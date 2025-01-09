@@ -439,13 +439,22 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
         if(CollectionUtils.isEmpty(productSkuInfoList)){
             return new SoDetailDTO.ListAddDetailNoBomViewDTO();
         }
+        //根据ids查询sku信息
+        List<String> skuIdList = productSkuInfoList.stream()
+                .map(SkuMappingDTO.ProductSkuInfoDTO::getSkuId)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIdList);
+
+
         for (SkuMappingDTO.ProductSkuInfoDTO productSku : productSkuInfoList) {
             SoDetailDTO.AddDetailView detailView = new SoDetailDTO.AddDetailView();
             detailView.setSkuId(productSku.getSkuId());
-            detailView.setSkuNo(productSku.getSkuNo());
             detailView.setPlatformSkuNo(productSku.getPlatformSkuNo());
-            detailView.setProductName(productSku.getSkuName());
             detailView.setCustomerId(productSku.getCustomerId());
+            ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(productSku.getSkuId())).findFirst().orElse(new ProductDetailEntity());
+            detailView.setProductName(productDetailEntity.getName());
+            detailView.setSkuNo(productDetailEntity.getSkuNo());
             noBomList.add(detailView);
         }
 

@@ -64,7 +64,7 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
         // 查询明细
         // 当前sku子任务明细所有结果
         List<ParamData> detailParamDataList = new ArrayList<>();
-        detailParamDataList.add(new ParamData(NEXT_LEVEL_ID, NEXT_LEVEL_ID, PannoEnum.EQ, nextLevelId));
+        detailParamDataList.add(new ParamData("nextLevelId", "nextLevelId", PannoEnum.EQ, nextLevelId));
         List<Map<String, Object>> listingDetailMongoData = mongoService.findMongoData(detailParamDataList, AMAZON_LISTING_DETAIL_DATA);
 
         for (Map<String, Object> listingMongoDataItem : dmpInputMongoChildList) {

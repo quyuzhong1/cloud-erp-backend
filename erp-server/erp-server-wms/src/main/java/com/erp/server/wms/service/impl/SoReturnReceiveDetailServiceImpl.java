@@ -110,9 +110,24 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 detailEntity.setRemark(detailDto.getRemark());
                 detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
                 detailEntity.setNoticeDetailId(detailDto.getNoticeDetailId());
+                //获取平台sku
+                if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
+                    String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                    detailEntity.setPlatformSkuNo(platformSkuNo);
+                }else {
+                    detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+                }
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                if(null == detailDto.getExchangeRate()){
+                    detailEntity.setExchangeRate(dto.getExchangeRate());
+                }else{
+                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
+                }
                 Integer returnQty = 0;
                 if("B2C".equals(dto.getType())){
-                    returnQty = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                     if(Objects.nonNull(soB2cReturnEntity)){
                         detailEntity.setReturnTypeDict(soB2cReturnEntity.getType());
                         detailEntity.setReturnReasonDict(soB2cReturnEntity.getReason());
@@ -136,73 +151,52 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                         }else {
                             throw new ServiceException(ApiError.ERROR_92023, detailDto.getSkuNo());
                         }
+                        //子产品无需校验
+                        //此单历史签收数量
+                        Integer historyReceiveQty = soReturnReceiveDetailEntities.stream()
+                                .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                                .map(SoReturnReceiveDetailEntity::getReceiveQty)
+                                .reduce(MathUtil.ZERO, Integer::sum);
+                        if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
+                            throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
+                        }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
+                            // 退货签收单的数量之和等于退货通知单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
+                            SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().
+                                    filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                                    .findFirst()
+                                    .orElse(null);
+                            BigDecimal returnAmount = BigDecimal.ZERO;
+                            BigDecimal taxReturnAmount = BigDecimal.ZERO;
+                            BigDecimal returnAmountLocalCurrency = BigDecimal.ZERO;
+                            BigDecimal taxReturnAmountLocalCurrency = BigDecimal.ZERO;
+                            if(null != soReturnNoticeDetailEntity){
+                                returnAmount = soReturnNoticeDetailEntity.getReturnAmount();
+                                taxReturnAmount = soReturnNoticeDetailEntity.getTaxReturnAmount();
+                                returnAmountLocalCurrency = soReturnNoticeDetailEntity.getReturnAmountLocalCurrency();
+                                taxReturnAmountLocalCurrency = soReturnNoticeDetailEntity.getTaxReturnAmountLocalCurrency();
+                            }else {
+                                returnAmount = soReturnDetailEntity.getReturnAmount();
+                                taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
+                                returnAmountLocalCurrency = soReturnDetailEntity.getReturnAmountLocalCurrency();
+                                taxReturnAmountLocalCurrency = soReturnDetailEntity.getTaxReturnAmountLocalCurrency();
+                            }
+                            List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntityList = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).collect(Collectors.toList());
+                            for (SoReturnReceiveDetailEntity soReturnReceiveDetail : soReturnReceiveDetailEntityList) {
+                                returnAmount = returnAmount.subtract(soReturnReceiveDetail.getReturnAmount()) ;
+                                taxReturnAmount = taxReturnAmount.subtract(soReturnReceiveDetail.getTaxReturnAmount());
+                                returnAmountLocalCurrency = returnAmountLocalCurrency.subtract(soReturnReceiveDetail.getReturnAmountLocalCurrency());
+                                taxReturnAmountLocalCurrency = taxReturnAmountLocalCurrency.subtract(soReturnReceiveDetail.getTaxReturnAmountLocalCurrency());
+                            }
+                            detailEntity.setReturnAmount(returnAmount);
+                            detailEntity.setTaxReturnAmount(taxReturnAmount);
+                            detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
+                            detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
+                        }
                     }
                     detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
                     detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
                 }
-                //获取平台sku
-                if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
-                    String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-                    detailEntity.setPlatformSkuNo(platformSkuNo);
-                }else {
-                    detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
-                }
-                detailEntity.setReturnAmount(detailDto.getReturnAmount());
-                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
-                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
-                if(null == detailDto.getExchangeRate()){
-                    detailEntity.setExchangeRate(dto.getExchangeRate());
-                }else{
-                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
-                }
-                //子产品无需校验
-                if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
-                    //此单历史签收数量
-                    Integer historyReceiveQty = soReturnReceiveDetailEntities.stream()
-                            .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
-                            .map(SoReturnReceiveDetailEntity::getReceiveQty)
-                            .reduce(MathUtil.ZERO, Integer::sum);
-                    if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
-                        throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
-                    }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
-                        // 退货签收单的数量之和等于退货通知单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
-                        SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().
-                                filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
-                                .findFirst()
-                                .orElse(null);
-                        BigDecimal returnAmount = BigDecimal.ZERO;
-                        BigDecimal taxReturnAmount = BigDecimal.ZERO;
-                        BigDecimal returnAmountLocalCurrency = BigDecimal.ZERO;
-                        BigDecimal taxReturnAmountLocalCurrency = BigDecimal.ZERO;
-                        if(null != soReturnNoticeDetailEntity){
-                            returnAmount = soReturnNoticeDetailEntity.getReturnAmount();
-                            taxReturnAmount = soReturnNoticeDetailEntity.getTaxReturnAmount();
-                            returnAmountLocalCurrency = soReturnNoticeDetailEntity.getReturnAmountLocalCurrency();
-                            taxReturnAmountLocalCurrency = soReturnNoticeDetailEntity.getTaxReturnAmountLocalCurrency();
-                        }else {
-                            SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
-                                    .filter(req -> req.getId().equals(detailDto.getSourceDetailId()))
-                                    .findFirst()
-                                    .orElse(null);
-                            returnAmount = soReturnDetailEntity.getReturnAmount();
-                            taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
-                            returnAmountLocalCurrency = soReturnDetailEntity.getReturnAmountLocalCurrency();
-                            taxReturnAmountLocalCurrency = soReturnDetailEntity.getTaxReturnAmountLocalCurrency();
-                        }
-                        List<SoReturnReceiveDetailEntity> soReturnReceiveDetailEntityList = soReturnReceiveDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).collect(Collectors.toList());
-                        for (SoReturnReceiveDetailEntity soReturnReceiveDetail : soReturnReceiveDetailEntityList) {
-                            returnAmount = returnAmount.subtract(soReturnReceiveDetail.getReturnAmount()) ;
-                            taxReturnAmount = taxReturnAmount.subtract(soReturnReceiveDetail.getTaxReturnAmount());
-                            returnAmountLocalCurrency = returnAmountLocalCurrency.subtract(soReturnReceiveDetail.getReturnAmountLocalCurrency());
-                            taxReturnAmountLocalCurrency = taxReturnAmountLocalCurrency.subtract(soReturnReceiveDetail.getTaxReturnAmountLocalCurrency());
-                        }
-                        detailEntity.setReturnAmount(returnAmount);
-                        detailEntity.setTaxReturnAmount(taxReturnAmount);
-                        detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
-                        detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
-                    }
-                }
+
                 list.add(detailEntity);
             }
             return this.saveBatch(list);
@@ -312,6 +306,34 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                 if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                     detailEntity.setId(detailDto.getId());
                 }
+
+                detailEntity.setId(detailDto.getId());
+                detailEntity.setMainId(dto.getId());
+                detailEntity.setSkuId(detailDto.getSkuId());
+                detailEntity.setSkuNo(skuVO.getSkuNo());
+                detailEntity.setReturnQty(detailDto.getReturnQty());
+                detailEntity.setReceiveQty(detailDto.getReceiveQty());
+                detailEntity.setRemark(detailDto.getRemark());
+                detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
+                detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
+                detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
+                //获取平台sku
+                if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
+                    String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                    detailEntity.setPlatformSkuNo(platformSkuNo);
+                }else {
+                    detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
+                }
+                detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
+                detailEntity.setReturnAmount(detailDto.getReturnAmount());
+                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
+                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
+                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
+                if(null == detailDto.getExchangeRate()){
+                    detailEntity.setExchangeRate(dto.getExchangeRate());
+                }else{
+                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
+                }
                 if("B2C".equals(dto.getType())){
                     SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                     if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
@@ -387,33 +409,6 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                             detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
                         }
                     }
-                }
-                detailEntity.setId(detailDto.getId());
-                detailEntity.setMainId(dto.getId());
-                detailEntity.setSkuId(detailDto.getSkuId());
-                detailEntity.setSkuNo(skuVO.getSkuNo());
-                detailEntity.setReturnQty(detailDto.getReturnQty());
-                detailEntity.setReceiveQty(detailDto.getReceiveQty());
-                detailEntity.setRemark(detailDto.getRemark());
-                detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
-                detailEntity.setReturnTypeDict(detailDto.getReturnTypeDict());
-                detailEntity.setReturnReasonDict(detailDto.getReturnReasonDict());
-                //获取平台sku
-                if(StringUtils.isBlank(detailDto.getPlatformSkuNo())){
-                    String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(skuVO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-                    detailEntity.setPlatformSkuNo(platformSkuNo);
-                }else {
-                    detailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
-                }
-                detailEntity.setIsChildSkuNo(detailDto.getIsChildSkuNo());
-                detailEntity.setReturnAmount(detailDto.getReturnAmount());
-                detailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
-                detailEntity.setReturnAmountLocalCurrency(detailDto.getReturnAmountLocalCurrency());
-                detailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());
-                if(null == detailDto.getExchangeRate()){
-                    detailEntity.setExchangeRate(dto.getExchangeRate());
-                }else{
-                    detailEntity.setExchangeRate(detailDto.getExchangeRate());
                 }
                 list.add(detailEntity);
                 //修改操作日志
