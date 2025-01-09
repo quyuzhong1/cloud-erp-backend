@@ -311,6 +311,13 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     }
 
     @Override
+    public List<DeliverySuggestDTO.PlatformDTO> listPlatformByPlatformType(DeliverySuggestDTO.PlatformTypeParamDTO dto) {
+        List<DeliverySuggestDTO.PlatformDTO> platformList = baseMapper.listPlatformByPlatformType(dto);
+        handlePlatform(platformList);
+        return platformList;
+    }
+
+    @Override
     public PagingVO<DeliverySuggestDTO.ListDTO> paging(PagingDTO<DeliverySuggestDTO.PagingParamDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
@@ -1044,5 +1051,25 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             return Boolean.FALSE;
         }).findFirst().orElse(null);
         return ObjectUtil.isNotEmpty(entity) ? Boolean.TRUE : Boolean.FALSE;
+    }
+
+
+    /**
+     * 查询平台名称
+     * @author will
+     * @date 2024/12/18 9:36
+     * @param platformDTOList
+     */
+    private void handlePlatform (List<DeliverySuggestDTO.PlatformDTO> platformDTOList) {
+        if (CollUtil.isEmpty(platformDTOList)) {
+            return;
+        }
+        List<String> platformList = platformDTOList.stream().map(DeliverySuggestDTO.PlatformDTO::getPlatform).collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+        for (DeliverySuggestDTO.PlatformDTO platformDTO : platformDTOList) {
+            //平台名称
+            String platformName = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(),platformDTO.getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            platformDTO.setPlatformName(platformName);
+        }
     }
 }

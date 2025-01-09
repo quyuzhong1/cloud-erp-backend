@@ -1,6 +1,7 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.business.dto.base.BatchParamsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * 试算配置
@@ -96,5 +98,25 @@ public class CfgRuleCalcController extends BaseController {
     public ApiResult<String> cancelFavorite(@RequestBody @Validated CalcSalesInfoFavoriteDTO.CancelDTO dto) {
         cfgRuleCalcService.cancelFavorite(dto);
         return success();
+    }
+
+    /**
+     * 根据sku查店铺
+     * @param dto 参数
+     */
+    @PostMapping("/hasSalesShopBySku")
+    public ApiResult<List<String>> hasSalesShopBySku(@RequestBody @Validated BatchParamsDTO<String> dto) {
+        List<String> shopIds = cfgRuleCalcService.hasSalesShopBySku(dto.getParams());
+        return success(shopIds);
+    }
+
+    /**
+     * 根据sku查店铺
+     * @param dto 参数
+     */
+    @PostMapping("/hasSalesSkuByShop")
+    public ApiResult<List<CfgRuleCalcDTO.SkuDTO>> hasSalesSkuByShop(@RequestBody @Validated BatchParamsDTO<String> dto) {
+        List<CfgRuleCalcDTO.SkuDTO> dtos = cfgRuleCalcService.hasSalesSkuByShop(dto.getParams());
+        return success(dtos);
     }
 }

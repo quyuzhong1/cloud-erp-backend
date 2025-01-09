@@ -121,4 +121,26 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/updateShippingCalculation")
     void updateShippingCalculation(@RequestBody @Validated ShippingCalculationDTO.PagingParamDTO pagingParamDTO);
+
+    /**
+     *sku成本-skuIds
+     * @param queryB2BDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostBySkuIds")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(@RequestBody InventorySkuCostDTO.QueryB2BDTO queryB2BDTO);
+    /**
+     * sku成本 订单明细
+     * @param queryB2CDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostByDetail")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(@RequestBody InventorySkuCostDTO.QueryB2CDTO queryB2CDTO);
+    /**
+     * sku成本 单个明细
+     * @param queryDetailDTOList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostByDetailList")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(@RequestBody List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList);
 }

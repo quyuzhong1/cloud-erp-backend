@@ -73,4 +73,14 @@ public class WarehouseFeignController {
         dto.setWarehouseIdList(ids);
         return warehouseService.listWarehouseByParams(dto);
     }
+
+    /**
+     * 根据仓库名称获取仓库信息
+     * @param warehouseNameList
+     * @return
+     */
+    @PostMapping("/listByWarehouseNameList")
+    public List<WarehouseEntity> listByWarehouseNameList(@RequestBody List<String> warehouseNameList) {
+        return warehouseService.listByWarehouseNameList(warehouseNameList);
+    }
 }

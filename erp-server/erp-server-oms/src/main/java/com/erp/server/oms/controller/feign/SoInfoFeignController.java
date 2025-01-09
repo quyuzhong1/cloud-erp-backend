@@ -215,6 +215,6 @@ public class SoInfoFeignController extends BaseController {
      */
     @PostMapping("/sdyFieldOrderHandler")
     public void sdyFieldOrderHandler(@RequestBody SoInfoToSdyDTO soInfoToSdyDTO) {
-        soInfoService.sdyFieldOrderHandler(soInfoToSdyDTO.getSoId(), soInfoToSdyDTO.getOperateEnum(), soInfoToSdyDTO.getDeliveryStatus());
+        soInfoService.sdyFieldOrderHandler(soInfoToSdyDTO.getSoId(), soInfoToSdyDTO.getOperateEnum());
     }
 }

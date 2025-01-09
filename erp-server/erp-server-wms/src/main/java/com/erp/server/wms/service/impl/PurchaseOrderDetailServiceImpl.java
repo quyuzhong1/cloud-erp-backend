@@ -17,6 +17,19 @@ import java.util.stream.Collectors;
 public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrderDetailMapper, PurchaseOrderDetailEntity> implements PurchaseOrderDetailService {
 
     @Override
+    public List<PurchaseOrderDetailEntity> listByPurchaseOrderId(String purchaseOrderId) {
+        return  lambdaQuery()
+                .eq(PurchaseOrderDetailEntity::getPurchaseOrderId,purchaseOrderId)
+                .orderByAsc(PurchaseOrderDetailEntity::getId)
+                .list();
+    }
+
+    @Override
+    public List<PurchaseOrderDetailEntity> listBySourceDetailIdList(List<String> subDetailIdList) {
+        return baseMapper.listBySourceDetailIdList(subDetailIdList);
+    }
+
+    @Override
     public List<PurchaseOrderDetailEntity> ListProductDetailEntityByIds(List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();

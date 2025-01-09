@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.mrp.dto.CfgRuleCalcDTO;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * <p>
@@ -56,4 +57,16 @@ public interface CfgRuleCalcService extends SuperService<CfgRuleCalcEntity> {
      * @param dto 参数
      */
     void cancelFavorite(CalcSalesInfoFavoriteDTO.CancelDTO dto);
+
+    /**
+     * 根据sku查询有销量店铺
+     * @param params 参数
+     */
+    List<String> hasSalesShopBySku(List<String> params);
+
+    /**
+     * 根据店铺查询有销量sku
+     * @param params 参数
+     */
+    List<CfgRuleCalcDTO.SkuDTO> hasSalesSkuByShop(List<String> params);
 }

@@ -401,4 +401,8 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return
      */
     List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
+
+    List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseView(List<String> ids);
+
+    Boolean pushDownPurchase(List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseViews);
 }

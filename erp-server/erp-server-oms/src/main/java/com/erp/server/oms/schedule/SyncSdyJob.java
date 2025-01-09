@@ -101,7 +101,7 @@ public class SyncSdyJob {
             List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
             List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
             List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
             //父类产品
             List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
             List<ProductDetailEntity> parentSkuList = new ArrayList<>();
@@ -259,7 +259,6 @@ public class SyncSdyJob {
                         dictBasicEntityList,
                         currencyList,
                         soChangeDetailEntities,
-                        "",
                         dictList
                 );
             }

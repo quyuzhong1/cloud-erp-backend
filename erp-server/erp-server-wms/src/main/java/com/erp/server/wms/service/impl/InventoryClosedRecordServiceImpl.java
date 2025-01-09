@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.InventoryClosedRecordEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -138,6 +137,11 @@ public class InventoryClosedRecordServiceImpl extends SuperServiceImpl<Inventory
                 .list()
                 .stream()
                 .collect(Collectors.toMap(InventoryClosedRecordEntity::getInventoryOrgId, e -> e));
+    }
+
+    @Override
+    public LocalDate getMinClosedDate() {
+        return  baseMapper.getMinClosedDate();
     }
 
 

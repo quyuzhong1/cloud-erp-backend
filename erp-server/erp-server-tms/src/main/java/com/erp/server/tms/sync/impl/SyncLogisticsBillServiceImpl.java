@@ -56,6 +56,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         //默认运单
         shudiyunB2cOrderDTO.setTransaction_type("运单");
         shudiyunB2cOrderDTO.setTransaction_sub_type("普通运单");
+
         shudiyunB2cOrderDTO.setBiz_status(LogisticTrackStatusEnum.getName(logisticsBillDetailEntity.getTrackStatus()));
         if (entity.getVersion() == null) {
             entity.setVersion(0);
@@ -116,6 +117,33 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             tmsPushMsgEntity.setSourceCode(sourceCode);
             tmsPushMsgEntity.setSyncOperate(operate);
             tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticsChannelEntities, logisticsSupplierEntities)));
+            tmsPushMsgService.save(tmsPushMsgEntity);
+        }
+    }
+
+
+    @Override
+    public void syncDataToSdy(LogisticsBillEntity entity,
+                              List<LogisticsBillDetailEntity> detailEntityList,
+                              String operate) {
+
+        for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
+            String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
+            if (CharSequenceUtil.isBlank(sourceCode)) {
+                continue;
+            }
+
+            TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
+            tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
+            tmsPushMsgEntity.setSourceId(billDetailEntity.getId());
+            tmsPushMsgEntity.setSourceCode(sourceCode);
+            tmsPushMsgEntity.setSyncOperate(operate);
+            Map<String, Object> map = new HashMap<>();
+            map.put("isQuerySync", Boolean.TRUE);
+            map.put("detailId", billDetailEntity.getId());
+            map.put("operate", operate);
+            tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             tmsPushMsgService.save(tmsPushMsgEntity);
         }
     }

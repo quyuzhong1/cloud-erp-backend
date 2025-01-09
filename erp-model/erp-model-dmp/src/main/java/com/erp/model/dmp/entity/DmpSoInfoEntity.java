@@ -248,6 +248,11 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
      @TableField("goods_cost")
      private BigDecimal goodsCost;
 
+    /**
+     * VAT税费
+     */
+    @TableField("vat_cost")
+    private BigDecimal vatCost;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

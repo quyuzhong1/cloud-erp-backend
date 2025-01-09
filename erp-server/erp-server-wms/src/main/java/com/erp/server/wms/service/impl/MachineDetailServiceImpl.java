@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -18,6 +19,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineRefSoEntity;
@@ -35,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -159,6 +162,22 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             return new ArrayList<>();
         }
         return this.lambdaQuery().in(MachineDetailEntity::getSourceDetailId,detailIds).list();
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listMachineBySourceIdList(sourceIdList);
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineByRefIdList(List<String> refIdList) {
+        if (CollectionUtils.isEmpty(refIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listMachineByRefIdList(refIdList);
     }
 
     @Override
@@ -314,6 +333,9 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         MachineInfoEntity machineInfoEntity = machineInfoService.getById(mainId);
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_99052);
+        }
+        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(machineInfoEntity.getSourceType())) {
+            return;
         }
         List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
         List<MachineRefSoEntity> oldRefList = machineRefSoService.listBySoDetailIdList(refDetailIdList);

@@ -40,7 +40,9 @@
         SELECT
         c.id,c.code as code, c.status,c.allocated_month as allocatedMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
         c.currency, c.currency_symbol,c.exchange_rate, c.company_id, c.company_name as companyName,cd.id as detailId,cd.sku_no as skuNo, cd.sku_id,
-        cd.product_name, cd.unit, cast(cd.product_cost AS NUMERIC(16, 6)) as productCost,c.create_user_name as createUserName,c.create_time as createTime
+        cd.product_name, cd.unit, cast(cd.product_cost AS NUMERIC(16, 6)) as productCost,cd.warehouse_id as warehouseId,cd.warehouse_name as warehouseName,
+        cast(cd.first_mile_shipping_cost AS NUMERIC(16, 6)) as firstMileShippingCost,cast(cd.clearance_customs_tax AS NUMERIC(16, 6)) as clearanceCustomsTax,
+        c.create_user_name as createUserName,c.create_time as createTime
         FROM  inventory_sku_cost c
         LEFT JOIN  inventory_sku_cost_detail cd ON cd.main_id=c.id and cd.is_deleted=false
         <where>
@@ -98,6 +100,55 @@
         <if test="month != null">
             and c.allocated_month = #{month}
         </if>
+    </select>
+    <select id="listSkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$SkuCostDTO">
+        WITH recent_costs AS (
+        SELECT
+            isc.company_id as salesOrgId,
+            isc.allocated_month as allocatedMonth,
+            isc.currency,
+            iscd.sku_id as skuId,
+            iscd.product_cost as productCost,
+            iscd.first_mile_shipping_cost as firstMileShippingCost,
+            iscd.clearance_customs_tax as clearanceCustomsTax,
+            iscd.warehouse_id as warehouseId,
+            ROW_NUMBER() OVER (PARTITION BY iscd.sku_id, iscd.warehouse_id ORDER BY isc.allocated_month DESC) as rn
+        FROM
+            inventory_sku_cost isc
+        LEFT JOIN inventory_sku_cost_detail iscd ON iscd.main_id = isc.id
+        WHERE iscd.is_deleted = FALSE and isc.status = 'approve'
+        AND isc.allocated_month >= (CURRENT_DATE - INTERVAL '3 months')
+        <if test="skuIds != null and skuIds.size > 0">
+            and iscd.sku_id in
+            <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="warehouseIds != null and warehouseIds.size > 0">
+            and iscd.warehouse_id in
+            <foreach collection="warehouseIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="salesOrgIds != null and salesOrgIds.size > 0">
+            and isc.company_id in
+            <foreach collection="salesOrgIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        )
+        SELECT
+            salesOrgId,
+            allocatedMonth,
+            currency,
+            skuId,
+            productCost,
+            firstMileShippingCost,
+            clearanceCustomsTax,
+            warehouseId
+        FROM
+            recent_costs
+        WHERE rn = 1
     </select>
 
 </mapper>

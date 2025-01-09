@@ -1,7 +1,6 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -9,14 +8,11 @@ import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -33,38 +29,17 @@ import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WmsPushMsgService;
-import com.google.common.collect.Lists;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockService {
     @Resource
-    private PlmTaskFeign plmTaskFeign;
-
-    @Resource
-    private SysUserFeign sysUserFeign;
-
-    @Resource
-    private SoReturnInstockDetailService soReturnInstockDetailService;
-
-    @Resource
     private WmsPushMsgService wmsPushMsgService;
-
-    @Resource
-    private SoReturnFeign soReturnFeign;
-
-    @Resource
-    private SoReturnReceiveService soReturnReceiveService;
 
     @Override
     public Map<String, Object> syncDataToSdyFieldHandler(SoReturnInstockEntity entity,
@@ -128,10 +103,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
             shudiyunB2cOrderDTO.setPlatform_name(platformName);
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 
-        shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
-        shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
+
         shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNoInitial);
         shudiyunB2cOrderDTO.setGoods_no(detailEntity.getSkuNo());
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
@@ -255,26 +231,46 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         }
     }
 
+    @Override
+    public void syncDataToSdy(SoReturnInstockEntity entity,
+                              List<SoReturnInstockDetailEntity> detailEntities,
+                              String operate) {
+        for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(detailEntity.getId());
+            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
+            wmsPushMsgEntity.setSyncOperate(operate);
+            Map<String, Object> map = new HashMap<>();
+            map.put("isQuerySync", Boolean.TRUE);
+            map.put("detailId", detailEntity.getId());
+            map.put("operate", operate);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
+    }
+
     private String getRootNodeNoInitial(SoReturnInstockEntity entity,
                                         List<SoReturnEntity> soReturnEntityList,
                                         List<SoReturnReceiveEntity> soReturnReceiveEntityList,
                                         List<SoReturnEntity> receiveReturnList) {
         String rootNodeNoInitial = entity.getCode(); // 默认值是 entity.getCode()
 
-        if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
-            SoReturnEntity soReturnEntity = soReturnEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                rootNodeNoInitial = soReturnEntity.getCode();
-            }
-        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            String receiveSourceId = soReturnReceiveEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).map(SoReturnReceiveEntity::getSourceId).findFirst().orElse("");
-            if (CharSequenceUtil.isNotBlank(receiveSourceId)) {
-                SoReturnEntity soReturnEntity = receiveReturnList.stream().filter(req -> req.getId().equals(receiveSourceId)).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                    rootNodeNoInitial = soReturnEntity.getCode();
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getType())) {
+            if (SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode().equals(entity.getSourceType())) {
+                rootNodeNoInitial = entity.getSourceCode();
+            } else if (SourceTypeEnum.WDT_RETURN_ORDER.getCode().equals(entity.getSourceType())) {
+                if (CharSequenceUtil.isNotBlank(entity.getPlatformOrderCode())) {
+                    rootNodeNoInitial = entity.getPlatformOrderCode();
+                } else {
+                    rootNodeNoInitial = entity.getSourceId();
                 }
+            } else if (SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(entity.getSourceType())) {
+                rootNodeNoInitial = entity.getSourceId();
             }
         }
+
         return rootNodeNoInitial;
     }
 

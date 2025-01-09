@@ -147,6 +147,23 @@ public class ExportWmsFeignController {
     @Resource
     private ReportOrderSalesService reportOrderSalesService;
 
+    @Resource
+    private SoB2bProcessingService soB2bProcessingService;
+
+    @Resource
+    private SoB2cProcessingService soB2cProcessingService;
+
+    @Resource
+    private FirstMileProcessingService firstMileProcessingService;
+
+    @Resource
+    private VirtualInventoryDetailService virtualInventoryDetailService;
+
+    @Resource
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
+
+
+
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
@@ -665,6 +682,7 @@ public class ExportWmsFeignController {
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
     public PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(@RequestBody PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         return warehouseReceiveService.exportWarehouseReceive(dto);
     }
@@ -722,4 +740,76 @@ public class ExportWmsFeignController {
     public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
         return virtualWarehouseAllocationService.exportVirtualStatistics(dto);
     }
+
+    /**
+     * 导出b2b销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/exportSoB2bProcessing")
+    @WebAdvanceQuery
+    public PagingVO<SoB2bProcessingDTO.ListDTO> exportSoB2bProcessing(@RequestBody PagingDTO<SoB2bProcessingDTO.PagingParamDTO> dto){
+        return soB2bProcessingService.paging(dto);
+    }
+
+    /**
+     * 导出b2c销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/exportSoB2cProcessing")
+    @WebAdvanceQuery
+    public PagingVO<SoB2cProcessingDTO.ListDTO> exportSoB2cProcessing(@RequestBody PagingDTO<SoB2cProcessingDTO.PagingParamDTO> dto){
+        return soB2cProcessingService.paging(dto);
+    }
+
+    /**
+     * 导出头程销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/exportFirstMileProcessing")
+    @WebAdvanceQuery
+    public PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(@RequestBody PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto){
+        return firstMileProcessingService.paging(dto);
+    }
+
+    /**
+     * 库龄分析数据导出
+     */
+    @PostMapping("/exportWmsVirtualInventoryAge")
+    @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
+    public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(@RequestBody PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto){
+        return virtualInventoryDetailService.exportWmsVirtualInventoryAge(dto);
+    }
+
+    /**
+     * 历史库龄数据导出
+     */
+    @PostMapping("/hisInventoryAgePaging")
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto){
+        return virtualInventoryDetailService.hisInventoryAgePaging(dto);
+    }
+
+    /**
+     * 历史库龄明细数据导出
+     */
+    @PostMapping("/hisInventoryAgeDetailPaging")
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto){
+        return virtualInventoryDetailService.exportHisInventoryAgeDetailPaging(dto);
+    }
+
+
+    /**
+     * 流水明细数据导出
+     */
+    @PostMapping("/virtualTransFlowDetailPaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(@RequestBody PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto){
+        return virtualTransFlowDetailService.paging(dto);
+    }
+
+    /**
+     * 列表历史库龄明细数据导出
+     */
+    @PostMapping("/framePaging")
+    @WebAdvanceQuery
+    public PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(@RequestBody PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto){
+        return virtualInventoryDetailService.framePaging(dto);
+    }
+
 }

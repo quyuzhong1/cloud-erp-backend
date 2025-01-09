@@ -240,4 +240,46 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportVirtualStatistics")
     PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
+    /**
+     * 库龄分析导出
+     */
+    @PostMapping("/feign/export/exportWmsVirtualInventoryAge")
+    PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    /**
+     * 历史库龄导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+
+    /**
+     * 历史库龄明细导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgeDetailPaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
+
+    /**
+     * 库龄流水导出
+     */
+    @PostMapping("/feign/export/virtualTransFlowDetailPaging")
+    PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto);
+    /**
+     * 列表历史库龄明细导出
+     */
+    @PostMapping("/feign/export/framePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
+    /**
+     * 导出b2b销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportSoB2bProcessing")
+    PagingVO<SoB2bProcessingDTO.ListDTO> exportSoB2bProcessing(PagingDTO<SoB2bProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出b2c销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportSoB2cProcessing")
+    PagingVO<SoB2cProcessingDTO.ListDTO> exportSoB2cProcessing(PagingDTO<SoB2cProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出头程销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportFirstMileProcessing")
+    PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto);
 }

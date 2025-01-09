@@ -262,12 +262,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                             .list();
                     if (CollectionUtils.isNotEmpty(shop)) {
                         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
-                        shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
-                        shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
+
 
                         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
 
                         if (ObjectUtil.isNotEmpty(customerInfo)) {
+                            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+                            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
+
                             //组织编码
                             List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
                             //销售组织
@@ -286,7 +288,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                                 List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                                 if(CollUtil.isNotEmpty(dictList)) {
                                     shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
-                                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getName());
+                                    shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
                                 }
                             }
 
@@ -347,6 +349,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                         shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
                         shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                     }
+
+                    shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+                    shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
                 }
 
                 //销售组织
@@ -354,8 +359,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
 
-                shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
-                shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
                 DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
                 if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                     shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
@@ -430,7 +433,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))));
                 } else {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
+                    if (dmpSoDetailEntity.getQty() == 0) {
+                        shudiyunB2cOrderDTO.setPrice(BigDecimal.ZERO);
+                    } else {
+                        shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
+                    }
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount));
                 }
                 shareTotalDiscount = shareTotalDiscount.add(shareDiscount);

@@ -183,12 +183,9 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
 
                     }
                     Object packId = dmpDataMap.get("platformCode");
-                    if (packId != null) {
-                        dmpDataMap.put("thirdCode", dmpDataMap.get("platformCode"));
-                    } else {
+                    if (packId == null) {
                         dmpDataMap.put("platformCode", dmpDataMap.get("thirdCode"));
                     }
-
 
                     //支付信息
                     Object paymentsObj = dmpDataMap.get("payments");

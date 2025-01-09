@@ -122,6 +122,12 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 采购订单仓位
+     */
+    @TableField(exist = false)
+    private String purchaseWarehouseLocation;
+
     @TableField(exist = false)
     private String approveStatus;
 

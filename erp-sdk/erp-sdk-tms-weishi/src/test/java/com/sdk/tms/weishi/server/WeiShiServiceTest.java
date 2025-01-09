@@ -93,6 +93,7 @@ class WeiShiServiceTest {
     void getLabelUrl() {
         WeiShiGetLabelUrlRequest weiShiGetLabelUrlRequest = WeiShiGetLabelUrlRequest.builder()
                 .referenceNo("XSDD24071804969")
+
                 .lableType("2")
                 .build()
                 ;

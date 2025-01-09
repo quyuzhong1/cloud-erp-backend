@@ -6,8 +6,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -61,15 +61,13 @@ import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
-import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.model.wms.entity.WmsAttachmentEntity;
-import com.erp.model.workflow.dto.StartProcessDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.CfgSettingFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
@@ -77,6 +75,7 @@ import com.erp.server.plm.listener.ProductDetailExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
+import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
 import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import com.erp.server.plm.utils.UnitConverterUtil;
@@ -262,7 +261,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private SyncWangDianProductDetailService syncWangDianProductDetailService;
 
     @Resource
+    private SyncLingXingProductDetailService syncLingXingProductDetailService;
+
+    @Resource
     private InventoryFeign inventoryFeign;
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
 
     @Resource
@@ -276,6 +280,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+    public static final String SKU_COST_SALE_ORG_ID = "skuCostSaleOrgId";
+    public static final String SKU_COST_WAREHOUSE = "skuCostWarehouse";
 
     /**
      * @param pagingDTO:查询参数
@@ -1655,6 +1661,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         sendPushTask(Arrays.asList(oldEntity),SyncOperateEnum.OPERATE_DELETE.getCode());
         //增加一条虚假的同步任务记录
         syncWangDianProductDetailService.addPlmPushMsg(entity);
+        syncLingXingProductDetailService.addPlmPushMsg(entity);
         return this.remove(queryWrapper);
     }
 
@@ -2159,6 +2166,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (isCheck) {
             syncWangDianProductDetailService.syncDataToWangDian(entity);
         }
+        syncLingXingProductDetailService.syncDataToLingxing(entity);
         //增加缓存清除
         redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, entity.getId());
         return true;
@@ -2200,6 +2208,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             batchResultDTOList.add(BatchResultDTO.fail("",String.join(",", skuNoList),"USD兑换CNY汇率不存在"));
             return batchResultDTOList;
         }
+        //获取SKU成本
+        List<BasicDictEntity> basicDictEntities = basicDictService.listByTypeList(Arrays.asList(SKU_COST_SALE_ORG_ID, SKU_COST_WAREHOUSE));
+        String skuCostSaleOrgId = basicDictEntities.stream().filter(e -> e.getType().equals(SKU_COST_SALE_ORG_ID)).map(BasicDictEntity::getValue).findFirst().orElse("");
+        String skuCostWarehouseId = basicDictEntities.stream().filter(e -> e.getType().equals(SKU_COST_WAREHOUSE)).map(BasicDictEntity::getValue).findFirst().orElse("");
+        InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = InventorySkuCostDTO.QueryB2BDTO.builder().salesOrgId(skuCostSaleOrgId).warehouseId(skuCostWarehouseId).skuIds(skuIds).billDate(LocalDate.now()).build();
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostBySkuIds(queryB2BDTO);
+        //税率
+        List<ProductCostEntity> productCostEntityList = productCostService.listBySkuIds(skuIds);
         List<ProductCustomsEntity> addList = new ArrayList<>();
         List<ProductCustomsEntity> updateList = new ArrayList<>();
         for(String skuId : skuIds){
@@ -2210,17 +2226,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //是否重算目的国申报价
             BigDecimal destDeclarePrice = Objects.isNull(customs.getToDeclarePrice()) ? BigDecimal.ZERO: customs.getToDeclarePrice();
             if (destDeclarePrice.compareTo(BigDecimal.ZERO) == 0 || isManual) {
-                DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
-                log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
-                if (Objects.isNull(skuCostDTO)) {
-                    batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中【{}】兑换【{}】汇率不存在",productDetailEntity.getSkuNo(), CurrencyEnum.USD.getCurrencyCode(),CurrencyEnum.CNY.getCurrencyCode() )));
-                    continue;
-                }
                 //含税成本 默认是人民币
                 BigDecimal actualTaxCost = BigDecimal.ZERO;
-                if (Objects.nonNull(skuCostDTO.getCostPrice())) {
-                    actualTaxCost = skuCostDTO.getCostPrice();
+                //SKU成本覆盖含税成本
+                InventorySkuCostDTO.SkuCostDTO skuCostDTO2 = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+                if (Objects.nonNull(skuCostDTO2)){
+                    //汇率
+                    BigDecimal rate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO2.getCurrency());
+                    //税率
+                    BigDecimal taxRate = productCostEntityList.stream().filter(e -> e.getSkuId().equals(skuId)).map(ProductCostEntity::getTaxRate).findFirst().orElse(null);
+                    if (Objects.nonNull(rate) && Objects.nonNull(taxRate)){
+                        //本位币
+                        BigDecimal actualNoTaxCost =  MathUtil.multiply(rate,skuCostDTO2.getProductCost(),4);
+                        BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+                        actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate));
+                    }
+                }else {
+                    DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+                    log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
+                    if (Objects.isNull(skuCostDTO)) {
+                        batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中中台Bom关系表不存",productDetailEntity.getSkuNo())));
+                        continue;
+                    }
+                    if (Objects.nonNull(skuCostDTO.getCostPrice())) {
+                        actualTaxCost = skuCostDTO.getCostPrice();
+                    }
                 }
+
                 //统一换算成美元汇率
                 BigDecimal actualTaxCostUsd = MathUtil.divide(actualTaxCost, usdRate);
                 log.info("actualTaxCostUsd: {}", actualTaxCostUsd);
@@ -2261,7 +2293,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
                         .setBusinessId(productDetailEntity.getId()).setOperation("编辑操作").setContent(msg));
                 batchResultDTOList.add(BatchResultDTO.success(skuId,productDetailEntity.getSkuNo(),msg));
-                log.info("更新目的国申报价 sku:{},目的国申报价：{}",skuCostDTO.getSkuNo(), resultDestDeclarePrice);
+                log.info("更新目的国申报价 sku:{},目的国申报价：{}",productDetailEntity.getSkuNo(), resultDestDeclarePrice);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){
@@ -2482,6 +2514,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
+    @Override
+    public void initProductToLingXing(List<String> ids) {
+        int count = productInfoService.count();
+        int pageSize = 50;
+        int pageCount = count / pageSize + 1;
+        for (int i = 0; i < pageCount; i++) {
+            Page<ProductInfoEntity> page = productInfoService.page(new Page<>(i, pageSize), Wrappers.<ProductInfoEntity>lambdaQuery().in(CollUtil.isNotEmpty(ids), ProductInfoEntity::getId, ids));
+            List<ProductInfoEntity> records = page.getRecords();
+            if (CollectionUtils.isEmpty(records)) {
+                return;
+            }
+            List<String> infoIds = records.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            List<ProductDetailEntity> detailEntities = list(Wrappers.<ProductDetailEntity>lambdaQuery()
+                    .eq(ProductDetailEntity::getStatus, 2)
+                    .in(ProductDetailEntity::getProductId, infoIds));
+            for (ProductDetailEntity entity : detailEntities) {
+                RateLimiter limiter = RateLimiter.create(60, 1, TimeUnit.MINUTES);
+                if (limiter.tryAcquire()) {
+                    try {
+                        syncLingXingProductDetailService.syncDataToLingxing(entity);
+                    } catch (Exception e) {
+                        log.error("推送领星失败:{}", e.getMessage(), e);
+                    }
+                }
+            }
+        }
+    }
     @Override
     @Transactional
     public Boolean approvalReject(ProductDetailOperateDTO dto) {
@@ -3705,6 +3764,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //发送金蝶
             sendSinglePushTask(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             syncWangDianProductDetailService.syncDataToWangDian(entityList);
+            syncLingXingProductDetailService.syncDataToLingxing(entityList);
         } else {
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();
             //新增审核不通过意见

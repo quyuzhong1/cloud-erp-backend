@@ -159,6 +159,11 @@ public enum RocketMqTagEnum {
      */
     LX_FBA_SHIPMENT_RECEIVE_TAG(29, RocketMqTagEnum.FBA_SHIPMENT,"lx_fba_shipment_receive_tag"),
 
+    /**
+     * 虚拟仓明细信息tag
+     */
+    WMS_VIRTUAL_DETAIL_MSG_TAG(30,RocketMqTagEnum.SYNC_WMS,"wms_virtual_detail_msg_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -567,6 +572,10 @@ public enum RocketMqTagEnum {
     WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG(11005, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_virtual_allocation_handle_detail_tag"),
 
     /**
+     * 同步产品资料到领星
+     */
+    LINGXING_PRODUCT_DETAIL_TAG(11001, RocketMqTagEnum.SYNC_LINGXING,"lingxing_product_detail_tag"),
+    /**
      * 速帝云通用推送
      */
     SDY_GENERAL_PUSH_TAG(11006, RocketMqTagEnum.SYNC_WANGDIAN, "sdy_general_push_tag"),
@@ -612,6 +621,7 @@ public enum RocketMqTagEnum {
     public static final String FBA_SHIPMENT = "fba_shipment";
 
     public static final String SYNC_WANGDIAN = "sync_wangdian";
+    public static final String SYNC_LINGXING = "sync_lingxing";
 
     private Integer code;
 

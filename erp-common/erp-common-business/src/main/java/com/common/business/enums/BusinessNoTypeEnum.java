@@ -103,6 +103,8 @@ public enum BusinessNoTypeEnum {
     CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
     CODE_YHBG(75, "YHBG","要货申请变更单",BusinessNoConstant.YHBG),
     CODE_MOULD(90, "MJ","模具管理",BusinessNoConstant.MJ),
+    CODE_N(81, "N","库龄批次号",BusinessNoConstant.N),
+
     ;
 
 

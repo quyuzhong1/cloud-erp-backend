@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.sdk.wms.goodcang.dto.response.GoodCangReturnInstockResp;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -23,10 +24,16 @@ public class DmpInputGoodCangReturnInstockDmpHandler extends DmpInputDbConvertDm
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
 		super.afterConvertData(dmpInputDataDmpRelationMaps);
-//		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
-//			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
-//			List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
-//			Map<String, Object> mongoData = mongoDataMaps.get(0);
-//		}
+		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
+			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
+			for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+				// 兼容2个引用单号
+				String orderReferenceNo = dmpDataMap.getOrDefault("order_reference_no", "").toString();
+				if (StringUtils.isBlank(orderReferenceNo)){
+					String referenceNo = dmpDataMap.getOrDefault("reference_no", "").toString();
+					dmpDataMap.put("order_reference_no", referenceNo);
+				}
+			}
+		}
 	}
 }

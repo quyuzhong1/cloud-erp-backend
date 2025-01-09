@@ -9,7 +9,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -20,7 +19,6 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -33,7 +31,6 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -41,7 +38,6 @@ import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
@@ -53,13 +49,13 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
@@ -78,6 +74,7 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.SoInfoConverter;
@@ -95,7 +92,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.apache.xpath.operations.Bool;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -111,7 +107,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -237,10 +232,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     private FileTemplateFeign fileTemplateFeign;
 
     @Resource
-    private SoChangeDetailService soChangeDetailService;
-
-    @Resource
-    private OmsPushMsgService omsPushMsgService;
+    private LogisticsFeign logisticsFeign;
 
     /**
      * 添加销售订单
@@ -803,7 +795,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setVirtualUsableQty(virtuaParamScarceDTO.getVirtualUsableQty());
                 item.setChildScarceList(virtuaParamScarceDTO.getChildScarceList());
                 item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
-                item.setVirtualScarceQty(virtuaParamScarceDTO.getVirtualScarceQty());
+                item.setVirtualScarceQty(ObjectUtil.isEmpty(virtuaParamScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : virtuaParamScarceDTO.getVirtualScarceQty());
             }
 
             //作废状态
@@ -1027,6 +1019,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //bom最小可用数
             Integer bomUsableQty = childScarceList.stream().min(Comparator.comparing(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty)).map(SoInfoDTO.VirtualChildScarceDTO::getParentUsableQty).get();
             item.setVirtualUsableQty(bomUsableQty);
+            //缺货数量
+            Integer virtualScarceQty = childScarceList.stream().max(Comparator.comparing(SoInfoDTO.VirtualChildScarceDTO::getVirtualScarceQty)).map(SoInfoDTO.VirtualChildScarceDTO::getVirtualScarceQty).get();
+            item.setVirtualScarceQty(virtualScarceQty);
         }
     }
 
@@ -1385,7 +1380,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (SoInfoEntity soInfoEntity : list) {
                 SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
                 List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode(), "");
+                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
 
         } else {
@@ -1477,7 +1472,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (SoInfoEntity soInfoEntity : list) {
                 SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
                 List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DISAPPROVE.getCode(), "");
+                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
@@ -1629,7 +1624,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             for (Map<String, Object> map : sdyList) {
                 SoInfoDTO.ViewDTO view = BeanUtil.toBean(map.get("view"), SoInfoDTO.ViewDTO.class);
                 List<SoDetailEntity> soDetailEntities = (List<SoDetailEntity>) map.get("detail");
-                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DELETE.getCode(), "");
+                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
         }
         return result;
@@ -2355,115 +2350,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return Boolean.TRUE;
     }
 
-    @Override
-    public SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam) {
-        if (Objects.isNull(costParam.getQty()) || costParam.getQty() < 0) {
-            costParam.setQty(0);
-        }
-        SkuCostProfitDTO.SkuCostProfitResult skuCostProfitResult = new SkuCostProfitDTO.SkuCostProfitResult();
-        skuCostProfitResult.setSkuId(costParam.getSkuId());
-        skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
-        skuCostProfitResult.setSaleCost(BigDecimal.ZERO);
-        skuCostProfitResult.setSaleProfit(BigDecimal.ZERO);
-        skuCostProfitResult.setSaleProfitRate(BigDecimal.ZERO);
-        if (Objects.isNull(costParam.getDiscountAmount())) {
-            costParam.setDiscountAmount(BigDecimal.ZERO);
-            ;
-        }
-        skuCostProfitResult.setTaxAmountBefore(costParam.getTaxAmount());
-        skuCostProfitResult.setTaxAmount(costParam.getTaxAmount());
-        skuCostProfitResult.setSaleAmount(costParam.getSaleAmount());
-        // 销售金额需要减去折扣金额
-        if (Objects.nonNull(costParam.getDiscountAmount()) && costParam.getDiscountAmount().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal saleAmountAfter = costParam.getSaleAmount().subtract(costParam.getDiscountAmount()).setScale(4, BigDecimal.ROUND_HALF_UP);
-            costParam.setSaleAmount(saleAmountAfter);
-            skuCostProfitResult.setSaleAmount(saleAmountAfter);
-
-            BigDecimal taxAmountAfter = costParam.getTaxAmount().subtract(costParam.getDiscountAmount()).setScale(4, BigDecimal.ROUND_HALF_UP);
-            costParam.setTaxAmount(taxAmountAfter);
-            skuCostProfitResult.setTaxAmount(taxAmountAfter);
-        }
-
-        // 销售金额转换
-        if (Objects.equals(costParam.getCurrency(), "CNY")) {
-            skuCostProfitResult.setAmountLocalCurrency(skuCostProfitResult.getSaleAmount());
-            skuCostProfitResult.setAllAmountLocalCurrency(skuCostProfitResult.getTaxAmount());
-            skuCostProfitResult.setExchangeRate(BigDecimal.ONE);
-        }
-        BigDecimal saleRate;
-        if (Objects.nonNull(costParam.getSaleAmount()) &&
-                costParam.getSaleAmount().compareTo(BigDecimal.ZERO) > 0 &&
-                !Objects.equals(costParam.getCurrency(), "CNY")) {
-            saleRate = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), costParam.getCurrency());
-            log.info("提交的币制：{}，转换后汇率：{}", costParam.getCurrency(), saleRate);
-            if (Objects.isNull(saleRate) || saleRate.compareTo(BigDecimal.ZERO) <= 0) {
-                costParam.setSaleAmount(BigDecimal.ZERO);
-                costParam.setTaxAmount(BigDecimal.ZERO);
-            } else {
-                skuCostProfitResult.setExchangeRate(saleRate);
-                // 转换成人民币销售金额
-                costParam.setSaleAmount(saleRate.multiply(costParam.getSaleAmount()).setScale(4, BigDecimal.ROUND_HALF_UP));
-                skuCostProfitResult.setAllAmountLocalCurrency(saleRate.multiply(costParam.getTaxAmount()).setScale(4, BigDecimal.ROUND_HALF_UP));
-            }
-            skuCostProfitResult.setExchangeRate(saleRate);
-            skuCostProfitResult.setAmountLocalCurrency(costParam.getSaleAmount());
-        }
-
-        BigDecimal purchasePrice = BigDecimal.ZERO;
-        // 获取SKU对应的一级供应商
-        List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(Lists.newArrayList(costParam.getSkuId()));
-        // 获取采购单价
-//        String supplierId = skuList.stream().filter(r -> Objects.equals(r.getSkuId(), costParam.getSkuId())).findFirst().map(SkuVO::getSupplierId).orElse(null);
-//        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//        if (StrUtil.isNotEmpty(supplierId)) {
-//            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(Lists.newArrayList(supplierId));
-//        }
-        SkuVO skuVO = null;
-        String currency = CurrencyEnum.CNY.getCurrencyCode();
-        if (CollUtil.isNotEmpty(skuList)) {
-            skuVO = skuList.stream().filter(r -> Objects.equals(r.getSkuId(), costParam.getSkuId())).findFirst().orElse(null);
-            if (Objects.nonNull(skuVO)) {
-//                purchasePrice = skuVO.getActualTaxCost();
-//                BigDecimal purchaseTaxRate = supplierSkuPrice.getTaxRate();
-                //不含税单价（不含税价格=含税价格/（1+增值税税率））
-                purchasePrice = skuVO.getNotTaxCostPrice();
-
-                skuCostProfitResult.setPurchasePrice(purchasePrice);
-            }
-        }
-        log.info("提交的币制：{}", costParam.getCurrency());
-
-        BigDecimal rate = BigDecimal.ZERO;
-//        if (Objects.nonNull(supplierSkuPrice)) {
-            LocalDate purchaseDate = costParam.getBillDate();
-            if (Objects.nonNull(purchaseDate)) {
-                String purchaseDateStr = purchaseDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-                rate = dmpTaskFeign.getRate(purchaseDateStr, currency);
-            }
-
-//        }
-        // 最新的采购单价币制转换（非人民币）--dmp采购成本是人民币币种 这里注释不用计算
-//        if (Objects.nonNull(skuCostProfitResult.getPurchasePrice()) &&
-//                skuCostProfitResult.getPurchasePrice().compareTo(BigDecimal.ZERO) == 1 &&
-//                !Objects.equals(supplierSkuPrice.getCurrency(), "CNY")) {
-//
-//            log.info("找到的最新的采购价目的币制：{}，含税单价：【{}】, 销售订单日期：{}，转换后汇率：{}", supplierSkuPrice.getCurrency(), supplierSkuPrice.getTaxPrice(), rate);
-//            // 未找到汇率直接返回
-//            if (Objects.isNull(rate) || rate.compareTo(BigDecimal.ZERO) <= 0) {
-//                skuCostProfitResult.setPurchasePrice(BigDecimal.ZERO);
-//                return skuCostProfitResult;
-//            } else {
-//                // skuCostProfitResult.setExchangeRate(rate);
-//                // 转换成人民币采购单价
-//                purchasePrice = rate.multiply(skuCostProfitResult.getPurchasePrice()).setScale(4, BigDecimal.ROUND_HALF_UP);
-//            }
-//        }
-        costParam.setAmountLocalCurrency(skuCostProfitResult.getAmountLocalCurrency());
-        // 计算成本毛利信息
-        skuCostProfitResult = SoUtils.calCostProfit(purchasePrice, costParam, skuCostProfitResult);
-        return skuCostProfitResult;
-    }
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void brushCostData(LocalDate startDate, LocalDate endDate) {
@@ -2480,12 +2366,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
             List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
-            // 供应商id集合
-//            List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//            List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//            if (CollUtil.isNotEmpty(supplierIds)) {
-//                purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//            }
             log.warn("开始计算销售订单【{}】成本毛利数据", soInfoEntity.getCode());
             for (SoDetailEntity item : detailList) {
                 // 计算毛利成本
@@ -2508,12 +2388,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         List<String> skuIdList = detailList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
-        // 供应商id集合
-//        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//        if (CollUtil.isNotEmpty(supplierIds)) {
-//            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//        }
         for (SoDetailEntity item : detailList) {
             // 计算毛利成本
             soDetailService.calCost(skuList, soInfoEntity.getBillDate(), item, Boolean.TRUE);
@@ -2742,12 +2616,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailDTO.CalDetailDTO> detailList = calCostProfitDTO.getDetailList();
         List<String> skuIdList = detailList.stream().map(SoDetailDTO.CalDetailDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
-        // 供应商id集合
-//        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//        if (CollUtil.isNotEmpty(supplierIds)) {
-//            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//        }
+        //重置不含税采购单价
+        resetSkuCost(calCostProfitDTO, skuIdList, skuList);
         List<SoDetailEntity> soDetailList = BeanMapper.copyList(detailList, SoDetailEntity.class);
         //是否含税
         long count = soDetailList.stream().filter(s -> Objects.isNull(s.getTaxRate()) || (Objects.nonNull(s.getTaxRate()) &&
@@ -2779,6 +2649,33 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             resultList.add(result);
         }
         return resultList;
+    }
+
+    private void resetSkuCost(SoInfoDTO.CalCostProfitDTO calCostProfitDTO, List<String> skuIdList, List<SkuVO> skuList) {
+        LocalDate billDate = calCostProfitDTO.getBillDate();
+        if (Objects.isNull(billDate)){
+            return;
+        }
+        InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = InventorySkuCostDTO.QueryB2BDTO.builder().skuIds(skuIdList)
+                .salesOrgId(calCostProfitDTO.getSalesOrgId()).warehouseId(calCostProfitDTO.getWarehouseId()).billDate(billDate).build();
+        //根据sku获取 人民币材料成本
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostBySkuIds(queryB2BDTO);
+
+        //重置sku采购单价
+        for (SkuVO skuVO : skuList){
+            if (CollUtil.isEmpty(skuCostDTOS)){
+                skuVO.setCostSource("采购平均成本");
+                continue;
+            }
+            InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> Objects.equals(skuVO.getSkuId(), e.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(skuCostDTO)){
+                skuVO.setCostSource("采购平均成本");
+                continue;
+            }
+            BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+            skuVO.setNotTaxCostPrice(MathUtil.multiply(rate,skuCostDTO.getProductCost(),4));
+            skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
+        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -3228,6 +3125,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (!resultDTO.getSuccess()) {
             throw new ServiceException(resultDTO.getMsg());
         }
+        //添加日志
+        String content = String.format("操作了整单释放锁定库存");
+        addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), id, "释放锁定操作");
         return Boolean.TRUE;
     }
 
@@ -3739,15 +3639,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             batchLockDTO.setProductName(productName);
             batchLockDTO.setQty(soDetailEntity.getQty());
             batchLockDTO.setFrozenQty(soDetailEntity.getFrozenQty());
-            //虚拟可用库存
-            Integer virtualUsableQty = virtualInventoryQtyList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getVirtualWarehouseId(), soInfoEntity.getVirtualWarehouseId())
-                            && CharSequenceUtil.equals(obj.getSkuId(), soDetailEntity.getSkuId())
-                            && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.USABLE.getCode())
-            ).map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
-            batchLockDTO.setVirtualUsableQty(virtualUsableQty);
-
-
             //销售通知单
             Integer totalNoticeQty = soDeliveryNoticeDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
                     && CharSequenceUtil.equals(obj.getSkuId(),soDetailEntity.getSkuId()))
@@ -3773,9 +3664,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //Min 【（销售数量 - 发货通知单数量 - 当前锁定数量），虚拟仓可用库存】
             Integer unFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
-            Integer toFrozenQty = virtualUsableQty > unFrozenQty ? unFrozenQty : virtualUsableQty;
+            Integer toFrozenQty = batchLockDTO.getVirtualUsableQty() > unFrozenQty ? unFrozenQty : batchLockDTO.getVirtualUsableQty();
             batchLockDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
-            batchLockDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
+            batchLockDTO.setVirtualScarceQty(ObjectUtil.isEmpty(paramScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : paramScarceDTO.getVirtualScarceQty());
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
@@ -3893,7 +3784,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Integer unFrozenQty = soDetailEntity.getQty() - totalNoticeQty - soDetailEntity.getFrozenQty();
             Integer toFrozenQty = detailDTO.getVirtualUsableQty() > unFrozenQty ? unFrozenQty : detailDTO.getVirtualUsableQty();
             detailDTO.setToFrozenQty(toFrozenQty + soDetailEntity.getFrozenQty());
-            detailDTO.setVirtualScarceQty(paramScarceDTO.getVirtualScarceQty());
+            detailDTO.setVirtualScarceQty(ObjectUtil.isEmpty(paramScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : paramScarceDTO.getVirtualScarceQty());
 
             //销售出库单
             Integer outstockQty = deliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), soDetailEntity.getId())
@@ -3908,11 +3799,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public void sdyFieldOrderHandler(String soId, String operateEnum, String deliveryStatus) {
+    public void sdyFieldOrderHandler(String soId, String operateEnum) {
         //同步数帝云
         SoInfoDTO.ViewDTO view = this.view(soId);
         List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-        syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, operateEnum, deliveryStatus);
+        syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, operateEnum);
     }
 
     @Override
