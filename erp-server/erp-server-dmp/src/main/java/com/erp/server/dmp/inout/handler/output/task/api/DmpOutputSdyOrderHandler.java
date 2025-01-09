@@ -47,6 +47,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -183,12 +184,12 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
     /**
      * 解析订单数据
      **/
-    public List<ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList) {
-        if (CollUtil.isEmpty(dmpSoDetailEntityList)) {
+    public List<ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList1) {
+        List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
+        if (CollUtil.isEmpty(dmpSoDetailEntities)) {
             return Collections.emptyList();
         }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
         //优惠额
         BigDecimal totalDiscount = dmpSoInfoEntity.getTotalDiscount();
@@ -198,15 +199,15 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
         //如果是亚马逊的优惠额在明细里
         if (PlatformDictEnum.AMAZON.getCode().equals(dmpSoInfoEntity.getSourcePlatform())) {
-            totalDiscount = dmpSoDetailEntityList.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            totalDiscount = dmpSoDetailEntities.stream().filter(req -> req.getDiscount() != null).map(req -> req.getDiscount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         }
 
         //数帝云数据结构
         List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
 
         //订单详情
-        for (int i = 0; i < dmpSoDetailEntityList.size(); i++) {
-            DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntityList.get(i);
+        for (int i = 0; i < dmpSoDetailEntities.size(); i++) {
+            DmpSoDetailEntity dmpSoDetailEntity = dmpSoDetailEntities.get(i);
 
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
             shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
@@ -215,7 +216,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {
-                shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
+            	if(dmpSoInfoEntity.getPlatformCreateTime() != null) {
+            		shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
+            	}
             }
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
@@ -240,7 +243,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             //总优惠金额
             shudiyunB2cOrderDTO.setDiscount_deduction_amount(dmpSoInfoEntity.getTotalDiscount());
 
-            Integer totalQty = dmpSoDetailEntityList.stream().mapToInt(DmpSoDetailEntity::getQty).sum();
+            Integer totalQty = dmpSoDetailEntities.stream().mapToInt(DmpSoDetailEntity::getQty).sum();
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
             shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
 
@@ -316,7 +319,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
                 //取消金额、数量
                 if (dmpSoDetailEntity.getRefundNum().compareTo(BigDecimal.ZERO) > 0) {
-                    BigDecimal canceledAmount = dmpSoDetailEntityList.stream().map(req -> req.getAfterAmount().divide(MathUtil.valueOf(req.getQty()), 4, RoundingMode.DOWN).multiply(dmpSoDetailEntity.getRefundNum())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                    BigDecimal canceledAmount = dmpSoDetailEntities.stream().map(req -> req.getAfterAmount().divide(MathUtil.valueOf(req.getQty()), 4, RoundingMode.DOWN).multiply(dmpSoDetailEntity.getRefundNum())).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                     shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(canceledAmount);
                     // 取消商品数量（合计）
                     shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(dmpSoDetailEntity.getRefundNum().intValue());
@@ -429,7 +432,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     shareDiscount = dmpSoDetailEntity.getAfterAmount().divide(dmpSoInfoEntity.getAllAmount(), 4, RoundingMode.DOWN).multiply(totalDiscount);
                 }
                 //计算为真实售价(原始币别)-商品分摊优惠/订单数量
-                if (dmpSoDetailEntityList.size() == i-1) {
+                if (dmpSoDetailEntities.size() == i-1) {
                     shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
                     shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))));
                 } else {

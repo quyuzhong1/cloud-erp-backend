@@ -150,4 +150,11 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @return
      */
     List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(List<String> typeList);
+
+    /**
+     * 删除订单全部异常
+     * @param dto
+     * @return
+     */
+    Boolean deleteAll(SoB2cErrorDTO.DeleteDetailDTO dto);
 }

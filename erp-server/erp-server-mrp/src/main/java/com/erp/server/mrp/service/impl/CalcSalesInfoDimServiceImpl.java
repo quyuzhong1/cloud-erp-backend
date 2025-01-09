@@ -653,7 +653,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
      * @param calcSalesInfoEstimateList  销量预估
      * @param dictBasicMap               平台字典
      */
-    private static void setSalesAttribute(CalcSalesInfoDimDTO.ExportDTO record, Map<String, ShopInfoEntity> shopMap,
+    private void setSalesAttribute(CalcSalesInfoDimDTO.ExportDTO record, Map<String, ShopInfoEntity> shopMap,
                                           List<CalcSalesInfoDenoisingEntity> calcSalesInfoDenoisingList, List<CalcSalesInfoHisEsEntity> calcSalesInfoHisList,
                                           CalcSalesInfoDimDTO.ExportResultDTO result, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList, Map<String, String> dictBasicMap) {
         ShopInfoEntity shopInfo = Optional.ofNullable(shopMap.get(record.getShopId())).orElse(new ShopInfoEntity());
@@ -675,10 +675,13 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             startDate = startDate.plusDays(1);
         }
         result.setSalesInfoDenoising(salesInfoDenoising);
+        //获取真实销量
+        List<OrderHistorySalesEsEntity> realHistorySalesQty = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(record.getShopId(), record.getSkuId(), record.getStartCalcDate(), record.getEndCalcDate());
+        Map<LocalDate, Integer> realSalesQtyMap = realHistorySalesQty.stream().collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, (o1, o2) -> o1));
         //获取预估销量
         List<CalcSalesInfoDimDTO.SalesInfoEstimateDTO> salesInfoEstimate = calcSalesInfoEstimateList.stream()
                 .filter(v -> v.getCalcSalesInfoDimId().equals(record.getId()))
-                .map(v -> CalcSalesInfoDimDTO.SalesInfoEstimateDTO.buildSalesInfoEstimateDTO(v, record, shopInfo.getName(), dictBasicMap.get(shopInfo.getDictPlatform())))
+                .map(v -> CalcSalesInfoDimDTO.SalesInfoEstimateDTO.buildSalesInfoEstimateDTO(v, record, shopInfo.getName(), dictBasicMap.get(shopInfo.getDictPlatform()), realSalesQtyMap))
                 .collect(Collectors.toList());
         result.setSalesInfoEstimate(salesInfoEstimate);
     }

@@ -110,7 +110,7 @@
         crc.sale_type saleType,
         crc.file_url,
         crc.create_user_name,
-        crc.create_time,
+        crc.create_time createTime,
         csic.id,
         csic.sku_id skuId,
         csic.sku_no skuNo,

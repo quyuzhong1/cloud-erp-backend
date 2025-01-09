@@ -99,12 +99,7 @@ public class SoB2cErrorFeignController extends BaseController {
      */
     @PostMapping("/deleteAll")
     public Boolean deleteAll(@RequestBody SoB2cErrorDTO.DeleteDetailDTO dto) {
-        Boolean detailResult = soB2cErrorService.deleteDetail(dto);
-        SoB2cErrorDTO.DeleteDTO mainDto = new SoB2cErrorDTO.DeleteDTO();
-        mainDto.setType(dto.getType());
-        mainDto.setMainId(dto.getMainId());
-        Boolean mainDelete = soB2cErrorService.delete(mainDto);
-        return detailResult && mainDelete;
+        return soB2cErrorService.deleteAll(dto);
     }
 
     /**

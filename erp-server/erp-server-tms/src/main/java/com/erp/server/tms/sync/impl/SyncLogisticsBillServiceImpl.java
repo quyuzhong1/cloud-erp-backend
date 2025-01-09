@@ -88,10 +88,10 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             shudiyunB2cOrderDTO.setLogistic_company_code("无");
         }
 
-        shudiyunB2cOrderDTO.setWaybill_number(CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo());
-        shudiyunB2cOrderDTO.setForeign_waybill_number(logisticsBillDetailEntity.getTrackNo());
+        shudiyunB2cOrderDTO.setWaybill_number(bizNo);
+        shudiyunB2cOrderDTO.setForeign_waybill_number(bizNo);
         shudiyunB2cOrderDTO.setSource_system("SDC");
-        shudiyunB2cOrderDTO.setRoot_node_no_initial(logisticsBillDetailEntity.getTrackNo());
+        shudiyunB2cOrderDTO.setRoot_node_no_initial(bizNo);
 
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
     }

@@ -2,4 +2,14 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.FbaShipmentDetailMapper">
 
+    <select id="getDetail" resultType="com.erp.model.wms.entity.FbaShipmentDetailEntity">
+        select fsd.id,fsd.create_time,fsd.update_time,fsd.create_user_name,fsd.create_user_id,fsd.update_user_name,fsd.update_user_id,
+               fsd.version,fsd.is_deleted,fsd.main_id,fsd.asin,fsd.msku,fsd.fn_sku,fsd.sku_no,fsd.declare_qty,fsd.diff_qty,
+               fsd.receive_qty,fsd.receive_date,fsd.is_combination,fsd.sku_id,fsd.delivery_qty,fs.code as shipmentCode
+        from fba_shipment_detail fsd
+        left join fba_shipment fs on fs.id = fsd.main_id and fs.is_deleted = false
+        where fsd.is_deleted = false
+        and fs.code = #{shipmentCode} and fsd.asin = #{asin} and fsd.msku = #{msku}
+        limit 1
+    </select>
 </mapper>

@@ -15,6 +15,7 @@ import org.springframework.util.ObjectUtils;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -548,6 +549,16 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 预估销量
          */
         private BigDecimal estimateQty;
+
+        /**
+         * 真实销量
+         */
+        private Integer realSalesQty;
+
+        /**
+         * 偏差比例
+         */
+        private BigDecimal deviationRatio;
         /**
          * 近三日销量
          */
@@ -626,7 +637,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private BigDecimal similarity;
 
-        public static SalesInfoEstimateDTO buildSalesInfoEstimateDTO(CalcSalesInfoEstimateEntity entity, ExportDTO record, String shopName, String platform) {
+        public static SalesInfoEstimateDTO buildSalesInfoEstimateDTO(CalcSalesInfoEstimateEntity entity, ExportDTO record, String shopName, String platform, Map<LocalDate, Integer> realSalesQtyMap) {
             StringBuilder salesInfoEstimateType = new StringBuilder();
             String rule;
             String baseRuleName = "日销量";
@@ -664,6 +675,9 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setSalesInfoEstimateType(salesInfoEstimateType.toString());
             dto.setRule(rule);
             dto.setEstimateQty(entity.getQty());
+            Integer realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
+            dto.setRealSalesQty(realQty);
+            dto.setDeviationRatio(realQty == 0 ? BigDecimal.ZERO : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP));
             dto.setAvgThreeSalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE.getName()));
             dto.setAvgSevenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.SEVEN.getName()));
             dto.setAvgFourteenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.FOURTEEN.getName()));
