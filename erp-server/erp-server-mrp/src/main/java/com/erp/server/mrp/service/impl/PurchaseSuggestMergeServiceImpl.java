@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -647,9 +648,20 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         }
         //查询独立采购数据
         List<String> sourceIdList = old.getSourceIdJson().stream().map(obj -> obj.toString()).collect(Collectors.toList());
-        this.listIndependentBySourceIdList(sourceIdList);
+        List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList = this.listIndependentBySourceIdList(sourceIdList);
+        if (CollUtil.isEmpty(purchaseSuggestMergeList)) {
+            return Collections.emptyList();
+        }
 
+        Integer suggestTotal = purchaseSuggestMergeList.stream().map(PurchaseSuggestMergeEntity::getSuggestPurchaseQty).reduce(MathUtil.ZERO, MathUtil::add);
 
+        List<PurchaseSuggestMergeDTO.MergeFrameDTO> mergeFrameList = new ArrayList<>();
+        for (PurchaseSuggestMergeEntity purchaseSuggestMergeEntity : purchaseSuggestMergeList) {
+            PurchaseSuggestMergeDTO.MergeFrameDTO mergeFrameDTO = new PurchaseSuggestMergeDTO.MergeFrameDTO();
+            mergeFrameDTO.setCode(purchaseSuggestMergeEntity.getCode());
+            mergeFrameDTO.setSuggestPurchaseQty(purchaseSuggestMergeEntity.getSuggestPurchaseQty());
+            
+        }
 
         return null;
     }
