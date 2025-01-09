@@ -29,38 +29,38 @@
 
    <!-- 通用查询结果列 -->
    <sql id="Base_Column_List">
-      psm.id,
-        psm.create_user_id as createUserId,
-        psm.create_user_name as createUserName,
-        psm.create_time as createTime,
-        psm.update_user_id as updateUserId,
-        psm.update_user_name as updateUserName,
-        psm.update_time as updateTime,
-        psm.code,
-        psm.data_type as dataType,
-        psm.suggest_purchase_qty as suggestPurchaseQty,
-        psm.suggest_purchase_date as suggestPurchaseDate,
-        psm.logistics_method as logisticsMethod,
-        psm.logistics_days as logisticsDays,
-        psm.estimate_instock_date as estimateInstockDate,
-        psm.estimate_sales_date as estimateSalesDate,
-        psm.purchase_cost as purchaseCost,
-        psm.invalid_status as invalidStatus,
-        psm.invalid_remark as invalidRemark,
-        psm.invalid_time as invalidTime,
-        psm.invalid_user_id as invalidUserId,
-        psm.invalid_user_name as invalidUserName,
-        psm.source_id as sourceId,
-        psm.source_type as sourceType,
-        psm.status,
-        psm.currency,
-        psm.platform_type as platformType,
-        psm.platform,
-        psm.shop_id as shopId,
-        psm.sku_id as skuId,
-        psm.plan_purchase_qty as planPurchaseQty,
-        psm.purchase_stock_up_qty as purchaseStockUpQty,
-        psm.remark
+      ps.id,
+        ps.create_user_id as createUserId,
+        ps.create_user_name as createUserName,
+        ps.create_time as createTime,
+        ps.update_user_id as updateUserId,
+        ps.update_user_name as updateUserName,
+        ps.update_time as updateTime,
+        ps.code,
+        ps.data_type as dataType,
+        ps.suggest_purchase_qty as suggestPurchaseQty,
+        ps.suggest_purchase_date as suggestPurchaseDate,
+        ps.logistics_method as logisticsMethod,
+        ps.logistics_days as logisticsDays,
+        ps.estimate_instock_date as estimateInstockDate,
+        ps.estimate_sales_date as estimateSalesDate,
+        ps.purchase_cost as purchaseCost,
+        ps.invalid_status as invalidStatus,
+        ps.invalid_remark as invalidRemark,
+        ps.invalid_time as invalidTime,
+        ps.invalid_user_id as invalidUserId,
+        ps.invalid_user_name as invalidUserName,
+        ps.source_id as sourceId,
+        ps.source_type as sourceType,
+        ps.status,
+        ps.currency,
+        ps.platform_type as platformType,
+        ps.platform,
+        ps.shop_id as shopId,
+        ps.sku_id as skuId,
+        ps.plan_purchase_qty as planPurchaseQty,
+        ps.purchase_stock_up_qty as purchaseStockUpQty,
+        ps.remark
    </sql>
 
    <!-- 查询可生成采购建议合并的数据 -->
@@ -69,15 +69,15 @@
        <include refid="Base_Column_List"/>
        from purchase_suggest ps
        <where>
-          psm.is_deleted = false and psm.status = 'draft' and psm.invalid_status = false
+          ps.is_deleted = false and ps.status = 'draft' and ps.invalid_status = false
           <if test="entity != null and entity.platformType != null and entity.platformType != ''">
-             and psm.platform_type = #{entity.platformType}
+             and ps.platform_type = #{entity.platformType}
           </if>
           <if test="entity != null and entity.platform != null and entity.platform != ''">
-             and psm.platform = #{entity.platform}
+             and ps.platform = #{entity.platform}
           </if>
           <if test="entity != null and entity.skuId != null and entity.skuId != ''">
-             and psm.sku_id = #{entity.skuId}
+             and ps.sku_id = #{entity.skuId}
           </if>
        </where>
     </select>

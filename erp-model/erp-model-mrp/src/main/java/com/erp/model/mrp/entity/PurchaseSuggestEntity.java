@@ -170,7 +170,7 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     /**
      * bom版本
      */
-    @TableField(exist = false)
+    @TableField("bom_version")
     private String bomVersion;
 
     public static final String CODE = "code";

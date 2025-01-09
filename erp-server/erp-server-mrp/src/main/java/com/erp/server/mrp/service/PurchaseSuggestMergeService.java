@@ -161,4 +161,12 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @return List<TabListDTO>
      */
     List<PurchaseSuggestMergeDTO.TabListDTO> tabList(PurchaseSuggestMergeDTO.TabListParamDTO dto);
+    /**
+     * 根据id查询
+     * @author will
+     * @date 2025/1/8 15:26
+     * @param id
+     * @return MergeFrameDTO
+     */
+    List<PurchaseSuggestMergeDTO.MergeFrameDTO> viewMergeFrame(String id);
 }

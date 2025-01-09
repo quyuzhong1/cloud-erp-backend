@@ -165,7 +165,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             }
             entity.setDestWarehouseName(warehouseDTO.getName());
             entity.setReceiveOrgId(warehouseDTO.getOrgId());
-            entity.setMergeIdJson(JSONUtil.parseArray(entity.getMergeIdList()));
+            entity.setSourceJson(JSONUtil.parseArray(entity.getSourceJsonList()));
             //核算公司
             if (CollectionUtils.isEmpty(accountingCompanyList)) {
                 throw new ServiceException(ApiError.ERROR_9040);
@@ -216,7 +216,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     }
 
     @Override
-    public Integer countByMergeIdList(List<String> purchaseMergeIdList) {
-        return baseMapper.countByMergeIdList(purchaseMergeIdList);
+    public List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList) {
+        return baseMapper.listByMergeIdList(purchaseMergeIdList);
     }
 }

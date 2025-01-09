@@ -306,7 +306,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .map(SalesInfoEntity::getSalesQty)
                     .findFirst()
                     .orElse(salesHistoryList.stream()
-                            .filter(v -> v.getReplenishmentId().equals(view.getId()))
+                            .filter(v -> v.getShopSkuIds().equals(view.getShopId() + "-" + view.getSkuId()))
                             .filter(v -> v.getDate().equals(localDate))
                             .map(ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty)
                             .map(BigDecimal::new)
@@ -909,7 +909,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             //产品名称
             String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), pagingView.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             List<ReplenishmentResultDTO.SalesHistoryDTO> historyDTOS = salesHistoryList.stream()
-                    .filter(v -> v.getReplenishmentId().equals(pagingView.getId()))
+                    .filter(v -> v.getShopSkuIds().equals(pagingView.getShopId() + "-" + pagingView.getSkuId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(historyDTOS)) {
                 continue;
@@ -1101,7 +1101,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                         return null;
                     }
                     Map<LocalDate, Integer> salesHistoryDTOList = listedSalesHistory.stream()
-                            .filter(e -> e.getReplenishmentId().equals(v.getId()))
+                            .filter(e -> e.getShopSkuIds().equals(v.getShopId() + "-" + v.getSkuId()))
                             .collect(Collectors.toMap(ReplenishmentResultDTO.SalesHistoryDTO::getDate, ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty, Integer::sum));
                     Map<LocalDate, Integer> historyInventory = historyInventoryList.stream()
                             .filter(e -> e.getReplenishmentId().equals(v.getId()))

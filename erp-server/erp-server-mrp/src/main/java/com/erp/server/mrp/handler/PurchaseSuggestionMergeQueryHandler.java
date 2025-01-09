@@ -41,7 +41,7 @@ public class PurchaseSuggestionMergeQueryHandler extends AbstractQueryHandler {
         }
         //未下推
         if (DeliverySuggestTabEnum.WAIT_PUSH.getCode().equals(value)) {
-            return "not EXISTS(select 1 from foreign_purchase_application_detail, jsonb_array_elements(merge_id_json) AS elem where is_deleted = false and elem::text = psm.id) and psm.status = 'finish' and psm.invalid_status = false";
+            return "not EXISTS(select 1 from foreign_purchase_application_detail, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem::text ->> 'id' = psm.id) and psm.status = 'finish' and psm.invalid_status = false";
         }
         return super.getSplicingSQL();
     }
