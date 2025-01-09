@@ -131,20 +131,20 @@ public class FbaTransitCalculateReportServiceImpl extends SuperServiceImpl<FbaTr
         //根据货件编码获取货件列表
         Set<String> shipmentCodeList = shipmentCodeMap.keySet();
         //货件列表
-        List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(new ArrayList<>(shipmentCodeList));
+        List<FbaShipmentEntity> fbaShipmentEntityList = CollUtil.isEmpty(shipmentCodeList) ? Collections.emptyList() : fbaShipmentService.listByCodes(new ArrayList<>(shipmentCodeList));
         if (CollUtil.isEmpty(fbaShipmentEntityList)){
             return;
         }
         Map<String, FbaShipmentEntity> fbaShipmentEntityMap = fbaShipmentEntityList.stream().collect(Collectors.toMap(FbaShipmentEntity::getCode, Function.identity()));
         //货件明细列表
         List<String> shipmentIds = fbaShipmentEntityList.stream().map(FbaShipmentEntity::getId).distinct().collect(Collectors.toList());
-        List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList = fbaShipmentDetailService.listByMainIds(shipmentIds);
+        List<FbaShipmentDetailEntity> fbaShipmentDetailEntityList = CollUtil.isEmpty(shipmentIds) ? Collections.emptyList() :  fbaShipmentDetailService.listByMainIds(shipmentIds);
         //店铺信息查询
         List<String> shopIds = fbaShipmentEntityList.stream().map(FbaShipmentEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoEntityList = FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
+        List<ShopInfoEntity> shopInfoEntityList = CollUtil.isEmpty(shopIds) ? Collections.emptyList() : FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
         //客户查询
         List<String> customerIds = shopInfoEntityList.stream().map(ShopInfoEntity::getCustomerId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<CustomerInfoEntity> customerInfoEntityList = FeignQuery.getByIds(CustomerInfoEntity.class, customerIds);
+        List<CustomerInfoEntity> customerInfoEntityList = CollUtil.isEmpty(customerIds) ? Collections.emptyList() : FeignQuery.getByIds(CustomerInfoEntity.class, customerIds);
         //根据map进行计算在途数据
         for (String shipmentCode : shipmentCodeMap.keySet()){
             List<String> keyList = shipmentCodeMap.get(shipmentCode);
