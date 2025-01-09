@@ -1,14 +1,18 @@
 package com.erp.model.scm.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.List;
 
 /**
  * <p>
@@ -161,7 +165,19 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
      */
     @TableField("source_detail_id")
     private String sourceDetailId;
-    
+
+    /**
+     * 采购建议合并表idjson
+     */
+    @TableField(value = "source_json", jdbcType = JdbcType.OTHER)
+    private JSONArray sourceJson;
+
+    /**
+     * 采购建议合并id集合
+     */
+    @TableField(exist = false)
+    private List<PurchaseSuggestMergeDTO.PushSourceDTO> sourceJsonList;
+
     public static final String PURCHASE_APPLICATION_ID = "purchase_application_id";
 
     public static final String SKU_ID = "sku_id";

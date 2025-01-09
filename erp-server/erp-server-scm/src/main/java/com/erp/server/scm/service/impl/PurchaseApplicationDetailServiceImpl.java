@@ -1,5 +1,6 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -25,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -165,7 +165,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             }
             entity.setDestWarehouseName(warehouseDTO.getName());
             entity.setReceiveOrgId(warehouseDTO.getOrgId());
-
+            entity.setSourceJson(JSONUtil.parseArray(entity.getSourceJsonList()));
             //核算公司
             if (CollectionUtils.isEmpty(accountingCompanyList)) {
                 throw new ServiceException(ApiError.ERROR_9040);
@@ -213,5 +213,10 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             isNew = Boolean.FALSE ;
         }
         return isNew;
+    }
+
+    @Override
+    public List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList) {
+        return baseMapper.listByMergeIdList(purchaseMergeIdList);
     }
 }

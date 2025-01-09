@@ -129,7 +129,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             soReturnDetailEntity.setListingId(detailDto.getListingId());
             soReturnDetailEntity.setPlatformSkuNo(detailDto.getPlatformSkuNo());
             soReturnDetailEntity.setPlatformSkuName(detailDto.getPlatformSkuName());
-            soReturnDetailEntity.setExchangeRate(dto.getExchangeRate());
+            soReturnDetailEntity.setExchangeRate(detailDto.getExchangeRate());
             soReturnDetailEntity.setReturnAmount(detailDto.getReturnAmount());
             soReturnDetailEntity.setTaxReturnAmount(detailDto.getTaxReturnAmount());
             soReturnDetailEntity.setTaxReturnAmountLocalCurrency(detailDto.getTaxReturnAmountLocalCurrency());

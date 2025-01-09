@@ -34,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -59,10 +60,11 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean add(SoReturnNoticeDTO.Add dto, String id) {
-        //获取退货单详情表id
-        List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Add::getSourceDetailId).collect(Collectors.toList());
-        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
-        List<SoReturnNoticeDetailEntity> noticeDetailEntities = this.listDetailBySourceDetailIds(returnDetailIds);
+        String soReturnId = dto.getSourceId();
+        //B2B退货订单明细集合
+        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainId(soReturnId);
+        //B2B退货通知单
+        List<SoReturnNoticeDetailEntity> noticeDetailEntities = listDetailBySourceIds(Collections.singletonList(soReturnId));
         List<SoReturnNoticeDetailEntity> list = new ArrayList<>();
 
         // 忽略库存计算SKU
@@ -113,10 +115,16 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库，不做库存验证", detailEntity.getSkuId(), detailEntity.getSkuNo());
             } else {
                 if(StringUtils.isNotBlank(detailDto.getSourceDetailId())){
-                    //退货通知单数量
-                    Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
-                    //退货单数量
-                    Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    //历史退货通知单的退货数量
+                    Integer returnNoticeQty = noticeDetailEntities.stream()
+                            .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                            .map(SoReturnNoticeDetailEntity::getReturnQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
+                    //退货单的退货数量
+                    Integer returnQty = soReturnDetailEntities.stream()
+                            .filter(req -> req.getId().equals(detailDto.getSourceDetailId()))
+                            .map(SoReturnDetailEntity::getReturnQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                         throw new ServiceException(ApiError.ERROR_92024, skuVO.getSkuNo());
                     }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
@@ -195,13 +203,17 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnNoticeEntity entity,SoReturnNoticeDTO.Update dto) {
         List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoReturnNoticeDetailDTO.Update::getId).collect(Collectors.toList());
-        //获取退货单详情表id
+
+        String soReturnId = dto.getSourceId();
+        //B2B退货订单明细集合
+        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainId(soReturnId);
+        //B2B退货通知单
+        List<SoReturnNoticeDetailEntity> noticeDetailEntities = listDetailBySourceIds(Collections.singletonList(soReturnId));
+        //B2C退货订单
         List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
-        List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByIds(returnDetailIds);
         List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
 
         List<SoReturnNoticeDetailEntity> list = new ArrayList<>();
-        List<SoReturnNoticeDetailEntity> noticeDetailEntities = this.listDetailByMainId(entity.getId());
         //原明细数据
         List<SoReturnNoticeDetailEntity> oldList = this.listDetailByMainId(dto.getId());
         List<String> deleteIds = getDeleteIds(dto.getDetailList(), oldList);
@@ -215,20 +227,19 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         //查询sku
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Update::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
-
         for (SoReturnNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
-            //退货通知单数量
-            Integer returnNoticeQty = 0 ;
+
             if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 detailEntity.setId(detailDto.getId());
-                returnNoticeQty = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
             }
             if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_92023);
                 }
+                //退货通知单数量
+                Integer returnNoticeQty = noticeDetailEntities.stream().filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnNoticeDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 //退货单数量
                 Integer returnQty = soB2cReturnDetailEntityList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoB2cReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
@@ -243,10 +254,36 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                     if (ObjectUtil.isEmpty(soReturnDetailEntity)) {
                         throw new ServiceException(ApiError.ERROR_92023);
                     }
-                    //退货单数量
-                    Integer returnQty = soReturnDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                    //历史退货通知单的退货数量
+                    Integer returnNoticeQty = noticeDetailEntities.stream()
+                            .filter(req -> !deleteIds.contains(req.getId()))
+                            .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                            .map(SoReturnNoticeDetailEntity::getReturnQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
+                    //退货单的退货数量
+                    Integer returnQty = soReturnDetailEntities.stream()
+                            .filter(req -> req.getId().equals(detailDto.getSourceDetailId()))
+                            .map(SoReturnDetailEntity::getReturnQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
-                        throw new ServiceException(ApiError.ERROR_92024);
+                        throw new ServiceException(ApiError.ERROR_92024, detailEntity.getSkuNo());
+                    }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
+                        // 退货通知单的数量之和等于退货订单数量，则需要对退货金额CNY，含税退货金额CNY，退货金额（本位币），含税退货金额（本位币）调整差值。
+                        BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
+                        BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
+                        BigDecimal returnAmountLocalCurrency = soReturnDetailEntity.getReturnAmountLocalCurrency();
+                        BigDecimal taxReturnAmountLocalCurrency = soReturnDetailEntity.getTaxReturnAmountLocalCurrency();
+                        List<SoReturnNoticeDetailEntity> soReturnDetailEntityList = noticeDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).collect(Collectors.toList());
+                        for (SoReturnNoticeDetailEntity soReturnNoticeDetail : soReturnDetailEntityList) {
+                            returnAmount = returnAmount.subtract(soReturnNoticeDetail.getReturnAmount()) ;
+                            taxReturnAmount = taxReturnAmount.subtract(soReturnNoticeDetail.getTaxReturnAmount());
+                            returnAmountLocalCurrency = returnAmountLocalCurrency.subtract(soReturnNoticeDetail.getReturnAmountLocalCurrency());
+                            taxReturnAmountLocalCurrency = taxReturnAmountLocalCurrency.subtract(soReturnNoticeDetail.getTaxReturnAmountLocalCurrency());
+                        }
+                        detailEntity.setReturnAmount(returnAmount);
+                        detailEntity.setTaxReturnAmount(taxReturnAmount);
+                        detailEntity.setReturnAmountLocalCurrency(returnAmountLocalCurrency);
+                        detailEntity.setTaxReturnAmountLocalCurrency(taxReturnAmountLocalCurrency);
                     }
                 }
                 detailEntity.setReturnAmount(detailDto.getReturnAmount());

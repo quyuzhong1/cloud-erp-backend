@@ -295,7 +295,7 @@ public class ReplenishmentResultDTO {
         /**
          * 建议 id
          */
-        private String replenishmentId;
+        private String shopSkuIds;
         /**
          * 日期
          */
@@ -305,9 +305,9 @@ public class ReplenishmentResultDTO {
          */
         private Integer originalSalesQty;
 
-        public static SalesHistoryDTO buildSalesHistory(String replenishmentId, LocalDate date, Integer originalSalesQty) {
+        public static SalesHistoryDTO buildSalesHistory(String shopSkuIds, LocalDate date, Integer originalSalesQty) {
             SalesHistoryDTO dto = new SalesHistoryDTO();
-            dto.setReplenishmentId(replenishmentId);
+            dto.setShopSkuIds(shopSkuIds);
             dto.setDate(date);
             dto.setOriginalSalesQty(originalSalesQty);
             return dto;
@@ -583,7 +583,7 @@ public class ReplenishmentResultDTO {
 
         // 设置其他属性
         public static void setOtherAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto,
-                                               CfgRuleStrategyDTO cfgRuleStrategy, BigDecimal purchasePrice, BigDecimal salesPrice) {
+                                              CfgRuleStrategyDTO cfgRuleStrategy, BigDecimal purchasePrice, BigDecimal salesPrice) {
             detail.setPurchaseApproveDays(dto.getPurchaseApproveDays());
             detail.setProductionDays(dto.getProductionDays());
             detail.setSupplierDeliveryDays(dto.getSupplierDeliveryDays());
@@ -741,6 +741,22 @@ public class ReplenishmentResultDTO {
             entity.setCalcVersion(calcVersion);
             return entity;
         }
+
+        public static FbaInTransitDetailDTO buildFbaInTransitDetailDTO(ReplenishmentInventoryDTO.FbaInTransitDTO fbaInTransitDTO, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, String calcVersion) {
+            FbaInTransitDetailDTO dto = new FbaInTransitDetailDTO();
+            dto.setSourceId(fbaInTransitDTO.getSourceId());
+            dto.setSourceCode(fbaInTransitDTO.getSourceCode());
+            dto.setSourceType(fbaInTransitDTO.getSourceType());
+            dto.setStatus(fbaInTransitDTO.getStatus());
+            dto.setDeliveryDate(fbaInTransitDTO.getDeliveryDate());
+            dto.setEstimateSalesDate(fbaInTransitDTO.getEstimateSalesDate().plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getInstockDays()));
+            dto.setDeclareQty(fbaInTransitDTO.getDeclareQty());
+            dto.setDeliveryQty(fbaInTransitDTO.getDeliveryQty());
+            dto.setReceiveQty(fbaInTransitDTO.getReceiveQty());
+            dto.setInTransitQty(fbaInTransitDTO.getInTransitQty());
+            dto.setCalcVersion(calcVersion);
+            return dto;
+        }
     }
 
     @Getter
@@ -841,6 +857,7 @@ public class ReplenishmentResultDTO {
             entity.setEffectiveValue(dto.getEffectiveValue());
             return entity;
         }
+
     }
 
 
@@ -1215,7 +1232,6 @@ public class ReplenishmentResultDTO {
         private Integer shopPreQty;
 
 
-
         public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             EstimatedDeliveryDetailEntity entity = new EstimatedDeliveryDetailEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
@@ -1555,7 +1571,7 @@ public class ReplenishmentResultDTO {
             return entity;
         }
 
-        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, LocalInventoryDTO inventoryDTO,Integer platformQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, LocalInventoryDTO inventoryDTO, Integer platformQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
             ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
             dto.setInventoryType(inventoryType);
             dto.setDictPlatform(result.getDictPlatform());

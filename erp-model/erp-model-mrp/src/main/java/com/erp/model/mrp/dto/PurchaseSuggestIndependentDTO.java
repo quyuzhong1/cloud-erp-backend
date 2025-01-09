@@ -26,7 +26,7 @@ import java.util.Map;
 */
 @Data
 @NoArgsConstructor
-public class PurchaseSuggestDTO implements Serializable {
+public class PurchaseSuggestIndependentDTO implements Serializable {
 
 
     /**
@@ -262,7 +262,7 @@ public class PurchaseSuggestDTO implements Serializable {
         /**
          * 来源id
          */
-        private String sourceId;
+        private String sourceIdJson;
         /**
          * 来源类型
          */
@@ -283,6 +283,18 @@ public class PurchaseSuggestDTO implements Serializable {
          * 作废人名称
          */
         private String invalidUserName;
+        /**
+         * 是否下推
+         */
+        private Boolean isPush;
+        /**
+         * 是否下推名称
+         */
+        private String isPushName;
+        /**
+         * 采购申请单号
+         */
+        private String purchaseApplicationCode;
     }
 
     /**
@@ -375,6 +387,64 @@ public class PurchaseSuggestDTO implements Serializable {
 
     }
 
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO  {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 采购建议量
+         */
+        private Integer suggestPurchaseQty;
+
+        /**
+         * 计划采购量（计划修正值）
+         */
+        private Integer planPurchaseQty;
+
+        /**
+         * 采购备货量
+         */
+        private Integer purchaseStockUpQty;
+
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 备注
+         */
+        @Size(max = 100,message = "备注最大长度不能超过100位")
+        private String remark;
+    }
 
     @Data
     @NoArgsConstructor
@@ -440,41 +510,40 @@ public class PurchaseSuggestDTO implements Serializable {
         @Size(max = 32,message = "来源类型最大长度不能超过32位")
         private String sourceType;
 
-        /**
-         * SKU
-         */
-        @NotBlank(message = "skuId不能为空")
-        @Size(max = 19,message = "skuId最大长度不能超过19位")
-        private String skuId;
+
     }
-    /**
-     * 导入修改
-     */
+
     @Data
     @NoArgsConstructor
-    public static class ImportUpdateDTO  {
+    public static class IndependentFrameDTO {
         /**
-         * id
+         * 编码
          */
-        @NotBlank(message = "主键id不能为空")
-        private String id;
+        private String code;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
 
         /**
-         * 计划采购量（计划修正值）
+         * 系统建议值
          */
-        @NotNull(message = "计划修正值不能为空")
+        private Integer suggestPurchaseQty;
+        /**
+         * 计划修正数量
+         */
         private Integer planPurchaseQty;
-
         /**
          * 采购备货数
          */
-        @NotNull(message = "采购备货数不能为空")
         private Integer purchaseStockUpQty;
-
         /**
-         * 备注
+         * 说明（bom信息）
          */
-        private String remark;
+        private Integer msg;
     }
-
 }

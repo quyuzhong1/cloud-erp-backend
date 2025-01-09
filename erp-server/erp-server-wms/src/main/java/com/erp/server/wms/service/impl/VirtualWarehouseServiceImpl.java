@@ -354,6 +354,11 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         //获取关联仓库
         List<VirtualWarehouseRelationEntity> warehouseRelationList = virtualWarehouseRelationService.getByVirtualWarehouseId(id);
         viewDTO.setWarehouseIdList(warehouseRelationList.stream().map(VirtualWarehouseRelationEntity::getWarehouseId).collect(Collectors.toList()));
+        if (CollUtil.isNotEmpty(viewDTO.getWarehouseIdList())){
+            List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class, viewDTO.getWarehouseIdList());
+            viewDTO.setWarehouseNameList(warehouseEntityList.stream().map(WarehouseEntity::getName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
+        }
+
         //获取关联外部仓
         ThirdMappingDTO.ViewParamDTO viewParamDTO = new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setSysId(id);

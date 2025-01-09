@@ -1,7 +1,6 @@
 package com.erp.server.scm.service;
 
 import com.common.business.service.SuperService;
-import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 
@@ -74,4 +73,12 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
      * 试产量产是否新品
      */
     Boolean existBySkuIds( List<String> skuIds);
+    /**
+     * 根据合并id集合查询合计数量
+     * @author will
+     * @date 2025/1/7 15:25
+     * @param purchaseMergeIdList
+     * @return Integer
+     */
+    List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList);
 }

@@ -12,16 +12,6 @@ import java.util.Set;
 
 public interface InventoryService {
 
-
-    /**
-     * 计算FBA可用库存
-     *
-     * @param replenishmentResultDTO 参数
-     * @param code                   选中的code值
-     * @param stockUpResult          备货配置
-     */
-    int getFbaInTransit(ReplenishmentResultDTO replenishmentResultDTO, String code, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
-
     /**
      * 获取FBA预计发货
      *

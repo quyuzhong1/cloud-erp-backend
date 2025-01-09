@@ -48,7 +48,6 @@ import com.erp.server.mrp.calculation.handler.SalesEstimateHandler;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
-import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.service.HistoryInventoryEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
@@ -157,7 +156,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Resource
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
     @Resource
-    private PurchaseSuggestService purchaseSuggestService;
+    private PurchaseSuggestIndependentService purchaseSuggestIndependentService;
 
     @Resource
     private SalesEstimateHandler salesEstimateHandler;
@@ -281,7 +280,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = records.stream().filter(v -> !ObjectUtils.isEmpty(v.getCfgRule())).collect(Collectors.groupingBy(v -> {
             CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(v.getCfgRule(), CfgRuleStrategyDTO.class);
             return new ReplenishmentSuggestionVO.SalesQtyTypeDTO(cfgRuleStrategyDTO.getSalesQtyResult().getSalesQtyType(), cfgRuleStrategyDTO.getSalesQtyResult().getOrderType());
-        }, Collectors.mapping(ReplenishmentSuggestionVO.PagingView::getId, Collectors.toList())));
+        }, Collectors.mapping(v -> v.getShopId() + "-" + v.getSkuId(), Collectors.toList())));
         return salesQtyTypeMap.entrySet()
                 .stream()
                 .map(v -> listSalesHistory(v.getValue(), v.getKey().getSalesQtyType(), v.getKey().getOrderType(), startDate, endDate))
@@ -307,7 +306,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     .map(SalesInfoEntity::getSalesQty)
                     .findFirst()
                     .orElse(salesHistoryList.stream()
-                            .filter(v -> v.getReplenishmentId().equals(view.getId()))
+                            .filter(v -> v.getShopSkuIds().equals(view.getShopId() + "-" + view.getSkuId()))
                             .filter(v -> v.getDate().equals(localDate))
                             .map(ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty)
                             .map(BigDecimal::new)
@@ -388,13 +387,15 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public SalesAnalysisVO salesAnalysis(SalesAnalysisDTO dto) {
-        ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getById(dto.getDetailId());
+        ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getByIdOpt(dto.getDetailId()).orElseThrow(() -> new ServiceException("建议明细不存在"));
+        ReplenishmentSuggestionEntity entity = getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("建议不存在"));
+
         CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(detail.getCfgRule(), CfgRuleStrategyDTO.class);
         CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
 
         LocalDate startDate = dto.getStartDate().minusDays(1);
         LocalDate endDate = LocalDate.now().plusDays(TimePeriodEstimateEnum.of(dto.getTimePeriod()).getDays() - 1L);
-        Map<LocalDate, Integer> salesHistoryMap = listSalesHistoryMap(detail.getMainId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), startDate, dto.getEndDate());
+        Map<LocalDate, Integer> salesHistoryMap = listSalesHistoryMap(entity.getShopId() +"-"+ entity.getSkuId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), startDate, dto.getEndDate());
         SalesAnalysisVO salesAnalysisVO = new SalesAnalysisVO();
         List<SalesInfoEntity> list = salesInfoService.list(Wrappers.<SalesInfoEntity>lambdaQuery()
                 .eq(SalesInfoEntity::getReplenishmentDetailId, dto.getDetailId())
@@ -883,7 +884,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         Map<ReplenishmentSuggestionVO.SalesQtyTypeDTO, List<String>> salesQtyTypeMap = list.stream().filter(v -> !ObjectUtils.isEmpty(v.getCfgRule())).collect(Collectors.groupingBy(v -> {
             CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(v.getCfgRule(), CfgRuleStrategyDTO.class);
             return new ReplenishmentSuggestionVO.SalesQtyTypeDTO(cfgRuleStrategyDTO.getSalesQtyResult().getSalesQtyType(), cfgRuleStrategyDTO.getSalesQtyResult().getOrderType());
-        }, Collectors.mapping(ReplenishmentSuggestionVO.PagingView::getId, Collectors.toList())));
+        }, Collectors.mapping(v -> v.getShopId() + "-" + v.getSkuId(), Collectors.toList())));
         LocalDate endDate = LocalDate.now().minusDays(1);
         LocalDate startDate = LocalDate.now().minusDays(361);
         List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistoryList = salesQtyTypeMap.entrySet()
@@ -908,7 +909,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             //产品名称
             String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), pagingView.getSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
             List<ReplenishmentResultDTO.SalesHistoryDTO> historyDTOS = salesHistoryList.stream()
-                    .filter(v -> v.getReplenishmentId().equals(pagingView.getId()))
+                    .filter(v -> v.getShopSkuIds().equals(pagingView.getShopId() + "-" + pagingView.getSkuId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isEmpty(historyDTOS)) {
                 continue;
@@ -947,30 +948,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         List<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> exportPagingVO = handleExport(pagingVO.getRecords());
         return new PagingVO(exportPagingVO, (int) pagingVO.getTotal(), (int) pagingVO.getSize(), (int) pagingVO.getCurrent());
-    }
-
-    @Override
-    public List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId, CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult) {
-        // 根据店铺加sku查询建议id
-        List<ReplenishmentSuggestionEntity> suggestionList = list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
-                .eq(ReplenishmentSuggestionEntity::getSkuId, skuId)
-                .in(ReplenishmentSuggestionEntity::getShopId, shopIds)
-        );
-        Map<String, String> suggestionMap = suggestionList.stream().collect(Collectors.toMap(ReplenishmentSuggestionEntity::getId, ReplenishmentSuggestionEntity::getShopId, (o1, o2) -> o1));
-
-        if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyResult.getSalesQtyType())) {
-            List<OrderHistorySalesEsEntity> historySalesList = orderHistorySalesEsService.getRecentSalesBySuggestionIds(suggestionMap.keySet(), salesQtyResult.getOrderType());
-            return historySalesList.stream()
-                    .map(v -> new LocalInventoryDTO.ShopSalesDTO(suggestionMap.get(v.getReplenishmentId()), v.getOriginalSalesQty()))
-                    .collect(Collectors.toList());
-        } else {
-            // 以销售出库单出库时间计算销量
-            List<OutStockHistorySalesEsEntity> historySalesList = outStockHistorySalesEsService.getRecentSalesBySuggestionIds(suggestionMap.keySet(), salesQtyResult.getOrderType());
-            return historySalesList.stream()
-                    .map(v -> new LocalInventoryDTO.ShopSalesDTO(suggestionMap.get(v.getReplenishmentId()), v.getOriginalSalesQty()))
-                    .collect(Collectors.toList());
-        }
-
     }
 
     @Override
@@ -1075,11 +1052,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 List<PurchaseSuggestEntity> purchaseSuggests = replenishmentResult.getPurchaseSuggests().stream()
                         .map(ReplenishmentResultDTO.PurchaseSuggestDTO::buildPurchaseSuggest)
                         .collect(Collectors.toList());
-                purchaseSuggestService.saveBatch(purchaseSuggests);
+                //purchaseSuggestIndependentService.saveBatch(purchaseSuggests);
                 for (PurchaseSuggestEntity purchaseSuggest : purchaseSuggests) {
-                    purchaseSuggestService.addPurchaseSuggestSys(purchaseSuggest);
+                    //purchaseSuggestIndependentService.addPurchaseSuggestSys(purchaseSuggest);
                 }
-                purchaseSuggestMergeService.generatePurchaseSuggestMerge("");
+//                purchaseSuggestMergeService.generatePurchaseSuggestMerge("");
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getRecentSuggestions())) {
                 List<RecentSuggestionDetailEntity> recentSuggestionDetails = replenishmentResult.getRecentSuggestions().stream()
@@ -1096,6 +1073,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
         List<ReplenishmentSuggestionEntity> entities = baseMapper.listAllCalculationData(platformType);
         List<String> suggestionIds = entities.stream().map(ReplenishmentSuggestionEntity::getId).collect(Collectors.toList());
+        List<String> shopSkuIds = entities.stream().map(v -> v.getShopId() + "-" + v.getSkuId()).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(suggestionIds)) {
             return Collections.emptyList();
         }
@@ -1108,7 +1086,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         LocalDate caleStartDate = calculationDate.minusDays(361);
         LocalDate caleEndDate = calculationDate.minusDays(1);
         //获取历史数据
-        List<ReplenishmentResultDTO.SalesHistoryDTO> listedSalesHistory = listSalesHistory(suggestionIds, salesQtyType, orderType, caleStartDate, caleEndDate);
+        List<ReplenishmentResultDTO.SalesHistoryDTO> listedSalesHistory = listSalesHistory(shopSkuIds, salesQtyType, orderType, caleStartDate, caleEndDate);
         List<ReplenishmentResultDTO.InventoryHistoryDTO> historyInventoryList = historyInventoryEsService.listByReplenishmentIdsAndDate(suggestionIds, caleStartDate, caleEndDate);
         return entities.parallelStream()
                 .map(v -> {
@@ -1123,7 +1101,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                         return null;
                     }
                     Map<LocalDate, Integer> salesHistoryDTOList = listedSalesHistory.stream()
-                            .filter(e -> e.getReplenishmentId().equals(v.getId()))
+                            .filter(e -> e.getShopSkuIds().equals(v.getShopId() + "-" + v.getSkuId()))
                             .collect(Collectors.toMap(ReplenishmentResultDTO.SalesHistoryDTO::getDate, ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty, Integer::sum));
                     Map<LocalDate, Integer> historyInventory = historyInventoryList.stream()
                             .filter(e -> e.getReplenishmentId().equals(v.getId()))
@@ -1138,36 +1116,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     return resultDTO;
                 }).filter(Objects::nonNull)
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 获取sku对应店铺的销量
-     *
-     * @param salesQtyType 销量类型
-     * @param orderType    订单类型
-     */
-    @Override
-    public Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, JSONArray orderType) {
-        Map<String, Integer> salesMap;
-        if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
-            salesMap = orderHistorySalesEsService.listByType(orderType);
-        } else {
-            // 以销售出库单出库时间计算销量
-            salesMap = outStockHistorySalesEsService.listByType(orderType);
-        }
-        if (org.springframework.util.CollectionUtils.isEmpty(salesMap)) {
-            return Collections.emptyMap();
-        }
-        //根据建议id查询建议明细
-        List<ReplenishmentSuggestionEntity> suggestion = listReplenishmentSuggestion(new ArrayList<>(salesMap.keySet()));
-        return suggestion.stream()
-                .collect(Collectors.groupingBy(
-                        ReplenishmentSuggestionEntity::getSkuId,
-                        Collectors.toMap(
-                                ReplenishmentSuggestionEntity::getShopId,
-                                entity -> salesMap.getOrDefault(entity.getId(), 0)
-                        )
-                ));
     }
 
     @Override
@@ -1221,12 +1169,13 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public List<ReplenishmentSuggestionVO.SalesInfoVO> listSalesInfo(BaseIdDTO dto) {
         List<ReplenishmentSuggestionVO.SalesInfoVO> salesInfoVOS = new ArrayList<>();
-        ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getById(dto.getId());
+        ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("建议明细不存在"));
+        ReplenishmentSuggestionEntity entity = getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("建议不存在"));
         CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(detail.getCfgRule(), CfgRuleStrategyDTO.class);
         CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
         LocalDate endDate = LocalDate.now().minusDays(1);
         LocalDate startDate = endDate.minusDays(364);
-        Map<LocalDate, Integer> map = listSalesHistoryMap(detail.getMainId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), startDate, endDate);
+        Map<LocalDate, Integer> map = listSalesHistoryMap(entity.getShopId() +"-"+ entity.getSkuId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), startDate, endDate);
         List<SalesInfoEntity> infoEntities = salesInfoService.listByReplenishmentDetailIds(Collections.singletonList(detail.getId()), startDate, endDate);
         LocalDate date = startDate;
         while (!date.isAfter(endDate)) {
@@ -1553,7 +1502,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         LocalDate date = LocalDate.parse(view.getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         LocalDate startDate = date.minusDays(361);
         LocalDate endDate = date.minusDays(1);
-        Map<LocalDate, Integer> salesHistoryMap = listSalesHistoryMap(view.getId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), startDate, endDate);
+        Map<LocalDate, Integer> salesHistoryMap = listSalesHistoryMap(view.getShopId() + "-" + view.getSkuId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), startDate, endDate);
         List<SalesInfoEntity> salesInfoList = salesInfoService.listByReplenishmentDetailIds(Collections.singletonList(view.getDetailId()));
         Map<LocalDate, SalesInfoEntity> calcDenoisingMap = salesInfoList.stream()
                 .collect(Collectors.toMap(SalesInfoEntity::getDate, v -> v, (o1, o2) -> o1));
@@ -1602,15 +1551,15 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> replenishmentIds, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
-        List<List<String>> partition = Lists.partition(replenishmentIds, 1000);
+    public List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> shopSkuIds, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
+        List<List<String>> partition = Lists.partition(shopSkuIds, 1000);
         return partition.stream()
-                .map(suggestionIdList -> CompletableFuture.supplyAsync(() -> {
+                .map(shopSkuIdList -> CompletableFuture.supplyAsync(() -> {
                     if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
-                        return orderHistorySalesEsService.listByReplenishmentIdsAndDate(suggestionIdList, orderType, startDate, endDate);
+                        return orderHistorySalesEsService.listByShopSkuIdsAndDate(shopSkuIdList, orderType, startDate, endDate);
                     } else {
                         // 以销售出库单出库时间计算销量
-                        return outStockHistorySalesEsService.listByReplenishmentIdsAndDate(suggestionIdList, orderType, startDate, endDate);
+                        return outStockHistorySalesEsService.listByShopSkuIdsAndDate(shopSkuIdList, orderType, startDate, endDate);
                     }
                 }, threadPoolTaskExecutor)).collect(Collectors.toList()).stream()
                 .map(CompletableFuture::join)
@@ -1619,13 +1568,13 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
-    public Map<LocalDate, Integer> listSalesHistoryMap(String replenishmentId, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
+    public Map<LocalDate, Integer> listSalesHistoryMap(String shopSkuId, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
         List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistory;
         if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
-            salesHistory = orderHistorySalesEsService.listByReplenishmentIdsAndDate(Collections.singletonList(replenishmentId), orderType, startDate, endDate);
+            salesHistory = orderHistorySalesEsService.listByShopSkuIdsAndDate(Collections.singletonList(shopSkuId), orderType, startDate, endDate);
         } else {
             // 以销售出库单出库时间计算销量
-            salesHistory = outStockHistorySalesEsService.listByReplenishmentIdsAndDate(Collections.singletonList(replenishmentId), orderType, startDate, endDate);
+            salesHistory = outStockHistorySalesEsService.listByShopSkuIdsAndDate(Collections.singletonList(shopSkuId), orderType, startDate, endDate);
         }
         return salesHistory.stream()
                 .collect(Collectors.toMap(ReplenishmentResultDTO.SalesHistoryDTO::getDate, ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty, Integer::sum));
@@ -1994,7 +1943,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
         LocalDate caleStartDate = LocalDate.now().minusDays(361);
         LocalDate caleEndDate = LocalDate.now().minusDays(1);
-        Map<LocalDate, Integer> salesHistoryMap = listSalesHistoryMap(detail.getMainId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), caleStartDate, caleEndDate);
+        Map<LocalDate, Integer> salesHistoryMap = listSalesHistoryMap(suggestion.getShopId() + "-" + suggestion.getSkuId(), salesQtyResult.getSalesQtyType(), salesQtyResult.getOrderType(), caleStartDate, caleEndDate);
         Map<LocalDate, Integer> historyInventoryMap = historyInventoryEsService.findByReplenishmentIdAndDateBetweenMap(detail.getMainId(), caleStartDate, caleEndDate);
         //模拟计算去噪销量
         List<ReplenishmentResultDTO.SalesInfoDTO> list = calculationSales(cfgRuleSalesQty.getIsIgnoreOutOfStock(), salesHistoryMap,

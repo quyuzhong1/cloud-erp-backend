@@ -238,8 +238,16 @@ public class VirtualWarehouseChannelDTO implements Serializable {
          */
         private List<String> shopIdList;
         /**
+         * 店铺名称集合
+         */
+        private List<String> shopNameList;
+        /**
          * 分区列表
          */
         private List<String> partitonIdList;
+        /**
+         *
+         */
+        private List<String> partitonNameList;
     }
 }

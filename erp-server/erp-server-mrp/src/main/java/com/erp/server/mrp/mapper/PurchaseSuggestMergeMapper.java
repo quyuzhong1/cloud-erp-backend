@@ -28,4 +28,12 @@ public interface PurchaseSuggestMergeMapper extends BaseMapper<PurchaseSuggestMe
      * @return IPage<ListDTO>
      */
     IPage<PurchaseSuggestMergeDTO.ListDTO> paging(Page query,@Param("params") PurchaseSuggestMergeDTO.PagingParamDTO params);
+    /**
+     * tab列表
+     * @author will
+     * @date 2025/1/8 14:53
+     * @param pagingParamDTO
+     * @return Integer
+     */
+    Integer tabList(@Param("params")PurchaseSuggestMergeDTO.PagingParamDTO pagingParamDTO);
 }

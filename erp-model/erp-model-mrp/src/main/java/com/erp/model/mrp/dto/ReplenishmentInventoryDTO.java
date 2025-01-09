@@ -43,6 +43,13 @@ public class ReplenishmentInventoryDTO {
      * 补货计划，采购建议
      */
     private List<ReplenishmentPurchaseDTO> replenishmentPurchaseList;
+    /**
+     * FBA在途
+     */
+    private List<FbaInTransitDTO> fbaInTransitList;
+    /**
+     * FBA预计发货
+     */
 
     @Setter
     @Getter
@@ -61,6 +68,66 @@ public class ReplenishmentInventoryDTO {
         private Integer qty;
     }
 
+    @Getter
+    @Setter
+    public static class FbaInTransitDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 发货状态
+         */
+        private String status;
+
+        /**
+         * 发货日期
+         */
+        private LocalDate deliveryDate;
+
+        /**
+         * 申报数量
+         */
+        private Integer declareQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 在途
+         */
+        private Integer inTransitQty;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+    }
 
     @Setter
     @Getter

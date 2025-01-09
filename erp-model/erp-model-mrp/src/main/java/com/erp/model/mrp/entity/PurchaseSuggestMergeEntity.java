@@ -161,6 +161,12 @@ public class PurchaseSuggestMergeEntity extends BaseEntity<PurchaseSuggestMergeE
     @TableField("invalid_user_name")
     private String invalidUserName;
 
+    /**
+     * 是否合并，true是，false否
+     */
+    @TableField("is_merge")
+    private Boolean isMerge;
+
 
     public static final String CODE = "code";
 

@@ -60,7 +60,10 @@ public class VirtualWarehouseDTO implements Serializable {
 
 //        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
+        //关联实体仓id集合
         private List<String> warehouseIdList;
+        //关联实体仓名称集合
+        private List<String> warehouseNameList;
     }
     @Data
     @NoArgsConstructor

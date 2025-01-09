@@ -161,11 +161,16 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("invalid_user_name")
     private String invalidUserName;
 
+    /**
+     * 父级skuId
+     */
+    @TableField("parent_sku_id")
+    private String parentSkuId;
 
     /**
      * bom版本
      */
-    @TableField(exist = false)
+    @TableField("bom_version")
     private String bomVersion;
 
     public static final String CODE = "code";

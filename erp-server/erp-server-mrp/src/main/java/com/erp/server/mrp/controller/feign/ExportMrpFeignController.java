@@ -26,7 +26,7 @@ public class ExportMrpFeignController {
     private ReplenishmentSuggestionService replenishmentSuggestionService;
 
     @Resource
-    private PurchaseSuggestService purchaseSuggestService;
+    private PurchaseSuggestIndependentService purchaseSuggestIndependentService;
 
     @Resource
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
@@ -69,7 +69,7 @@ public class ExportMrpFeignController {
     @PostMapping("/listPurchaseSuggestion")
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
-        return purchaseSuggestService.listPurchaseSuggestion(dto);
+        return purchaseSuggestIndependentService.listPurchaseSuggestion(dto);
     }
 
     /**
@@ -107,8 +107,8 @@ public class ExportMrpFeignController {
      */
     @PostMapping("/pagingPurchaseSuggestion")
     @WebAdvanceQuery
-    public PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto) {
-        return purchaseSuggestService.paging(dto);
+    public PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {
+        return purchaseSuggestIndependentService.paging(dto);
     }
 
     /**
