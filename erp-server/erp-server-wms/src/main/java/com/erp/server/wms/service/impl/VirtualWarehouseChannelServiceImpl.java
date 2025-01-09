@@ -220,11 +220,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 String msg;
                 //平台名称
                 String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), channelAddDT.getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
-                if (CollUtil.isEmpty(shopIds)) {
-                    msg = CharSequenceUtil.format("{},按平台,军区({})", platformName, partitionName);
-                } else {
-                    msg = CharSequenceUtil.format("{},按店铺({}),军区({})", platformName, shopName, partitionName);
-                }
+                msg = CharSequenceUtil.format("{},按店铺({}),军区({})", platformName, shopName, partitionName);
                 oldChannelMsg.add(msg);
             }
         }
@@ -249,12 +245,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
                 String msg ;
                 //平台名称
                 String platformName = platformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), value.get(0).getDictPlatform())).map(DictBasicDTO.ViewDTO::getName).findFirst().orElse("");
-
-                if (CollUtil.isEmpty(shopIds)) {
-                    msg = CharSequenceUtil.format("{},按平台,军区({})", platformName,partitionName);
-                } else {
-                    msg = CharSequenceUtil.format("{},按店铺({}),军区({})",shopName,partitionName);
-                }
+                msg = CharSequenceUtil.format("{},按店铺({}),军区({})",platformName,shopName,partitionName);
                 newChannelMsg.add(msg);
                 if (!oldChannelMsg.contains(msg)) {
                     isChange =  Boolean.TRUE;
