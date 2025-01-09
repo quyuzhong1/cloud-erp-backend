@@ -120,6 +120,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
 
@@ -2956,8 +2957,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean generatePlatformB2cOutStock(SoOutstockDTO.GenerateB2cDTO generateB2cDTO, PlatformSoOutStockDTO dto, SoB2cEntity soB2cEntity, Collection<PlatformSoOutStockDetailDTO> generateSourceDetailList) {
         if (CollectionUtils.isEmpty(generateSourceDetailList)){
             // 无新增
@@ -3013,16 +3012,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             try {
                 if (!soOutstockService.handleCreateB2cSoOutstockWithoutTx(genDTO)){
                     log.warn("【亚马逊物流销售报告】生成销售出库单失败:dto={}", JSONUtil.toJsonStr(genDTO));
-                } else {
-                    String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
-                    SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
-                    deleteDTO.setMainId(soB2cEntity.getId());
-                    deleteDTO.setType(type);
-                    List<String> detailIds = genDTO.getDetailList().stream()
-                            .map(SoOutstockDetailDTO.AddDTO::getSoDetailId)
-                            .collect(Collectors.toList());
-                    deleteDTO.setDetailIdList(detailIds);
-                    soB2cFeign.deleteDetailError(deleteDTO);
                 }
             } catch (Exception e) {
                 log.warn("自动生成销售出库单失败：dto={}, error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
@@ -3486,15 +3475,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
         }
 
-        // 检查清除异常信息
-        if (CollectionUtils.isNotEmpty(checkErrorDetailIds)){
-            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
-            SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
-            deleteDTO.setMainId(soB2cEntity.getId());
-            deleteDTO.setType(type);
-            deleteDTO.setDetailIdList(checkErrorDetailIds);
-            soB2cFeign.deleteDetailError(deleteDTO);
-        }
+//        // 检查清除异常信息
+//        if (CollectionUtils.isNotEmpty(checkErrorDetailIds)){
+//            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+//            SoB2cErrorDTO.DeleteDetailDTO deleteDTO = new SoB2cErrorDTO.DeleteDetailDTO();
+//            deleteDTO.setMainId(soB2cEntity.getId());
+//            deleteDTO.setType(type);
+//            deleteDTO.setDetailIdList(checkErrorDetailIds);
+//            soB2cFeign.deleteDetailError(deleteDTO);
+//        }
         return result;
     }
 
