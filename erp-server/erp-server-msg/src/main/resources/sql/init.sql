@@ -54,7 +54,7 @@ ALTER TABLE "public"."msg_config" ADD CONSTRAINT "msg_conf_pkey" PRIMARY KEY ("i
  Source Server         : 开发
  Source Server Type    : PostgreSQL
  Source Server Version : 120006 (120006)
- Source Host           : 172.16.100.12:5432
+ Source Host           : 10.107.36.15:5432
  Source Catalog        : erp-sys
  Source Schema         : public
 
