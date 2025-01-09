@@ -103,7 +103,6 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
             // ALiExpress,Shopify来源卖家sku可能为空
             if (StringUtils.isBlank(dto.getPlatformSkuNo())) {
                 log.warn("[Listing] 消费:来源数据异常PlatformSkuNo为空, msg={}", JSONUtil.toJsonStr(dto));
-//                return ApiResult.success()
                 // 防止来源为null
                 dto.setPlatformSkuNo("");
             }
@@ -175,7 +174,12 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                 if (!oldEntity.toString().equals(entity.toString())) {
                     ListingInfoEntity oldLogInfo = OmsListingConverter.INSTANCE.copyListingInfo(oldEntity);
                     if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
-                        oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
+                        // 亚马逊平台PlatformSpuNo保留历史
+                        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())){
+                            oldEntity.setPlatformSpuNo(oldEntity.getPlatformSpuNo());
+                        } else {
+                            oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
+                        }
                     }
                     if (StringUtils.isNotBlank(entity.getProductImageUrl())) {
                         oldEntity.setProductImageUrl(entity.getProductImageUrl());
