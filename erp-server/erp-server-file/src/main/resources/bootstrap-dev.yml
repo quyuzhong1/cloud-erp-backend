@@ -2,12 +2,12 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 10.107.36.15
+        server-addr: 10.244.1.21
         namespace: ${NACOS_NAMESPACE:dev}
         heart-beat-interval: 3
         heart-beat-timeout: 10
       config:
-        server-addr: 10.107.36.15
+        server-addr: 10.244.1.21
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-file.yml,druid-common.yml,erp-third-party.yml

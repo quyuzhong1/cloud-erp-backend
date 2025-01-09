@@ -2,9 +2,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 10.107.36.15
+        server-addr: 10.244.1.21
         namespace: test
       config:
-        server-addr: 10.107.36.15
+        server-addr: 10.244.1.21
         namespace: test
         shared-configs: common.yml,erp-auth.yml
