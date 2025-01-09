@@ -26,7 +26,8 @@
             pp.listing_date as  listingDate,
             pp.create_user_name as  createUserName,
             pp.create_time as  createTime,
-            ppr.remark
+            ppr.remark,
+            pp.application_category_id
         from  product_plan pp
         left join (select a.product_plan_id, a.remark from product_plan_remark a
         inner join (select product_plan_id,max(id) as id from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id) b
@@ -55,6 +56,12 @@
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
                     #{item} = ANY(string_to_array(pp.category_id,','))
+                </foreach>
+            </if>
+            <if test="params.applicationCategoryId != null and params.applicationCategoryId.size > 0">
+                and pp.application_category_id in
+                <foreach collection="applicationCategoryId" item="id" open="(" separator="," close=")">
+                    #{id}
                 </foreach>
             </if>
             <if test="params.planSurveyDateBegin != null ">

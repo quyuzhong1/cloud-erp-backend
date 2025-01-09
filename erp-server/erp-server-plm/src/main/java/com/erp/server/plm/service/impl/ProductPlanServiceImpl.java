@@ -108,6 +108,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Resource
     private ProductStatusTimeService productStatusTimeService;
 
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -115,7 +118,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         IPage<ProductPlanVO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<ProductPlanVO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
+            List<String> applicationCategoryIds = pageData.getRecords().stream().map(ProductPlanVO::getApplicationCategoryId).distinct().collect(Collectors.toList());
+            List<ApplicationCategoryEntity> list = applicationCategoryService.listByIds(applicationCategoryIds);
+            Map<String, String> applicationCategoryMap = list.stream()
+                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
             records.forEach(obj -> {
+                obj.setApplicationCategoryName(applicationCategoryMap.get(obj.getApplicationCategoryId()));
                 //产品状态格式化
                 obj.setProductStatusName(ProductPlanStatusEnum.getNameByCode(obj.getProductStatus()));
                 //调研是否延期
@@ -143,8 +151,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95133);
         }
+        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryService.getById(productPlanEntity.getApplicationCategoryId());
         ProductPlanDTO productPlanDTO = new ProductPlanDTO();
         BeanMapperUtils.copy(productPlanEntity, productPlanDTO);
+        productPlanDTO.setApplicationCategoryName(applicationCategoryEntity.getName());
         resultDTO.setProductPlanDTO(productPlanDTO);
         //枚举格式化
         productPlanDTO.setProductStyleName(ProductStyleEnum.getNameByCode(productPlanEntity.getProductStyle()));
@@ -254,7 +264,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, basicDictService, basicCategoryService, productPlanSaleService, productPlanSaleInfoService, productPlanPurchaseService, productPlanRemarkService, sysUserFeign);
+        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, basicDictService, basicCategoryService, productPlanSaleService, productPlanSaleInfoService,
+                productPlanPurchaseService, productPlanRemarkService, sysUserFeign, applicationCategoryService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -403,6 +414,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         productPlanEntity.setBrandName(productInfoEntity.getBrandName());
         productPlanEntity.setCategoryId(productInfoEntity.getCategoryId());
         productPlanEntity.setCategory(productInfoEntity.getCategory());
+        productPlanEntity.setApplicationCategoryId(productInfoEntity.getApplicationCategoryId());
         productPlanEntity.setGradeId(productInfoEntity.getGradeId());
         productPlanEntity.setGrade(productInfoEntity.getGrade());
         productPlanEntity.setSpuNo(productInfoEntity.getSpuNo());
