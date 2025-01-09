@@ -113,6 +113,7 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
         product.setPlatformProductName(spuName);
         String skuNo = dmpSkuInfoEntity.getSkuNo();
         product.setPlatformSkuNo(org.apache.commons.lang.StringUtils.isBlank(skuNo)? "" : skuNo);
+        product.setProductSpec(dmpSkuInfoEntity.getProdcutProperty());
 
         product.setPlatformSkuName(spuName);
         // 类型 platform 平台  warehouse 仓库

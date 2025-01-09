@@ -143,9 +143,8 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
                         continue;
                     }
                     for (Item item : items) {
-                        JSONObject jsonObject = (JSONObject) JSON.toJSON(item);
                         String productId = item.getKeyByIdentifierType(entry.getKey(), marketPlaceEnum);
-                        jsonObject.put("productId", productId);
+                        JSONObject jsonObject = convertJsonObject(item, productId);
                         String shipmentIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.PRODUCT_ITEMS.getBusinessTypeName(), productId);
                         // 缓存倒redis
                         redisUtil.set(shipmentIdResultKey, jsonObject.toJSONString(), 900);
@@ -170,6 +169,15 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
         }
 
         return convertDmpInputTaskInitDTOS(resultList);
+    }
+
+    /**
+     * 转换JSONObject
+     */
+    private static JSONObject convertJsonObject(Item item, String productId) {
+        JSONObject jsonObject = (JSONObject) JSON.toJSON(item);
+        jsonObject.put("productId", productId);
+        return jsonObject;
     }
 
     /**
