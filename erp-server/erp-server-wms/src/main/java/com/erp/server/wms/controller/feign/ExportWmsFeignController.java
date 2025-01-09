@@ -146,6 +146,8 @@ public class ExportWmsFeignController {
 
     @Resource
     private ReportOrderSalesService reportOrderSalesService;
+    @Resource
+    private FbaTransitCalculateReportService fbaTransitCalculateReportService;
 
     @Resource
     private SoB2bProcessingService soB2bProcessingService;
@@ -812,4 +814,13 @@ public class ExportWmsFeignController {
         return virtualInventoryDetailService.framePaging(dto);
     }
 
+
+    /**
+     * 导出FBA在途核对列表
+     */
+    @PostMapping("/exportFbaTransitReport")
+    @WebAdvanceQuery
+    public PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(@RequestBody PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto){
+        return fbaTransitCalculateReportService.paging(dto);
+    }
 }

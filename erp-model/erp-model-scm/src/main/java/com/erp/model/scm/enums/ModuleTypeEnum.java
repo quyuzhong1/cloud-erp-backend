@@ -126,6 +126,7 @@ public enum ModuleTypeEnum {
     WAVE_LIST("101", "波次列表"),
     PRODUCT_DETAIL("113", "产品明细"),
     REMOTE_POSTCODE("114", "偏远邮编"),
+    FBA_TRANSIT_CALCULATE_REPORT("114", "FBA在途核对报表"),
     ;
 
 
