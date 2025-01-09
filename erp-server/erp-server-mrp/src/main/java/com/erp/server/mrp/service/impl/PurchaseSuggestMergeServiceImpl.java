@@ -862,7 +862,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
         //采购申请单信息
         List<String> ids = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestMergeDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(ids);
+        List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = CollUtil.isEmpty(ids) ? Collections.emptyList() : purchaseApplicationDetailFeign.listByMergeIdList(ids);
 
         Map<String, List<PurchaseSuggestMergeDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId()));
 

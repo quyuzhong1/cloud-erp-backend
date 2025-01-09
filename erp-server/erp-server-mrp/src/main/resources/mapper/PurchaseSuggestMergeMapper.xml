@@ -111,7 +111,7 @@
         <where>
             ${params.sqlMap.default}
             and psm.is_deleted = false
-            <if test="params.isMerge != null and params.isMerge != ''">
+            <if test="params.isMerge != null">
                 and psm.is_merge = #{params.isMerge}
             </if>
         </where>
