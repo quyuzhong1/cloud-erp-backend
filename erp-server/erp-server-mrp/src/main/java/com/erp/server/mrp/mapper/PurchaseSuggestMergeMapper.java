@@ -46,5 +46,5 @@ public interface PurchaseSuggestMergeMapper extends BaseMapper<PurchaseSuggestMe
      * @param sourceIdList
      * @return PurchaseSuggestMergeEntity
      */
-    List<PurchaseSuggestMergeEntity> listIndependentBySourceIdList(List<String> sourceIdList);
+    List<PurchaseSuggestMergeEntity> listIndependentBySourceIdList(@Param("sourceIdList") List<String> sourceIdList);
 }

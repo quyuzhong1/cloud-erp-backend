@@ -653,34 +653,51 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollUtil.isEmpty(purchaseSuggestMergeList)) {
             return Collections.emptyList();
         }
-        //建议总数
-        Integer hasUseQty = MathUtil.ZERO;
+        //计划修正值（已使用）
+        Integer usePlanQty = MathUtil.ZERO;
+        //计划修正值（已使用）
+        Integer useStockUpQty = MathUtil.ZERO;
         List<PurchaseSuggestMergeDTO.MergeFrameDTO> mergeFrameList = new ArrayList<>();
-        for (PurchaseSuggestMergeEntity purchaseSuggestMergeEntity : purchaseSuggestMergeList) {
+        for (int i = 0; i < purchaseSuggestMergeList.size(); i++) {
+            PurchaseSuggestMergeEntity purchaseSuggestMergeEntity = purchaseSuggestMergeList.get(i);
             PurchaseSuggestMergeDTO.MergeFrameDTO mergeFrameDTO = new PurchaseSuggestMergeDTO.MergeFrameDTO();
             mergeFrameDTO.setCode(purchaseSuggestMergeEntity.getCode());
             mergeFrameDTO.setSuggestPurchaseQty(purchaseSuggestMergeEntity.getSuggestPurchaseQty());
 
             //计划修正值,系统建议值从小到大依次分摊 = 子单系统值 / 合并单系统值 * 合并单修正数,抹零取整，最后一个相加
-            BigDecimal planQty = MathUtil.divide(MathUtil.valueOf(purchaseSuggestMergeEntity.getSuggestPurchaseQty()), MathUtil.valueOf(old.getSuggestPurchaseQty())).multiply(MathUtil.valueOf(old.getPlanPurchaseQty()));
-            Integer purchasePlanQty = Integer.valueOf(planQty.setScale(0, RoundingMode.DOWN).toString());
-            mergeFrameDTO.setPlanPurchaseQty(purchasePlanQty);
+            if (i == purchaseSuggestMergeList.size() - 1) {
+                mergeFrameDTO.setPlanPurchaseQty(old.getPlanPurchaseQty() - usePlanQty);
+                mergeFrameDTO.setPurchaseStockUpQty(old.getPurchaseStockUpQty() - useStockUpQty);
+            } else {
+                BigDecimal planQty = MathUtil.divide(MathUtil.valueOf(purchaseSuggestMergeEntity.getSuggestPurchaseQty()), MathUtil.valueOf(old.getSuggestPurchaseQty())).multiply(MathUtil.valueOf(old.getPlanPurchaseQty()));
+                Integer purchasePlanQty = Integer.valueOf(planQty.setScale(0, RoundingMode.DOWN).toString());
+                mergeFrameDTO.setPlanPurchaseQty(purchasePlanQty);
 
-            //计划备货数
-            BigDecimal stockUpQty = MathUtil.divide(MathUtil.valueOf(purchaseSuggestMergeEntity.getSuggestPurchaseQty()), MathUtil.valueOf(old.getSuggestPurchaseQty())).multiply(MathUtil.valueOf(old.getPurchaseStockUpQty()));
-            Integer purchaseStockUpQty = Integer.valueOf(planQty.setScale(0, RoundingMode.DOWN).toString());
-            mergeFrameDTO.setPlanPurchaseQty(purchaseStockUpQty);
+                //计划备货数
+                BigDecimal stockUpQty = MathUtil.divide(MathUtil.valueOf(purchaseSuggestMergeEntity.getSuggestPurchaseQty()), MathUtil.valueOf(old.getSuggestPurchaseQty())).multiply(MathUtil.valueOf(old.getPurchaseStockUpQty()));
+                Integer purchaseStockUpQty = Integer.valueOf(stockUpQty.setScale(0, RoundingMode.DOWN).toString());
+                mergeFrameDTO.setPurchaseStockUpQty(purchaseStockUpQty);
+            }
+            //值更新
+            usePlanQty +=  mergeFrameDTO.getPlanPurchaseQty();
+            useStockUpQty += mergeFrameDTO.getPurchaseStockUpQty();
+
+            mergeFrameList.add(mergeFrameDTO);
         }
-
-        return null;
+        return mergeFrameList;
     }
 
-    /**
-     * 根据来源id查询独立采购信息
-     * @param sourceIdList
-     * @return
-     */
+   /**
+    * 根据来源id集合查询
+    * @Author will
+    * @Date 11:22 2025/1/9
+    * @Param [sourceIdList]
+    * @return java.util.List<com.erp.model.mrp.entity.PurchaseSuggestMergeEntity>
+    **/
     private List<PurchaseSuggestMergeEntity> listIndependentBySourceIdList(List<String> sourceIdList) {
+        if (CollUtil.isEmpty(sourceIdList)) {
+            return Collections.emptyList();
+        }
         return baseMapper.listIndependentBySourceIdList(sourceIdList);
     }
 
