@@ -22,6 +22,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -34,6 +35,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -60,13 +62,20 @@ public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
         // 根据明细类型扩展
         String extendJson = dmpInputTaskEntity.getExtendJson();
+        // Sku列表
+        List<String> sellerSkus = null;
         // 查询所有
         boolean hasAll = false;
         if(StringUtils.isNotBlank(extendJson)) {
             JSONObject parseObject = JSON.parseObject(extendJson);
             if(parseObject != null) {
                 hasAll = parseObject.getBooleanValue("hasAll");
+                JSONArray jsonArray = parseObject.getJSONArray("sellerSkus");
+                if (CollectionUtils.isNotEmpty(jsonArray)){
+                    sellerSkus = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
+                }
             }
+
         }
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.FBA_INVENTORY;
         // 默认请求速率配置
@@ -91,12 +100,24 @@ public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
         Boolean details = true;
         // 数据开始时间(空=全量)
         OffsetDateTime startDateTime = null == dmpInputTaskEntity.getStartTime() || hasAll ? null : DateUtil.plus8SameUtcOffset(dmpInputTaskEntity.getStartTime());
-        // Sku列表
-        List<String> sellerSkus = null;
         FbaInventoryApi api = AmazonSpApiInitUtils.create(FbaInventoryApi.class, shopInfoDTO, false);
 
         try {
-            List<InventorySummary> allList = api.getAllInventorySummaries(granularityType, granularityId, marketplaceIds, details, startDateTime, sellerSkus);
+            List<InventorySummary> allList = new LinkedList<>();
+            if (CollectionUtils.isEmpty(sellerSkus)){
+                // 按更新时间请求
+                allList = api.getAllInventorySummaries(granularityType, granularityId, marketplaceIds, details, startDateTime, null);
+            } else {
+                // 按sku请求
+                List<List<String>> partition = Lists.partition(sellerSkus, 50);
+                for (List<String> curSkuList : partition) {
+                    List<InventorySummary> curList = api.getAllInventorySummaries(granularityType, granularityId, marketplaceIds, details, null, curSkuList);
+                    allList.addAll(curList);
+                }
+            }
+            if (CollectionUtils.isEmpty(allList)){
+                return Collections.emptyList();
+            }
             // 拼接来源信息
             List<JSONObject> resultList = allList.stream().map(e -> setAmazonOrderIdAndToJsonObject(e, shopInfoDTO, marketplaceEnum)).collect(Collectors.toList());
             // 组合响应
@@ -144,6 +165,4 @@ public class DmpInputAmzFbaInventoryApiInitHandler extends DmpInputInitHandler {
         }
         return json;
     }
-
-
 }
