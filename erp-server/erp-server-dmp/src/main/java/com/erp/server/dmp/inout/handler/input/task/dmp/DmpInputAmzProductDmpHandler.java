@@ -72,11 +72,10 @@ public class DmpInputAmzProductDmpHandler extends DmpInputDoChildDmpHandler {
             if (StringUtils.isBlank(listingProductId)) {
                 continue;
             }
-            String productIdType = listingMongoDataItem.getOrDefault("productIdType", "").toString();
-            if ("1".equalsIgnoreCase(productIdType)){
-                // 标准类型asin=productId
-                listingMongoDataItem.put("asin", listingProductId);
-            }
+            String asin1 = listingMongoDataItem.getOrDefault("asin1", "").toString();
+            // 默认asin=asin1
+            listingMongoDataItem.put("asin", asin1);
+
             // 匹配明细
             Map<String, Object> detailMap = listingDetailMongoData
                     .stream()
