@@ -494,7 +494,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
             List<String> shopNameList = shopInfoEntityList.stream().filter(e -> shopIds.contains(e.getId())).map(ShopInfoEntity::getName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             //分区
             List<String> partitionIds = CollUtil.isEmpty(channelEntityList) ? Collections.emptyList() : channelEntityList.get(0).getPartitionIds();
-            List<String> partitionNameList = dictPartitionEntityList.stream().filter(e -> shopIds.contains(e.getId())).map(DictPartitionEntity::getName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<String> partitionNameList = dictPartitionEntityList.stream().filter(e -> partitionIds.contains(e.getId())).map(DictPartitionEntity::getName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
 
             detailDTOList.add(VirtualWarehouseChannelDTO.DetailDTO.builder().shopIdList(shopIds).shopNameList(CollUtil.isEmpty(shopNameList) ? Collections.singletonList("全部") : shopNameList)
                     .partitonIdList(partitionIds).partitonNameList(CollUtil.isEmpty(partitionNameList) ? Collections.singletonList("全部") : partitionNameList).build());
