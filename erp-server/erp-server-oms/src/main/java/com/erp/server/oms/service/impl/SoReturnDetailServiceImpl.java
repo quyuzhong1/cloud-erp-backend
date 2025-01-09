@@ -658,7 +658,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                         .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                         .stripTrailingZeros();
                 //含税退货金额
-                taxReturnAmount = returnAmount.divide(BigDecimal.valueOf(soReturnDetailEntity.getReturnQty()), 4, RoundingMode.DOWN)
+                taxReturnAmount = taxReturnAmount.divide(BigDecimal.valueOf(soReturnDetailEntity.getReturnQty()), 4, RoundingMode.DOWN)
                         .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                         .stripTrailingZeros();
                 //退货金额（本位币）
