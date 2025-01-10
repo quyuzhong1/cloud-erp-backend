@@ -102,11 +102,11 @@ public final class SoUtils {
         headMap.put("customerOrderNo", "客户订单号");
         headMap.put("isDeclare", "是否报关");
         headMap.put("remark", "备注");
+        headMap.put("customerPO", "客户PO号");
         headMap.put("detailRemark", "明细备注");
         headMap.put("approveUserName", "最新审核人");
         headMap.put("createUserName", "创建人");
         headMap.put("createTime", "创建时间");
-
         return headMap;
     }
 
