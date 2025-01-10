@@ -389,15 +389,18 @@
         where is_deleted = false
     </select>
     <select id="getLocalInTransitDetail"
-            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$LocalInTransitDetailDTO">
-        SELECT warehouseId,
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$LocalInTransitDTO">
+        SELECT
+        skuId,
+        warehouseId,
         source_type,
         source_code,
         qty,
         sourceId,
         estimatedPutAwayDate
-        FROM (SELECT MAX
-        (warehouse_id) AS warehouseId,
+        FROM (SELECT
+        sku_id AS skuId,
+        warehouse_id AS warehouseId,
         MAX(source_type) AS source_type,
         MAX(source_code) AS source_code,
         SUM(qty) AS qty,
@@ -444,16 +447,9 @@
         </if>
         where tf.is_deleted = 'f'
         and tf.dict_inventory_status = 'inTransit'
-        and tf.source_type in
-        ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder',
-        'transferOut', 'transferIn')
-        and tf.sku_id = #{skuId}
-        and tf.warehouse_id in
-        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        and tf.source_type in ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder','transferOut', 'transferIn')
         ) m
-        group by source_type, source_code
+        group by source_type, source_code,warehouseId,skuId
         order by estimatedPutAwayDate desc) t
         where t.qty > 0
     </select>
@@ -721,12 +717,13 @@
     </select>
     <select id="getPurchaseOrder" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ViewSubcontractPoDTO">
         select
+        pod.sku_id,
         po.code,
         pod.plan_delivery_date as planDeliveryDate
         from ${tableName} po
         inner join ${tableDetailName} pod on po.id = pod.purchase_order_id and pod.is_deleted = false
         <where>
-            pod.sku_id = #{skuId} and po.code IN
+            po.code IN
             <foreach item="code" collection="sourceCodeList" open="(" separator="," close=")">
                 #{code}
             </foreach>

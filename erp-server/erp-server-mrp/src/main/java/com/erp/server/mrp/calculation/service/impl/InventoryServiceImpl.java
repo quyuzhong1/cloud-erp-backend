@@ -163,8 +163,49 @@ public class InventoryServiceImpl implements InventoryService {
         getLocalUsable(inventoryResult, baseKey, dto, calcDate);
         getVirtualUsable(inventoryResult, baseKey, dto, calcDate);
         getLocalWaitQcQty(inventoryResult, baseKey, dto, calcDate);
+        getLocalInTransit(inventoryResult, baseKey, dto, calcDate);
         getEstimatedPurchase(inventoryResult, baseKey, dto, calcDate);
         return dto;
+    }
+
+    /**
+     * 获取本地在途
+     *
+     * @param inventoryResult 库存配置
+     * @param baseKey         公共key
+     * @param dto             库存参数
+     * @param calcDate        日期
+     */
+    private void getLocalInTransit(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
+        Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalInTransit());
+        if (CollectionUtils.isEmpty(codes)) {
+            dto.setFbaInTransitList(Collections.emptyList());
+            return;
+        }
+        boolean isPurchase = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode());
+        boolean isTransfer = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_TRANSFER.getCode());
+        List<ReplenishmentInventoryDTO.LocalInTransitDTO> localInTransitDetails = inventoryMapper.getLocalInTransitDetail(isPurchase, isTransfer, getTableName(TRANSACTION_FLOW, calcDate),
+                getTableName(INSTOCK_FORCAST, calcDate), getTableName(PO_RECEIVE, calcDate), getTableName(PO_INSTOCK, calcDate), getTableName(PO_RETURN, calcDate),
+                getTableName(TRANSFER_OUT, calcDate), getTableName(TRANSFER_IN, calcDate));
+        List<String> sourceCodeList = localInTransitDetails.stream()
+                .filter(v -> CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode().equals(v.getSourceType()))
+                .map(ReplenishmentInventoryDTO.LocalInTransitDTO::getSourceCode)
+                .distinct()
+                .collect(Collectors.toList());
+        List<PurchaseOrderDTO.ViewSubcontractPoDTO> purchaseOrderList = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(sourceCodeList)) {
+            purchaseOrderList = inventoryMapper.getPurchaseOrder(sourceCodeList, getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
+        }
+        for (ReplenishmentInventoryDTO.LocalInTransitDTO detailDTO : localInTransitDetails) {
+            if (LocalInTransitTypeEnum.PURCHASE_IN_TRANSIT.getCode().equals(detailDTO.getSourceType())) {
+                PurchaseOrderDTO.ViewSubcontractPoDTO viewDTO = purchaseOrderList.stream()
+                        .filter(v -> detailDTO.getSourceCode().equals(v.getCode()))
+                        .filter(v -> detailDTO.getSkuId().equals(v.getSkuId()))
+                        .findFirst()
+                        .orElse(new PurchaseOrderDTO.ViewSubcontractPoDTO());
+                detailDTO.setEstimatedPutAwayDate(viewDTO.getPlanDeliveryDate());
+            }
+        }
     }
 
     /**
@@ -550,6 +591,7 @@ public class InventoryServiceImpl implements InventoryService {
      */
     private List<ReplenishmentResultDTO.ShopInventoryDetailDTO> createShopSaleQtyList(Map<String, Set<String>> platformShop, String dictPlatform, Map<String, Integer> platformShopSalesMap) {
         return Optional.ofNullable(platformShop.get(dictPlatform)).orElse(new HashSet<>()).stream()
+                .filter(platformShopSalesMap::containsKey)
                 .map(v -> new ReplenishmentResultDTO.ShopInventoryDetailDTO(v, new BigDecimal(Optional.ofNullable(platformShopSalesMap.get(v)).orElse(0)), null))
                 .collect(Collectors.toList());
     }
@@ -594,9 +636,9 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList) {
+    public int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList) {
         List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> localInTransitDetail = new ArrayList<>();
-        List<LocalInventoryDTO> invetoryList = getLocalInTransitInventory(replenishmentResultDTO, codes, cfgRuleStrategyDTO.getStockUpResult());
+        List<LocalInventoryDTO> invetoryList = getLocalInTransitInventory(replenishmentResultDTO, cfgRuleStrategyDTO.getStockUpResult());
         int qty = getAllocateQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getLocalWarehouseList(),
                 invetoryList, localInTransitDetail, getShopDemandQtyMap(dtoList), ReplenishmentInventoryTypeEnum.LOCAL_IN_TRANSIT, CfgRuleWarehouseTypeEnum.LOCAL);
         Map<String, List<ReplenishmentResultDTO.LocalInTransitDetailDTO>> collect = Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(new ArrayList<>())
@@ -638,38 +680,23 @@ public class InventoryServiceImpl implements InventoryService {
      * 获取本地在途库存
      *
      * @param replenishmentResultDTO 建议
-     * @param codes                  单据状态
      * @param stockUpResult          备货配置
      */
-    private List<LocalInventoryDTO> getLocalInTransitInventory(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
-        String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+    private List<LocalInventoryDTO> getLocalInTransitInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
         String platformType = replenishmentResultDTO.getReplenishment().getPlatformType();
-        boolean isPurchase = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode());
-        boolean isTransfer = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_TRANSFER.getCode());
         List<String> localWarehouseIds = replenishmentResultDTO.getLocalWarehouseId();
         if (CollectionUtils.isEmpty(localWarehouseIds)) {
             return Collections.emptyList();
         }
-        List<ReplenishmentResultDTO.LocalInTransitDetailDTO> localInTransitDetails = inventoryMapper.getLocalInTransitDetail(isPurchase, isTransfer, replenishmentResultDTO.getReplenishment().getSkuId(), localWarehouseIds, getTableName(TRANSACTION_FLOW, calcDate),
-                getTableName(INSTOCK_FORCAST, calcDate), getTableName(PO_RECEIVE, calcDate), getTableName(PO_INSTOCK, calcDate), getTableName(PO_RETURN, calcDate),
-                getTableName(TRANSFER_OUT, calcDate), getTableName(TRANSFER_IN, calcDate));
-        List<String> sourceCodeList = localInTransitDetails.stream()
-                .filter(v -> CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode().equals(v.getSourceType()))
-                .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getSourceCode)
-                .distinct()
+        List<ReplenishmentResultDTO.LocalInTransitDetailDTO> localInTransitDetails = replenishmentResultDTO.getInventoryDTO().getLocalInTransitList()
+                .stream().filter(v -> v.getSkuId().equals(replenishmentResultDTO.getReplenishment().getSkuId()))
+                .filter(v -> localWarehouseIds.contains(v.getWarehouseId()))
+                .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::buildLocalInTransitDetailDTO)
                 .collect(Collectors.toList());
-        List<PurchaseOrderDTO.ViewSubcontractPoDTO> purchaseOrderList = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(sourceCodeList)) {
-            purchaseOrderList = inventoryMapper.getPurchaseOrder(sourceCodeList, replenishmentResultDTO.getReplenishment().getSkuId(), getTableName(PURCHASE_ORDER, calcDate), getTableName(PURCHASE_ORDER_DETAIL, calcDate));
-        }
-        Map<String, LocalDate> purchaseDateMap = purchaseOrderList.stream()
-                .collect(Collectors.toMap(PurchaseOrderDTO.ViewSubcontractPoDTO::getCode, PurchaseOrderDTO.ViewSubcontractPoDTO::getPlanDeliveryDate, (o1, o2) -> o1));
-        for (ReplenishmentResultDTO.LocalInTransitDetailDTO dto : localInTransitDetails) {
-            if (LocalInTransitTypeEnum.PURCHASE_IN_TRANSIT.getCode().equals(dto.getSourceType())) {
-                dto.setEstimatedPutAwayDate(purchaseDateMap.get(dto.getSourceCode()));
-            } else {
+        for (ReplenishmentResultDTO.LocalInTransitDetailDTO detail : localInTransitDetails) {
+            if (LocalInTransitTypeEnum.TRANSFER_IN_TRANSIT.getCode().equals(detail.getSourceType())) {
                 //预计入库日期 = 采购订单的审核日期 + 生产周期 + 供应商发货时长 + 质检入库时长
-                dto.setEstimatedPutAwayDate(dto.getEstimatedPutAwayDate()
+                detail.setEstimatedPutAwayDate(detail.getEstimatedPutAwayDate()
                         .plusDays(stockUpResult.getPurchaseApproveDays())
                         .plusDays(stockUpResult.getProductionDays())
                         .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays()));
@@ -677,10 +704,10 @@ public class InventoryServiceImpl implements InventoryService {
             if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType) || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(platformType)) {
                 //预计到货日期（Amazon） = 预计入库日期 + 本地发FBA时效 + FBA入库时间
                 //预计到货日期（海外） = 预计入库日期 + 本地发海外时效 + 海外仓入库时间
-                dto.setEstimateSalesDate(dto.getEstimatedPutAwayDate().plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getInstockDays()));
+                detail.setEstimateSalesDate(detail.getEstimatedPutAwayDate().plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getInstockDays()));
             } else if (CfgRulePlatformTypeEnum.B2B.getCode().equals(platformType) || CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(platformType)) {
                 //预计到货日期（本地）= 预计入库日期
-                dto.setEstimateSalesDate(dto.getEstimatedPutAwayDate());
+                detail.setEstimateSalesDate(detail.getEstimatedPutAwayDate());
             }
         }
         replenishmentResultDTO.setLocalInTransitDetails(localInTransitDetails);

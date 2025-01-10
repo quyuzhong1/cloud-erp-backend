@@ -1513,10 +1513,20 @@ public class ReplenishmentResultDTO {
          */
         private Integer shopPreQty;
 
+        public static LocalInTransitDetailDTO buildLocalInTransitDetailDTO(ReplenishmentInventoryDTO.LocalInTransitDTO localInTransitDTO) {
+            LocalInTransitDetailDTO dto = new LocalInTransitDetailDTO();
+            dto.setQty(localInTransitDTO.getQty());
+            dto.setEstimatedPutAwayDate(localInTransitDTO.getEstimatedPutAwayDate());
+            dto.setSourceId(localInTransitDTO.getSourceId());
+            dto.setSourceCode(localInTransitDTO.getSourceCode());
+            dto.setSourceType(localInTransitDTO.getSourceType());
+            dto.setWarehouseId(localInTransitDTO.getWarehouseId());
+            return dto;
+        }
+
         public static LocalInTransitDetailEntity buildLocalInTransitDetail(LocalInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             LocalInTransitDetailEntity entity = new LocalInTransitDetailEntity();
             entity.setReplenishmentDetailId(replenishmentDetailId);
-            entity.setQty(dto.getQty());
             entity.setQty(dto.getQty());
             entity.setPlanArrivalDate(dto.getEstimatedPutAwayDate());
             entity.setEstimateSalesDate(dto.getEstimateSalesDate());
@@ -1528,6 +1538,7 @@ public class ReplenishmentResultDTO {
             entity.setWarehouseId(dto.getWarehouseId());
             return entity;
         }
+
     }
 
     @Getter

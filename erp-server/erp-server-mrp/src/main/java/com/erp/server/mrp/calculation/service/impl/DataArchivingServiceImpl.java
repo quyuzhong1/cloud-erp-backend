@@ -63,7 +63,7 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                 log.warn("完成处理归档数据,时间{}", System.currentTimeMillis());
                 String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
                 inventoryService.checkAllTableExists(calcDate);
-//                inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
+                inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
                 Map<String, List<String>> platformMap = mappings.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getType, Collectors.mapping(CfgPlatformMappingEntity::getPlatform, Collectors.toList())));
                 List<String> typeList = mappings.stream()
                         .map(CfgPlatformMappingEntity::getType)

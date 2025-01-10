@@ -35,6 +35,11 @@ public class ReplenishmentInventoryDTO {
     private List<VirtualUsableDTO> virtualUsableList;
 
     /**
+     * 本地在途
+     */
+    private List<LocalInTransitDTO> localInTransitList;
+
+    /**
      * 预计采购
      */
     private List<EstimatedPurchaseDTO> estimatedPurchaseList;
@@ -344,5 +349,45 @@ public class ReplenishmentInventoryDTO {
          * 明细id
          */
         private JSONArray sourceIdJson;
+    }
+
+    @Getter
+    @Setter
+    public static class LocalInTransitDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimatedPutAwayDate;
     }
 }
