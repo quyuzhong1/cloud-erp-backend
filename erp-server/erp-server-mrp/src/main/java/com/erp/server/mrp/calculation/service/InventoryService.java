@@ -31,11 +31,10 @@ public interface InventoryService {
      * 获取本地仓在途
      *
      * @param replenishmentResultDTO 参数
-     * @param codes                  编码
      * @param cfgRuleStrategyDTO     配置
      * @param dtoList                该sku全部店铺数据
      */
-    int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList);
+    int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList);
 
     /**
      * 获取本地仓在途
