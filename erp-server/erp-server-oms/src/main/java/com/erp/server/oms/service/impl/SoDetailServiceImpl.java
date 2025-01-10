@@ -665,7 +665,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 19:43
      */
     @Override
-    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId) {
+    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId,Boolean isTax) {
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList);
         try {
@@ -719,6 +719,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             item.setDeliveryQty(deliveryQty);
             item.setWaitQty(waitQty);
             //税率
+            if(Objects.isNull(item.getTaxRate())){
+                item.setTaxRate(BigDecimal.ZERO);
+            }
             BigDecimal taxRate = item.getTaxRate();
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //单价
@@ -744,6 +747,15 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 item.setMaxPrice(price);
                 item.setMinPrice(price);
                 item.setAvgPrice(price);
+            }
+            if(isTax){
+                if(taxRate.compareTo(BigDecimal.ZERO) <= 0){
+                    throw new ServiceException("是否含税选择为是，税率必须大于0");
+                }
+            }else{
+                if(taxRate.compareTo(BigDecimal.ZERO) > 0){
+                    throw new ServiceException("是否含税选择为否，税率不能大于0");
+                }
             }
         }
         result.setSuccessList(successList);
@@ -1023,6 +1035,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-23 10:26
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateDeliveryStatus(List<SoDetailDTO.UpdateDeliveryStatusDTO> paramList) {
         if (CollectionUtils.isEmpty(paramList)) {
             return;

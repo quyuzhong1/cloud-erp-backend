@@ -1,10 +1,7 @@
 package com.erp.server.wms.mapper;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.erp.model.wms.dto.PackingTaskDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
-import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -15,6 +12,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.common.business.dto.base.ApproveStatusQtyDTO;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -126,7 +124,7 @@ public interface FirstMileDeliveryMapper extends BaseMapper<FirstMileDeliveryEnt
     List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@Param("deliveryCodes") List<String> deliveryCodes);
     Page<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@Param("query") Page<PackingTaskDTO.ExportDTO> query,@Param("params") PackingTaskDTO.ExportDTO page, @Param("ids") List<String> ids, @Param("permissionSql") String permissionSql);
 
-    List<WmsCartonDetailDTO.ListPackingDetailPackQtyDTO> ListPackingDetailPackQty(@Param("params") PackingTaskDTO.ExportDTO page, @Param("ids") List<String> ids, @Param("permissionSql") String permissionSql);
-
     List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(@Param("businessCodes")List<String> businessCodes);
+
+    List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(@Param("approveStatus") String approveStatus, @Param("sourceType") String sourceType, @Param("reportMonth") LocalDate reportMonth, @Param("shipmentCode") String shipmentCode, @Param("asin") String asin, @Param("msku") String msku);
 }

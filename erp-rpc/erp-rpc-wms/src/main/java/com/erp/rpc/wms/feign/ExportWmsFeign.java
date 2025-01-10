@@ -282,4 +282,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportFirstMileProcessing")
     PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出FBA在途核对列表
+     */
+    @PostMapping("/feign/export/exportFbaTransitReport")
+    PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto);
 }

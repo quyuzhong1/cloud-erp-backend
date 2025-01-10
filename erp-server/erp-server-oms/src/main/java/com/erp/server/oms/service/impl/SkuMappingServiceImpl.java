@@ -32,6 +32,7 @@ import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -1588,6 +1589,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             dto.setSystemCode(shopInfoEntity.getDictPlatform());
             dto.setBillType(BusinessTypeEnum.PRODUCT.getCode());
             dto.setNextLevelId(shopInfoEntity.getId());
+            // 亚马逊指定正常任务类型兼容限流重试
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())){
+                dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+            }
             createDTOList.add(dto);
         }
         dmpInoutTaskFeign.doInputTask(createDTOList);

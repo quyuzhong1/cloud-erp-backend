@@ -56,6 +56,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         //默认运单
         shudiyunB2cOrderDTO.setTransaction_type("运单");
         shudiyunB2cOrderDTO.setTransaction_sub_type("普通运单");
+
         shudiyunB2cOrderDTO.setBiz_status(LogisticTrackStatusEnum.getName(logisticsBillDetailEntity.getTrackStatus()));
         if (entity.getVersion() == null) {
             entity.setVersion(0);
@@ -87,10 +88,10 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             shudiyunB2cOrderDTO.setLogistic_company_code("无");
         }
 
-        shudiyunB2cOrderDTO.setWaybill_number(CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo());
-        shudiyunB2cOrderDTO.setForeign_waybill_number(logisticsBillDetailEntity.getTrackNo());
+        shudiyunB2cOrderDTO.setWaybill_number(bizNo);
+        shudiyunB2cOrderDTO.setForeign_waybill_number(bizNo);
         shudiyunB2cOrderDTO.setSource_system("SDC");
-        shudiyunB2cOrderDTO.setRoot_node_no_initial(logisticsBillDetailEntity.getTrackNo());
+        shudiyunB2cOrderDTO.setRoot_node_no_initial(bizNo);
 
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
     }

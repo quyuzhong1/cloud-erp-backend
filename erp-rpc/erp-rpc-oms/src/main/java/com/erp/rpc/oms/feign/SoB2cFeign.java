@@ -338,8 +338,8 @@ public interface SoB2cFeign {
      * @return
      * @create 2024-01-05 9:54
      */
-    @GetMapping("/feign/soB2c/listTrackNoEmptyList")
-    List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+    @PostMapping("/feign/soB2c/listTrackNoEmptyList")
+    List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList(@RequestBody SoB2cDTO.QueryDTO queryDTO);
 
 
     @GetMapping("/feign/soB2c/view")
