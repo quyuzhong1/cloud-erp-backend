@@ -4454,7 +4454,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
 
                 if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
-                    errorMsgList.add("二级类目不存在");
+                    productInfoDTO.setCategory(bestEntity.getName());
+                    productInfoDTO.setCategoryId(bestEntity.getId());
                 } else {
                     BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
@@ -4463,6 +4464,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                         errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
                     }
+                    productInfoDTO.setCategory(secondaryCategory);
+                    productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
                 }
                 //存在错误信息则返回
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -4470,8 +4473,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     errorList.add(dto);
                     continue;
                 }
-                productInfoDTO.setCategory(secondaryCategory);
-                productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
             }
             String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
             if (ObjectUtils.isEmpty(applicationCategoryId)) {

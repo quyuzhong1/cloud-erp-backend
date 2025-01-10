@@ -185,7 +185,7 @@ public class ProductSkuDTO extends PermissionsDTO {
     /**
      * 应用分类id
      */
-    private List<String> applicationCategoryId;
+    private List<String> applicationCategoryIds;
 
 }
 

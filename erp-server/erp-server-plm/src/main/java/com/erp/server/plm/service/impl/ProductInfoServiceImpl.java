@@ -2681,26 +2681,29 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     public Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto) {
 
         List<ProductInfoEntity> list = new ArrayList<>();
-//        List<ApplicationCategoryEntity> applicationCategoryList= applicationCategoryService.list();
-//        dto.getProductIds().forEach(req -> {
-//            ProductInfoEntity productInfoEntity = this.getById(req);
-//            productInfoEntity.setApplicationCategoryId(dto.getApplicationCategoryId());
-//            list.add(productInfoEntity);
-//            //新增产品操作日志
-//            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
-//            productOperateRecordDTO.setProductId(req);
-//            List<String> remarkList = new ArrayList<>();
-//            remarkList.add("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]");
-//            productOperateRecordDTO.setRemark(toJSONString(remarkList));
-//            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
-//
-//            //新增操作日志
-//            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
-//                    .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
-//        });
-//        if (CollectionUtils.isNotEmpty(list)) {
-//            this.saveOrUpdateBatch(list);
-//        }
+        List<ApplicationCategoryEntity> applicationCategoryList= applicationCategoryService.list();
+        Map<String, String> applicationMap = applicationCategoryList.stream()
+                .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
+        dto.getProductIds().forEach(req -> {
+            ProductInfoEntity productInfoEntity = this.getById(req);
+            String oldName = applicationMap.get(productInfoEntity.getApplicationCategoryId());
+            productInfoEntity.setApplicationCategoryId(dto.getApplicationCategoryId());
+            list.add(productInfoEntity);
+            //新增产品操作日志
+            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+            productOperateRecordDTO.setProductId(req);
+            List<String> remarkList = new ArrayList<>();
+            remarkList.add("转移应用分类[应用分类]由[" + oldName + "]改为[" + applicationMap.get(dto.getApplicationCategoryId()) + "]");
+            productOperateRecordDTO.setRemark(toJSONString(remarkList));
+            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+
+            //新增操作日志
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
+                    .setOperation("应用分类变更").setContent("转移应用分类[应用分类]由[" + oldName+ "]改为[" + applicationMap.get(dto.getApplicationCategoryId()) + "]"));
+        });
+        if (CollectionUtils.isNotEmpty(list)) {
+            this.saveOrUpdateBatch(list);
+        }
         return Boolean.TRUE;
     }
 

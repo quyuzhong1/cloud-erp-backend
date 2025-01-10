@@ -127,9 +127,9 @@
             AND pd.is_change = #{params.isChange}
         </if>
 
-        <if test="params.statusList != null and params.statusList.size > 0 ">
+        <if test="params.applicationCategoryIds != null and params.applicationCategoryIds.size > 0 ">
             AND pi.application_category_id in
-            <foreach collection="params.applicationCategoryId" item="item" open="(" separator="," close=")">
+            <foreach collection="params.applicationCategoryIds" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>

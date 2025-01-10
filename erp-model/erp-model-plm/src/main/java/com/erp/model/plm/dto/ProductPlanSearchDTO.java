@@ -82,5 +82,5 @@ public class ProductPlanSearchDTO extends SortDTO {
     /**
      * 应用分类id
      */
-    private List<String> applicationCategoryId;
+    private List<String> applicationCategoryIds;
 }
