@@ -131,23 +131,6 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     oldEntity = listingInfoService.getById(listDto.get(0).getListingId());
                 }
             }
-            // 亚马逊保存FNSKU
-            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform()) && StringUtils.isNotBlank(dto.getPlatformSkuNo())){
-                ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
-                if (null == shopInfo){
-                    ServiceException.runError("【listing消费】店铺信息不存在:"+ dto.getShopId());
-                }
-
-                // 查询关联的FNSKU
-                // 根据Msku和仓库ID
-                List<FbaInventoryEntity> fbaInventoryEntityList =  FeignQuery.create(FbaInventoryEntity.class)
-                        .eq(FbaInventoryEntity::getWarehouseId, shopInfo.getWarehouseId())
-                        .eq(FbaInventoryEntity::getMsku, dto.getPlatformSkuNo())
-                        .list();
-
-                FbaInventoryEntity fbaInventoryEntity = fbaInventoryEntityList.stream().findFirst().orElse(null);
-                dto.setPlatformFnSku(null == fbaInventoryEntity ? "" : fbaInventoryEntity.getFnSku());
-            }
 
             // 转换
             if(dto.getMatchResult() != null){
