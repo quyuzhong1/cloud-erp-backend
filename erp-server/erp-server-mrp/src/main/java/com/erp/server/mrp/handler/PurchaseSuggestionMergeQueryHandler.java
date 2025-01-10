@@ -15,6 +15,15 @@ public class PurchaseSuggestionMergeQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if("isPush".equals(field) && (Boolean) value){
+            return "EXISTS(select 1 from foreign_purchase_application_detail, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'id' = psm.id)";
+        }
+        if("isPush".equals(field) && !(Boolean) value){
+            return "not EXISTS(select 1 from foreign_purchase_application_detail, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'id' = psm.id)";
+        }
+        if("purchaseApplicationCode".equals(field)){
+            return "psm.id in (select jsonb_array_elements(source_json)->>'id' from foreign_purchase_application_detail, jsonb_array_elements(source_json) AS elem where is_deleted = false and elem ->>'code' "+compareCodeSplicingValueSql+")";
+        }
         if ("tab".equals(field)) {
             return getTabSql(value);
         }

@@ -97,10 +97,6 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Autowired
     private HistoryImportRecordService historyImportRecordService;
 
-
-    @Autowired
-    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
-
     @Autowired
     private PurchaseSuggestSysService purchaseSuggestSysService;
 
@@ -636,11 +632,11 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     public List<PurchaseSuggestMergeDTO.MergeFrameDTO> viewMergeFrame(String id) {
         PurchaseSuggestMergeEntity old = this.getById(id);
-        if (ObjectUtil.isEmpty(old) || !old.getIsMerge()) {
+        if (ObjectUtil.isEmpty(old) || Boolean.TRUE.equals(!old.getIsMerge())) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
         //查询独立采购数据
-        List<String> sourceIdList = old.getSourceIdJson().stream().map(obj -> obj.toString()).collect(Collectors.toList());
+        List<String> sourceIdList = old.getSourceIdJson().stream().map(Object::toString).collect(Collectors.toList());
         List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList = this.listIndependentBySourceIdList(sourceIdList);
         if (CollUtil.isEmpty(purchaseSuggestMergeList)) {
             return Collections.emptyList();
@@ -896,7 +892,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 childDTO.setSourceIdJson(listDTO.getSourceIdJson());
 
                 //是否是组合品
-                long count = bomChildrenSkuList.stream().filter(obj -> StrUtil.equals(obj.getBomVersion(), listDTO.getBomVersion()) && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())).count();
+                long count = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion()) && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())).count();
                 childDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
 
                 //采购申请
