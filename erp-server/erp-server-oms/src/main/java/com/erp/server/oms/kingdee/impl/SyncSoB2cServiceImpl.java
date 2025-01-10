@@ -140,8 +140,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         if (ObjectUtil.isNotEmpty(shopInfo)) {
             String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
             shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
-            shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
-            shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
             DictCurrencyEntity dictCurrencyEntity = dictCurrencyEntities.stream().filter(req -> req.getId().equals(shopInfo.getTradeCurrency())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                 shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
@@ -155,6 +153,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         String finalCustomerId = customerId;
         CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(finalCustomerId)).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(customerInfo)) {
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
             BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
                 shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
@@ -166,7 +166,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
                     shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
-                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getName());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }
         }

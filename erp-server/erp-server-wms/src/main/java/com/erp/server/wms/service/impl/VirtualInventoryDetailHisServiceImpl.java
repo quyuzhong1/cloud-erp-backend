@@ -96,6 +96,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                 //添加虚拟仓明细每日库存
                 this.addVirtualInventoryDetailHis(localDate);
             } catch (Exception e) {
+                log.error("生成结余失败，date = {},msg = {}",localDate,e.getMessage());
                 sendWarnMsg(localDate);
             }
         }

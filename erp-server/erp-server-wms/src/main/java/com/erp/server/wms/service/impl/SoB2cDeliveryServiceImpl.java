@@ -1299,36 +1299,52 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public Boolean generateB2cSoOutstock(SoB2cDeliveryEntity entity) {
-        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getSourceId());
-        generateB2cDTO.setSourceId(entity.getId());
-        generateB2cDTO.setSourceCode(entity.getCode());
-        generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
-        generateB2cDTO.setBatchNo(entity.getBatchNo());
-        List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(entity.getId()));
-        List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
-        LinkedList<SoOutstockDetailDTO.AddDTO> newDetailList = new LinkedList<>();
-        for (PickingListsDTO.SourceView view : views) {
-            SoB2cDeliveryDetailEntity detailEntity = deliveryDetailList.stream().filter(v -> v.getId().equals(view.getSourceDetailId()))
-                    .findFirst().orElse(new SoB2cDeliveryDetailEntity());
-            SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
-                    .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
-            SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
-            addDTO.setWarehouseLocation(Objects.isNull(entity.getBatchNo()) ? view.getWarehouseLocation() : "");
-            addDTO.setSkuNo(view.getSkuNo());
-            addDTO.setSkuId(view.getSkuId());
-            addDTO.setActualQty(view.getQty());
-            addDTO.setPlanQty(view.getQty());
-            addDTO.setSourceDetailId(detailEntity.getId());
-            newDetailList.add(addDTO);
+        try {
+            SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getSourceId());
+            generateB2cDTO.setSourceId(entity.getId());
+            generateB2cDTO.setSourceCode(entity.getCode());
+            generateB2cDTO.setSourceType(SourceTypeEnum.SO_B2C_DELIVERY.getCode());
+            generateB2cDTO.setBatchNo(entity.getBatchNo());
+            List<SoB2cDeliveryDetailEntity> deliveryDetailList = soB2cDeliveryDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+            List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(entity.getId()));
+            List<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
+            LinkedList<SoOutstockDetailDTO.AddDTO> newDetailList = new LinkedList<>();
+            for (PickingListsDTO.SourceView view : views) {
+                SoB2cDeliveryDetailEntity detailEntity = deliveryDetailList.stream().filter(v -> v.getId().equals(view.getSourceDetailId()))
+                        .findFirst().orElse(new SoB2cDeliveryDetailEntity());
+                SoOutstockDetailDTO.AddDTO dto = detailList.stream().filter(d -> d.getSoDetailId().equals(detailEntity.getSourceDetailId()))
+                        .findFirst().orElse(new SoOutstockDetailDTO.AddDTO());
+                SoOutstockDetailDTO.AddDTO addDTO = BeanMapperUtils.map(SoOutstockDetailDTO.AddDTO.class, dto);
+                addDTO.setWarehouseLocation(Objects.isNull(entity.getBatchNo()) ? view.getWarehouseLocation() : "");
+                addDTO.setSkuNo(view.getSkuNo());
+                addDTO.setSkuId(view.getSkuId());
+                addDTO.setActualQty(view.getQty());
+                addDTO.setPlanQty(view.getQty());
+                addDTO.setSourceDetailId(detailEntity.getId());
+                newDetailList.add(addDTO);
+            }
+            generateB2cDTO.setDetailList(newDetailList);
+            if(entity.getDeliveryTime() == null){
+                throw new ServiceException("发货单发货时间不能为空");
+            }
+            //重试时需要按照发货单发货时间扣减
+            generateB2cDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
+            return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+        }catch (Exception e){
+            String soB2cId = entity.getSourceId();
+            String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+            String paramJson = JSONUtil.toJsonStr(entity);
+            String message = e.getMessage();
+            log.error("创建B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", soB2cId, paramJson, message);
+            SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+            addError.setType(type);
+            addError.setMainId(soB2cId);
+            addError.setMessage(message);
+            addError.setParamJson(paramJson);
+            soB2cFeign.addSoB2cError(addError);
+            return Boolean.FALSE;
         }
-        generateB2cDTO.setDetailList(newDetailList);
-        if(entity.getDeliveryTime() == null){
-            throw new ServiceException("发货单发货时间不能为空");
-        }
-        //重试时需要按照发货单发货时间扣减
-        generateB2cDTO.setBillDate(entity.getDeliveryTime().toLocalDate());
-        return soOutstockService.generateB2cSoOutstock(generateB2cDTO);
+
     }
 
     @Override

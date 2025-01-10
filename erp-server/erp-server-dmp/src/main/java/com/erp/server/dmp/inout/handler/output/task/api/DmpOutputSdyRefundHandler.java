@@ -207,12 +207,11 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
 
                     if (CollectionUtils.isNotEmpty(shop)) {
                         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
-                        sdyDTO.setShop_no(shopInfo.getId());
-                        sdyDTO.setShop_name(shopInfo.getName());
-
                         CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
 
                         if (ObjectUtil.isNotEmpty(customerInfo)) {
+                            sdyDTO.setShop_no(customerInfo.getCode());
+                            sdyDTO.setShop_name(customerInfo.getName());
                             //组织编码
                             List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
                             //销售组织
@@ -230,7 +229,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                                 List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                                 if (CollUtil.isNotEmpty(dictList)) {
                                     sdyDTO.setSubplatform_no(dictList.get(0).getValue());
-                                    sdyDTO.setSubplatform_name(dictList.get(0).getName());
+                                    sdyDTO.setSubplatform_name(dictList.get(0).getValue());
                                 }
                             }
                         }
@@ -272,8 +271,8 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
 
                 String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 sdyDTO.setSales_company_code(salesOrgCode);
-                sdyDTO.setShop_no(shopInfo.getId());
-                sdyDTO.setShop_name(shopInfo.getName());
+                sdyDTO.setShop_no(customerInfo.getCode());
+                sdyDTO.setShop_name(customerInfo.getName());
                 DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
                 if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                     sdyDTO.setTransaction_currency(dictCurrencyEntity.getName());
@@ -285,7 +284,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                     List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                     if (CollUtil.isNotEmpty(dictList)) {
                         sdyDTO.setSubplatform_no(dictList.get(0).getValue());
-                        sdyDTO.setSubplatform_name(dictList.get(0).getName());
+                        sdyDTO.setSubplatform_name(dictList.get(0).getValue());
                     }
                 }
             }

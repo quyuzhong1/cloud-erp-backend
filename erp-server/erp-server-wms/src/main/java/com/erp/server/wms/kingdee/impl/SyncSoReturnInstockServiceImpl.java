@@ -103,10 +103,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
             shudiyunB2cOrderDTO.setPlatform_name(platformName);
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 
-        shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
-        shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
+
         shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNoInitial);
         shudiyunB2cOrderDTO.setGoods_no(detailEntity.getSkuNo());
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
@@ -256,20 +257,20 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                         List<SoReturnEntity> receiveReturnList) {
         String rootNodeNoInitial = entity.getCode(); // 默认值是 entity.getCode()
 
-        if (SourceTypeEnum.SO_RETURN.getCode().equals(entity.getSourceType())) {
-            SoReturnEntity soReturnEntity = soReturnEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                rootNodeNoInitial = soReturnEntity.getCode();
-            }
-        } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            String receiveSourceId = soReturnReceiveEntityList.stream().filter(req -> req.getId().equals(entity.getSourceId())).map(SoReturnReceiveEntity::getSourceId).findFirst().orElse("");
-            if (CharSequenceUtil.isNotBlank(receiveSourceId)) {
-                SoReturnEntity soReturnEntity = receiveReturnList.stream().filter(req -> req.getId().equals(receiveSourceId)).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(soReturnEntity)) {
-                    rootNodeNoInitial = soReturnEntity.getCode();
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getType())) {
+            if (SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode().equals(entity.getSourceType())) {
+                rootNodeNoInitial = entity.getSourceCode();
+            } else if (SourceTypeEnum.WDT_RETURN_ORDER.getCode().equals(entity.getSourceType())) {
+                if (CharSequenceUtil.isNotBlank(entity.getPlatformOrderCode())) {
+                    rootNodeNoInitial = entity.getPlatformOrderCode();
+                } else {
+                    rootNodeNoInitial = entity.getSourceId();
                 }
+            } else if (SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(entity.getSourceType())) {
+                rootNodeNoInitial = entity.getSourceId();
             }
         }
+
         return rootNodeNoInitial;
     }
 

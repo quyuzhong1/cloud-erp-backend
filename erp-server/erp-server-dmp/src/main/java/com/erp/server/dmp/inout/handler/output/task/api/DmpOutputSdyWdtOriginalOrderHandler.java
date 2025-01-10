@@ -18,6 +18,7 @@ import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.enums.WdtSourcePlatformEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -32,6 +33,7 @@ import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -255,10 +257,18 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                             shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
                             shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
                         }
-                    }
+                        shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+                        shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
 
-                    shudiyunB2cOrderDTO.setShop_no(shopInfo.getId());
-                    shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
+                        String subPlatformType = customerInfo.getPlatformType();
+                        if(StringUtils.isNotBlank(subPlatformType)) {
+                            List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                            if(CollUtil.isNotEmpty(dictList)) {
+                                shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                                shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
+                            }
+                        }
+                    }
                     DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
                     if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                         shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());

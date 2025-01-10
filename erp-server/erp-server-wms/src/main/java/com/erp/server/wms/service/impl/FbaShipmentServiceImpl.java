@@ -60,7 +60,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1821,5 +1820,13 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             list.add(searchResultDTO);
         }
         return list;
+    }
+
+    @Override
+    public List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku) {
+        if (Objects.isNull(reportMonth)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByReceiveAndReportMonth(reportMonth,shipmentCode,asin,msku);
     }
 }

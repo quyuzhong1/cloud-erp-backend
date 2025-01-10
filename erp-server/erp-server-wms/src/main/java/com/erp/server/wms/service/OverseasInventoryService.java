@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 海外仓库存 服务类
@@ -73,4 +75,11 @@ public interface OverseasInventoryService extends SuperService<OverseasInventory
      * 导出
      */
     PagingVO<OverseasInventoryDTO.ListDTO> exportOverseasInventory(PagingDTO<OverseasInventoryDTO.ExportDTO> dto);
+
+    /**
+     * 根据sku和仓库获取三方仓库存列表
+     * @param queryDTO
+     * @return
+     */
+    List<OverseasInventoryEntity> listBySkuAndWarehouseCode(OverseasInventoryDTO.QueryDTO queryDTO);
 }
