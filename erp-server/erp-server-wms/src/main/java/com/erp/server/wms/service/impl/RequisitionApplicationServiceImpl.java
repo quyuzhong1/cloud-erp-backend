@@ -979,6 +979,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //待处理撤销
         if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus());
+            List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Arrays.asList(id));
+            detailEntityList.forEach(v->{
+                v.setFromVirtualWarehouseId("");
+                v.setFromVirtualWarehouseName("");
+            });
+            //清空虚拟仓
+            requisitionApplicationDetailService.updateBatchById(detailEntityList);
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus())) {
             pickingListsService.exist(id);
             //处理中撤销
