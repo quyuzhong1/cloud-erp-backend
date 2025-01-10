@@ -11,7 +11,9 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -91,7 +93,17 @@ public class MergePackageDeliveryConsumer implements RocketMQListener<String> {
         if (null != retryCountObj) {
             retryCount = (Integer) retryCountObj;
             if (retryCount > 200) {
-                log.warn("【组包处理消费】销售单【{}】重试次数超过100终止消费", curDeliveryEntity.getSoCode());
+                String msg = CharSequenceUtil.format("【组包处理消费】销售单【{}】重试次数超过100终止消费", curDeliveryEntity.getSoCode());
+                log.warn(msg);
+                String soB2cId = curDeliveryEntity.getSourceId();
+                String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
+                String paramJson = JSONUtil.toJsonStr(curDeliveryEntity);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setMainId(soB2cId);
+                addError.setMessage(msg);
+                addError.setParamJson(paramJson);
+                soB2cFeign.addSoB2cError(addError);
                 return;
             }
             retryCount = retryCount + 1;

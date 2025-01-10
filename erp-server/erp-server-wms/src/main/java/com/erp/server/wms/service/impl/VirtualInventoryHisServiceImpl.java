@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.VirtualInventoryHisEntity;
 import com.erp.server.wms.mapper.VirtualInventoryHisMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,9 +68,13 @@ public class VirtualInventoryHisServiceImpl extends SuperServiceImpl<VirtualInve
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        List<VirtualInventoryHisEntity> oldList = Lists.newArrayList();
         List<String> virtualInventoryIdList = list.stream().map(VirtualInventoryHisDTO.AddDTO::getVirtualInventoryId).distinct().collect(Collectors.toList());
-        List<VirtualInventoryHisEntity> oldList =  baseMapper.listByVirtualInventoryIdList(virtualInventoryIdList,localDate.minusDays(1L));
-
+        List<List<String>> partitionIdList = Lists.partition(virtualInventoryIdList, 50000);
+        for(List<String> idList : partitionIdList) {
+            List<VirtualInventoryHisEntity> hisList =  baseMapper.listByVirtualInventoryIdList(idList,localDate.minusDays(1L));
+            oldList.addAll(hisList);
+        }
         for (VirtualInventoryHisDTO.AddDTO addDTO : list) {
             //传入时间减1
             addDTO.setDate(localDate.minusDays(1L));
