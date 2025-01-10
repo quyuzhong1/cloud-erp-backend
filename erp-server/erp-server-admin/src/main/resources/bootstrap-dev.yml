@@ -2,10 +2,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.12:8848
-        namespace: ${NACOS_NAMESPACE:dev-k8s}
+        server-addr: 172.16.100.60:30848
+        namespace: ${NACOS_NAMESPACE:dev}
       config:
-        server-addr: 172.16.100.12:8848
+        server-addr: 172.16.100.60:30848
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-sys.yml,druid-common.yml
