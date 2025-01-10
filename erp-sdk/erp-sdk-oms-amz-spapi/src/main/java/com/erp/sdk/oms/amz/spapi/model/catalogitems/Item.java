@@ -373,23 +373,20 @@ public class Item {
         if (AmazonIdentifiersTypeEnum.ASIN.equals(identifierType)){
             return this.getAsin();
         }
-        // 日本
-        if (AmazonIdentifiersTypeEnum.UPC.equals(identifierType)){
-            ItemIdentifiersByMarketplace identifiersByMarketplace = this.getIdentifiers()
+        ItemIdentifiersByMarketplace identifiersByMarketplace = this.getIdentifiers()
                     .stream()
                     .filter(e -> marketplaceEnum.getMarketplaceId().equalsIgnoreCase(e.getMarketplaceId()))
                     .findFirst()
                     .orElse(null);
-            if (null != identifiersByMarketplace){
+        if (null != identifiersByMarketplace){
                 ItemIdentifier itemIdentifier = identifiersByMarketplace.getIdentifiers()
                         .stream()
-                        .filter(e -> "UPC".equalsIgnoreCase(e.getIdentifierType()))
+                        .filter(e -> identifierType.getCode().equalsIgnoreCase(e.getIdentifierType()))
                         .findFirst()
                         .orElse(null);
                 if (null != itemIdentifier){
                     return itemIdentifier.getIdentifier();
                 }
-            }
         }
         return this.getAsin();
     }

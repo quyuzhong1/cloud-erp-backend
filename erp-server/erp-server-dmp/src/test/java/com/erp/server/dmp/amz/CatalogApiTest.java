@@ -81,10 +81,10 @@ public class CatalogApiTest {
 //        List<String> marketplaceIds = Arrays.asList("ATVPDKIKX0DER");
 //        List<String> identifiers = Arrays.asList("1963-US7");
 //        String identifiersType = "SKU";
-//        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.FR;
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.JP;
-//        String shopId = "1735479610549735425";
-        String shopId = "1735553314990329858";
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.FR;
+        String shopId = "1735512797405515786";
+//        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.JP;
+//        String shopId = "1735553314990329858";
         List<String> marketplaceIds = Arrays.asList(marketplaceEnum.getMarketplaceId());
 //        List<String> identifiers = Arrays.asList(
 //                "UK0673-FBA",
@@ -156,7 +156,9 @@ public class CatalogApiTest {
 //                );
         String identifiersType = "EAN";
         List<String> identifiers = Arrays.asList(
-                "708214686903"
+                "6975357304948",
+                "6975357305174",
+                "6975357306331"
         );
         List<List<String>> partition = Lists.partition(identifiers, 20);
 

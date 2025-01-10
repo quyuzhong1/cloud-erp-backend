@@ -223,8 +223,8 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
     public boolean canUpdateDetail(Map<String, Object> mongoItem, AmazonMarketplaceEnum marketPlaceEnum) {
         String productIdType = mongoItem.getOrDefault("productIdType", "").toString();
         String status = mongoItem.getOrDefault("status", "").toString();
-//        if ("1".equalsIgnoreCase(productIdType) && AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(status)) {
-        if (AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(status)) {
+        if ("1".equalsIgnoreCase(productIdType) && AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(status)) {
+//        if (AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(status)) {
             //停售无法更新明细"
             return false;
         }
