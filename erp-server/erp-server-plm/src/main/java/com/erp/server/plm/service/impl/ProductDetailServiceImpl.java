@@ -6,7 +6,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -57,6 +56,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -72,6 +72,7 @@ import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
+import com.erp.server.plm.listener.ProductDetailUpdateExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
@@ -706,6 +707,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
             manySpecDetailById.setCategoryIdList(categoryIdList);
+            ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(manySpecDetailById.getApplicationCategoryId());
+            manySpecDetailById.setApplicationCategoryName(applicationCategory.getName());
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
         }
         //多规格产品明细信息
@@ -5278,6 +5281,45 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             entity.setBusinessId(productDetailEntity.getId());
             plmAttachmentService.save(entity);
         }
+    }
+
+    @Override
+    public void importProductUpdate(MultipartFile excelFile, HttpServletResponse response) {
+        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener();
+        try {
+            read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<ProductDetailUpdateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
+
+        List<ProductDetailUpdateExcelDTO> successList = excelListenerUtil.getSuccessList();
+
+//        //处理验证成功数据
+//        handleImportSuccessList(successList, errorList);
+
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            StringBuilder sb = new StringBuilder();
+            String excelPath = "excel/productUpdateError.xlsx";
+            String name = "导入更新";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+        }
+
     }
 
     /**

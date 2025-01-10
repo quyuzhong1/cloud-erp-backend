@@ -451,7 +451,8 @@
                pi.sales_channel,
                pi.type,
                pi.iterate_ref_sku_id,
-               pi.iterate_ref_sku_no
+               pi.iterate_ref_sku_no,
+               pi.application_category_id
         FROM product_info pi
         WHERE pi.is_deleted = FALSE
           AND pi.id = #{productId}
