@@ -130,7 +130,7 @@ public class PurchaseSuggestMergeEntity extends BaseEntity<PurchaseSuggestMergeE
     @TableField("status")
     private String status;
     /**
-    * 计划采购量（计划修正值）
+    * 计划修正值
     */
     @TableField("plan_purchase_qty")
     private Integer planPurchaseQty;

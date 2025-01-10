@@ -14,6 +14,7 @@ import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
 import com.erp.model.mrp.vo.ReplenishmentSuggestionVO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,6 +39,11 @@ public class ReplenishmentResultDTO {
      * 补货明细表数据
      */
     private DetailDTO replenishmentDetail;
+    /**
+     * bom子件信息
+     */
+    private List<BomChildrenSkuDTO> bomSkuList;
+
     /**
      * FBA在途明细
      */
@@ -140,10 +146,13 @@ public class ReplenishmentResultDTO {
     private List<DeliverySuggestDTO> deliverySuggests;
 
     /**
-     * 建议采购
+     * 建议采购(源数据)
      */
     private List<PurchaseSuggestDTO> purchaseSuggests;
-
+    /**
+     * 建议采购（独立采购/合并采购数据）
+     */
+    private List<PurchaseSuggestDTO> purchaseSuggestMerges;
     /**
      * 最近建议明细
      */
@@ -886,7 +895,14 @@ public class ReplenishmentResultDTO {
     @Getter
     @Setter
     public static class DeliverySuggestDTO {
-
+        /**
+         * 断货时间
+         */
+        private LocalDate localDate;
+        /**
+         * 主键id
+         */
+        private String id;
         /**
          * 编码
          */
@@ -957,6 +973,7 @@ public class ReplenishmentResultDTO {
 
         public static DeliverySuggestDTO buildDeliverySuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType) {
             DeliverySuggestDTO dto = new DeliverySuggestDTO();
+            dto.setId(IdWorker.getIdStr());
             dto.setCode(code);
             dto.setDataType(createType);
             dto.setLogisticsDays(logisticsResult.getLogisticsDays());
@@ -998,6 +1015,10 @@ public class ReplenishmentResultDTO {
     @Getter
     @Setter
     public static class PurchaseSuggestDTO {
+        /**
+         * 主键id
+         */
+        private String id;
         /**
          * 编码
          */
@@ -1063,20 +1084,26 @@ public class ReplenishmentResultDTO {
          * skuid
          */
         private String skuId;
+        /**
+         * bom信息
+         */
+        private String bomVersion;
 
-        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType) {
+        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,String sourceId) {
             PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
+            dto.setId(IdWorker.getIdStr());
             dto.setCode(code);
             dto.setDataType(createType);
             dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
             dto.setLogisticsDays(logisticsResult.getLogisticsDays());
-            dto.setSourceId(replenishmentResultDTO.getReplenishment().getId());
-            dto.setSourceType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            dto.setSourceId(sourceId);
+            dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
             dto.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             dto.setPlatformType(replenishmentResultDTO.getReplenishment().getPlatformType());
             dto.setPlatform(replenishmentResultDTO.getReplenishment().getPlatform());
             dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
             dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
+            dto.setSourceId(sourceId);
             return dto;
         }
 

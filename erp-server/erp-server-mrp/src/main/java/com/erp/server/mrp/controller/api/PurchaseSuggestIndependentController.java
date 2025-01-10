@@ -12,8 +12,10 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.service.PurchaseSuggestIndependentService;
+import com.erp.server.mrp.service.PurchaseSuggestMergeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,6 +40,9 @@ public class PurchaseSuggestIndependentController extends BaseController {
 
     @Resource
     private PurchaseSuggestIndependentService purchaseSuggestIndependentService;
+
+    @Resource
+    private PurchaseSuggestMergeService purchaseSuggestMergeService;
 
     /**
      * 分页查询
@@ -65,6 +70,7 @@ public class PurchaseSuggestIndependentController extends BaseController {
         List<PurchaseSuggestIndependentDTO.ListDTO> paging = purchaseSuggestIndependentService.list(params);
         return success(paging);
     }
+
 
     /**
      * 导出采购建议

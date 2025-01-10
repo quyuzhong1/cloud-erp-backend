@@ -33,7 +33,9 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -1082,6 +1084,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         if (CollectionUtils.isEmpty(detailsIds)) {
             return Collections.emptyList();
         }
+        //查询建议下所有sku的bom信息
+        List<String> skuIdList = entities.stream().map(ReplenishmentSuggestionEntity::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+
         List<OverseasProviderWarehouseDTO> overseasProviderWarehouseList = BeanMapperUtils.copyList(OverseasProviderWarehouseDTO.class, FeignQuery.list(OverseasProviderWarehouseEntity.class));
         LocalDate caleStartDate = calculationDate.minusDays(361);
         LocalDate caleEndDate = calculationDate.minusDays(1);
@@ -1100,6 +1106,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                     if (ObjectUtils.isEmpty(detail)) {
                         return null;
                     }
+                    List<BomChildrenSkuDTO> bomSkuList = bomChildrenSkuList.stream()
+                            .filter(e -> CharSequenceUtil.equals(e.getSkuId(), v.getSkuId()) && CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()))
+                            .collect(Collectors.toList());
+                    resultDTO.setBomSkuList(bomSkuList);
                     Map<LocalDate, Integer> salesHistoryDTOList = listedSalesHistory.stream()
                             .filter(e -> e.getShopSkuIds().equals(v.getShopId() + "-" + v.getSkuId()))
                             .collect(Collectors.toMap(ReplenishmentResultDTO.SalesHistoryDTO::getDate, ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty, Integer::sum));

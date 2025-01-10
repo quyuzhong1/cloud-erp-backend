@@ -111,9 +111,28 @@
         <where>
             ${params.sqlMap.default}
             and psm.is_deleted = false
-            <if test="params.isMerge != null and params.isMerge != ''">
+            <if test="params.isMerge != null">
                 and psm.is_merge = #{params.isMerge}
             </if>
+        </where>
+    </select>
+
+    <!-- 根据来源id集合查询 -->
+    <select id="listIndependentBySourceIdList"
+            resultType="com.erp.model.mrp.entity.PurchaseSuggestMergeEntity">
+        select
+            <include refid="Base_Column_List"/>
+        from purchase_suggest_merge psm
+        left join purchase_suggest_sys pss on psm.id = pss.source_id and pss.is_deleted = false and psm.data_type = 'auto'
+        <where>
+            psm.is_deleted = false and psm.is_merge = false  AND EXISTS (
+            SELECT 1
+            FROM jsonb_array_elements_text(psm.source_id_json) AS elem
+            WHERE elem IN
+            <foreach item="item" collection="sourceIdList" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+            );
         </where>
     </select>
 
