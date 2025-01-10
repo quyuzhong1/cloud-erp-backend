@@ -304,6 +304,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private Boolean favorite;
 
+        /**
+         * 编码
+         */
+        private String code;
+
     }
 
     @Getter
