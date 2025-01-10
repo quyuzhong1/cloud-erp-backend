@@ -323,17 +323,6 @@ public class Item {
                 .filter(e-> e.getMarketplaceId().equalsIgnoreCase(marketPlaceId))
                 .map(e-> StrUtil.format("{}/{}", e.getColor(), e.getSize()).replace("null", "-"))
                 .collect(Collectors.joining("\n"));
-//        ItemAttributes attributes = this.getAttributes();
-//        if (null == attributes) {
-//            return "";
-//        }
-//        Map<String, Object> tempMap = BeanUtil.beanToMap(attributes);
-//        if (!tempMap.isEmpty()) {
-//            return tempMap.entrySet().stream()
-//                    .map(e -> StrUtil.format("{}:{}", e.getKey(), e.getValue().toString()))
-//                    .collect(Collectors.joining(","));
-//        }
-//        return "";
     }
 
     /**

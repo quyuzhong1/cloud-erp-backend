@@ -558,6 +558,10 @@ public enum RocketMqTagEnum {
      * 异步获取平台打印面单标签
      */
     ASYNC_GET_PLATFORM_LABEL_TAG(10001, RocketMqTagEnum.SYNC_TMS,"async_get_platform_label_tag"),
+    /**
+     * 异步更新物流获取记录
+     */
+    ASYNC_GET_TRACK123_LOGISTICS_TRACK(10002, RocketMqTagEnum.SYNC_TMS, "async_get_logistics_track"),
 
     //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
     /**
