@@ -206,6 +206,7 @@ public class InventoryServiceImpl implements InventoryService {
                 detailDTO.setEstimatedPutAwayDate(viewDTO.getPlanDeliveryDate());
             }
         }
+        dto.setLocalInTransitList(localInTransitDetails);
     }
 
     /**
