@@ -2,9 +2,9 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: deploy-nacos-0.deploy-nacos-svc.dev.svc.cluster.local
+        server-addr: 172.16.100.60:30848
         namespace: test
       config:
-        server-addr: deploy-nacos-0.deploy-nacos-svc.dev.svc.cluster.local
+        server-addr: 172.16.100.60:30848
         namespace: test
         shared-configs: common.yml,erp-auth.yml
