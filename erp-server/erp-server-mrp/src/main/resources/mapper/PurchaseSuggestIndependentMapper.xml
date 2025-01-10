@@ -21,9 +21,6 @@
        <result column="estimate_instock_date" property="estimateInstockDate" />
        <result column="estimate_sales_date" property="estimateSalesDate" />
        <result column="purchase_cost" property="purchaseCost" />
-       <result column="invalid_status" property="invalidStatus" />
-       <result column="invalid_remark" property="invalidRemark" />
-       <result column="source_id" property="sourceId" />
        <result column="source_type" property="sourceType" />
     </resultMap>
 

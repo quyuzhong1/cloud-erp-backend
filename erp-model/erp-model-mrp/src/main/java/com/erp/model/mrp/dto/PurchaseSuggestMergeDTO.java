@@ -301,11 +301,6 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private JSONArray sourceIdJson;
 
         /**
-         * 来源id，备货建议id
-         */
-        private String sourceId;
-
-        /**
          * bom版本
          */
         private String bomVersion;

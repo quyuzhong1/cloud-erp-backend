@@ -7,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -111,7 +112,7 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @author will
      * @date 2024/10/31 9:26
      */
-    void generatePurchaseSuggestMerge (String purchaseSuggestId);
+    void generatePurchaseSuggestData(ReplenishmentResultDTO replenishmentResult, List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests);
     /**
      * 导入采购计划合并数据
      * @author will
@@ -124,12 +125,11 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * 根据平台和sku查询
      * @author will
      * @date 2024/11/6 10:34
-     * @param platformTypeList
      * @param platformList
      * @param skuIdList
      * @return List<PurchaseSuggestMergeEntity>
      */
-    List<PurchaseSuggestMergeEntity> listByPlatformListAndSkuIdList(List<String> platformTypeList, List<String> platformList, List<String> skuIdList);
+    List<PurchaseSuggestMergeEntity> listByPlatformListAndSkuIdList(List<String> platformList, List<String> skuIdList);
     /**
      * 查询采购bom信息
      * @author will

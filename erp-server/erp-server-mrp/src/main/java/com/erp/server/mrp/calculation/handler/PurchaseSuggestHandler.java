@@ -1,10 +1,16 @@
 package com.erp.server.mrp.calculation.handler;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.enums.*;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
+import com.erp.server.mrp.convert.PurchaseSuggestConverter;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -14,11 +20,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.BusinessNoTypeEnum.CODE_P;
@@ -70,69 +72,83 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = replenishmentResultDTO.getSalesEstimates();
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         //发货信息
-        Map<LocalDate, ReplenishmentResultDTO.DeliverySuggestDTO> deliveryMap = replenishmentResultDTO.getDeliverySuggests().stream().collect(Collectors.toMap(ReplenishmentResultDTO.DeliverySuggestDTO::getLocalDate, Function.identity()));
+        Map<LocalDate, List<ReplenishmentResultDTO.DeliverySuggestDTO>> deliveryMap = replenishmentResultDTO.getDeliverySuggests().stream().collect(Collectors.groupingBy(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestPurchaseDate));
         //处理连续断货数据
         List<LocalDate> dates = rptOutOfStocks.stream().map(ReplenishmentResultDTO.RptOutOfStockDTO::getStartDate).distinct().collect(Collectors.toList());
-        List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = dates.parallelStream()
-                .map(localDate -> {
+        List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = deliveryMap.entrySet().parallelStream()
+                .flatMap(entry -> {
                     String code = docNoGenHelper.generateCode(CODE_P);
+                    List<String> deliverySuggestIdList = entry.getValue().stream().map(ReplenishmentResultDTO.DeliverySuggestDTO::getId).distinct().collect(Collectors.toList());
                     //查询关联的发货计划
-                    ReplenishmentResultDTO.DeliverySuggestDTO deliverySuggestDTO = deliveryMap.get(localDate);
-                    ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO, ExecutionTypeEnum.AUTO.getCode(),deliverySuggestDTO.getId());
+                    ReplenishmentResultDTO.PurchaseSuggestDTO parentSuggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO, ExecutionTypeEnum.AUTO.getCode(),deliverySuggestIdList);
+                    //根据suggestDTO判断是否需要拆分生成多条建议
+                    List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggestList = generateMultipleSuggest(replenishmentResultDTO, parentSuggestDTO);
 
-                    if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
-                            || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-                        //建议采购日期（本地发FBA） = 断货日期 -（审批时长 + 采购交期 + 供应商发货时效 + 质检天数 + 采购频率 + 本地发FBA时效 + FBA入库时间 + 本地仓发货频率 + FBA安全天数）
-                        //建议采购日期（本地发海外） = 断货日期 -（审批时长 + 采购交期 + 供应商发货时效 + 质检天数 + 采购频率 + 本地发海外时效 + 海外仓入库时间 + 本地仓发货频率 + 海外仓安全天数）
-                        LocalDate suggestDeliveryDate = localDate.minusDays(stockUpResult.getPurchaseApproveDays())
-                                .minusDays(stockUpResult.getProductionDays())
-                                .minusDays(stockUpResult.getSupplierDeliveryDays())
-                                .minusDays(stockUpResult.getQcDays())
-                                .minusDays(stockUpResult.getPurchaseCycleDays())
-                                .minusDays(logisticsResult.getLogisticsDays())
-                                .minusDays(stockUpResult.getInstockDays())
-                                .minusDays(logisticsResult.getLogisticsCycleDays())
-                                .minusDays(stockUpResult.getSafeDays());
-                        suggestDeliveryDate = suggestDeliveryDate.isBefore(now) ? now : suggestDeliveryDate;
-                        suggestDTO.setSuggestPurchaseDate(suggestDeliveryDate);
-                        //预计可售日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发FBA时效 + FBA入库时间）
-                        //预计可售日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发海外时效 + 海外仓入库时间）
-                        LocalDate estimateSalesDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
-                                .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays())
-                                .plusDays(logisticsResult.getLogisticsDays()).plusDays(stockUpResult.getInstockDays());
-                        suggestDTO.setEstimateSalesDate(estimateSalesDate);
-                        //预计入库日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数+ 采购频率）
-                        //预计入库日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数+ 采购频率）
-                        LocalDate estimateInstockDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
-                                .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays()).plusDays(stockUpResult.getPurchaseCycleDays());
-                        suggestDTO.setEstimateInstockDate(estimateInstockDate);
-                        //建议采购量
-                        LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
-                        int suggestDeliveryQty = getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now);
-                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
-                        suggestDTO.setSuggestPurchaseQty(Math.max(0, suggestDeliveryQty - inventory));
+                    for (ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO : purchaseSuggestList) {
+                        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
+                                || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
+                            suggestDTO.setSuggestPurchaseDate(entry.getKey());
+                            //预计可售日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发FBA时效 + FBA入库时间）
+                            //预计可售日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发海外时效 + 海外仓入库时间）
+                            LocalDate estimateSalesDate = suggestDTO.getSuggestPurchaseDate().plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
+                                    .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays())
+                                    .plusDays(logisticsResult.getLogisticsDays()).plusDays(stockUpResult.getInstockDays());
+                            suggestDTO.setEstimateSalesDate(estimateSalesDate);
+                            //预计入库日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数+ 采购频率）
+                            //预计入库日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数+ 采购频率）
+                            LocalDate estimateInstockDate = suggestDTO.getSuggestPurchaseDate().plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
+                                    .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays()).plusDays(stockUpResult.getPurchaseCycleDays());
+                            suggestDTO.setEstimateInstockDate(estimateInstockDate);
+                            //建议采购量
+                            LocalDate calcDate = suggestDTO.getSuggestPurchaseDate().plusDays(Math.min(agingDays, days));
+                            int suggestDeliveryQty =  getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now);
+                            //按是否存在bom重新赋值
+                            suggestDeliveryQty = CharSequenceUtil.isBlank(suggestDTO.getBomVersion()) ? suggestDeliveryQty : suggestDeliveryQty * suggestDTO.getQuantity();
+                            suggestDTO.setSuggestDeliveryQty(suggestDeliveryQty);
+                            int inventory = inventoryService.getInventoryByPurchaseSuggest(suggestDTO,replenishmentResultDTO, calcDate, purchaseVolumeInventory);
+                            suggestDTO.setInventoryQty(inventory);
+                            suggestDTO.setSuggestPurchaseQty(Math.max(0, suggestDeliveryQty - inventory));
+                        }
+                        //采购成本 = 采购单价 * 建议采购量，取一供 ＞ 二供
+                        if (!ObjectUtils.isEmpty(replenishmentResultDTO.getPurchasePrice())) {
+                            suggestDTO.setPurchaseCost(replenishmentResultDTO.getPurchasePrice().multiply(BigDecimal.valueOf(suggestDTO.getSuggestPurchaseQty())));
+                        }
                     }
-                    if (CfgRulePlatformTypeEnum.B2B.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
-                            || CfgRulePlatformTypeEnum.INTERNAL.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
-                        //建议采购日期（本地备货） = 断货日期 -（审批时长 + 采购交期 + 供应商发货时效 + 质检天数 + 采购频率 + 本地备货安全天数）
-                        LocalDate suggestDeliveryDate = getSuggestDeliveryDate(localDate, stockUpResult, now);
-                        suggestDTO.setSuggestPurchaseDate(suggestDeliveryDate);
-                        //建议采购量
-                        LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
-                        int inventory = inventoryService.getInventory(replenishmentResultDTO, calcDate, purchaseVolumeInventory, cfgRuleStrategyDTO.getWarehouseResult());
-                        suggestDTO.setSuggestPurchaseQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - inventory));
-                        //预计入库日期 （本地备货）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数+ 采购频率）
-                        LocalDate estimateInstockDate = suggestDeliveryDate.plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
-                                .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays()).plusDays(stockUpResult.getPurchaseCycleDays());
-                        suggestDTO.setEstimateInstockDate(estimateInstockDate);
-                    }
-                    //采购成本 = 采购单价 * 建议采购量，取一供 ＞ 二供
-                    if (!ObjectUtils.isEmpty(replenishmentResultDTO.getPurchasePrice())) {
-                        suggestDTO.setPurchaseCost(replenishmentResultDTO.getPurchasePrice().multiply(BigDecimal.valueOf(suggestDTO.getSuggestPurchaseQty())));
-                    }
-                    return suggestDTO;
+                    return purchaseSuggestList.stream();
                 }).filter(v -> v.getSuggestPurchaseQty() > 0).collect(Collectors.toList());
         replenishmentResultDTO.setPurchaseSuggests(purchaseSuggests);
+    }
+
+
+    /**
+     * 拆分建议数据
+     * @Auther will
+     * @Date 2025/1/10 09:05
+     * @param replenishmentResultDTO
+     * @return List<ReplenishmentResultDTO.PurchaseSuggestDTO>
+     */
+    private List<ReplenishmentResultDTO.PurchaseSuggestDTO> generateMultipleSuggest(ReplenishmentResultDTO replenishmentResultDTO,ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO) {
+        List<BomChildrenSkuDTO> bomSkuList = replenishmentResultDTO.getBomSkuList();
+        //无bom则返回
+        if (CollUtil.isEmpty(bomSkuList)) {
+            return Collections.singletonList(suggestDTO);
+        }
+        //无配置或者不拆分也直接返回
+        CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = replenishmentResultDTO.getCfgRuleStrategy().getOrderResult();
+        if (ObjUtil.isEmpty(orderResult) || !orderResult.getIsSplit()) {
+            return Collections.singletonList(suggestDTO);
+        }
+        List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = new ArrayList<>();
+        for (BomChildrenSkuDTO bomSku : bomSkuList) {
+            ReplenishmentResultDTO.PurchaseSuggestDTO childSuggestDTO = PurchaseSuggestConverter.INSTANCE.copyPurchaseSuggest(suggestDTO);
+            childSuggestDTO.setId(IdWorker.getIdStr());
+            childSuggestDTO.setSkuId(bomSku.getSkuId());
+            childSuggestDTO.setSkuNo(bomSku.getSkuNo());
+            childSuggestDTO.setParentSkuId(bomSku.getParentSkuId());
+            childSuggestDTO.setQuantity(bomSku.getQuantity());
+            purchaseSuggests.add(childSuggestDTO);
+        }
+        return purchaseSuggests;
     }
 
     /**
