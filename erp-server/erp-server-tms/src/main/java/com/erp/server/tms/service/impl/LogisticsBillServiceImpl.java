@@ -212,15 +212,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean remove(LogisticsBillDTO.RemoveDTO dto) {
         List<String> outstockIdList = dto.getOutstockIdList();
         List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
         if (CollectionUtils.isNotEmpty(billEntityList)) {
-            List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
-            List<LogisticsBillEntity> logisticsBillEntityList = this.listByIds(ids);
+            List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList());
             //同步速递云运单
-            logisticsBillEntityList.forEach(req -> pushSdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
-
+            billEntityList.forEach(req -> pushSdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
             logisticsBillDetailService.removeByMainIds(ids,true);
             return this.removeByIds(ids);
         }
