@@ -12,6 +12,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -95,7 +96,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDetailEntity> implements SoDetailService {
 
-
+    @Resource
+    private CommonService commonService;
     @Resource
     private SoInfoService soInfoService;
 
@@ -184,11 +186,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.add(waitSubmit);
 
         //待审核
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         SoInfoDTO.TabListDTO waitApprove = new SoInfoDTO.TabListDTO();
         waitApprove.setSearchType(OmsConstant.WAIT_APPROVE);
-        int waitApproveCount = countList.stream().filter(a -> a.getType().equals(approveIngStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        //需要审核的业务ids
+        List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SO_INFO.getCode());
+        int waitApproveCount = 0;
+        if(CollectionUtils.isNotEmpty(businessIds)){
+            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(businessIds);
+            soInfoEntityList = soInfoEntityList.stream().filter(v->v.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)).collect(Collectors.toList());
+            waitApproveCount = soInfoEntityList.size();
+        }
         waitApprove.setCount(waitApproveCount);
         result.add(waitApprove);
 
