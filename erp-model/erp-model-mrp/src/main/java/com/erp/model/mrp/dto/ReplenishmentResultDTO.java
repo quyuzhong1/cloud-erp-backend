@@ -150,10 +150,6 @@ public class ReplenishmentResultDTO {
      */
     private List<PurchaseSuggestDTO> purchaseSuggests;
     /**
-     * 建议采购（独立采购/合并采购数据）
-     */
-    private List<PurchaseSuggestDTO> purchaseSuggestMerges;
-    /**
      * 最近建议明细
      */
     private List<RecentSuggestionDTO> recentSuggestions;
@@ -896,9 +892,9 @@ public class ReplenishmentResultDTO {
     @Setter
     public static class DeliverySuggestDTO {
         /**
-         * 断货时间
+         * 建议采购日期
          */
-        private LocalDate localDate;
+        private LocalDate suggestPurchaseDate;
         /**
          * 主键id
          */
@@ -1026,6 +1022,140 @@ public class ReplenishmentResultDTO {
         /**
          * 数据类型（auto系统，manual人工）
          */
+        private String dataType;
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
+        /**
+         * 库存数量（本地仓可用 + 本地仓待检  + 本地在途 + 预计采购）
+         */
+        private Integer inventoryQty;
+        /**
+         * 建议采购量
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+        /**
+         * 采购成本
+         */
+        private BigDecimal purchaseCost;
+        /**
+         * 来源id
+         */
+        private JSONArray sourceIdJson;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * skuid
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 父级SkuId
+         */
+        private String parentSkuId;
+        /**
+         * bom信息
+         */
+        private String bomVersion;
+        /**
+         * 用量
+         */
+        private Integer quantity;
+
+        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,List<String> deliverySuggestIdList) {
+            PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
+            dto.setId(IdWorker.getIdStr());
+            dto.setCode(code);
+            dto.setDataType(createType);
+            dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
+            dto.setLogisticsDays(logisticsResult.getLogisticsDays());
+            dto.setSourceIdJson(JSONUtil.parseArray(deliverySuggestIdList));
+            dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+            dto.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            dto.setPlatformType(replenishmentResultDTO.getReplenishment().getPlatformType());
+            dto.setPlatform(replenishmentResultDTO.getReplenishment().getPlatform());
+            dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
+            dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
+            dto.setSkuNo(replenishmentResultDTO.getReplenishment().getSkuNo());
+            return dto;
+        }
+
+        public static PurchaseSuggestEntity buildPurchaseSuggest(PurchaseSuggestDTO dto) {
+            PurchaseSuggestEntity entity = new PurchaseSuggestEntity();
+            entity.setCode(dto.getCode());
+            entity.setDataType(dto.getDataType());
+            entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
+            entity.setSuggestPurchaseQty(dto.getSuggestPurchaseQty());
+            entity.setSuggestPurchaseDate(dto.getSuggestPurchaseDate());
+            entity.setPlanPurchaseQty(entity.getSuggestPurchaseQty());
+            entity.setLogisticsMethod(dto.getLogisticsMethod());
+            entity.setLogisticsDays(dto.getLogisticsDays());
+            entity.setEstimateInstockDate(dto.getEstimateInstockDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setPurchaseCost(dto.getPurchaseCost());
+            entity.setSourceIdJson(dto.getSourceIdJson());
+            entity.setSourceType(dto.getSourceType());
+            entity.setPlatformType(dto.getPlatformType());
+            entity.setCurrency(dto.getCurrency());
+            entity.setPlatform(dto.getPlatform());
+            entity.setShopId(dto.getShopId());
+            entity.setSkuId(dto.getSkuId());
+            return entity;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class PurchaseSuggestMergeDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 数据类型（auto系统，manual人工）
+         */
         @TableField("data_type")
         private String dataType;
         /**
@@ -1084,50 +1214,6 @@ public class ReplenishmentResultDTO {
          * skuid
          */
         private String skuId;
-        /**
-         * bom信息
-         */
-        private String bomVersion;
-
-        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,String sourceId) {
-            PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
-            dto.setId(IdWorker.getIdStr());
-            dto.setCode(code);
-            dto.setDataType(createType);
-            dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
-            dto.setLogisticsDays(logisticsResult.getLogisticsDays());
-            dto.setSourceId(sourceId);
-            dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
-            dto.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
-            dto.setPlatformType(replenishmentResultDTO.getReplenishment().getPlatformType());
-            dto.setPlatform(replenishmentResultDTO.getReplenishment().getPlatform());
-            dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
-            dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
-            dto.setSourceId(sourceId);
-            return dto;
-        }
-
-        public static PurchaseSuggestEntity buildPurchaseSuggest(PurchaseSuggestDTO dto) {
-            PurchaseSuggestEntity entity = new PurchaseSuggestEntity();
-            entity.setCode(dto.getCode());
-            entity.setDataType(dto.getDataType());
-            entity.setSuggestPurchaseQty(dto.getSuggestPurchaseQty());
-            entity.setSuggestPurchaseDate(dto.getSuggestPurchaseDate());
-            entity.setPlanPurchaseQty(entity.getSuggestPurchaseQty());
-            entity.setLogisticsMethod(dto.getLogisticsMethod());
-            entity.setLogisticsDays(dto.getLogisticsDays());
-            entity.setEstimateInstockDate(dto.getEstimateInstockDate());
-            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
-            entity.setPurchaseCost(dto.getPurchaseCost());
-            entity.setSourceId(dto.getSourceId());
-            entity.setSourceType(dto.getSourceType());
-            entity.setPlatformType(dto.getPlatformType());
-            entity.setCurrency(dto.getCurrency());
-            entity.setPlatform(dto.getPlatform());
-            entity.setShopId(dto.getShopId());
-            entity.setSkuId(dto.getSkuId());
-            return entity;
-        }
     }
 
 

@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
@@ -786,11 +787,77 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult) {
+    public int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory) {
         return deliveryVolumeInventory.stream()
-                .map(code -> getInventoryByCode(code, replenishmentResultDTO, endDate, warehouseResult))
+                .map(code -> getInventoryByCode(code, replenishmentResultDTO, endDate))
                 .reduce(0, Math::addExact);
     }
+
+    @Override
+    public int getInventoryByPurchaseSuggest(ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO,ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory) {
+        return deliveryVolumeInventory.stream()
+                .map(code -> getInventoryByCode(suggestDTO,code, replenishmentResultDTO, endDate))
+                .reduce(0, Math::addExact);
+    }
+
+    /**
+     * @param code                   库存类型
+     * @param replenishmentResultDTO 建议
+     * @param endDate                结束时间
+     */
+    private int getInventoryByCode(ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO,String code, ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate) {
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
+        CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
+        //虚拟仓集合
+        List<String> virtualWarehouseIdList = warehouseResult.getLocalWarehouseList().stream()
+                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getVirtualWarehouseId).collect(Collectors.toList());
+        //实体仓集合
+        List<String> warehouseIdList = warehouseResult.getLocalWarehouseList().stream()
+                .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId).collect(Collectors.toList());
+
+        if (CfgRuleSuggestedAmountNodeEnum.LOCAL_USABLE_QTY.getCode().equals(code)) {
+            Integer inventoryQty;
+            if (Boolean.TRUE.equals(warehouseResult.getIsEnableVirtual())) {
+                inventoryQty = replenishmentResultDTO.getInventoryDTO().getVirtualUsableList()
+                        .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
+                        .filter(v -> virtualWarehouseIdList.contains(v.getVirtualWarehouseId()))
+                        .map(ReplenishmentInventoryDTO.VirtualUsableDTO::getQty)
+                        .reduce(MathUtil.ZERO,Integer::sum);
+
+            } else {
+                inventoryQty = replenishmentResultDTO.getInventoryDTO().getLocalUsableList()
+                        .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
+                        .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
+                        .map(ReplenishmentInventoryDTO.LocalUsableDTO::getQty)
+                        .reduce(MathUtil.ZERO,Integer::sum);
+            }
+            return inventoryQty;
+        }
+        if (CfgRuleSuggestedAmountNodeEnum.LOCAL_WAIT_QC.getCode().equals(code)) {
+            return replenishmentResultDTO.getInventoryDTO().getLocalWaitQcList()
+                    .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
+                    .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
+                    .map(ReplenishmentInventoryDTO.LocalWaitQcDTO::getQty)
+                    .reduce(MathUtil.ZERO,Integer::sum);
+        }
+        if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
+            return Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getShopPreQty)
+                    .reduce(MathUtil.ZERO,Integer::sum);
+        }
+        if (CfgRuleSuggestedAmountNodeEnum.LOCAL_PLAN_PURCHASE_QTY.getCode().equals(code)) {
+            return Optional.ofNullable(replenishmentResultDTO.getInventoryDTO().getEstimatedPurchaseList()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate) && CharSequenceUtil.equals(v.getSkuId(),suggestDTO.getSkuId()))
+                    .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
+                    .map(ReplenishmentInventoryDTO.EstimatedPurchaseDTO::getQty)
+                    .reduce(MathUtil.ZERO,Integer::sum);
+        }
+        return 0;
+    }
+
 
     @Override
     public List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getReplenishmentPlan(ReplenishmentResultDTO replenishmentResultDTO, Set<String> replenishmentPlan,
@@ -1004,10 +1071,8 @@ public class InventoryServiceImpl implements InventoryService {
      * @param code                   库存类型
      * @param replenishmentResultDTO 建议
      * @param endDate                结束时间
-     * @param warehouseResult        仓库配置
      */
-    private int getInventoryByCode(String code, ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate,
-                                   CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult) {
+    private int getInventoryByCode(String code, ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate) {
         if (CfgRuleSuggestedAmountNodeEnum.FBA_USABLE_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getReplenishmentDetail().getFbaUsableQty()).orElse(0);
         }

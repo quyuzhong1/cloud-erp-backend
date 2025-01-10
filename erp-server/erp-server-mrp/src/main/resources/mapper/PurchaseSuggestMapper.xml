@@ -21,9 +21,6 @@
        <result column="estimate_instock_date" property="estimateInstockDate" />
        <result column="estimate_sales_date" property="estimateSalesDate" />
        <result column="purchase_cost" property="purchaseCost" />
-       <result column="invalid_status" property="invalidStatus" />
-       <result column="invalid_remark" property="invalidRemark" />
-       <result column="source_id" property="sourceId" />
        <result column="source_type" property="sourceType" />
     </resultMap>
 
@@ -45,14 +42,8 @@
         ps.estimate_instock_date as estimateInstockDate,
         ps.estimate_sales_date as estimateSalesDate,
         ps.purchase_cost as purchaseCost,
-        ps.invalid_status as invalidStatus,
-        ps.invalid_remark as invalidRemark,
-        ps.invalid_time as invalidTime,
-        ps.invalid_user_id as invalidUserId,
-        ps.invalid_user_name as invalidUserName,
-        ps.source_id as sourceId,
+        ps.source_id_json as sourceIdJson,
         ps.source_type as sourceType,
-        ps.status,
         ps.currency,
         ps.platform_type as platformType,
         ps.platform,
@@ -66,19 +57,28 @@
    <!-- 查询可生成采购建议合并的数据 -->
     <select id="listGeneratePurchaseSuggestMerge" resultType="com.erp.model.mrp.entity.PurchaseSuggestEntity">
        select
-       <include refid="Base_Column_List"/>
+            <include refid="Base_Column_List"/>
        from purchase_suggest ps
        <where>
-          ps.is_deleted = false and ps.status = 'draft' and ps.invalid_status = false
-          <if test="entity != null and entity.platformType != null and entity.platformType != ''">
-             and ps.platform_type = #{entity.platformType}
-          </if>
-          <if test="entity != null and entity.platform != null and entity.platform != ''">
+          ps.is_deleted = false  and ps.invalid_status = false
+          and exists (
+            select 1 from purchase_suggest_merge psm,jsonb_array_elements_text(psm.source_id_json) AS source_id where psm.is_deleted = false and psm.status = 'draft' and psm.is_merge = false and source_id = ps.id
+          )
+          <if test="platform != null and platform != ''">
              and ps.platform = #{entity.platform}
           </if>
-          <if test="entity != null and entity.skuId != null and entity.skuId != ''">
-             and ps.sku_id = #{entity.skuId}
+          <if test="skuIdList != null and skuIdList.size > 0">
+             and ps.sku_id in
+            <foreach collection="skuIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
           </if>
+           <if test="suggestPurchaseDateList != null and suggestPurchaseDateList.size > 0">
+               and ps.suggest_purchase_date in
+               <foreach collection="suggestPurchaseDateList" open="(" close=")" item="item" separator=",">
+                   #{item}
+               </foreach>
+           </if>
        </where>
     </select>
 

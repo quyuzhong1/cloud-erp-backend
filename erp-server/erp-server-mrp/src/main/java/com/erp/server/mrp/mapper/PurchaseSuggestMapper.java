@@ -5,6 +5,7 @@ import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -22,8 +23,8 @@ public interface PurchaseSuggestMapper extends BaseMapper<PurchaseSuggestEntity>
      * 查询可生成采购建议合并的数据
      * @author will
      * @date 2025/1/6 17:36
-     * @param purchaseSuggestEntity
-     * @return List<PurchaseSuggestEntity>
+     * @param skuIdList
+     * @return List<skuIdList>
      */
-    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge(@Param("entity") PurchaseSuggestEntity purchaseSuggestEntity);
+    List<PurchaseSuggestEntity> listGeneratePurchaseSuggestMerge(@Param("platform") String platform,@Param("skuIdList")  List<String> skuIdList,@Param("suggestPurchaseDateList")List<LocalDate> suggestPurchaseDateList);
 }

@@ -158,7 +158,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Resource
     private ReplenishmentSuggestionDetailService replenishmentSuggestionDetailService;
     @Resource
-    private PurchaseSuggestIndependentService purchaseSuggestIndependentService;
+    private PurchaseSuggestService purchaseSuggestService;
 
     @Resource
     private SalesEstimateHandler salesEstimateHandler;
@@ -1054,11 +1054,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 List<PurchaseSuggestEntity> purchaseSuggests = replenishmentResult.getPurchaseSuggests().stream()
                         .map(ReplenishmentResultDTO.PurchaseSuggestDTO::buildPurchaseSuggest)
                         .collect(Collectors.toList());
-                //purchaseSuggestIndependentService.saveBatch(purchaseSuggests);
-                for (PurchaseSuggestEntity purchaseSuggest : purchaseSuggests) {
-                    //purchaseSuggestIndependentService.addPurchaseSuggestSys(purchaseSuggest);
-                }
-//                purchaseSuggestMergeService.generatePurchaseSuggestMerge("");
+                purchaseSuggestService.saveBatch(purchaseSuggests);
+                purchaseSuggestMergeService.generatePurchaseSuggestData(replenishmentResult,replenishmentResult.getPurchaseSuggests());
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getRecentSuggestions())) {
                 List<RecentSuggestionDetailEntity> recentSuggestionDetails = replenishmentResult.getRecentSuggestions().stream()
