@@ -158,7 +158,8 @@ public class PlatformListingConsumerService<T extends DmpSyncTaskIdDTO> extends 
                     ListingInfoEntity oldLogInfo = OmsListingConverter.INSTANCE.copyListingInfo(oldEntity);
                     if (StringUtils.isNotBlank(entity.getPlatformSpuNo())) {
                         // 亚马逊平台PlatformSpuNo保留历史
-                        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())){
+                        if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())
+                                && StringUtils.isNotBlank(oldEntity.getPlatformSpuNo())){
                             oldEntity.setPlatformSpuNo(oldEntity.getPlatformSpuNo());
                         } else {
                             oldEntity.setPlatformSpuNo(entity.getPlatformSpuNo());
