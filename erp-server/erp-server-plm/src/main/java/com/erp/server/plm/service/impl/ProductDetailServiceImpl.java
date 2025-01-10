@@ -336,7 +336,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
-
+        Map<String, String> applicationCategoryMap = applicationCategoryService.list()
+                .stream().collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
         List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
@@ -344,6 +345,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
         for (ProductDetailShowDTO item : list) {
+            item.setApplicationCategoryName(applicationCategoryMap.get(item.getApplicationCategoryId()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
