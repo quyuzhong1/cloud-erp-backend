@@ -308,6 +308,10 @@ public class RocketMqConsumerGroup {
      * 异步获取平台打印面单标签
      */
     public static final String ASYNC_GET_PLATFORM_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_get_platform_label_consumer";
+    /**
+     * 异步更新物流更新时间
+     */
+    public static final String ASYNC_GET_LOGISTICS_TRACK_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_get_logistics_track_consumer";
 
     /**
      * 异步组包发货
