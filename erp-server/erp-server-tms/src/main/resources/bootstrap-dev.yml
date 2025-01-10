@@ -2,19 +2,19 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 10.97.222.50
+        server-addr: deploy-nacos-0.deploy-nacos-svc.dev.svc.cluster.local
         namespace: ${NACOS_NAMESPACE:dev}
         heart-beat-interval: 3
         heart-beat-timeout: 10
       config:
-        server-addr: 10.97.222.50
+        server-addr: deploy-nacos-0.deploy-nacos-svc.dev.svc.cluster.local
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-tms.yml,druid-common.yml,erp-third-party.yml
 sfs:
   nacos:
     application: seata-server
-    server-addr: 10.97.222.50:8848
+    server-addr: deploy-nacos-0.deploy-nacos-svc.dev.svc.cluster.local:8848
     namespace: seata-server
     group: SEATA_GROUP
 
