@@ -93,7 +93,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         //处理买家信息
         handleSoB2cReceiver(entity, soB2cEntity.getId());
         //封装军区
-        ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getId());
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
         this.buildPartitionId(entity,shopInfoEntity);
         boolean update = this.updateById(entity);
         // 记录主单操作日志
