@@ -582,6 +582,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         if(StringUtils.isNotBlank(soReturnEntity.getSourceId())){
             SoInfoEntity soInfoEntity = soInfoService.getById(soReturnEntity.getSourceId());
             BeanMapperUtils.copy(soInfoEntity, viewDTO);
+            viewDTO.setSoInfoCreateTime(soInfoEntity.getCreateTime());
         }
         BeanMapperUtils.copy(soReturnEntity, viewDTO);
         //汇率

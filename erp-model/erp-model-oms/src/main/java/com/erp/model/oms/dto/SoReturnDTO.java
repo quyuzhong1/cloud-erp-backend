@@ -474,6 +474,10 @@ public class SoReturnDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 销售订单创建日期
+         */
+        private LocalDateTime soInfoCreateTime;
     }
 
     /**

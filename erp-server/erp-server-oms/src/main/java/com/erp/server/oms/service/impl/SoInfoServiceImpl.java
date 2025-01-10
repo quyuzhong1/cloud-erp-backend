@@ -1142,6 +1142,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         draftEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(draftEntity);
+        //设置军区
+        this.buildPartition(draftEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(draftEntity);
         //保存成功
@@ -3526,6 +3528,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setReceiveAmount(receiveAmount);
             addSo.setCustomsFee(customsFee);
             addSo.setDiscountAmount(discountAmount);
+            this.buildPartition(addSo);
+            handleVirtualWarehouse(addSo);
             Boolean isAdd = Boolean.TRUE;
             List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {

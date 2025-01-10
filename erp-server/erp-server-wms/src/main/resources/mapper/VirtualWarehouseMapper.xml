@@ -122,7 +122,7 @@
             and vwc.type = 'platform' and vwc.dict_platform = #{params.dictPlatform}
         </if>
         <if test="params.partitionId != null and params.partitionId != ''">
-            and (vwcpr.partition_id = #{params.partitionId} or vwcpr.partition_id is null)
+            and (vwcpr.partition_id = #{params.partitionId} or vwcpr.partition_id is null or vwcpr.partition_id = '')
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and vwr.warehouse_id = #{params.warehouseId}

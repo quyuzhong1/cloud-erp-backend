@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.service;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
@@ -86,7 +87,8 @@ public class BasicReplenishmentDataService {
     private OrderHistorySalesEsService orderHistorySalesEsService;
     @Resource
     private OutStockHistorySalesEsService outStockHistorySalesEsService;
-
+    @Resource
+    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
     /**
      * 增量变动建议补货基础数据
@@ -187,6 +189,9 @@ public class BasicReplenishmentDataService {
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
         ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, platformType, calculationDate);
+        //获取策略配置
+        List<CfgRuleOrderStrategyEntity> list = cfgRuleOrderStrategyService.list();
+        CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = CollUtil.isEmpty(list) ? null : CfgRuleOrderStrategyDTO.StrategyResultDTO.buildStrategyResultDTO(list.get(0));
         //获取建议配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
@@ -243,6 +248,7 @@ public class BasicReplenishmentDataService {
                         cfgRuleStrategy.setStockUpResult(stockUpResult);
                         cfgRuleStrategy.setInventoryResult(inventoryResult);
                         cfgRuleStrategy.setSuggestAmountResult(suggestResult);
+                        cfgRuleStrategy.setOrderResult(orderResult);
                         dto.setCfgRuleStrategy(cfgRuleStrategy);
                     }
                     stockingTimeHandler.handle(resultDTOS);

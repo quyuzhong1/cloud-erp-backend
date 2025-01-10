@@ -40,7 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -689,7 +689,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
     @Override
     public List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(SoReturnDTO.SkuParamDTO dto) {
-        List<SoReturnDTO.SoReturnAmoutDTO> result = new ArrayList<>();
+         List<SoReturnDTO.SoReturnAmoutDTO> result = new ArrayList<>();
         for (SoReturnDTO.ReturnSkuDTO skuDTO : dto.getSkuDTOList()) {
             SoReturnDTO.SoReturnAmoutDTO view = new SoReturnDTO.SoReturnAmoutDTO();
             view.setSkuId(skuDTO.getSkuId());
@@ -754,42 +754,33 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
     }
     //无销售订单情况
     private void getReturnAmoutByCustomer(SoReturnDTO.ReturnSkuDTO dto, SoReturnDTO.SoReturnAmoutDTO view) {
-        LocalDate returnCeateDate = LocalDate.now();
+        LocalDateTime returnCeateDate = LocalDateTime.now();
         if(StringUtils.isNotBlank(dto.getReturnId())){
             SoReturnEntity soReturnEntity = soReturnService.getById(dto.getReturnId());
             if(null != soReturnEntity){
-                returnCeateDate = soReturnEntity.getCreateTime().toLocalDate();
+                returnCeateDate = soReturnEntity.getCreateTime();
             }
         }
         SoOutstockDTO.ListAmountParamDTO params = new SoOutstockDTO.ListAmountParamDTO();
         params.setCustomerId(dto.getCustomerId());
         params.setSkuIds(Collections.singletonList(dto.getSkuId()));
         params.setReturnCreateDate(returnCeateDate.toString());
+        params.setCurrency(dto.getCurrency());
         List<SoOutstockDTO.AmountDTO> amountDTOS = soOutstockFeign.listAmountBySkuIds(params);
-
         if(CollectionUtils.isNotEmpty(amountDTOS)){
+            SoDetailEntity soDetailEntity = soDetailService.lambdaQuery()
+                    .eq(SoDetailEntity::getCurrency, dto.getCurrency())
+                    .eq(SoDetailEntity::getId, amountDTOS.get(0).getSoDetailId())
+                    .one();
             //退货金额
-            BigDecimal returnAmount = amountDTOS.get(0).getAmount()
-                    .divide(BigDecimal.valueOf(amountDTOS.get(0).getQty()), 4, RoundingMode.DOWN)
+            BigDecimal returnAmount = soDetailEntity.getPrice()
                     .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                     .stripTrailingZeros();
             //含税退货金额
-            BigDecimal taxReturnAmount = amountDTOS.get(0).getTaxAmount()
-                    .divide(BigDecimal.valueOf(amountDTOS.get(0).getQty()), 4, RoundingMode.DOWN)
+            BigDecimal taxReturnAmount = soDetailEntity.getTaxAmount()
+                    .divide(BigDecimal.valueOf(soDetailEntity.getQty()), 4, RoundingMode.DOWN)
                     .multiply(BigDecimal.valueOf(dto.getReturnQty()))
                     .stripTrailingZeros();
-            //先判断币种和汇率是否跟销售出库单一致，若不同的情况下计算出详情页的币种的退货金额
-            if(!amountDTOS.get(0).equals(dto.getCurrency())){
-                //销售订单币种 转 CNY的汇率
-                Map<String, BigDecimal> currencyMap = soReturnService.getCurrencyMap(Collections.singletonList(amountDTOS.get(0).getCurrency()));
-                BigDecimal soRate = currencyMap.get(amountDTOS.get(0).getCurrency());
-                //页面汇率 转 CNY的汇率
-                BigDecimal viewRate = dto.getExchangeRate();
-                //
-                returnAmount = returnAmount.multiply(soRate).divide(viewRate, 4, RoundingMode.DOWN);
-                //
-                taxReturnAmount = taxReturnAmount.multiply(soRate).divide(viewRate, 4, RoundingMode.DOWN);
-            }
             //退货金额（本位币）
             BigDecimal returnAmountLocalCurrency = returnAmount
                     .multiply(dto.getExchangeRate())
