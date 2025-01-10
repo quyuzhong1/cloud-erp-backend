@@ -916,7 +916,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (CollectionUtils.isNotEmpty(page.getRecords())) {
             List<String> productPlanIds = page.getRecords().stream().map(ProductPlanExcelDTO::getProductPlanId).collect(Collectors.toList());
             List<ProductPlanSaleInfoEntity> productPlanSaleInfoList = productPlanSaleInfoService.listByProductPlanIds(productPlanIds);
+            List<String> applicationCategoryIds = page.getRecords().stream().map(ProductPlanExcelDTO::getApplicationCategoryId).distinct().collect(Collectors.toList());
+            List<ApplicationCategoryEntity> list = applicationCategoryService.listByIds(applicationCategoryIds);
+            Map<String, String> applicationCategoryMap = list.stream()
+                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
             page.getRecords().forEach(obj -> {
+                obj.setApplicationCategory(applicationCategoryMap.get(obj.getApplicationCategoryId()));
                 //枚举格式化
                 obj.setProductStyleName(ProductStyleEnum.getNameByCode(obj.getProductStyleName()));
                 obj.setProductTypeName(ProductTypeEnum.getNameByCode(obj.getProductTypeName()));

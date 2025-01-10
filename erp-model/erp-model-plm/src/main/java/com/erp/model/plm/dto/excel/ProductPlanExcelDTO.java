@@ -54,6 +54,10 @@ public class ProductPlanExcelDTO implements Serializable {
     private String category;
 
     /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+    /**
      * 应用分类
      */
     @ExcelProperty(value = "应用分类", index = 4)

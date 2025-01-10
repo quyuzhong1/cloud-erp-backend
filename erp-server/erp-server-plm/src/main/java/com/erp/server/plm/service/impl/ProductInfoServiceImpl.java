@@ -49,6 +49,7 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -58,7 +59,6 @@ import java.math.BigDecimal;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -203,6 +203,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Autowired
     private ProjectTaskProgressService projectTaskProgressService;
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
@@ -808,7 +810,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
             //工时统计
             List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> taskTimeList = projectTaskTimeRecordService.listByProductIds(productIds);
-
+            List<String> applicationCategoryId = list.stream().map(ProductShowDTO::getApplicationCategoryId).distinct().collect(Collectors.toList());
+            List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.listByIds(applicationCategoryId);
+            Map<String, String> categoryMap = categoryEntityList.stream()
+                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
 
             //根据产品id 获取到对应的要交付的文档数
             List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
@@ -820,6 +825,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //完成的任务的状态
             List<Integer> finishedList = Arrays.asList(TaskStateEnum.FINISH.getCode());
             for (ProductShowDTO item : list) {
+                item.setApplicationCategoryName(categoryMap.get(item.getApplicationCategoryId()));
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                     item.setIsAddProductName("是");
@@ -1097,6 +1103,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         } else {
             result.setChargeIds(new ArrayList<>());
         }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(entity.getApplicationCategoryId());
+        result.setApplicationCategoryName(applicationCategory.getName());
         String chargeName = entity.getChargeName();
         if (StringUtils.isNotBlank(chargeName)) {
             result.setChargeNames(Arrays.asList(chargeName.split(",")));
@@ -2667,6 +2675,33 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public List<ProductDetailDTO.ProductDTO> listProductBySkuIds(List<String> skuIds) {
         return baseMapper.listProductBySkuIds(skuIds);
+    }
+
+    @Override
+    public Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto) {
+
+        List<ProductInfoEntity> list = new ArrayList<>();
+//        List<ApplicationCategoryEntity> applicationCategoryList= applicationCategoryService.list();
+//        dto.getProductIds().forEach(req -> {
+//            ProductInfoEntity productInfoEntity = this.getById(req);
+//            productInfoEntity.setApplicationCategoryId(dto.getApplicationCategoryId());
+//            list.add(productInfoEntity);
+//            //新增产品操作日志
+//            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+//            productOperateRecordDTO.setProductId(req);
+//            List<String> remarkList = new ArrayList<>();
+//            remarkList.add("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]");
+//            productOperateRecordDTO.setRemark(toJSONString(remarkList));
+//            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+//
+//            //新增操作日志
+//            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
+//                    .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
+//        });
+//        if (CollectionUtils.isNotEmpty(list)) {
+//            this.saveOrUpdateBatch(list);
+//        }
+        return Boolean.TRUE;
     }
 
 

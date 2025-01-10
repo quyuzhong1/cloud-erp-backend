@@ -201,6 +201,9 @@ public class ProductInfoDTO {
      */
     private Integer isNoSpecAdd;
 
+    @NotBlank(message = "应用分类不能为空")
+    private String applicationCategoryId;
+
 
     @Data
     @NoArgsConstructor

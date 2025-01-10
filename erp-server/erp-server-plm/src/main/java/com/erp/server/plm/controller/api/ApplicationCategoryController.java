@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -60,8 +61,8 @@ public class ApplicationCategoryController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
-    public ApiResult<String> delete(@RequestParam String id) {
-        applicationCategoryService.delete(id);
+    public ApiResult<String> delete(@RequestBody BaseIdDTO dto) {
+        applicationCategoryService.delete(dto.getId());
         return success();
     }
 

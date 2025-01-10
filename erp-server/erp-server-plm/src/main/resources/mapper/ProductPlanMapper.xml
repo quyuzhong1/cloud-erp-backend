@@ -141,7 +141,8 @@
             to_char(pp.plan_first_mass_stock_in_date, 'yyyy-MM-dd') as planFirstMassStockInDateStr,
             pp.plan_marketing_season as planMarketingSeasonName,
             to_char(pp.plan_listing_date, 'yyyy-MM-dd') as planListingDateStr,
-            ppr.remark
+            ppr.remark,
+        pp.application_category_id
         from  product_plan pp
         left join product_plan_purchase ppp on pp.id = ppp.product_plan_id and ppp.is_deleted = false
         left join product_plan_sale pps on pp.id = pps.product_plan_id and pps.is_deleted = false
@@ -170,6 +171,12 @@
                 and
                 <foreach collection="params.categoryId" item="item" open="(" close=")" separator="or">
                     #{item} = ANY(string_to_array(pp.category_id,','))
+                </foreach>
+            </if>
+            <if test="params.applicationCategoryId != null and params.applicationCategoryId.size > 0">
+                and pp.application_category_id in
+                <foreach collection="applicationCategoryId" item="id" open="(" separator="," close=")">
+                    #{id}
                 </foreach>
             </if>
             <if test="params.planSurveyDateBegin != null ">

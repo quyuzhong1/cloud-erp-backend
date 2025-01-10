@@ -272,6 +272,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private PlmAttachmentService plmAttachmentService;
 
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -414,6 +417,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
             noSpecDetailById.setCategoryIdList(categoryIdList);
         }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
+        noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
@@ -541,6 +546,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noSpecDetailById.setCategoryIdList(categoryIdList);
 
         }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
+        noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.listBySkuId(skuId);
@@ -4257,7 +4264,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> productDetailEntityList = this.list();
         List<ProductUnitEntity> unitEntityList = productUnitService.list();
         List<BasicCategoryEntity> categoryEntityList = basicCategoryService.list();
-
+        List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
+        Map<String, String> applicationCategoryMap = applicationCategoryList.stream()
+                .collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId, (o1, o2) -> o1));
 
         //根据供应商名称查询供应商信息
         List<String> mainSupplierNameList = successList.stream().map(req -> req.getMainSupplier()).distinct().collect(Collectors.toList());
@@ -4463,6 +4472,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 productInfoDTO.setCategory(secondaryCategory);
                 productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
+            }
+            String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
+            if (ObjectUtils.isEmpty(applicationCategoryId)) {
+                errorMsgList.add("应用分类不存在");
+            } else {
+                productInfoDTO.setApplicationCategoryId(applicationCategoryId);
             }
 
             //存在侵权风险
