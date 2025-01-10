@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
 import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
 import com.erp.server.mrp.handler.OverseasHistoryInventoryHandler;
+import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -119,7 +120,7 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingPurchaseSuggestionMerge")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingPurchaseSuggestionMerge(@RequestBody PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
         return purchaseSuggestMergeService.paging(dto);
     }

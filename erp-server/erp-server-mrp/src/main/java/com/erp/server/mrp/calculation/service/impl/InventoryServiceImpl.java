@@ -206,6 +206,7 @@ public class InventoryServiceImpl implements InventoryService {
                 detailDTO.setEstimatedPutAwayDate(viewDTO.getPlanDeliveryDate());
             }
         }
+        dto.setLocalInTransitList(localInTransitDetails);
     }
 
     /**
@@ -868,16 +869,12 @@ public class InventoryServiceImpl implements InventoryService {
                     .reduce(MathUtil.ZERO,Integer::sum);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
-            return Optional.ofNullable(replenishmentResultDTO.getLocalInTransitDetails()).orElse(new ArrayList<>())
-                    .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
-                    .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getShopPreQty)
-                    .reduce(MathUtil.ZERO,Integer::sum);
+            return 0;
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_PLAN_PURCHASE_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getInventoryDTO().getEstimatedPurchaseList()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate) && CharSequenceUtil.equals(v.getSkuId(),suggestDTO.getSkuId()))
+                    .filter(v -> CharSequenceUtil.equals(v.getSkuId(),suggestDTO.getSkuId()))
                     .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
                     .map(ReplenishmentInventoryDTO.EstimatedPurchaseDTO::getQty)
                     .reduce(MathUtil.ZERO,Integer::sum);
