@@ -13,6 +13,7 @@ public enum ApiModuleTypeEnum {
     STOCK_OVERSEAS(2, "stockOverseas", "海外仓库存",""),
     ASSISTANT_DATA(3, "assistantData", "辅助资料",""),
     ONE_LEVEL_CATEGORY(4, "oneLevelCategory", "一级分类","plm"),
+    APPLICATION_CATEGORY(46, "applicationCategory", "应用分类","plm"),
     SECOND_LEVEL_CATEGORY(5, "secondLevelCategory", "二级分类","plm"),
     SYS_USER_INFO(6, "sysUserInfo", "员工","sys"),
     CHANGE_ORG(7, "changeOrg", "默认组织切换",""),

@@ -99,11 +99,14 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
                 productSpuBaseInfoDTO.setCategoryId(basicCategoryEntity.getId());
             }
         }
-        String applicationCategoryId = applicationCategoryMap.get(data.getApplicationCategoryName());
-        if (ObjectUtils.isEmpty(applicationCategoryId)) {
-            data.setErrorMsg("应用分类不存在");
-            errorList.add(data);
-            return;
+        String applicationCategoryId = null;
+        if (!ObjectUtils.isEmpty(data.getApplicationCategoryName())) {
+            applicationCategoryId = applicationCategoryMap.get(data.getApplicationCategoryName());
+            if (ObjectUtils.isEmpty(applicationCategoryId)) {
+                data.setErrorMsg("应用分类不存在");
+                errorList.add(data);
+                return;
+            }
         }
         productSpuBaseInfoDTO.setApplicationCategoryId(applicationCategoryId);
         //存在错误数据则直接返回

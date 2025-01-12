@@ -1981,13 +1981,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> secondSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getSecondSupplier).distinct().collect(Collectors.toList());
             mainSupplierIds.addAll(secondSupplierIds);
             Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
-
+            Map<String, String> applicationCategoryMap = applicationCategoryService.list()
+                    .stream().collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName));
             String chargeId = "";
             String productPropertyId = "";
             String saleCountry = "";
             List<String> chargeIds = new ArrayList<>();
             List<String> productPropertyIdAndSaleCountrys = new ArrayList<>();
             for(ProductDetailExcelExportDTO l : list) {
+                l.setApplicationCategoryName(applicationCategoryMap.get(l.getApplicationCategoryId()));
                 chargeId = l.getChargeId();
                 if(StringUtils.isNotBlank(chargeId)) {
                     chargeIds.addAll(Arrays.stream(chargeId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));

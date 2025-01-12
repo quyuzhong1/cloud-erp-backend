@@ -48,4 +48,9 @@ public interface ApplicationCategoryService extends SuperService<ApplicationCate
      * @param applicationCategory 分类
      */
     ApplicationCategoryEntity getByName(String applicationCategory);
+
+    /**
+     * 更新金蝶同步状态
+     */
+    Boolean updateSyncKingdeeId(String id,String syncKingdeeId);
 }
