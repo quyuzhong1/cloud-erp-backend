@@ -53,7 +53,7 @@
         DELETE FROM purchase_suggest_merge WHERE status = 'draft'
     </delete>
     <delete id="deletePurchaseSuggest">
-        DELETE FROM purchase_suggest ps WHERE ps.status = 'draft'
+        DELETE FROM purchase_suggest ps WHERE 1 = 1
         <if test="sourceId !=null and sourceId !=''" >
             and source_id = #{sourceId}
         </if>
@@ -66,7 +66,7 @@
         )
     </delete>
     <insert id="movePurchaseSuggest">
-        INSERT INTO purchase_suggest_history SELECT * FROM purchase_suggest ps WHERE ps.status = 'draft'
+        INSERT INTO purchase_suggest_history SELECT * FROM purchase_suggest ps WHERE 1 = 1
         <if test="sourceId !=null and sourceId !=''" >
             and source_id = #{sourceId}
         </if>
