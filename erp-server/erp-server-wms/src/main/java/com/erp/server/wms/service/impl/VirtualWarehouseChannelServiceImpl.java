@@ -382,11 +382,6 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     }
 
     @Override
-    public List<VirtualWarehouseDTO.BindChannelDto> getByParams(VirtualWarehouseChannelDTO.ChannelAddDTO newChannel) {
-        return baseMapper.getByParams(newChannel);
-    }
-
-    @Override
     public List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(List<String> platformList) {
         List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(platformList)) {
