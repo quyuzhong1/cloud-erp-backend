@@ -94,9 +94,11 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
                     return;
                 } else {
                     productSpuBaseInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
+                    productSpuBaseInfoDTO.setCategory(secondaryCategoryEntity.getName());
                 }
             } else {
                 productSpuBaseInfoDTO.setCategoryId(basicCategoryEntity.getId());
+                productSpuBaseInfoDTO.setCategory(basicCategoryEntity.getName());
             }
         }
         String applicationCategoryId = null;
