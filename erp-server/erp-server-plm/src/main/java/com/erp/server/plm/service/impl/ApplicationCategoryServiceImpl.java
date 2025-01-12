@@ -105,7 +105,9 @@ public class ApplicationCategoryServiceImpl extends SuperServiceImpl<Application
     @Override
     public Boolean update(ApplicationCategoryDTO.UpdateDTO addOrUpdateDTO) {
         verifyData(addOrUpdateDTO.getName(), addOrUpdateDTO.getCode(), addOrUpdateDTO.getId());
+        ApplicationCategoryEntity applicationCategory = getById(addOrUpdateDTO.getId());
         ApplicationCategoryEntity applicationCategoryEntity =  BeanMapperUtils.map(ApplicationCategoryEntity.class, addOrUpdateDTO);
+        applicationCategoryEntity.setSyncKingdeeId(applicationCategory.getSyncKingdeeId());
         sendPushTask(Collections.singletonList(applicationCategoryEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         boolean save = super.updateById(applicationCategoryEntity);
         if(!save) {
