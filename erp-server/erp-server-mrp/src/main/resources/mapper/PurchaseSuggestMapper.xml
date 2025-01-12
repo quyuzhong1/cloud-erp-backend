@@ -65,7 +65,7 @@
             select 1 from purchase_suggest_merge psm,jsonb_array_elements_text(psm.source_id_json) AS source_id where psm.is_deleted = false and psm.status = 'draft' and psm.is_merge = false and source_id = ps.id
           )
           <if test="platform != null and platform != ''">
-             and ps.platform = #{entity.platform}
+             and ps.platform = #{platform}
           </if>
           <if test="skuIdList != null and skuIdList.size > 0">
              and ps.sku_id in
