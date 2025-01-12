@@ -51,7 +51,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.dmp.mapper.DmpPushTaskHistoryMapper;
 import com.erp.server.dmp.mapper.DmpPushTaskMapper;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
-import com.erp.server.dmp.service.DmpOutputTaskService;
 import com.erp.server.dmp.service.DmpPushMsgService;
 import com.erp.server.dmp.service.DmpPushTaskService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -545,6 +544,7 @@ public class DmpPushTaskServiceImpl extends SuperServiceImpl<DmpPushTaskMapper, 
             case BASIC_CATEGORY:
             case PRODUCT_DETAIL:
             case PRODUCT_BOM_INFO:
+            case APPLICATION_CATEGORY:
                 plmTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             case SYS_USER_INFO:

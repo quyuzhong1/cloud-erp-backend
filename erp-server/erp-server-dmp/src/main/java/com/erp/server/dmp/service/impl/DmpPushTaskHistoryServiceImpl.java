@@ -193,6 +193,7 @@ public class DmpPushTaskHistoryServiceImpl extends ServiceImpl<DmpPushTaskHistor
             case BASIC_CATEGORY:
             case PRODUCT_DETAIL:
             case PRODUCT_BOM_INFO:
+            case APPLICATION_CATEGORY:
                 plmTaskFeign.findDataSendSyncTask(syncParamDTO);
                 return;
             case SYS_USER_INFO:

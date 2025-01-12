@@ -256,4 +256,10 @@ public class ProductPlanEntity extends BaseEntity<ProductPlanEntity> {
     @TableField(value = "listing_date")
     private LocalDate listingDate;
 
+
+    /**
+     * 应用分类id
+     */
+    @TableField(value = "application_category_id")
+    private String applicationCategoryId;
 }
