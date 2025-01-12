@@ -104,18 +104,6 @@ public class MouldDetailEntity extends BaseEntity<MouldDetailEntity> {
 
     public static final String THIRD_MOULD_NO = "third_mould_no";
 
-    public static final String TYPE_ID = "type_id";
-
-    public static final String MOLD_HOLES = "mold_holes";
-
-    public static final String LENGTH = "length";
-
-    public static final String WIDTH = "width";
-
-    public static final String HEIGHT = "height";
-
-    public static final String MATERIAL = "material";
-
     public static final String LIFE_CYCLE = "life_cycle";
 
     public static final String DEVELOP_CYCLE = "develop_cycle";

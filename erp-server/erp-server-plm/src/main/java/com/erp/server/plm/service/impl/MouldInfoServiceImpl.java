@@ -182,6 +182,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                             viewDTO.setImagesUrl(new ArrayList<>());
                         }
                         viewDTO.setProductName(v.getProductName());
+                        viewDTO.setTypeId(v.getTypeId());
+                        viewDTO.setLength(v.getLength());
+                        viewDTO.setWidth(v.getWidth());
+                        viewDTO.setHeight(v.getHeight());
+                        viewDTO.setMouldHoles(v.getMouldHoles());
+                        viewDTO.setMaterial(v.getMaterial());
                         return viewDTO;
                     })
                     .collect(Collectors.toList());
@@ -309,12 +315,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 if (!ObjectUtils.isEmpty(viewDTO)) {
                     MouldInfoDTO.LogDetailDTO oldDetailDTO = new MouldInfoDTO.LogDetailDTO();
                     oldDetailDTO.setThirdMouldNo(viewDTO.getThirdMouldNo());
-                    oldDetailDTO.setTypeName(mouldTypeMap.get(viewDTO.getTypeId()));
-                    oldDetailDTO.setMouldHoles(viewDTO.getMouldHoles());
-                    oldDetailDTO.setLength(MathUtil.divide(viewDTO.getLength(), new BigDecimal(10), 2));
-                    oldDetailDTO.setWidth(MathUtil.divide(viewDTO.getWidth(), new BigDecimal(10), 2));
-                    oldDetailDTO.setHeight(MathUtil.divide(viewDTO.getHeight(), new BigDecimal(10), 2));
-                    oldDetailDTO.setMaterial(viewDTO.getMaterial());
                     oldDetailDTO.setLifeCycle(viewDTO.getLifeCycle());
                     oldDetailDTO.setDevelopCycle(viewDTO.getDevelopCycle());
                     oldDetailDTO.setEnableDate(viewDTO.getEnableDate());
@@ -331,7 +331,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     oldDetailDTO.setRefundAmount(viewDTO.getRefundAmount());
                     String oldProductList = Optional.ofNullable(viewDTO.getProductList()).orElse(new ArrayList<>())
                             .stream()
-                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl())
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + mouldTypeMap.get(v.getTypeId()) + "：模具穴数" + v.getMouldHoles() +
+                                    "模具长" + MathUtil.divide(v.getLength(), new BigDecimal(10), 2) + "：模具宽" + MathUtil.divide(v.getWidth(), new BigDecimal(10), 2) +
+                                    "模具高" + MathUtil.divide(v.getHeight(), new BigDecimal(10), 2) + "：模具材质" + v.getMaterial()
+                            )
                             .collect(Collectors.joining(","));
                     oldDetailDTO.setProductList(oldProductList);
                     String oldRefProductList = Optional.ofNullable(viewDTO.getRefProductList()).orElse(new ArrayList<>())
@@ -341,12 +344,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     oldDetailDTO.setRefProductList(oldRefProductList);
                     MouldInfoDTO.LogDetailDTO logDetailDTO = new MouldInfoDTO.LogDetailDTO();
                     logDetailDTO.setThirdMouldNo(updateDTO.getThirdMouldNo());
-                    logDetailDTO.setTypeName(mouldTypeMap.get(updateDTO.getTypeId()));
-                    logDetailDTO.setMouldHoles(updateDTO.getMouldHoles());
-                    logDetailDTO.setLength(MathUtil.divide(updateDTO.getLength(), new BigDecimal(10), 2));
-                    logDetailDTO.setWidth(MathUtil.divide(updateDTO.getWidth(), new BigDecimal(10), 2));
-                    logDetailDTO.setHeight(MathUtil.divide(updateDTO.getHeight(), new BigDecimal(10), 2));
-                    logDetailDTO.setMaterial(updateDTO.getMaterial());
                     logDetailDTO.setLifeCycle(updateDTO.getLifeCycle());
                     logDetailDTO.setDevelopCycle(updateDTO.getDevelopCycle());
                     logDetailDTO.setEnableDate(updateDTO.getEnableDate());
@@ -363,7 +360,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     logDetailDTO.setRefundAmount(updateDTO.getRefundAmount());
                     String productList = Optional.ofNullable(updateDTO.getProductList()).orElse(new ArrayList<>())
                             .stream()
-                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl())
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + mouldTypeMap.get(v.getTypeId()) + "：模具穴数" + v.getMouldHoles() +
+                                    "模具长" + MathUtil.divide(v.getLength(), new BigDecimal(10), 2) + "：模具宽" + MathUtil.divide(v.getWidth(), new BigDecimal(10), 2) +
+                                    "模具高" + MathUtil.divide(v.getHeight(), new BigDecimal(10), 2) + "：模具材质" + v.getMaterial()
+                            )
                             .collect(Collectors.joining(","));
                     logDetailDTO.setProductList(productList);
                     String refProductList = Optional.ofNullable(updateDTO.getRefProductList()).orElse(new ArrayList<>())
@@ -499,14 +499,20 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private void verifyData(List<MouldDetailDTO.ViewDTO> viewDTOS) {
         for (MouldDetailDTO.ViewDTO viewDTO : viewDTOS) {
             StringBuilder msg = new StringBuilder();
-            if (StringUtils.isEmpty(viewDTO.getTypeId())) {
-                msg.append("模具类型不能为空,");
+            if (CollectionUtils.isEmpty(viewDTO.getProductList())) {
+                msg.append("模具产品不能为空,");
+                continue;
             }
-            if (StringUtils.isEmpty(viewDTO.getMouldHoles())) {
-                msg.append("模具穴数不能为空,");
-            }
-            if (StringUtils.isEmpty(viewDTO.getMaterial())) {
-                msg.append("模具材质不能为空,");
+            for (MouldProductDTO.ViewDTO dto : viewDTO.getProductList()) {
+                if (StringUtils.isEmpty(dto.getTypeId())) {
+                    msg.append("模具类型不能为空,");
+                }
+                if (StringUtils.isEmpty(dto.getMouldHoles())) {
+                    msg.append("模具穴数不能为空,");
+                }
+                if (StringUtils.isEmpty(dto.getMaterial())) {
+                    msg.append("模具材质不能为空,");
+                }
             }
             if (ObjectUtils.isEmpty(viewDTO.getLifeCycle())) {
                 msg.append("模具寿命(万)(啤)不能为空,");
