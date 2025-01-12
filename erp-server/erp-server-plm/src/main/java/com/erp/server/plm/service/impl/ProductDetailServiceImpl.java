@@ -552,7 +552,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         }
         ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
-        noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.listBySkuId(skuId);
