@@ -496,6 +496,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                         String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
                         addChildDetailView.setPlatformSkuNo(platformSkuNo);
                         addChildDetailView.setCustomerId(dto.getCustomerId());
+                        addChildDetailView.setWarehouseId(addDetailView.getWarehouseId());
+                        addChildDetailView.setWarehouseName(addChildDetailView.getWarehouseName());
                         addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
                         bomList.add(addChildDetailView);
                     }
@@ -570,6 +572,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                             addChildDetailView.setReturnReasonDict(addDetailView.getReturnReasonDict());
                             addChildDetailView.setReturnTypeDictName(addDetailView.getReturnTypeDictName());
                             addChildDetailView.setReturnTypeDict(addDetailView.getReturnTypeDict());
+                            addChildDetailView.setWarehouseId(addDetailView.getWarehouseId());
+                            addChildDetailView.setWarehouseName(addChildDetailView.getWarehouseName());
                             addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
                             bomList.add(addChildDetailView);
                         }
