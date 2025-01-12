@@ -60,7 +60,7 @@
             <include refid="Base_Column_List"/>
        from purchase_suggest ps
        <where>
-          ps.is_deleted = false  and ps.invalid_status = false
+          ps.is_deleted = false
           and exists (
             select 1 from purchase_suggest_merge psm,jsonb_array_elements_text(psm.source_id_json) AS source_id where psm.is_deleted = false and psm.status = 'draft' and psm.is_merge = false and source_id = ps.id
           )
