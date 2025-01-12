@@ -59,6 +59,7 @@
         from (select vw.id virtualWarehouseId,vw.name virtualWarehouseName,vw.disabled
         from virtual_warehouse_relation vwr
         inner join virtual_warehouse vw on vwr.virtual_warehouse_id=vw.id and vw.is_deleted=false and vw.disabled=false
+        left join virtual_warehouse_channel vwc on vwc.virtual_warehouse_id=vwr.virtual_warehouse_id and vwc.is_deleted=false and vwc.disabled=false
         where vwr.is_deleted=false and vwr.disabled=false
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ( (vw.id = #{params.searchKeyword}) or vw.name ilike
@@ -66,6 +67,9 @@
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and vwr.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.shopId != null and params.shopId != ''">
+            and (vwc.relation_id = #{params.shopId} or vwc.relation_id = '')
         </if>
         group by vw.id
         order by

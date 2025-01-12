@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.DictPartitionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.DictPartitionEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="code" property="code" />
+       <result column="name" property="name" />
+       <result column="index" property="index" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        create_user_id,
+        create_user_name,
+        update_time,
+        update_user_id,
+        update_user_name,
+        version,
+        is_deleted,
+        disabled, code, name, index
+    </sql>
+    <select id="pagingSelect" resultType="com.erp.model.sys.dto.DictPartitionDTO$DictDTO">
+        select id,name as value,name,code,disabled,index
+        from
+        (
+            select
+                dp.id,
+                dp.name,
+                dp.code,
+                dp.disabled,
+                dp.index
+            from dict_partition dp
+            where dp.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and dp.name ilike concat('%', #{params.searchKeyword}::text ,'%')
+            </if>
+            <if test="params.disabled != null">
+                and dp.disabled=#{params.disabled}
+            </if>
+            order by dp.disabled asc,
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                case when dp.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+                when dp.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+                when dp.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+                end , dp.name,
+            </if>
+            dp.index asc
+        ) dps
+    </select>
+    <select id="dropDown" resultType="com.erp.model.sys.dto.DictPartitionDTO$DictDTO"
+            parameterType="com.erp.model.sys.dto.DictPartitionDTO$SelectDTO">
+        select
+            dp.id,
+            dp.name,
+            dp.code,
+            dp.disabled,
+            dp.index
+        from dict_partition dp
+        where dp.is_deleted = false
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and dp.name ilike concat('%', #{params.searchKeyword}::text ,'%')
+        </if>
+        <if test="params.disabled != null">
+            and dp.disabled=#{params.disabled}
+        </if>
+        order by dp.disabled asc,
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            case when dp.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when dp.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when dp.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , dp.name,
+        </if>
+        dp.index asc
+    </select>
+
+
+</mapper>

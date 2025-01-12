@@ -85,6 +85,18 @@ public class CustomerDTO implements Serializable {
         private String code;
 
         /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
          * 客户名称
          */
         private String name;
@@ -503,6 +515,18 @@ public class CustomerDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          * 审核状态code
          */

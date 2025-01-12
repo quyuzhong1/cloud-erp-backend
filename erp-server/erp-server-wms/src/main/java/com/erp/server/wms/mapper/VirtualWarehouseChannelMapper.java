@@ -58,12 +58,4 @@ public interface VirtualWarehouseChannelMapper extends BaseMapper<VirtualWarehou
      * @date 2024/6/13 12:27
      */
     List<VirtualWarehouseChannelEntity> listVirtualWarehouseByPlatform(@Param("listPlatformDTO") VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
-
-    /**
-     * 根据参数获取数据
-     *
-     * @param newChannel
-     * @return
-     */
-    List<VirtualWarehouseDTO.BindChannelDto> getByParams(@Param("params")VirtualWarehouseChannelDTO.ChannelAddDTO newChannel);
 }
