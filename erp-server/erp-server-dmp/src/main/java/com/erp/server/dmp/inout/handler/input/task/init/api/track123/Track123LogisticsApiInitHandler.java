@@ -1,55 +1,45 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.track123;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.utils.RedisUtil;
-import com.common.core.entity.BaseEntity;
 import com.common.core.utils.MathUtil;
-import com.common.core.utils.ObjectUtils;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.dto.DmpLogisticsTrackRegisterDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.entity.DmpLogisticsTrackEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
-//import com.erp.server.dmp.service.DmpLogisticsTrackRegisterService;
-import com.erp.server.dmp.mapper.ForeignMapper;
-import com.erp.server.dmp.service.DmpLogisticsTrackService;
 import com.erp.server.dmp.service.ForeignService;
 import com.sdk.tms.track123.model.request.TrackRequest;
-import com.sdk.tms.track123.model.response.*;
+import com.sdk.tms.track123.model.response.Rejected;
+import com.sdk.tms.track123.model.response.ResponseData;
+import com.sdk.tms.track123.model.response.TrackDetail;
+import com.sdk.tms.track123.model.response.TrackResponse;
 import com.sdk.tms.track123.service.TrackShipperService;
 import io.seata.common.util.CollectionUtils;
-import jnr.ffi.annotations.In;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.context.annotation.Scope;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -67,7 +57,8 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
     private RedisUtil redisUtil;
     @Resource
     private ForeignService foreignService;
-
+    @Resource
+    private MQProducerService mqProducerService;
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
 
@@ -142,7 +133,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                     Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
                     while (iterator.hasNext()) {
                         LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
-                        if (strings.contains(dto.getTrackNo())) {
+                        if (strings.contains(dto.getId())) {
                             iterator.remove();
                         }
                     }
@@ -156,7 +147,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                 List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
 
                 //一次请求一百条并存储到redis下次过滤
-                List<String> collect = partition.get(0).stream().map(LogisticsTrackDTO.UpdateTrackDTO::getTrackNo).distinct().collect(Collectors.toList());
+                List<String> collect = partition.get(0).stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
                 noList.addAll(collect);
                 // 缓存到redis
                 redisUtil.lSet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, noList);
@@ -197,6 +188,10 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
 
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
         if (CollectionUtils.isNotEmpty(records)) {
+            List<String> billDetailIdList = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(billDetailIdList)){
+                mqProducerService.asyncClassMsg(RocketMqTopic.TMS_123_LOGISTICS_TRACK, RocketMqTagEnum.ASYNC_GET_TRACK123_LOGISTICS_TRACK.getName(), billDetailIdList, "getTrack");
+            }
             String token = cfgAppClient.getClientSecret();
             //根据配置进行获取
             List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
@@ -214,6 +209,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
                 return null;
             }
+
             TrackRequest trackRequest = TrackRequest.builder()
                     .trackNos(logisticsRegisterVOS.stream().map(LogisticsRegisterVO::getTrackNo).distinct().collect(Collectors.toList()))
                     .cursor("")

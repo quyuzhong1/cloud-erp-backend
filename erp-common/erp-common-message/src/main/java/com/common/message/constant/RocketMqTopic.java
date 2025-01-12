@@ -136,5 +136,9 @@ public class RocketMqTopic {
      * 同步虚拟仓库存明细
      */
     public static final String WMS_VIRTUAL_DETAIL_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_topic";
+    /**
+     * 同步track123 物流轨迹更新记录
+     */
+    public static final String TMS_123_LOGISTICS_TRACK = "${spring.cloud.nacos.discovery.namespace}-tms_track123_logistics_track_msg_topic";
 
 }

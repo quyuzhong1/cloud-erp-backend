@@ -54,6 +54,7 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
@@ -73,6 +74,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
+import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
@@ -234,6 +236,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private LogisticsFeign logisticsFeign;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
     /**
      * 添加销售订单
      *
@@ -322,6 +326,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(addEntity);
+        //封装军区
+        this.buildPartition(addEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(addEntity);
 
@@ -347,6 +353,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return "";
     }
 
+    private void buildPartition(SoInfoEntity addEntity) {
+        String customerId = addEntity.getCustomerId();
+        if (StringUtils.isBlank(customerId)) {
+            return;
+        }
+        CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+        if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) ){
+            String country = customerInfo.getCountryId();
+
+            addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+        }
+    }
+
     /**
      * 查询虚拟仓库
      * @author will
@@ -364,6 +383,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
         platformDTO.setWarehouseIdList(Arrays.asList(entity.getWarehouseId()));
         platformDTO.setRelationId("");
+        platformDTO.setPartitionId(entity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
             entity.setVirtualWarehouseId("");
@@ -1116,6 +1136,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         draftEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(draftEntity);
+        //设置军区
+        this.buildPartition(draftEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(draftEntity);
         //保存成功
@@ -1235,6 +1257,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soInfo.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
+        //封装军区
+        this.buildPartition(soInfo);
         //获取虚拟仓库
         handleVirtualWarehouse(soInfo);
 
@@ -3440,6 +3464,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setReceiveAmount(receiveAmount);
             addSo.setCustomsFee(customsFee);
             addSo.setDiscountAmount(discountAmount);
+            this.buildPartition(addSo);
+            handleVirtualWarehouse(addSo);
             Boolean isAdd = Boolean.TRUE;
             List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {
@@ -3809,5 +3835,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
+
+    @Override
+    public IPage<SoInfoEntity> pagePartitionIsNull(Page query) {
+        return baseMapper.pagePartitionIsNull(query);
     }
 }

@@ -74,6 +74,11 @@ public class CfgRuleWarehouseDetailEntity extends BaseEntity<CfgRuleWarehouseDet
      */
     @TableField(exist = false)
     private List<String> channelIdList;
+    /**
+     * 分区id集合
+     */
+    @TableField(exist = false)
+    private List<String> partitionIdList;
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 

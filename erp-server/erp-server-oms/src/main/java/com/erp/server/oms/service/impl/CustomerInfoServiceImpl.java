@@ -43,10 +43,7 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -586,6 +583,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             if (Objects.nonNull(globalArea)) {
                 areaName = globalArea.getRegionName();
                 subregionName = globalArea.getSubregionName();
+            }
+        }
+        if(StringUtils.isNotBlank(customer.getCountryId())){
+            List<CfgCountryPartitionEntity> cfgCountryPartitionEntity = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getCountry,customer.getCountryId()).list();
+            if(CollectionUtils.isNotEmpty(cfgCountryPartitionEntity)){
+                view.setPartitionName(cfgCountryPartitionEntity.get(0).getPartitionName());
+                view.setPartitionCode(cfgCountryPartitionEntity.get(0).getPartitionCode());
+                view.setPartitionId(cfgCountryPartitionEntity.get(0).getPartitionId());
             }
         }
         view.setAreaName(areaName);

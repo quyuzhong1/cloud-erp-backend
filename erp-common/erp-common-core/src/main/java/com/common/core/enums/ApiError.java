@@ -1058,7 +1058,7 @@ public enum ApiError implements Serializable {
     ERROR_92136(92136,"发货通知单【{}】配置的发货仓库不能为空"),
     ERROR_92137(92137,"B2C发货单【{}】配置的发货仓库不能为空"),
     ERROR_92138(92138,"存在已审核调拨单【{}】不能修改中转仓"),
-    ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】 已生成物流单,不允许反审核"),
+    ERROR_SO_OUTSTOCK_BILL_COST_NOT_DIS_APPROVE(92138,"销售出库单【{}】已生成物流单且已确认/暂估确认不允许反审核"),
     ERROR_DELIVERY_INTERCEPT_READY_PACKAGED(92139,"销售订单号【{}】已组包不支持拦截操作"),
     ERROR_92140(92140,"关联单号【{}】已审核不能修改装箱"),
     ERROR_92141(92141,"装箱任务记录不存在"),
@@ -1163,7 +1163,7 @@ public enum ApiError implements Serializable {
     ERROR_92164(92164,"请先审核通过关联的中转调拨单【{}】后审核出库单"),
     ERROR_92165(92165,"出库日期不能早于最后一个调拨单的调拨日期【{}】"),
 
-    ERROR_VW_CHANNEL_ERROR(92234,"当前{}【{}】已经被虚拟仓【{}】绑定\n"),
+    ERROR_VW_CHANNEL_ERROR(92234,"当前平台【{}】店铺【{}】军区【{}】已经被虚拟仓【{}】绑定\n"),
     ERROR_IMPORT_SIZE_ERROR(92235,"超过最大导入条数：{}"),
     ERROR_WAREHOUSE_INVENTORY_ALLOCATION_ERROR(92235,"实体仓可分配库存不足，SKU:【{}】，实体仓：【{}】，可分配库存:【{}】"),
     ERROR_VW_INVENTORY_ERROR(92235,"虚拟仓【{}】库存不足"),

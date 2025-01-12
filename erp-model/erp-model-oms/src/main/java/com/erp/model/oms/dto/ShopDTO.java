@@ -959,6 +959,10 @@ public class ShopDTO implements Serializable {
          */
         private String dictPlatform;
         /**
+         *
+         */
+        private String type;
+        /**
          * 区域
          */
         private String dictAreaCode;

@@ -1,9 +1,11 @@
 package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.handler.PlatformSaveHandler;
@@ -32,6 +34,7 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -228,6 +231,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.mainId")
     public Boolean deleteDetail(SoB2cErrorDTO.DeleteDetailDTO dto) {
         Boolean result = baseMapper.deleteB2cErrorByDetailId(dto);
         if (result){
@@ -320,6 +324,21 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
             e.setTypeName(SoB2cErrorTypeEnum.getName(e.getType()));
         });
         return typeCountDTO;
+    }
+
+    @Override
+    @DistributeLocker(keyName = "dto.mainId")
+    public Boolean deleteAll(SoB2cErrorDTO.DeleteDetailDTO dto) {
+        List<SoB2cErrorEntity> list = this.lambdaQuery().eq(SoB2cErrorEntity::getMainId, dto.getMainId()).eq(SoB2cErrorEntity::getType, dto.getType()).list();
+        if (CollUtil.isEmpty(list)){
+            return Boolean.TRUE;
+        }
+        List<String> errorIds = list.stream().filter(e -> dto.getDetailIdList().contains(e.getDetailId()) && Objects.equals(e.getDetailId(), CharSequenceUtil.EMPTY)).map(SoB2cErrorEntity::getId).distinct().collect(Collectors.toList());
+        boolean result = this.removeByIds(errorIds);
+        if (result && errorIds.size() == list.size()){
+            soB2cService.removeSignError(dto.getMainId(),dto.getType());
+        }
+        return Boolean.TRUE;
     }
 
     /**

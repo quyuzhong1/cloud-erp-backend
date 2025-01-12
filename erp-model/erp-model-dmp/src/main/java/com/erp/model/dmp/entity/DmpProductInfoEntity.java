@@ -90,6 +90,11 @@ public class DmpProductInfoEntity extends BaseEntity<DmpProductInfoEntity> {
      */
     @TableField("auth_id")
     private String authId;
+    /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

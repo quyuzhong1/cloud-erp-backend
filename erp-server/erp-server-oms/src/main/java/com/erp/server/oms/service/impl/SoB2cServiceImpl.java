@@ -73,6 +73,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
@@ -561,7 +562,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addDTO.getReceiverDTO().setCustomerId(customerId);
         }
         //新增买家信息
-        soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
+        soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity);
         //新增明细
         soB2cDetailService.add(addDTO, soB2cEntity.getId());
         //新增财务信息
@@ -1027,7 +1028,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //修改物流信息
         soB2cLogisticsService.update(updateDTO.getLogisticsDTO(), soB2cEntity.getId());
         //修改买家信息
-        soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity.getId());
+        soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity);
         //修改明细
         soB2cDetailService.update(updateDTO.getDetailList(), soB2cEntity.getId());
         //修改订单分类
@@ -3086,6 +3087,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(id);
         if (ObjectUtils.isEmpty(soB2cReceiverEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        }
+        if(StringUtils.isNotBlank(soB2cReceiverEntity.getPartitionId())){
+            DictPartitionEntity dictPartitionEntity = FeignQuery.getById(DictPartitionEntity.class,soB2cReceiverEntity.getPartitionId());
+            if(Objects.nonNull(dictPartitionEntity)){
+                soB2cReceiverEntity.setPartitionName(dictPartitionEntity.getName());
+                soB2cReceiverEntity.setPartitionCode(dictPartitionEntity.getCode());
+            }
         }
         SoB2cReceiverDTO.ViewDTO receiverDTO = new SoB2cReceiverDTO.ViewDTO();
         BeanMapperUtils.copy(soB2cReceiverEntity, receiverDTO);

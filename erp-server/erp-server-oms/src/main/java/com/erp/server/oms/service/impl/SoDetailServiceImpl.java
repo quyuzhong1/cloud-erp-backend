@@ -757,11 +757,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             }
             if(isTax){
                 if(taxRate.compareTo(BigDecimal.ZERO) <= 0){
-                    throw new ServiceException("税率必须大于0");
+                    throw new ServiceException("是否含税选择为是，税率必须大于0");
                 }
             }else{
                 if(taxRate.compareTo(BigDecimal.ZERO) > 0){
-                    throw new ServiceException("税率不能大于0");
+                    throw new ServiceException("是否含税选择为否，税率不能大于0");
                 }
             }
         }
@@ -1401,6 +1401,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
         platformDTO.setWarehouseIdList(Arrays.asList(soInfoEntity.getWarehouseId()));
         platformDTO.setRelationId("");
+        platformDTO.setPartitionId(soInfoEntity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
             return Collections.EMPTY_LIST;
