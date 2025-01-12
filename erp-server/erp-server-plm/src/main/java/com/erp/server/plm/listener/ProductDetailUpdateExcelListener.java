@@ -96,6 +96,10 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
                     productSpuBaseInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
                     productSpuBaseInfoDTO.setCategory(secondaryCategoryEntity.getName());
                 }
+            } else if (ObjectUtils.isEmpty(secondaryCategoryEntity) && !ObjectUtils.isEmpty(secondaryCategory)){
+                data.setErrorMsg("产品分类二级类目不存在");
+                errorList.add(data);
+                return;
             } else {
                 productSpuBaseInfoDTO.setCategoryId(basicCategoryEntity.getId());
                 productSpuBaseInfoDTO.setCategory(basicCategoryEntity.getName());

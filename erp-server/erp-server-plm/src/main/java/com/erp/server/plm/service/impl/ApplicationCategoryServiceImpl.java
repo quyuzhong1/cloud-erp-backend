@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.SyncOperateEnum;
@@ -60,6 +61,7 @@ public class ApplicationCategoryServiceImpl extends SuperServiceImpl<Application
         ApplicationCategoryEntity applicationCategoryEntity = new ApplicationCategoryEntity();
         applicationCategoryEntity.setName(addDTO.getName());
         applicationCategoryEntity.setCode(addDTO.getCode());
+        applicationCategoryEntity.setId(IdWorker.getIdStr());
         sendPushTask(Collections.singletonList(applicationCategoryEntity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         boolean save = super.save(applicationCategoryEntity);
         if(!save) {
