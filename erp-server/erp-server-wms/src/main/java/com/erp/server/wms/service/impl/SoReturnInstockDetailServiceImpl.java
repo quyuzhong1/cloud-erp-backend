@@ -169,7 +169,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                         && StringUtils.isNotBlank(detailDto.getSourceDetailId())){ //签收单明细id
                     SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(v -> v.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                     if(null == soReturnReceiveDetailEntity){
-                        throw new ServiceException(ApiError.ERROR_92167, detailDto.getSkuNo());
+                        throw new ServiceException(ApiError.ERROR_92170, detailDto.getSkuNo());
                     }
                     Integer receiveQty = soReturnReceiveDetailEntity.getReceiveQty();
                     //此单历史入库数量

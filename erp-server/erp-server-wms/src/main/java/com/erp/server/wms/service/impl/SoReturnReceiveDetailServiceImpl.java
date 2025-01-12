@@ -142,7 +142,7 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                         && StringUtils.isNotBlank(detailDto.getNoticeDetailId())){
                     SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(detailDto.getNoticeDetailId())).findFirst().orElse(null);
                     if(null == soReturnNoticeDetailEntity){
-                        throw new ServiceException(ApiError.ERROR_92163, detailDto.getSkuNo());
+                        throw new ServiceException(ApiError.ERROR_92169, detailDto.getSkuNo());
                     }
                     Integer returnQty = soReturnNoticeDetailEntity.getReturnQty();
                     //此单历史签收数量
