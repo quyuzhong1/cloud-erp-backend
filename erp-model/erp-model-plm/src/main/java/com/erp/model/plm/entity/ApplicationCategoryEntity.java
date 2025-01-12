@@ -1,13 +1,13 @@
 package com.erp.model.plm.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -34,7 +34,11 @@ public class ApplicationCategoryEntity extends BaseEntity<ApplicationCategoryEnt
     */
     @TableField("code")
     private String code;
-
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
     public static final String NAME = "name";
 

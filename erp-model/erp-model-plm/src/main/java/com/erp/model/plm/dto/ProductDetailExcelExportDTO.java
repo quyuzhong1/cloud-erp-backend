@@ -614,4 +614,10 @@ public class ProductDetailExcelExportDTO {
      */
     @ExcelIgnore
     private String productPropertyId;
+
+    /**
+     * 报关产品属性Id
+     */
+    @ExcelIgnore
+    private String applicationCategoryId;
 }
