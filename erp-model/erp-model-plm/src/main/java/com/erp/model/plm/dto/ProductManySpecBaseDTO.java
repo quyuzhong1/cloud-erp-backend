@@ -161,4 +161,15 @@ public class ProductManySpecBaseDTO implements Serializable{
      *禁止修改的字段
      */
     private List<String> disableFieldList;
+
+
+    /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类名
+     */
+    private String applicationCategoryName;
 }
