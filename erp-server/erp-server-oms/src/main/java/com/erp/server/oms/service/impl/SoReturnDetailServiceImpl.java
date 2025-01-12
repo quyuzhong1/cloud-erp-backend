@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
@@ -457,58 +458,8 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             detailView.setSkuNo(productDetailEntity.getSkuNo());
             noBomList.add(detailView);
         }
-
-        List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
-        if(CollectionUtils.isNotEmpty(bomChildrenSkuList)){
-            //存在套装SKU
-            view.setExistBom(Boolean.TRUE);
-            //根据父skuno 分组
-            Map<String, List<BomChildrenSkuDTO>> collect = bomChildrenSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
-            List<String> childSkuNoList = new ArrayList<>();
-            for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
-                String skuNo = addDetailView.getSkuNo();
-                if(collect.containsKey(skuNo)){
-                    //把子件添加到结果集
-                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
-                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
-                        childSkuNoList.add(bomChildrenSkuDTO.getSkuNo());
-                    }
-                }
-            }
-            //sku映射表
-            skuParamDTO = new SkuMappingDTO.SkuParamDTO();
-            skuParamDTO.setCutomerId(dto.getCustomerId());
-            skuParamDTO.setSkuNoList(childSkuNoList);
-            productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
-            for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
-                String skuNo = addDetailView.getSkuNo();
-                if(collect.containsKey(skuNo)){
-                    //父sku
-                    parentSkuNoList.add(skuNo);
-                    //把子件添加到结果集
-                    List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
-                    for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
-                        SoDetailDTO.AddDetailView addChildDetailView = new SoDetailDTO.AddDetailView();
-                        addChildDetailView.setSkuId(bomChildrenSkuDTO.getSkuId());
-                        addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                        addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
-                        String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-                        addChildDetailView.setPlatformSkuNo(platformSkuNo);
-                        addChildDetailView.setCustomerId(dto.getCustomerId());
-                        addChildDetailView.setWarehouseId(addDetailView.getWarehouseId());
-                        addChildDetailView.setWarehouseName(addChildDetailView.getWarehouseName());
-                        addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
-                        bomList.add(addChildDetailView);
-                    }
-                }else {
-                    bomList.add(addDetailView);
-                }
-            }
-        }
         view.setNobomList(noBomList);
-        view.setBomList(bomList);
-        view.setParentSkuNoList(parentSkuNoList);
+        generateBomList(dto, noBomList, view, bomList, parentSkuNoList);
         return view;
     }
 
@@ -530,10 +481,15 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             }
         });
         view.setNobomList(noBomList);
+        generateBomList(dto, noBomList, view, bomList, parentSkuNoList);
+        return view;
+    }
+
+    private void generateBomList(SoReturnDTO.PlatformSkuDTO dto, List<SoDetailDTO.AddDetailView> noBomList, SoDetailDTO.ListAddDetailNoBomViewDTO view, List<SoDetailDTO.AddDetailView> bomList, List<String> parentSkuNoList) {
         if(CollectionUtils.isNotEmpty(noBomList)){
             List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
-            if(CollectionUtils.isNotEmpty(bomChildrenSkuList)){
+            if(CollUtil.isNotEmpty(bomChildrenSkuList)){
                 //存在套装SKU
                 view.setExistBom(Boolean.TRUE);
                 //根据父skuno 分组
@@ -554,38 +510,48 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                 skuParamDTO.setCutomerId(dto.getCustomerId());
                 skuParamDTO.setSkuNoList(childSkuNoList);
                 List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingService.listSkuBySkuNos(skuParamDTO);
-                for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
-                    String skuNo = addDetailView.getSkuNo();
-                    if(collect.containsKey(skuNo)){
-                        //父sku
-                        parentSkuNoList.add(skuNo);
-                        //把子件添加到结果集
-                        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
-                        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
-                            SoDetailDTO.AddDetailView addChildDetailView = new SoDetailDTO.AddDetailView();
-                            addChildDetailView.setSkuId(bomChildrenSkuDTO.getSkuId());
-                            addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                            addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
-                            String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
-                            addChildDetailView.setPlatformSkuNo(platformSkuNo);
-                            addChildDetailView.setReturnReasonDictName(addDetailView.getReturnReasonDictName());
-                            addChildDetailView.setReturnReasonDict(addDetailView.getReturnReasonDict());
-                            addChildDetailView.setReturnTypeDictName(addDetailView.getReturnTypeDictName());
-                            addChildDetailView.setReturnTypeDict(addDetailView.getReturnTypeDict());
-                            addChildDetailView.setWarehouseId(addDetailView.getWarehouseId());
-                            addChildDetailView.setWarehouseName(addChildDetailView.getWarehouseName());
-                            addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
-                            bomList.add(addChildDetailView);
+                if(CollUtil.isNotEmpty(productSkuInfoList)){
+                    for (SoDetailDTO.AddDetailView addDetailView : noBomList) {
+                        String skuNo = addDetailView.getSkuNo();
+                        if(collect.containsKey(skuNo)){
+                            //把子件添加到结果集
+                            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = collect.get(skuNo);
+                            boolean allSkuExist = childSkuNoList.stream().allMatch(productSkuInfoList.stream().map(SkuMappingDTO.ProductSkuInfoDTO::getSkuNo).collect(Collectors.toList())::contains);
+                            if(Boolean.FALSE.equals(allSkuExist)){
+                                bomList.add(addDetailView);
+                                break;
+                            }
+                            //父sku
+                            parentSkuNoList.add(skuNo);
+                            for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                                SoDetailDTO.AddDetailView addChildDetailView = new SoDetailDTO.AddDetailView();
+                                addChildDetailView.setSkuId(bomChildrenSkuDTO.getSkuId());
+                                addChildDetailView.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                                addChildDetailView.setProductName(bomChildrenSkuDTO.getSkuName());
+                                String platformSkuNo = productSkuInfoList.stream().filter(v -> v.getSkuNo().equals(bomChildrenSkuDTO.getSkuNo())).map(SkuMappingDTO.ProductSkuInfoDTO::getPlatformSkuNo).findFirst().orElse("");
+                                addChildDetailView.setPlatformSkuNo(platformSkuNo);
+                                addChildDetailView.setReturnReasonDictName(addDetailView.getReturnReasonDictName());
+                                addChildDetailView.setReturnReasonDict(addDetailView.getReturnReasonDict());
+                                addChildDetailView.setReturnTypeDictName(addDetailView.getReturnTypeDictName());
+                                addChildDetailView.setReturnTypeDict(addDetailView.getReturnTypeDict());
+                                addChildDetailView.setWarehouseId(addDetailView.getWarehouseId());
+                                addChildDetailView.setWarehouseName(addChildDetailView.getWarehouseName());
+                                addChildDetailView.setIsChildSkuNo(Boolean.TRUE);
+                                bomList.add(addChildDetailView);
+                            }
+                        }else {
+                            bomList.add(addDetailView);
                         }
-                    }else {
-                        bomList.add(addDetailView);
+                    }
+                    if(CollUtil.isEmpty(parentSkuNoList)){
+                        //存在套装SKU
+                        view.setExistBom(Boolean.FALSE);
                     }
                 }
             }
         }
         view.setBomList(bomList);
         view.setParentSkuNoList(parentSkuNoList);
-        return view;
     }
 
 
