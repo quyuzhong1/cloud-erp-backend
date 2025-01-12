@@ -7,7 +7,6 @@ import com.erp.model.plm.dto.ProductDetailUpdateExcelDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import lombok.Getter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -63,13 +62,6 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
         ProductDetailEntity productBy = productDetailEntityList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(null);
         if (ObjectUtils.isEmpty(productBy)) {
             data.setErrorMsg("sku不存在");
-            errorList.add(data);
-            return;
-        }
-        if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
-                || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
-            data.setErrorMsg("仅{待提交，审核不通过}的状态下可导入修改");
             errorList.add(data);
             return;
         }
