@@ -490,8 +490,6 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             List<String> skuNOs = noBomList.stream().map(SoDetailDTO.AddDetailView::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             List<BomChildrenSkuDTO> bomChildrenSkuList = bomSkuFeign.checkExistAndListCombinationSku(skuNOs);
             if(CollUtil.isNotEmpty(bomChildrenSkuList)){
-                //存在套装SKU
-                view.setExistBom(Boolean.TRUE);
                 //根据父skuno 分组
                 Map<String, List<BomChildrenSkuDTO>> collect = bomChildrenSkuList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
                 List<String> childSkuNoList = new ArrayList<>();
@@ -543,9 +541,9 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
                             bomList.add(addDetailView);
                         }
                     }
-                    if(CollUtil.isEmpty(parentSkuNoList)){
+                    if(CollUtil.isNotEmpty(parentSkuNoList)){
                         //存在套装SKU
-                        view.setExistBom(Boolean.FALSE);
+                        view.setExistBom(Boolean.TRUE);
                     }
                 }
             }
