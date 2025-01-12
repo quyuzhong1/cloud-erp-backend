@@ -262,6 +262,16 @@ public class ProductShowDTO implements Serializable {
     private String category;
 
     /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类名字
+     */
+    private String applicationCategoryName;
+
+    /**
      * 立项日期
      */
     private LocalDate projectInitDate;

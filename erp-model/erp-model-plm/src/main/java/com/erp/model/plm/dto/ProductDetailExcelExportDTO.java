@@ -6,9 +6,6 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.annotation.write.style.ContentRowHeight;
 import com.alibaba.excel.annotation.write.style.HeadRowHeight;
 import com.common.business.annotation.MenuCode;
-import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.plm.enums.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -61,6 +58,13 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("二级分类")
     @MenuCode("plm:product:detail:listProinfo")
     private String secondaryCategory;
+
+    /**
+     * 二级分类
+     */
+    @ExcelProperty("应用分类")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String applicationCategoryName;
 
     /**
      * 产品经理
@@ -610,4 +614,10 @@ public class ProductDetailExcelExportDTO {
      */
     @ExcelIgnore
     private String productPropertyId;
+
+    /**
+     * 报关产品属性Id
+     */
+    @ExcelIgnore
+    private String applicationCategoryId;
 }

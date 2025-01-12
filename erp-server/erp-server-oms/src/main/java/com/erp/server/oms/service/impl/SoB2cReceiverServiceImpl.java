@@ -1,7 +1,9 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -11,18 +13,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ReflectUtils;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
-import com.erp.model.oms.entity.CustomerB2cEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.enums.DictValueEnum;
+import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cReceiverMapper;
-import com.erp.server.oms.service.CustomerB2cService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SoB2cReceiverService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
@@ -62,17 +61,31 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
+    @Resource
+    private ShopInfoService shopInfoService;
+
     @Override
-    public Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, String mainId) {
+    public Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, SoB2cEntity soB2cEntity) {
         SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
         BeanMapperUtils.copy(receiverDTO,entity);
         //处理买家信息
-        handleSoB2cReceiver(entity,mainId);
+        handleSoB2cReceiver(entity, soB2cEntity.getId());
+        if(StringUtils.isNotBlank(soB2cEntity.getShopId())){
+            ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
+            this.buildPartitionId(entity, shopInfoEntity);
+        }else{
+            this.buildPartitionId(entity, null);
+        }
         return this.save(entity);
     }
 
     @Override
-    public Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, String mainId) {
+    public Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, SoB2cEntity soB2cEntity) {
         SoB2cReceiverEntity old = super.getById(receiverDTO.getId());
         if(null == old){
            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单买家信息表");
@@ -80,10 +93,11 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         SoB2cReceiverEntity entity = new SoB2cReceiverEntity();
         BeanMapperUtils.copy(receiverDTO,entity);
         //处理买家信息
-        handleSoB2cReceiver(entity,mainId);
+        handleSoB2cReceiver(entity, soB2cEntity.getId());
+        //封装军区
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
+        this.buildPartitionId(entity,shopInfoEntity);
         boolean update = this.updateById(entity);
-        //主表信息
-        SoB2cEntity soB2cEntity = soB2cService.getById(old.getMainId());
         // 记录主单操作日志
         log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
         String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
@@ -204,6 +218,26 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 .set(SoB2cReceiverEntity::getSecondAddress,receiver.getSecondAddress())
                 .set(SoB2cReceiverEntity::getFullAddress,receiver.getFullAddress())
                 .eq(SoB2cReceiverEntity::getId, receiver.getId()).eq(SoB2cReceiverEntity::getMainId,receiver.getMainId()).update();
+    }
+
+    @Override
+    public void buildPartitionId(SoB2cReceiverEntity receiverEntity, ShopInfoEntity shopInfoEntity) {
+        String country = receiverEntity.getCountry();
+        if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getCustomerId())){
+            CustomerInfoEntity customerInfo = customerInfoService.getById(shopInfoEntity.getCustomerId());
+            if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.GL.getCode())){
+                country = customerInfo.getCountryId();
+            }
+        }
+        if(StringUtils.isBlank(country)){
+            return;
+        }
+        receiverEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+    }
+
+    @Override
+    public IPage<SoB2cReceiverEntity> pagePartitionIsNull(Page query) {
+        return baseMapper.pagePartitionIsNull(query);
     }
 
     /**

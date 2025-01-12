@@ -29,18 +29,6 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      * @date: 2024-06-02
      */
     BaseResultDTO.AddDTO add(VirtualWarehouseDTO.AddDTO dto);
-//    /**
-//     * 新增
-//     *
-//     * @param dto
-//     * @return
-//     * @author hyj
-//     * @date: 2024-06-02
-//     */
-//    BaseResultDTO.AddDTO addAndBind(VirtualWarehouseDTO.AddDTO dto);
-    //绑定信息
-//    void bindInfo(List<String> warehouseIdList, List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList,
-//                          List<ThirdMappingDTO.AddDTO> thirdMappingList, String virtualWarehouseEntityId);
     /**
      * 修改
      *

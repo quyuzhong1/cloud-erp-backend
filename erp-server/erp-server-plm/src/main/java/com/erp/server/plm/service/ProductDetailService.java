@@ -841,4 +841,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
 
     void uploadSkuImage(UploadSkuDTO dto);
+
+    /**
+     * 导入更新
+     * @param excelFile 文件
+     * @param response 响应
+     */
+    void importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
 }

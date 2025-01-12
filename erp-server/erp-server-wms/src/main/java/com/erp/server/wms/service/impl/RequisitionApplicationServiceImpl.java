@@ -979,6 +979,13 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         //待处理撤销
         if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus())) {
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_SUBMIT.getStatus());
+            List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(Arrays.asList(id));
+            detailEntityList.forEach(v->{
+                v.setFromVirtualWarehouseId("");
+                v.setFromVirtualWarehouseName("");
+            });
+            //清空虚拟仓
+            requisitionApplicationDetailService.updateBatchById(detailEntityList);
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE_ING.getStatus())) {
             pickingListsService.exist(id);
             //处理中撤销
@@ -1001,8 +1008,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 //service.cancelWdtOrder(fromVmIds, entity, haveFromVwMap);
             }
             updateApproveStatus(id, RequisitionApplicationStatusEnum.WAIT_HANDLE.getStatus());
-            //清空明细中的虚拟仓
-//            requisitionApplicationDetailService.cleanVirtualWarehouseIdByMianId(id);
+            //清空明细中的虚拟仓冻结数量
+            requisitionApplicationDetailService.cleanVirtualFrozenQtyByMianId(id);
         } else if (Objects.equals(entity.getStatus(), RequisitionApplicationStatusEnum.HANDLE.getStatus())) {
             if (entity.getHandleTime().isBefore(LocalDateTime.of(2024,07,27,0,0))) {
                 throw new ServiceException("系统升级，不支持撤销，请联系实施人员");

@@ -4,12 +4,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -38,7 +36,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -92,6 +89,8 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
 
     /**
      * 组装数据发送到金蝶
@@ -216,6 +215,13 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
                 }
             }
         }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(productInfoEntity.getApplicationCategoryId());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            resultMap.put("applicationCategory", applicationCategory.getName());
+            //一级分类编码
+            resultMap.put("applicationCategoryCode", applicationCategory.getCode());
+        }
+
         //产品经理
         resultMap.put("chargeName", productInfoEntity.getChargeName());
         //销售信息

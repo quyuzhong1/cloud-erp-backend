@@ -1394,6 +1394,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
         platformDTO.setWarehouseIdList(Arrays.asList(soInfoEntity.getWarehouseId()));
         platformDTO.setRelationId("");
+        platformDTO.setPartitionId(soInfoEntity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
             return Collections.EMPTY_LIST;

@@ -220,9 +220,6 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     public PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> vmPagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         IPage<VirtualWarehouseRelationDTO.SelectResultDTO> pagResult = baseMapper.vmPagingSelect(query, dto.getParams());
-        List<VirtualWarehouseRelationDTO.SelectResultDTO> records = pagResult.getRecords();
-        //排序
-        pagResult.setRecords(records);
         return new PagingVO<>(pagResult);
     }
 
