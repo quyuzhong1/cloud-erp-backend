@@ -705,6 +705,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setNoticeDetailId(view.getId());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
+                detailAddDTO.setIsChildSkuNo(view.getIsChildSkuNo());
                 SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
                 detailAddDTO.setExchangeRate(soReturnNoticeDetailEntity.getExchangeRate());
                 if (Objects.equals(soReturnNoticeDetailEntity.getReturnQty(), view.getReceiveQty())) {
