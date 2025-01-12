@@ -1007,6 +1007,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
             if (CharSequenceUtil.isNotBlank(virtualWarehouseId)) {
                 detailEntity.setVirtualWarehouseId(virtualWarehouseId);
+            }else{
+                detailEntity.setVirtualWarehouseId("");
             }
 
             //仓库名称
