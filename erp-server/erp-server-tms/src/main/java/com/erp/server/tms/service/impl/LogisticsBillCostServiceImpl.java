@@ -485,6 +485,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
         }
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         LogisticsBillCostExcelListener excelListenerUtil = new LogisticsBillCostExcelListener();
@@ -921,6 +922,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
      * @param successList
      * @param errorList
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void handleImportSuccessList (List<LogisticsBillCostExcelDTO> successList,List<LogisticsBillCostExcelDTO > errorList,String dictCostAttribution) {
         if (CollectionUtils.isEmpty(successList)) {
@@ -1045,7 +1047,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             		for(UpdateDTO remove : removeList) {
             			String costName = tmsCfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), remove.getCfgCostId())).findFirst().orElse(null).getCostName();
             			Set<String> set = costIdTypeListMap.get(costName);
-            			if(CollUtil.isNotEmpty(set)) {
+            			if(CollUtil.isEmpty(set)) {
             				set = new HashSet<>();
             			}
             			set.add(AllocationFeeTypeEnum.getName(validateCategory.getKey()) + "-" + LogisticsBillCostTypeEnum.getName(validateCategory.getValue()) + "分类下所有费用币种必须一致");

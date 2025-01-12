@@ -614,7 +614,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             		for(UpdateDTO remove : removeList) {
             			String costName = erpFieldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), remove.getCfgCostId())).findFirst().orElse(null).getErpFieldName();
             			Set<String> set = costIdTypeListMap.get(costName);
-            			if(CollUtil.isNotEmpty(set)) {
+            			if(CollUtil.isEmpty(set)) {
             				set = new HashSet<>();
             			}
             			set.add(AllocationFeeTypeEnum.getName(validateCategory.getKey()) + "-" + LogisticsBillCostTypeEnum.getName(validateCategory.getValue()) + "分类下所有费用币种必须一致");

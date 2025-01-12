@@ -17,6 +17,7 @@ import com.erp.model.tms.entity.TmsCostDetailEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.enums.DictCostCategoryEnum;
 import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.mapper.TmsCostDetailMapper;
@@ -26,6 +27,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -84,6 +86,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
 
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean batchUpdate(List<TmsCostDetailDTO.UpdateDTO> costDetailList, String mainId,DictCostAttributionEnum dictCostAttributionEnum,Boolean isImport) {
         if (CollectionUtils.isEmpty(costDetailList)) {
@@ -139,16 +142,6 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     	if(CollUtil.isEmpty(list)) {
     		return;
     	}
-    	List<String> cfgCostIds = list.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
-		Map<String, String> costCategoryMap = tmsCfgCostService.listByIds(cfgCostIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, TmsCfgCostEntity::getDictCostCategory));
-		Map<String, List<TmsCostDetailEntity>> costCategoryAddDataDTOMaps = list.stream().collect(Collectors.groupingBy(v -> costCategoryMap.get(v.getCfgCostId()) + "_" + v.getType()));
-		for(Map.Entry<String, List<TmsCostDetailEntity>> costCategoryAddDataDTOMap : costCategoryAddDataDTOMaps.entrySet()) {
-			List<TmsCostDetailEntity> costCategoryList = costCategoryAddDataDTOMap.getValue();
-			String categoryCurrency = costCategoryList.get(0).getCurrency();
-			if(costCategoryList.stream().anyMatch(d -> !categoryCurrency.equals(d.getCurrency()))) {
-				throw new ServiceException(AllocationFeeTypeEnum.getName(costCategoryAddDataDTOMap.getKey()) + "分类下所有" + LogisticsBillCostTypeEnum.getName(costCategoryList.get(0).getType()) +"费用币种必须一致");
-			}
-		}
 		Map<String, String> categoryList = this.validateCategoryCurrency(list);
 		if(!categoryList.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
@@ -174,7 +167,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 			List<TmsCostDetailEntity> costCategoryList = costCategoryAddDataDTOMap.getValue();
 			String categoryCurrency = costCategoryList.get(0).getCurrency();
 			if(costCategoryList.stream().anyMatch(d -> !categoryCurrency.equals(d.getCurrency()))) {
-				categoryList.put(costCategoryAddDataDTOMap.getKey() , costCategoryList.get(0).getType());
+				categoryList.put(costCategoryMap.get(costCategoryList.get(0).getCfgCostId()) , costCategoryList.get(0).getType());
 			}
 		}
 		return categoryList;

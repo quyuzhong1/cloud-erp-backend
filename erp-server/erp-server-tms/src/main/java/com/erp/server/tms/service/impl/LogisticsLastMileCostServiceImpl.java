@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -237,11 +238,6 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
         //物流费用信息
         List<String> logisticsBillDetailIdList = logisticsBillDetailList.stream().map(LogisticsBillDetailEntity::getId).distinct().collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostList = logisticsBillCostService.listByLogisticsBillDetailIdList(logisticsBillDetailIdList);
-        Map<String, List<TmsCostDetailEntity>> mainIdListMap = new HashMap<>();
-        if(CollUtil.isNotEmpty(logisticsBillCostList)) {
-        	List<TmsCostDetailEntity> listByMainIdList = tmsCostDetailService.listByMainIdList(logisticsBillCostList.stream().map(LogisticsBillCostEntity::getId).collect(Collectors.toList()));
-        	mainIdListMap = listByMainIdList.stream().collect(Collectors.groupingBy(TmsCostDetailEntity::getMainId));
-        }
         for (JSONObject jsonObject :  successList) {
             //主数据
             JSONObject successJson = new JSONObject();
@@ -324,7 +320,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             
             updateList.forEach(u -> u.setCurrency(updateDataDTO.getCurrency()));
             List<TmsCostDetailEntity> validateList = BeanMapperUtils.copyList(TmsCostDetailEntity.class, updateList);
-            List<TmsCostDetailEntity> tmsCostDetailEntityList = mainIdListMap.get(logisticsBillCostEntity.getId());
+            List<TmsCostDetailEntity> tmsCostDetailEntityList = tmsCostDetailService.listByMainIdList(Arrays.asList(logisticsBillCostEntity.getId()));
             if(CollUtil.isNotEmpty(tmsCostDetailEntityList)) {
             	List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
             	validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
@@ -343,10 +339,12 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             	if(!costIdTypeListMap.isEmpty()) {
             		jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(new ArrayList<>(costIdTypeListMap.values())));
                     errorList.add(jsonObject);
-                    continue;
             	}
             }
             
+            if(CollUtil.isEmpty(updateList)) {
+            	continue;
+            }
             updateDataDTO.setCostDetailList(updateList);
             this.update(updateDataDTO,Boolean.TRUE);
         }
