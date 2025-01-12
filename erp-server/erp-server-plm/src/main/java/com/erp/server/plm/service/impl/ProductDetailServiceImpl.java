@@ -708,7 +708,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
             manySpecDetailById.setCategoryIdList(categoryIdList);
             ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(manySpecDetailById.getApplicationCategoryId());
-            manySpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+            if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                manySpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+            }
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
         }
         //多规格产品明细信息
