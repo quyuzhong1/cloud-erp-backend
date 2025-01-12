@@ -700,7 +700,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         if (CollectionUtils.isEmpty(skuList)) {
-            return SkuMappingConverter.INSTANCE.convertSkuDTO(dataList);
+            return Collections.EMPTY_LIST;
         }
         //重置sku含税成本
         resetSkuVo(skuList,dataList);
