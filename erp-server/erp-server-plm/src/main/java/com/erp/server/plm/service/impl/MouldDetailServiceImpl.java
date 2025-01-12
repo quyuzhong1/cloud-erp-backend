@@ -103,6 +103,12 @@ public class MouldDetailServiceImpl extends SuperServiceImpl<MouldDetailMapper, 
                         MouldProductEntity mouldProduct = new MouldProductEntity();
                         mouldProduct.setProductName(v.getProductName());
                         mouldProduct.setMouldDetailId(mouldDetail.getId());
+                        mouldProduct.setTypeId(v.getTypeId());
+                        mouldProduct.setLength(v.getLength());
+                        mouldProduct.setHeight(v.getHeight());
+                        mouldProduct.setWidth(v.getWidth());
+                        mouldProduct.setMouldHoles(v.getMouldHoles());
+                        mouldProduct.setMaterial(v.getMaterial());
                         if (!CollectionUtils.isEmpty(v.getImagesUrl())) {
                             mouldProduct.setImagesUrl(String.join(",", v.getImagesUrl()));
                         }
