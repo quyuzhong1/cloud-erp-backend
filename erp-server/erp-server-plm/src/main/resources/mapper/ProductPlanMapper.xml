@@ -173,9 +173,9 @@
                     #{item} = ANY(string_to_array(pp.category_id,','))
                 </foreach>
             </if>
-            <if test="params.applicationCategoryId != null and params.applicationCategoryId.size > 0">
+            <if test="params.applicationCategoryIds != null and params.applicationCategoryIds.size > 0">
                 and pp.application_category_id in
-                <foreach collection="applicationCategoryId" item="id" open="(" separator="," close=")">
+                <foreach collection="params.applicationCategoryIds" item="id" open="(" separator="," close=")">
                     #{id}
                 </foreach>
             </if>

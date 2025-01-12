@@ -9,13 +9,17 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.ApplicationCategoryDTO;
 import com.erp.model.plm.entity.ApplicationCategoryEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.server.plm.mapper.ApplicationCategoryMapper;
 import com.erp.server.plm.service.ApplicationCategoryService;
+import com.erp.server.plm.service.ProductInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -29,6 +33,10 @@ import java.util.List;
 @Slf4j
 @Service
 public class ApplicationCategoryServiceImpl extends SuperServiceImpl<ApplicationCategoryMapper, ApplicationCategoryEntity> implements ApplicationCategoryService {
+
+    @Lazy
+    @Resource
+    private ProductInfoService productInfoService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -91,7 +99,10 @@ public class ApplicationCategoryServiceImpl extends SuperServiceImpl<Application
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(String id) {
-        //todo 校验分类下产品
+        int count = productInfoService.count(Wrappers.<ProductInfoEntity>lambdaQuery().eq(ProductInfoEntity::getApplicationCategoryId, id));
+        if (count > 0) {
+            throw new ServiceException("分类下存在产品，请调整分类后删除");
+        }
         removeById(id);
     }
 
