@@ -93,4 +93,13 @@ public class BaseIdsDTO implements Serializable {
          */
         private List<String> changeIds;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryDTO extends IdsDTO{
+
+        @NotNull(message = "发货日期不能为空")
+        private LocalDate deliveryDate;
+
+    }
 }

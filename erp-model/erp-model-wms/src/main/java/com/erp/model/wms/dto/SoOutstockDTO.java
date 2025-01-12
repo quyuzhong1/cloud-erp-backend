@@ -542,6 +542,7 @@ public class SoOutstockDTO implements Serializable {
             this.carrierId = entity.getCarrierId();
             this.sellerId = entity.getSellerId();
             this.customerId = entity.getCustomerId();
+            this.billDate = entity.getActualDeliveryDate();
         }
     }
 

@@ -349,12 +349,12 @@ public class SoDeliveryNoticeController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "下推销售出库单")
     @PostMapping(value = "/generateSoDeliverySave")
-    public ApiResult<List<BatchResultDTO>> generateSoDeliverySave(@RequestBody BaseIdsDTO.IdsDTO idsDTO) {
+    public ApiResult<List<BatchResultDTO>> generateSoDeliverySave(@RequestBody BaseIdsDTO.DeliveryDTO idsDTO) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(idsDTO.getIds().size());
         for (String id : idsDTO.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = soDeliveryNoticeService.generateSoDeliverySave(id);
+                resultDTO = soDeliveryNoticeService.generateSoDeliverySave(id,idsDTO.getDeliveryDate());
             }catch (Exception e){
                 log.error("发货通知单不存在, 下推销售出库单失败",e);
                 SoDeliveryNoticeEntity entity = soDeliveryNoticeService.getById(id);
