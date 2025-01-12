@@ -81,7 +81,7 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
         BasicCategoryEntity secondaryCategoryEntity = categoryList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
 
         if (ObjectUtils.isEmpty(basicCategoryEntity)) {
-            if (!ObjectUtils.isEmpty(secondaryCategoryEntity)) {
+            if (!ObjectUtils.isEmpty(secondaryCategoryEntity) || !ObjectUtils.isEmpty(category)) {
                 data.setErrorMsg("产品分类一级类目不存在");
                 errorList.add(data);
                 return;
