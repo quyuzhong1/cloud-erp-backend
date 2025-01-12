@@ -201,7 +201,7 @@ public class FirstMileDeliveryController extends BaseController {
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment(),dto.getDeliveryDate()));
             }catch (Exception e){
                 log.error("发货单审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
 
 /**
  * @author Will
@@ -49,14 +50,22 @@ public class ApproveOneDTO extends PermissionsDTO {
      * 是否是pc端访问
      */
     private Boolean pcShow = false;
-
-
+    /**
+     *发货日期
+     */
+    private LocalDate deliveryDate;
 
     public ApproveOneDTO (String id,String type,String comment) {
         this.id = id;
         this.type = type;
         this.comment = comment;
 
+    }
+    public ApproveOneDTO (String id,String type,String comment,LocalDate deliveryDate) {
+        this.id = id;
+        this.type = type;
+        this.comment = comment;
+        this.deliveryDate = deliveryDate;
     }
 
     public ApproveOneDTO (String id,String type,String comment,Boolean isNeedProcess) {
