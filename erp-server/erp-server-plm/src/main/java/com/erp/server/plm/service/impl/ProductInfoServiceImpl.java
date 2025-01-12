@@ -1105,7 +1105,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             result.setChargeIds(new ArrayList<>());
         }
         ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(entity.getApplicationCategoryId());
-        result.setApplicationCategoryName(applicationCategory.getName());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            result.setApplicationCategoryName(applicationCategory.getName());
+        }
         String chargeName = entity.getChargeName();
         if (StringUtils.isNotBlank(chargeName)) {
             result.setChargeNames(Arrays.asList(chargeName.split(",")));

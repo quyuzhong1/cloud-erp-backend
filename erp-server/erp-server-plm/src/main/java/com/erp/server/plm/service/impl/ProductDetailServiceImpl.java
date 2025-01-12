@@ -5285,7 +5285,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Override
     public void importProductUpdate(MultipartFile excelFile, HttpServletResponse response) {
-        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener();
+        List<BasicCategoryEntity> categoryList = basicCategoryService.list();
+        List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
+        Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
+        List<ProductDetailEntity> productDetailEntityList = this.list();
+        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList);
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -5295,17 +5299,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        List<ProductDetailUpdateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
         List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
-
-        List<ProductDetailUpdateExcelDTO> successList = excelListenerUtil.getSuccessList();
-
-//        //处理验证成功数据
-//        handleImportSuccessList(successList, errorList);
-
+        List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
+        for (ProductInfoDTO productInfoDTO : successList) {
+            productInfoService.updateSpec(productInfoDTO);
+        }
         if (CollectionUtils.isNotEmpty(errorList)) {
             StringBuilder sb = new StringBuilder();
             String excelPath = "excel/productUpdateError.xlsx";
