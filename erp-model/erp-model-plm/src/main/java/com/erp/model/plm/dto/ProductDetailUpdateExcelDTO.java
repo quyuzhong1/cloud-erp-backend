@@ -42,4 +42,14 @@ public class ProductDetailUpdateExcelDTO {
      */
     private String errorMsg;
 
+    /**
+     * 产品类别id
+     */
+    private String categoryId;
+
+    /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
 }
