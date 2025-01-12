@@ -49,6 +49,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
         CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = stockUpResult.getLogisticsResult();
@@ -73,8 +74,6 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         //发货信息
         Map<LocalDate, List<ReplenishmentResultDTO.DeliverySuggestDTO>> deliveryMap = replenishmentResultDTO.getDeliverySuggests().stream().collect(Collectors.groupingBy(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestPurchaseDate));
-        //处理连续断货数据
-        List<LocalDate> dates = rptOutOfStocks.stream().map(ReplenishmentResultDTO.RptOutOfStockDTO::getStartDate).distinct().collect(Collectors.toList());
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = deliveryMap.entrySet().parallelStream()
                 .flatMap(entry -> {
                     String code = docNoGenHelper.generateCode(CODE_P);

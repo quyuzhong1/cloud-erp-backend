@@ -134,11 +134,6 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         handleData(purchaseSuggestMergeEntity);
 
         log.info("开始新增或更新建议采购(合并后)");
-        if (CharSequenceUtil.isBlank(purchaseSuggestMergeEntity.getId())) {
-            // 生成单号
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PP);
-            purchaseSuggestMergeEntity.setCode(code);
-        }
         boolean save = super.saveOrUpdate(purchaseSuggestMergeEntity);
         if(!save) {
             throw new ServiceException("建议采购(合并后)保存失败");
@@ -383,6 +378,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 addOrUpdateDTO.setId(purchaseSuggestMergeEntity.getId());
             } else {
                 addOrUpdateDTO.setId(null);
+                // 生成单号
+                String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PP);
+                addOrUpdateDTO.setCode(code);
             }
             //建议采购量
             addOrUpdateDTO.setSuggestPurchaseQty(suggestPurchaseQty);

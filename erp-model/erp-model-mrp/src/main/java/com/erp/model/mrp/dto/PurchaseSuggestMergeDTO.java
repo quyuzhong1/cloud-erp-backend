@@ -453,6 +453,10 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 编码
+         */
+        private String code;
     }
 
     /**
