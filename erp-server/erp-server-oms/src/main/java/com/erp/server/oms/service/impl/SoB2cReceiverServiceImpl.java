@@ -1,7 +1,9 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -231,6 +233,11 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             return;
         }
         receiverEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+    }
+
+    @Override
+    public IPage<SoB2cReceiverEntity> pagePartitionIsNull(Page query) {
+        return baseMapper.pagePartitionIsNull(query);
     }
 
     /**
