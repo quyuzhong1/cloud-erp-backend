@@ -868,7 +868,11 @@ public class InventoryServiceImpl implements InventoryService {
                     .reduce(MathUtil.ZERO,Integer::sum);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
-            return 0;
+            return replenishmentResultDTO.getInventoryDTO().getLocalInTransitList()
+                    .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
+                    .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
+                    .map(ReplenishmentInventoryDTO.LocalInTransitDTO::getQty)
+                    .reduce(MathUtil.ZERO,Integer::sum);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_PLAN_PURCHASE_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getInventoryDTO().getEstimatedPurchaseList()).orElse(new ArrayList<>())

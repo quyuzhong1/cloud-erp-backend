@@ -1443,6 +1443,7 @@ public class ReplenishmentResultDTO {
             dto.setQty(purchaseDTO.getQty());
             dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
             dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
             dto.setSourceCode(purchaseDTO.getSourceCode());
             dto.setSourceType(purchaseDTO.getSourceType());
             dto.setReceivingChannel(purchaseDTO.getWarehouseId());
