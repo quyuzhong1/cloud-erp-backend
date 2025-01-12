@@ -8,7 +8,6 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
@@ -41,36 +40,6 @@ public class MouldDetailEntity extends BaseEntity<MouldDetailEntity> {
     */
     @TableField("third_mould_no")
     private String thirdMouldNo;
-    /**
-    * 模具类型
-    */
-    @TableField("type_id")
-    private String typeId;
-    /**
-    * 模具穴数
-    */
-    @TableField("mould_holes")
-    private String mouldHoles;
-    /**
-    * 模具长
-    */
-    @TableField("length")
-    private BigDecimal length;
-    /**
-    * 模具宽
-    */
-    @TableField("width")
-    private BigDecimal width;
-    /**
-    * 模具高
-    */
-    @TableField("height")
-    private BigDecimal height;
-    /**
-    * 模具材质
-    */
-    @TableField("material")
-    private String material;
     /**
     * 模具寿命(万)(啤)
     */
