@@ -220,7 +220,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 detailEntity.setWarehouseOrgName(companyDTO.getName());
             }
             //库存SKU
-            SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream().filter(obj -> detailEntity.getSkuId() != null && obj.getProductSkuId().equals(detailEntity.getSkuId()) && detailEntity.getWarehouseId() != null && obj.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+            SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = SkuMappingList.stream()
+                    .filter(obj -> obj.getProductSkuId() != null
+                            && obj.getProductSkuId().equals(detailEntity.getSkuId())
+                            && obj.getWarehouseId() != null
+                            && obj.getWarehouseId().equals(detailEntity.getWarehouseId()))
+                    .findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
                 detailEntity.setWarehouseSkuNo(StrUtil.isBlank(warehouseListSkuDTO.getWarehouseSkuNo()) ? "" : warehouseListSkuDTO.getWarehouseSkuNo() );
             } else {
@@ -230,6 +235,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         }
 
        return this.saveOrUpdateBatch(detailList);
+    }
+
+    public static void main(String[] args) {
+        List<SkuMappingDTO.ListSkuDTO> skuMappingList = new ArrayList<>();
+        SkuMappingDTO.ListSkuDTO skuDTO = new SkuMappingDTO.ListSkuDTO();
+        skuDTO.setProductSkuId("");
+        skuMappingList.add(skuDTO);
+        SkuMappingDTO.ListSkuDTO listSkuDTO = skuMappingList.stream().filter(req -> req.getPlatformSpuNo().equals("123")).findFirst().orElse(null);
+        System.out.println(listSkuDTO);
     }
 
     @Override
