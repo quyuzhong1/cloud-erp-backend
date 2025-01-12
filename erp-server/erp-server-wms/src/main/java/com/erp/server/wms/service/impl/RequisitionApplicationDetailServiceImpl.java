@@ -206,10 +206,8 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public void cleanVirtualWarehouseIdByMianId(String mainId) {
+    public void cleanVirtualFrozenQtyByMianId(String mainId) {
         lambdaUpdate().eq(RequisitionApplicationDetailEntity::getMainId,mainId)
-                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId,"")
-                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName,"")
                 .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty, MathUtil.ZERO)
                 .update();
     }

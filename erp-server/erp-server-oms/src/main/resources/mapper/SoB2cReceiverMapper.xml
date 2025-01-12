@@ -41,6 +41,13 @@
         is_deleted,
         main_id, login_id, customer_id, name, email, tel_number, first_address, second_address, city_id, country_id, receiver_name, receiver_tel_number, post_code, full_address
     </sql>
+    <select id="pagePartitionIsNull" resultType="com.erp.model.oms.entity.SoB2cReceiverEntity">
+        SELECT sbr.* ,ci.country_id as customerCountry from so_b2c_receiver sbr
+                                             inner join so_b2c sb on sbr.main_id = sb.id
+                                             left join shop_info si on si.is_deleted = false and si.id = sb.shop_id
+                                             left join customer_info ci on ci.id = si.customer_id and ci.is_deleted = false
+        where sbr.partition_id = '' and sbr.is_deleted = false and sb.is_deleted = false
+    </select>
 
 
 </mapper>

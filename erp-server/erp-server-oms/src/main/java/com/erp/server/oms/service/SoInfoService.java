@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -486,4 +488,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @Date 2024-11-25
      **/
     List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto);
+
+    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
 }
