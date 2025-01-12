@@ -136,7 +136,7 @@ public class BasicReplenishmentDataService {
                                 ReplenishmentSuggestionEntity entity = Optional.ofNullable(oldReplenishmentMap.get(skuId + ":" + v.getKey())).orElse(new ReplenishmentSuggestionEntity());
                                 String skuNo = skuMap.get(skuId);
                                 // 过滤掉已生成建议且 sku_no 未发生变化的 SKU，或未启用的平台
-                                if (!ObjectUtils.isEmpty(entity.getId()) && entity.getSkuNo().equals(skuNo)) {
+                                if (ObjectUtils.isEmpty(skuNo) || (!ObjectUtils.isEmpty(entity.getId()) && entity.getSkuNo().equals(skuNo))) {
                                     continue;
                                 }
                                 ShopInfoEntity shopInfo = shopInfoMap.get(v.getKey());

@@ -578,8 +578,7 @@ public class InventoryServiceImpl implements InventoryService {
         } else {
             return new BigDecimal(totalQty)
                     .multiply(new BigDecimal(platformSaleQty))
-                    .divide(new BigDecimal(0 == totalSaleQty ? 1 : totalSaleQty), 2, RoundingMode.HALF_UP)
-                    .setScale(0, RoundingMode.FLOOR);
+                    .divide(new BigDecimal(0 == totalSaleQty ? 1 : totalSaleQty), 2, RoundingMode.FLOOR);
         }
     }
 
@@ -616,7 +615,7 @@ public class InventoryServiceImpl implements InventoryService {
             if (i == shopSaleQtyList.size() - 1) {
                 shopQty = platformQty.subtract(otherSales);
             } else {
-                shopQty = platformQty.multiply(shopSaleQtyList.get(i).getQty()).divide(new BigDecimal(0 == platformSaleQty ? 1 : platformSaleQty), 2, RoundingMode.HALF_UP).setScale(0, RoundingMode.FLOOR);
+                shopQty = platformQty.multiply(shopSaleQtyList.get(i).getQty()).divide(new BigDecimal(0 == platformSaleQty ? 1 : platformSaleQty), 2, RoundingMode.FLOOR);
                 otherSales = otherSales.add(shopQty);
             }
             detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(shopSaleQtyList.get(i).getShopId(), shopQty, platformSaleQty));
