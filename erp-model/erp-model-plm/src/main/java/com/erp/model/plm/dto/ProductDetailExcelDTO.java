@@ -34,8 +34,14 @@ public class ProductDetailExcelDTO {
     /**
      * 二级分类
      */
-    @FieldValid(fieldName = "二级分类", isNotBlank = true)
+    @FieldValid(fieldName = "二级分类")
     private String secondaryCategory;
+
+    /**
+     * 应用分类名
+     */
+    @FieldValid(fieldName = "应用分类", isNotBlank = true)
+    private String applicationCategoryName;
 
     /**
      * 产品经理

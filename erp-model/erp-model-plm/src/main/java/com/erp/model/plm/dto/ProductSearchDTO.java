@@ -56,7 +56,10 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         private List<String> productIds;
 
-
+        /**
+         * 应用分类
+         */
+        private List<String> applicationCategoryIds;
 
 
         /**

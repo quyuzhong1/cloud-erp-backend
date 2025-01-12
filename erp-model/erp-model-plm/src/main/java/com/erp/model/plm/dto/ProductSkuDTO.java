@@ -193,6 +193,12 @@ public class ProductSkuDTO extends PermissionsDTO {
      * sqlMap 默认key default
      */
     private Map<String, String> sqlMap;
+
+    /**
+     * 应用分类id
+     */
+    private List<String> applicationCategoryIds;
+
 }
 
 

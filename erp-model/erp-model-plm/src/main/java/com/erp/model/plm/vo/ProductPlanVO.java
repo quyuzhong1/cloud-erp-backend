@@ -146,4 +146,14 @@ public class ProductPlanVO implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类名字
+     */
+    private String applicationCategoryName;
 }

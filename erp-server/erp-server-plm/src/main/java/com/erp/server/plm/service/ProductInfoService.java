@@ -316,4 +316,10 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * 部门信息校验和查询
      */
     List<String> handleDept(List<String> deptIdList);
+
+    /**
+     * 更新分类
+     * @param dto 参数
+     */
+    Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto);
 }
