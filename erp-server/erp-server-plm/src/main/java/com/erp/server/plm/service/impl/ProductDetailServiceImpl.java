@@ -5299,17 +5299,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             log.error("导入格式错误！", e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-//        List<ProductDetailUpdateExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-//        if (CollectionUtils.isEmpty(excelDateList)) {
-//            throw new ServiceException(ApiError.ERROR_95123);
-//        }
         List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
-
-        List<ProductDetailUpdateExcelDTO> successList = excelListenerUtil.getSuccessList();
-
-//        //处理验证成功数据
-//        handleImportSuccessList(successList, errorList);
-
+        List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
+        for (ProductInfoDTO productInfoDTO : successList) {
+            productInfoService.updateSpec(productInfoDTO);
+        }
         if (CollectionUtils.isNotEmpty(errorList)) {
             StringBuilder sb = new StringBuilder();
             String excelPath = "excel/productUpdateError.xlsx";

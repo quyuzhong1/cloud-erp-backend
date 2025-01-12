@@ -2,13 +2,14 @@ package com.erp.server.plm.listener;
 
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.dto.ProductDetailUpdateExcelDTO;
+import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import lombok.Getter;
+import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +35,7 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
     /**
      * 成功信息
      */
-    private List<ProductDetailUpdateExcelDTO> successList = new ArrayList<>();
+    private List<ProductInfoDTO> successList = new ArrayList<>();
 
     public ProductDetailUpdateExcelListener(List<BasicCategoryEntity> categoryList, Map<String, String> applicationCategoryMap, List<ProductDetailEntity> productDetailEntityList) {
         this.categoryList = categoryList;
@@ -50,11 +51,17 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
      **/
     @Override
     public void invoke(ProductDetailUpdateExcelDTO data, AnalysisContext analysisContext) {
-
+        ProductInfoDTO productSpuBaseInfoDTO = new ProductInfoDTO();
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(data);
         if (!org.springframework.util.CollectionUtils.isEmpty(msgList)) {
             data.setErrorMsg(String.join(",", msgList));
+            errorList.add(data);
+            return;
+        }
+        ProductDetailEntity productBy = productDetailEntityList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(null);
+        if (ObjectUtils.isEmpty(productBy)) {
+            data.setErrorMsg("sku不存在");
             errorList.add(data);
             return;
         }
@@ -66,22 +73,22 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
         BasicCategoryEntity secondaryCategoryEntity = categoryList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
 
         if (ObjectUtils.isEmpty(basicCategoryEntity)) {
-            if (ObjectUtils.isNotEmpty(secondaryCategoryEntity)) {
+            if (!ObjectUtils.isEmpty(secondaryCategoryEntity)) {
                 data.setErrorMsg("产品分类一级类目不存在");
                 errorList.add(data);
                 return;
             }
         } else {
-            if (ObjectUtils.isNotEmpty(secondaryCategoryEntity)) {
+            if (!ObjectUtils.isEmpty(secondaryCategoryEntity)) {
                 if (!basicCategoryEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                     data.setErrorMsg("产品分类一级类目和二级类目的关系不匹配");
                     errorList.add(data);
                     return;
                 } else {
-                    data.setCategoryId(secondaryCategoryEntity.getId());
+                    productSpuBaseInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
                 }
             } else {
-                data.setCategoryId(basicCategoryEntity.getId());
+                productSpuBaseInfoDTO.setCategoryId(basicCategoryEntity.getId());
             }
         }
         String applicationCategoryId = applicationCategoryMap.get(data.getApplicationCategoryName());
@@ -90,12 +97,13 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
             errorList.add(data);
             return;
         }
-        data.setApplicationCategoryId(applicationCategoryId);
+        productSpuBaseInfoDTO.setApplicationCategoryId(applicationCategoryId);
         //存在错误数据则直接返回
         if (!CollectionUtils.isEmpty(errorList)) {
             return;
         }
-        successList.add(data);
+        productSpuBaseInfoDTO.setId(productBy.getProductId());
+        successList.add(productSpuBaseInfoDTO);
     }
 
     @Override
