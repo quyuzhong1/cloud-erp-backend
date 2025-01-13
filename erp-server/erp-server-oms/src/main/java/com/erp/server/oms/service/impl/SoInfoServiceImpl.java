@@ -3209,12 +3209,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 resultViews.add(generateSoReturnView);
             }else {
                 generateSoReturnViews.forEach(view -> {
-                    if (calDTO.getReturnQty() < 0) {
-                        throw new ServiceException("退货数量不能小于0");
-                    }
-                    if (calDTO.getReturnQty() > view.getSalesQty()) {
-                        throw new ServiceException("退货数量不能大于销售数量");
-                    }
                     if (Objects.equals(calDTO.getReturnQty(), view.getSalesQty())) {
                         //退货金额
                         view.setReturnAmount(view.getAmount());

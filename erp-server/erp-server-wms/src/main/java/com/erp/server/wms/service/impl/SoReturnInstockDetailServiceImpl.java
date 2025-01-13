@@ -178,7 +178,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                             .map(SoReturnInstockDetailEntity::getRealQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
                     if (receiveQty < detailDto.getRealQty() + realQty) {
-                        throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.ERROR_92045 , skuVO.getSkuNo());
                     }else if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnReceiveDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnReceiveDetailEntity.getTaxReturnAmount();
@@ -216,7 +216,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                             .map(SoReturnInstockDetailEntity::getRealQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
                     if (receiveQty < detailDto.getRealQty() + realQty) {
-                        throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.ERROR_92171, skuVO.getSkuNo());
                     }else if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
@@ -568,7 +568,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                             .map(SoReturnInstockDetailEntity::getRealQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
                     if (returnQty < detailDto.getRealQty() + realQty) {
-                        throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.ERROR_92171, skuVO.getSkuNo());
                     }else if(realQty > 0 && returnQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnDetailEntity.getTaxReturnAmount();
