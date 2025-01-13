@@ -2,10 +2,12 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: ${NACOS_SERVER_ADDR}
+        server-addr: 172.16.100.12:8848
         namespace: ${NACOS_NAMESPACE:dev-k8s}
+        ip: 172.16.100.60
+        port: 30010
       config:
-        server-addr: ${NACOS_SERVER_ADDR}
+        server-addr: 172.16.100.12:8848
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-sys.yml,druid-common.yml
@@ -15,6 +17,8 @@ sfs:
     server-addr: 172.16.100.12:8848
     namespace: seata-server
     group: SEATA_GROUP
+    ip: 172.16.100.60
+    port: 30010
 
 
 
