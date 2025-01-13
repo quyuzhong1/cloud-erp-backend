@@ -776,6 +776,16 @@ public class InventoryDTO implements Serializable {
          */
         private List<LocalDate> billDateList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
 
