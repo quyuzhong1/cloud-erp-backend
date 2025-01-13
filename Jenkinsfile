@@ -73,6 +73,8 @@ pipeline {
                 ssh -tt root@172.16.100.60 "sed -i -e 's|\\\${tag}|${TAG}|g' -e 's|\\\${namespace}|${NAMESPACE}|g' /k8s-yaml/erp-server/erp-gateway.yaml"
                 ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erp-server/ || true"
                 ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erp-server/"
+                ssh -tt root@172.16.100.90 "docker rmi $(docker images | grep 172.16.100.92:5000/sdc-erp/erp*)"
+                ssh -tt root@172.16.100.90 "docker system prune -f"
                 """
             }
         }
