@@ -415,13 +415,13 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             skuIdList = productChangeService.getChangeSearchCondition(searchKeyword);
             if (CollectionUtils.isEmpty(skuIdList)) {
                 IPage<BomPagingVO> pageData = new Page<BomPagingVO>();
-                return new PagingVO<BomPagingVO>(pageData);
+                return new PagingVO<>(pageData);
             }
         }
         IPage<BomPagingVO> pageData = baseMapper.paging(query, params, bomIdList, skuIdList);
         List<BomPagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
-            return new PagingVO<BomPagingVO>();
+            return new PagingVO<>(pageData);
         }
         List<String> bomIds = list.stream().map(BomPagingVO::getId).collect(Collectors.toList());
 

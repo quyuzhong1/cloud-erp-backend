@@ -40,6 +40,7 @@ public final class SoUtils {
         headMap.put("approveStatusName", "单据状态");
         headMap.put("invalidStatusName", "作废状态");
         headMap.put("customerName", "客户");
+        headMap.put("partitionName", "军区");
         headMap.put("countryName", "收货国家");
         headMap.put("salesOrgName", "销售组织");
         headMap.put("sellerName", "销售员");
@@ -65,8 +66,11 @@ public final class SoUtils {
         headMap.put("productName", "产品名称");
         headMap.put("platformSkuNo", "客户SKU");
         headMap.put("qty", "销售数量");
+        headMap.put("frozenQty", "锁定数量");
+        headMap.put("virtualUsableQty", "虚拟仓可用库存");
         headMap.put("scarceQty", "缺货数量");
         headMap.put("virtualScarceQty", "虚拟仓缺货数量");
+        headMap.put("effectiveNoticeQty", "发货通知数量");
         headMap.put("availableQty", "可出数量");
         headMap.put("deliveryQty", "已出库数量");
         headMap.put("waitQty", "剩余未出数量");

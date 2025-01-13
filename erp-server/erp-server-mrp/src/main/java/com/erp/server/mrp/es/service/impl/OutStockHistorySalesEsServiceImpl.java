@@ -208,6 +208,11 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
         SearchScrollHits<OutStockHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OutStockHistorySalesEsEntity.class, IndexCoordinates.of("out_stock_history_sales"));
         String scrollId = orderHistorySales.getScrollId();
         scrollIdList.add(scrollId);
+        if (!CollectionUtils.isEmpty(orderHistorySales.getSearchHits())) {
+            result.addAll(orderHistorySales.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList()));
+        }
         while (true) {
             SearchScrollHits<OutStockHistorySalesEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, OutStockHistorySalesEsEntity.class, IndexCoordinates.of("out_stock_history_sales"));
             // 获取查询结果并收集到列表中

@@ -554,7 +554,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 packageForecastDetailService.updateStatusByOrderCode(parcelOrder.getOrderCode(), parcelOrder.getStatus());
             });
         } catch (ApiException e) {
-            throw new RuntimeException(e);
+            log.error("接口调用异常记录：{}",e.getErrorMessage());
         }
     }
 

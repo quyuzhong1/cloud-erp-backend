@@ -456,9 +456,9 @@ public class SoB2cFeignController extends BaseController {
      * @author Lambda
      * @create 2024-01-05 9:44
      */
-    @GetMapping("/listTrackNoEmptyList")
-    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
-        return soB2cLogisticsService.listTrackNoEmptyList();
+    @PostMapping("/listTrackNoEmptyList")
+    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList(@RequestBody SoB2cDTO.QueryDTO queryDTO) {
+        return soB2cLogisticsService.listTrackNoEmptyList(queryDTO);
     }
 
     /**

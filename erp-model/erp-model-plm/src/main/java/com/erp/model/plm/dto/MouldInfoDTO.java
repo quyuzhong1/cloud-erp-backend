@@ -89,37 +89,6 @@ public class MouldInfoDTO implements Serializable {
         private String thirdMouldNo;
 
         /**
-         * 模具类型
-         */
-        @Dict(tableName = "cfg_mould_setting", queryFieldName = "id")
-        private String typeId;
-
-        /**
-         * 模具穴数
-         */
-        private String mouldHoles;
-
-        /**
-         * 模具长
-         */
-        private BigDecimal length;
-
-        /**
-         * 模具宽
-         */
-        private BigDecimal width;
-
-        /**
-         * 模具高
-         */
-        private BigDecimal height;
-
-        /**
-         * 模具材质
-         */
-        private String material;
-
-        /**
          * 模具寿命(万)(啤)
          */
         private Integer lifeCycle;
@@ -166,6 +135,7 @@ public class MouldInfoDTO implements Serializable {
         /**
          * 产品明细
          */
+        @Dict
         private List<MouldProductDTO.ViewDTO> productList;
 
         /**
@@ -1148,36 +1118,6 @@ public class MouldInfoDTO implements Serializable {
          * 外部模具编号(供应商)
          */
         private String thirdMouldNo;
-
-        /**
-         * 模具类型
-         */
-        private String typeName;
-
-        /**
-         * 模具穴数
-         */
-        private String mouldHoles;
-
-        /**
-         * 模具长
-         */
-        private BigDecimal length;
-
-        /**
-         * 模具宽
-         */
-        private BigDecimal width;
-
-        /**
-         * 模具高
-         */
-        private BigDecimal height;
-
-        /**
-         * 模具材质
-         */
-        private String material;
 
         /**
          * 模具寿命(万)(啤)

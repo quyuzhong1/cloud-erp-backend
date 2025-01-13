@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -45,6 +44,16 @@ public class ProductDTO implements Serializable {
      */
     private String categoryId;
 
+    /**
+     * 应用分类id
+     */
+    @NotBlank(message = "应用分类不能为空")
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类id
+     */
+    private String applicationCategoryName;
 
     /**
      * 产品属性

@@ -378,8 +378,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
-        return baseMapper.listTrackNoEmptyList();
+    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList(SoB2cDTO.QueryDTO queryDTO) {
+        return baseMapper.listTrackNoEmptyList(queryDTO);
     }
 
     @Override

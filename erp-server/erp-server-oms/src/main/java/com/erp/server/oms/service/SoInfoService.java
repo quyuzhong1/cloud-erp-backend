@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -478,4 +480,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     void sdyFieldOrderHandler(String soId, String operateEnum);
 
     List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
+
+    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
 }

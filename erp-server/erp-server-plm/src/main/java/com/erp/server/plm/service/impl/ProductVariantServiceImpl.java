@@ -125,7 +125,7 @@ public class ProductVariantServiceImpl extends ServiceImpl<ProductVariantMapper,
     public Boolean deleteVariant(String variantId) {
         ProductVariantEntity entity = this.getById(variantId);
         if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException(ApiError.ERROR_95170);
+            throw new ServiceException(ApiError.ERROR_95244);
         }
         if (entity.getOccupyStatus()) {
             throw new ServiceException(ApiError.ERROR_95167);

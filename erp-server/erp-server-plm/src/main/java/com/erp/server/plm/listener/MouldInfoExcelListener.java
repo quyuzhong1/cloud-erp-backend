@@ -22,6 +22,7 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
     private final Map<String, String> typeNameMap;
     private final Map<String, String> dictBasicNameMap;
     private final Map<String, String> paymentConditionNameMap;
+    private final Map<String, String> supplierMap;
 
     /**
      * 导入正确数据
@@ -32,10 +33,11 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
      */
     private final List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = new ArrayList<>();
 
-    public MouldInfoExcelListener(Map<String, String> typeNameMap, Map<String, String> dictBasicNameMap, Map<String, String> paymentConditionNameMap) {
+    public MouldInfoExcelListener(Map<String, String> typeNameMap, Map<String, String> dictBasicNameMap, Map<String, String> paymentConditionNameMap, Map<String, String> supplierMap) {
         this.typeNameMap = typeNameMap;
         this.dictBasicNameMap = dictBasicNameMap;
         this.paymentConditionNameMap = paymentConditionNameMap;
+        this.supplierMap = supplierMap;
     }
 
     @Override
@@ -43,24 +45,19 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(data);
         if (!CollectionUtils.isEmpty(msgList)) {
-            data.setErrorMsg(String.join(",", msgList));
-            errorList.add(data);
-            return;
+            msgList.add(String.join(",", msgList));
         }
         if (!typeNameMap.containsKey(data.getTypeName())) {
-            data.setErrorMsg("模具类型不存在");
-            errorList.add(data);
-            return;
+            msgList.add("模具类型不存在");
         }
         if (!dictBasicNameMap.containsKey(data.getPayMethodName())) {
-            data.setErrorMsg("结算方式不存在");
-            errorList.add(data);
-            return;
+            msgList.add("结算方式不存在");
         }
         if (!paymentConditionNameMap.containsKey(data.getPaymentConditionName())) {
-            data.setErrorMsg("付款条件不存在");
-            errorList.add(data);
-            return;
+            msgList.add("付款条件不存在");
+        }
+        if (!supplierMap.containsKey(data.getSupplierName())) {
+            msgList.add("供应商不存在");
         }
         MouldDetailDTO.ViewDTO viewDTO1 = successList.stream()
                 .filter(v -> v.getMouldNo().equals(data.getNum()))
@@ -68,21 +65,10 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
                 .orElse(null);
         MouldDetailDTO.ViewDTO dto = new MouldDetailDTO.ViewDTO();
         dto.setMouldNo(data.getNum());
-        dto.setTypeId(typeNameMap.get(data.getTypeName()));
         dto.setPayMethodId(dictBasicNameMap.get(data.getPayMethodName()));
         dto.setPaymentCondition(paymentConditionNameMap.get(data.getPaymentConditionName()));
         dto.setThirdMouldNo(data.getThirdMouldNo());
-        dto.setMouldHoles(data.getMouldHoles());
-        if (!ObjectUtils.isEmpty(data.getLength())) {
-            dto.setLength(new BigDecimal(data.getLength()));
-        }
-        if (!ObjectUtils.isEmpty(data.getWidth())) {
-            dto.setWidth(new BigDecimal(data.getWidth()));
-        }
-        if (!ObjectUtils.isEmpty(data.getHeight())) {
-            dto.setHeight(new BigDecimal(data.getHeight()));
-        }
-        dto.setMaterial(data.getMaterial());
+        dto.setSupplierId(supplierMap.get(data.getSupplierName()));
         if (!ObjectUtils.isEmpty(data.getLifeCycle())) {
             dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
         }
@@ -112,15 +98,27 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
             dto.setRefundAmount(new BigDecimal(data.getRefundAmount()));
         }
         MouldProductDTO.ViewDTO viewDTO = new MouldProductDTO.ViewDTO();
+        viewDTO.setTypeId(typeNameMap.get(data.getTypeName()));
+        viewDTO.setMouldHoles(data.getMouldHoles());
+        if (!ObjectUtils.isEmpty(data.getLength())) {
+            viewDTO.setLength(new BigDecimal(data.getLength()));
+        }
+        if (!ObjectUtils.isEmpty(data.getWidth())) {
+            viewDTO.setWidth(new BigDecimal(data.getWidth()));
+        }
+        if (!ObjectUtils.isEmpty(data.getHeight())) {
+            viewDTO.setHeight(new BigDecimal(data.getHeight()));
+        }
+        viewDTO.setMaterial(data.getMaterial());
         viewDTO.setProductName(data.getProductName());
         dto.setProductList(Collections.singletonList(viewDTO));
         if (!ObjectUtils.isEmpty(viewDTO1) && !checkFieldEquals(viewDTO1, dto)) {
-            data.setErrorMsg("若为同一模具下的不同产品，序号+其他字段均一致");
-            errorList.add(data);
-            return;
+            msgList.add("若为同一模具下的不同产品，序号+其他字段均一致");
         }
         //存在错误数据则直接返回
-        if (!CollectionUtils.isEmpty(errorList)) {
+        if (!CollectionUtils.isEmpty(msgList)) {
+            data.setErrorMsg(String.join(",", msgList));
+            errorList.add(data);
             return;
         }
         successList.add(dto);
@@ -131,15 +129,9 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
      */
     private boolean checkFieldEquals(MouldDetailDTO.ViewDTO viewDTO1, MouldDetailDTO.ViewDTO dto) {
 
-        return Objects.equals(viewDTO1.getTypeId(), dto.getTypeId()) &&
-                Objects.equals(viewDTO1.getPayMethodId(), dto.getPayMethodId()) &&
+        return Objects.equals(viewDTO1.getPayMethodId(), dto.getPayMethodId()) &&
                 Objects.equals(viewDTO1.getPaymentCondition(), dto.getPaymentCondition()) &&
                 Objects.equals(viewDTO1.getThirdMouldNo(), dto.getThirdMouldNo()) &&
-                Objects.equals(viewDTO1.getMouldHoles(), dto.getMouldHoles()) &&
-                Objects.equals(viewDTO1.getLength(), dto.getLength()) &&
-                Objects.equals(viewDTO1.getWidth(), dto.getWidth()) &&
-                Objects.equals(viewDTO1.getHeight(), dto.getHeight()) &&
-                Objects.equals(viewDTO1.getMaterial(), dto.getMaterial()) &&
                 Objects.equals(viewDTO1.getLifeCycle(), dto.getLifeCycle()) &&
                 Objects.equals(viewDTO1.getDevelopCycle(), dto.getDevelopCycle()) &&
                 Objects.equals(viewDTO1.getEnableDate(), dto.getEnableDate()) &&
@@ -167,7 +159,6 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
                     MouldDetailDTO.ViewDTO dto = entry.getValue().stream()
                             .findFirst()
                             .orElse(new MouldDetailDTO.ViewDTO());
-                    dto.setMouldNo(null);
                     // 设置合并后的产品列表
                     dto.setProductList(dtos);
                     return dto;

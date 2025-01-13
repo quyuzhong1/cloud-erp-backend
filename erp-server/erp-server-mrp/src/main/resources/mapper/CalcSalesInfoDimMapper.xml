@@ -75,7 +75,8 @@
                csic.platform,
                csic.remark,
                csic.cfg_rule_calc_id,
-               crc.name
+               crc.name,
+               crc.code
         from calc_sales_info_dim csic
                  inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where csic.id = #{id}
@@ -110,7 +111,7 @@
         crc.sale_type saleType,
         crc.file_url,
         crc.create_user_name,
-        crc.create_time,
+        crc.create_time createTime,
         csic.id,
         csic.sku_id skuId,
         csic.sku_no skuNo,
