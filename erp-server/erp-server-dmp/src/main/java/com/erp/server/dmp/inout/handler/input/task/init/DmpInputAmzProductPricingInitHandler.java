@@ -80,13 +80,11 @@ public class DmpInputAmzProductPricingInitHandler extends DmpInputAmzCommonInitH
         paramDataList.add(new ParamData("requestShopId", "requestShopId", PannoEnum.EQ, shopId));
         List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, AMAZON_LISTING_DATA);
 
-        // 批量查询数量仅支持20
-        int pageSize = 20;
         // 结果
         List<JSONObject> resultList = new LinkedList<>();
 
-        // 查询商品详情客户端
-        CatalogApi catalogApi = CatalogApi.init(marketPlaceEnum.getEndpointsEnum(), shopInfoDTO, false, null);
+        // 查询商品详情
+        ProductPricingApi api = AmazonSpApiInitUtils.create(ProductPricingApi.class, shopInfoDTO, false);
         // 限流类型
         AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.PRODUCT_PRICING;
 
@@ -99,7 +97,7 @@ public class DmpInputAmzProductPricingInitHandler extends DmpInputAmzCommonInitH
         // 缓存优先
         checkAndGetRedisList(canQueryList, resultList, waitQueryList);
         if (CollectionUtils.isEmpty(waitQueryList)) {
-            return convertDmpInputTaskInitDTOS(resultList);
+            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(resultList)));
         }
 
         // 平台请求中:平台类型:sellerId:业务类型:请求的端点区域
@@ -127,7 +125,6 @@ public class DmpInputAmzProductPricingInitHandler extends DmpInputAmzCommonInitH
                     initDmpResponse.setDoNextStatus(false);
                     return Collections.emptyList();
                 }
-                ProductPricingApi api = AmazonSpApiInitUtils.create(ProductPricingApi.class, shopInfoDTO, false);
 
                 // 请求亚马逊接口获取价格
                 String itemType = "Sku";
@@ -141,9 +138,9 @@ public class DmpInputAmzProductPricingInitHandler extends DmpInputAmzCommonInitH
                 }
                 for (Price price : priceList) {
                     JSONObject jsonObject = convertJsonObject(price, marketPlaceEnum.getMarketplaceId(), shopId, shopInfoDTO.getPlatformShopCode());
-                    String shipmentIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.PRODUCT_PRICING.getBusinessTypeName(), price.getSellerSKU());
+                    String sellerIdResultKey = StrUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, AmazonRequestTypeRateLimiterEnum.PRODUCT_PRICING.getBusinessTypeName(), price.getSellerSKU());
                     // 缓存倒redis
-                    redisUtil.set(shipmentIdResultKey, jsonObject.toJSONString(), 900);
+                    redisUtil.set(sellerIdResultKey, jsonObject.toJSONString(), 900);
                     // 添加到当前结果
                     resultList.add(jsonObject);
                 }
@@ -161,8 +158,7 @@ public class DmpInputAmzProductPricingInitHandler extends DmpInputAmzCommonInitH
                 throw new ServiceException("【亚马逊listing价格】  查询失败" + e);
             }
         }
-        return convertDmpInputTaskInitDTOS(resultList);
-
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(resultList)));
     }
 
     /**
@@ -176,16 +172,6 @@ public class DmpInputAmzProductPricingInitHandler extends DmpInputAmzCommonInitH
         return jsonObject;
     }
 
-    /**
-     * 转换中台响应DTO
-     */
-    private static List<DmpInputTaskInitDTO> convertDmpInputTaskInitDTOS(List<JSONObject> resultList) {
-        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new LinkedList<>();
-        for (JSONObject jsonObject : resultList) {
-            dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
-        }
-        return dmpInputTaskInitDTOList;
-    }
 
     /**
      * 检查和设置到redis

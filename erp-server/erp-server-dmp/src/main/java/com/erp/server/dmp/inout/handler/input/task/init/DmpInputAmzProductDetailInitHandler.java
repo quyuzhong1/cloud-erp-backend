@@ -96,7 +96,7 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
         // 缓存优先
         checkAndGetRedisList(canQueryList, resultList, waitQueryList);
         if (CollectionUtils.isEmpty(waitQueryList)){
-            return convertDmpInputTaskInitDTOS(resultList);
+            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(resultList)));
         }
 
         // 待查询按商品类型分组
@@ -168,7 +168,7 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
             log.warn("查询亚马逊listing详情成功, platformShopCode={}", shopInfoDTO.getPlatformShopCode());
         }
 
-        return convertDmpInputTaskInitDTOS(resultList);
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(resultList)));
     }
 
     /**
@@ -180,16 +180,6 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
         return jsonObject;
     }
 
-    /**
-     * 转换中台响应DTO
-     */
-    private static List<DmpInputTaskInitDTO> convertDmpInputTaskInitDTOS(List<JSONObject> resultList) {
-        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new LinkedList<>();
-        for (JSONObject jsonObject : resultList) {
-            dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
-        }
-        return dmpInputTaskInitDTOList;
-    }
 
     /**
      * 检查和设置到redis
