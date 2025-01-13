@@ -62,5 +62,5 @@ spec:
       port: 9120
       # 容器暴露的访问端口 要确定与其他服务不冲突
       targetPort: 9120
-      nodePort:
+      nodePort: 30120
   type: NodePort

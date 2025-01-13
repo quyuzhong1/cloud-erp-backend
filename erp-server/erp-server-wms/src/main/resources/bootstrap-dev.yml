@@ -6,6 +6,8 @@ spring:
         namespace: ${NACOS_NAMESPACE:dev-k8s}
         heart-beat-interval: 3
         heart-beat-timeout: 10
+        ip: 172.16.100.60
+        port: 30090
       config:
         server-addr: 172.16.100.12:8848
         namespace: dev
@@ -17,6 +19,8 @@ sfs:
     server-addr: 172.16.100.12:8848
     namespace: seata-server
     group: SEATA_GROUP
+    ip: 172.16.100.60
+    port: 30090
 
 
 

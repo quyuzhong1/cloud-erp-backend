@@ -62,5 +62,5 @@ spec:
       port: 9050
       # 容器暴露的访问端口 要确定与其他服务不冲突
       targetPort: 9050
-      nodePort:
+      nodePort: 30050
   type: NodePort
