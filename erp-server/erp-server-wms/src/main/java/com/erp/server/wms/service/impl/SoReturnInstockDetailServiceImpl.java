@@ -570,7 +570,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                                 .reduce(MathUtil.ZERO, Integer::sum);
                     }
                     if (receiveQty < detailDto.getRealQty() + realQty) {
-                        throw new ServiceException(ApiError.ERROR_92171, skuVO.getSkuNo());
+                        throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
                     }else if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
                         BigDecimal returnAmount = soReturnReceiveDetailEntity.getReturnAmount();
                         BigDecimal taxReturnAmount = soReturnReceiveDetailEntity.getTaxReturnAmount();
