@@ -86,7 +86,8 @@
         </if>
         <!--不显示0库存-->
         <if test="params.hasNotZero !=null and params.hasNotZero ">
-            AND (oi.deliver_onway_qty > 0
+            AND (
+            oi.deliver_onway_qty > 0
             OR oi.pending_qty > 0
             OR oi.sellable_qty > 0
             OR oi.unsellable_qty > 0
@@ -94,7 +95,9 @@
             OR oi.onway_qty > 0
             OR oi.lack_qty > 0
             OR oi.frozen_qty > 0
-            OR oi.shipped_qty > 0)
+            OR oi.shipped_qty > 0
+            OR oi.sale_return_in_transit_qty > 0
+            )
         </if>
 
         <!--权限-->
@@ -167,7 +170,6 @@
         <!--不显示0库存-->
         <if test="params.hasNotZero !=null and params.hasNotZero ">
             AND (
-            (
             oi.deliver_onway_qty > 0
             OR oi.pending_qty > 0
             OR oi.sellable_qty > 0
@@ -177,8 +179,8 @@
             OR oi.lack_qty > 0
             OR oi.frozen_qty > 0
             OR oi.shipped_qty > 0
-            )
-            OR ( oi.dict_platform = 'AliExpress' )
+            OR oi.shipped_qty > 0
+            OR oi.sale_return_in_transit_qty > 0
             )
         </if>
         <!--权限-->
