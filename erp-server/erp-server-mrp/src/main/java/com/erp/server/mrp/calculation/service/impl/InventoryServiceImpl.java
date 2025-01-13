@@ -370,7 +370,7 @@ public class InventoryServiceImpl implements InventoryService {
         if (Boolean.TRUE.equals(view.getIsSplit())) {
             replenishmentPurchases = inventoryMapper.getReplenishmentPurchaseMergePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST_MERGE, calcDate), true);
         } else {
-            replenishmentPurchases = inventoryMapper.getReplenishmentPurchaseMergePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST, calcDate), false);
+            replenishmentPurchases = inventoryMapper.getReplenishmentPurchaseMergePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST_MERGE, calcDate), false);
         }
         if (CollectionUtils.isEmpty(replenishmentPurchases)) {
             dto.setReplenishmentPurchaseList(new ArrayList<>());
