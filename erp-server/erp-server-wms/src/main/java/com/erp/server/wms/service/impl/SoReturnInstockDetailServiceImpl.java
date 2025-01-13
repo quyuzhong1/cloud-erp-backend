@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -39,10 +40,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -119,6 +117,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             skuParamDTO.setSkuNoList(skuNos);
             List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
             List<SoReturnInstockDetailEntity> list = new ArrayList<>();
+            List<SoReturnInstockDetailDTO.Add> detailList = dto.getDetailList();
+            if(CollUtil.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_92174);
+            }
+            Map<String , Integer> returnDetailIdMap = new HashMap<>();
             for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
                 //获取平台sku
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
@@ -215,6 +218,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                             .filter(req -> StringUtils.isNotBlank(req.getSoReturnDetailId()) && req.getSoReturnDetailId().equals(detailDto.getSoReturnDetailId()))
                             .map(SoReturnInstockDetailEntity::getRealQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
+
+                    //校验是否存在重复的明细并且数量大于退货数量
+                    if(returnDetailIdMap.containsKey(detailDto.getSoReturnDetailId())){
+                        Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSoReturnDetailId()) + detailDto.getRealQty();
+                        if (receiveQty < detailReturnQtySum + realQty) {
+                            throw new ServiceException(ApiError.ERROR_92171, skuVO.getSkuNo());
+                        }
+                        returnDetailIdMap.put(detailDto.getSoReturnDetailId(),detailReturnQtySum);
+                    }else {
+                        returnDetailIdMap.put(detailDto.getSoReturnDetailId(),detailDto.getReceiveQty());
+                    }
+
                     if (receiveQty < detailDto.getRealQty() + realQty) {
                         throw new ServiceException(ApiError.ERROR_92171, skuVO.getSkuNo());
                     }else if(realQty > 0 && receiveQty == detailDto.getRealQty() + realQty){
@@ -500,6 +515,11 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), pairList, "编辑操作");
                 this.removeByIds(deleteIds);
             }
+            List<SoReturnInstockDetailDTO.Update> detailList = dto.getDetailList();
+            if(CollUtil.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_92174);
+            }
+            Map<String , Integer> returnDetailIdMap = new HashMap<>();
             for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
@@ -554,7 +574,6 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                         throw new ServiceException(ApiError.ERROR_92023, skuVO.getSkuNo());
                     }
                     Integer returnQty = 0;
-
                     if(CollectionUtils.isNotEmpty(soReturnDetailEntities)){
                         returnQty = soReturnDetailEntities.stream()
                                 .filter(req -> req.getId().equals(detailDto.getSoReturnDetailId()))
@@ -567,6 +586,17 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                             .filter(req ->  !req.getId().equals(detailDto.getId()) && StringUtils.isNotBlank(req.getSoReturnDetailId()) && req.getSoReturnDetailId().equals(detailDto.getSoReturnDetailId()))
                             .map(SoReturnInstockDetailEntity::getRealQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
+
+                    //校验是否存在重复的明细并且数量大于退货数量
+                    if(returnDetailIdMap.containsKey(detailDto.getSoReturnDetailId())){
+                        Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSoReturnDetailId()) + detailDto.getRealQty();
+                        if (returnQty < detailReturnQtySum + realQty) {
+                            throw new ServiceException(ApiError.ERROR_92171, skuVO.getSkuNo());
+                        }
+                        returnDetailIdMap.put(detailDto.getSoReturnDetailId(),detailReturnQtySum);
+                    }else {
+                        returnDetailIdMap.put(detailDto.getSoReturnDetailId(),detailDto.getReceiveQty());
+                    }
                     if (returnQty < detailDto.getRealQty() + realQty) {
                         throw new ServiceException(ApiError.ERROR_92171, skuVO.getSkuNo());
                     }else if(realQty > 0 && returnQty == detailDto.getRealQty() + realQty){

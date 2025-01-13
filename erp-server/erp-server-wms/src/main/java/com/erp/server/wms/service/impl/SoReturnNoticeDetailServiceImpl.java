@@ -33,9 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -76,6 +74,11 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         //查询sku
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Add::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
+        List<SoReturnNoticeDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_92172);
+        }
+        Map<String , Integer> returnDetailIdMap = new HashMap<>();
         for (SoReturnNoticeDetailDTO.Add detailDto : dto.getDetailList()) {
             ProductDetailEntity skuVO = productDetailEntitys.stream().filter(req -> req.getId().equals(detailDto.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
@@ -125,6 +128,16 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                             .filter(req -> req.getId().equals(detailDto.getSourceDetailId()))
                             .map(SoReturnDetailEntity::getReturnQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
+                    //校验是否存在重复的明细并且数量大于退货数量
+                    if(returnDetailIdMap.containsKey(detailDto.getSourceDetailId())){
+                        Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSourceDetailId()) + detailDto.getReturnQty();
+                        if (returnQty <  detailReturnQtySum + returnNoticeQty) {
+                            throw new ServiceException(ApiError.ERROR_92024, skuVO.getSkuNo());
+                        }
+                        returnDetailIdMap.put(detailDto.getSourceDetailId(),detailReturnQtySum);
+                    }else {
+                        returnDetailIdMap.put(detailDto.getSourceDetailId(),detailDto.getReturnQty());
+                    }
                     if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                         throw new ServiceException(ApiError.ERROR_92024, skuVO.getSkuNo());
                     }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
@@ -230,6 +243,12 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         //查询sku
         List<String> skuIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Update::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<ProductDetailEntity> productDetailEntitys = plmTaskFeign.getByIdList(skuIds);
+
+        List<SoReturnNoticeDetailDTO.Update> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_92172);
+        }
+        Map<String , Integer> returnDetailIdMap = new HashMap<>();
         for (SoReturnNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
             if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
@@ -266,6 +285,15 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                         .filter(req -> req.getId().equals(detailDto.getSourceDetailId()))
                         .map(SoReturnDetailEntity::getReturnQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
+                if(returnDetailIdMap.containsKey(detailDto.getSourceDetailId())){
+                    Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSourceDetailId()) + detailDto.getReturnQty();
+                    if (returnQty <  detailReturnQtySum + returnNoticeQty) {
+                        throw new ServiceException(ApiError.ERROR_92024, soReturnDetailEntity.getSkuNo());
+                    }
+                    returnDetailIdMap.put(detailDto.getSourceDetailId(),detailReturnQtySum);
+                }else {
+                    returnDetailIdMap.put(detailDto.getSourceDetailId(),detailDto.getReturnQty());
+                }
                 if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                     throw new ServiceException(ApiError.ERROR_92024, soReturnDetailEntity.getSkuNo());
                 }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){
