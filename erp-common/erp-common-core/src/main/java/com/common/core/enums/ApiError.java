@@ -1426,7 +1426,7 @@ public enum ApiError implements Serializable {
     TRANSACTION_SUB_TYPE_NOT_NULL(92154,"【{}】手工单的单据子类型不能为空"),
     ERROR_92169(92169,"sku【{}】在退货通知单中不存在"),
     ERROR_92170(92170,"sku【{}】在退货签收单中不存在"),
-
+    ERROR_92171(92171,"sku【{}】实退总数量不能大于应退数量"),
 
     /**
      * TMS 错误
