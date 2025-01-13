@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -77,11 +78,15 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = deliveryMap.entrySet().parallelStream()
                 .flatMap(entry -> {
                     String code = docNoGenHelper.generateCode(CODE_P);
-                    List<String> deliverySuggestIdList = entry.getValue().stream().map(ReplenishmentResultDTO.DeliverySuggestDTO::getId).distinct().collect(Collectors.toList());
+                    List<ReplenishmentResultDTO.DeliverySuggestDTO> value = entry.getValue();
+
+                    List<String> deliverySuggestIdList = value.stream().map(ReplenishmentResultDTO.DeliverySuggestDTO::getId).distinct().collect(Collectors.toList());
                     //查询关联的发货计划
                     ReplenishmentResultDTO.PurchaseSuggestDTO parentSuggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO, ExecutionTypeEnum.AUTO.getCode(),deliverySuggestIdList);
                     //根据suggestDTO判断是否需要拆分生成多条建议
                     List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggestList = generateMultipleSuggest(replenishmentResultDTO, parentSuggestDTO);
+                    //建议发货量合计
+                    Integer totalSuggestQty = value.stream().map(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
 
                     for (ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO : purchaseSuggestList) {
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
@@ -100,10 +105,10 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                             suggestDTO.setEstimateInstockDate(estimateInstockDate);
                             //建议采购量
                             LocalDate calcDate = suggestDTO.getSuggestPurchaseDate().plusDays(Math.min(agingDays, days));
-                            int suggestDeliveryQty =  getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now);
                             //按是否存在bom重新赋值
-                            suggestDeliveryQty = CharSequenceUtil.isBlank(suggestDTO.getBomVersion()) ? suggestDeliveryQty : suggestDeliveryQty * suggestDTO.getQuantity();
+                            int suggestDeliveryQty = CharSequenceUtil.isBlank(suggestDTO.getBomVersion()) ? totalSuggestQty : totalSuggestQty * suggestDTO.getQuantity();
                             suggestDTO.setSuggestDeliveryQty(suggestDeliveryQty);
+
                             int inventory = inventoryService.getInventoryByPurchaseSuggest(suggestDTO,replenishmentResultDTO, calcDate, purchaseVolumeInventory);
                             suggestDTO.setInventoryQty(inventory);
                             suggestDTO.setSuggestPurchaseQty(Math.max(0, suggestDeliveryQty - inventory));
