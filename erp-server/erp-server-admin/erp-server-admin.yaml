@@ -35,6 +35,8 @@ spec:
               value: "-Xms1g -Xmx3g -XX:+UseParallelGC -XX:ParallelGCThreads=2"
             - name: TZ
               value: "Asia/Shanghai"  # 设置时区，确保与宿主机一致
+            - name: NACOS_SERVER_ADDR
+              value: "http://172.16.100.60:30010"
           ports:
             - containerPort: 9010 #修改成你项目的端口
           volumeMounts:
@@ -62,5 +64,5 @@ spec:
       port: 9010
       # 容器暴露的访问端口 要确定与其他服务不冲突
       targetPort: 9010
-      nodePort:
+      nodePort: 30010
   type: NodePort
