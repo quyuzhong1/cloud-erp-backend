@@ -570,6 +570,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             }
             detailList.add(viewPushDetailDTO);
         }
+        viewPushDTO.setDetailList(detailList);
         return viewPushDTO;
     }
 
