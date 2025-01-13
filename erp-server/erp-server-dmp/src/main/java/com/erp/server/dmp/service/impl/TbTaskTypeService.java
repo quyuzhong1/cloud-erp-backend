@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -10,10 +11,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -71,6 +69,9 @@ public class TbTaskTypeService {
 
     @Resource
     private DmpCfgOutputDetailService dmpCfgOutputDetailService;
+
+    @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
 
     @Value("${openApi.mabang.timeoutHour:24}")
     public void setTimeoutMabangHours(Long timeoutMabangHours) {
@@ -192,26 +193,45 @@ public class TbTaskTypeService {
                 .eq(DmpCfgInputEntity::getIsMainTask, Boolean.TRUE)
                 .list();
 
+        List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(cfgInputIds)) {
+            return;
+        }
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery().in(DmpCfgInputDetailEntity::getMainId, cfgInputIds).list();
+
         //每一个主任务都需要添加任务详情
         for (DmpCfgInputEntity dmpCfgInputEntity : cfgInputEntityList) {
-
-            //添加输入任务
-            addInputDetail(shopInfo, dmpCfgInputEntity);
+            DmpCfgInputDetailEntity dmpCfgInputDetailEntity = list.stream().filter(req -> req.getNextLevelId().equals(shopInfo.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(dmpCfgInputDetailEntity)) {
+                //添加输入任务
+                addInputDetail(shopInfo, dmpCfgInputEntity);
+            }
         }
 
-        //根据系统id查询输出任务
-        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery()
-                .eq(DmpCfgOutputEntity::getSystemId, systemId)
-                .list();
+        List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, cfgInputIds).list();
+        List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isEmpty(convertIds)) {
+            return;
+        }
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getInputConvertId, convertIds).list();
+
+        List<String> outputIds = outputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(outputIds)) {
+            return;
+        }
+
+        List<DmpCfgOutputDetailEntity> cfgOutputDetailEntities = dmpCfgOutputDetailService.lambdaQuery().in(DmpCfgOutputDetailEntity::getMainId, outputIds).list();
 
         //添加输出任务详情
         for (DmpCfgOutputEntity dmpCfgOutputEntity : outputEntityList) {
-            DmpCfgOutputDetailDTO.AddDTO addDTO = new DmpCfgOutputDetailDTO.AddDTO();
-            addDTO.setMainId(dmpCfgOutputEntity.getId());
-            addDTO.setNextLevelId(shopInfo.getId());
-            dmpCfgOutputDetailService.add(addDTO);
+            DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity = cfgOutputDetailEntities.stream().filter(req -> req.getNextLevelId().equals(shopInfo.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(dmpCfgOutputDetailEntity)) {
+                DmpCfgOutputDetailDTO.AddDTO addDTO = new DmpCfgOutputDetailDTO.AddDTO();
+                addDTO.setMainId(dmpCfgOutputEntity.getId());
+                addDTO.setNextLevelId(shopInfo.getId());
+                dmpCfgOutputDetailService.add(addDTO);
+            }
         }
-
     }
 
     /**
