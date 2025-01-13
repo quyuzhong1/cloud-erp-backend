@@ -1104,10 +1104,9 @@ public class ReplenishmentResultDTO {
          */
         private Integer quantity;
 
-        public static PurchaseSuggestDTO buildPurchaseSuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,List<String> deliverySuggestIdList) {
+        public static PurchaseSuggestDTO buildPurchaseSuggestDTO( CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,List<String> deliverySuggestIdList) {
             PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
             dto.setId(IdWorker.getIdStr());
-            dto.setCode(code);
             dto.setDataType(createType);
             dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
             dto.setLogisticsDays(logisticsResult.getLogisticsDays());
