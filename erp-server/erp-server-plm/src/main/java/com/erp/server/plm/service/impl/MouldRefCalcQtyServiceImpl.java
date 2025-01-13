@@ -31,10 +31,7 @@ import org.springframework.util.ObjectUtils;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -155,7 +152,7 @@ public class MouldRefCalcQtyServiceImpl extends SuperServiceImpl<MouldRefCalcQty
         Map<String, Object> data = new HashMap<>();
         data.put("name", dto.getName());
         data.put("mouldNo", dto.getMouldNo());
-        data.put("supplierName", supplierMap.get(dto.getSupplierId()));
+        data.put("supplierName", Optional.ofNullable(supplierMap.get(dto.getSupplierId())).orElse(""));
         data.put("refundAmount", agreement.getRefundAmount());
         data.put("refundOrderQty", agreement.getRefundOrderQty());
         data.put("updateTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
