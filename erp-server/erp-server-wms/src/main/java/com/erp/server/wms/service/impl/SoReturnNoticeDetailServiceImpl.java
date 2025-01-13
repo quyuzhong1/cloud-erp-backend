@@ -248,7 +248,6 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         if(CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92172);
         }
-        Map<String , Integer> returnDetailIdMap = new HashMap<>();
         for (SoReturnNoticeDetailDTO.Update detailDto : dto.getDetailList()) {
             SoReturnNoticeDetailEntity detailEntity = new SoReturnNoticeDetailEntity();
             if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
@@ -277,23 +276,21 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 //历史退货通知单的退货数量
                 Integer returnNoticeQty = noticeDetailEntities.stream()
                         .filter(req -> !deleteIds.contains(req.getId()))
-                        .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                        .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
                         .map(SoReturnNoticeDetailEntity::getReturnQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
+                if(StringUtils.isNotBlank(detailDto.getId())){
+                    returnNoticeQty = noticeDetailEntities.stream()
+                            .filter(req -> !deleteIds.contains(req.getId()))
+                            .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                            .map(SoReturnNoticeDetailEntity::getReturnQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
+                }
                 //退货单的退货数量
                 Integer returnQty = soReturnDetailEntities.stream()
                         .filter(req -> req.getId().equals(detailDto.getSourceDetailId()))
                         .map(SoReturnDetailEntity::getReturnQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
-                if(returnDetailIdMap.containsKey(detailDto.getSourceDetailId())){
-                    Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSourceDetailId()) + detailDto.getReturnQty();
-                    if (returnQty <  detailReturnQtySum + returnNoticeQty) {
-                        throw new ServiceException(ApiError.ERROR_92024, soReturnDetailEntity.getSkuNo());
-                    }
-                    returnDetailIdMap.put(detailDto.getSourceDetailId(),detailReturnQtySum);
-                }else {
-                    returnDetailIdMap.put(detailDto.getSourceDetailId(),detailDto.getReturnQty());
-                }
                 if (returnQty <  detailDto.getReturnQty() + returnNoticeQty) {
                     throw new ServiceException(ApiError.ERROR_92024, soReturnDetailEntity.getSkuNo());
                 }else if(returnNoticeQty > 0 && returnQty == detailDto.getReturnQty() + returnNoticeQty){

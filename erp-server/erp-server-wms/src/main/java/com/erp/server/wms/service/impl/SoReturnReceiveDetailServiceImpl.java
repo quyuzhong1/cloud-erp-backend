@@ -390,7 +390,6 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             if(CollUtil.isEmpty(detailList)) {
                 throw new ServiceException(ApiError.ERROR_92172);
             }
-            Map<String , Integer> returnDetailIdMap = new HashMap<>();
             for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
@@ -440,21 +439,16 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                     //此单历史签收数量
                     Integer historyReceiveQty = soReturnReceiveDetailEntities.stream()
                             .filter(req -> !deleteIds.contains(req.getId()))
-                            .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                            .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
                             .map(SoReturnReceiveDetailEntity::getReceiveQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
-
-                    //校验是否存在重复的明细并且数量大于退货数量
-                    if(returnDetailIdMap.containsKey(detailDto.getSourceDetailId())){
-                        Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSourceDetailId()) + detailDto.getReceiveQty();
-                        if (returnQty < detailReturnQtySum + historyReceiveQty) {
-                            throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
-                        }
-                        returnDetailIdMap.put(detailDto.getSourceDetailId(),detailReturnQtySum);
-                    }else {
-                        returnDetailIdMap.put(detailDto.getSourceDetailId(),detailDto.getReceiveQty());
+                    if(StringUtils.isNotBlank(detailDto.getId())){
+                        historyReceiveQty = soReturnReceiveDetailEntities.stream()
+                                .filter(req -> !deleteIds.contains(req.getId()))
+                                .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                                .map(SoReturnReceiveDetailEntity::getReceiveQty)
+                                .reduce(MathUtil.ZERO, Integer::sum);
                     }
-
                     if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
                         throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
                     }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
