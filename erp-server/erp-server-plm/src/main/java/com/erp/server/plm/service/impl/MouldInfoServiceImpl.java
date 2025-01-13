@@ -28,7 +28,10 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.MouldRefundStatusEnum;
@@ -68,7 +71,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -331,10 +333,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     oldDetailDTO.setRefundAmount(viewDTO.getRefundAmount());
                     String oldProductList = Optional.ofNullable(viewDTO.getProductList()).orElse(new ArrayList<>())
                             .stream()
-                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + mouldTypeMap.get(v.getTypeId()) + "：模具穴数" + v.getMouldHoles() +
-                                    "模具长" + MathUtil.divide(v.getLength(), new BigDecimal(10), 2) + "：模具宽" + MathUtil.divide(v.getWidth(), new BigDecimal(10), 2) +
-                                    "模具高" + MathUtil.divide(v.getHeight(), new BigDecimal(10), 2) + "：模具材质" + v.getMaterial()
-                            )
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + Optional.ofNullable(mouldTypeMap.get(v.getTypeId())).orElse("")
+                                    + "：模具穴数" + v.getMouldHoles() + "模具长" + v.getLength() + "：模具宽" + v.getWidth() +
+                                    "模具高" + v.getHeight() + "：模具材质" + v.getMaterial())
                             .collect(Collectors.joining(","));
                     oldDetailDTO.setProductList(oldProductList);
                     String oldRefProductList = Optional.ofNullable(viewDTO.getRefProductList()).orElse(new ArrayList<>())
@@ -360,9 +361,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     logDetailDTO.setRefundAmount(updateDTO.getRefundAmount());
                     String productList = Optional.ofNullable(updateDTO.getProductList()).orElse(new ArrayList<>())
                             .stream()
-                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + mouldTypeMap.get(v.getTypeId()) + "：模具穴数" + v.getMouldHoles() +
-                                    "模具长" + MathUtil.divide(v.getLength(), new BigDecimal(10), 2) + "：模具宽" + MathUtil.divide(v.getWidth(), new BigDecimal(10), 2) +
-                                    "模具高" + MathUtil.divide(v.getHeight(), new BigDecimal(10), 2) + "：模具材质" + v.getMaterial()
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + Optional.ofNullable(mouldTypeMap.get(v.getTypeId())).orElse("")
+                                    + "：模具穴数" + v.getMouldHoles() + "模具长" + v.getLength() + "：模具宽" + v.getWidth() +
+                                    "模具高" + v.getHeight() + "：模具材质" + v.getMaterial()
                             )
                             .collect(Collectors.joining(","));
                     logDetailDTO.setProductList(productList);
