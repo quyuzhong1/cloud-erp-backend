@@ -13,8 +13,11 @@ public class MouldInfoQueryHandler extends AbstractQueryHandler {
         if("supplierId".equals(field)){
             return "EXISTS (select 1 from supplier where md.supplier_id = id  and id " + compareCodeSplicingValueSql + ")";
         }
-        if("productName".equals(field)){
-            return "EXISTS (select 1 from mould_product where md.id = mould_detail_id and product_name " + compareCodeSplicingValueSql + ")";
+        if("mouldType".equals(field)){
+            return "EXISTS (select 1 from mould_product where md.id = mould_detail_id and type_id " + compareCodeSplicingValueSql + ")";
+        }
+        if("material".equals(field)){
+            return "EXISTS (select 1 from mould_product where md.id = mould_detail_id and material " + compareCodeSplicingValueSql + ")";
         }
         return null;
     }

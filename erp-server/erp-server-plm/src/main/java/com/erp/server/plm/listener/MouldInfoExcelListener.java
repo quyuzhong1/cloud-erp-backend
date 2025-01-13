@@ -68,21 +68,9 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
                 .orElse(null);
         MouldDetailDTO.ViewDTO dto = new MouldDetailDTO.ViewDTO();
         dto.setMouldNo(data.getNum());
-        dto.setTypeId(typeNameMap.get(data.getTypeName()));
         dto.setPayMethodId(dictBasicNameMap.get(data.getPayMethodName()));
         dto.setPaymentCondition(paymentConditionNameMap.get(data.getPaymentConditionName()));
         dto.setThirdMouldNo(data.getThirdMouldNo());
-        dto.setMouldHoles(data.getMouldHoles());
-        if (!ObjectUtils.isEmpty(data.getLength())) {
-            dto.setLength(new BigDecimal(data.getLength()));
-        }
-        if (!ObjectUtils.isEmpty(data.getWidth())) {
-            dto.setWidth(new BigDecimal(data.getWidth()));
-        }
-        if (!ObjectUtils.isEmpty(data.getHeight())) {
-            dto.setHeight(new BigDecimal(data.getHeight()));
-        }
-        dto.setMaterial(data.getMaterial());
         if (!ObjectUtils.isEmpty(data.getLifeCycle())) {
             dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
         }
@@ -112,6 +100,18 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
             dto.setRefundAmount(new BigDecimal(data.getRefundAmount()));
         }
         MouldProductDTO.ViewDTO viewDTO = new MouldProductDTO.ViewDTO();
+        viewDTO.setTypeId(typeNameMap.get(data.getTypeName()));
+        viewDTO.setMouldHoles(data.getMouldHoles());
+        if (!ObjectUtils.isEmpty(data.getLength())) {
+            viewDTO.setLength(new BigDecimal(data.getLength()));
+        }
+        if (!ObjectUtils.isEmpty(data.getWidth())) {
+            viewDTO.setWidth(new BigDecimal(data.getWidth()));
+        }
+        if (!ObjectUtils.isEmpty(data.getHeight())) {
+            viewDTO.setHeight(new BigDecimal(data.getHeight()));
+        }
+        viewDTO.setMaterial(data.getMaterial());
         viewDTO.setProductName(data.getProductName());
         dto.setProductList(Collections.singletonList(viewDTO));
         if (!ObjectUtils.isEmpty(viewDTO1) && !checkFieldEquals(viewDTO1, dto)) {
@@ -131,15 +131,9 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
      */
     private boolean checkFieldEquals(MouldDetailDTO.ViewDTO viewDTO1, MouldDetailDTO.ViewDTO dto) {
 
-        return Objects.equals(viewDTO1.getTypeId(), dto.getTypeId()) &&
-                Objects.equals(viewDTO1.getPayMethodId(), dto.getPayMethodId()) &&
+        return Objects.equals(viewDTO1.getPayMethodId(), dto.getPayMethodId()) &&
                 Objects.equals(viewDTO1.getPaymentCondition(), dto.getPaymentCondition()) &&
                 Objects.equals(viewDTO1.getThirdMouldNo(), dto.getThirdMouldNo()) &&
-                Objects.equals(viewDTO1.getMouldHoles(), dto.getMouldHoles()) &&
-                Objects.equals(viewDTO1.getLength(), dto.getLength()) &&
-                Objects.equals(viewDTO1.getWidth(), dto.getWidth()) &&
-                Objects.equals(viewDTO1.getHeight(), dto.getHeight()) &&
-                Objects.equals(viewDTO1.getMaterial(), dto.getMaterial()) &&
                 Objects.equals(viewDTO1.getLifeCycle(), dto.getLifeCycle()) &&
                 Objects.equals(viewDTO1.getDevelopCycle(), dto.getDevelopCycle()) &&
                 Objects.equals(viewDTO1.getEnableDate(), dto.getEnableDate()) &&
