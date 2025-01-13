@@ -55,26 +55,26 @@ public class MouldInfoImportDTO {
         @FieldValid(fieldName = "模具编号(供应商)", maxLength = 20)
         private String thirdMouldNo;
         /**
+         * 产品名称
+         */
+        @ColumnWidth(25)
+        @ExcelProperty(value = "产品名称", index = 2)
+        @FieldValid(fieldName = "产品名称", isNotBlank = true)
+        private String productName;
+        /**
          * 模具类型
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "模具类型", index = 2)
+        @ExcelProperty(value = "模具类型", index = 3)
         @FieldValid(fieldName = "模具类型", isNotBlank = true)
         private String typeName;
         /**
          * 模具穴数
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "模具穴数", index = 3)
+        @ExcelProperty(value = "模具穴数", index = 4)
         @FieldValid(fieldName = "模具穴数", isNotBlank = true)
         private String mouldHoles;
-        /**
-         * 产品名称
-         */
-        @ColumnWidth(25)
-        @ExcelProperty(value = "产品名称", index = 4)
-        @FieldValid(fieldName = "产品名称", isNotBlank = true)
-        private String productName;
         /**
          * 模具尺寸.长(cm)
          */
