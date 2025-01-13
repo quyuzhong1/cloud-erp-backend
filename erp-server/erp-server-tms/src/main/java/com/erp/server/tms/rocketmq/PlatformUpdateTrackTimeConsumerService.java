@@ -39,7 +39,7 @@ public class PlatformUpdateTrackTimeConsumerService implements RocketMQListener<
             return;
         }
         //根据明细id更新轨迹更新时间
-        logisticsBillDetailService.lambdaUpdate().set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now()).in(LogisticsBillDetailEntity::getId,billDetailIds).update();
+        logisticsBillDetailService.lambdaUpdate().set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now()).in(LogisticsBillDetailEntity::getId,billDetailIds).update();
     }
 
 }
