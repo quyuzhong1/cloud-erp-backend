@@ -258,9 +258,16 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
                 //历史退货通知单的退货数量
                 Integer returnNoticeQty = noticeDetailEntities.stream()
                         .filter(req -> !deleteIds.contains(req.getId()))
-                        .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                        .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
                         .map(SoReturnNoticeDetailEntity::getReturnQty)
                         .reduce(MathUtil.ZERO, Integer::sum);
+                if(StringUtils.isNotBlank(detailDto.getId())){
+                    returnNoticeQty = noticeDetailEntities.stream()
+                            .filter(req -> !deleteIds.contains(req.getId()))
+                            .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                            .map(SoReturnNoticeDetailEntity::getReturnQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
+                }
                 //退货单的退货数量
                 Integer returnQty = soReturnDetailEntities.stream()
                         .filter(req -> req.getId().equals(detailDto.getSourceDetailId()))

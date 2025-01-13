@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.enums.SourceTypeEnum;
@@ -422,9 +423,16 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                     //此单历史签收数量
                     Integer historyReceiveQty = soReturnReceiveDetailEntities.stream()
                             .filter(req -> !deleteIds.contains(req.getId()))
-                            .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                            .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
                             .map(SoReturnReceiveDetailEntity::getReceiveQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
+                    if(StringUtils.isNotBlank(detailDto.getId())){
+                        historyReceiveQty = soReturnReceiveDetailEntities.stream()
+                                .filter(req -> !deleteIds.contains(req.getId()))
+                                .filter(req -> !req.getId().equals(detailDto.getId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
+                                .map(SoReturnReceiveDetailEntity::getReceiveQty)
+                                .reduce(MathUtil.ZERO, Integer::sum);
+                    }
                     if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
                         throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
                     }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
