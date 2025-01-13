@@ -3,7 +3,7 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.12:8848
-        namespace: ${NACOS_NAMESPACE:dev-k8s}
+        namespace: ${NACOS_NAMESPACE:dev}
         ip: 172.16.100.60
         port: 30010
       config:
