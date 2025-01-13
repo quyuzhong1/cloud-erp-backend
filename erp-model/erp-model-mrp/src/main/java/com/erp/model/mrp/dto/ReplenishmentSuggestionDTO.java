@@ -799,7 +799,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         private BigDecimal denoisingQty;
 
-        public static ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO buildSalesInfoDenoisingDTO(ReplenishmentSuggestionVO.View view, String shopName, String platform, LocalDate startDate,
+        public static ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO buildSalesInfoDenoisingDTO(ReplenishmentSuggestionVO.View view, String shopName, String platform, LocalDate date,
                                                                                            Map<LocalDate, SalesInfoEntity> calcDenoisingMap, Map<LocalDate, Integer> calcSalesInfoHisMap) {
             ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO dto = new ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO();
             dto.setSkuId(view.getSkuId());
@@ -807,10 +807,10 @@ public class ReplenishmentSuggestionDTO implements Serializable {
             dto.setShopId(view.getShopId());
             dto.setShopName(shopName);
             dto.setPlatformName(platform);
-            dto.setDate(startDate);
-            Integer hisQty = Optional.ofNullable(calcSalesInfoHisMap.get(startDate)).orElse(0);
+            dto.setDate(date);
+            Integer hisQty = Optional.ofNullable(calcSalesInfoHisMap.get(date)).orElse(0);
             dto.setHisSalesQty(hisQty);
-            SalesInfoEntity entity = calcDenoisingMap.get(startDate);
+            SalesInfoEntity entity = calcDenoisingMap.get(date);
             if (ObjectUtils.isEmpty(entity)) {
                 dto.setDenoisingQty(new BigDecimal(hisQty));
             } else {

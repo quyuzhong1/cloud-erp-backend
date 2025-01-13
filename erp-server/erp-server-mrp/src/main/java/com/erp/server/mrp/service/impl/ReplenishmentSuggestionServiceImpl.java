@@ -1395,7 +1395,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
         List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> result = new ArrayList<>();
         // 获取首日结余库存
-        BigDecimal balanceInventory = new BigDecimal(view.getLocalUsableQty());
+        BigDecimal balanceInventory = new BigDecimal(view.getFbaUsableQty());
         for (SalesEstimateEntity estimate : entityList) {
             ReplenishmentSuggestionDTO.InventoryEstimateExportDTO exportDTO = new ReplenishmentSuggestionDTO.InventoryEstimateExportDTO();
             exportDTO.setShopName(name);
@@ -1433,7 +1433,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .collect(Collectors.toMap(EstimatedDeliveryDetailEntity::getEstimateSalesDate, EstimatedDeliveryDetailEntity::getShopPreQty, Integer::sum));
         List<ReplenishmentSuggestionDTO.InventoryEstimateExportDTO> result = new ArrayList<>();
         // 获取首日结余库存
-        BigDecimal balanceInventory = new BigDecimal(view.getLocalUsableQty());
+        BigDecimal balanceInventory = new BigDecimal(view.getOverseasUsableQty());
         for (SalesEstimateEntity estimate : entityList) {
             ReplenishmentSuggestionDTO.InventoryEstimateExportDTO exportDTO = new ReplenishmentSuggestionDTO.InventoryEstimateExportDTO();
             exportDTO.setShopName(name);
@@ -1513,10 +1513,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         List<SalesInfoEntity> salesInfoList = salesInfoService.listByReplenishmentDetailIds(Collections.singletonList(view.getDetailId()));
         Map<LocalDate, SalesInfoEntity> calcDenoisingMap = salesInfoList.stream()
                 .collect(Collectors.toMap(SalesInfoEntity::getDate, v -> v, (o1, o2) -> o1));
-        while (startDate.isBefore(endDate)) {
+        while (endDate.isAfter(startDate)) {
             result.add(ReplenishmentSuggestionDTO.SalesInfoDenoisingDTO.buildSalesInfoDenoisingDTO(view, name,
-                    platformName, startDate, calcDenoisingMap, salesHistoryMap));
-            startDate = startDate.plusDays(1);
+                    platformName, endDate, calcDenoisingMap, salesHistoryMap));
+            endDate = endDate.minusDays(1);
         }
         return result;
     }
