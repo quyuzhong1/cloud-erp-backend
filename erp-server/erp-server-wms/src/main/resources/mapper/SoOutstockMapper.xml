@@ -529,6 +529,6 @@
                 #{id}
             </foreach>
         </if>
-        order by so.create_time desc
+        order by so.actual_delivery_date desc
     </select>
 </mapper>

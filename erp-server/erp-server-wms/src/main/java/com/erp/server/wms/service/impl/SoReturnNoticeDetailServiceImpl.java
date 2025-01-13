@@ -216,10 +216,6 @@ public class SoReturnNoticeDetailServiceImpl extends SuperServiceImpl<SoReturnNo
         List<SoReturnDetailEntity> soReturnDetailEntities = soReturnFeign.listDetailByMainId(soReturnId);
         //B2B退货通知单
         List<SoReturnNoticeDetailEntity> noticeDetailEntities = listDetailBySourceIds(Collections.singletonList(soReturnId));
-        //B2C退货订单
-        List<String> returnDetailIds = dto.getDetailList().stream().map(SoReturnNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
-        List<SoB2cReturnDetailEntity> soB2cReturnDetailEntityList = FeignQuery.getByIds(SoB2cReturnDetailEntity.class,returnDetailIds);
-
         List<SoReturnNoticeDetailEntity> list = new ArrayList<>();
         //原明细数据
         List<SoReturnNoticeDetailEntity> oldList = this.listDetailByMainId(dto.getId());
