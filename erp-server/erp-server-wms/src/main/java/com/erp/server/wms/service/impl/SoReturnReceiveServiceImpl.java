@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
@@ -257,10 +258,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     entity.setSourceCode(soReturnEntity.getCode());
                 }
                 //获取销售单信息
-                SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
-                if (null != soInfoEntity) {
-                    entity.setSoCode(soInfoEntity.getCode());
-                    entity.setSoId(soInfoEntity.getId());
+                if(StringUtils.isNotBlank(soReturnEntity.getSourceId())){
+                    SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+                    if (null != soInfoEntity) {
+                        entity.setSoCode(soInfoEntity.getCode());
+                        entity.setSoId(soInfoEntity.getId());
+                    }
                 }
             }
         }

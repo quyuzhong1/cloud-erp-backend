@@ -736,7 +736,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
                 }
                 detailEntity.setMainId(dto.getId());
-                detailEntity.setSkuId(detailEntity.getSkuId());
+                detailEntity.setSkuId(detailDto.getSkuId());
 
                 detailEntity.setSkuNo(skuVO.getSkuNo());
                 detailEntity.setRealQty(detailDto.getRealQty());
@@ -835,8 +835,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
             }
             detailEntity.setMainId(dto.getId());
-            detailEntity.setSkuId(detailEntity.getSkuId());
-
+            detailEntity.setSkuId(detailDto.getSkuId());
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
