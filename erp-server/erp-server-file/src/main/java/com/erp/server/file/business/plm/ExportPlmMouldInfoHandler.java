@@ -39,12 +39,6 @@ public class ExportPlmMouldInfoHandler extends AbstractPageFileEventHandler<Moul
                 exportDTO.setMouldNo("");
                 exportDTO.setThirdMouldNo("");
                 exportDTO.setStatusName("");
-                exportDTO.setTypeName("");
-                exportDTO.setMouldHoles("");
-                exportDTO.setLength(null);
-                exportDTO.setWidth(null);
-                exportDTO.setHeight(null);
-                exportDTO.setMaterial("");
                 exportDTO.setLifeCycle(null);
                 exportDTO.setDevelopCycle(null);
                 exportDTO.setEnableDate(null);

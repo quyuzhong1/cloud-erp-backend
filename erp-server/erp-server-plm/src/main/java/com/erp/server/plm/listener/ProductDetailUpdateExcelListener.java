@@ -7,7 +7,6 @@ import com.erp.model.plm.dto.ProductDetailUpdateExcelDTO;
 import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import lombok.Getter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
@@ -66,13 +65,6 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
             errorList.add(data);
             return;
         }
-        if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
-                || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
-            data.setErrorMsg("仅{待提交，审核不通过}的状态下可导入修改");
-            errorList.add(data);
-            return;
-        }
         //产品分类
         String category = data.getMainCategory();
         BasicCategoryEntity basicCategoryEntity = categoryList.stream().filter(req -> req.getName().equals(category) && req.getPid().equals("0")).findFirst().orElse(null);
@@ -81,7 +73,7 @@ public class ProductDetailUpdateExcelListener extends AnalysisEventListener<Prod
         BasicCategoryEntity secondaryCategoryEntity = categoryList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
 
         if (ObjectUtils.isEmpty(basicCategoryEntity)) {
-            if (!ObjectUtils.isEmpty(secondaryCategoryEntity)) {
+            if (!ObjectUtils.isEmpty(secondaryCategoryEntity) || !ObjectUtils.isEmpty(category)) {
                 data.setErrorMsg("产品分类一级类目不存在");
                 errorList.add(data);
                 return;

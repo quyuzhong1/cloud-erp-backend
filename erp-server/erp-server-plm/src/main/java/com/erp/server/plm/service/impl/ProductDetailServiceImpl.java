@@ -421,7 +421,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noSpecDetailById.setCategoryIdList(categoryIdList);
         }
         ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
-        noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.list(productId);
@@ -550,7 +552,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         }
         ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
-        noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+        }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
         List<ProductCostShowDTO> costShowDTOList = productCostService.listBySkuId(skuId);
@@ -708,7 +712,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
             manySpecDetailById.setCategoryIdList(categoryIdList);
             ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(manySpecDetailById.getApplicationCategoryId());
-            manySpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+            if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                manySpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+            }
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
         }
         //多规格产品明细信息

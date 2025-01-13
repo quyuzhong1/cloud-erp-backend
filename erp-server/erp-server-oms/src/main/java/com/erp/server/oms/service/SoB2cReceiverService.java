@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
@@ -82,4 +84,6 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * 封装分区Id
      */
     void buildPartitionId(SoB2cReceiverEntity receiverEntity, ShopInfoEntity shopInfoEntity);
+
+    IPage<SoB2cReceiverEntity> pagePartitionIsNull(Page query);
 }

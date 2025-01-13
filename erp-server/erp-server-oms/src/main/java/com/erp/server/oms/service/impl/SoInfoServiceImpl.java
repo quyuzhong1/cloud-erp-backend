@@ -3900,4 +3900,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
     }
+
+    @Override
+    public IPage<SoInfoEntity> pagePartitionIsNull(Page query) {
+        return baseMapper.pagePartitionIsNull(query);
+    }
 }

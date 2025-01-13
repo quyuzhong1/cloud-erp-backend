@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.annotation.Dict;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -53,7 +55,36 @@ public class MouldProductDTO implements Serializable {
         */
         private List<String> imagesUrl;
 
+        /**
+         * 模具类型
+         */
+        @Dict(tableName = "cfg_mould_setting", queryFieldName = "id")
+        private String typeId;
 
+        /**
+         * 模具穴数
+         */
+        private String mouldHoles;
+
+        /**
+         * 模具长
+         */
+        private BigDecimal length;
+
+        /**
+         * 模具宽
+         */
+        private BigDecimal width;
+
+        /**
+         * 模具高
+         */
+        private BigDecimal height;
+
+        /**
+         * 模具材质
+         */
+        private String material;
     }
 
     /**
@@ -97,7 +128,41 @@ public class MouldProductDTO implements Serializable {
         @NotNull(message = "图片地址不能为空")
         private List<String> imagesUrl;
 
+        /**
+         * 模具类型
+         */
+        @NotBlank(message = "模具类型不能为空")
+        @Size(max = 19,message = "模具类型最大长度不能超过19位")
+        private String typeId;
 
+        /**
+         * 模具穴数
+         */
+        @NotBlank(message = "模具穴数不能为空")
+        @Size(max = 255,message = "模具穴数最大长度不能超过255位")
+        private String mouldHoles;
+
+        /**
+         * 模具长
+         */
+        private BigDecimal length;
+
+        /**
+         * 模具宽
+         */
+        private BigDecimal width;
+
+        /**
+         * 模具高
+         */
+        private BigDecimal height;
+
+        /**
+         * 模具材质
+         */
+        @NotBlank(message = "模具材质不能为空")
+        @Size(max = 255,message = "模具材质最大长度不能超过255位")
+        private String material;
     }
 
 

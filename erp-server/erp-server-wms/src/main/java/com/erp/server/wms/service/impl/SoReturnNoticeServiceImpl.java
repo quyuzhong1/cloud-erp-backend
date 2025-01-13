@@ -715,6 +715,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 detailAddDTO.setSkuId(view.getSkuId());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
+                detailAddDTO.setIsChildSkuNo(Boolean.FALSE);
                 SoReturnDetailEntity soReturnDetailEntity = soReturnDetailEntities.stream()
                         .filter(v -> v.getId().equals(view.getId()))
                         .findFirst().orElse(new SoReturnDetailEntity());

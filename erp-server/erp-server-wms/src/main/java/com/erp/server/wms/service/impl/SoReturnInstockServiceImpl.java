@@ -927,6 +927,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
                 detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
                 detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setIsChildSkuNo(view.getIsChildSkuNo());
                 detailAddDTO.setExchangeRate(soReturnReceiveDetailEntity.getExchangeRate());
                 if (Objects.equals(soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty())) {
                     detailAddDTO.setReturnAmount(soReturnReceiveDetailEntity.getReturnAmount());
