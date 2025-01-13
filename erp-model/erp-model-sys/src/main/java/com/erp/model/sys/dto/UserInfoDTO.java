@@ -76,6 +76,16 @@ public class UserInfoDTO implements Serializable {
         private String departmentName;
 
         /**
+         * 金蝶部门表id
+         */
+        private String kingdeeDepartmentId;
+
+        /**
+         * 金蝶部门名
+         */
+        private String kingdeeDepartmentName;
+
+        /**
          * 是否禁用
          * true 禁用
          */
