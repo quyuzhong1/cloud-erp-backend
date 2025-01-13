@@ -56,6 +56,9 @@ public class WorkOptionServiceImpl implements WorkOptionService {
             if (myWorkOptionDTO.getModuleCode().equals("project_task")) {
                 PagingDTO<TaskSearchParamDTO> pagingDTO = parseObject(myWorkOptionDTO.getModuleParam(), PagingDTO.class);
                 TaskSearchParamDTO params = parseObject(toJSONString(pagingDTO.getParams()), TaskSearchParamDTO.class);
+                Map<String, String> sqlMap = new HashMap<>();
+                sqlMap.put("default", "1 = 1");
+                params.setSqlMap(sqlMap);
                 pagingDTO.setParams(params);
                 if (StringUtil.isNotBlank(userDatePermissionSql)) {
                     pagingDTO.setPermissionSql(userDatePermissionSql);
