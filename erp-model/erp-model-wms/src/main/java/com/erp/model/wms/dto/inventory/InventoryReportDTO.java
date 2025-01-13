@@ -108,6 +108,16 @@ public class InventoryReportDTO implements Serializable {
          * 勾选的数据行
          */
         private List<ExportTransportItem> items;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
