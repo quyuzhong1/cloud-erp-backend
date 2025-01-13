@@ -1057,6 +1057,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             throw new ServiceException(ApiError.ERROR_1016);
         }
         List<MouldDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
+        for (MouldDetailDTO.ViewDTO dto : successList) {
+            dto.setMouldNo(null);
+        }
         String url = "";
         List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (!CollectionUtils.isEmpty(errorList)) {
