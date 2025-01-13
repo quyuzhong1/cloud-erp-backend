@@ -4,14 +4,23 @@ import java.lang.reflect.Field;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.annotation.Resource;
+
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.date.DateUtil;
+
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
@@ -22,9 +31,15 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.StrUtils;
+import com.common.message.constant.RedisKeyConstant;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqNewTopic;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputMongoDmpRelationEntity;
 import com.erp.model.dmp.entity.DmpInputTaskFileEntity;
+import com.erp.model.dmp.entity.DmpSoDetailEntity;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputDmpRequest;
@@ -44,6 +59,7 @@ import com.google.common.collect.Lists;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.crypto.digest.MD5;
+import cn.hutool.extra.spring.SpringUtil;
 
 /**
  * dmp输入任务dmp状态处理器，被dmp任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -72,6 +88,16 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	
 	@Autowired
 	private DmpInputMongoDmpRelationService dmpInputMongoDmpRelationService;
+	
+	@Resource
+    private MQProducerService<String> mqProducerService;
+	private static Set<String> SKU_LISTING_TIME_SET = new HashSet<>();
+	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
+	@Resource
+	protected RedisTemplate<String,Object> redisTemplate;
+	@Autowired
+	@Qualifier("dmpListTimeExecutorPool")
+	protected ExecutorService dmpListTimeExecutorPool;
 	
 	@Override
 	public void doDmpHandler(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse, DmpHandlerChain chain) {
@@ -131,6 +157,9 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		}
 		
 		dmpResponse.getConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, dmpInputDmpBaseEntityList);
+		if(storageName.equals("dmp_so_detail") && CollUtil.isNotEmpty(dmpInputDmpBaseEntityList)) {
+			dmpListTimeExecutorPool.execute(() -> pushSoInfoSkuListingTime(dmpResponse.getConvertInputDmpBaseEntityListMaps()));
+		}
 		dmpResponse.getChangeConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, changeConvertInputDmpBaseEntityList);
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
@@ -414,6 +443,64 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		}
 	}
 
-
+	private void pushSoInfoSkuListingTime(Map<DmpCfgInputConvertEntity , List<BaseEntity>> convertInputDmpBaseEntityListMaps) {
+		Map<String , DmpSoInfoEntity> dmpSoInfoEntityMap = new HashMap<>();
+		Map<String, List<DmpSoDetailEntity>> dmpSoDetailEntityMap = new HashMap<>();
+		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+			if(CollUtil.isNotEmpty(value)) {
+				String currStorageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+				if("dmp_so_info".equals(currStorageName)) {
+					for(BaseEntity v : value) {
+						DmpSoInfoEntity dmpSoInfoEntity = (DmpSoInfoEntity) v;
+						dmpSoInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
+					}
+				}else if("dmp_so_detail".equals(currStorageName)) {
+					for(BaseEntity v : value) {
+						DmpSoDetailEntity dmpSoDetailEntity = (DmpSoDetailEntity) v;
+						String mainId = dmpSoDetailEntity.getMainId();
+						List<DmpSoDetailEntity> list = dmpSoDetailEntityMap.get(mainId);
+						if(CollUtil.isEmpty(list)) {
+							list = new ArrayList<>();
+						}
+						list.add(dmpSoDetailEntity);
+						dmpSoDetailEntityMap.put(mainId, list);
+					}
+				}
+			}
+		}
+		
+		String tag = RocketMqNewTag.DMP_PRODUCT_LISTING_TO_PLM_TAG.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
+		for(Map.Entry<String, List<DmpSoDetailEntity>> dmpSoDetailEntity : dmpSoDetailEntityMap.entrySet()) {
+			DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoEntityMap.get(dmpSoDetailEntity.getKey());
+			if(dmpSoInfoEntity != null) {
+				String sourcePlatform = dmpSoInfoEntity.getSourcePlatform();
+				if(StringUtils.isNotBlank(sourcePlatform)) {
+					List<DmpSoDetailEntity> dmpSoDetailEntityList = dmpSoDetailEntity.getValue();
+					for(DmpSoDetailEntity detailEntity : dmpSoDetailEntityList) {
+						String skuNo = detailEntity.getPlatformSku();
+						if(StringUtils.isNotBlank(skuNo)) {
+							String key = RedisKeyConstant.PRODUCT_LISTING_TIME + sourcePlatform + ":" + skuNo;
+							if(!SKU_LISTING_TIME_SET.contains(key)) {
+								Boolean hasKey = redisTemplate.hasKey(key);
+								if(hasKey) {
+									SKU_LISTING_TIME_SET.add(key);
+								}else {
+									String now = DateUtil.now();
+									Map<String, String> mqData = new HashMap<>();
+									mqData.put("sourcePlatform", sourcePlatform);
+									mqData.put("sourceSystem", dmpSoInfoEntity.getSourceSystem());
+									mqData.put("skuNo", skuNo);
+									mqData.put("listingTime", now);
+									mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PRODUCT_LISTING_TO_PLM_TOPIC, tag
+											, JSON.toJSONString(mqData), key);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 
 }

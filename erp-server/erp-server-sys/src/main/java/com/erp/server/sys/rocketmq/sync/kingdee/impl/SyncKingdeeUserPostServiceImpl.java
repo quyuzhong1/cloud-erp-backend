@@ -69,39 +69,8 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public DmpPushTaskEntity syncDataToKingdee(KingdeeUserRefPostEntity entity, String operate) {
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException("金蝶员工任岗表不能为空");
-        }
-        Map<String, Object> resultMap = new HashMap<>();
-        //业务id
-        resultMap.put("id", entity.getId());
-
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getKingdeeId());
-        resultMap.put("operate", operate);
-        String useOrgCode = entity.getUseOrgCode();
-        resultMap.put("createOrgCode", useOrgCode);
-        resultMap.put("useOrgCode", useOrgCode);
-        String userId = entity.getErpUserId();
-
-        SysUserInfoEntity userInfo = sysUserInfoService.getById(userId);
-        if (Objects.nonNull(userInfo)) {
-            resultMap.put("userCode", userInfo.getCode());
-            resultMap.put("userName", userInfo.getRealName());
-
-        }
-        String kingdeePostId = entity.getKingdeePostId();
-        KingdeePostEntity post = kingdeePostService.getById(kingdeePostId);
-        if (Objects.nonNull(post)) {
-            resultMap.put("postCode", post.getCode());
-        }
-        String kingdeeDeptId = entity.getKingdeeDepartmentId();
-        KingdeeDepartmentEntity dept = kingdeeDepartmentService.getById(kingdeeDeptId);
-        if (Objects.nonNull(dept)) {
-            resultMap.put("deptCode", dept.getKingdeeDeptCode());
-        }
         //生成任务
-        return saveTask(entity, operate, resultMap);
+        return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
     }
 
 
@@ -147,5 +116,42 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
         
         return null;
     }
+
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(KingdeeUserRefPostEntity entity, String operate) {
+		if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException("金蝶员工任岗表不能为空");
+        }
+        Map<String, Object> resultMap = new HashMap<>();
+        //业务id
+        resultMap.put("id", entity.getId());
+
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getKingdeeId());
+        resultMap.put("operate", operate);
+        String useOrgCode = entity.getUseOrgCode();
+        resultMap.put("createOrgCode", useOrgCode);
+        resultMap.put("useOrgCode", useOrgCode);
+        String userId = entity.getErpUserId();
+
+        SysUserInfoEntity userInfo = sysUserInfoService.getById(userId);
+        if (Objects.nonNull(userInfo)) {
+            resultMap.put("userCode", userInfo.getCode());
+            resultMap.put("userName", userInfo.getRealName());
+
+        }
+        String kingdeePostId = entity.getKingdeePostId();
+        KingdeePostEntity post = kingdeePostService.getById(kingdeePostId);
+        if (Objects.nonNull(post)) {
+            resultMap.put("postCode", post.getCode());
+        }
+        String kingdeeDeptId = entity.getKingdeeDepartmentId();
+        KingdeeDepartmentEntity dept = kingdeeDepartmentService.getById(kingdeeDeptId);
+        if (Objects.nonNull(dept)) {
+            resultMap.put("deptCode", dept.getKingdeeDeptCode());
+        }
+        return resultMap;
+	}
 
 }

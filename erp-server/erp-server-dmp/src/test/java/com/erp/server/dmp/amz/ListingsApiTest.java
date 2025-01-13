@@ -14,14 +14,22 @@
 package com.erp.server.dmp.amz;
 
 import cn.hutool.json.JSONUtil;
+import com.amazonaws.http.AmazonHttpClient;
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
+import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.api.ListingsApi;
+import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonAuthClientUtils;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsitems.Item;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import com.erp.server.dmp.ErpServerDmpApplication;
@@ -29,7 +37,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.junit.Test;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +51,9 @@ import java.util.List;
 public class ListingsApiTest {
 
     private final ListingsApi api = amazonAuthorizationGrant(AmazonMarketplaceEnum.US);
+
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
     public ListingsApi amazonAuthorizationGrant(AmazonMarketplaceEnum marketplaceEnum) {
 //        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
@@ -93,11 +106,20 @@ public class ListingsApiTest {
      */
     @Test
     public void getListingsItemTest() throws ApiException {
-        String sellerId = "AZFY4CTNEDLZX";
-        String sku = "1963-US7";
-        List<String> marketplaceIds = Arrays.asList("A1AM78C64UM0Y8");;
+        String sellerId = "A1FND2G4OYN01O";
+        String sku = "2958-EU2";
+        String shopId = "1735512797405515786";
+        List<String> marketplaceIds = Collections.singletonList("A13V1IB3VIYZZH");;
         String issueLocale = null;
-        List<String> includedData = null;
+        List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships");;
+
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        // 亚马逊订单下载
+        ListingsApi api = AmazonSpApiInitUtils.create(ListingsApi.class, shopInfoDTO, false);
         Item response = api.getListingsItem(sellerId, sku, marketplaceIds, issueLocale, includedData);
         System.out.println("ListingsItem信息");
         System.out.println(JSONUtil.toJsonStr(response));

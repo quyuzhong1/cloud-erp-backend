@@ -5,9 +5,12 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
+import com.erp.server.sys.service.KingdeeUserRefPostService;
 import com.erp.server.sys.service.SyncTaskService;
 import com.erp.server.sys.service.SysUserInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -38,9 +41,15 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private SysUserInfoService sysUserInfoService;
+    
+    @Resource
+    private KingdeeUserRefPostService kingdeeUserRefPostService;
 
     @Resource
     private SyncKingdeeSysUserInfoService syncKingdeeSysUserInfoService;
+    
+    @Resource
+    private SyncKingdeeUserPostService syncKingdeeUserPostService;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
@@ -104,6 +113,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SYS_USER_INFO:
                 resultList = newSyncSysUser(sourceDetailList);
                 break;
+            case SYS_USER_POST:
+                resultList = newUserPost(sourceDetailList);
+                break;
             default:
             	break;
         }
@@ -135,5 +147,26 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSysUserInfoService.newSyncDataToKingdee(sysUserInfoEntity, syncParamDetailDTO.getSyncOperate()));
         }
         return resultList;
+    }
+    
+    private Map<String , Map<String, Object>> newUserPost (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+    	List<KingdeeUserRefPostEntity> list = kingdeeUserRefPostService.listByIds(sourceIdList);
+    	if (CollectionUtils.isEmpty(list)) {
+    		log.error("userPost >>>> 未找到数据！");
+    		return resultList;
+    	}
+    	for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+    		String sourceId = syncParamDetailDTO.getSourceId();
+    		KingdeeUserRefPostEntity kingdeeUserRefPostEntity = list.stream().filter(obj -> {
+    			return obj.getId().equals(sourceId);
+    		}).findFirst().orElse(null);
+    		if (ObjectUtils.isEmpty(kingdeeUserRefPostEntity)) {
+    			continue;
+    		}
+    		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeUserPostService.newSyncDataToKingdee(kingdeeUserRefPostEntity, syncParamDetailDTO.getSyncOperate()));
+    	}
+    	return resultList;
     }
 }

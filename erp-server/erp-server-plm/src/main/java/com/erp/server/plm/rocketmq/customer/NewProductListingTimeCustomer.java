@@ -23,6 +23,7 @@ import com.common.message.constant.RocketMqNewTopic;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.server.plm.service.ProductSaleService;
 
@@ -45,26 +46,37 @@ public class NewProductListingTimeCustomer implements RocketMQListener<String> {
 			log.info("新中台监听到上市时间需要修改：{}", data);
 			JSONObject parseObject = JSON.parseObject(data);
 			String sourcePlatform = parseObject.getString("sourcePlatform");
+			String sourceSystem = parseObject.getString("sourceSystem");
 			String platformSkuNo = parseObject.getString("skuNo");
 			String listingTime = parseObject.getString("listingTime");
 			
-			List<ListingInfoEntity> listingInfoEntityList = FeignQuery.create(ListingInfoEntity.class)
-				.eq(ListingInfoEntity::getType, RuleTypeEnum.PLATFORM.getCode())
-				.eq(ListingInfoEntity::getPlatformSkuNo, platformSkuNo)
-				.last(" and LOWER(platform) = LOWER('"+ sourcePlatform +"') ")
-				.list();
-			if(CollUtil.isEmpty(listingInfoEntityList)) {
-				return;
-			}
-			ListingInfoEntity listingInfoEntity = listingInfoEntityList.get(0);
-			List<SkuMappingEntity> skuMappingEntityList = FeignQuery.create(SkuMappingEntity.class)
-				.eq(SkuMappingEntity::getType, RuleTypeEnum.PLATFORM.getCode())
-				.eq(SkuMappingEntity::getIsExpire, false)
-				.eq(SkuMappingEntity::getDictPlatform, listingInfoEntity.getPlatform())
-				.in(SkuMappingEntity::getListingId, listingInfoEntityList.stream().map(ListingInfoEntity::getId).collect(Collectors.toList()))
-				.list();
+			List<String> productIdList = null;
+			
+			if(StringUtils.isNotBlank(sourceSystem) && "wdt".equals(sourceSystem)) {
+				List<ProductDetailEntity> productDetailList = FeignQuery.create(ProductDetailEntity.class).eq(ProductDetailEntity::getSkuNo, platformSkuNo).list();
+				if(CollUtil.isNotEmpty(productDetailList)) {
+					productIdList = productDetailList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+				}
+			}else {
+				List<ListingInfoEntity> listingInfoEntityList = FeignQuery.create(ListingInfoEntity.class)
+						.eq(ListingInfoEntity::getType, RuleTypeEnum.PLATFORM.getCode())
+						.eq(ListingInfoEntity::getPlatformSkuNo, platformSkuNo)
+						.last(" and LOWER(platform) = LOWER('"+ sourcePlatform +"') ")
+						.list();
+					if(CollUtil.isEmpty(listingInfoEntityList)) {
+						return;
+					}
+					ListingInfoEntity listingInfoEntity = listingInfoEntityList.get(0);
+					List<SkuMappingEntity> skuMappingEntityList = FeignQuery.create(SkuMappingEntity.class)
+						.eq(SkuMappingEntity::getType, RuleTypeEnum.PLATFORM.getCode())
+						.eq(SkuMappingEntity::getIsExpire, false)
+						.eq(SkuMappingEntity::getDictPlatform, listingInfoEntity.getPlatform())
+						.in(SkuMappingEntity::getListingId, listingInfoEntityList.stream().map(ListingInfoEntity::getId).collect(Collectors.toList()))
+						.list();
 
-			List<String> productIdList = skuMappingEntityList.stream().filter(s -> StringUtils.isNotBlank(s.getProductSkuId())).map(SkuMappingEntity::getProductSkuId).collect(Collectors.toList());
+					productIdList = skuMappingEntityList.stream().filter(s -> StringUtils.isNotBlank(s.getProductSkuId())).map(SkuMappingEntity::getProductSkuId).collect(Collectors.toList());
+			}
+			
 			if(CollUtil.isEmpty(productIdList)) {
 				return;
 			}

@@ -135,7 +135,7 @@ public class DmpOutputAmzRefundRocketMQTaskHandler extends DmpOutputRocketMQTask
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("platformCode", "shopId");
+        return Collections.singletonList("uniqueId");
     }
 
 
