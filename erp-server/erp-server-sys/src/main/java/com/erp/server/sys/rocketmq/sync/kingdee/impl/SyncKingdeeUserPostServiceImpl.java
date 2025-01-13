@@ -19,16 +19,20 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPushMsgEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.KingdeePostService;
+import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysPushMsgService;
 import com.erp.server.sys.service.SysUserInfoService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +67,9 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
     
     @Resource
     private SysPushMsgService sysPushMsgService;
+    
+    @Resource
+    private SysAccountingCompanyService sysAccountingCompanyService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -131,6 +138,15 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
         resultMap.put("syncKingdeeId", entity.getKingdeeId());
         resultMap.put("operate", operate);
         String useOrgCode = entity.getUseOrgCode();
+        if(StringUtils.isBlank(useOrgCode)) {
+        	String useOrgId = entity.getUseOrgId();
+        	if(StringUtils.isNotBlank(useOrgId)) {
+        		SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompanyService.getById(useOrgId);
+            	if(sysAccountingCompanyEntity != null) {
+            		useOrgCode = sysAccountingCompanyEntity.getCode();
+            	}
+        	}
+        }
         resultMap.put("createOrgCode", useOrgCode);
         resultMap.put("useOrgCode", useOrgCode);
         String userId = entity.getErpUserId();
