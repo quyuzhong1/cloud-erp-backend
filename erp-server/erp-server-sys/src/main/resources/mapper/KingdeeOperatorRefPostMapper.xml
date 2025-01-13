@@ -91,6 +91,8 @@
     <select id="listInfo" resultType="com.erp.model.sys.dto.UserInfoDTO$BusinessOperationUserDTO">
         SELECT ko.kingdee_id AS syncKingdeeId,
                krp.code AS code,
+               krp.kingdee_department_id AS kingdeeDepartmentId,
+               kd.kingdee_dept_name  AS kingdeeDepartmentName,
                kd.erp_dept_id  AS departmentId,
                su.user_name   AS userName,
                su.real_name   AS realName,
