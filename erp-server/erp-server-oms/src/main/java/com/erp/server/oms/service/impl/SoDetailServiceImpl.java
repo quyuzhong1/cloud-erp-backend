@@ -278,6 +278,9 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isEmpty(skuIdList)) {
             return new ArrayList<>();
         }
+        if(StringUtils.isBlank(warehouseId)){
+            throw new ServiceException("仓库不能为空");
+        }
         InventoryQtyDTO.FindSkuInventoryParamDTO paramDTO = new InventoryQtyDTO.FindSkuInventoryParamDTO();
         paramDTO.setSkuIds(skuIdList);
         paramDTO.setWarehouseId(warehouseId);
