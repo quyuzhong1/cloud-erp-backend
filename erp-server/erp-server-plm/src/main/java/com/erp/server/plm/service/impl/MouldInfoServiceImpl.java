@@ -1041,9 +1041,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.list(KingdeePaymentConditionEntity.class);
         Map<String, String> paymentConditionNameMap = paymentConditionList.stream()
                 .collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, KingdeePaymentConditionEntity::getCode, (o1, o2) -> o1));
+        List<SupplierEntity> supplierList = FeignQuery.list(SupplierEntity.class);
+        Map<String, String> supplierMap = supplierList.stream()
+                .collect(Collectors.toMap(SupplierEntity::getName, SupplierEntity::getId, (o1, o2) -> o1));
         List<CfgMouldSettingEntity> cfgMouldSettingList = cfgMouldSettingService.mouldList();
         Map<String, String> typeNameMap = cfgMouldSettingList.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId, (o1, o2) -> o1));
-        MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap, dictBasicNameMap, paymentConditionNameMap);
+        MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap, dictBasicNameMap, paymentConditionNameMap, supplierMap);
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), MouldInfoImportDTO.MouldInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

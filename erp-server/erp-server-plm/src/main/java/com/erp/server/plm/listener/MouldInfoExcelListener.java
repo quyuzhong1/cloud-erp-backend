@@ -22,6 +22,7 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
     private final Map<String, String> typeNameMap;
     private final Map<String, String> dictBasicNameMap;
     private final Map<String, String> paymentConditionNameMap;
+    private final Map<String, String> supplierMap;
 
     /**
      * 导入正确数据
@@ -32,10 +33,11 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
      */
     private final List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = new ArrayList<>();
 
-    public MouldInfoExcelListener(Map<String, String> typeNameMap, Map<String, String> dictBasicNameMap, Map<String, String> paymentConditionNameMap) {
+    public MouldInfoExcelListener(Map<String, String> typeNameMap, Map<String, String> dictBasicNameMap, Map<String, String> paymentConditionNameMap, Map<String, String> supplierMap) {
         this.typeNameMap = typeNameMap;
         this.dictBasicNameMap = dictBasicNameMap;
         this.paymentConditionNameMap = paymentConditionNameMap;
+        this.supplierMap = supplierMap;
     }
 
     @Override
@@ -45,22 +47,22 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         if (!CollectionUtils.isEmpty(msgList)) {
             data.setErrorMsg(String.join(",", msgList));
             errorList.add(data);
-            return;
         }
         if (!typeNameMap.containsKey(data.getTypeName())) {
             data.setErrorMsg("模具类型不存在");
             errorList.add(data);
-            return;
         }
         if (!dictBasicNameMap.containsKey(data.getPayMethodName())) {
             data.setErrorMsg("结算方式不存在");
             errorList.add(data);
-            return;
         }
         if (!paymentConditionNameMap.containsKey(data.getPaymentConditionName())) {
             data.setErrorMsg("付款条件不存在");
             errorList.add(data);
-            return;
+        }
+        if (!supplierMap.containsKey(data.getSupplierName())) {
+            data.setErrorMsg("供应商不存在");
+            errorList.add(data);
         }
         MouldDetailDTO.ViewDTO viewDTO1 = successList.stream()
                 .filter(v -> v.getMouldNo().equals(data.getNum()))
@@ -71,6 +73,7 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         dto.setPayMethodId(dictBasicNameMap.get(data.getPayMethodName()));
         dto.setPaymentCondition(paymentConditionNameMap.get(data.getPaymentConditionName()));
         dto.setThirdMouldNo(data.getThirdMouldNo());
+        dto.setSupplierId(supplierMap.get(data.getSupplierName()));
         if (!ObjectUtils.isEmpty(data.getLifeCycle())) {
             dto.setLifeCycle(Integer.parseInt(data.getLifeCycle()));
         }

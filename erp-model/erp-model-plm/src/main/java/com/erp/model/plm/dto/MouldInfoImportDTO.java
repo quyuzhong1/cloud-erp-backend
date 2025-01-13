@@ -124,32 +124,41 @@ public class MouldInfoImportDTO {
         @ExcelProperty(value = "模具启用日期", index = 11)
         @FieldValid(fieldName = "模具启用日期", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.DATE_S)
         private String enableDate;
+
+        /**
+         * 模具供应商
+         */
+        @ColumnWidth(25)
+        @ExcelProperty(value = "模具供应商", index = 12)
+        @FieldValid(fieldName = "模具供应商", isNotBlank = true)
+        private String supplierName;
+
         /**
          * 数量(套)
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "数量(套)", index = 12)
+        @ExcelProperty(value = "数量(套)", index = 13)
         @FieldValid(fieldName = "数量(套)", maxLength = 9, isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
         private String qty;
         /**
          * 含税单价(￥)
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "含税单价(￥)", index = 13)
+        @ExcelProperty(value = "含税单价(￥)", index = 14)
         @FieldValid(fieldName = "含税单价(￥)", maxLength = 16, isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
         private String taxPrice;
         /**
          * 税率(%)
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "税率(%)", index = 14)
+        @ExcelProperty(value = "税率(%)", index = 15)
         @FieldValid(fieldName = "税率(%)", maxLength = 16, isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
         private String taxRate;
         /**
          * 付款方式
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "付款方式", index = 15)
+        @ExcelProperty(value = "付款方式", index = 16)
         @FieldValid(fieldName = "付款方式", maxLength = 100, isNotBlank = true)
         private String payMethodName;
 
@@ -157,35 +166,35 @@ public class MouldInfoImportDTO {
          * 付款条件
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "付款条件", index = 16)
+        @ExcelProperty(value = "付款条件", index = 17)
         @FieldValid(fieldName = "付款条件", isNotBlank = true)
         private String paymentConditionName;
         /**
          * 费用返还
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "费用返还", index = 17)
+        @ExcelProperty(value = "费用返还", index = 18)
         @FieldValid(fieldName = "费用返还", fieldValues = "是,否")
         private String isNeedRefundName;
         /**
          * 返还金额(￥)
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "返还金额(￥)", index = 18)
+        @ExcelProperty(value = "返还金额(￥)", index = 19)
         @FieldValid(fieldName = "返还金额(￥)", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.AMOUNT2)
         private String refundAmount;
         /**
          * 返还标准
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "返还标准", index = 19)
+        @ExcelProperty(value = "返还标准", index = 20)
         @FieldValid(fieldName = "返还标准", enumClass = RefundStandardEnum.class)
         private String refundStandardName;
         /**
          * 返还单量
          */
         @ColumnWidth(25)
-        @ExcelProperty(value = "返还数量", index = 20)
+        @ExcelProperty(value = "返还数量", index = 21)
         @FieldValid(fieldName = "返还数量", maxLength = 9, formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER)
         private String refundOrderQty;
 
@@ -193,7 +202,7 @@ public class MouldInfoImportDTO {
          * 错误信息
          */
         @ColumnWidth(50)
-        @ExcelProperty(value = "导入错误说明", index = 21)
+        @ExcelProperty(value = "导入错误说明", index = 22)
         private String errorMsg;
     }
 }
