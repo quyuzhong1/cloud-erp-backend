@@ -45,24 +45,19 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(data);
         if (!CollectionUtils.isEmpty(msgList)) {
-            data.setErrorMsg(String.join(",", msgList));
-            errorList.add(data);
+            msgList.add(String.join(",", msgList));
         }
         if (!typeNameMap.containsKey(data.getTypeName())) {
-            data.setErrorMsg("模具类型不存在");
-            errorList.add(data);
+            msgList.add("模具类型不存在");
         }
         if (!dictBasicNameMap.containsKey(data.getPayMethodName())) {
-            data.setErrorMsg("结算方式不存在");
-            errorList.add(data);
+            msgList.add("结算方式不存在");
         }
         if (!paymentConditionNameMap.containsKey(data.getPaymentConditionName())) {
-            data.setErrorMsg("付款条件不存在");
-            errorList.add(data);
+            msgList.add("付款条件不存在");
         }
         if (!supplierMap.containsKey(data.getSupplierName())) {
-            data.setErrorMsg("供应商不存在");
-            errorList.add(data);
+            msgList.add("供应商不存在");
         }
         MouldDetailDTO.ViewDTO viewDTO1 = successList.stream()
                 .filter(v -> v.getMouldNo().equals(data.getNum()))
@@ -118,12 +113,12 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
         viewDTO.setProductName(data.getProductName());
         dto.setProductList(Collections.singletonList(viewDTO));
         if (!ObjectUtils.isEmpty(viewDTO1) && !checkFieldEquals(viewDTO1, dto)) {
-            data.setErrorMsg("若为同一模具下的不同产品，序号+其他字段均一致");
-            errorList.add(data);
-            return;
+            msgList.add("若为同一模具下的不同产品，序号+其他字段均一致");
         }
         //存在错误数据则直接返回
-        if (!CollectionUtils.isEmpty(errorList)) {
+        if (!CollectionUtils.isEmpty(msgList)) {
+            data.setErrorMsg(String.join(",", msgList));
+            errorList.add(data);
             return;
         }
         successList.add(dto);
@@ -164,7 +159,6 @@ public class MouldInfoExcelListener extends AnalysisEventListener<MouldInfoImpor
                     MouldDetailDTO.ViewDTO dto = entry.getValue().stream()
                             .findFirst()
                             .orElse(new MouldDetailDTO.ViewDTO());
-                    dto.setMouldNo(null);
                     // 设置合并后的产品列表
                     dto.setProductList(dtos);
                     return dto;
