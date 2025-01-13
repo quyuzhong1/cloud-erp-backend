@@ -77,12 +77,12 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         Map<LocalDate, List<ReplenishmentResultDTO.DeliverySuggestDTO>> deliveryMap = replenishmentResultDTO.getDeliverySuggests().stream().collect(Collectors.groupingBy(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestPurchaseDate));
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = deliveryMap.entrySet().parallelStream()
                 .flatMap(entry -> {
-                    String code = docNoGenHelper.generateCode(CODE_P);
+
                     List<ReplenishmentResultDTO.DeliverySuggestDTO> value = entry.getValue();
 
                     List<String> deliverySuggestIdList = value.stream().map(ReplenishmentResultDTO.DeliverySuggestDTO::getId).distinct().collect(Collectors.toList());
                     //查询关联的发货计划
-                    ReplenishmentResultDTO.PurchaseSuggestDTO parentSuggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(code, logisticsResult, replenishmentResultDTO, ExecutionTypeEnum.AUTO.getCode(),deliverySuggestIdList);
+                    ReplenishmentResultDTO.PurchaseSuggestDTO parentSuggestDTO = ReplenishmentResultDTO.PurchaseSuggestDTO.buildPurchaseSuggestDTO(logisticsResult, replenishmentResultDTO, ExecutionTypeEnum.AUTO.getCode(),deliverySuggestIdList);
                     //根据suggestDTO判断是否需要拆分生成多条建议
                     List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggestList = generateMultipleSuggest(replenishmentResultDTO, parentSuggestDTO);
                     //建议发货量合计
@@ -91,6 +91,8 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                     for (ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO : purchaseSuggestList) {
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())
                                 || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
+                            String code = docNoGenHelper.generateCode(CODE_P);
+                            suggestDTO.setCode(code);
                             suggestDTO.setSuggestPurchaseDate(entry.getKey());
                             //预计可售日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发FBA时效 + FBA入库时间）
                             //预计可售日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发海外时效 + 海外仓入库时间）
