@@ -116,7 +116,7 @@ public class InventoryServiceImpl implements InventoryService {
             } else {
                 // 获取平台对应的店铺和历史销量
                 Map<String, Set<String>> platformShop = getPlatformShop(warehouseList,
-                        replenishmentResultDTO.getShopIdByPlatform(), dto.getWarehouseId());
+                        replenishmentResultDTO.getShopIdByPlatform(), dto.getWarehouseId(), warehouseType);
                 Map<String, Integer> platformShopSalesMap = getPlatformShopSalesMap(shopDemandQty, platformShop);
                 int totalSaleQty = platformShopSalesMap.values().stream().reduce(0, Math::addExact);
                 List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouses = filterWarehouseList(warehouseList, warehouseType, dto.getWarehouseId());
@@ -368,9 +368,9 @@ public class InventoryServiceImpl implements InventoryService {
         CfgRuleOrderStrategyDTO.ViewDTO view = cfgRuleOrderStrategyService.view();
         List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> replenishmentPurchases;
         if (Boolean.TRUE.equals(view.getIsSplit())) {
-            replenishmentPurchases = inventoryMapper.getReplenishmentPurchaseMergePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST_MERGE, calcDate));
+            replenishmentPurchases = inventoryMapper.getReplenishmentPurchaseMergePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST_MERGE, calcDate), true);
         } else {
-            replenishmentPurchases = inventoryMapper.getReplenishmentPurchasePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST, calcDate));
+            replenishmentPurchases = inventoryMapper.getReplenishmentPurchaseMergePlan(localReplenishmentPlan, SnapshotTableEnum.getTableName(PURCHASE_SUGGEST, calcDate), false);
         }
         if (CollectionUtils.isEmpty(replenishmentPurchases)) {
             dto.setReplenishmentPurchaseList(new ArrayList<>());
@@ -520,11 +520,14 @@ public class InventoryServiceImpl implements InventoryService {
      *
      * @param warehouseList    仓库配置
      * @param shopIdByPlatform 平台店铺
+     * @param warehouseType    仓库类型
      */
     private Map<String, Set<String>> getPlatformShop(List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList,
-                                                      Map<String, List<String>> shopIdByPlatform, String warehouseId) {
+                                                     Map<String, List<String>> shopIdByPlatform, String warehouseId, CfgRuleWarehouseTypeEnum warehouseType) {
         return warehouseList.stream()
-                .filter(v -> warehouseId.equals(v.getWarehouseId()))
+                .filter(v -> CfgRuleWarehouseTypeEnum.VIRTUAL.equals(warehouseType) ?
+                        v.getVirtualWarehouseId().equals(warehouseId) :
+                        v.getWarehouseId().equals(warehouseId))
                 .collect(Collectors.toMap(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getDictPlatform, v -> {
                     if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType())) {
                         return new HashSet<>(Optional.ofNullable(shopIdByPlatform.get(v.getDictPlatform())).orElse(new ArrayList<>()));

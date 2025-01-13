@@ -649,32 +649,7 @@
         ) m
         ) n where n.transport_qty > 0
     </select>
-    <select id="getReplenishmentPurchasePlan"
-            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$ReplenishmentPurchaseDTO">
-        SELECT
-        ps.id AS sourceId,
-        MAX ( ps.code ) AS sourceCode,
-        MAX ( ps.status ) AS status,
-        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.purchase_stock_up_qty END ) AS qty,
-        MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
-        MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
-        'LOCAL_REPLENISHMENT_PLAN' AS sourceType,
-        ps.sku_id,
-        ps.shop_id
-        FROM
-        ${tableName} ps
-        WHERE
-        ps.invalid_status = FALSE
-        AND ps.status IN
-        <foreach item="code" collection="codes" open="(" separator="," close=")">
-            #{code}
-        </foreach>
-        GROUP BY
-        ps.sku_id,
-        ps.shop_id,
-        ps.id
 
-    </select>
     <select id="getReplenishmentPurchaseMergePlan"
             resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$ReplenishmentPurchaseDTO">
         SELECT
@@ -690,7 +665,7 @@
         FROM
         ${tableName} ps
         WHERE
-        ps.invalid_status = FALSE
+        ps.invalid_status = FALSE AND is_merge = #{isMerge}
         AND ps.status IN
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}

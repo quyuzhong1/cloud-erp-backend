@@ -47,6 +47,7 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
                                         .collect(Collectors.toList());
         Integer qty = inTransitDetails.stream().map(ReplenishmentResultDTO.FbaInTransitDetailDTO::getInTransitQty)
                 .reduce(0, Math::addExact);
+        replenishmentResultDTO.setFbaInTransitDetails(inTransitDetails);
         replenishmentResultDTO.getReplenishmentDetail().setFbaInTransitQty(qty);
     }
 }

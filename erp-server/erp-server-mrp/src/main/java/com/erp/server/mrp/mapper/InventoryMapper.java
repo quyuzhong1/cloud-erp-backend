@@ -148,14 +148,7 @@ public interface InventoryMapper {
      * @param codes     状态
      * @param tableName 表
      */
-    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchasePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
-    /**
-     * 查询补货计划预计采购
-     *
-     * @param codes     状态
-     * @param tableName 表
-     */
-    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchaseMergePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchaseMergePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName, @Param("isMerge") Boolean isMerge);
 
     /**
      * 查询待检库存
