@@ -41,6 +41,8 @@
         pt.source_id as sourceId,
         pt.source_code as sourceCode,
         pt.source_type as sourceType,
+        pt.business_id as businessId,
+        pt.business_code as businessCode,
         pt.delivery_qty as deliveryQty,
         pt.warehouse_id as warehouseId,
         pt.warehouse_name as warehouseName,

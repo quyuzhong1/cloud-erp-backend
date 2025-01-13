@@ -176,6 +176,15 @@ public class PackingTaskDTO implements Serializable {
          * 关联订单编号【可排序】
          */
         private String sourceCode;
+        /**
+         * 业务id
+         */
+        private String businessId;
+
+        /**
+         * 业务单号【可排序】
+         */
+        private String businessCode;
 
         /**
          * 单据类型(B2B,FBA,third) 【可排序】

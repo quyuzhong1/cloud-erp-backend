@@ -2028,6 +2028,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(CharSequenceUtil.format("关联要货申请单{}已生成装箱，无需重复生成",firstMileDeliveryEntity.getSourceCode()));
         }
         PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.firstMileDeliveryToPackingTask(firstMileDeliveryEntity,sourceType);
+        //要货计划 直接赋值 要货申请 查询关联的要货计划
+        if (SourceTypeEnum.DELIVERY_PLAN.getCode().equals(firstMileDeliveryEntity.getSourceType())){
+            packingTaskEntity.setBusinessId(firstMileDeliveryEntity.getSourceId());
+            packingTaskEntity.setBusinessCode(firstMileDeliveryEntity.getSourceCode());
+        }else if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(firstMileDeliveryEntity.getSourceType())){
+            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(firstMileDeliveryEntity.getSourceId());
+            if(Objects.nonNull(requisitionApplication)){
+                packingTaskEntity.setBusinessId(requisitionApplication.getSourceId());
+                packingTaskEntity.setBusinessCode(requisitionApplication.getSourceCode());
+            }
+
+        }
         //查询明细
         List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(firstMileDeliveryEntity.getId());
         packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));

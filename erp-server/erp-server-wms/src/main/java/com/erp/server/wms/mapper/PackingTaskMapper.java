@@ -36,7 +36,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     IPage<PackingTaskDTO.PagingViewDTO> paging(@Param("query") Page<PackingTaskDTO.PagingViewDTO> query, @Param("params") PackingTaskDTO.PagingParamDTO params);
-    List<PackingTaskDTO.PagingViewDTO> pagingList(@Param("params") PackingTaskDTO.PagingParamDTO params);
+
     Page<PackingTaskDTO.PagingViewDTO> pagingList(@Param("page") Page<PackingTaskDTO.PagingViewDTO> page, @Param("params") PackingTaskDTO.PagingParamDTO params);
 
     /**
