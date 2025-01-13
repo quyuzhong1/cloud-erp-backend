@@ -361,8 +361,8 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     logDetailDTO.setRefundAmount(updateDTO.getRefundAmount());
                     String productList = Optional.ofNullable(updateDTO.getProductList()).orElse(new ArrayList<>())
                             .stream()
-                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + mouldTypeMap.get(v.getTypeId()) + "：模具穴数" + v.getMouldHoles() +
-                                    "模具长" + v.getLength() + "：模具宽" + v.getWidth() +
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + Optional.ofNullable(mouldTypeMap.get(v.getTypeId())).orElse("")
+                                    + "：模具穴数" + v.getMouldHoles() + "模具长" + v.getLength() + "：模具宽" + v.getWidth() +
                                     "模具高" + v.getHeight() + "：模具材质" + v.getMaterial()
                             )
                             .collect(Collectors.joining(","));
