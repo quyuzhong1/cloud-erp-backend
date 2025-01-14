@@ -47,37 +47,40 @@
         ORDER BY ci.create_time DESC
     </select>
 
-    <select id="listExport" resultType="com.erp.model.oms.dto.CustomerDTO$PagingViewDTO">
+    <select id="listExport" resultType="com.erp.model.oms.dto.CustomerDTO$PagingExportDTO">
         SELECT
         ci.id,
         ci.code,
-        approve_status,
-        seller_name,
-        approve_user_name,
         ci.name,
         short_name,
+        area_id,
+        country_id,
+        province_id,
+        city_id,
+        seller_id,
+        seller_name,
+        business_mode,
+        ci.platform_type as platformType,
+        company_category_dict,
+        approve_status,
         ci.disabled,
-        use_org_name,
-        group_id,
-        group_name,
         use_org_id,
+        use_org_name,
+        group_name,
+        inner_org_id,
+        inner_org_name,
+        customer_property,
+        mail_address,
+        approve_user_name,
+        ci.create_user_id,
         ci.create_user_name,
         ci.create_time,
-        ci.platform_type as platformType,
-        currency,
-        financial_organization,
-        enable_time,
-        down_time,
-        trade_currency,
-        business_mode,
-        transactional_mode,
-        period_setting,
-        check_type,
         ci.country_id,
         ccp.partition_id as partitionId,
         ccp.partition_code as partitionCode,
         ccp.partition_name as partitionName
-        FROM customer_info ci
+        FROM
+        customer_info ci
         left join foreign_cfg_country_partition ccp on ccp.country = ci.country_id and ccp.is_deleted = false and ccp.disabled = false
         WHERE
         ${params.sqlMap.default}
@@ -154,5 +157,38 @@
         ) custom
     </select>
 
+
+    <select id="listAddressContactExport" resultType="com.erp.model.oms.dto.CustomerDTO$PagingAddressContactExportDTO">
+        select
+            ci.id,
+            ci.name,
+            ci.code,
+            cc.person,
+            cc.position,
+            cc.tel_number as personTelNumber,
+            cc.email as personEmail,
+            cc.is_default as personIsDefault,
+            cc.disabled as personDisabled,
+            cc.remark as personRemark,
+            ca.address,
+            ca.type,
+            ca.tel_number as addressTelNumber,
+            ca.email as addressEmail,
+            ca.is_default as addressIsDefault,
+            ca.disabled as addressDisabled,
+            ca.remark as addressRemark
+        from customer_info ci
+        inner join customer_address ca on ci.id = ca.main_id and ca.is_deleted = false
+        inner join customer_contact cc on ci.id = cc.main_id and cc.is_deleted = false
+        where
+            ci.is_deleted = false
+        and cc.person = ca.person
+        <if test="customerIdList != null and customerIdList.size > 0">
+            and ci.id IN
+            <foreach collection="customerIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
 
 </mapper>

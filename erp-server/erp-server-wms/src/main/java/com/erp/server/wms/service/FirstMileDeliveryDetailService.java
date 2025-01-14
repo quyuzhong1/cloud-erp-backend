@@ -93,4 +93,13 @@ public interface FirstMileDeliveryDetailService extends SuperService<FirstMileDe
      * @return List<listFirstMileDTO>
      */
     List<FirstMileDeliveryDetailDTO.listFirstMileDTO> listFirstMileSource(List<String> firstMileDetailIdList);
+
+    /**
+     * 根据要货申请id查询详情信息
+     * @Author jack
+     * @Date 2025-01-07
+     * @param requisitionApplicationIds
+     * @return java.util.List<com.erp.model.wms.entity.FbaDeliveryDetailEntity>
+     **/
+    List<FirstMileDeliveryDetailEntity> listByRequisitionApplicationIds(List<String> requisitionApplicationIds);
 }

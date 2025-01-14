@@ -79,6 +79,11 @@ public class KingdeeOperatorRefPostDTO implements Serializable {
         private String id;
 
         /**
+         * 业务员编码
+         */
+        private String operatorCode;
+
+        /**
          * 组织id
          */
         private String useOrgId;

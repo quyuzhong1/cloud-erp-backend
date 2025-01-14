@@ -2237,25 +2237,19 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setChargeName(shopInfo.getChargeName());
                     }
                 }
-            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getSourceId())){
-                //要货计划
-                    WmsDeliveryPlanEntity deliveryPlan = wmsDeliveryPlanService.getById(requisitionApplication.getSourceId());
-                    if (Objects.nonNull(deliveryPlan)){
-                        printDTO.setCountryId(deliveryPlan.getCountry());
-                        printDTO.setCountryName(deliveryPlan.getCountryName());
-                        printDTO.setShopId(deliveryPlan.getShopId());
-                        printDTO.setShopName(deliveryPlan.getShopName());
-                        if (CharSequenceUtil.isNotBlank(deliveryPlan.getShopId())){
-                            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(deliveryPlan.getShopId());
-                            if (Objects.nonNull(shopInfo)){
-                                printDTO.setShopName(shopInfo.getName());
-                                printDTO.setChargeId(shopInfo.getChargeId());
-                                printDTO.setChargeName(shopInfo.getChargeName());
-                            }
-                        }
-                    }
+            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
+                printDTO.setShopId(requisitionApplication.getChannelId());
+                printDTO.setShopName(requisitionApplication.getChannelName());
+                ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
+                if (Objects.nonNull(shopInfo)) {
+                    printDTO.setCountryId(shopInfo.getDictCountryCode());
+                    printDTO.setCountryName(shopInfo.getCountryName());
+                    printDTO.setShopName(shopInfo.getName());
+                    printDTO.setChargeId(shopInfo.getChargeId());
+                    printDTO.setChargeName(shopInfo.getChargeName());
                 }
             }
+        }
         return printDTO;
     }
 
