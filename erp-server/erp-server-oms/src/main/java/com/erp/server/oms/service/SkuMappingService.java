@@ -301,4 +301,12 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return
      */
     List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO);
+
+    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
+
+    String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
+
+    String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
+
+    Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
 }
