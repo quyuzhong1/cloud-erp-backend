@@ -1,5 +1,7 @@
 package com.common.business.enums;
 
+import org.apache.commons.lang3.StringUtils;
+
 /**
  * 发票类型
  *
@@ -35,6 +37,18 @@ public enum InvoiceTypeEnum {
 
     public String getDesc() {
         return desc;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (InvoiceTypeEnum statusEnum : InvoiceTypeEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
     }
 
 

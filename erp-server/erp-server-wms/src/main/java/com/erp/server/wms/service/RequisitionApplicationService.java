@@ -266,4 +266,8 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     void printFnskuBillConfirm(RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto, HttpServletResponse response);
 
     void updateByChange(List<RequisitionApplicationDetailEntity> addList, List<RequisitionApplicationDetailEntity> updateList, List<RequisitionApplicationDetailEntity> deleteList);
+
+    void writeBackRequisitionDeliveryPushDownStatus(String requisitionApplicationId);
+
+    void writeBackRequisitionPickPushDownStatus(String requisitionApplicationId);
 }

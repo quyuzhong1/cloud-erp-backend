@@ -128,6 +128,11 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("remark")
     private String remark;
+    /**
+     * 来源类型 selfAdd系统新增，third第三方同步
+     */
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String SKU_NO = "sku_no";
 

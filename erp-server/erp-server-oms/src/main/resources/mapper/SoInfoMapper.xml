@@ -45,6 +45,7 @@
         sod.amount_local_currency AS amountLocalCurrency,
         sod.all_amount_local_currency AS allAmountLocalCurrency,
         sod.frozen_qty as frozenQty,
+        sod.is_close,
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName
@@ -298,12 +299,12 @@
         SELECT
         si.code AS soCode,
         si.customer_id,
-        si.warehouse_id,
         sd.id AS detailId,
         sd.main_id AS soId,
         sd.sku_id,
         sd.sku_no,
-        sd.qty AS salesQty
+        sd.qty AS salesQty,
+        si.sales_org_id
         FROM so_info si
         LEFT JOIN so_detail sd ON si.id = sd.main_id AND si.is_deleted = FALSE
         WHERE sd.is_deleted = FALSE

@@ -182,6 +182,11 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     */
     @TableField("data_encrypt")
     private String dataEncrypt;
+    /**
+     * 价税合计(本位币)-旺店通用
+     */
+    @TableField("all_amount_local_currency")
+    private BigDecimal allAmountLocalCurrency;
 
 
     public static final String MAIN_ID = "main_id";

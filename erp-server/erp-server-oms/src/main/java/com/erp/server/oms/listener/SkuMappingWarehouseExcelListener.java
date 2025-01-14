@@ -227,6 +227,7 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addListingInfoEntity.setPlatformSkuNo(dto.getWarehouseSkuNo());
                 addListingInfoEntity.setPlatformSkuName(dto.getWarehouseProductName());
                 addListingInfoEntity.setPlatform("");
+                addListingInfoEntity.setThirdBarcode(dto.getThirdBarcode());
                 addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
                 addListingInfoEntityList.add(addListingInfoEntity);
                 //封装新增skuMapping
@@ -287,6 +288,8 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 }
 
                 listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+                listingInfoEntity.setThirdBarcode(dto.getThirdBarcode());
+                listingInfoEntity.setPlatformSkuName(dto.getWarehouseProductName());
                 updateListingInfoList.add(listingInfoEntity);
             }
         }
