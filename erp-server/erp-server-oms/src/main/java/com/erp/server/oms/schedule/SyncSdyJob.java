@@ -174,7 +174,6 @@ public class SyncSdyJob {
                         dictList
                 );
             }
-            currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
     }
@@ -263,7 +262,6 @@ public class SyncSdyJob {
                 );
             }
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
-            currentPage++;
         }
     }
 }
