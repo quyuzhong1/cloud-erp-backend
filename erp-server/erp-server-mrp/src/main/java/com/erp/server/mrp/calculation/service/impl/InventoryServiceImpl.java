@@ -590,7 +590,7 @@ public class InventoryServiceImpl implements InventoryService {
             }
 
             // 将结果加入 detailDTOS
-            detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(entry.getKey(), shopQty, warehouseDemandQty));
+            detailDTOS.add(new ReplenishmentResultDTO.ShopInventoryDetailDTO(entry.getKey(), shopQty, entry.getValue()));
 
             // 如果当前 shopId 匹配，则累加结果
             if (entry.getKey().equals(shopId)) {
