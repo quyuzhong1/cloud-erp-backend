@@ -1341,7 +1341,7 @@ public class ReplenishmentResultDTO {
         /**
          * 店铺预计数量
          */
-        private Integer shopPreQty;
+        private Integer shopPreQty = 0;
 
 
         public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
@@ -1412,7 +1412,7 @@ public class ReplenishmentResultDTO {
         /**
          * 店铺预计数量
          */
-        private Integer shopPreQty;
+        private Integer shopPreQty = 0;
 
         /**
          * 收货渠道
@@ -1446,6 +1446,7 @@ public class ReplenishmentResultDTO {
             dto.setSourceCode(purchaseDTO.getSourceCode());
             dto.setSourceType(purchaseDTO.getSourceType());
             dto.setReceivingChannel(purchaseDTO.getWarehouseId());
+            dto.setWarehouseId(purchaseDTO.getWarehouseId());
             return dto;
         }
 
@@ -1511,7 +1512,7 @@ public class ReplenishmentResultDTO {
         /**
          * 店铺预计数量
          */
-        private Integer shopPreQty;
+        private Integer shopPreQty = 0;
 
         public static LocalInTransitDetailDTO buildLocalInTransitDetailDTO(ReplenishmentInventoryDTO.LocalInTransitDTO localInTransitDTO) {
             LocalInTransitDetailDTO dto = new LocalInTransitDetailDTO();
@@ -1592,7 +1593,7 @@ public class ReplenishmentResultDTO {
         /**
          * 店铺预计数量
          */
-        private Integer shopPreQty;
+        private Integer shopPreQty = 0;
 
         public static OverseasInTransitDetailEntity buildOverseasInTransitDetail(OverseasInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
             OverseasInTransitDetailEntity entity = new OverseasInTransitDetailEntity();
