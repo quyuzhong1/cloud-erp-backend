@@ -1441,9 +1441,25 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<LinkedHashMap> resultList = fillInventoryAgePageData(page.getRecords(), userRangeList);
         LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
         List<LinkedHashMap<String ,Object>> convertDataList = (List<LinkedHashMap<String ,Object>>) resultList.get(0).get("data");
+        List<LinkedHashMap<String ,Object>> lastDataList = new LinkedList<>();
+        for (LinkedHashMap<String, Object> data : convertDataList) {
+            LinkedHashMap<String, Object> sortedData = new LinkedHashMap<>();
+            // 按照指定的顺序插入字段
+            sortedData.put("productName", data.get("productName"));
+            sortedData.put("spuNo", data.get("spuNo"));
+            sortedData.put("saleStateName", data.get("saleStateName"));
+            sortedData.put("warehouseName", data.get("warehouseName"));
+            sortedData.put("orgName", data.get("orgName"));
+            sortedData.put("skuNo", data.get("skuNo"));
+            sortedData.put("realInventory", data.get("realInventory"));
+            sortedData.put("usableInventory", data.get("usableInventory"));
+            sortedData.put("1-2天", data.get("1-2天"));
+            sortedData.put("2天以上", data.get("2天以上"));
+            lastDataList.add(sortedData);
+        }
         DynamicExcelDTO excelDTO = new DynamicExcelDTO();
         excelDTO.setHeaders(headMap);
-        excelDTO.setData(convertDataList);
+        excelDTO.setData(lastDataList);
         return new PagingVO<>(Collections.singletonList(excelDTO), (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
