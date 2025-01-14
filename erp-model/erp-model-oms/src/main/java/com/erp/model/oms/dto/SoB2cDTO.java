@@ -1698,6 +1698,11 @@ public class SoB2cDTO implements Serializable {
          * 主表信息
          */
         private List<MergeMainDTO> mainList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data
