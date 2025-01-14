@@ -464,7 +464,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
             //产品sku信息
             ProductDetailEntity productDetailEntity = productDetailEntitys.stream().filter(entityClass -> entityClass.getId().equals(detailEntity.getSkuId())).findFirst().orElse(new ProductDetailEntity());
             detailView.setProductName(productDetailEntity.getName());
-
+            viewDTO.setExchangeRate(detailEntity.getExchangeRate());
             if("B2C".equals(entity.getType())){
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
@@ -484,7 +484,6 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soDetailEntity.getMainId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     detailView.setDeliveryQty(actualQty);
                 }
-                viewDTO.setExchangeRate(detailEntity.getExchangeRate());
             }
             detailViewDTOS.add(detailView);
         }

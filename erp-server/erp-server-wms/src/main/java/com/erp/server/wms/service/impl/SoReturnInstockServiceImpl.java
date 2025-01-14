@@ -573,6 +573,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     }
                 }
             }
+            viewDTO.setExchangeRate(detailEntity.getExchangeRate());
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);
