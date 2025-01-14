@@ -1357,6 +1357,7 @@ public class ReplenishmentResultDTO {
             entity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
             entity.setCalcVersion(calcVersion);
             entity.setShopPreQty(dto.getShopPreQty());
+            entity.setReceivingChannel(dto.getReceivingChannel());
             return entity;
         }
     }
@@ -1608,6 +1609,7 @@ public class ReplenishmentResultDTO {
             entity.setEstimateSalesDate(dto.getEstimateSalesDate());
             entity.setCalcVersion(calcVersion);
             entity.setShopPreQty(dto.getShopPreQty());
+            entity.setWarehouseId(dto.getWarehouseId());
             return entity;
         }
 

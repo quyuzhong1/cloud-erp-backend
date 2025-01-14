@@ -93,6 +93,12 @@ public class OverseasInTransitDetailEntity extends BaseEntity<OverseasInTransitD
     @TableField("shop_pre_qty")
     private Integer shopPreQty;
 
+    /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 
     public static final String DELIVERY_PLAN_ID = "delivery_plan_id";
