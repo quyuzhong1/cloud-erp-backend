@@ -1180,7 +1180,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (StringUtils.isNotBlank(subPlatformType)) {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
                     shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }
