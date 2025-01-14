@@ -185,6 +185,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList1) {
+        if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
+            return Collections.emptyList();
+        }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
         if (CollUtil.isEmpty(dmpSoDetailEntities)) {
             return Collections.emptyList();
