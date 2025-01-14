@@ -100,7 +100,8 @@
                su.user_state AS userState,
                su.delete_state AS deleteState,
                su.user_state AS userState,
-               krp.erp_user_id AS userId
+               krp.erp_user_id AS userId,
+               COALESCE(krp.erp_user_id, '') || '-' || COALESCE(krp.kingdee_department_id, '') as uniqueId
         FROM kingdee_operator_ref_post ko
                  LEFT JOIN kingdee_user_ref_post krp
                            ON krp.id = ko.user_post_id AND krp.is_deleted = FALSE

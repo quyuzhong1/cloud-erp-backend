@@ -17,7 +17,10 @@ public class UserInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BusinessOperationUserDTO {
-
+        /**
+         * 唯一值（用户id-金额部门id）
+         */
+        private String uniqueId;
         /**
          * 用户id
          */
