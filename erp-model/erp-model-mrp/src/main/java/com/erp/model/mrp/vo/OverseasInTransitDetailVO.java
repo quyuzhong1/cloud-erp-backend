@@ -1,6 +1,7 @@
 package com.erp.model.mrp.vo;
 
 import com.common.business.annotation.Dict;
+import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.mrp.enums.ReplenishmentBillStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
@@ -57,4 +58,10 @@ public class OverseasInTransitDetailVO {
      * 店铺在途明细
      */
     private Integer shopInTransitQty;
+
+    /**
+     * 仓库id
+     */
+    @Dict(serviceCode = ServiceCodeNameEnum.WMS, queryFieldName = "id" , tableName = "warehouse")
+    private String warehouseId;
 }

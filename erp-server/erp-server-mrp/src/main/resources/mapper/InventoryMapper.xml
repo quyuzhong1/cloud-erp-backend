@@ -35,47 +35,72 @@
     </select>
     <select id="getFbaDelivery"
             resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$FbaInTransitDTO">
-        WITH ReceiveQtyCTE AS (
-            SELECT
-                t3.code AS fba_shipment_code,
-                t4.sku_id,
-                SUM(t4.receive_qty) AS total_receive_qty
-            FROM
-                ${shipmentName} t3
-                    INNER JOIN
-                ${shipmentDetailName} t4
-                ON t4.is_deleted = FALSE
-                    AND t4.main_id = t3.ID
-            GROUP BY
-                t3.code, t4.sku_id
-        )
         SELECT
             t2.sku_id,
             t1.shop_id,
-            MAX(t1.ID) AS sourceId,
-            MAX(t1.code) AS sourceCode,
+            MAX ( t1.ID ) AS sourceId,
+            MAX ( t1.code ) AS sourceCode,
             'firstMileDelivery' AS sourceType,
-            MAX(t1.approve_status) AS status,
-            MAX(t1.approve_time) AS deliveryDate,
-            SUM(t2.delivery_qty) AS deliveryQty,
-            SUM(COALESCE(r.total_receive_qty, 0)) AS receiveQty,
-            SUM(t2.delivery_qty - COALESCE(r.total_receive_qty, 0)) AS inTransitQty
+            MAX ( t1.approve_status ) AS status,
+            MAX ( t1.approve_time ) AS deliveryDate,
+            SUM ( t2.delivery_qty ) AS deliveryQty,
+            SUM (
+                    COALESCE (
+                            (
+                                SELECT SUM
+                                       ( t4.receive_qty )
+                                FROM
+                                    ${shipmentName} t3
+                                        INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                        AND t4.main_id = t3.ID
+                                        AND t3.code = t2.fba_shipment_code
+                                        AND t4.sku_id = t2.sku_id
+                            ),
+                            0
+                    )
+            ) AS receiveQty,
+            SUM (
+                    (
+                        t2.delivery_qty - COALESCE (
+                                (
+                                    SELECT SUM
+                                           ( t4.receive_qty )
+                                    FROM
+                                        ${shipmentName} t3
+                                            INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                            AND t4.main_id = t3.ID
+                                            AND t3.code = t2.fba_shipment_code
+                                            AND t4.sku_id = t2.sku_id
+                                ),
+                                0
+                                          )
+                        )
+            ) AS inTransitQty
         FROM
             ${tableName} t1
-                INNER JOIN
-            ${tableDetailName} t2
-            ON t2.is_deleted = FALSE
+                INNER JOIN ${tableDetailName} t2 ON t2.is_deleted = FALSE
                 AND t2.main_id = t1.ID
-                LEFT JOIN
-            ReceiveQtyCTE r
-            ON r.fba_shipment_code = t2.fba_shipment_code
-                AND r.sku_id = t2.sku_id
         WHERE
             t1.is_deleted = FALSE
           AND t1.approve_status = 'approve'
-          AND (t2.delivery_qty - COALESCE(r.total_receive_qty, 0)) > 0
+          AND (
+                  t2.delivery_qty - COALESCE (
+                          (
+                              SELECT SUM
+                                     ( t4.receive_qty )
+                              FROM
+                                  ${shipmentName} t3
+                                      INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                      AND t4.main_id = t3.ID
+                                      AND t3.code = t2.fba_shipment_code
+                                      AND t4.sku_id = t2.sku_id
+                          ),
+                          0
+                                    )
+                  ) > 0
         GROUP BY
-            t2.sku_id, t1.shop_id
+            t2.sku_id,
+            t1.shop_id
     </select>
     <select id="getLogisticsBillBySourceIds" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
         select source_id,order_time from ${tableName} where is_deleted = false
