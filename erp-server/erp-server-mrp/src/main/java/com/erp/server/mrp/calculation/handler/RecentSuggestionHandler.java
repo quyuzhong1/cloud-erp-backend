@@ -15,6 +15,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
@@ -48,7 +49,7 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
             recentSuggestions.add(dto);
         }
         //获取最近发货日
-        ReplenishmentResultDTO.DeliverySuggestDTO deliverySuggestDTO = resultDTO.getDeliverySuggests()
+        ReplenishmentResultDTO.DeliverySuggestDTO deliverySuggestDTO = Optional.ofNullable(resultDTO.getDeliverySuggests()).orElse(new ArrayList<>())
                 .stream()
                 .min(Comparator.comparing(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestDeliveryDate))
                 .orElse(null);
@@ -72,7 +73,7 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
         }
 
         //获取最近采购日
-        ReplenishmentResultDTO.PurchaseSuggestDTO purchaseSuggestDTO = resultDTO.getPurchaseSuggests()
+        ReplenishmentResultDTO.PurchaseSuggestDTO purchaseSuggestDTO = Optional.ofNullable(resultDTO.getPurchaseSuggests()).orElse(new ArrayList<>())
                 .stream()
                 .min(Comparator.comparing(ReplenishmentResultDTO.PurchaseSuggestDTO::getSuggestPurchaseDate))
                 .orElse(null);
