@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -29,6 +30,8 @@ import com.erp.server.sys.service.KingdeePostService;
 import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysPushMsgService;
 import com.erp.server.sys.service.SysUserInfoService;
+import com.erp.server.sys.service.impl.SysAccountingCompanyImpl;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
@@ -67,9 +70,6 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
     
     @Resource
     private SysPushMsgService sysPushMsgService;
-    
-    @Resource
-    private SysAccountingCompanyService sysAccountingCompanyService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -141,10 +141,11 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
         if(StringUtils.isBlank(useOrgCode)) {
         	String useOrgId = entity.getUseOrgId();
         	if(StringUtils.isNotBlank(useOrgId)) {
-        		SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompanyService.getById(useOrgId);
-            	if(sysAccountingCompanyEntity != null) {
-            		useOrgCode = sysAccountingCompanyEntity.getCode();
-            	}
+        		SysAccountingCompanyImpl sysAccountingCompany = ApplicationContextUtils.getBean(SysAccountingCompanyImpl.class);
+        		SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompany.getById(useOrgId);
+        		if(sysAccountingCompanyEntity != null) {
+        			useOrgCode = sysAccountingCompanyEntity.getCode();
+        		}
         	}
         }
         resultMap.put("createOrgCode", useOrgCode);

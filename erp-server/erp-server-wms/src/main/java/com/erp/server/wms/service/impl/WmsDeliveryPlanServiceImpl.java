@@ -37,6 +37,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.DeliveryPlanDetailExportExcelDTO;
+import com.erp.model.wms.dto.excel.DeliveryPlanDetailPdaExportExcelDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseProductReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseSkuResp;
 import com.erp.model.wms.entity.*;
@@ -51,6 +52,7 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.convert.DeliveryPlanConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.listener.DeliveryPlanDetailExcelListener;
+import com.erp.server.wms.listener.DeliveryPlanDetailPdaExcelListener;
 import com.erp.server.wms.mapper.WmsDeliveryPlanMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -773,27 +775,26 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
 
     @Override
     public ListingInfoDTO.ImportDTO importFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId, HttpServletResponse response) {
-
         if(CharSequenceUtil.isBlank(warehouseId)&& CharSequenceUtil.isBlank(shopId)){
             throw new ServiceException("仓库id不能为空");
         }
-
-        //查询第三方SKU信息
-        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList;
-
         //店铺不为空代表是fba ，否则是第三方仓
         if(CharSequenceUtil.isNotBlank(shopId)){
-            listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),"","",shopId);
+            return fbaImportFile(excelFile, thirdSkuNoList, shopId);
         }else{
-            List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Collections.singletonList(warehouseId));
-            String provideCode = "";
-            if(CollectionUtils.isNotEmpty(viewDTOList)){
-                provideCode = viewDTOList.get(0).getProviderCode();
-            }
-            listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode,warehouseId,"");
+            return thirdImportFile(excelFile, thirdSkuNoList, warehouseId, shopId);
         }
+    }
 
-        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList,warehouseId,CharSequenceUtil.isNotBlank(shopId));
+    private ListingInfoDTO.ImportDTO thirdImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String warehouseId, String shopId) {
+        List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOList = overseasProviderWarehouseService.listByWarehouseIdList(Collections.singletonList(warehouseId));
+        String provideCode = "";
+        if(CollectionUtils.isNotEmpty(viewDTOList)){
+            provideCode = viewDTOList.get(0).getProviderCode();
+        }
+        //查询第三方SKU信息
+        List<ListingInfoWithSkuMappingDTO>  listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),provideCode, warehouseId,"");
+        DeliveryPlanDetailExcelListener excelListenerUtil = new DeliveryPlanDetailExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList, warehouseId,CharSequenceUtil.isNotBlank(shopId));
         try {
             EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -814,9 +815,46 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
         //导出错误数据
         List<DeliveryPlanDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
         String url = "";
-        if (CollectionUtils.isNotEmpty(errorList)) {
+        if (CollUtil.isNotEmpty(errorList)) {
             String fileName = "海外发货计划错误数据.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryPlanDetailExportExcelDTO.class);
+            if (file != null && !file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        this.fillData(successList);
+        importDTO.setSuccessList(successList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
+    }
+
+    private ListingInfoDTO.ImportDTO fbaImportFile(MultipartFile excelFile, List<String> thirdSkuNoList, String shopId) {
+        //查询店铺id下的SKU信息
+        List<ListingInfoWithSkuMappingDTO> listingWithSkuMappingDTOList = skuMappingFeign.listByErpSkuIdAndType(new ArrayList<>(),"","", shopId);
+        DeliveryPlanDetailPdaExcelListener excelListenerUtil = new DeliveryPlanDetailPdaExcelListener(thirdSkuNoList,listingWithSkuMappingDTOList);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), DeliveryPlanDetailPdaExportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<DeliveryPlanDetailPdaExportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollUtil.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        ListingInfoDTO.ImportDTO importDTO = new ListingInfoDTO.ImportDTO();
+        //导入数据处理
+        List<ListingInfoDTO.PageDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<DeliveryPlanDetailPdaExportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        String url = "";
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "FBA发货计划错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, DeliveryPlanDetailPdaExportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }

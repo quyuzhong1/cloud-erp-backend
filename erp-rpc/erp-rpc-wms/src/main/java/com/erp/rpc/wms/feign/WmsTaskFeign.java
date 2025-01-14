@@ -178,8 +178,7 @@ public interface WmsTaskFeign {
      * @return java.lang.Integer
      */
     @PostMapping("feign/soDeliveryNotice/getPushDownBySoDetailIds")
-    Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
-
+    List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
 
     /**
      * 根据销售订单ids 获取是否有下推的单据

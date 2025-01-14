@@ -42,7 +42,7 @@ public class StocktakingTaskDetailExcelDTO {
     @ColumnWidth(30)
     @ExcelProperty(value = "盘点库存", index = 4)
     @FieldValid(fieldName = "盘点库存",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
-    private Integer qty;
+    private String qty;
 
     /**
      * 错误数据

@@ -78,6 +78,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         TongYouCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByTongYou(logisticsOrderVO);
         ValidatorUtil.validateEntity(request);
+        String iossVatId = request.getIossVatId();
         try {
             TongYouCreateOrder tongYouCreateOrder = tongYouService.createOrder(request, logisticsOrderVO.getAuthMap());
             if (!tongYouCreateOrder.getSuccess()) {
@@ -93,6 +94,7 @@ public class TongYouLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .transportNo(tongYouCreateOrder.getLogisticsNo())
                     .trackNo(tongYouCreateOrder.getLogisticsNo())
                     .deliveryNo(logisticsOrderVO.getDeliveryNo())
+                    .iossTaxNo(iossVatId)
                     .build());
         } catch (Exception e) {
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),

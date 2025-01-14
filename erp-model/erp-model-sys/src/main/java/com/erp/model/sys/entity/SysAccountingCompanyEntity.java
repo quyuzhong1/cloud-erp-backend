@@ -61,6 +61,12 @@ public class SysAccountingCompanyEntity implements Serializable {
     private String kingdeeId;
 
     /**
+     * 金蝶code
+     */
+    @TableField("kingdee_code")
+    private String kingdeeCode;
+
+    /**
      * 是否禁用
      */
     @TableField("disabled")

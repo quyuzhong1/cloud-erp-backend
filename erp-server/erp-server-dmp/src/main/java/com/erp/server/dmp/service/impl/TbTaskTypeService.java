@@ -184,6 +184,10 @@ public class TbTaskTypeService {
             return;
         }
 
+        if (dmpBasicSystemEntity.getCode().equals("TikTok")) {
+            System.out.println("123");
+        }
+
         //获取系统id
         String systemId = dmpBasicSystemEntity.getId();
 
@@ -208,7 +212,14 @@ public class TbTaskTypeService {
             }
         }
 
-        List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, cfgInputIds).list();
+
+        //根据系统id查询所有主任务
+        List<DmpCfgInputEntity> listAll = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, systemId)
+                .list();
+        List<String> inputIds = listAll.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+
+        List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, inputIds).list();
         List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         if (CollUtil.isEmpty(convertIds)) {
             return;

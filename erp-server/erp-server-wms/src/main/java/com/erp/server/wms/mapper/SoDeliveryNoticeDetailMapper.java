@@ -37,4 +37,6 @@ public interface SoDeliveryNoticeDetailMapper extends BaseMapper<SoDeliveryNotic
     List<SoDeliveryNoticeDetailEntity> listDetailBySourceDetailIds(@Param("ids") List<String> sourceDetailIds);
 
     List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceIdList(@Param("sourceIdList")List<String> sourceIdList,@Param("status")String status);
+
+    List<SoDeliveryNoticeDetailDTO.ListDTO> listBySourceDetailIdList(@Param("sourceDetailIdList")List<String> sourceDetailIdList);
 }

@@ -31,6 +31,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.Md5Util;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -1010,6 +1011,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSkuNo(groupSkuDTO.getSkuNo());
                 cartonDetailDTO.setFnSku(viewDTO.getFnSku());
                 cartonDetailDTO.setEan(viewDTO.getEan());
+                cartonDetailDTO.setMd5(Md5Util.md5(groupSkuDTO.getSkuId() + "-" + viewDTO.getFnSku() + "-" + viewDTO.getEan()));
                 //发货数量
                 Integer deliveryQty1 = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(groupSkuDTO.getFnSku(), e.getFnSku()))
                         .map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1086,6 +1088,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //(输入SKU/FNSKU/EAN码/产品条码)
         String searchKey = searchDTO.getSearchKey();
         String searchMode = searchDTO.getSearchMode();
+        //是否过滤待装箱为0数量
+        Boolean isRemoveZero = searchDTO.getIsRemoveZero();
         List<PackingTaskDetailDTO.ViewDTO> viewDTOList = packingTaskDetailService.searchProductBySearchKey(packingTaskEntity.getId(),searchKey, searchMode);
         if (CollectionUtils.isNotEmpty(viewDTOList)){
             //根据sku进行分类汇总
@@ -1101,6 +1105,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSkuNo(groupSkuDTO.getSkuNo());
                 cartonDetailDTO.setFnSku(viewDTO.getFnSku());
                 cartonDetailDTO.setEan(viewDTO.getEan());
+                cartonDetailDTO.setMd5(Md5Util.md5(groupSkuDTO.getSkuId() + "-" + viewDTO.getFnSku() + "-" + viewDTO.getEan()));
                 //发货数量
                 Integer deliveryQty1 = taskDetailEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSkuId().equals(groupSkuDTO.getSkuId()) && Objects.equals(e.getFnSku(), groupSkuDTO.getFnSku()))
                         .map(PackingTaskDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -1118,6 +1123,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setPackQty(packQty);
                 //未装数量
                 cartonDetailDTO.setWaitPackQty(deliveryQty1 - packQty1);
+                if (cartonDetailDTO.getWaitPackQty() <= 0 && Objects.nonNull(isRemoveZero) && isRemoveZero){
+                    continue;
+                }
                 //单个sku重量
                 cartonDetailDTO.setSingleGrossWeight(groupSkuDTO.getSingleGrossWeight());
                 cartonDetailDTO.setSingleWeightUnit(groupSkuDTO.getSingleWeightUnit());
@@ -2237,25 +2245,19 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         printDTO.setChargeName(shopInfo.getChargeName());
                     }
                 }
-            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getSourceId())){
-                //要货计划
-                    WmsDeliveryPlanEntity deliveryPlan = wmsDeliveryPlanService.getById(requisitionApplication.getSourceId());
-                    if (Objects.nonNull(deliveryPlan)){
-                        printDTO.setCountryId(deliveryPlan.getCountry());
-                        printDTO.setCountryName(deliveryPlan.getCountryName());
-                        printDTO.setShopId(deliveryPlan.getShopId());
-                        printDTO.setShopName(deliveryPlan.getShopName());
-                        if (CharSequenceUtil.isNotBlank(deliveryPlan.getShopId())){
-                            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(deliveryPlan.getShopId());
-                            if (Objects.nonNull(shopInfo)){
-                                printDTO.setShopName(shopInfo.getName());
-                                printDTO.setChargeId(shopInfo.getChargeId());
-                                printDTO.setChargeName(shopInfo.getChargeName());
-                            }
-                        }
-                    }
+            }else if (Objects.nonNull(requisitionApplication) && CharSequenceUtil.isNotBlank(requisitionApplication.getChannelId()) && Objects.equals(requisitionApplication.getType(),RequisitionApplicationTypeEnum.FBA.getCode())){
+                printDTO.setShopId(requisitionApplication.getChannelId());
+                printDTO.setShopName(requisitionApplication.getChannelName());
+                ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(requisitionApplication.getChannelId());
+                if (Objects.nonNull(shopInfo)) {
+                    printDTO.setCountryId(shopInfo.getDictCountryCode());
+                    printDTO.setCountryName(shopInfo.getCountryName());
+                    printDTO.setShopName(shopInfo.getName());
+                    printDTO.setChargeId(shopInfo.getChargeId());
+                    printDTO.setChargeName(shopInfo.getChargeName());
                 }
             }
+        }
         return printDTO;
     }
 

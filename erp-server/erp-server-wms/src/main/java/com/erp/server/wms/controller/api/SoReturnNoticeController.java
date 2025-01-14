@@ -19,12 +19,10 @@ import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.server.wms.query.SoReturnNoticeQueryHandler;
 import com.erp.server.wms.service.SoReturnNoticeService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;

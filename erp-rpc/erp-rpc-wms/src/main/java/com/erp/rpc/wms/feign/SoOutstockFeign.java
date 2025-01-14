@@ -5,6 +5,7 @@ import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -136,4 +137,24 @@ public interface SoOutstockFeign {
      */
     @PostMapping("feign/soOutstock/updateSoOutPrice")
     Boolean updateSoOutPrice(List<SoDetailEntity> saveOrUpdateList);
+
+    /**
+     * B2B退货订单没有关联订单时的计算规则
+     * @author jack
+     * @date: 2024-11-25
+     * @param params
+     * @return SoOutstockDTO.AmountDTO
+     */
+    @PostMapping("feign/soOutstock/listAmountBySkuIds")
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@RequestBody SoOutstockDTO.ListAmountParamDTO params);
+
+    /**
+     * 根据销售 销售订单详情ids 获取是否有下推的单据
+     * @author jack
+     * @date 2024-12-19
+     * @param soDetailIds
+     * @return
+     */
+    @PostMapping("feign/soOutstock/getPushDownBySoDetailIds")
+    List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds);
 }

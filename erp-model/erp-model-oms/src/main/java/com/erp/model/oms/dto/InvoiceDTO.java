@@ -103,7 +103,18 @@ public class InvoiceDTO implements Serializable {
          * id
          */
         private String id;
-
+        /**
+         * mainId
+         */
+        private String mainId;
+        /**
+         * 客户编号
+         */
+        private String code;
+        /**
+         * 客户名称
+         */
+        private String name;
         /**
          * 发票抬头
          */
@@ -113,6 +124,7 @@ public class InvoiceDTO implements Serializable {
          * 类型
          */
         private String type;
+        private String typeName;
 
         /**
          * 银行名称
@@ -132,6 +144,7 @@ public class InvoiceDTO implements Serializable {
          * false 不是
          */
         private Boolean isDefault;
+        private String isDefaultName;
 
 
         /**
@@ -153,5 +166,6 @@ public class InvoiceDTO implements Serializable {
          * 开票通讯地址
          */
         private String invoiceAddress;
+
     }
 }

@@ -33,7 +33,7 @@ import java.util.Map;
  * @Date 2022-07-08 16:52
  * @Created by yl
  */
-@FeignClient(name = "erp-sys",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys", configuration = {FeignErrorDecoder.class})
 public interface SysUserFeign {
 
     /**
@@ -421,6 +421,11 @@ public interface SysUserFeign {
      */
     @PostMapping("feign/globalArea/getById")
     DictGlobalAreaEntity getGlobalAreaById(@RequestBody String id);
+    /**
+     * 根据ids查询区域
+     */
+    @PostMapping("feign/globalArea/listGlobalAreaByIds")
+    List<DictGlobalAreaEntity> listGlobalAreaByIds(@RequestBody List<String> ids);
 
     /**
      * 根据id查询省/市
