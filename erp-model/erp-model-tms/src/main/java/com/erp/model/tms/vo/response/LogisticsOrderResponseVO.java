@@ -49,6 +49,10 @@ public class LogisticsOrderResponseVO extends LogisticsBaseResponseVO implements
      */
     Boolean more;
     /**
+     * ioss税号
+     */
+    String iossTaxNo;
+    /**
      * 兼容一对多情况 一个订单存在多个运单号 主单和子单
      */
     List<LogisticsOrderResponseVO> logisticsOrderResponseVOS;

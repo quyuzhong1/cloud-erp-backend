@@ -187,10 +187,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     }
 
     @Override
-    public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo) {
+    public Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo) {
         return lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, mainId).
                 set(SoB2cLogisticsEntity::getCode, transportNo).
                 set(SoB2cLogisticsEntity::getTrackNo, trackNo).
+                set(SoB2cLogisticsEntity::getIossTaxNo, iossTaxNo).
                 set(SoB2cLogisticsEntity::getSourceSystem, SoB2cLogisticSourceSystemEnum.THIRD.getCode()).
                 update();
     }
