@@ -1664,7 +1664,6 @@ public class ReplenishmentResultDTO {
         /**
          * 平台数量
          */
-        @TableField("platform_qty")
         private Integer platformQty;
 
         /**
