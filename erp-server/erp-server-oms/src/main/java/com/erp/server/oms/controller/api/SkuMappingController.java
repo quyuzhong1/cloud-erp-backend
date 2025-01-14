@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -16,10 +17,18 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.server.oms.service.ListingInfoService;
+import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +42,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * SKU对照表管理
@@ -52,7 +63,10 @@ public class SkuMappingController extends BaseController {
 
     @Resource
     private SkuMappingRuleService skuMappingRuleService;
-
+    @Resource
+    private ListingInfoService listingInfoService;
+    @Resource
+    private ShopInfoService shopInfoService;
 
     /**
      * 获取 tab列表
@@ -177,9 +191,60 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/updatePlatformSku")
-    public ApiResult updatePlatformSku(@RequestBody @Valid SkuMappingDTO.UpdatePlatformDTO dto) {
-        String id = skuMappingService.updatePlatformSku(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> updatePlatformSku(@RequestBody @Valid SkuMappingDTO.UpdatePlatformDTO dto) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        //通账号同平台SKU批量更新
+//        Boolean batchUpdateSamePlatform = dto.getBatchUpdateSamePlatform();
+        String id = dto.getId();
+        String shopId = dto.getShopId();
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfo)) {
+            resultDTOList.add(BatchResultDTO.fail(id,id,"店铺信息不存在"));
+            return failure(resultDTOList);
+        }
+        String name = shopInfo.getName();
+
+//        if (Objects.nonNull(batchUpdateSamePlatform) && batchUpdateSamePlatform){
+//            String account = shopInfo.getAccount();
+//            String dictPlatform = dto.getDictPlatform();
+//            ListingInfoDTO.QueryPlatformDTO params = ListingInfoDTO.QueryPlatformDTO.builder().account(account).dictPlatform(dictPlatform)
+//                    .platformSkuNo(dto.getPlatformSkuNo()).type(RuleTypeEnum.PLATFORM.code).build();
+//            //同账号同平台SKU批量更新
+//            List<SkuMappingDTO.PagingViewDTO> pagingViewDTOS = skuMappingService.listByAccountAndDictPlatform(params);
+//            List<String> ids = pagingViewDTOS.stream().map(SkuMappingDTO.PagingViewDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+//            List<String> listingIds = pagingViewDTOS.stream().map(SkuMappingDTO.PagingViewDTO::getListingId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+//            List<SkuMappingEntity> skuMappingEntityList = skuMappingService.listByIds(ids);
+//            List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByIds(listingIds);
+//            for (SkuMappingDTO.PagingViewDTO pagingViewDTO : pagingViewDTOS){
+//                SkuMappingEntity skuMapping = skuMappingEntityList.stream().filter(e -> Objects.equals(pagingViewDTO.getId(),e.getId())).findFirst().orElse(null);
+//                ListingInfoEntity listing = listingInfoEntityList.stream().filter(e -> Objects.equals(pagingViewDTO.getListingId(),e.getId())).findFirst().orElse(null);
+//                try {
+//                    BatchResultDTO resultDTO = skuMappingService.updatePlatformSku(dto,skuMapping,listing,shopId);
+//                    resultDTOList.add(resultDTO);
+//                }catch (Exception e){
+//                    resultDTOList.add(BatchResultDTO.fail(skuMapping.getId(),skuMapping.getId(),CharSequenceUtil.format("店铺【{}】更新异常:{}", name,e.getMessage())));
+//                }
+//            }
+//
+//        }else {
+            SkuMappingEntity skuMapping = skuMappingService.getById(id);
+            if (Objects.isNull(skuMapping)) {
+                resultDTOList.add(BatchResultDTO.fail(id,id,ApiError.ERROR_92051.msg));
+                return failure(resultDTOList);
+            }
+            ListingInfoEntity listing = listingInfoService.getById(skuMapping.getListingId());
+            if (Objects.isNull(listing)) {
+                resultDTOList.add(BatchResultDTO.fail(id,skuMapping.getListingId(),"listing记录不存在"));
+                return failure(resultDTOList);
+            }
+            try {
+                BatchResultDTO resultDTO = skuMappingService.updatePlatformSku(dto,skuMapping,listing,shopId);
+                resultDTOList.add(resultDTO);
+            }catch (Exception e){
+                resultDTOList.add(BatchResultDTO.fail(skuMapping.getId(),skuMapping.getId(),CharSequenceUtil.format("店铺【{}】更新异常:{}", name,e.getMessage())));
+            }
+//        }
+        return resultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOList) : failure(resultDTOList);
     }
  
    /**

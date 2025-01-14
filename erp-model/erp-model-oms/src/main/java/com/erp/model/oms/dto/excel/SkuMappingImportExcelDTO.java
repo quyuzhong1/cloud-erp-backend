@@ -42,12 +42,18 @@ public class SkuMappingImportExcelDTO {
     @FieldValid(fieldName = "平台sku", isNotBlank = true)
     private String platformSkuNo;
 
-
+    /**
+     * 平台产品ID
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "平台产品ID", index = 3)
+    @FieldValid(fieldName = "平台产品ID")
+    private String platformProductId;
     /**
      * 平台产品名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "平台产品名称", index = 3)
+    @ExcelProperty(value = "平台产品名称", index = 4)
     @FieldValid(fieldName = "平台产品名称")
     private String platformProductName;
 
@@ -55,7 +61,7 @@ public class SkuMappingImportExcelDTO {
      * 产品sku
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "产品sku", index = 4)
+    @ExcelProperty(value = "产品sku", index = 5)
     @FieldValid(fieldName = "产品sku", isNotBlank = true)
     private String productSkuNo;
 
@@ -63,7 +69,7 @@ public class SkuMappingImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 5)
+    @ExcelProperty(value = "错误数据", index = 6)
     private String errorMsg;
 
 
