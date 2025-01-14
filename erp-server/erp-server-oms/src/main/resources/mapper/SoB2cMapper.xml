@@ -299,7 +299,7 @@
                 </foreach>
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         group by
@@ -362,7 +362,7 @@
                 </foreach>
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.logistics_channel_id
@@ -478,7 +478,7 @@
                 </foreach>
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         order by sb2c.id desc
