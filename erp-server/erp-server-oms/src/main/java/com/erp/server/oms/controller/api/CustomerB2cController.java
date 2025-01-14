@@ -283,6 +283,7 @@ public class CustomerB2cController extends BaseController {
      * 导出数据
      */
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = CustomerB2cQueryHandler.class)
     public ApiResult<Object> exportCustomerB2c(@RequestBody @Valid CustomerB2CDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = customerB2cService.exportExcel(dto, response);
         return Boolean.TRUE.equals(result) ? success() : failure();
