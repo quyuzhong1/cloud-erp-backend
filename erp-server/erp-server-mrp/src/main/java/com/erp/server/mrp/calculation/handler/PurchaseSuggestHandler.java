@@ -7,7 +7,10 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.*;
-import com.erp.model.mrp.enums.*;
+import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleSuggestedAmountNodeEnum;
+import com.erp.model.mrp.enums.CfgSettingEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.wms.enums.ExecutionTypeEnum;
 import com.erp.server.mrp.calculation.service.InventoryService;
@@ -20,7 +23,6 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -50,11 +52,14 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+        //无补货数据则无需新增采购建议
+        if (CollUtil.isEmpty(replenishmentResultDTO.getDeliverySuggests())) {
+            return;
+        }
 
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
         CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = stockUpResult.getLogisticsResult();
-        List<ReplenishmentResultDTO.RptOutOfStockDTO> rptOutOfStocks = replenishmentResultDTO.getRptOutOfStocks();
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestAmountResult = cfgRuleStrategyDTO.getSuggestAmountResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         Set<String> purchaseVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeAging());
@@ -68,11 +73,6 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                 .map(CfgSettingDTO::getDataJson)
                 .map(Integer::parseInt)
                 .findFirst().orElse(180);
-        List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults = stockUpResult.getStockingRatioResults();
-        // 根据新品/常规品获取默认补货系数
-        BigDecimal stockingRatio = CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode().equals(replenishmentResultDTO.getReplenishmentDetail().getSkuType()) ? stockUpResult.getStockingRatio() : stockUpResult.getNewStockingRatio();
-        List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = replenishmentResultDTO.getSalesEstimates();
-        LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         //发货信息
         Map<LocalDate, List<ReplenishmentResultDTO.DeliverySuggestDTO>> deliveryMap = replenishmentResultDTO.getDeliverySuggests().stream().collect(Collectors.groupingBy(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestPurchaseDate));
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = deliveryMap.entrySet().parallelStream()
