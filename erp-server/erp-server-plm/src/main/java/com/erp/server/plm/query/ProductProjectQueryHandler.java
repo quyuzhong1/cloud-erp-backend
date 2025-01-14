@@ -31,6 +31,9 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
+        if ("sku_no".equals(field)) {
+            return "exists ( SELECT id FROM product_detail pd WHERE pd.sku_no "+ compareCodeSplicingValueSql + ")";
+        }
         // 类型
         QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
         // 值

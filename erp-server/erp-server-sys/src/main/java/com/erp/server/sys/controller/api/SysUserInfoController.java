@@ -16,6 +16,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.server.sys.query.SysUserInfoQueryHandler;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -220,7 +221,7 @@ public class SysUserInfoController extends BaseController {
      * @return
      */
     @RequestMapping("/shopAuthPaging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = SysUserInfoQueryHandler.class)
     public ApiResult shopAuthPaging(@RequestBody @Validated PagingDTO<SysUserInfoDTO.ShopAuthPagingSearchDTO> dto) {
         PagingVO pagingVO = sysUserInfoService.shopAuthPaging(dto);
         return success(pagingVO);

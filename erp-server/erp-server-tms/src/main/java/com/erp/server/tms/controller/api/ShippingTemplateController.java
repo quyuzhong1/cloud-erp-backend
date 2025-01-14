@@ -174,6 +174,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出运费模板")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = ShippingTemplateQueryHandler.class)
     public ApiResult<Object>exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto) {
         Boolean flag = shippingTemplateService.exportExcel(dto);
         return flag == true ? success() : failure();
