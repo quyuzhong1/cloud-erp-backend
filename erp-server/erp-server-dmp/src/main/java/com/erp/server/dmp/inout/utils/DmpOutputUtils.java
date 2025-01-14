@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.utils;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.common.business.enums.ErpServerModuleEnum;
+import com.common.business.utils.RedisUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
@@ -22,6 +24,8 @@ import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
@@ -36,6 +40,8 @@ public class DmpOutputUtils{
 	private DmpHandlerCache dmpHandlerCache;
 	@Resource
     private MQProducerService mqProducerService;
+	@Resource
+	private RedisUtil redisUtil;
 	
 	public boolean updateStatus(String id , String status , String responseData , String message) {
 		Integer errorCount = null;
@@ -88,7 +94,26 @@ public class DmpOutputUtils{
 	        	message = responseData;
 	        }
 	        
-	        DmpHandlerUtils.sendFeiShuMsg("输出【" + systemName +"】任务记录id=【" + id + "】，单据编号=【" + code + "】处理失败：" + message);
+	        boolean isSend = true;
+	        if(StringUtils.isNotBlank(message) && message.contains("旺店通出库") && message.contains("msg=库存不足")) {
+	        	String redisKey = "wdt:error:code:" + code;
+	        	Object object = redisUtil.get(redisKey);
+	        	
+	        	if(object == null) {
+	        		redisUtil.set(redisKey, DateUtil.now() , 86400);
+	        		isSend = false;
+	        	}else {
+	        		boolean isAfter = DateTime.now().after(DateUtil.offsetHour(DateUtil.parse(object.toString()), 2));
+	        		if(isAfter) {
+	        			redisUtil.del(redisKey);
+	        		}else {
+	        			isSend = false;
+	        		}
+	        	}
+	        }
+	        if(isSend) {
+	        	DmpHandlerUtils.sendFeiShuMsg("输出【" + systemName +"】任务记录id=【" + id + "】，单据编号=【" + code + "】处理失败：" + message);
+	        }
 		}
 		return update;
 	}
