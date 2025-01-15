@@ -677,7 +677,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (StringUtils.isNotBlank(subPlatformType)) {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
                     shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }
