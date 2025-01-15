@@ -304,7 +304,7 @@
 
         from transaction_flow tf
         <where>
-                ${params.sqlMap.default} and tf.is_deleted = false
+                tf.is_deleted = false
                 <if test="params.skuNoList != null and params.skuNoList.size != ''">
                     and tf.sku_no in
                     <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -339,7 +339,10 @@
                         #{item}
                     </foreach>
                 </if>
-            ) m 
+            ) m
+        <where>
+            ${params.sqlMap.default}
+        </where>
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
