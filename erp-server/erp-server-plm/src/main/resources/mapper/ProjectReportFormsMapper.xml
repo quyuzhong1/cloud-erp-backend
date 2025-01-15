@@ -32,7 +32,7 @@
             poi.end_time AS planStartDate,
             poi.start_time AS planEndDate,
             poi.create_time AS createTime,
-            poi.update_time AS updatetime
+            poi.update_time AS updatetime,
             CASE WHEN pott.finished_count = pott.total_task_count THEN to_date( pott.reality_end_time, 'YYYY-MM-dd' ) ELSE null END as actualFinishDate
         FROM product_info pi
         LEFT JOIN project_info poi ON pi.id = poi.product_id AND poi.is_deleted = FALSE
