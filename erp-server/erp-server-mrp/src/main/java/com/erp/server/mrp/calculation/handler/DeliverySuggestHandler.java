@@ -13,9 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.BusinessNoTypeEnum.CODE_S;
@@ -108,7 +106,16 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                     suggestDTO.setSuggestPurchaseDate(purchaseSuggestDate);
                     return suggestDTO;
                 }).filter(v -> v.getSuggestDeliveryQty() > 0).collect(Collectors.toList());
-        replenishmentResultDTO.setDeliverySuggests(deliverySuggests);
+        Collection<ReplenishmentResultDTO.DeliverySuggestDTO> dtos = deliverySuggests.stream()
+                .collect(Collectors.groupingBy(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestDeliveryDate, Collectors.collectingAndThen(Collectors.toList(), v -> {
+                    ReplenishmentResultDTO.DeliverySuggestDTO deliverySuggestDTO = v.stream().findFirst()
+                            .orElse(new ReplenishmentResultDTO.DeliverySuggestDTO());
+                    Integer qty = v.stream().map(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestDeliveryQty)
+                            .reduce(0, Math::addExact);
+                    deliverySuggestDTO.setSuggestDeliveryQty(qty);
+                    return deliverySuggestDTO;
+                }))).values();
+        replenishmentResultDTO.setDeliverySuggests(new ArrayList<>(dtos));
     }
 
     /**
