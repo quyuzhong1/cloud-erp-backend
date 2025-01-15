@@ -132,7 +132,10 @@ public class InventoryServiceImpl implements InventoryService {
                 //分摊同仓库维度数据
                 for (CfgRuleWarehouseDTO.StrategyDetailResultDTO resultDTO : resultList) {
                     //获取仓库需求数
-                    Map<String, Integer> shopQtyMap = Optional.ofNullable(warehouseShopMap.get(resultDTO)).orElse(new HashMap<>());
+                    Map<String, Integer> shopQtyMap = warehouseShopMap.get(resultDTO);
+                    if (ObjectUtils.isEmpty(shopQtyMap)) {
+                        continue;
+                    }
                     int warehouseDemandQty = shopQtyMap
                             .values().stream()
                             .mapToInt(Integer::intValue)
