@@ -4,7 +4,8 @@ spring:
       discovery:
         server-addr: 172.16.100.60:30848
         namespace: ${NACOS_NAMESPACE:dev}
-        ip: 
+        ip: 172.16.100.60
+        port: 30900
       config:
         server-addr: 172.16.100.60:30848
         namespace: dev
