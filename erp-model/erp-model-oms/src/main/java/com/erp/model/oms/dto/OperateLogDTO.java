@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +15,7 @@ public class OperateLogDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class AddModuleOperateLogDTO {
         private String content;
 
@@ -103,6 +105,11 @@ public class OperateLogDTO implements Serializable {
          */
         @NotBlank(message = "业务id不能为空")
         private String businessId;
+
+        /**
+         * 模块
+         */
+        private String moduleType;
 
         /**
          * 父级id(用于综合数据查询)

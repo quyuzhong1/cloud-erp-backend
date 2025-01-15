@@ -21,7 +21,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;

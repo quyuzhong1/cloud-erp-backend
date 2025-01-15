@@ -32,6 +32,7 @@ import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.excel.SkuMappingCustomerImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.*;
@@ -42,7 +43,7 @@ import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
@@ -57,6 +58,7 @@ import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
+import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
 import com.erp.server.oms.mapper.SkuMappingMapper;
@@ -260,7 +262,19 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         //仓库sku 对照
         if (customer.equals(type)) {
-
+            SkuMappingCustomerExcelListener excelListenerUtil = new SkuMappingCustomerExcelListener();
+            try {
+                EasyExcel.read(excelFile.getInputStream(), SkuMappingCustomerImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            } catch (Exception e) {
+                log.error("sku 对照表导入错误！>>>>{}", e);
+                return Boolean.FALSE;
+            }
+            List<SkuMappingCustomerImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            if (errorList.size() > 0) {
+                String fileName = "sku对照错误信息";
+                ExcelUtil.export(fileName, "error", errorList, SkuMappingCustomerImportExcelDTO.class, response);
+                return Boolean.FALSE;
+            }
         }
 
         return Boolean.TRUE;
