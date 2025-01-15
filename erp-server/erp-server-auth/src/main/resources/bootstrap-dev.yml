@@ -2,11 +2,11 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.12:8848
+        server-addr: 172.16.100.60:30848
         namespace: ${NACOS_NAMESPACE:dev}
         ip: 172.16.100.60
         port: 30030
       config:
-        server-addr: 172.16.100.12:8848
+        server-addr: 172.16.100.60:30848
         namespace: dev
         shared-configs: common.yml,erp-auth.yml

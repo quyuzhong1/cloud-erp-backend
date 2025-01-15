@@ -2,21 +2,21 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.12:8848
+        server-addr: 172.16.100.60:30848
         namespace: ${NACOS_NAMESPACE:dev}
         heart-beat-interval: 3
         heart-beat-timeout: 10
         ip: 172.16.100.60
         port: 30085
       config:
-        server-addr: 172.16.100.12:8848
+        server-addr: 172.16.100.60:30848
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-scm.yml,druid-common.yml
 sfs:
   nacos:
     application: seata-server
-    server-addr: 172.16.100.12:8848
+    server-addr: 172.16.100.60:30848
     namespace: seata-server
     group: SEATA_GROUP
     ip: 172.16.100.60
