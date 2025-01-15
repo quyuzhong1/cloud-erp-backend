@@ -1,6 +1,5 @@
 package com.erp.model.mrp.entity;
 
-import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -8,7 +7,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -110,26 +108,26 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
     /**
      * 分时段销量  json
      */
-    @TableField(jdbcType = JdbcType.OTHER)
-    private JSONArray salesQty;
+    @TableField("sales_qty")
+    private String salesQty;
 
     /**
      * 分时段日均销  json
      */
-    @TableField(jdbcType = JdbcType.OTHER)
-    private JSONArray avgSalesQty;
+    @TableField("avg_sales_qty")
+    private String avgSalesQty;
 
     /**
      * 预估销量 json
      */
-    @TableField(jdbcType = JdbcType.OTHER)
-    private JSONArray salesEstimateQty;
+    @TableField("sales_estimate_qty")
+    private String salesEstimateQty;
 
     /**
      * 预估日销量  json
      */
-    @TableField(jdbcType = JdbcType.OTHER)
-    private JSONArray avgSalesEstimateQty;
+    @TableField("avg_sales_estimate_qty")
+    private String avgSalesEstimateQty;
 
     /**
      * 采购审批天数（天）
@@ -298,7 +296,7 @@ public class ReplenishmentSuggestionDetailEntity extends BaseEntity<Replenishmen
      * 采购单价
      */
     @TableField("real_sale_qty")
-    private JSONArray realSaleQty;
+    private String realSaleQty;
 
     /**
      * 销售价

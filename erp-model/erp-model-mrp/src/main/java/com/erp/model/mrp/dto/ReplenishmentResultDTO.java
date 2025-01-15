@@ -567,21 +567,21 @@ public class ReplenishmentResultDTO {
         }
 
         // 转换销售数据为 JSON
-        private static JSONArray convertToSalesVOJson(List<TimePeriodSalesDTO> salesList) {
+        private static String convertToSalesVOJson(List<TimePeriodSalesDTO> salesList) {
             if (CollectionUtils.isEmpty(salesList)) {
-                return new JSONArray();
+                return null;
             }
-            return JSONUtil.parseArray(salesList.stream()
+            return JSON.toJSONString(salesList.stream()
                     .map(v -> new ReplenishmentSuggestionVO.SalesVO(v.getCode().getName(), v.getQty()))
                     .collect(Collectors.toList()));
         }
 
         // 转换销售预估数据为 JSON
-        private static JSONArray convertToSalesEstimateVOJson(List<TimePeriodSalesEstimateDTO> estimates, DetailDTO dto, boolean isAvg) {
+        private static String convertToSalesEstimateVOJson(List<TimePeriodSalesEstimateDTO> estimates, DetailDTO dto, boolean isAvg) {
             if (CollectionUtils.isEmpty(estimates)) {
-                return new JSONArray();
+                return null;
             }
-            return JSONUtil.parseArray(estimates.stream()
+            return JSON.toJSONString(estimates.stream()
                     .map(v -> new ReplenishmentSuggestionVO.SalesVO(RecentTimePeriodEnum.getNameByCode(v.getCode(), isAvg, dto.getCalcDate()), v.getQty()))
                     .collect(Collectors.toList()));
         }
