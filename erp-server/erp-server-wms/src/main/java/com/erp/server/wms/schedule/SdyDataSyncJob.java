@@ -101,6 +101,9 @@ public class SdyDataSyncJob {
             }
 
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
+            if (CollUtil.isEmpty(ids)) {
+                return;
+            }
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
 
             //B2C订单
