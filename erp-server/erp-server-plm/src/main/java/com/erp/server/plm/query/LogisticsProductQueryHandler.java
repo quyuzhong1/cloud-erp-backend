@@ -1,8 +1,10 @@
 package com.erp.server.plm.query;
 
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
+import com.common.business.threadlocal.AdvanceQueryContext;
 import com.erp.model.scm.enums.PageListTypeEnum;
 import com.erp.server.plm.service.CommonService;
 import org.springframework.stereotype.Component;
@@ -52,6 +54,16 @@ public class LogisticsProductQueryHandler extends AbstractQueryHandler {
                 super.buildDefaultDTO("pl.approve_status", approveStatusList);
             }
             return super.getSplicingSQL();
+        }
+        QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+        if ("ps.sale_state".equals(field)) {
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)) {
+                return "ps.sale_state is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)) {
+                return "ps.sale_state is not null";
+            }
+            return " ps.sale_state " + compareCodeSplicingValueSql;
         }
         return null;
     }
