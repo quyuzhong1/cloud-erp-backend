@@ -255,10 +255,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     throw new ServiceException(ApiError.ERROR_92023);
                 }
                 //获取销售单信息
-                SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
                 entity.setSourceCode(soReturnEntity.getCode());
-                entity.setSoCode(soInfoEntity.getCode());
-                entity.setSoId(soInfoEntity.getId());
+                if (CharSequenceUtil.isNotBlank(soReturnEntity.getSourceId())){
+                    SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+                    entity.setSoCode(Objects.nonNull(soInfoEntity) ? soInfoEntity.getCode() : CharSequenceUtil.EMPTY);
+                    entity.setSoId(Objects.nonNull(soInfoEntity) ? soInfoEntity.getId() : CharSequenceUtil.EMPTY);
+                }
             }
         }
 

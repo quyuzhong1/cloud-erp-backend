@@ -1639,6 +1639,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return this.getById(id);
     }
 
+    @Override
+    public CustomerInfoEntity getCustomerByCode(String code) {
+        return this.lambdaQuery().eq(CustomerInfoEntity::getCode, code).last("limit 1").one();
+    }
+
     /**
      * 客户联系人信息
      *
