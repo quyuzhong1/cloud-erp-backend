@@ -530,6 +530,10 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * 是否合并
+         */
+        private Boolean isMerge;
 
         /**
         * 创建类型

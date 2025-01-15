@@ -1104,7 +1104,10 @@ public class ReplenishmentResultDTO {
          * 用量
          */
         private Integer quantity;
-
+        /**
+         * 是否拆分
+         */
+        private Boolean isMerge;
         /**
          * 补货建议明细id
          */

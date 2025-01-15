@@ -390,6 +390,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PP);
                 addOrUpdateDTO.setCode(code);
             }
+            addOrUpdateDTO.setIsMerge(Boolean.TRUE);
             //建议采购量
             addOrUpdateDTO.setSuggestPurchaseQty(suggestPurchaseQty);
             //采购成本
