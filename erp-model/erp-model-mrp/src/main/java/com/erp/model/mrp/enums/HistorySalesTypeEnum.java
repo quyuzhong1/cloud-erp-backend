@@ -9,7 +9,9 @@ import lombok.Getter;
 public enum HistorySalesTypeEnum implements EnumMessage {
 
     SYSTEM("system", "系统"),
-    CUSTOM("custom", "自定义");
+    CUSTOM("custom", "自定义"),
+    UPDATE_IMPORT("updateImport", "更新导入")
+    ;
 
     private final String code;
 

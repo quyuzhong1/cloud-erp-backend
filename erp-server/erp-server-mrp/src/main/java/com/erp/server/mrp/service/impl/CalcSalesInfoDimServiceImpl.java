@@ -126,8 +126,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 //开始计算分时段预估
                 calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
                 //计算吻合度
-                BigDecimal similarity = calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap);
-                entity.setSimilarity(similarity);
+                calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
                 calcSalesInfoDenoisingService.saveBatch(calculationSales);
                 calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
                 updateById(entity);
@@ -138,11 +137,14 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     /**
      * 计算吻合度
-     * @param dto 参数
+     *
+     * @param dto                       参数
      * @param calcSalesInfoEstimateList 参数
-     * @param hisSalesMap 参数
+     * @param hisSalesMap               参数
+     * @param entity                    参数
      */
-    private BigDecimal calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList, Map<LocalDate, Integer> hisSalesMap) {
+    private void calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList,
+                                             Map<LocalDate, Integer> hisSalesMap, CalcSalesInfoDimEntity entity) {
 
         List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
                 .map(CalcSalesInfoEstimateEntity::getQty)
@@ -154,7 +156,12 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
             date = date.plusDays(1);
         }
-        return DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId()).getMAPEScore();
+        DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId());
+        entity.setMapeScore(metricsResult.getMAPEScore());
+        entity.setMaeScore(metricsResult.getMAEScore());
+        entity.setMseScore(metricsResult.getMSEScore());
+        entity.setRmseScore(metricsResult.getRMSEScore());
+        entity.setR2Score(metricsResult.getR2Score());
     }
 
     @Override
@@ -251,7 +258,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         salesEstimateDTO.setDateList(dates);
         salesEstimateDTO.setSalesEstimateList(salesEstimateList);
         salesEstimateDTO.setRealSalesList(realSalesList);
-        salesEstimateDTO.setSimilarity(entity.getSimilarity());
+        salesEstimateDTO.setMapeScore(entity.getMapeScore());
+        salesEstimateDTO.setR2Score(entity.getR2Score());
+        salesEstimateDTO.setMaeScore(entity.getMaeScore());
+        salesEstimateDTO.setMseScore(entity.getMseScore());
+        salesEstimateDTO.setRmseScore(entity.getRmseScore());
         return salesEstimateDTO;
     }
 
@@ -452,7 +463,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             lineDTO.setQty(entry.getValue());
             calcList.add(lineDTO);
         }
-        DataDifferenceCalculator.compareMultiplePredictions(calcList, basicData);
+        DataDifferenceCalculator.compareMultiplePredictions(calcList, basicData, dto.getMetricsType());
         List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
         lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", new BigDecimal(100), basicData));
         lineList.addAll(calcList);

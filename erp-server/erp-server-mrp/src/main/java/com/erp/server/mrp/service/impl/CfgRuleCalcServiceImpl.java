@@ -111,7 +111,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         List<CalcSalesInfoHisEsEntity> historySaleList;
         if (HistorySalesTypeEnum.SYSTEM.getCode().equals(addDTO.getSaleType())) {
             historySaleList = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
-        } else {
+        } else if (HistorySalesTypeEnum.CUSTOM.getCode().equals(addDTO.getSaleType())) {
             Map<String, String> platformMap = getPlatformMap();
             HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuVOS, shopInfoList, platformMap, entity);
             try {
@@ -122,6 +122,23 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
                     return BatchResultDTO.fail(entity.getId(), code, url);
                 }
                 historySaleList = excelListener.getDataList();
+            } catch (ExcelCommonException e) {
+                log.error("导入格式错误！", e);
+                throw new ServiceException(ApiError.ERROR_1016);
+            }
+        } else {
+            List<CalcSalesInfoHisEsEntity> historySales = getSysHistorySalesQty(addDTO, entity.getId(), skuMap, shopMap);
+            Map<String, String> platformMap = getPlatformMap();
+            HistorySalesQtyExcelListener excelListener = new HistorySalesQtyExcelListener(skuVOS, shopInfoList, platformMap, entity);
+            try {
+                EasyExcelFactory.read(FastDFSClientUtil.getInputStream(addDTO.getFileUrl()), CfgRuleCalcDTO.HistorySaleImportDTO.class, excelListener).headRowNumber(1).sheet(0).doRead();
+                //导出错误数据
+                if (!CollectionUtils.isEmpty(excelListener.getErrorList())) {
+                    String url = exportErrorExcel(excelListener.getErrorList());
+                    return BatchResultDTO.fail(entity.getId(), code, url);
+                }
+                List<CalcSalesInfoHisEsEntity> customSales = excelListener.getDataList();
+                historySaleList = mergeSales(historySales, customSales);
             } catch (ExcelCommonException e) {
                 log.error("导入格式错误！", e);
                 throw new ServiceException(ApiError.ERROR_1016);
@@ -139,6 +156,29 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         calcSalesInfoDimService.saveBatch(calcSalesInfoDimList);
         calcSalesInfoDimService.calcSalesInfo(calcResultList);
         return BatchResultDTO.success(entity.getId(), code);
+    }
+
+    private List<CalcSalesInfoHisEsEntity> mergeSales(
+            List<CalcSalesInfoHisEsEntity> historySales,
+            List<CalcSalesInfoHisEsEntity> customSales) {
+        Map<LocalDate, CalcSalesInfoHisEsEntity> historyMap = historySales.stream()
+                .collect(Collectors.toMap(
+                        CalcSalesInfoHisEsEntity::getDate,
+                        entity -> entity,
+                        (existing, replacement) -> existing
+                ));
+        Map<LocalDate, CalcSalesInfoHisEsEntity> customMap = customSales.stream()
+                .collect(Collectors.toMap(
+                        CalcSalesInfoHisEsEntity::getDate,
+                        entity -> entity,
+                        (existing, replacement) -> replacement
+                ));
+        Set<LocalDate> allDates = new HashSet<>();
+        allDates.addAll(historyMap.keySet());
+        allDates.addAll(customMap.keySet());
+        return allDates.stream()
+                .map(date -> customMap.getOrDefault(date, historyMap.get(date)))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -164,6 +204,12 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         }
         if (addDTO.getStartCalcDate().isAfter(addDTO.getEndCalcDate())) {
             throw new ServiceException(ApiError.ERROR__VERIFY_END_CALC_DATE);
+        }
+        if (!addDTO.getStartCalcDate().plusYears(1).isAfter(addDTO.getEndCalcDate())) {
+            throw new ServiceException(ApiError.ERROR__VERIFY_CALC_DATE);
+        }
+        if (addDTO.getSkuIds().size() * addDTO.getShopIds().size() > 999999) {
+            throw new ServiceException(ApiError.ERROR__CALC_SIZE);
         }
     }
 

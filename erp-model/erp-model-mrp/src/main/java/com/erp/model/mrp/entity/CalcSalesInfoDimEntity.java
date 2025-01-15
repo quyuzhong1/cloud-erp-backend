@@ -81,12 +81,32 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     */
     @TableField("remark")
     private String remark;
-
     /**
-     * 相似度
+     * MAE
      */
-    @TableField("similarity")
-    private BigDecimal similarity;
+    @TableField("mae_score")
+    private BigDecimal maeScore;
+    /**
+     * MSE
+     */
+    @TableField("mse_score")
+    private BigDecimal mseScore;
+    /**
+     * RMSE
+     */
+    @TableField("rmse_score")
+    private BigDecimal rmseScore;
+    /**
+     * MAPE
+     */
+    @TableField("mape_score")
+    private BigDecimal mapeScore;
+    /**
+     * R2
+     */
+    @TableField("r2_score")
+    private BigDecimal r2Score;
+
 
     /**
      * 历史数据base
