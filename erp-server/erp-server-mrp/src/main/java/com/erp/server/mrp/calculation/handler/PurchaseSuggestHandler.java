@@ -2,7 +2,7 @@ package com.erp.server.mrp.calculation.handler;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.utils.MathUtil;
@@ -142,7 +142,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         }
         //无配置或者不拆分也直接返回
         CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = replenishmentResultDTO.getCfgRuleStrategy().getOrderResult();
-        if (ObjUtil.isEmpty(orderResult) || !orderResult.getIsSplit()) {
+        if (ObjectUtil.isEmpty(orderResult) || Boolean.TRUE.equals(!orderResult.getIsSplit())) {
             return Collections.singletonList(suggestDTO);
         }
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = new ArrayList<>();

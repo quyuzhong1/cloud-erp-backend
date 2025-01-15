@@ -17,6 +17,7 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
+import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CreateTypeEnum;
@@ -36,6 +37,7 @@ import com.erp.rpc.scm.feign.PurchaseApplicationDetailFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.mrp.mapper.PurchaseSuggestIndependentMapper;
 import com.erp.server.mrp.service.PurchaseSuggestIndependentService;
+import com.erp.server.mrp.service.PurchaseSuggestService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -69,6 +71,10 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
 
     @Resource
     private PurchaseApplicationDetailFeign purchaseApplicationDetailFeign;
+
+    @Resource
+    private PurchaseSuggestService purchaseSuggestService;
+
 
     @Override
     public List<PurchaseSuggestIndependentDTO.ListDTO> list(PurchaseSuggestIndependentDTO.ListParamDTO params) {
@@ -106,15 +112,63 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
     @Override
     public List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> viewIndependentFrame(String id) {
         PurchaseSuggestMergeEntity suggestMergeEntity = this.getById(id);
-        if (ObjectUtil.isEmpty(suggestMergeEntity) || suggestMergeEntity.getIsMerge()) {
+        if (ObjectUtil.isEmpty(suggestMergeEntity) || Boolean.TRUE.equals(suggestMergeEntity.getIsMerge())) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(id));
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(id));
         bomChildrenSkuList = bomChildrenSkuList.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
             throw new ServiceException("选择数据非组合品");
         }
+        //采购建议源数据
+        List<String> sourceIdList = suggestMergeEntity.getSourceIdJson().stream().map(Object::toString).collect(Collectors.toList());
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(purchaseSuggestList)) {
+            return Collections.emptyList();
+        }
+        //补货建议明细id
+        String replenishSuggestDetailId = purchaseSuggestList.get(0).getSourceIdJson().get(0).toString();
+
+        return getIndependentFrameDTOS(suggestMergeEntity, bomChildrenSkuList, replenishSuggestDetailId);
+    }
+
+    /**
+     * 弹框数据
+     * @Auther will
+     * @Date 2025/1/15 17:49
+     */
+    private  List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> getIndependentFrameDTOS(PurchaseSuggestMergeEntity suggestMergeEntity, List<BomChildrenSkuDTO> bomChildrenSkuList, String replenishSuggestDetailId) {
         List<PurchaseSuggestIndependentDTO.IndependentFrameDTO> mergeFrameDTOList = new ArrayList<>();
+        PurchaseSuggestIndependentDTO.IndependentFrameDTO parentDTO = getIndependentParentFrameDTO(suggestMergeEntity, bomChildrenSkuList, replenishSuggestDetailId);
+        mergeFrameDTOList.add(parentDTO);
+        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuList) {
+            PurchaseSuggestIndependentDTO.IndependentFrameDTO resultDTO = getIndependentChildFrameDTO(suggestMergeEntity, replenishSuggestDetailId, bomChildrenSkuDTO);
+            mergeFrameDTOList.add(resultDTO);
+        }
+        return mergeFrameDTOList;
+    }
+    /**
+     * 生成子件数据
+     * @Auther will
+     * @Date 2025/1/15 17:49
+     */
+    private  PurchaseSuggestIndependentDTO.IndependentFrameDTO getIndependentChildFrameDTO(PurchaseSuggestMergeEntity suggestMergeEntity, String replenishSuggestDetailId, BomChildrenSkuDTO bomChildrenSkuDTO) {
+        PurchaseSuggestIndependentDTO.IndependentFrameDTO resultDTO = new PurchaseSuggestIndependentDTO.IndependentFrameDTO();
+        resultDTO.setCode(suggestMergeEntity.getCode());
+        resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+        resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+        resultDTO.setSuggestPurchaseQty(suggestMergeEntity.getSuggestPurchaseQty() * bomChildrenSkuDTO.getQuantity());
+        resultDTO.setPlanPurchaseQty(suggestMergeEntity.getPlanPurchaseQty() * bomChildrenSkuDTO.getQuantity());
+        resultDTO.setPurchaseStockUpQty(suggestMergeEntity.getPurchaseStockUpQty() * bomChildrenSkuDTO.getQuantity());
+        resultDTO.setSourceId(replenishSuggestDetailId);
+        return resultDTO;
+    }
+    /**
+     * 生成父级数据
+     * @Auther will
+     * @Date 2025/1/15 17:48
+     */
+    private  PurchaseSuggestIndependentDTO.IndependentFrameDTO getIndependentParentFrameDTO(PurchaseSuggestMergeEntity suggestMergeEntity, List<BomChildrenSkuDTO> bomChildrenSkuList, String repleinshSuggestDetailId) {
         PurchaseSuggestIndependentDTO.IndependentFrameDTO parentDTO = new PurchaseSuggestIndependentDTO.IndependentFrameDTO();
         parentDTO.setCode(suggestMergeEntity.getCode());
         parentDTO.setSkuId(suggestMergeEntity.getSkuId());
@@ -122,18 +176,8 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         parentDTO.setSuggestPurchaseQty(suggestMergeEntity.getSuggestPurchaseQty());
         parentDTO.setPlanPurchaseQty(suggestMergeEntity.getPlanPurchaseQty());
         parentDTO.setPurchaseStockUpQty(suggestMergeEntity.getPurchaseStockUpQty());
-        mergeFrameDTOList.add(parentDTO);
-        for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuList) {
-            PurchaseSuggestIndependentDTO.IndependentFrameDTO resultDTO = new PurchaseSuggestIndependentDTO.IndependentFrameDTO();
-            resultDTO.setCode(suggestMergeEntity.getCode());
-            resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-            resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-            resultDTO.setSuggestPurchaseQty(suggestMergeEntity.getSuggestPurchaseQty() * bomChildrenSkuDTO.getQuantity());
-            resultDTO.setPlanPurchaseQty(suggestMergeEntity.getPlanPurchaseQty() * bomChildrenSkuDTO.getQuantity());
-            resultDTO.setPurchaseStockUpQty(suggestMergeEntity.getPurchaseStockUpQty() * bomChildrenSkuDTO.getQuantity());
-            mergeFrameDTOList.add(resultDTO);
-        }
-        return mergeFrameDTOList;
+        parentDTO.setSourceId(repleinshSuggestDetailId);
+        return parentDTO;
     }
 
     /**

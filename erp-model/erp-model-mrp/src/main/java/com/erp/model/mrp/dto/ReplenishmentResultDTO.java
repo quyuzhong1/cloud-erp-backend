@@ -987,6 +987,7 @@ public class ReplenishmentResultDTO {
 
         public static DeliverySuggestEntity buildDeliverySuggest(DeliverySuggestDTO dto) {
             DeliverySuggestEntity entity = new DeliverySuggestEntity();
+            entity.setId(dto.getId());
             entity.setCode(dto.getCode());
             entity.setDataType(dto.getDataType());
             entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
@@ -1103,6 +1104,14 @@ public class ReplenishmentResultDTO {
          * 用量
          */
         private Integer quantity;
+        /**
+         * 是否拆分
+         */
+        private Boolean isMerge;
+        /**
+         * 补货建议明细id
+         */
+        private String replenishmentSuggestionDetailId;
 
         public static PurchaseSuggestDTO buildPurchaseSuggestDTO( CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,List<String> deliverySuggestIdList) {
             PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
@@ -1117,6 +1126,7 @@ public class ReplenishmentResultDTO {
             dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
             dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
             dto.setSkuNo(replenishmentResultDTO.getReplenishment().getSkuNo());
+            dto.setReplenishmentSuggestionDetailId(replenishmentResultDTO.getDeliverySuggests().get(0).getSourceId());
             return dto;
         }
 
@@ -1141,6 +1151,7 @@ public class ReplenishmentResultDTO {
             entity.setPlatform(dto.getPlatform());
             entity.setShopId(dto.getShopId());
             entity.setSkuId(dto.getSkuId());
+            entity.setReplenishmentSuggestionDetailId(dto.getReplenishmentSuggestionDetailId());
             return entity;
         }
     }
