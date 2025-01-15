@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.QueryUtils;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.ProductSkuDTO;
 import com.erp.model.plm.dto.SearchPagingDTO;
@@ -11,6 +12,7 @@ import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.plm.mapper.WorkOptionMapper;
 import com.erp.server.plm.service.*;
 import jodd.util.StringUtil;
+import org.ehcache.shadow.org.terracotta.context.query.Query;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -78,6 +80,9 @@ public class WorkOptionServiceImpl implements WorkOptionService {
                 if (StringUtil.isNotBlank(userDatePermissionSql)) {
                     pagingDTO.setPermissionSql(userDatePermissionSql);
                 }
+                Map<String, String> sqlMap = new HashMap<>();
+                sqlMap.put("default", "1 = 1");
+                params.setSqlMap(sqlMap);
                 myWorkOptionDTO.setTableNumber(productDetailService.paging(pagingDTO).getTotalCount());
             }
             if (myWorkOptionDTO.getModuleCode().equals("product_bom_info")) {
