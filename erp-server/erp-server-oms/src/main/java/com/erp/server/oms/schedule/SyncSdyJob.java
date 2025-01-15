@@ -99,9 +99,15 @@ public class SyncSdyJob {
 
             //产品信息
             List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-            List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+            List<SkuVO> skuVOList = new ArrayList<>();
+            if (CollUtil.isNotEmpty(skuNos)) {
+                skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+            }
             List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = new ArrayList<>();
+            if (CollUtil.isNotEmpty(skuIds)) {
+                bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+            }
             //父类产品
             List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
             List<ProductDetailEntity> parentSkuList = new ArrayList<>();
@@ -174,7 +180,6 @@ public class SyncSdyJob {
                         dictList
                 );
             }
-            currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
     }
@@ -263,7 +268,6 @@ public class SyncSdyJob {
                 );
             }
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
-            currentPage++;
         }
     }
 }

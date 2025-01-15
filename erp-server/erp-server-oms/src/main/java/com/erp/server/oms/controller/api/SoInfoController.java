@@ -3,7 +3,6 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -587,6 +586,20 @@ public class SoInfoController extends BaseController {
         List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.generateSoReturnView(dto.getIds());
         return success(list);
     }
+
+    /**
+     * 下推销售退货订单-列表查询-计算退货金额
+     * @param  calDTO
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
+     * @Author jack
+     * @Date 2024-11-25
+     **/
+    @PostMapping("/calReturnAmountByQty")
+    public ApiResult<List<SoInfoDTO.GenerateSoReturnView>> calReturnAmountByQty(@RequestBody SoInfoDTO.CalDetailDTO calDTO) {
+        List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.calReturnAmountByQty(calDTO.getDetails());
+        return success(list);
+    }
+
     /**
      * 补录销售订单毛利历史数据
      *

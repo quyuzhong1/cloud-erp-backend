@@ -35,7 +35,7 @@ public class SoReturnInstockDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class Add {
+    public static class Add  extends  Common{
         /**
          * skuId
          */
@@ -89,6 +89,15 @@ public class SoReturnInstockDetailDTO {
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
+
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
@@ -96,7 +105,7 @@ public class SoReturnInstockDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class Update {
+    public static class Update  extends  Common{
         /**
          * id
          */
@@ -152,6 +161,14 @@ public class SoReturnInstockDetailDTO {
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
     }
 
     /**
@@ -159,7 +176,7 @@ public class SoReturnInstockDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class View {
+    public static class View extends  Common{
         /**
          * id
          */
@@ -269,5 +286,43 @@ public class SoReturnInstockDetailDTO {
          * 平台sku
          */
         private String platformSkuNo;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Common {
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+
     }
 }
