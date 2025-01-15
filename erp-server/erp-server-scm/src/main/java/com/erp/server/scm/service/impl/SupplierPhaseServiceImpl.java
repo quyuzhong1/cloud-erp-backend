@@ -558,11 +558,11 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         resultList.add(all);
         //待审核
         SupplierPhaseDTO.TabFlagDTO waitApprove = new SupplierPhaseDTO.TabFlagDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())).findFirst().
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).findFirst().
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
-        waitApprove.setTabFlag(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        waitApprove.setTabFlagName(ApproveStatusEnum.WAIT_SUBMIT.getName());
+        waitApprove.setTabFlag(ApproveStatusEnum.APPROVE_ING.getStatus());
+        waitApprove.setTabFlagName(ApproveStatusEnum.APPROVE_ING.getName());
         resultList.add(waitApprove);
         return resultList;
     }
