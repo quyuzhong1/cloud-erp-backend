@@ -272,26 +272,22 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
         //销售员
         String sellerId = entity.getSellerId();
-        String deptCode = "";
-
-
-
+        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(useOrgCode);
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
-                deptCode=kingSellerInfo.getDeptCode();
+                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
             }
         }
-
-        resultMap.put("sellerDeptCode", deptCode);
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
         DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("settleModeCode", settleMode.getRemark());

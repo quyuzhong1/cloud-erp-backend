@@ -573,4 +573,7 @@ public interface SysUserFeign {
 
     @PostMapping("feign/dept/getDeptByNames")
     List<SysDepartmentEntity> getDeptByNames(@RequestBody List<String> deptNameList);
+
+    @PostMapping("feign/dept/getDeptByIds")
+    List<SysDepartmentEntity> getDeptByIds(@RequestBody List<String> ids);
 }

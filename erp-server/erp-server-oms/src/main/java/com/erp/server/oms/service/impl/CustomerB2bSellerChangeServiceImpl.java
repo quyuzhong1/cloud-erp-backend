@@ -506,6 +506,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         //审核通过更新客户表销售员信息，更新历史销售员信息
         customerInfoEntity.setSellerId(entity.getChangeSellerId());
         customerInfoEntity.setSellerName(entity.getChangeSellerName());
+        //对于历史数据需要重新编辑部门
+        if (CharSequenceUtil.isBlank(entity.getChangeSellerDeptId())){
+            throw new ServiceException("客户销售员变更未存在销售部门，重新选择后再发起审核");
+        }
+        customerInfoEntity.setSalesDeptId(entity.getChangeSellerDeptId());
         customerInfoService.updateById(customerInfoEntity);
         customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
 

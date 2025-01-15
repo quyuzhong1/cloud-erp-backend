@@ -542,12 +542,13 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
         //销售员
         String sellerId = entity.getSellerId();
-
+        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
         if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(soInfoById.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
@@ -702,14 +703,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         String sellerId = entity.getSellerId();
-        SysDepartmentUserNumberDTO deptUser = null;
-        String deptId = "";
-        if (CharSequenceUtil.isNotBlank(sellerId)) {
-            deptUser = sysUserFeign.getDeptByUserId(sellerId);
-        }
-        if (Objects.nonNull(deptUser)) {
-            deptId = deptUser.getDepartmentId();
-        }
+        String deptId = entity.getSalesDeptId();
+//        SysDepartmentUserNumberDTO deptUser = null;
+//        String deptId = "";
+//        if (CharSequenceUtil.isNotBlank(sellerId)) {
+//            deptUser = sysUserFeign.getDeptByUserId(sellerId);
+//        }
+//        if (Objects.nonNull(deptUser)) {
+//            deptId = deptUser.getDepartmentId();
+//        }
 
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSalesOrgId(), entity.getWarehouseOrgId()));
@@ -750,16 +752,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
         }
-        //部门
-        if (CharSequenceUtil.isNotBlank(deptId)) {
-            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-            dto.setDeptId(entity.getSalesDeptId());
-            dto.setOrgId(entity.getSalesOrgId());
-            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
-            if (ObjectUtil.isNotEmpty(deptKingdee)) {
-                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
-            }
-        }
+//        //部门
+//        if (CharSequenceUtil.isNotBlank(deptId)) {
+//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            dto.setDeptId(entity.getSalesDeptId());
+//            dto.setOrgId(entity.getSalesOrgId());
+//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+//        }
 
         //销售组织
         String salesOrgId = entity.getSalesOrgId();
@@ -769,6 +771,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(entity.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(deptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
@@ -776,6 +779,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
 
@@ -902,14 +906,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //获取销售出库单详情
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         String sellerId = entity.getSellerId();
-        SysDepartmentUserNumberDTO deptUser = null;
-        String deptId = "";
-        if (CharSequenceUtil.isNotBlank(sellerId)) {
-            deptUser = sysUserFeign.getDeptByUserId(sellerId);
-        }
-        if (Objects.nonNull(deptUser)) {
-            deptId = deptUser.getDepartmentId();
-        }
+        String deptId = entity.getSalesDeptId();
+//        SysDepartmentUserNumberDTO deptUser = null;
+//        String deptId = "";
+//        if (CharSequenceUtil.isNotBlank(sellerId)) {
+//            deptUser = sysUserFeign.getDeptByUserId(sellerId);
+//        }
+//        if (Objects.nonNull(deptUser)) {
+//            deptId = deptUser.getDepartmentId();
+//        }
 
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soB2cEntity.getOrgId(), entity.getWarehouseOrgId()));
@@ -948,15 +953,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         //部门
-        if (CharSequenceUtil.isNotBlank(deptId)) {
-            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-            dto.setDeptId(entity.getSalesDeptId());
-            dto.setOrgId(entity.getSalesOrgId());
-            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
-            if (ObjectUtil.isNotEmpty(deptKingdee)) {
-                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
-            }
-        }
+//        if (CharSequenceUtil.isNotBlank(deptId)) {
+//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            dto.setDeptId(entity.getSalesDeptId());
+//            dto.setOrgId(entity.getSalesOrgId());
+//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+//        }
         //销售组织
         String salesOrgId = soB2cEntity.getOrgId();
         //币别
@@ -967,6 +972,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(soB2cEntity.getOrgId());
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(deptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
@@ -974,6 +980,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
 
