@@ -326,7 +326,17 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollUtil.isEmpty(purchaseSuggests)) {
             return;
         }
-        List<PurchaseSuggestMergeDTO.AddOrUpdateDTO> addList = PurchaseSuggestConverter.INSTANCE.purchaseSuggestToMergeAdd(purchaseSuggests);
+        List<PurchaseSuggestMergeDTO.AddOrUpdateDTO> addList = new ArrayList<>();
+        for (ReplenishmentResultDTO.PurchaseSuggestDTO purchaseSuggestDTO : purchaseSuggests) {
+            PurchaseSuggestMergeDTO.AddOrUpdateDTO addOrUpdateDTO = PurchaseSuggestConverter.INSTANCE.purchaseSuggestToMergeAdd(purchaseSuggestDTO);
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PP);
+            addOrUpdateDTO.setCode(code);
+            //来源
+            addOrUpdateDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION.getCode());
+            addOrUpdateDTO.setSourceIdJson(JSONUtil.parseArray(Collections.singletonList(purchaseSuggestDTO.getId())));
+            addList.add(addOrUpdateDTO);
+        }
         addList.forEach(this::addOrUpdate);
     }
 
