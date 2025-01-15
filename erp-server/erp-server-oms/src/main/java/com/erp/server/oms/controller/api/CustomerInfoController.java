@@ -502,4 +502,13 @@ public class CustomerInfoController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 初始化处理客户销售部门数据
+     * @return
+     */
+    @PostMapping("/initHistoryCustomerDeptId")
+    public ApiResult initHistoryCustomerDeptId() {
+        customerInfoService.initHistoryCustomerDeptId();
+        return success();
+    }
 }

@@ -313,7 +313,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 item.setDisabled(Boolean.FALSE);
             }
             //部门为空时设置为时效
-            if (CharSequenceUtil.isBlank(item.getDepartmentId())){
+            if (CharSequenceUtil.isBlank(item.getDepartmentId()) || CharSequenceUtil.isBlank(item.getDepartmentName())){
                 item.setDisabled(Boolean.TRUE);
             }
         }

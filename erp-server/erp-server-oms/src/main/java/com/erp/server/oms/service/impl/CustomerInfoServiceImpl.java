@@ -5,9 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -33,9 +31,9 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.PagingViewDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
@@ -43,10 +41,15 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.*;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -143,7 +146,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
     /**
      * 获取到分组的id 集合
@@ -2083,5 +2087,39 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
+    }
+
+    @Override
+    public void initHistoryCustomerDeptId() {
+        List<CustomerInfoEntity> list = this.list();
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        Map<String, List<CustomerInfoEntity>> orgMap = list.stream().collect(Collectors.groupingBy(CustomerInfoEntity::getUseOrgId));
+        for (String orgId : orgMap.keySet()){
+            if (CharSequenceUtil.isBlank(orgId)){
+                continue;
+            }
+            List<CustomerInfoEntity> customerInfoEntityList = orgMap.get(orgId);
+            if (CollUtil.isEmpty(customerInfoEntityList)){
+                continue;
+            }
+            KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
+            dto.setOrgId(orgId);
+            dto.setType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+            ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listApiResult = kingdeeFeign.listKingdeeUser(dto);
+            List<UserInfoDTO.BusinessOperationUserDTO> data = listApiResult.getData();
+            if (CollUtil.isEmpty(data)){
+                continue;
+            }
+            customerInfoEntityList.forEach(customerInfoEntity -> {
+                List<UserInfoDTO.BusinessOperationUserDTO> collect = data.stream().filter(e -> Objects.equals(customerInfoEntity.getSellerId(), e.getUserId())).collect(Collectors.toList());
+                if (1 == collect.size() && CharSequenceUtil.isNotBlank(collect.get(0).getDepartmentId())){
+                    this.lambdaUpdate().eq(CustomerInfoEntity::getId,customerInfoEntity.getId()).set(CustomerInfoEntity::getSalesDeptId, collect.get(0).getDepartmentId()).update();
+                }
+            });
+
+        }
+
     }
 }

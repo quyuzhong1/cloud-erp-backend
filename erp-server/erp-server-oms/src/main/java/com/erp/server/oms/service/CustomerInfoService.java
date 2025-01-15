@@ -380,4 +380,9 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
     PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto);
 
     List<CustomerDTO.InfoDTO> listSimpleName(CustomerDTO.PageSelectDTO dto);
+
+    /**
+     * 初始化处理客户销售部门数据
+     */
+    void initHistoryCustomerDeptId();
 }
