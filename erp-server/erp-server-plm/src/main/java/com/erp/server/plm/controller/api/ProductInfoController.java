@@ -148,6 +148,7 @@ public class ProductInfoController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/allExport")
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult allExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
         Boolean result= productInfoService.allExport(dto);
         return result ? success() : failure();

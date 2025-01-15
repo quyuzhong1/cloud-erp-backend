@@ -64,48 +64,52 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
         // 项目经理部门下人员
         if ("projectChargeDeptId".equals(field) && CollectionUtils.isNotEmpty(sourceValueIds)) {
             List<String> projectChargeDeptUserIdList =  productInfoService.handleDept(sourceValueIds);
-            if (CollectionUtils.isNotEmpty(projectChargeDeptUserIdList)) {
-                if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
-                    super.buildSplicingSQLDTO("p.project_charge_id", QueryConditionEnum.IN_LIST, projectChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                } else {
-                    super.buildSplicingSQLDTO("p.project_charge_id", QueryConditionEnum.NOT_IN_LIST, projectChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                }
+            if (CollectionUtils.isEmpty(projectChargeDeptUserIdList)) {
+                projectChargeDeptUserIdList = Collections.singletonList("-1");
+            }
+            if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO("p.project_charge_id", QueryConditionEnum.IN_LIST, projectChargeDeptUserIdList, QueryDataTypeEnum.STRING);
+            } else {
+                super.buildSplicingSQLDTO("p.project_charge_id", QueryConditionEnum.NOT_IN_LIST, projectChargeDeptUserIdList, QueryDataTypeEnum.STRING);
             }
         }
 
         //产品经理部门下人员
         if ("productChargeDeptId".equals(field) && CollectionUtils.isNotEmpty(sourceValueIds)) {
             List<String> productChargeDeptUserIdList =  productInfoService.handleDept(sourceValueIds);
-            if (CollectionUtils.isNotEmpty(productChargeDeptUserIdList)) {
-                if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
-                    super.buildSplicingSQLDTO("p.charge_id", QueryConditionEnum.IN_LIST, productChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                } else {
-                    super.buildSplicingSQLDTO("p.charge_id", QueryConditionEnum.NOT_IN_LIST, productChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                }
+            if (CollectionUtils.isEmpty(productChargeDeptUserIdList)) {
+                productChargeDeptUserIdList = Collections.singletonList("-1");
+            }
+            if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO("p.charge_id", QueryConditionEnum.IN_LIST, productChargeDeptUserIdList, QueryDataTypeEnum.STRING);
+            } else {
+                super.buildSplicingSQLDTO("p.charge_id", QueryConditionEnum.NOT_IN_LIST, productChargeDeptUserIdList, QueryDataTypeEnum.STRING);
             }
         }
 
         //团队成员部门下人员
         if ("teamChargeDeptId".equals(field) && CollectionUtils.isNotEmpty(sourceValueIds)) {
             List<String> teamChargeDeptUserIdList =  productInfoService.handleDept(sourceValueIds);
-            if (CollectionUtils.isNotEmpty(teamChargeDeptUserIdList)) {
-                if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
-                    super.buildSplicingSQLDTO("exists ( select id from project_members where product_id = p.id and  is_deleted = false and ", QueryConditionEnum.IN_LIST, teamChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                } else {
-                    super.buildSplicingSQLDTO("exists ( select id from project_members where product_id = p.id and  is_deleted = false and ", QueryConditionEnum.NOT_IN_LIST, teamChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                }
+            if (CollectionUtils.isEmpty(teamChargeDeptUserIdList)) {
+                teamChargeDeptUserIdList = Collections.singletonList("-1");
+            }
+            if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO("exists ( select id from project_members where product_id = p.id and  is_deleted = false and ", QueryConditionEnum.IN_LIST, teamChargeDeptUserIdList, QueryDataTypeEnum.STRING);
+            } else {
+                super.buildSplicingSQLDTO("exists ( select id from project_members where product_id = p.id and  is_deleted = false and ", QueryConditionEnum.NOT_IN_LIST, teamChargeDeptUserIdList, QueryDataTypeEnum.STRING);
             }
         }
 
         //创建人部门下人员
         if ("createChargeDeptId".equals(field) && CollectionUtils.isNotEmpty(sourceValueIds)) {
             List<String> createChargeDeptUserIdList =  productInfoService.handleDept(sourceValueIds);
-            if (CollectionUtils.isNotEmpty(createChargeDeptUserIdList)) {
-                if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
-                    super.buildSplicingSQLDTO("p.create_user_id", QueryConditionEnum.IN_LIST, createChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                } else {
-                    super.buildSplicingSQLDTO("p.create_user_id", QueryConditionEnum.NOT_IN_LIST, createChargeDeptUserIdList, QueryDataTypeEnum.STRING);
-                }
+            if (CollectionUtils.isEmpty(createChargeDeptUserIdList)) {
+                createChargeDeptUserIdList = Collections.singletonList("-1");
+            }
+            if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
+                super.buildSplicingSQLDTO("p.create_user_id", QueryConditionEnum.IN_LIST, createChargeDeptUserIdList, QueryDataTypeEnum.STRING);
+            } else {
+                super.buildSplicingSQLDTO("p.create_user_id", QueryConditionEnum.NOT_IN_LIST, createChargeDeptUserIdList, QueryDataTypeEnum.STRING);
             }
         }
         return null;
