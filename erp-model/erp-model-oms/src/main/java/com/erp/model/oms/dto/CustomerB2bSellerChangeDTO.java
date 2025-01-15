@@ -274,6 +274,11 @@ public class CustomerB2bSellerChangeDTO implements Serializable {
         */
         @NotBlank(message = "变更后销售id不能为空")
         private String changeSellerId;
+        /**
+         * 变更后销售部门id
+         */
+        @NotBlank(message = "变更后销售部门id不能为空")
+        private String changeSellerDeptId;
 
         /**
          * 变更后销售名

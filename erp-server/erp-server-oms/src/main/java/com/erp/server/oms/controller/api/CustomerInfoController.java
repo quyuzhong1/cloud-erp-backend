@@ -466,7 +466,7 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "保存销售员变更信息")
-    @PostMapping(value = "addSellerChange")
+    @PostMapping(value = "/addSellerChange")
     public ApiResult<List<BatchResultDTO>> saveSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) {
         List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchAdd(addDTOList);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
@@ -478,7 +478,7 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "保存并提交销售员变更信息")
-    @PostMapping(value = "addAndSubmitSellerChange")
+    @PostMapping(value = "/addAndSubmitSellerChange")
     public ApiResult<List<BatchResultDTO>> addAndSubmitSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) {
         List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchAddAndSubmit(addDTOList);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
@@ -503,4 +503,13 @@ public class CustomerInfoController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 初始化处理客户销售部门数据
+     * @return
+     */
+    @PostMapping("/initHistoryCustomerDeptId")
+    public ApiResult initHistoryCustomerDeptId() {
+        customerInfoService.initHistoryCustomerDeptId();
+        return success();
+    }
 }

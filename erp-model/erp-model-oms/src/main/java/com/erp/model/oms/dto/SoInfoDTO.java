@@ -1049,6 +1049,10 @@ public class SoInfoDTO implements Serializable {
          * 销售部门id
          */
         private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
         /**
          * 销售员id
