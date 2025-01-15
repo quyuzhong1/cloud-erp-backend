@@ -633,7 +633,7 @@ public class InventoryServiceImpl implements InventoryService {
                     .filter(v -> v.getShopId().equals(replenishmentResultDTO.getReplenishment().getShopId()))
                     .map(ReplenishmentResultDTO.ShopInventoryDetailDTO::getQty)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            Integer totalQty = entry.getValue()
+            int totalQty = entry.getValue()
                     .stream()
                     .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                     .reduce(0, Math::addExact);
