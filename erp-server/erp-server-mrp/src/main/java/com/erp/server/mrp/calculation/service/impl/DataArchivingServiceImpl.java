@@ -53,17 +53,17 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                 cleanDay = ObjectUtils.isEmpty(cleanDay) ? 361 : cleanDay;
                 List<CfgDataArchivingEntity> effectiveData = cfgDataArchivingService.getEffectiveData();
                 log.warn("开始处理归档数据,时间{}", System.currentTimeMillis());
-//                for (CfgDataArchivingEntity config : effectiveData) {
-//                    // 执行归档逻辑
-//                    cfgDataArchivingService.archiveData(config);
-//                }
+                for (CfgDataArchivingEntity config : effectiveData) {
+                    // 执行归档逻辑
+                    cfgDataArchivingService.archiveData(config);
+                }
                 //归档建议
-//                cfgDataArchivingService.dataArchivingSuggestion(null);
+                cfgDataArchivingService.dataArchivingSuggestion(null);
                 List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
                 log.warn("完成处理归档数据,时间{}", System.currentTimeMillis());
                 String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
                 inventoryService.checkAllTableExists(calcDate);
-//                inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
+                inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
                 Map<String, List<String>> platformMap = mappings.stream().collect(Collectors.groupingBy(CfgPlatformMappingEntity::getType, Collectors.mapping(CfgPlatformMappingEntity::getPlatform, Collectors.toList())));
                 List<String> typeList = mappings.stream()
                         .map(CfgPlatformMappingEntity::getType)
@@ -71,22 +71,22 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                 for (String type : typeList) {
                     CfgRulePlatformTypeEnum platformType = PlatformMappingTypeEnum.getEnum(type).getPlatformType();
                     //清洗销售订单历史销量和库存
-//                    log.warn("开始清洗{}销售订单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
-//                    replenishmentDataService.cleanHistorySalesByOrder(calculationDate, platformType, cleanDay);
-//                    log.warn("完成清洗{}销售订单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
-//                    //清洗销售订单历史销量和库存
-//                    log.warn("开始清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
-//                    replenishmentDataService.cleanHistorySalesByOutStock(calculationDate, platformType, cleanDay);
-//                    log.warn("完成清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
-//                    log.warn("开始增量更新建议基础数据,时间{}", System.currentTimeMillis());
-//                    //增量更新建议基础数据
-//                    replenishmentDataService.initReplenishmentSku(platformType, platformMap.get(type));
-//                    log.warn("完成增量更新建议基础数据,时间{}", System.currentTimeMillis());
-//                    List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType.getCode());
-//                    //清洗历史销量和库存
-//                    log.warn("开始清洗{}历史库存数据,时间{}", platformType.getName(), System.currentTimeMillis());
-//                    replenishmentDataService.cleanHistoryInventory(calculationDate, suggestionList, platformType, cleanDay);
-//                    log.warn("完成清洗{}历史库存数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    log.warn("开始清洗{}销售订单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    replenishmentDataService.cleanHistorySalesByOrder(calculationDate, platformType, cleanDay);
+                    log.warn("完成清洗{}销售订单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    //清洗销售订单历史销量和库存
+                    log.warn("开始清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    replenishmentDataService.cleanHistorySalesByOutStock(calculationDate, platformType, cleanDay);
+                    log.warn("完成清洗{}销售出库单历史销量数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    log.warn("开始增量更新建议基础数据,时间{}", System.currentTimeMillis());
+                    //增量更新建议基础数据
+                    replenishmentDataService.initReplenishmentSku(platformType, platformMap.get(type));
+                    log.warn("完成增量更新建议基础数据,时间{}", System.currentTimeMillis());
+                    List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType.getCode());
+                    //清洗历史销量和库存
+                    log.warn("开始清洗{}历史库存数据,时间{}", platformType.getName(), System.currentTimeMillis());
+                    replenishmentDataService.cleanHistoryInventory(calculationDate, suggestionList, platformType, cleanDay);
+                    log.warn("完成清洗{}历史库存数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType.getCode());
                     //计算数据是否需要进行补货
                     log.warn("开始清洗{}是否需要进行补货数据,时间{}", platformType.getName(), System.currentTimeMillis());
