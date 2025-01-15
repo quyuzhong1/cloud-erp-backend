@@ -1917,7 +1917,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         if(FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus())
                 || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus())){
-            throw new ServiceException("物流单/报关单已生成，不支持修改");
+            throw new ServiceException("物流单/报关单已生成，不支持修改删除");
         }
         //已装箱的数据，如果未下推入库单，或者下推的入库单待提交时，可以再次修改装箱信息，否则提示：已下推海外仓入库单【单号】，不允许修改装箱数据（装箱页面保存时校验）
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()));
@@ -2177,7 +2177,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
-            throw new ServiceException(ApiError.ERROR_98001);
+            throw new ServiceException(ApiError.ERROR_92141);
         }
         return buildPrintInfo(cartonEntity,packingTaskEntity);
     }
@@ -2674,6 +2674,24 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //循环处理装箱任务
             processByPackingTask(taskEntityList, detailMap, applicationEntityMap, providerWarehouseEntityMap, providerEntityMap, skuMappingViewDTOS);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteCarton(WmsCartonSpecDTO.DeleteCartonDTO dto) {
+        WmsCartonEntity cartonEntity = wmsCartonService.getById(dto.getCartonId());
+        if (Objects.isNull(cartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
+        PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
+        if (ObjectUtils.isEmpty(packingTaskEntity)) {
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        checkSourceOrderStatus(packingTaskEntity);
+        wmsCartonSpecService.removeById(cartonEntity.getSpecId());
+        wmsCartonService.removeById(dto.getCartonId());
+        wmsCartonDetailService.listByMainIds(Collections.singletonList(dto.getCartonId()));
+        return Boolean.TRUE;
     }
 
     /**
