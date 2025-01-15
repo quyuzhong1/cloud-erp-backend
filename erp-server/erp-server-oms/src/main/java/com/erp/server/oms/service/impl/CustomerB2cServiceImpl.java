@@ -799,7 +799,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             item.setApproveStatusName(approveStatus.getName());
         }
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/CustomerExport.xlsx";
+        String excelPath = "excel/CustomerB2cExport.xlsx";
         String name = "客户列表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
