@@ -31,6 +31,7 @@
         <result column="create_po_type" property="createPoType" />
         <result column="source_detail_id" property="sourceDetailId" />
         <result column="remark" property="remark" />
+        <result column="source_json" property="sourceJson" jdbcType="OTHER" typeHandler="com.erp.server.scm.handler.ObjectJsonArrayHandler" />
     </resultMap>
     <select id="listSkuAndQty"
             resultType="com.erp.model.scm.dto.PurchaseApplicationDetailDTO$PurchaseSkuQtyDTO">

@@ -452,6 +452,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 .in(PurchaseSuggestMergeEntity::getPlatform,platformList)
                 .in(PurchaseSuggestMergeEntity::getSkuId,skuIdList)
                 .in(PurchaseSuggestMergeEntity::getStatus,SuggestStatusEnum.DRAFT.getCode())
+                .eq(PurchaseSuggestMergeEntity::getIsMerge,Boolean.TRUE)
                 .list();
     }
 
