@@ -93,6 +93,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                                 || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
                             String code = docNoGenHelper.generateCode(CODE_P);
                             suggestDTO.setCode(code);
+                            suggestDTO.setId(IdWorker.getIdStr());
                             suggestDTO.setSuggestPurchaseDate(entry.getKey());
                             //预计可售日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发FBA时效 + FBA入库时间）
                             //预计可售日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发海外时效 + 海外仓入库时间）
@@ -147,7 +148,6 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = new ArrayList<>();
         for (BomChildrenSkuDTO bomSku : bomSkuList) {
             ReplenishmentResultDTO.PurchaseSuggestDTO childSuggestDTO = PurchaseSuggestConverter.INSTANCE.copyPurchaseSuggest(suggestDTO);
-            childSuggestDTO.setId(IdWorker.getIdStr());
             childSuggestDTO.setSkuId(bomSku.getSkuId());
             childSuggestDTO.setSkuNo(bomSku.getSkuNo());
             childSuggestDTO.setParentSkuId(bomSku.getParentSkuId());

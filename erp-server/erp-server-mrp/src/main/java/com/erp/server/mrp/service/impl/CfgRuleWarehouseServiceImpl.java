@@ -92,7 +92,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
 
         // 记录主单操作日志
         log.info("编辑 开始记录仓库（规则设置）日志数据，id：【{}】", cfgRuleWarehouseEntity.getId());
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleWarehouseEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleWarehouseEntity.getId(), "");
+        operateLogService.addModuleOperateLogByObj(ObjectUtil.isEmpty(old) ? new CfgRuleWarehouseEntity() : old, cfgRuleWarehouseEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleWarehouseEntity.getId(), "");
         return Boolean.TRUE;
     }
 

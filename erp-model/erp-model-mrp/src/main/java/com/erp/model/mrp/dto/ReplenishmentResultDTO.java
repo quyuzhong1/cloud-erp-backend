@@ -1106,7 +1106,6 @@ public class ReplenishmentResultDTO {
 
         public static PurchaseSuggestDTO buildPurchaseSuggestDTO( CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,List<String> deliverySuggestIdList) {
             PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
-            dto.setId(IdWorker.getIdStr());
             dto.setDataType(createType);
             dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
             dto.setLogisticsDays(logisticsResult.getLogisticsDays());
@@ -1123,6 +1122,7 @@ public class ReplenishmentResultDTO {
 
         public static PurchaseSuggestEntity buildPurchaseSuggest(PurchaseSuggestDTO dto) {
             PurchaseSuggestEntity entity = new PurchaseSuggestEntity();
+            entity.setId(dto.getId());
             entity.setCode(dto.getCode());
             entity.setDataType(dto.getDataType());
             entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
