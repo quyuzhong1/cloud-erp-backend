@@ -39,8 +39,8 @@ public class CalcSalesInfoDimDTO implements Serializable {
     /**
      * 高级查询参数
      */
-    @Data
-    @NoArgsConstructor
+    @Setter
+    @Getter
     public static class PagingParamDTO extends SortDTO {
 
         /**
@@ -63,8 +63,8 @@ public class CalcSalesInfoDimDTO implements Serializable {
     /**
      * 高级查询参数
      */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class ParamDTO extends SortDTO {
 
         /**
@@ -180,9 +180,13 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String cfgRuleCalcId;
 
         /**
-         * 相似度
+         * MAPE
          */
-        private BigDecimal similarity;
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
     }
 
     @Getter
@@ -404,9 +408,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private List<Integer> realSalesList;
 
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
 
     }
 
@@ -638,9 +658,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private BigDecimal threeHundredAndSixtySalesQty;
 
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
 
         public static SalesInfoEstimateDTO buildSalesInfoEstimateDTO(CalcSalesInfoEstimateEntity entity, ExportDTO record, String shopName, String platform, Map<LocalDate, Integer> realSalesQtyMap) {
             StringBuilder salesInfoEstimateType = new StringBuilder();
@@ -680,7 +716,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setSalesInfoEstimateType(salesInfoEstimateType.toString());
             dto.setRule(rule);
             dto.setEstimateQty(entity.getQty());
-            Integer realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
+            int realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
             dto.setRealSalesQty(realQty);
             dto.setDeviationRatio(realQty == 0 ? BigDecimal.ZERO : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP));
             dto.setAvgThreeSalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE.getName()));
@@ -701,7 +737,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setOneHundredAndEightySalesQty(salesQtyMap.get(TimePeriodEnum.ONE_HUNDRED_AND_EIGHTY.getName()));
             dto.setTwoHundredAndSeventySalesQty(salesQtyMap.get(TimePeriodEnum.TWO_HUNDRED_AND_SEVENTY.getName()));
             dto.setThreeHundredAndSixtySalesQty(salesQtyMap.get(TimePeriodEnum.THREE_HUNDRED_AND_SIXTY.getName()));
-            dto.setSimilarity(record.getSimilarity());
+            dto.setR2Score(record.getR2Score());
+            dto.setMapeScore(record.getMapeScore());
+            dto.setMaeScore(record.getMaeScore());
+            dto.setMseScore(record.getMseScore());
+            dto.setRmseScore(record.getRmseScore());
             return dto;
         }
     }
@@ -775,9 +815,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private LocalDate endCalcDate;
 
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
     }
 
     @Getter
@@ -939,9 +995,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private Boolean favorite;
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
     }
 
     @Getter
@@ -1052,6 +1124,12 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 结束日期
          */
         private LocalDate endDate;
+
+        /**
+         * 预测类型
+         * @see MetricsTypeEnum
+         */
+        private String metricsType;
     }
 
     /**
@@ -1249,9 +1327,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private String platform;
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
 
         /**
          * 修改人名称
