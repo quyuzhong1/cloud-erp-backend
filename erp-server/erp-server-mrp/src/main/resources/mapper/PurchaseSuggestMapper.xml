@@ -35,6 +35,7 @@
         ps.update_time as updateTime,
         ps.code,
         ps.data_type as dataType,
+        ps.suggest_delivery_qty as suggestDeliveryQty,
         ps.suggest_purchase_qty as suggestPurchaseQty,
         ps.suggest_purchase_date as suggestPurchaseDate,
         ps.logistics_method as logisticsMethod,

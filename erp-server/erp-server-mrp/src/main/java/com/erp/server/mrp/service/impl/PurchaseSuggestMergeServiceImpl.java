@@ -326,6 +326,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         List<PurchaseSuggestMergeDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         for (ReplenishmentResultDTO.PurchaseSuggestDTO purchaseSuggestDTO : purchaseSuggests) {
             PurchaseSuggestMergeDTO.AddOrUpdateDTO addOrUpdateDTO = PurchaseSuggestConverter.INSTANCE.purchaseSuggestToMergeAdd(purchaseSuggestDTO);
+            addOrUpdateDTO.setId(null);
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_PP);
             addOrUpdateDTO.setCode(code);
@@ -651,6 +652,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollUtil.isEmpty(purchaseSuggestMergeList)) {
             return Collections.emptyList();
         }
+        //采购建议源数据
+        List<String> purchaseSuggestIdList = purchaseSuggestMergeList.stream().flatMap(obj -> Stream.of(obj.getSourceIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(purchaseSuggestIdList);
+        if (CollectionUtils.isEmpty(purchaseSuggestList)) {
+            return Collections.emptyList();
+        }
         //计划修正值（已使用）
         Integer usePlanQty = MathUtil.ZERO;
         //计划修正值（已使用）
@@ -661,6 +668,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             PurchaseSuggestMergeDTO.MergeFrameDTO mergeFrameDTO = new PurchaseSuggestMergeDTO.MergeFrameDTO();
             mergeFrameDTO.setCode(purchaseSuggestMergeEntity.getCode());
             mergeFrameDTO.setSuggestPurchaseQty(purchaseSuggestMergeEntity.getSuggestPurchaseQty());
+            //补货建议id
+            String sourceId = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestMergeEntity.getSourceIdJson().get(0).toString())).map(obj -> obj.getSourceIdJson().get(0).toString()).findFirst().orElse(null);
+            mergeFrameDTO.setSourceId(sourceId);
 
             //计划修正值,系统建议值从小到大依次分摊 = 子单系统值 / 合并单系统值 * 合并单修正数,抹零取整，最后一个相加
             if (i == purchaseSuggestMergeList.size() - 1) {

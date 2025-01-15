@@ -861,5 +861,9 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 采购备货数
          */
         private Integer purchaseStockUpQty;
+        /**
+         * 来源id(补货建议明细id)
+         */
+        private String sourceId;
     }
 }
