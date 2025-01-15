@@ -87,8 +87,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_PLATFORM_SKU;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_WAREHOUSE_SKU;
+import static com.common.business.enums.FileTaskEventEnum.*;
 
 /**
  * <p>
@@ -1017,9 +1016,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     }
 
-    private void fillCustomerDb(List<SkuMappingDTO.CustomerPagingViewDTO> list) {
+    private void fillCustomerDb(List<SkuMappingDTO.CustomerPagingViewDTO> list,PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
         for (SkuMappingDTO.CustomerPagingViewDTO item : list) {
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
+            if(StringUtils.isNotBlank(item.getProductImageUrl()) && dto.getParams().isExport()){
+                item.setImageByte(FastDFSClientUtil.getFileByte(item.getProductImageUrl()));
+            }
         }
 
     }
@@ -1669,7 +1671,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
         }
-        fillCustomerDb(list);
+        fillCustomerDb(list,dto);
         return new PagingVO<>(pageData);
     }
 
@@ -1767,7 +1769,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto) {
-        return null;
+        downloadTaskFeign.saveDownloadTask("sku对照列表", EXPORT_OMS_CUSTOMER_SKU.getCode(), dto);
+        return Boolean.TRUE;
     }
 
 }

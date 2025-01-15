@@ -1,5 +1,8 @@
 package com.erp.model.oms.dto;
 
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.business.annotation.MenuCode;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -262,6 +265,7 @@ public class SkuMappingDTO implements Serializable {
 
         private String type;
 
+        private boolean isExport;
     }
 
     /**
@@ -606,7 +610,10 @@ public class SkuMappingDTO implements Serializable {
          * 图片
          */
         private String productImageUrl;
-
+        /**
+         * 图片byte
+         */
+        private byte[] imageByte;
         /**
          * 客户sku
          */

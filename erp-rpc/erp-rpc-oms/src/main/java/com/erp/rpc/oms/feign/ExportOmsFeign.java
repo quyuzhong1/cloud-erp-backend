@@ -31,6 +31,8 @@ public interface ExportOmsFeign {
     PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto);
     @PostMapping("/feign/export/warehouseSku")
     PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
+    @PostMapping("/feign/export/customerSku")
+    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> exportCustomerSku(@RequestBody PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
     @PostMapping("/feign/export/shop")
     PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto);
     @PostMapping("/feign/export/customer")
