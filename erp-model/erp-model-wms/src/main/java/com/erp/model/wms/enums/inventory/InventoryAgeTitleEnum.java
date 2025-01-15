@@ -11,6 +11,7 @@ import java.util.Optional;
  */
 public enum  InventoryAgeTitleEnum {
 
+    SKU_NO("skuNo", "SKU"),
     SKU_INFO("skuInfo", "产品信息"),
     SPU_NO("spuNo", "SPU型号"),
     SALE_STATE_NAME("saleStateName", "销售状态"),

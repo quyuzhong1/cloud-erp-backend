@@ -1445,6 +1445,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         for (LinkedHashMap<String, Object> data : convertDataList) {
             LinkedHashMap<String, Object> sortedData = new LinkedHashMap<>();
             // 按照指定的顺序插入字段
+            sortedData.put("skuNo", data.get("skuNo"));
             sortedData.put("productName", data.get("productName"));
             sortedData.put("spuNo", data.get("spuNo"));
             sortedData.put("saleStateName", data.get("saleStateName"));
