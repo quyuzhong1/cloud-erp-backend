@@ -153,6 +153,7 @@ public class InventoryServiceImpl implements InventoryService {
                     inventoryDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO.buildReplenishmentInventoryDetailDTO(
                             inventoryType.getCode(), resultDTO, dto, warehouseQty.intValue(), detailDTOS));
                     k++;
+                    warehouseCount = warehouseCount.add(warehouseQty);
                 }
             }
         }
@@ -637,16 +638,16 @@ public class InventoryServiceImpl implements InventoryService {
                     .map(ReplenishmentResultDTO.LocalInTransitDetailDTO::getQty)
                     .reduce(0, Math::addExact);
             int i = 0;
-            int countQty = 0;
+            BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.LocalInTransitDetailDTO dto : entry.getValue()) {
-                int currentQty;
+                BigDecimal currentQty;
                 if (i == entry.getValue().size()) {
-                    currentQty = totalQty - countQty;
+                    currentQty = new BigDecimal(totalQty).subtract(countQty);
                 } else {
-                    currentQty = dto.getQty() / totalQty * shopQty.intValue();
+                    currentQty = new BigDecimal(dto.getQty()).multiply(shopQty).divide(new BigDecimal(totalQty), 2, RoundingMode.FLOOR);
                 }
-                dto.setShopPreQty(currentQty);
-                countQty += currentQty;
+                dto.setShopPreQty(currentQty.intValue());
+                countQty = countQty.add(currentQty);
                 i++;
             }
 
