@@ -184,6 +184,7 @@ public class SdyDataSyncJob {
                         dictBasicEntityList,
                         dictList);
             }
+            currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
     }
@@ -275,6 +276,7 @@ public class SdyDataSyncJob {
                         soReturnReceiveEntityList,
                         receiveReturnList);
             }
+            currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
 
