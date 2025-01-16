@@ -734,10 +734,31 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private void fillList(List<FbaShipmentDTO.ListDTO> records) {
         List<String> codes = records.stream().map(req -> req.getCode()).distinct().collect(Collectors.toList());
         List<String> skuNos = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<String> shopIds = records.stream().map(FbaShipmentDTO.ListDTO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         //根据来源详情id查询发货详情
         List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listApprovedByFbaShipmentCodes(codes);
         //根据sku获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+
+        // 店铺信息
+        List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+        // 同步记录
+        List<DmpInoutDTO.LastOneDTO> lastOneDTOS = new LinkedList<>();
+
+        if (CollectionUtils.isNotEmpty(shopList)){
+            // 查询最近同步任务
+            List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
+            shopList.forEach(v->{
+                DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
+                commonDTO.setSystemCode(PlatformDictEnum.AMAZON.getCode());
+                commonDTO.setBillType(BusinessTypeEnum.FBA_SHIPMENT.getCode());
+                commonDTO.setNextLevelId(v.getId());
+                commonDTOList.add(commonDTO);
+            });
+            lastOneDTOS = dmpInoutTaskFeign.newInputTaskList(commonDTOList);
+        }
+
+
         for (FbaShipmentDTO.ListDTO record : records) {
             record.setPackingDownload(record.getIsPackingDownload()?"已下载":"未下载");
             //设置发货状态中文
@@ -769,6 +790,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //产品名称
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
             record.setProductName(skuVO.getSkuName());
+
+            // 最近同步时间
+            record.setLastSyncTime(getLastSyncTime(record.getShopId(), shopList, lastOneDTOS));
         }
     }
 
