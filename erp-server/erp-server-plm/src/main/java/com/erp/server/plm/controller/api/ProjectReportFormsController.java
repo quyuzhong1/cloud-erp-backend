@@ -9,6 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
+import com.erp.server.plm.query.ProjectReportFormsQueryHandler;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -38,7 +39,7 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/purchaseBusinessGatherTable")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ProjectReportFormsQueryHandler.class)
     public ApiResult<PagingVO<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
         PagingVO<ProjectReportFormsDTO.PagingView> listPagingVO = projectReportFormsService.projectReportFormsPaging(dto);
         return success(listPagingVO);
@@ -66,6 +67,7 @@ public class ProjectReportFormsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目报表")
     @PostMapping(value = "/exportExcelPurchaseBusiness")
+    @WebAdvanceQuery(handler = ProjectReportFormsQueryHandler.class)
     public ApiResult<Object> exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
         Boolean flag = projectReportFormsService.exportExcelProjectReportForms(dto);
         return flag == true ? success() : failure();

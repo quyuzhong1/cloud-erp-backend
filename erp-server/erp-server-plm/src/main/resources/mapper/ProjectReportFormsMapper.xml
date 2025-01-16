@@ -256,8 +256,9 @@
             WHERE pot.is_deleted = FALSE
             GROUP BY pot.product_id
         ) pott ON pott.product_id = pi.id
-        WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
-
+        WHERE
+        ${params.sqlMap.default} and
+        pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
         <if test="params.ids != null and params.ids.size > 0">
             AND pi.id IN
             <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
