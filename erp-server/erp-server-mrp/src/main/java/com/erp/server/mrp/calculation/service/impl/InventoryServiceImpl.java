@@ -867,6 +867,20 @@ public class InventoryServiceImpl implements InventoryService {
                     .map(ReplenishmentInventoryDTO.EstimatedPurchaseDTO::getQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
         }
+        if (CfgRuleSuggestedAmountNodeEnum.FBA_PLAN_DELIVERY_QTY.getCode().equals(code)) {
+            return Optional.ofNullable(replenishmentResultDTO.getFbaDeliveryDetails()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getShopPreQty)
+                    .reduce(0, Math::addExact);
+        }
+        if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_PLAN_DELIVERY_QTY.getCode().equals(code)) {
+            return Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(new ArrayList<>())
+                    .stream()
+                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getShopPreQty)
+                    .reduce(0, Math::addExact);
+        }
         return 0;
     }
 
