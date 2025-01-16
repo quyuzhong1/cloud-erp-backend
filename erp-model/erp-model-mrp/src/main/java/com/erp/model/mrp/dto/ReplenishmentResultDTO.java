@@ -1109,9 +1109,9 @@ public class ReplenishmentResultDTO {
          */
         private Boolean isMerge;
         /**
-         * 补货建议明细id
+         * 补货建议id
          */
-        private String replenishmentSuggestionDetailId;
+        private String replenishmentSuggestionId;
 
         public static PurchaseSuggestDTO buildPurchaseSuggestDTO( CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,List<String> deliverySuggestIdList) {
             PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
@@ -1126,7 +1126,7 @@ public class ReplenishmentResultDTO {
             dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
             dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
             dto.setSkuNo(replenishmentResultDTO.getReplenishment().getSkuNo());
-            dto.setReplenishmentSuggestionDetailId(replenishmentResultDTO.getDeliverySuggests().get(0).getSourceId());
+            dto.setReplenishmentSuggestionId(replenishmentResultDTO.getDeliverySuggests().get(0).getSourceId());
             return dto;
         }
 
@@ -1151,7 +1151,7 @@ public class ReplenishmentResultDTO {
             entity.setPlatform(dto.getPlatform());
             entity.setShopId(dto.getShopId());
             entity.setSkuId(dto.getSkuId());
-            entity.setReplenishmentSuggestionDetailId(dto.getReplenishmentSuggestionDetailId());
+            entity.setReplenishmentSuggestionId(dto.getReplenishmentSuggestionId());
             return entity;
         }
     }
