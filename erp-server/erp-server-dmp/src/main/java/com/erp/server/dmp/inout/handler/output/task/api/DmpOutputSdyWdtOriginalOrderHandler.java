@@ -264,7 +264,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                         if(StringUtils.isNotBlank(subPlatformType)) {
                             List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                             if(CollUtil.isNotEmpty(dictList)) {
-                                shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                                shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getName());
                                 shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
                             }
                         }

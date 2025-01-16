@@ -185,6 +185,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList1) {
+        if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
+            return Collections.emptyList();
+        }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
         if (CollUtil.isEmpty(dmpSoDetailEntities)) {
             return Collections.emptyList();
@@ -290,7 +293,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                             if(StringUtils.isNotBlank(subPlatformType)) {
                                 List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                                 if(CollUtil.isNotEmpty(dictList)) {
-                                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getName());
                                     shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
                                 }
                             }
@@ -454,7 +457,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
-            shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
+            shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
 
             shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
 

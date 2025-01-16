@@ -235,6 +235,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     private LogisticsFeign logisticsFeign;
 
     @Resource
+    private OmsPushMsgService omsPushMsgService;
+
+    @Resource
     private CfgSettingFeign fgSettingFeign;
 
     @Resource

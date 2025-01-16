@@ -7,6 +7,7 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -19,16 +20,22 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPushMsgEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.KingdeePostService;
+import com.erp.server.sys.service.SysAccountingCompanyService;
 import com.erp.server.sys.service.SysPushMsgService;
 import com.erp.server.sys.service.SysUserInfoService;
+import com.erp.server.sys.service.impl.SysAccountingCompanyImpl;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -131,6 +138,16 @@ public class SyncKingdeeUserPostServiceImpl implements SyncKingdeeUserPostServic
         resultMap.put("syncKingdeeId", entity.getKingdeeId());
         resultMap.put("operate", operate);
         String useOrgCode = entity.getUseOrgCode();
+        if(StringUtils.isBlank(useOrgCode)) {
+        	String useOrgId = entity.getUseOrgId();
+        	if(StringUtils.isNotBlank(useOrgId)) {
+        		SysAccountingCompanyImpl sysAccountingCompany = ApplicationContextUtils.getBean(SysAccountingCompanyImpl.class);
+        		SysAccountingCompanyEntity sysAccountingCompanyEntity = sysAccountingCompany.getById(useOrgId);
+        		if(sysAccountingCompanyEntity != null) {
+        			useOrgCode = sysAccountingCompanyEntity.getCode();
+        		}
+        	}
+        }
         resultMap.put("createOrgCode", useOrgCode);
         resultMap.put("useOrgCode", useOrgCode);
         String userId = entity.getErpUserId();

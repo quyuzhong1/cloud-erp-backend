@@ -249,7 +249,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                         if(StringUtils.isNotBlank(subPlatformType)) {
                             List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                             if(CollUtil.isNotEmpty(dictList)) {
-                                sdyDTO.setSubplatform_no(dictList.get(0).getValue());
+                                sdyDTO.setSubplatform_no(dictList.get(0).getName());
                                 sdyDTO.setSubplatform_name(dictList.get(0).getValue());
                             }
                         }
@@ -305,7 +305,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 if(StringUtils.isNotBlank(subPlatformType)) {
                     List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                     if(CollUtil.isNotEmpty(dictList)) {
-                        sdyDTO.setSubplatform_no(dictList.get(0).getValue());
+                        sdyDTO.setSubplatform_no(dictList.get(0).getName());
                         sdyDTO.setSubplatform_name(dictList.get(0).getValue());
                     }
                 }

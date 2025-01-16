@@ -3722,4 +3722,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         }
         return virtualWarehouseList.get(0).getVirtualWarehouseId();
     }
+
+
+    @Override
+    public List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params) {
+        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate() || StringUtils.isBlank(params.getCurrency())){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listAmountBySkuIds(params);
+    }
 }

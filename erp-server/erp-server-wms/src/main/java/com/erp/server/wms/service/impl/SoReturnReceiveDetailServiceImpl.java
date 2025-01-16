@@ -34,10 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -107,6 +104,11 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<String> skuNos = skuInfoByIds.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
             skuParamDTO.setSkuNoList(skuNos);
             List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
+            List<SoReturnReceiveDetailDTO.Add> detailList = dto.getDetailList();
+            if(CollUtil.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_92173);
+            }
+            Map<String , Integer> returnDetailIdMap = new HashMap<>();
             for (SoReturnReceiveDetailDTO.Add detailDto : dto.getDetailList()) {
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
@@ -188,6 +190,16 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
                             .filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
                             .map(SoReturnReceiveDetailEntity::getReceiveQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
+                    //校验是否存在重复的明细并且数量大于退货数量
+                    if(returnDetailIdMap.containsKey(detailDto.getSourceDetailId())){
+                        Integer detailReturnQtySum = returnDetailIdMap.get(detailDto.getSourceDetailId()) + detailDto.getReceiveQty();
+                        if (returnQty < detailReturnQtySum + historyReceiveQty) {
+                            throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
+                        }
+                        returnDetailIdMap.put(detailDto.getSourceDetailId(),detailReturnQtySum);
+                    }else {
+                        returnDetailIdMap.put(detailDto.getSourceDetailId(),detailDto.getReceiveQty());
+                    }
                     if (returnQty < detailDto.getReceiveQty() + historyReceiveQty) {
                         throw new ServiceException(ApiError.ERROR_92020, skuVO.getSkuNo());
                     }else if(historyReceiveQty > 0 && returnQty == detailDto.getReceiveQty() + historyReceiveQty){
@@ -374,6 +386,10 @@ public class SoReturnReceiveDetailServiceImpl extends SuperServiceImpl<SoReturnR
             List<String> skuNos = skuInfoByIds.stream().map(SkuVO::getSkuNo).collect(Collectors.toList());
             skuParamDTO.setSkuNoList(skuNos);
             List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoList = skuMappingFeign.listSkuBySkuNos(skuParamDTO);
+            List<SoReturnReceiveDetailDTO.Update> detailList = dto.getDetailList();
+            if(CollUtil.isEmpty(detailList)) {
+                throw new ServiceException(ApiError.ERROR_92172);
+            }
             for (SoReturnReceiveDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnReceiveDetailEntity detailEntity = new SoReturnReceiveDetailEntity();

@@ -268,6 +268,12 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                 }
             } else if (SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(entity.getSourceType())) {
                 rootNodeNoInitial = entity.getSourceId();
+            } else if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equals(entity.getSourceType())) {
+                if (CharSequenceUtil.isNotBlank(entity.getPlatformOrderCode())) {
+                    rootNodeNoInitial = entity.getPlatformOrderCode();
+                } else {
+                    rootNodeNoInitial = entity.getCode();
+                }
             }
         }
 

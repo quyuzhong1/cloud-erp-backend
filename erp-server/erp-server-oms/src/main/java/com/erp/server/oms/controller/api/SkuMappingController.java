@@ -6,8 +6,6 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -27,8 +25,8 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.ShopInfoService;
@@ -402,8 +400,6 @@ public class SkuMappingController extends BaseController {
         skuMappingService.syncWarehouseProduct(dto.getIds());
         return success();
     }
-
-
     /**
      * 根据customerId和skuno 关联查询平台sku
      * @author jack
@@ -415,4 +411,16 @@ public class SkuMappingController extends BaseController {
     public ApiResult<List<SkuMappingDTO.ProductSkuInfoDTO>> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
         return this.success(skuMappingService.listSkuBySkuNos(skuParamDTO));
     }
+
+//    /**
+//     * 根据customerId和平台sku 查询是否存在套装bom
+//     * @author jack
+//     * @date: 2024-11-07
+//     * @param skuParamDTO
+//     * @return ApiResult<List<BomChildrenSkuDTO>>
+//     */
+//    @PostMapping("/checkBomByPlatformSkuNos")
+//    public ApiResult<List<BomChildrenSkuDTO>> checkBomByPlatformSkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
+//        return this.success(skuMappingService.checkBomByPlatformSkuNos(skuParamDTO));
+//    }
 }
