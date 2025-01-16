@@ -608,10 +608,16 @@
         <if test="params.type != null and params.type != ''">
             AND li.type = #{params.type} AND sm.type = #{params.type}
         </if>
+        <if test="params.authId != null and params.authId != ''">
+            AND li.auth_id = #{params.authId}
+        </if>
+        <if test="params.platformSkuNoList !=null and params.platformSkuNoList.size>0">
         AND li.platform_sku_no IN
         <foreach collection="params.platformSkuNoList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
+
     </select>
     <select id="customerPaging" resultType="com.erp.model.oms.dto.SkuMappingDTO$CustomerPagingViewDTO">
         SELECT

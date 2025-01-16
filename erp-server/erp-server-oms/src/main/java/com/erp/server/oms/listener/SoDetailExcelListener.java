@@ -3,6 +3,7 @@ package com.erp.server.oms.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
@@ -29,6 +30,8 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
      */
     List<SkuVO> skuList;
 
+    List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS;
+
     /**
      * 成功的数据
      */
@@ -44,8 +47,9 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
      *
      * @param skuList
      */
-    public SoDetailExcelListener(List<SkuVO> skuList) {
+    public SoDetailExcelListener(List<SkuVO> skuList,List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS) {
         this.skuList = skuList;
+        this.skuMappingViewDTOS = skuMappingViewDTOS;
     }
 
 
@@ -67,12 +71,38 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
             errorMsgList.addAll(msgList);
         }
         String skuNo = soDetailImportExcelDTO.getSkuNo();
-        SkuVO sku = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-        if (Objects.isNull(sku)) {
-            errorMsgList.add("sku 不存在");
+
+        if(StringUtils.isBlank(skuNo) && StringUtils.isBlank(soDetailImportExcelDTO.getPlatformSkuNo()) ){
+            errorMsgList.add("skuNo和平台skuNo不能同时为空");
+        }
+        SkuVO sku = null;
+        if(StringUtils.isNotBlank(skuNo)){
+            String finalSkuNo = skuNo;
+            sku = skuList.stream().filter(s -> s.getSkuNo().equals(finalSkuNo)).findFirst().orElse(null);
+            if (Objects.isNull(sku)) {
+                errorMsgList.add("sku 不存在");
+            }
+        }
+        if(StringUtils.isNotBlank(soDetailImportExcelDTO.getPlatformSkuNo())){
+            SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(s -> s.getPlatformSkuNo().equals(soDetailImportExcelDTO.getPlatformSkuNo())).findFirst().orElse(null);
+            if(Objects.isNull(skuMappingViewDTO)){
+                errorMsgList.add("客户sku映射不存在");
+            }else{
+                if(StringUtils.isNotBlank(skuNo) && !skuNo.equals(skuMappingViewDTO.getProductSkuNo())){
+                    errorMsgList.add("客户sku映射与skuNo不匹配");
+                }
+                if(StringUtils.isBlank(skuNo)){
+                    skuNo = skuMappingViewDTO.getProductSkuNo();
+                    String finalSkuNo1 = skuNo;
+                    sku = skuList.stream().filter(s -> s.getSkuNo().equals(finalSkuNo1)).findFirst().orElse(null);
+                    if (Objects.isNull(sku)) {
+                        errorMsgList.add("sku 不存在");
+                    }
+                }
+            }
         }
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             soDetailImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(soDetailImportExcelDTO);
             return;
@@ -87,7 +117,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
 
         //是否关闭
         String isClose = soDetailImportExcelDTO.getIsClose();
-        addDTO.setIsClose(StringUtils.isBlank(isClose) ? false : isClose.equals("是"));
+        addDTO.setIsClose(!StringUtils.isBlank(isClose) && isClose.equals("是"));
         addDTO.setSkuNo(skuNo);
         addDTO.setSkuId(sku.getSkuId());
         addDTO.setProductName(sku.getSkuName());
@@ -107,6 +137,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setPrice(new BigDecimal(priceStr));
         addDTO.setTaxRate(taxRate);
         addDTO.setRemark(soDetailImportExcelDTO.getRemark());
+        addDTO.setPlatformSkuNo(soDetailImportExcelDTO.getPlatformSkuNo());
         successList.add(addDTO);
     }
 
