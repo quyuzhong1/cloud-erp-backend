@@ -5232,96 +5232,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
-    /**
-     * 报表管理 销售统计
-     *
-     * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
-     * @author yl
-     * @date 2023-09-01 11:19
-     */
-    @Override
-    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        ReportDTO.ProductSalesPagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        AdvanceQueryDTO advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream()
-                .filter(e -> "sb.platform_order_create_time".equals(e.getField()))
-                .findFirst()
-                .orElse(null);
-        if (null == advanceQueryDTO){
-            advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream()
-                    .filter(e -> "sb.create_time".equals(e.getField()))
-                    .findFirst()
-                    .orElse(null);
-        }
-        if (null == advanceQueryDTO){
-            throw new ServiceException("订单创建时间必传");
-        }
-        if (null == advanceQueryDTO.getValue()){
-            throw new ServiceException("订单创建时间不能为空");
-        }
 
-        // 销售订单开始时间
-        LocalDateTime startTime = null;
-        // 销售订单结束时间
-        LocalDateTime endTime = null;
-        if (QueryConditionEnum.GT.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())
-                || QueryConditionEnum.GE.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())){
-            startTime = LocalDateTime.of(LocalDate.parse(advanceQueryDTO.getValue().toString()), LocalTime.MIN);
-            endTime = LocalDateTime.now(ZoneId.systemDefault());
-        }
-
-        if (QueryConditionEnum.LT.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())
-                || QueryConditionEnum.LE.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())){
-            startTime = LocalDateTime.of(1970, 1 , 1,  0, 0, 0);
-            endTime = LocalDateTime.of(LocalDate.parse(advanceQueryDTO.getValue().toString()), LocalTime.MIN);;
-        }
-        if (QueryConditionEnum.BETWEEN.getCompareCode().equalsIgnoreCase(advanceQueryDTO.getCompare())) {
-            JSONArray dateJsonArray = JSONArray.parseArray(JSON.toJSONString(advanceQueryDTO.getValue()));
-            startTime = LocalDateTime.of(LocalDate.parse(dateJsonArray.get(0).toString()), LocalTime.MIN);
-            endTime = LocalDateTime.of(LocalDate.parse(dateJsonArray.get(1).toString()), LocalTime.MIN);
-        }
-        if (null == startTime || null == endTime){
-            ServiceException.runError("解析单创建时间失败");
-        }
-
-        //sku 创建时间
-        List<LocalDateTime> skuCreateTimeList = params.getSkuCreateTimeList();
-        List<String> skuIdList = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
-            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
-            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(skuIdList)) {
-                return new PagingVO<>(new Page<>());
-            }
-        }
-        IPage pageData = baseMapper.productSalesPaging(query, params, skuIdList);
-        List<ReportDTO.ProductSalesPagingViewDTO> list = pageData.getRecords();
-        Duration between = LocalDateTimeUtil.between(startTime, endTime);
-        long diffDays = between.toDays();
-        if (diffDays == 0) {
-            diffDays = 1;
-        }
-        fillProductSalesList(list, diffDays);
-        return new PagingVO<>(pageData);
-
-    }
-
-
-    /**
-     * 导出 销售统计
-     *
-     * @param params
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-09-04 16:39
-     */
-    @Override
-    public Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("产品销售统计", EXPORT_OMS_SO_B2C_PRODUCT_SALES.getCode(), params);
-        return Boolean.TRUE;
-    }
 
     @Override
     public SoB2cDTO.FinancialInfoDTO getFinancialInfoById(SoB2cDTO.FinancialParamDTO dto) {
@@ -5571,45 +5482,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cFinanceService.add(addDTO);
     }
 
-    /**
-     * 填充销售订单数据
-     *
-     * @param list
-     * @param diffDays
-     */
-    private void fillProductSalesList(List<ReportDTO.ProductSalesPagingViewDTO> list, long diffDays) {
-        List<String> shopIdList = list.stream().map(ReportDTO.ProductSalesPagingViewDTO::getShopId).collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = CollectionUtils.isNotEmpty(shopIdList) ? shopInfoService.listByIds(shopIdList) : Collections.emptyList();
-        //平台skuno
-        List<String> platformSkuNoList = list.stream().map(ReportDTO.ProductSalesPagingViewDTO::getPlatformSkuNo).collect(Collectors.toList());
-
-        List<SkuMappingDTO.SkuDTO> skuInfoList = skuMappingService.listByPlatformSkuNoList(platformSkuNoList);
-        for (ReportDTO.ProductSalesPagingViewDTO item : list) {
-            String shopId = item.getShopId();
-            //平台sku
-            String platformSkuNo = item.getPlatformSkuNo();
-            SkuMappingDTO.SkuDTO sku = skuInfoList.stream().filter(s -> s.getPlatformSkuNo().equals(platformSkuNo)).
-                    findFirst().orElse(null);
-            String productSkuNo = "";
-            String sellerSkuNo = "";
-            if (Objects.nonNull(sku)) {
-                productSkuNo = sku.getProductSkuNo();
-                sellerSkuNo = sku.getFlagSkuNo();
-            }
-            item.setProductSkuNo(productSkuNo);
-            item.setSellerSkuNo(sellerSkuNo);
-            String shopName = shopInfoList.stream().filter(s -> s.getId().equals(shopId)).
-                    findFirst().map(ShopInfoEntity::getName).orElse("");
-            item.setShopName(shopName);
-            int qty = null == item.getQty() ? 0 : item.getQty();
-            Integer avgQty = Math.toIntExact(qty / diffDays);
-            item.setAvgQty(avgQty);
-            BigDecimal amount = item.getAmount();
-            BigDecimal avgAmount = amount.divide(new BigDecimal(diffDays), 4, RoundingMode.HALF_UP);
-            item.setAvgAmount(avgAmount);
-
-        }
-    }
 
 
     @Override
@@ -7330,28 +7202,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return new PagingVO<>(records, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
-    @Override
-    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        //sku 创建时间
-        List<LocalDateTime> skuCreateTimeList = dto.getParams().getSkuCreateTimeList();
-        List<String> skuIdList = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
-            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
-            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(skuIdList)) {
-                return new PagingVO<>();
-            }
-        }
-        //获取到产品销售统计导出的数据
-        Page<ReportDTO.ProductSalesPagingViewDTO> page = baseMapper.listProductSalesExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), skuIdList);
-        Duration between = LocalDateTimeUtil.between(dto.getParams().getOrderCreateTimeList().get(0), dto.getParams().getOrderCreateTimeList().get(1));
-        long diffDays = between.toDays();
-        if (diffDays == 0) {
-            diffDays = 1;
-        }
-        fillProductSalesList(page.getRecords(), diffDays);
-        return new PagingVO<>(page);
-    }
 
     @Override
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail() {
@@ -9487,4 +9337,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         return "";
     }
+
+    @Override
+    public IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.productSalesPaging(query, params, skuIdList);
+    }
+
+    @Override
+    public Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.listProductSalesExport(query, params, skuIdList);
+    }
+
 }
