@@ -11,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -27,10 +28,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
-import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaDefaultTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleSalesFormulaTypeEnum;
-import com.erp.model.mrp.enums.HistorySalesTypeEnum;
+import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -400,6 +398,14 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         return detailEntityList.stream()
                 .map(v -> new CfgRuleCalcDTO.SkuDTO(v.getId(), v.getSkuNo()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CfgRuleCalcDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<CfgRuleCalcDTO.TabListDTO> list = new ArrayList<>();
+        list.add(new CfgRuleCalcDTO.TabListDTO(CalcStatusEnum.DOING.getCode()));
+        list.add(new CfgRuleCalcDTO.TabListDTO(CalcStatusEnum.FINISH.getCode()));
+        return list;
     }
 
 

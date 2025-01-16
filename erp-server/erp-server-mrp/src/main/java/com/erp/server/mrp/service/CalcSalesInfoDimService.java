@@ -2,6 +2,7 @@ package com.erp.server.mrp.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
@@ -121,4 +122,16 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param dto 参数
      */
     PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
+
+    /**
+     * tab
+     * @param dto 参数
+     */
+    List<CalcSalesInfoDimDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 翻页id
+     * @param params 参数
+     */
+    List<CalcSalesInfoDimDTO.DataIdPageDTO> dataIdPage(CalcSalesInfoDimDTO.ParamDTO params);
 }

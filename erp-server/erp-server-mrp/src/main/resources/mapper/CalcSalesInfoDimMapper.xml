@@ -64,7 +64,8 @@
                csic.remark,
                csic.cfg_rule_calc_id,
                crc.name,
-               crc.code
+               crc.code,
+               csic.status
         from calc_sales_info_dim csic
                  inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where csic.id = #{id}
@@ -118,7 +119,8 @@
         csic.mape_score as mapeScore,
         csic.mae_score as maeScore,
         csic.mse_score as mseScore,
-        csic.rmse_score as rmseScore
+        csic.rmse_score as rmseScore,
+        csic.status
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
@@ -145,7 +147,8 @@
         crc.name,
         crc.code,
         crc.start_calc_date startCalcDate,
-        crc.end_calc_date endCalcDate
+        crc.end_calc_date endCalcDate,
+        crc.status
         from cfg_rule_calc as crc
         where ${params.sqlMap.default}
         and crc.is_deleted = FALSE
@@ -233,5 +236,25 @@
             and user_id = #{uid})
         </if>
         order by csic.update_time desc,csic.id desc
+    </select>
+    <select id="dataIdPage" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$DataIdPageDTO">
+
+        select crc.id as cfgRuleCalcId,
+        csic.id
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        csic.update_time desc
     </select>
 </mapper>
