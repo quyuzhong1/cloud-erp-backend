@@ -5928,20 +5928,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(customerInfo)) {
             dto.setSellerId(customerInfo.getSellerId());
             dto.setSellerName(customerInfo.getSellerName());
+            dto.setSalesDeptId(customerInfo.getSalesDeptId());
         } else {
+            CustomerInfoEntity chargeInfo = customerInfoService.getById(chargeId);
             dto.setSellerId(chargeId);
             dto.setSellerName(shopInfoEntity.getChargeName());
+            dto.setSalesDeptId(Objects.nonNull(chargeInfo) ? chargeInfo.getSalesDeptId() : CharSequenceUtil.EMPTY);
         }
         if (Objects.nonNull(soB2cReceiver)) {
             dto.setCountry(soB2cReceiver.getCountry());
         }
-        SysDepartmentUserNumberDTO deptUser = null;
-        if (!StringUtil.isEmpty(dto.getSellerId())) {
-            deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
-        }
-        if (Objects.nonNull(deptUser)) {
-            dto.setSalesDeptId(deptUser.getDepartmentId());
-        }
+//        SysDepartmentUserNumberDTO deptUser = null;
+//        if (!StringUtil.isEmpty(dto.getSellerId())) {
+//            deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
+//        }
+//        if (Objects.nonNull(deptUser)) {
+//            dto.setSalesDeptId(deptUser.getDepartmentId());
+//        }
         dto.setSalesOrgId(entity.getOrgId());
         dto.setSalesOrgName(entity.getOrgName());
         // 记录是否是平台仓订单
