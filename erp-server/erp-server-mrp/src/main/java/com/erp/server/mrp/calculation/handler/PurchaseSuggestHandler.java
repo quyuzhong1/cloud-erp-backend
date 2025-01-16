@@ -21,7 +21,6 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -157,52 +156,4 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         }
         return purchaseSuggests;
     }
-
-    /**
-     * 获取建议发货日期
-     *
-     * @param localDate     断货日
-     * @param stockUpResult 备货配置
-     * @param now           计算日
-     */
-    private LocalDate getSuggestDeliveryDate(LocalDate localDate, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, LocalDate now) {
-        LocalDate suggestDeliveryDate = localDate.minusDays(stockUpResult.getPurchaseApproveDays())
-                .minusDays(stockUpResult.getQcDays())
-                .minusDays(stockUpResult.getProductionDays())
-                .minusDays(stockUpResult.getPurchaseCycleDays())
-                .minusDays(stockUpResult.getSupplierDeliveryDays())
-                .minusDays(stockUpResult.getSafeDays());
-        suggestDeliveryDate = suggestDeliveryDate.isBefore(now) ? now : suggestDeliveryDate;
-        return suggestDeliveryDate;
-    }
-
-    /**
-     * 获取建议发货量
-     *
-     * @param calculationDays      计算天数
-     * @param salesEstimates       预估销量
-     * @param stockingRatioResults 补货系数
-     * @param now                  计算开始日期
-     */
-    private int getSuggestDeliveryQty(LocalDate calculationDays, List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults, BigDecimal stockingRatio, LocalDate now) {
-        BigDecimal totalSaleQty = BigDecimal.ZERO;
-        while (now.isBefore(calculationDays)) {
-            LocalDate date = now;
-            //获取销量
-            BigDecimal saleQty = salesEstimates.parallelStream()
-                    .filter(v -> v.getDate().equals(date))
-                    .map(ReplenishmentResultDTO.SalesEstimateDTO::getSalesQty)
-                    .findFirst()
-                    .orElse(BigDecimal.ZERO);
-            BigDecimal ratio = stockingRatioResults.parallelStream()
-                    .filter(v -> !v.getStartDate().isAfter(date) && !v.getEndDate().isBefore(date))
-                    .max(Comparator.comparing(CfgRuleStockingRatioDTO.StockingRatioResultDTO::getIndex))
-                    .map(CfgRuleStockingRatioDTO.StockingRatioResultDTO::getStockingRatio)
-                    .orElse(stockingRatio);
-            totalSaleQty = totalSaleQty.add(saleQty.multiply(ratio));
-            now = now.plusDays(1);
-        }
-        return totalSaleQty.setScale(2, RoundingMode.CEILING).intValue();
-    }
-
 }
