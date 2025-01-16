@@ -100,6 +100,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER;
 @Slf4j
 public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper, CustomerInfoEntity> implements CustomerInfoService {
 
+    @Resource
+    private CommonService commonService;
 
     @Resource
     private CustomerContactService customerContactService;
@@ -441,10 +443,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         all.setSearchType(SearchType.ALL);
         resultList.add(all);
         //待审核
-        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
         CustomerDTO.TabListDTO waitApprove = new CustomerDTO.TabListDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        //需要审核的业务ids
+        List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.CUSTOMER_INFO.getCode());
+        int waitApproveCount = 0;
+        if(CollectionUtils.isNotEmpty(businessIds)){
+            List<CustomerInfoEntity> customerInfoEntities = this.listByIds(businessIds);
+            customerInfoEntities = customerInfoEntities.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)).collect(Collectors.toList());
+            waitApproveCount = customerInfoEntities.size();
+        }
         waitApprove.setCount(waitApproveCount);
         waitApprove.setSearchType(SearchType.WAIT_APPROVE);
         resultList.add(waitApprove);

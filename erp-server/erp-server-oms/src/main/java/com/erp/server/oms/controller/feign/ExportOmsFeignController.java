@@ -101,6 +101,12 @@ public class ExportOmsFeignController {
         return skuMappingService.exportWarehouseSku(dto);
     }
 
+    @PostMapping("/customerSku")
+    @WebAdvanceQuery
+    public PagingVO<SkuMappingDTO.CustomerPagingViewDTO> exportCustomerSku(@RequestBody PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
+        dto.getParams().setExport(true);
+        return skuMappingService.customerPaging(dto);
+    }
     @PostMapping("/shop")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

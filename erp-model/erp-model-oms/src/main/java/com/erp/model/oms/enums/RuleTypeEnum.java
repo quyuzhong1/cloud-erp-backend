@@ -20,6 +20,7 @@ import java.util.stream.Stream;
 public enum RuleTypeEnum implements EnumMessage {
     PLATFORM("platform","平台"),
     WAREHOUSE("warehouse","仓库"),
+    CUSTOMER("customer","客户"),
     ASSIGN("assign","指定物流"),
     MIN_FREIGHT("minFreight","最低运费")
     ;

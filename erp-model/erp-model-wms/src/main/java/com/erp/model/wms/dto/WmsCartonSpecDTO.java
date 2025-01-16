@@ -995,4 +995,18 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String sizeUnit;
     }
+    @Data
+    @NoArgsConstructor
+    public static class DeleteCartonDTO {
+        /**
+         * 装箱id
+         */
+        @NotBlank(message = "装箱任务ID不能为空")
+        private String taskId;
+        /**
+         * 箱子id
+         */
+        @NotBlank(message = "箱子ID不能为空")
+        private String cartonId;
+    }
 }

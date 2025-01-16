@@ -12,6 +12,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,14 +32,20 @@ public class SoB2cDeliveryDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class DeliverDTO{
+    public static class DeliverDTO {
         /**
          * manual 手动
          * falsehood 手动标发
          */
-      private String type;
+        private String type;
 
-      private List<String> ids;
+        @NotEmpty(message = "请选择需要发货的数据")
+        private List<String> ids;
+        /**
+         * 发货日期
+         */
+        @NotNull(message = "发货日期不能为空")
+        private LocalDate deliveryDate;
     }
 
 
