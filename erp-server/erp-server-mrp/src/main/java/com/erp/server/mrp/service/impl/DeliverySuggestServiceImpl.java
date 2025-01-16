@@ -381,6 +381,15 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode()) || old.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
+        if (MathUtil.compareTo(old.getPlanDeliveryQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+            throw new ServiceException("计划修正值必须大于0");
+        }
+        if (MathUtil.compareTo(old.getActualDeliveryQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+            throw new ServiceException("运营确认值必须大于0");
+        }
+        if (MathUtil.compareTo(old.getDeliveryStockUpQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+            throw new ServiceException("发货备货数必须大于0");
+        }
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.FINISH.getCode());
         old.setFinishDate(LocalDate.now());
