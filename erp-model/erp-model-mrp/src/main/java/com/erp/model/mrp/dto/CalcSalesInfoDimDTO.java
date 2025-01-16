@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -1024,6 +1025,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         @Dict(enumClass = CalcStatusEnum.class)
         private String status;
+
+        /**
+         * 序号
+         */
+        private Integer serialNo;
     }
 
     @Getter

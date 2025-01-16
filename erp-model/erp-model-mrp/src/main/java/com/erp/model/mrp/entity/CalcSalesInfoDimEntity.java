@@ -120,6 +120,11 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     @TableField("status")
     private String status;
 
+    /**
+     * 序号
+     */
+    @TableField("serial_no")
+    private String serialNo;
 
     public static final String SKU_ID = "sku_id";
 

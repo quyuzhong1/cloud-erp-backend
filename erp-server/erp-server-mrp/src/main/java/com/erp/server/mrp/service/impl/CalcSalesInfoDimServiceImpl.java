@@ -61,6 +61,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum.COMPLETELY;
@@ -109,9 +110,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList) {
+        AtomicInteger index = new AtomicInteger(0);
         for (CalcSalesInfoDimDTO.CalcResultDTO dto : calcResultList) {
             CompletableFuture.runAsync(() -> {
                 CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
+                entity.setSerialNo(String.format("%06d", index.incrementAndGet()));
                 entity.setId(dto.getCalcSalesInfoDimId());
                 List<CalcSalesInfoDenoisingEntity> allSalesList = new ArrayList<>();
                 //开始计算去噪销量
@@ -130,6 +133,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                 calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
                 calcSalesInfoDenoisingService.saveBatch(calculationSales);
                 calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
+                entity.setStatus(CalcStatusEnum.FINISH.getCode());
                 updateById(entity);
             }, threadPoolTaskExecutor);
         }
