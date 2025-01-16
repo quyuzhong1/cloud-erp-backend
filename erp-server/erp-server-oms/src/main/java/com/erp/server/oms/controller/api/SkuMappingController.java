@@ -31,7 +31,6 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.model.oms.dto.OperateLogDTO;
