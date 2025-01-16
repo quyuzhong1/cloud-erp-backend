@@ -103,6 +103,11 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
      */
     @TableField("supplier_id")
     private String supplierId;
+    /**
+     * 供应商
+     */
+    @TableField("supplier_name")
+    private String supplierName;
 
     /**
      * 仓库id
@@ -110,6 +115,11 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
     @TableField("warehouse_id")
     private String warehouseId;
 
+    /**
+     * 仓库
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
     /**
      * 来源详情id
      */
@@ -122,8 +132,6 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
     @TableField("source_code")
     private String sourceCode;
 
-
-    
 
     public static final String QC_DEPT_ID = "qc_dept_id";
 
