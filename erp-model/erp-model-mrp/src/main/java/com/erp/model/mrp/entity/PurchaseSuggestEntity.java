@@ -149,8 +149,8 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     /**
      * 补货建议明细id
      */
-    @TableField("replenishment_suggestion_detail_id")
-    private String replenishmentSuggestionDetailId;
+    @TableField("replenishment_suggestion_id")
+    private String replenishmentSuggestionId;
 
 
     public static final String CODE = "code";

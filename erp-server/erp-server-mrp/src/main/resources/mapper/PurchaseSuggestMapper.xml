@@ -52,6 +52,7 @@
         ps.sku_id as skuId,
         ps.plan_purchase_qty as planPurchaseQty,
         ps.purchase_stock_up_qty as purchaseStockUpQty,
+        ps.replenishment_suggestion_id,
         ps.remark
    </sql>
 

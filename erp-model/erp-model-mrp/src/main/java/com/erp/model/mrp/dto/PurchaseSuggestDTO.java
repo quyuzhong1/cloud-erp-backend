@@ -448,11 +448,11 @@ public class PurchaseSuggestDTO implements Serializable {
         private String skuId;
 
         /**
-         * 补货建议明细id
+         * 补货建议id
          */
-        @NotBlank(message = "补货建议明细id不能为空")
-        @Size(max = 19,message = "补货建议明细id最大长度不能超过19位")
-        private String replenishmentSuggestionDetailId;
+        @NotBlank(message = "补货建议id不能为空")
+        @Size(max = 19,message = "补货建议id最大长度不能超过19位")
+        private String replenishmentSuggestionId;
 
     }
     /**

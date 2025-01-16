@@ -152,6 +152,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
             childSuggestDTO.setSkuNo(bomSku.getSkuNo());
             childSuggestDTO.setParentSkuId(bomSku.getParentSkuId());
             childSuggestDTO.setQuantity(bomSku.getQuantity());
+            childSuggestDTO.setBomVersion(bomSku.getBomVersion());
             purchaseSuggests.add(childSuggestDTO);
         }
         return purchaseSuggests;
