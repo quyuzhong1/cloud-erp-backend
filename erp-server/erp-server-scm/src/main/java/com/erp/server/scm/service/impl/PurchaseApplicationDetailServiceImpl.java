@@ -182,6 +182,7 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
             //产品信息
             SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(entity.getSkuId())).findFirst().orElse(null);
             if (!org.springframework.util.ObjectUtils.isEmpty(skuVO)) {
+                entity.setSkuNo(skuVO.getSkuNo());
                 entity.setProductName(skuVO.getSkuName());
                 entity.setVariantProperty(skuVO.getVariantProperty());
                 entity.setSupplierId(skuVO.getSupplierId());

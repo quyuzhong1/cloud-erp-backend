@@ -97,9 +97,10 @@
             ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
         from purchase_suggest_merge psm
         LEFT JOIN purchase_suggest_sys pss ON psm.id = pss.source_id AND pss.is_deleted = false AND psm.data_type = 'auto'
+        LEFT JOIN purchase_suggest ps ON psm.source_id_json @> ('["' || ps.id || '"]')::jsonb
         LEFT JOIN product_detail pd ON psm.sku_id = pd.id AND pd.is_deleted = false
         <where>
-            psm.is_deleted = false and psm.is_merge = false and psm.status = 'draft' AND psm.source_id_json  @> ('[' || #{params.sourceId} || ']')::jsonb
+            psm.is_deleted = false and psm.is_merge = false and psm.status = 'draft' AND ps.replenishment_suggestion_id = #{params.sourceId}
         </where>
     </select>
 

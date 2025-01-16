@@ -551,7 +551,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .in(ReplenishmentSuggestionEntity::getId, ids)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode())
-                .set(ReplenishmentSuggestionEntity::getIsManual, Boolean.TRUE)
         );
         // 操作日志
         List<Pair<String, String>> addPairList = ids.stream().map(obj -> new Pair<>(obj, replenishmentRemark)).collect(Collectors.toList());
