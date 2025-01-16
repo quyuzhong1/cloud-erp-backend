@@ -1442,7 +1442,7 @@ public class ReplenishmentResultDTO {
             entity.setSourceId(dto.getSourceId());
             entity.setSourceCode(dto.getSourceCode());
             entity.setSourceType(dto.getSourceType());
-            entity.setShopPreQty(entity.getShopPreQty());
+            entity.setShopPreQty(dto.getShopPreQty());
             entity.setReceivingChannel(dto.getReceivingChannel());
             entity.setCalcVersion(calcVersion);
             return entity;

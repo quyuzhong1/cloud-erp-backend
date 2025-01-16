@@ -825,6 +825,18 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         @NotBlank(message = "采购组织不能为空")
         private String purchaseOrgId;
         /**
+         * 采购备货数
+         */
+        private Integer purchaseStockUpQty;
+        /**
+         * 单相数量
+         */
+        private Integer unitQty;
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
+        /**
          * 是否加急
          */
         private Boolean isUrgent;
