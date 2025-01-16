@@ -824,6 +824,11 @@ public class SoDetailDTO implements Serializable {
         private String remark;
 
 
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+
     }
 
     /**

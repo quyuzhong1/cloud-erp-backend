@@ -1676,7 +1676,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (Objects.isNull(queryDTO)){
             return Collections.emptyList();
         }
-        if (CollUtil.isEmpty(queryDTO.getPlatformSkuIdList()) && CollUtil.isEmpty(queryDTO.getPlatformSkuNoList())){
+        if (CollUtil.isEmpty(queryDTO.getPlatformSkuIdList()) && CollUtil.isEmpty(queryDTO.getPlatformSkuNoList()) && StringUtils.isBlank(queryDTO.getAuthId())){
             return Collections.emptyList();
         }
         return baseMapper.listSkuMappingByParams(queryDTO);
