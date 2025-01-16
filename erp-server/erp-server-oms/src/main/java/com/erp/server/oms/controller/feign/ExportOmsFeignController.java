@@ -44,6 +44,10 @@ public class ExportOmsFeignController {
 
     @Resource
     private SoB2cReturnService soB2cReturnService;
+    @Resource
+    private ReportManagerService reportManagerService;
+
+
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
@@ -86,7 +90,7 @@ public class ExportOmsFeignController {
 
     @PostMapping("/soB2CProductSales")
     public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(@RequestBody PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        return soB2cService.exportSoB2CProductSales(dto);
+        return reportManagerService.exportSoB2CProductSales(dto);
     }
 
     @PostMapping("/platformSku")
