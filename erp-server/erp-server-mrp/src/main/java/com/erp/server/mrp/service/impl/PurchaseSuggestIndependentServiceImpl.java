@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -253,6 +254,11 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         List<String> shopIdList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
+        //采购建议源数据
+        List<String> purchaseSuggestIdList = list.stream().flatMap(obj -> Stream.of(obj.getSourceIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(purchaseSuggestIdList);
+
+
         //采购申请单信息
         List<String> ids = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestIndependentDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = CollUtil.isEmpty(ids) ? Collections.emptyList() : purchaseApplicationDetailFeign.listByMergeIdList(ids);
@@ -263,6 +269,10 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
             listDTO.setCurrencySymbol(currencySymbol);
+
+            //补货建议id
+            String sourceId = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getSourceIdJson().get(0).toString())).map(PurchaseSuggestEntity::getReplenishmentSuggestionId).findFirst().orElse(null);
+            listDTO.setSourceId(sourceId);
 
             //数据类型
             listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));

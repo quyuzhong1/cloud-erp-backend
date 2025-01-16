@@ -107,7 +107,7 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingPurchaseSuggestion")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {
         return purchaseSuggestIndependentService.paging(dto);
     }
