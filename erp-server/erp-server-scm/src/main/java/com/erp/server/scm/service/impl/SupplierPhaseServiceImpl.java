@@ -562,7 +562,7 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
                 flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
         waitApprove.setCount(waitApproveCount);
         waitApprove.setTabFlag(ApproveStatusEnum.APPROVE_ING.getStatus());
-        waitApprove.setTabFlagName(ApproveStatusEnum.APPROVE_ING.getName());
+        waitApprove.setTabFlagName("待审核");
         resultList.add(waitApprove);
         return resultList;
     }
