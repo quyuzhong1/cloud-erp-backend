@@ -399,10 +399,6 @@ public class SoDetailDTO implements Serializable {
          * 成本来源
          */
         private String costSource;
-        /**
-         * 客户PO号
-         */
-        private String customerPO;
     }
 
     /**
