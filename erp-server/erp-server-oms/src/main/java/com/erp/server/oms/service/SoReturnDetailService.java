@@ -133,14 +133,5 @@ public interface SoReturnDetailService extends SuperService<SoReturnDetailEntity
      **/
     List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(SoReturnDTO.SkuParamDTO dto);
 
-    /**
-     * 退货详情页，根据skuId + customerId查询销售出库单来获取以下字段 ：币种，汇率，退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
-     * @param dto dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
-     * @Author jack
-     * @Date 2024-11-27
-     **/
-    List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmount(SoReturnDTO.SkuParamDTO dto);
-
     List<SoReturnDTO.SoReturnAmoutDTO> getReturnAmountInNotice(SoReturnDTO.SkuParamDTO dto);
 }

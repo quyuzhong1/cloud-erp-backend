@@ -1656,14 +1656,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return baseMapper.listByAccountAndDictPlatform(params);
     }
 
-    @Override
-    public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
-        if(null ==  skuParamDTO || StringUtils.isBlank(skuParamDTO.getCutomerId())){
-            throw new ServiceException("客户id不能为空");
-        }
-        return this.baseMapper.listSkuBySkuNos(skuParamDTO);
-    }
-
 //    @Override
 //    public  List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
 //        if(StringUtils.isBlank(skuParamDTO.getCutomerId()) || CollectionUtils.isEmpty(skuParamDTO.getPlatformSkuNoList())){
