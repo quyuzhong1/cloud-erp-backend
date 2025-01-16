@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
@@ -14,7 +15,7 @@ import java.util.Arrays;
  * @Date 2023-04-13 10:34
  * @Created by yl
  */
-public enum QcTypeEnum {
+public enum QcTypeEnum implements EnumMessage {
     STOCK_IN("stockIn", "入库质检",true),
     STOCK_OUT("stockOut", "出库质检",true),
     OUTSIDE_QC("outsideQc", "外检质检",false),

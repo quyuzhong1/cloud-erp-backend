@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -23,10 +22,8 @@ import com.erp.model.wms.entity.OperateLogEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.OperateLogMapper;
 import com.erp.server.wms.service.CfgOperateLogFieldService;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.OperateLogService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -101,7 +98,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             }
             //字典
             if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
-                valuePair = setDistValue(valuePair);
+                valuePair = setDistValue(valuePair,fieldEntity.getValue());
             }
             //人员
             if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
@@ -226,18 +223,18 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     /**
      * 设置字典值
      */
-    private Pair<String, String> setDistValue(Pair<String, String> valuePair) {
-        String oldValue = "";
-        String newValue = "";
-        List<DictBasicEntity> oldList = dictBasicService.listByIds(Collections.singletonList(valuePair.getKey().split(",")));
-        if (CollectionUtils.isNotEmpty(oldList)) {
-            oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+    private Pair<String,String> setDistValue (Pair<String, String> valuePair,String value) {
+        String  oldValue = "";
+        String  newValue = "";
+        DictBasicEntity oldEntity = dictBasicService.getByTypeAndValue(value, valuePair.getKey());
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            oldValue = oldEntity.getName();
         }
-        List<DictBasicEntity> newList = dictBasicService.listByIds(Collections.singletonList(valuePair.getValue().split(",")));
-        if (CollectionUtils.isNotEmpty(newList)) {
-            newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+        DictBasicEntity newEntity = dictBasicService.getByTypeAndValue(value, valuePair.getValue());
+        if (ObjectUtils.isNotEmpty(newEntity)) {
+            newValue = newEntity.getName();
         }
-        return new Pair<>(oldValue, newValue);
+        return new Pair<>(oldValue,newValue);
     }
 
     /**
