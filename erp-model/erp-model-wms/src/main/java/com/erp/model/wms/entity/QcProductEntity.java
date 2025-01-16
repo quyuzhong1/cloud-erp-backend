@@ -107,6 +107,11 @@ public class QcProductEntity extends BaseEntity<QcProductEntity> {
      */
     @TableField("variant_property")
     private String variantProperty;
+    /**
+     * sku名称
+     */
+    @TableField("sku_name")
+    private String skuName;
 
 
     public static final String MIAN_ID = "mian_id";

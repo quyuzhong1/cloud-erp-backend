@@ -8,25 +8,25 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcProductDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcProductService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -47,6 +47,9 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private OperateLogService operateLogService;
+
     /**
      * 质检产品信息 暂存
      *
@@ -65,9 +68,12 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         }
         QcProductEntity qcProductEntity = new QcProductEntity();
         BeanMapper.copy(qcProduct, qcProductEntity);
+        QcProductEntity oldEntity = null;
         String id = qcProduct.getId();
         if (CharSequenceUtil.isBlank(id)) {
             id = IdWorker.getIdStr();
+        }else{
+            oldEntity = getById(id);
         }
         qcProductEntity.setMainId(billId);
         qcProductEntity.setSkuId(skuId);
@@ -92,6 +98,13 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
 
         //标记SKU
         plmTaskFeign.updateOccupyStatus(Collections.singletonList(qcProductEntity.getSkuId()));
+
+        //操作日志
+        if (Objects.isNull(oldEntity)) {
+            operateLogService.addModuleOperateLog("新增了质检单的产品信息", ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
+        }else {
+            operateLogService.addModuleOperateLogByObj(oldEntity, qcProductEntity, ModuleTypeEnum.QC_ORDER.getCode(), billId, "","编辑了质检单的产品信息");
+        }
     }
 
 
