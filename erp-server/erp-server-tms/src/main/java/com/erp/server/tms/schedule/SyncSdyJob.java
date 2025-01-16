@@ -93,6 +93,7 @@ public class SyncSdyJob {
                     syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticsChannelEntities, logisticsSupplierEntities);
                 }
             }
+            currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
         }
     }
