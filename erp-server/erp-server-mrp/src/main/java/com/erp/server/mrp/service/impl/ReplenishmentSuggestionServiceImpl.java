@@ -1104,7 +1104,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                         return null;
                     }
                     List<BomChildrenSkuDTO> bomSkuList = bomChildrenSkuList.stream()
-                            .filter(e -> CharSequenceUtil.equals(e.getSkuId(), v.getSkuId()) && CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()))
+                            .filter(e -> CharSequenceUtil.equals(e.getParentSkuId(), v.getSkuId()) && CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()))
                             .collect(Collectors.toList());
                     resultDTO.setBomSkuList(bomSkuList);
                     Map<LocalDate, Integer> salesHistoryDTOList = listedSalesHistory.stream()
