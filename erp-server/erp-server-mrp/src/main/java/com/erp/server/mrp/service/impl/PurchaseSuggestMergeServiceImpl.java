@@ -581,6 +581,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 pushSourceDTO.setCode(entity.getCode());
                 pushSourceDTOList.add(pushSourceDTO);
             }
+            viewPushDetailDTO.setSourceList(pushSourceDTOList);
             detailList.add(viewPushDetailDTO);
         }
         viewPushDTO.setDetailList(detailList);
@@ -590,7 +591,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     public void savePushPurchaseApplication(PurchaseSuggestMergeDTO.SavePushDTO dto) {
 
-        List<String> purchaseMergeIdList = dto.getDetailList().stream().flatMap(obj -> Stream.of(obj.getSourceList().stream().map(Object::toString).toArray(String[]::new))).collect(Collectors.toList());
+        List<String> purchaseMergeIdList = dto.getDetailList().stream().flatMap(obj -> Stream.of(obj.getSourceList().stream().map(PurchaseSuggestMergeDTO.PushSourceDTO::getId).toArray(String[]::new))).collect(Collectors.toList());
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(purchaseMergeIdList);
         if (CollectionUtils.isNotEmpty(purchaseApplicationList)) {
             String codes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
