@@ -640,7 +640,7 @@ public class InventoryServiceImpl implements InventoryService {
             int i = 0;
             BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.LocalInTransitDetailDTO dto : entry.getValue()) {
-                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size(), totalQty, countQty, dto.getQty(), shopQty);
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getQty(), shopQty);
                 dto.setShopPreQty(currentQty.intValue());
                 countQty = countQty.add(currentQty);
                 i++;
@@ -724,7 +724,7 @@ public class InventoryServiceImpl implements InventoryService {
             int i = 0;
             BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO dto : entry.getValue()) {
-                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size(), totalQty, countQty, dto.getQty(), shopQty);
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getQty(), shopQty);
                 dto.setShopPreQty(currentQty.intValue());
                 countQty = countQty.add(currentQty);
                 i++;
@@ -902,7 +902,7 @@ public class InventoryServiceImpl implements InventoryService {
             int i = 0;
             BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.OverseasInTransitDetailDTO dto : entry.getValue()) {
-                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size(), totalQty, countQty, dto.getInTransitQty(), shopQty);
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getInTransitQty(), shopQty);
                 dto.setShopPreQty(currentQty.intValue());
                 countQty = countQty.add(currentQty);
                 i++;
@@ -939,7 +939,7 @@ public class InventoryServiceImpl implements InventoryService {
             int i = 0;
             BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.EstimatedDeliveryDetailDTO dto : entry.getValue()) {
-                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size(), totalQty, countQty, dto.getQty(), shopQty);
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getQty(), shopQty);
                 dto.setShopPreQty(currentQty.intValue());
                 countQty = countQty.add(currentQty);
                 i++;
@@ -960,7 +960,7 @@ public class InventoryServiceImpl implements InventoryService {
     private static BigDecimal getCurrentDocQty(Boolean isLast, Integer totalQty, BigDecimal countQty, Integer docQty, BigDecimal shopQty) {
         BigDecimal currentQty;
         if (Boolean.TRUE.equals(isLast)) {
-            currentQty = new BigDecimal(totalQty).subtract(countQty);
+            currentQty = shopQty.subtract(countQty);
         } else {
             currentQty = new BigDecimal(docQty).multiply(shopQty).divide(new BigDecimal(totalQty), 0, RoundingMode.FLOOR);
         }
