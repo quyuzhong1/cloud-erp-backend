@@ -313,7 +313,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 编码
          */
         private String code;
-
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
     }
 
     @Getter
@@ -1014,6 +1018,12 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * R2
          */
         private BigDecimal r2Score;
+
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
     }
 
     @Getter
@@ -1071,6 +1081,12 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
     }
 
     /**
@@ -1369,5 +1385,33 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
+
+    }
+
+    @Getter
+    @Setter
+    public static class DataIdPageDTO {
+
+        /**
+         * 配置id
+         */
+        private String cfgRuleCalcId;
+        /**
+         * 主表id
+         */
+        private String id;
+
     }
 }

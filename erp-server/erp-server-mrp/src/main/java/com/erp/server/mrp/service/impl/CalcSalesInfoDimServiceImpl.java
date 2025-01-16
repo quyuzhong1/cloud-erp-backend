@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -555,6 +556,19 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         }
         processListData(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<CalcSalesInfoDimDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<CalcSalesInfoDimDTO.TabListDTO> list = new ArrayList<>();
+        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.DOING.getCode()));
+        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.FINISH.getCode()));
+        return list;
+    }
+
+    @Override
+    public List<CalcSalesInfoDimDTO.DataIdPageDTO> dataIdPage(CalcSalesInfoDimDTO.ParamDTO params) {
+        return baseMapper.dataIdPage(params);
     }
 
     private void processListData(List<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> records) {
