@@ -1150,10 +1150,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(receiptConditionId);
             base.setReceiveConditionName(receiptCondition != null ? receiptCondition.getName() : "");
         }
-        if(StringUtils.isNotBlank(customer.getSellerId())){
-            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(customer.getSellerId());
-            base.setSalesDeptId(deptByUserId.getDepartmentId());
-            base.setSalesDeptName(deptByUserId.getDepartmentName());
+        if(StringUtils.isNotBlank(customer.getSalesDeptId())){
+            List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
+            base.setSalesDeptId(customer.getSalesDeptId());
+            base.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
         }
         return base;
     }
