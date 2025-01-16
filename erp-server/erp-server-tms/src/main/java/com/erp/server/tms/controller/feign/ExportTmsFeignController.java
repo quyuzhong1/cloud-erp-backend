@@ -314,4 +314,15 @@ public class ExportTmsFeignController {
     public PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody @Valid PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
         return logisticsLargeService.paging(dto);
     }
+
+
+    /**
+     * 头程报关导出查询
+     */
+    @PostMapping("/fmDeclareBill")
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
+    public PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+        dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
+        return tmsDeclareBillService.export(dto);
+    }
 }
