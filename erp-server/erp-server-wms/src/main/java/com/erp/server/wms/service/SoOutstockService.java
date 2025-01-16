@@ -553,6 +553,4 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO handleWdtData(String id);
-
-    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
 }
