@@ -28,10 +28,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -43,6 +45,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -132,6 +135,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SysDictFeign sysDictFeign;
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
@@ -728,10 +734,31 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private void fillList(List<FbaShipmentDTO.ListDTO> records) {
         List<String> codes = records.stream().map(req -> req.getCode()).distinct().collect(Collectors.toList());
         List<String> skuNos = records.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<String> shopIds = records.stream().map(FbaShipmentDTO.ListDTO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         //根据来源详情id查询发货详情
         List<FirstMileDeliveryDetailEntity> fbaDeliveryDetailEntities = firstMileDeliveryDetailService.listApprovedByFbaShipmentCodes(codes);
         //根据sku获取产品信息
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+
+        // 店铺信息
+        List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+        // 同步记录
+        List<DmpInoutDTO.LastOneDTO> lastOneDTOS = new LinkedList<>();
+
+        if (CollectionUtils.isNotEmpty(shopList)){
+            // 查询最近同步任务
+            List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
+            shopList.forEach(v->{
+                DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
+                commonDTO.setSystemCode(PlatformDictEnum.AMAZON.getCode());
+                commonDTO.setBillType(BusinessTypeEnum.FBA_SHIPMENT.getCode());
+                commonDTO.setNextLevelId(v.getId());
+                commonDTOList.add(commonDTO);
+            });
+            lastOneDTOS = dmpInoutTaskFeign.newInputTaskList(commonDTOList);
+        }
+
+
         for (FbaShipmentDTO.ListDTO record : records) {
             record.setPackingDownload(record.getIsPackingDownload()?"已下载":"未下载");
             //设置发货状态中文
@@ -763,6 +790,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             //产品名称
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(record.getSkuNo())).findFirst().orElse(new SkuVO());
             record.setProductName(skuVO.getSkuName());
+
+            // 最近同步时间
+            record.setLastSyncTime(getLastSyncTime(record.getShopId(), shopList, lastOneDTOS));
         }
     }
 
@@ -1828,5 +1858,29 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             return Collections.emptyList();
         }
         return baseMapper.listByReceiveAndReportMonth(reportMonth,shipmentCode,asin,msku);
+    }
+
+    /**
+     * 获取站点最近同步时间
+     */
+    private LocalDateTime getLastSyncTime(String shopId, List<ShopInfoEntity> shopList, List<DmpInoutDTO.LastOneDTO> lastOneDTOS) {
+        if (StringUtils.isBlank(shopId)){
+            return null;
+        }
+        ShopInfoEntity shopInfoEntity = shopList.stream().filter(e -> e.getId().equalsIgnoreCase(shopId)).findFirst().orElse(null);
+        if (null == shopInfoEntity){
+            return null;
+        }
+        List<String> sameCodeShopId = shopList.stream()
+                .filter(e -> e.getPlatformShopCode().equalsIgnoreCase(shopInfoEntity.getPlatformShopCode()))
+                .map(BaseEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        return lastOneDTOS.stream()
+                .filter(e -> sameCodeShopId.contains(e.getNextLevelId()))
+                .map(DmpInoutDTO.LastOneDTO::getLatestUpdateTime)
+                .filter(Objects::nonNull)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
     }
 }
