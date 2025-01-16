@@ -2,7 +2,6 @@ package com.erp.model.mrp.dto;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -588,7 +587,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 偏差比例
          */
-        private BigDecimal deviationRatio;
+        private String deviationRatio;
         /**
          * 近三日销量
          */
@@ -723,7 +722,8 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setEstimateQty(entity.getQty());
             int realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
             dto.setRealSalesQty(realQty);
-            dto.setDeviationRatio(realQty == 0 ? BigDecimal.ZERO : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP));
+            BigDecimal deviationRatio = realQty == 0 ? BigDecimal.ZERO : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP);
+            dto.setDeviationRatio(deviationRatio.multiply(new BigDecimal(100)) + "%");
             dto.setAvgThreeSalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE.getName()));
             dto.setAvgSevenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.SEVEN.getName()));
             dto.setAvgFourteenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.FOURTEEN.getName()));
@@ -1391,6 +1391,16 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 状态名
+         */
+        private String statusName;
     }
 
     @Getter
