@@ -113,6 +113,8 @@ public class MoveInfoExcelListener extends AnalysisEventListener<MoveInfoExcelDT
 
         if (!StrUtils.isDigit(String.valueOf(moveInfoExcelDTO.getQty())) || ObjectUtil.isEmpty(moveInfoExcelDTO.getQty())) {
             errorMsgList.add("移动数量只能是数字");
+        }else  if(moveInfoExcelDTO.getQty() < 1 || moveInfoExcelDTO.getQty() >999999999){
+            errorMsgList.add("移动数量范围1-999999999");
         }
         if (CharSequenceUtil.isBlank(moveInfoExcelDTO.getWarehouseName())) {
             errorMsgList.add("仓库名称不能为空");
