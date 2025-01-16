@@ -166,14 +166,15 @@ public class InventoryServiceImpl implements InventoryService {
         } else {
             return new BigDecimal(dto.getQty())
                     .multiply(new BigDecimal(warehouseDemandQty))
-                    .divide(new BigDecimal(0 == totalSum ? 1 : totalSum), 2, RoundingMode.FLOOR);
+                    .divide(new BigDecimal(0 == totalSum ? 1 : totalSum), 0, RoundingMode.FLOOR);
         }
     }
 
     /**
      * 获取该仓库配置下对应平台对应店铺的需求数
-     * @param shopDemandQty 店铺需求数
-     * @param resultList   配置结果
+     *
+     * @param shopDemandQty    店铺需求数
+     * @param resultList       配置结果
      * @param shopIdByPlatform 店铺平台数量
      */
     private Map<CfgRuleWarehouseDTO.StrategyDetailResultDTO, Map<String, Integer>> getWarehouseShopMap(Map<String, Integer> shopDemandQty, List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> resultList, Map<String, List<String>> shopIdByPlatform) {
@@ -554,8 +555,8 @@ public class InventoryServiceImpl implements InventoryService {
      * @param warehouseId   仓库id
      */
     private Map<String, List<CfgRuleWarehouseDTO.StrategyDetailResultDTO>> filterWarehouseList(List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList,
-                                                                                  CfgRuleWarehouseTypeEnum warehouseType,
-                                                                                  String warehouseId) {
+                                                                                               CfgRuleWarehouseTypeEnum warehouseType,
+                                                                                               String warehouseId) {
 
         return warehouseList.stream()
                 .filter(v -> CfgRuleWarehouseTypeEnum.VIRTUAL.equals(warehouseType) ?
@@ -567,15 +568,14 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
 
-
     /**
      * 分摊库存
      *
-     * @param shopId                 建议店铺
-     * @param warehouseQty           被分摊数量
-     * @param warehouseDemandQty     仓库需求量
-     * @param shopQtyMap             店铺需求量
-     * @param detailDTOS             明细
+     * @param shopId             建议店铺
+     * @param warehouseQty       被分摊数量
+     * @param warehouseDemandQty 仓库需求量
+     * @param shopQtyMap         店铺需求量
+     * @param detailDTOS         明细
      */
     private int calculateInventoryQty(String shopId, BigDecimal warehouseQty, int warehouseDemandQty,
                                       Map<String, Integer> shopQtyMap,
@@ -589,7 +589,7 @@ public class InventoryServiceImpl implements InventoryService {
                 shopQty = warehouseQty.subtract(otherSales);
             } else {
                 shopQty = warehouseQty.multiply(new BigDecimal(entry.getValue()))
-                        .divide(new BigDecimal(warehouseDemandQty == 0 ? 1 : warehouseDemandQty), 2, RoundingMode.FLOOR);
+                        .divide(new BigDecimal(warehouseDemandQty == 0 ? 1 : warehouseDemandQty), 0, RoundingMode.FLOOR);
                 otherSales = otherSales.add(shopQty);
             }
 
@@ -640,12 +640,7 @@ public class InventoryServiceImpl implements InventoryService {
             int i = 0;
             BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.LocalInTransitDetailDTO dto : entry.getValue()) {
-                BigDecimal currentQty;
-                if (i == entry.getValue().size()) {
-                    currentQty = new BigDecimal(totalQty).subtract(countQty);
-                } else {
-                    currentQty = new BigDecimal(dto.getQty()).multiply(shopQty).divide(new BigDecimal(totalQty), 2, RoundingMode.FLOOR);
-                }
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getQty(), shopQty);
                 dto.setShopPreQty(currentQty.intValue());
                 countQty = countQty.add(currentQty);
                 i++;
@@ -722,24 +717,18 @@ public class InventoryServiceImpl implements InventoryService {
                     .filter(v -> v.getShopId().equals(replenishmentResultDTO.getReplenishment().getShopId()))
                     .map(ReplenishmentResultDTO.ShopInventoryDetailDTO::getQty)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            Integer totalQty = entry.getValue()
+            int totalQty = entry.getValue()
                     .stream()
                     .map(ReplenishmentResultDTO.EstimatedPurchaseDetailDTO::getQty)
                     .reduce(0, Math::addExact);
             int i = 0;
-            int countQty = 0;
+            BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.EstimatedPurchaseDetailDTO dto : entry.getValue()) {
-                int currentQty;
-                if (i == entry.getValue().size()) {
-                    currentQty = totalQty - countQty;
-                } else {
-                    currentQty = dto.getQty() / totalQty * shopQty.intValue();
-                }
-                dto.setShopPreQty(currentQty);
-                countQty += currentQty;
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getQty(), shopQty);
+                dto.setShopPreQty(currentQty.intValue());
+                countQty = countQty.add(currentQty);
                 i++;
             }
-
         }
         replenishmentResultDTO.setLocalPurchaseDetail(localPurchaseDetail);
         return qty;
@@ -801,9 +790,9 @@ public class InventoryServiceImpl implements InventoryService {
     }
 
     @Override
-    public int getInventoryByPurchaseSuggest(ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO,ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory) {
+    public int getInventoryByPurchaseSuggest(ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO, ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory) {
         return deliveryVolumeInventory.stream()
-                .map(code -> getInventoryByCode(suggestDTO,code, replenishmentResultDTO, endDate))
+                .map(code -> getInventoryByCode(suggestDTO, code, replenishmentResultDTO, endDate))
                 .reduce(0, Math::addExact);
     }
 
@@ -812,7 +801,7 @@ public class InventoryServiceImpl implements InventoryService {
      * @param replenishmentResultDTO 建议
      * @param endDate                结束时间
      */
-    private int getInventoryByCode(ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO,String code, ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate) {
+    private int getInventoryByCode(ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO, String code, ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate) {
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult = cfgRuleStrategyDTO.getWarehouseResult();
         //虚拟仓集合
@@ -829,14 +818,14 @@ public class InventoryServiceImpl implements InventoryService {
                         .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
                         .filter(v -> virtualWarehouseIdList.contains(v.getVirtualWarehouseId()))
                         .map(ReplenishmentInventoryDTO.VirtualUsableDTO::getQty)
-                        .reduce(MathUtil.ZERO,Integer::sum);
+                        .reduce(MathUtil.ZERO, Integer::sum);
 
             } else {
                 inventoryQty = replenishmentResultDTO.getInventoryDTO().getLocalUsableList()
                         .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
                         .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
                         .map(ReplenishmentInventoryDTO.LocalUsableDTO::getQty)
-                        .reduce(MathUtil.ZERO,Integer::sum);
+                        .reduce(MathUtil.ZERO, Integer::sum);
             }
             return inventoryQty;
         }
@@ -845,22 +834,22 @@ public class InventoryServiceImpl implements InventoryService {
                     .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
                     .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
                     .map(ReplenishmentInventoryDTO.LocalWaitQcDTO::getQty)
-                    .reduce(MathUtil.ZERO,Integer::sum);
+                    .reduce(MathUtil.ZERO, Integer::sum);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
             return replenishmentResultDTO.getInventoryDTO().getLocalInTransitList()
                     .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
                     .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
                     .map(ReplenishmentInventoryDTO.LocalInTransitDTO::getQty)
-                    .reduce(MathUtil.ZERO,Integer::sum);
+                    .reduce(MathUtil.ZERO, Integer::sum);
         }
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_PLAN_PURCHASE_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getInventoryDTO().getEstimatedPurchaseList()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> CharSequenceUtil.equals(v.getSkuId(),suggestDTO.getSkuId()))
+                    .filter(v -> CharSequenceUtil.equals(v.getSkuId(), suggestDTO.getSkuId()))
                     .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
                     .map(ReplenishmentInventoryDTO.EstimatedPurchaseDTO::getQty)
-                    .reduce(MathUtil.ZERO,Integer::sum);
+                    .reduce(MathUtil.ZERO, Integer::sum);
         }
         return 0;
     }
@@ -906,24 +895,18 @@ public class InventoryServiceImpl implements InventoryService {
                     .filter(v -> v.getShopId().equals(replenishmentResultDTO.getReplenishment().getShopId()))
                     .map(ReplenishmentResultDTO.ShopInventoryDetailDTO::getQty)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
-            Integer totalQty = entry.getValue()
+            int totalQty = entry.getValue()
                     .stream()
                     .map(ReplenishmentResultDTO.OverseasInTransitDetailDTO::getInTransitQty)
                     .reduce(0, Math::addExact);
             int i = 0;
-            int countQty = 0;
+            BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.OverseasInTransitDetailDTO dto : entry.getValue()) {
-                int currentQty;
-                if (i == entry.getValue().size()) {
-                    currentQty = totalQty - countQty;
-                } else {
-                    currentQty = dto.getInTransitQty() / totalQty * shopQty.intValue();
-                }
-                dto.setShopPreQty(currentQty);
-                countQty += currentQty;
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getInTransitQty(), shopQty);
+                dto.setShopPreQty(currentQty.intValue());
+                countQty = countQty.add(currentQty);
                 i++;
             }
-
         }
         replenishmentResultDTO.setOverseasInTransitDetail(overseasInTransitDetail);
         return qty;
@@ -954,22 +937,34 @@ public class InventoryServiceImpl implements InventoryService {
                     .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
                     .reduce(0, Math::addExact);
             int i = 0;
-            int countQty = 0;
+            BigDecimal countQty = BigDecimal.ZERO;
             for (ReplenishmentResultDTO.EstimatedDeliveryDetailDTO dto : entry.getValue()) {
-                int currentQty;
-                if (i == entry.getValue().size()) {
-                    currentQty = totalQty - countQty;
-                } else {
-                    currentQty = dto.getQty() / totalQty * shopQty.intValue();
-                }
-                dto.setShopPreQty(currentQty);
-                countQty += currentQty;
+                BigDecimal currentQty = getCurrentDocQty(i == entry.getValue().size() - 1, totalQty, countQty, dto.getQty(), shopQty);
+                dto.setShopPreQty(currentQty.intValue());
+                countQty = countQty.add(currentQty);
                 i++;
             }
-
         }
         replenishmentResultDTO.setOverseasDeliveryDetail(overseasPlanDeliveryDetail);
         return qty;
+    }
+
+    /**
+     * 获取当前单据数据
+     * @param isLast    是否最后一条数据
+     * @param totalQty  总数量
+     * @param countQty  统计数量
+     * @param docQty    单据数量
+     * @param shopQty   店铺分配数量
+     */
+    private static BigDecimal getCurrentDocQty(Boolean isLast, Integer totalQty, BigDecimal countQty, Integer docQty, BigDecimal shopQty) {
+        BigDecimal currentQty;
+        if (Boolean.TRUE.equals(isLast)) {
+            currentQty = shopQty.subtract(countQty);
+        } else {
+            currentQty = new BigDecimal(docQty).multiply(shopQty).divide(new BigDecimal(totalQty), 0, RoundingMode.FLOOR);
+        }
+        return currentQty;
     }
 
     @Override
