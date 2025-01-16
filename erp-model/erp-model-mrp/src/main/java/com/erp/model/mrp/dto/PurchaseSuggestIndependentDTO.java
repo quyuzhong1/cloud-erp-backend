@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -262,7 +263,11 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
         /**
          * 来源id
          */
-        private String sourceIdJson;
+        private JSONArray sourceIdJson;
+        /**
+         * 来源id(补货建议id)
+         */
+        private String sourceId;
         /**
          * 来源类型
          */

@@ -237,6 +237,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
+        if (MathUtil.compareTo(old.getPlanPurchaseQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+            throw new ServiceException("计划修正值必须大于0");
+        }
+        if (MathUtil.compareTo(old.getPurchaseStockUpQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+            throw new ServiceException("采购备货数必须大于0");
+        }
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.FINISH.getCode());
         this.updateById(old);
@@ -671,7 +677,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             mergeFrameDTO.setCode(purchaseSuggestMergeEntity.getCode());
             mergeFrameDTO.setSuggestPurchaseQty(purchaseSuggestMergeEntity.getSuggestPurchaseQty());
             //补货建议id
-            String sourceId = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestMergeEntity.getSourceIdJson().get(0).toString())).map(obj -> obj.getSourceIdJson().get(0).toString()).findFirst().orElse(null);
+            String sourceId = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestMergeEntity.getSourceIdJson().get(0).toString())).map(PurchaseSuggestEntity::getReplenishmentSuggestionId).findFirst().orElse(null);
             mergeFrameDTO.setSourceId(sourceId);
 
             //计划修正值,系统建议值从小到大依次分摊 = 子单系统值 / 合并单系统值 * 合并单修正数,抹零取整，最后一个相加
@@ -919,7 +925,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
                 //采购申请
                 PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
-                        ObjectUtil.isNotEmpty(obj.getSourceJson())).findFirst().orElse(null);
+                        ObjectUtil.isNotEmpty(obj.getSourceJson()) && JSONUtil.toList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class).stream().anyMatch(e -> CharSequenceUtil.equals(e.getId(), listDTO.getId()))).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
                     listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
                     listDTO.setIsPush(Boolean.TRUE);
