@@ -68,6 +68,6 @@ public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
     }
 
     public static String getPurchaseVolumeInventory() {
-        return String.join(":", SUGGESTED_PURCHASE.getCode(), SUGGESTED_PURCHASE_QTY.getCode(), INVENTORY.getCode(),FBA_PLAN_DELIVERY_QTY.getCode(),OVERSEAS_PLAN_DELIVERY_QTY.getCode());
+        return String.join(":", SUGGESTED_PURCHASE.getCode(), SUGGESTED_PURCHASE_QTY.getCode(), INVENTORY.getCode());
     }
 }

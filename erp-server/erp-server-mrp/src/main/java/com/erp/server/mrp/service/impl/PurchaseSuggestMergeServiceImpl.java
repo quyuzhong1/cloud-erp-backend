@@ -374,7 +374,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             //查询拆分后sku对应的库存数据
             Integer inventoryQty = purchaseSuggestDTO.getInventoryQty();
             //需要合并的数据
-            List<PurchaseSuggestEntity> mergeList = list.stream().filter(obj -> obj.getSuggestPurchaseDate().isEqual(purchaseSuggestDTO.getSuggestPurchaseDate())).collect(Collectors.toList());
+            List<PurchaseSuggestEntity> mergeList = list.stream().filter(obj ->
+                    obj.getSuggestPurchaseDate().isEqual(purchaseSuggestDTO.getSuggestPurchaseDate())
+                    && CharSequenceUtil.equals(purchaseSuggestDTO.getSkuId(), obj.getSkuId())
+            ).collect(Collectors.toList());
             //需要发货的数量
             Integer totalDeliveryQty = mergeList.stream().map(PurchaseSuggestEntity::getSuggestDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             //建议采购量
@@ -393,6 +396,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                     ).findFirst().orElse(null);
             if (purchaseSuggestMergeEntity != null) {
                 addOrUpdateDTO.setId(purchaseSuggestMergeEntity.getId());
+                addOrUpdateDTO.setCode(purchaseSuggestMergeEntity.getCode());
             } else {
                 addOrUpdateDTO.setId(null);
                 // 生成单号
@@ -551,6 +555,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollectionUtils.isEmpty(purchaseSuggestMergeList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+
+        String codes = purchaseSuggestMergeList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestMergeEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(codes)) {
+            throw new ServiceException("采购建议【{}】状态未完成不支持下推", codes);
+        }
+
         PurchaseSuggestMergeDTO.ViewPushDTO viewPushDTO = new PurchaseSuggestMergeDTO.ViewPushDTO();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         viewPushDTO.setApplyUserId(loginUser.getUid());
@@ -561,8 +571,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(ids);
         if (CollectionUtils.isNotEmpty(purchaseApplicationList)) {
-            String codes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
-            throw new ServiceException(CharSequenceUtil.format("所选采购建议已下推采购申请【{}】",codes));
+            String pushCodes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
+            throw new ServiceException(CharSequenceUtil.format("所选采购建议已下推采购申请【{}】",pushCodes));
         }
 
         List<PurchaseSuggestMergeDTO.ViewPushDetailDTO> detailList = new ArrayList<>();
@@ -930,12 +940,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
                         ObjectUtil.isNotEmpty(obj.getSourceJson()) && JSONUtil.toList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class).stream().anyMatch(e -> CharSequenceUtil.equals(e.getId(), listDTO.getId()))).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
-                    listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
-                    listDTO.setIsPush(Boolean.TRUE);
-                    listDTO.setIsPushName("已下推");
+                    childDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
+                    childDTO.setIsPush(Boolean.TRUE);
+                    childDTO.setIsPushName("已下推");
                 } else {
-                    listDTO.setIsPush(Boolean.FALSE);
-                    listDTO.setIsPushName("未下推");
+                    childDTO.setIsPush(Boolean.FALSE);
+                    childDTO.setIsPushName("未下推");
                 }
                 resultList.add(childDTO);
             }

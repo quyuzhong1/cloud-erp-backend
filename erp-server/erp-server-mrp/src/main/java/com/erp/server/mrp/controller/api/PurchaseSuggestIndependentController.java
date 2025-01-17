@@ -12,7 +12,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
-import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.service.PurchaseSuggestIndependentService;
 import com.erp.server.mrp.service.PurchaseSuggestMergeService;
@@ -81,7 +80,7 @@ public class PurchaseSuggestIndependentController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货建议")
     @PostMapping(value = "/export")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = purchaseSuggestIndependentService.export(pagingParamDTO);
         return flag == true ? success() : failure();
