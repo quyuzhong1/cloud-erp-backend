@@ -50,7 +50,17 @@
         INSERT INTO purchase_suggest_merge_history SELECT * FROM purchase_suggest_merge WHERE status = 'draft'
     </insert>
     <delete id="deletePurchaseSuggestMerge">
-        DELETE FROM purchase_suggest_merge WHERE status = 'draft'
+        DELETE FROM purchase_suggest_merge psm WHERE psm.status = 'draft' and psm.is_merge = true
+    </delete>
+    <!-- 删除独立采购数据 -->
+    <delete id="deletePurchaseSuggestIndependent">
+        DELETE FROM purchase_suggest_merge psi WHERE psi.status = 'draft' and psi.is_merge = false AND NOT EXISTS (
+            SELECT 1
+            FROM purchase_suggest_merge psm,
+                 jsonb_array_elements_text(psm.source_id_json) AS source_id
+            WHERE  psm.status in ('waitConfirm', 'finish')  and psm.is_merge = true
+              AND psi.source_id_json ->>0 = source_id
+        )
     </delete>
     <delete id="deletePurchaseSuggest">
         DELETE FROM purchase_suggest ps WHERE 1 = 1
@@ -65,6 +75,7 @@
               AND source_id = ps.id
         )
     </delete>
+
     <insert id="movePurchaseSuggest">
         INSERT INTO purchase_suggest_history SELECT * FROM purchase_suggest ps WHERE 1 = 1
         <if test="sourceId !=null and sourceId !=''" >
