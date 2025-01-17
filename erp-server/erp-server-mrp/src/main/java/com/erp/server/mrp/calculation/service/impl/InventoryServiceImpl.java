@@ -856,7 +856,9 @@ public class InventoryServiceImpl implements InventoryService {
         if (CfgRuleSuggestedAmountNodeEnum.LOCAL_IN_TRANSIT_QTY.getCode().equals(code)) {
             return replenishmentResultDTO.getInventoryDTO().getLocalInTransitList()
                     .stream().filter(v -> v.getSkuId().equals(suggestDTO.getSkuId()))
-                    .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
+                    .filter(v -> warehouseIdList.contains(v.getWarehouseId())
+                            && (suggestDTO.getEstimateInstockDate().isAfter(suggestDTO.getSuggestPurchaseDate()) || suggestDTO.getEstimateInstockDate().isEqual(suggestDTO.getSuggestPurchaseDate()))
+                            && (suggestDTO.getEstimateInstockDate().isBefore(endDate) || suggestDTO.getEstimateInstockDate().isEqual(endDate)))
                     .map(ReplenishmentInventoryDTO.LocalInTransitDTO::getQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
         }
@@ -864,21 +866,27 @@ public class InventoryServiceImpl implements InventoryService {
             return Optional.ofNullable(replenishmentResultDTO.getInventoryDTO().getEstimatedPurchaseList()).orElse(new ArrayList<>())
                     .stream()
                     .filter(v -> CharSequenceUtil.equals(v.getSkuId(), suggestDTO.getSkuId()))
-                    .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
+                    .filter(v -> warehouseIdList.contains(v.getWarehouseId())
+                            && (suggestDTO.getEstimateInstockDate().isAfter(suggestDTO.getSuggestPurchaseDate()) || suggestDTO.getEstimateInstockDate().isEqual(suggestDTO.getSuggestPurchaseDate()))
+                            && (suggestDTO.getEstimateInstockDate().isBefore(endDate) || suggestDTO.getEstimateInstockDate().isEqual(endDate)))
                     .map(ReplenishmentInventoryDTO.EstimatedPurchaseDTO::getQty)
                     .reduce(MathUtil.ZERO, Integer::sum);
         }
         if (CfgRuleSuggestedAmountNodeEnum.FBA_PLAN_DELIVERY_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getFbaDeliveryDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
-                    .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getShopPreQty)
+                    .filter(v ->
+                            (v.getPlanDeliveryDate().isAfter(suggestDTO.getSuggestPurchaseDate()) || v.getPlanDeliveryDate().isEqual(suggestDTO.getSuggestPurchaseDate()))
+                            && (v.getPlanDeliveryDate().isBefore(endDate) || v.getPlanDeliveryDate().isEqual(endDate)))
+                    .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
                     .reduce(0, Math::addExact);
         }
         if (CfgRuleSuggestedAmountNodeEnum.OVERSEAS_PLAN_DELIVERY_QTY.getCode().equals(code)) {
             return Optional.ofNullable(replenishmentResultDTO.getOverseasDeliveryDetails()).orElse(new ArrayList<>())
                     .stream()
-                    .filter(v -> !v.getEstimateSalesDate().isAfter(endDate))
+                    .filter(v ->
+                            (v.getPlanDeliveryDate().isAfter(suggestDTO.getSuggestPurchaseDate()) || v.getPlanDeliveryDate().isEqual(suggestDTO.getSuggestPurchaseDate()))
+                                    && (v.getPlanDeliveryDate().isBefore(endDate) || v.getPlanDeliveryDate().isEqual(endDate)))
                     .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getShopPreQty)
                     .reduce(0, Math::addExact);
         }
