@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.*;
 import com.common.business.dto.base.*;
@@ -148,23 +149,24 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:delivery",
             serviceClass = SoB2cDeliveryService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> delivery(@RequestBody SoB2cDeliveryDTO.DeliverDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    public ApiResult<List<BatchResultDTO>> delivery(@RequestBody @Validated SoB2cDeliveryDTO.DeliverDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         String deliveryType = dto.getType();
         Boolean isManual = DeliverTypeEnum.MANUAL.getCode().equals(deliveryType);
-        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO result;
             try {
-                result = soB2cDeliveryService.delivery(id, deliveryType);
+                result = soB2cDeliveryService.delivery(id, deliveryType, dto.getDeliveryDate());
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (isManual && isSuccess) {
                     //波次列表波次状态自动变更
                     waveListService.waveListStatusAutoChange(id);
-                    //生成销售出库单
+                    //生产直接调拨单
                     Boolean isOutStock = soB2cDeliveryService.pushTransferInfoError(entity);
                     if (isOutStock) {
+                        //生成销售出库单
                         soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
                 }

@@ -77,6 +77,17 @@ public class PackingTaskEntity extends BaseEntity<PackingTaskEntity> {
      */
     @TableField("weighting_status")
     private String weightingStatus;
+    /**
+     * 业务id
+     */
+    @TableField("business_id")
+    private String businessId;
+
+    /**
+     * 业务单号 B2B取值为销售订单/来源为要货申请&发货单取值为发货计划
+     */
+    @TableField("business_code")
+    private String businessCode;
 
     public static final String SOURCE_ID = "source_id";
 

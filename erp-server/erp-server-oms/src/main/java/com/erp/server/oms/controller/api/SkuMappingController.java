@@ -11,6 +11,8 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -27,9 +29,9 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.ShopInfoService;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.server.oms.service.SkuMappingRuleService;
 import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
@@ -121,6 +123,38 @@ public class SkuMappingController extends BaseController {
         PagingVO<SkuMappingDTO.WarehousePagingViewDTO> pagingVO = skuMappingService.warehousePaging(dto);
         return success(pagingVO);
     }
+    /**
+     * 客户SKU 分页
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/customerPaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.CustomerPagingViewDTO>> customerPaging(@RequestBody @Validated PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
+        PagingVO<SkuMappingDTO.CustomerPagingViewDTO> pagingVO = skuMappingService.customerPaging(dto);
+        return success(pagingVO);
+    }
+    /**
+     * 新增客户SKU
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addCustomer")
+    public ApiResult<String> addCustomer(@ModelAttribute @Validated(value = {AddGroup.class}) SkuMappingDTO.AddCustomerRequest dto) {
+        return success(skuMappingService.addCustomer(dto));
+    }
+    /**
+     * 更新客户SKU
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateCustomer")
+    public ApiResult<String> updateCustomer(@ModelAttribute @Validated(value = {UpdateGroup.class}) SkuMappingDTO.AddCustomerRequest dto) {
+        return success(skuMappingService.updateCustomer(dto));
+    }
 
 
     /**
@@ -171,6 +205,17 @@ public class SkuMappingController extends BaseController {
     @WebAdvanceQuery
     public ApiResult exportWarehouseSku(@RequestBody @Valid SkuMappingDTO.ExportWarehouseSkuDTO dto) {
         Boolean result = skuMappingService.exportWarehouseSku(dto);
+        return result ? success() : failure();
+    }
+    /**
+     * 导出客户sku 对照表
+     *
+     * @return
+     */
+    @PostMapping("/exportCustomerSku")
+    @WebAdvanceQuery
+    public ApiResult exportCustomerSku(@RequestBody @Valid SkuMappingDTO.CustomerPagingParamDTO dto) {
+        Boolean result = skuMappingService.exportCustomerSku(dto);
         return result ? success() : failure();
     }
 

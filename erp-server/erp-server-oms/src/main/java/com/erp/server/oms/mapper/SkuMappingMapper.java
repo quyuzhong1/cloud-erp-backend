@@ -8,6 +8,7 @@ import com.erp.model.oms.entity.SkuMappingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.util.List;
 
@@ -123,4 +124,6 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      */
     List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(@Param("params") ListingInfoDTO.QueryPlatformDTO params);
 
+
+    IPage<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(Page<T> query, @Param("params")SkuMappingDTO.CustomerPagingParamDTO params);
 }

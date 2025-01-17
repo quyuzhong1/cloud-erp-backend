@@ -18,7 +18,7 @@ import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
-import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
@@ -383,7 +383,23 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return this.saveBatch(list);
     }
+    @Override
+    public void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList) {
+        if (CollectionUtils.isNotEmpty(operateLogList)) {
+            List<OperateLogEntity> addList = new ArrayList<>(operateLogList.size());
+            for (OperateLogDTO.AddModuleOperateLogDTO item : operateLogList) {
+                OperateLogEntity entity = new OperateLogEntity();
+                entity.setModuleType(item.getModuleType())
+                        .setBusinessId(item.getBusinessId())
+                        .setContent(item.getContent())
+                        .setOperation(item.getOperation());
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
 
+        }
+
+    }
     @Override
     public void removeByBusinessIds(List<String> businessIds) {
         lambdaUpdate().in(OperateLogEntity::getBusinessId,businessIds).remove();

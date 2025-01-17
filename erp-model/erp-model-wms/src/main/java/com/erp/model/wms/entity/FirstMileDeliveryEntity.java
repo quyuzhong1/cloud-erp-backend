@@ -10,6 +10,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -170,6 +171,12 @@ public class FirstMileDeliveryEntity extends BaseEntity<FirstMileDeliveryEntity>
     @TableField("transfer_warehouse_ids")
     private String transferWarehouseIds;
 
+
+    /**
+     * 发货日期
+     */
+    @TableField("delivery_date")
+    private LocalDate deliveryDate;
 
     public static final String APPROVE_STATUS = "approve_status";
 
