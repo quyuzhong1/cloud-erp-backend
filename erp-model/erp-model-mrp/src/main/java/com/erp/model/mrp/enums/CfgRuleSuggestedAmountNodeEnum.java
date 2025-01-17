@@ -4,6 +4,9 @@ import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.Arrays;
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
 public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
@@ -69,5 +72,9 @@ public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
 
     public static String getPurchaseVolumeInventory() {
         return String.join(":", SUGGESTED_PURCHASE.getCode(), SUGGESTED_PURCHASE_QTY.getCode(), INVENTORY.getCode());
+    }
+
+    public static List<String> getPurchaseVolumeAgingList() {
+        return  Arrays.asList(PURCHASE_APPROVE_DAYS.getCode(),PRODUCTION_DAYS.getCode(),SUPPLIER_DELIVERY_DAYS.getCode(),QC_DAYS.getCode(),PURCHASE_CYCLE_DAYS.getCode());
     }
 }

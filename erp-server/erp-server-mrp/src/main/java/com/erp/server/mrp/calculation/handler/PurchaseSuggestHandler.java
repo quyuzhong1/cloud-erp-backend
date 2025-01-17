@@ -61,7 +61,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = stockUpResult.getLogisticsResult();
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestAmountResult = cfgRuleStrategyDTO.getSuggestAmountResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
-        Set<String> purchaseVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeAging());
+        List<String> purchaseVolumeAging = CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeAgingList();
         Set<String> purchaseVolumeInventory = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeInventory());
         purchaseVolumeInventory.add(CfgRuleSuggestedAmountNodeEnum.FBA_PLAN_DELIVERY_QTY.getCode());
         purchaseVolumeInventory.add(CfgRuleSuggestedAmountNodeEnum.OVERSEAS_PLAN_DELIVERY_QTY.getCode());
