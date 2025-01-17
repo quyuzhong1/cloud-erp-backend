@@ -127,9 +127,9 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "启用时间必须晚于当前销售员开始时间");
         }
 
-        if(Objects.nonNull(currentSellerEntity) && addDTO.getChangeSellerId().equals(currentSellerEntity.getSellerId())){
-            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "变更后的销售员与当前销售员一致");
-        }
+//        if(Objects.nonNull(currentSellerEntity) && addDTO.getChangeSellerId().equals(currentSellerEntity.getSellerId())){
+//            return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "变更后的销售员与当前销售员一致");
+//        }
 
         CustomerB2bSellerChangeEntity customerB2bSellerChangeEntity = CustomerInfoConverter.INSTANCE.toCustomerB2bSellerChangeConvert(customerInfoEntity,addDTO);
         log.info("开始新增b2b客户销售员变更单");
@@ -587,9 +587,9 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(Objects.nonNull(currentSellerEntity) && !updateDTO.getStartDate().isAfter(currentSellerEntity.getStartDate())){
             throw new ServiceException("启用时间必须晚于当前销售员开始时间");
         }
-        if(Objects.nonNull(currentSellerEntity) && updateDTO.getChangeSellerId().equals(currentSellerEntity.getSellerId())){
-            throw new ServiceException("变更后的销售员与当前销售员一致");
-        }
+//        if(Objects.nonNull(currentSellerEntity) && updateDTO.getChangeSellerId().equals(currentSellerEntity.getSellerId())){
+//            throw new ServiceException("变更后的销售员与当前销售员一致");
+//        }
 
         CustomerB2bSellerChangeEntity customerB2bSellerChangeEntity =  BeanMapperUtils.map(CustomerB2bSellerChangeEntity.class, updateDTO);
         log.info("编辑 开始修改b2b客户销售员变更单数据，id：【{}】", old.getId());
