@@ -2368,6 +2368,7 @@ public class SoB2cDTO implements Serializable {
          */
         private  String sellerName;
 
+        private String salesDeptId;
         private String salesOrgId;
 
         private String salesOrgName;
