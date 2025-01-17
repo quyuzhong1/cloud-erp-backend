@@ -1152,6 +1152,8 @@ public class ReplenishmentResultDTO {
             entity.setShopId(dto.getShopId());
             entity.setSkuId(dto.getSkuId());
             entity.setReplenishmentSuggestionId(dto.getReplenishmentSuggestionId());
+            entity.setParentSkuId(dto.getParentSkuId());
+            entity.setBomVersion(dto.getBomVersion());
             return entity;
         }
     }
