@@ -141,6 +141,7 @@ public class InventoryServiceImpl implements InventoryService {
                     //获取仓库需求数
                     Map<String, Integer> shopQtyMap = warehouseShopMap.get(resultDTO);
                     if (ObjectUtils.isEmpty(shopQtyMap)) {
+                        k++;
                         continue;
                     }
                     int warehouseDemandQty = shopQtyMap
