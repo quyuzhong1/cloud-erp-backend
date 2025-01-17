@@ -2632,9 +2632,8 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (CharSequenceUtil.equals(poReturnEntity.getSourceType(),SourceTypeEnum.QC_INFO.getCode())) {
                 continue;
             }
-            PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailEntities.stream().filter(v->v.getId().equals(detailEntity.getPurchaseOrderDetailId())).findFirst().orElse(null);
             String returnMode = poReturnEntity.getReturnMode();
-            String warehouseLocation = purchaseOrderDetailEntity!=null?purchaseOrderDetailEntity.getWarehouseLocation():detailEntity.getWarehouseLocation();
+            String warehouseLocation = detailEntity.getWarehouseLocation();
             Integer usableQty = inventoryService.getInventoryTotal(warehouseEntity.getOrgId(), warehouseEntity.getId(), detailEntity.getSkuId(), warehouseLocation, InventoryStatusEnum.USABLE.getCode());
             if(Objects.equals(returnMode, ReturnModeEnum.REPLENISHMENT.getCode())
                     && usableQty < detailEntity.getReplenishQty()) {
