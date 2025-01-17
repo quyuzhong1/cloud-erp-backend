@@ -256,7 +256,6 @@
         select
         sb2c.dict_platform as dictPlatform,
         sb2c.shop_id as shopId,
-        sb2c.create_time as createTime,
         sb2cr.name as buyerName,
         sb2c.currency as sourceCurrency,
         sb2cr.receiver_name as receiverName,
