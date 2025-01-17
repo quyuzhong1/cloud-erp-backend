@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -44,6 +45,7 @@ import com.erp.server.mrp.mapper.CalcSalesInfoDimMapper;
 import com.erp.server.mrp.service.*;
 import com.erp.server.mrp.utils.DataDifferenceCalculator;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -60,6 +62,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import static com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum.COMPLETELY;
@@ -83,6 +86,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     @Resource
     private CalcSalesInfoDenoisingService calcSalesInfoDenoisingService;
     @Resource
+    @Lazy
     private CfgRuleCalcService cfgRuleCalcService;
 
     @Resource
@@ -107,42 +111,58 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     private CalcSalesInfoFavoriteService calcSalesInfoFavoriteService;
 
     @Override
-    public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList) {
-        for (CalcSalesInfoDimDTO.CalcResultDTO dto : calcResultList) {
-            CompletableFuture.runAsync(() -> {
-                CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
-                entity.setId(dto.getCalcSalesInfoDimId());
-                List<CalcSalesInfoDenoisingEntity> allSalesList = new ArrayList<>();
-                //开始计算去噪销量
-                List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList, entity);
-                //开始计算分时段销量和日均
-                List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
-                //开始计算销量预估
-                List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calculationSalesEstimates(dto, avgTimePeriodSales, allSalesList);
-                List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(dto.getShopId(), dto.getSkuId(),
-                        dto.getStartCalcDate(), dto.getEndCalcDate());
-                Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
-                        .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
-                //开始计算分时段预估
-                calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
-                //计算吻合度
-                BigDecimal similarity = calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap);
-                entity.setSimilarity(similarity);
-                calcSalesInfoDenoisingService.saveBatch(calculationSales);
-                calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
-                updateById(entity);
-            }, threadPoolTaskExecutor);
-        }
+    public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList, String id) {
+        AtomicInteger index = new AtomicInteger(0);
+        CompletableFuture.allOf(calcResultList.stream()
+                        .map(v -> CompletableFuture.runAsync(() -> executeTask(v, index), threadPoolTaskExecutor))
+                        .toArray(CompletableFuture[]::new))
+                .thenRunAsync(() -> {
+                    boolean allTasksFinished = calcResultList.stream().allMatch(task -> CalcStatusEnum.FINISH.getCode().equals(task.getStatus()));
+                    if (allTasksFinished) {
+                        CfgRuleCalcEntity entity = new CfgRuleCalcEntity();
+                        entity.setId(id);
+                        entity.setStatus(CalcStatusEnum.FINISH.getCode());
+                        cfgRuleCalcService.updateById(entity);
+                    }
+                });
+    }
 
+    private void executeTask(CalcSalesInfoDimDTO.CalcResultDTO dto, AtomicInteger index) {
+        CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
+        entity.setSerialNo(String.format("%06d", index.incrementAndGet()));
+        entity.setId(dto.getCalcSalesInfoDimId());
+        List<CalcSalesInfoDenoisingEntity> allSalesList = new ArrayList<>();
+        //开始计算去噪销量
+        List<CalcSalesInfoDenoisingEntity> calculationSales = calculationSales(dto, allSalesList, entity);
+        //开始计算分时段销量和日均
+        List<CalcSalesInfoDimDTO.TimePeriodSalesDTO> avgTimePeriodSales = calculationTimePeriodSales(dto, allSalesList, entity);
+        //开始计算销量预估
+        List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList = calculationSalesEstimates(dto, avgTimePeriodSales, allSalesList);
+        List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(dto.getShopId(), dto.getSkuId(),
+                dto.getStartCalcDate(), dto.getEndCalcDate());
+        Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
+                .collect(Collectors.toMap(OrderHistorySalesEsEntity::getDate, OrderHistorySalesEsEntity::getOriginalSalesQty, Integer::sum));
+        //开始计算分时段预估
+        calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
+        //计算吻合度
+        calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
+        calcSalesInfoDenoisingService.saveBatch(calculationSales);
+        calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
+        entity.setStatus(CalcStatusEnum.FINISH.getCode());
+        dto.setStatus(CalcStatusEnum.FINISH.getCode());
+        updateById(entity);
     }
 
     /**
      * 计算吻合度
-     * @param dto 参数
+     *
+     * @param dto                       参数
      * @param calcSalesInfoEstimateList 参数
-     * @param hisSalesMap 参数
+     * @param hisSalesMap               参数
+     * @param entity                    参数
      */
-    private BigDecimal calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList, Map<LocalDate, Integer> hisSalesMap) {
+    private void calculationSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto, List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList,
+                                             Map<LocalDate, Integer> hisSalesMap, CalcSalesInfoDimEntity entity) {
 
         List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
                 .map(CalcSalesInfoEstimateEntity::getQty)
@@ -154,7 +174,12 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
             date = date.plusDays(1);
         }
-        return DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId()).getMAPEScore();
+        DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId());
+        entity.setMapeScore(metricsResult.getMAPEScore());
+        entity.setMaeScore(metricsResult.getMAEScore());
+        entity.setMseScore(metricsResult.getMSEScore());
+        entity.setRmseScore(metricsResult.getRMSEScore());
+        entity.setR2Score(metricsResult.getR2Score());
     }
 
     @Override
@@ -251,7 +276,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         salesEstimateDTO.setDateList(dates);
         salesEstimateDTO.setSalesEstimateList(salesEstimateList);
         salesEstimateDTO.setRealSalesList(realSalesList);
-        salesEstimateDTO.setSimilarity(entity.getSimilarity());
+        salesEstimateDTO.setMapeScore(entity.getMapeScore());
+        salesEstimateDTO.setR2Score(entity.getR2Score());
+        salesEstimateDTO.setMaeScore(entity.getMaeScore());
+        salesEstimateDTO.setMseScore(entity.getMseScore());
+        salesEstimateDTO.setRmseScore(entity.getRmseScore());
         return salesEstimateDTO;
     }
 
@@ -452,7 +481,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             lineDTO.setQty(entry.getValue());
             calcList.add(lineDTO);
         }
-        DataDifferenceCalculator.compareMultiplePredictions(calcList, basicData);
+        DataDifferenceCalculator.compareMultiplePredictions(calcList, basicData, dto.getMetricsType());
         List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
         lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", new BigDecimal(100), basicData));
         lineList.addAll(calcList);
@@ -544,6 +573,19 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         }
         processListData(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<CalcSalesInfoDimDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<CalcSalesInfoDimDTO.TabListDTO> list = new ArrayList<>();
+        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.DOING.getCode(), CalcStatusEnum.DOING.getName()));
+        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.FINISH.getCode(), CalcStatusEnum.DOING.getName()));
+        return list;
+    }
+
+    @Override
+    public List<CalcSalesInfoDimDTO.DataIdPageDTO> dataIdPage(CalcSalesInfoDimDTO.ParamDTO params) {
+        return baseMapper.dataIdPage(params);
     }
 
     private void processListData(List<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> records) {
