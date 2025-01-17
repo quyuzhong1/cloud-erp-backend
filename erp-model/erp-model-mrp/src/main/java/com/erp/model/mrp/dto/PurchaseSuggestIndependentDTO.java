@@ -558,7 +558,7 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
         /**
          * 说明（bom信息）
          */
-        private Integer msg;
+        private String msg;
         /**
          * 来源id（补货建议明细id）
          */
