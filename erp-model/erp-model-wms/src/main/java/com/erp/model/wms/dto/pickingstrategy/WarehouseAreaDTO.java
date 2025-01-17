@@ -134,7 +134,7 @@ public class WarehouseAreaDTO {
         private String remark;
         private String updateUserName;
         private LocalDateTime updateTime;
-
+        private Boolean canEditAreaType;
     }
 
     @Getter
