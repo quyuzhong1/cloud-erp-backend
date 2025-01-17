@@ -269,7 +269,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     entity.setSourceCode(soReturnEntity.getCode());
                 }
                 //获取销售单信息
-                entity.setSourceCode(soReturnEntity.getCode());
                 if (CharSequenceUtil.isNotBlank(soReturnEntity.getSourceId())){
                     SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
                     entity.setSoCode(Objects.nonNull(soInfoEntity) ? soInfoEntity.getCode() : CharSequenceUtil.EMPTY);
