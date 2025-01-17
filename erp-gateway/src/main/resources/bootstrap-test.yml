@@ -3,7 +3,7 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.60:30848
-        namespace: ${NACOS_NAMESPACE:test}
+        namespace: $test
       config:
         server-addr: 172.16.100.60:30848
         namespace: test

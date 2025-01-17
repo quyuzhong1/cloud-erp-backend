@@ -4,6 +4,8 @@ spring:
       discovery:
         server-addr: deploy-nacos-svc:8848
         namespace: ${NACOS_NAMESPACE:dev}
+        ip: 172.16.100.60
+        port: 30700
       config:
         server-addr: deploy-nacos-svc:8848
         namespace: dev
