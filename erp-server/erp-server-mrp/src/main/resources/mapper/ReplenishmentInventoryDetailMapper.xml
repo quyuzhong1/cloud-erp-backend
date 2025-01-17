@@ -53,6 +53,9 @@
         <if test="param.isShowZeroInventory != null and param.isShowZeroInventory">
             and sid.shop_require_qty > 0
         </if>
+        order by rid.warehouse_id,
+        rid.virtual_warehouse_id,
+        sid.shop_require_qty
     </select>
 
 </mapper>
