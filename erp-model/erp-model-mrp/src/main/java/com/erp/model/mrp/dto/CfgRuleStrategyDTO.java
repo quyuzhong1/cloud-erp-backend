@@ -30,6 +30,10 @@ public class CfgRuleStrategyDTO {
      */
     private CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult;
     /**
+     * 策略
+     */
+    private CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult;
+    /**
      * 系统配置
      */
     private List<CfgSettingDTO> settings;

@@ -3,8 +3,6 @@ package com.erp.server.mrp.es.service;
 import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -13,13 +11,6 @@ import java.util.Set;
 
 public interface OutStockHistorySalesEsService {
 
-    /**
-     * 分页查询
-     * @param ids 建议id
-     * @param startDate 开始时间
-     * @param endDate 结束时间
-     */
-    Page<OutStockHistorySalesEsEntity> findByReplenishmentIdInAndDateBetween(List<String> ids, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
      * 保存数据
@@ -30,46 +21,33 @@ public interface OutStockHistorySalesEsService {
     /**
      * 根据建议id分组
      *
-     * @param replenishmentIds 建议id
+     * @param shopSkuIds       shopId-skuId
      * @param orderType        销量类型
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    Map<String, Integer> countQtyByReplenishmentIdsAndDate(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate);
+    Map<String, Integer> countQtyByShopSkuIdsAndDate(List<String> shopSkuIds, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
     /**
      * 查询历史数据
-     * @param suggestionIdList 建议id
+     * @param shopSkuIds       shopId-skuId
      * @param orderType        销量类型
      * @param startDate        开始日期
      * @param endDate          结束日期
      */
-    List<ReplenishmentResultDTO.SalesHistoryDTO> listByReplenishmentIdsAndDate(List<String> suggestionIdList, JSONArray orderType, LocalDate startDate, LocalDate endDate);
-
-    /**
-     * 删除原数据
-     * @param suggestionIds 建议id
-     * @param startDate        开始日期
-     * @param endDate          结束日期
-     */
-    void deleteBySuggestionIdsAndDate(List<String> suggestionIds, LocalDate startDate, LocalDate endDate);
-
-    /**
-     * 查询最近有销量的数据
-     * @param suggestionIds 建议id
-     * @param orderType 订单类型
-     */
-    List<OutStockHistorySalesEsEntity> getRecentSalesBySuggestionIds(Set<String> suggestionIds, JSONArray orderType);
-
-    /**
-     * 订单类型
-     * @param orderType 订单类型
-     */
-    Map<String, Integer> listByType(JSONArray orderType);
+    List<ReplenishmentResultDTO.SalesHistoryDTO> listByShopSkuIdsAndDate(List<String> shopSkuIds, JSONArray orderType, LocalDate startDate, LocalDate endDate);
 
     /**
      * 根据店铺查询有销量sku
+     *
      * @param shopIds 店铺
      */
     Map<String, Set<String>> listSkuByShopId(Set<String> shopIds);
+
+    /**
+     * 删除历史数据
+     * @param startDate 开始日期
+     * @param endDate 结束日期
+     */
+    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
 }

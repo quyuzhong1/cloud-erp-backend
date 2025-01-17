@@ -1,7 +1,6 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import lombok.*;
 
@@ -181,6 +180,7 @@ public class CfgRuleWarehouseDTO implements Serializable {
 
     @Getter
     @Setter
+    @EqualsAndHashCode
     public static class StrategyDetailResultDTO {
         /**
          * id

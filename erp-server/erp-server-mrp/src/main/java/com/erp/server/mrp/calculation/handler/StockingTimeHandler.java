@@ -1,30 +1,32 @@
 package com.erp.server.mrp.calculation.handler;
 
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
-import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Component
 public class StockingTimeHandler extends AbstractSkuCalculationHandler {
     @Resource
     private FbaUsableHandler fbaUsableHandler;
+
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return fbaUsableHandler;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public boolean shouldHandle(ReplenishmentResultDTO r) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
-        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+
+        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = replenishmentResultDTO.getCfgRuleStrategy().getStockUpResult();
         buildBasicStockingTime(replenishmentResultDTO, stockUpResult);
         //FBA备货时长：
         //最短：本地发FBA时效（最短）+ FBA入库天数

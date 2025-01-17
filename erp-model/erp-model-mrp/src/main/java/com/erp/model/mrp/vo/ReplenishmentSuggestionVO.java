@@ -123,6 +123,11 @@ public class ReplenishmentSuggestionVO {
         private Integer localUsableQty;
 
         /**
+         * 本地仓待检
+         */
+        private Integer localWaitQcQty;
+
+        /**
          * 本地仓在途
          */
         private Integer localInTransitQty;
@@ -353,6 +358,11 @@ public class ReplenishmentSuggestionVO {
         private Boolean favorite;
 
         /**
+         * 平台类型
+         */
+        private String platformType;
+
+        /**
          * sku id
          */
         private String skuId;
@@ -427,6 +437,11 @@ public class ReplenishmentSuggestionVO {
          * 本地仓可用
          */
         private Integer localUsableQty;
+
+        /**
+         * 本地仓待检
+         */
+        private Integer localWaitQcQty;
 
         /**
          * 本地仓在途
@@ -581,6 +596,11 @@ public class ReplenishmentSuggestionVO {
          * 配置
          */
         private String cfgRule;
+
+        /**
+         * 计算日
+         */
+        private String calcDate;
     }
 
     @Getter

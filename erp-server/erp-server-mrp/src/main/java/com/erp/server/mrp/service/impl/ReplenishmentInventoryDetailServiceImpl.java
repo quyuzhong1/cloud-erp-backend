@@ -55,7 +55,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params) {
+    public PagingVO<InventoryDetailVO> inventoryDetail(PagingDTO<InventoryTotalDTO> params, String platformType) {
         Page<InventoryDetailVO> page = baseMapper.inventoryDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
             return new PagingVO<>();
@@ -74,6 +74,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
             virtualWarehouseEntities = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
         }
         for (InventoryDetailVO detailVO : page.getRecords()) {
+            detailVO.setPlatformType(platformType);
             WarehouseEntity warehouse = warehouseEntities.stream()
                     .filter(e -> e.getId().equals(detailVO.getWarehouseId()))
                     .findFirst().orElse(new WarehouseEntity());

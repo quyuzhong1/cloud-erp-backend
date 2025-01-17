@@ -51,6 +51,12 @@ public class ShopInventoryDetailEntity extends BaseEntity<ShopInventoryDetailEnt
     @TableField("calc_version")
     private String calcVersion;
 
+    /**
+     * 店铺需求数
+     */
+    @TableField("shop_require_qty")
+    private Integer shopRequireQty;
+
 
     public static final String MAIN_ID = "main_id";
 

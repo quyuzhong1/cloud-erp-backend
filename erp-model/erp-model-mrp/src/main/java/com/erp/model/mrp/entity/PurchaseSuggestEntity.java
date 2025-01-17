@@ -1,5 +1,6 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONArray;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -10,7 +11,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 
 /**
@@ -37,6 +37,11 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     */
     @TableField("data_type")
     private String dataType;
+    /**
+     * 建议发货量
+     */
+    @TableField("suggest_delivery_qty")
+    private Integer suggestDeliveryQty;
     /**
     * 建议采购量
     */
@@ -73,25 +78,10 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     @TableField("purchase_cost")
     private BigDecimal purchaseCost;
     /**
-    * 作废状态
-    */
-    @TableField("invalid_status")
-    private Boolean invalidStatus;
-    /**
-    * 作废原因
-    */
-    @TableField("invalid_remark")
-    private String invalidRemark;
-    /**
-     * 状态
-     */
-    @TableField("status")
-    private String status;
-    /**
     * 来源id
     */
-    @TableField("source_id")
-    private String sourceId;
+    @TableField("source_id_json")
+    private JSONArray sourceIdJson;
     /**
     * 来源类型
     */
@@ -139,34 +129,29 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
      */
     @TableField("purchase_stock_up_qty")
     private Integer purchaseStockUpQty;
-
     /**
      * 备注
      */
     @TableField("remark")
     private String remark;
     /**
-     * 作废时间
+     * 父级skuId
      */
-    @TableField("invalid_time")
-    private LocalDateTime invalidTime;
-    /**
-     * 作废人id
-     */
-    @TableField("invalid_user_id")
-    private String invalidUserId;
-    /**
-     * 作废人名称
-     */
-    @TableField("invalid_user_name")
-    private String invalidUserName;
-
+    @TableField("parent_sku_id")
+    private String parentSkuId;
 
     /**
      * bom版本
      */
-    @TableField(exist = false)
+    @TableField("bom_version")
     private String bomVersion;
+
+    /**
+     * 补货建议明细id
+     */
+    @TableField("replenishment_suggestion_id")
+    private String replenishmentSuggestionId;
+
 
     public static final String CODE = "code";
 
@@ -185,10 +170,6 @@ public class PurchaseSuggestEntity extends BaseEntity<PurchaseSuggestEntity> {
     public static final String ESTIMATE_SALES_DATE = "estimate_sales_date";
 
     public static final String PURCHASE_COST = "purchase_cost";
-
-    public static final String INVALID_STATUS = "invalid_status";
-
-    public static final String INVALID_REMARK = "invalid_remark";
 
     public static final String SOURCE_ID = "source_id";
 

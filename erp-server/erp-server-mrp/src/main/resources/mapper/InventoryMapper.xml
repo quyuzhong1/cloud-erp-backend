@@ -9,65 +9,98 @@
         GROUP BY sku_no, warehouse_id
     </select>
     <select id="getFbaShipment"
-            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
-        select t1.ID                                AS sourceId,
-               t1.code                              AS sourceCode,
-               'fbaShipment'                             AS sourceType,
-               t1.delivery_status                   AS status,
-               t2.declare_qty                       AS declareQty,
-               t2.delivery_qty                      AS deliveryQty,
-               t2.receive_qty                       AS receiveQty,
-               t2.delivery_qty - t2.receive_qty     AS inTransitQty,
-               #{result.replenishmentDetail.calcVersion} AS calcVersion
-        from ${tableName} t1
-                 INNER JOIN
-             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
-        where t1.is_deleted = false
-          and t2.sku_id = #{result.replenishment.skuId}
-          and t1.shop_id = #{result.replenishment.shopId}
-          and (t2.delivery_qty - t2.receive_qty) > 0
-          and t1.delivery_status = 'shipped'
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$FbaInTransitDTO">
+        SELECT
+            t2.sku_id,
+            t1.shop_id,
+            MAX ( t1.id ) AS sourceId,
+            MAX ( t1.code ) AS sourceCode,
+            'fbaShipment' AS sourceType,
+            MAX ( t1.delivery_status ) AS status,
+            SUM ( t2.declare_qty ) AS declareQty,
+            SUM ( t2.delivery_qty ) AS deliveryQty,
+            SUM ( t2.receive_qty ) AS receiveQty,
+            SUM ( t2.delivery_qty - t2.receive_qty ) AS inTransitQty
+        FROM
+            ${tableName} t1
+                INNER JOIN ${tableDetailName} t2 ON t2.is_deleted = FALSE
+                AND t2.main_id = t1.id
+        WHERE
+            t1.is_deleted = FALSE
+          AND ( t2.delivery_qty - t2.receive_qty ) > 0
+          AND t1.delivery_status = 'shipped'
+        GROUP BY
+            t2.sku_id,
+            t1.shop_id
     </select>
     <select id="getFbaDelivery"
-            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$FbaInTransitDetailDTO">
-        select t1.id                                                            as sourceId,
-               t1.code                                                          as sourceCode,
-               'firstMileDelivery'                                              as sourceType,
-               t1.approve_status                                                as status,
-               t1.approve_time                                                  as deliveryDate,
-               t2.delivery_qty                                                  as deliveryQty,
-               COALESCE(
-                       (SELECT SUM
-                               (t4.receive_qty)
-                        FROM ${shipmentName} t3
-                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
-                            AND t4.main_id = t3.id
-                            AND t3.code = t2.fba_shipment_code
-                            AND t4.sku_id = #{result.replenishment.skuId}), 0)  AS receiveQty,
-               (t2.delivery_qty - COALESCE(
-                       (SELECT SUM
-                               (t4.receive_qty)
-                        FROM ${shipmentName} t3
-                                 INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
-                            AND t4.main_id = t3.id
-                            AND t3.code = t2.fba_shipment_code
-                            AND t4.sku_id = #{result.replenishment.skuId}), 0)) as inTransitQty,
-               #{result.replenishmentDetail.calcVersion}                        as calcVersion
-        from ${tableName} t1
-                 INNER JOIN
-             ${tableDetailName} t2 on t2.is_deleted = false and t2.main_id = t1.id
-        where t1.is_deleted = false
-          and t2.sku_id = #{result.replenishment.skuId}
-          and t1.shop_id = #{result.replenishment.shopId}
-          and t1.approve_status = 'approve'
-          and (t2.delivery_qty - COALESCE(
-                (SELECT SUM
-                        (t4.receive_qty)
-                 FROM ${shipmentName} t3
-                          INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
-                     AND t4.main_id = t3.id
-                     AND t3.code = t2.fba_shipment_code
-                     AND t4.sku_id = #{result.replenishment.skuId}), 0)) > 0
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$FbaInTransitDTO">
+        SELECT
+            t2.sku_id,
+            t1.shop_id,
+            MAX ( t1.ID ) AS sourceId,
+            MAX ( t1.code ) AS sourceCode,
+            'firstMileDelivery' AS sourceType,
+            MAX ( t1.approve_status ) AS status,
+            MAX ( t1.approve_time ) AS deliveryDate,
+            SUM ( t2.delivery_qty ) AS deliveryQty,
+            SUM (
+                    COALESCE (
+                            (
+                                SELECT SUM
+                                       ( t4.receive_qty )
+                                FROM
+                                    ${shipmentName} t3
+                                        INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                        AND t4.main_id = t3.ID
+                                        AND t3.code = t2.fba_shipment_code
+                                        AND t4.sku_id = t2.sku_id
+                            ),
+                            0
+                    )
+            ) AS receiveQty,
+            SUM (
+                    (
+                        t2.delivery_qty - COALESCE (
+                                (
+                                    SELECT SUM
+                                           ( t4.receive_qty )
+                                    FROM
+                                        ${shipmentName} t3
+                                            INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                            AND t4.main_id = t3.ID
+                                            AND t3.code = t2.fba_shipment_code
+                                            AND t4.sku_id = t2.sku_id
+                                ),
+                                0
+                                          )
+                        )
+            ) AS inTransitQty
+        FROM
+            ${tableName} t1
+                INNER JOIN ${tableDetailName} t2 ON t2.is_deleted = FALSE
+                AND t2.main_id = t1.ID
+        WHERE
+            t1.is_deleted = FALSE
+          AND t1.approve_status = 'approve'
+          AND (
+                  t2.delivery_qty - COALESCE (
+                          (
+                              SELECT SUM
+                                     ( t4.receive_qty )
+                              FROM
+                                  ${shipmentName} t3
+                                      INNER JOIN ${shipmentDetailName} t4 ON t4.is_deleted = FALSE
+                                      AND t4.main_id = t3.ID
+                                      AND t3.code = t2.fba_shipment_code
+                                      AND t4.sku_id = t2.sku_id
+                          ),
+                          0
+                                    )
+                  ) > 0
+        GROUP BY
+            t2.sku_id,
+            t1.shop_id
     </select>
     <select id="getLogisticsBillBySourceIds" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
         select source_id,order_time from ${tableName} where is_deleted = false
@@ -98,7 +131,7 @@
         wdp.approve_status AS status,
         wdpd.qty AS qty,
         CASE WHEN wdp.approve_status = 'approve' THEN wdp.approve_time
-        ELSE wdp.create_time END AS estimateSalesDate,
+        ELSE wdp.create_time END AS planDeliveryDate,
         wdp.id AS sourceId,
         wdp.code AS sourceCode,
         wdp.to_warehouse_id AS warehouseId
@@ -123,8 +156,8 @@
           AND wdpd.sku_id =
         #{result.replenishment.skuId}
         <choose>
-            <when test="sourceType == 'replenishment_plan'">
-              AND  wdp.source_type = 'replenishment_plan'
+            <when test="sourceType == 'FBA_DELIVERY_PLAN_BY_REPLENISHMENT' || sourceType == 'OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT'">
+              AND  wdp.source_type = 'deliverySuggestion'
             </when>
             <otherwise>
                 AND wdp.source_type = ''
@@ -207,13 +240,20 @@
         SUM ( pad.apply_qty ) AS qty,
         MAX ( pad.create_po_type ) AS createPoType,
         MAX ( COALESCE ( pa.approve_time, pa.create_time ) ) AS estimatedPutAwayDate,
-        MAX ( pad.id ) AS detailId,
-        'purchaseApplication' AS sourceType
+        MAX ( pad.id ) AS detailId
         FROM
         ${tableName} AS pa
         INNER JOIN ${tableDetailName} AS pad ON pad.is_deleted = FALSE
         AND pad.purchase_application_id = pa.id
         <where>
+            <choose>
+                <when test="sourceType == 'LOCAL_REPLENISHMENT_PURCHASE_PLAN'">
+                    AND pa.source_type in ('purchaseSuggestion','purchaseSuggestionMerge')
+                </when>
+                <otherwise>
+                    AND pa.source_type not in ('purchaseSuggestion','purchaseSuggestionMerge')
+                </otherwise>
+            </choose>
             <if test="codes != null and !codes.isEmpty()">
                 <!-- 当 codes 包含 'approve' 时，处理特殊条件 -->
                 <if test="codes.size() == 1 and 'approve' in codes">
@@ -249,11 +289,11 @@
         pod.sku_id,
         max(po.code) AS sourceCode,
         po.id AS sourceId,
-        max(po.create_time) AS estimatedPutAwayDate,
+        max(pod.plan_delivery_date) AS estimatedPutAwayDate,
         max(po.approve_status) AS status,
         sum(pod.purchase_qty) AS qty,
         po.delivery_warehouse_id AS warehouseId,
-        'purchaseOrder' AS sourceType
+        'LOCAL_PURCHASE_ORDER' AS sourceType
         FROM
         ${tableName} AS po
         INNER JOIN ${tableDetailName} AS pod ON pod.is_deleted = FALSE
@@ -348,15 +388,18 @@
         where is_deleted = false
     </select>
     <select id="getLocalInTransitDetail"
-            resultType="com.erp.model.mrp.dto.ReplenishmentResultDTO$LocalInTransitDetailDTO">
-        SELECT warehouseId,
+            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$LocalInTransitDTO">
+        SELECT
+        skuId,
+        warehouseId,
         source_type,
         source_code,
         qty,
         sourceId,
         estimatedPutAwayDate
-        FROM (SELECT MAX
-        (warehouse_id) AS warehouseId,
+        FROM (SELECT
+        sku_id AS skuId,
+        warehouse_id AS warehouseId,
         MAX(source_type) AS source_type,
         MAX(source_code) AS source_code,
         SUM(qty) AS qty,
@@ -372,8 +415,8 @@
         case
         when tf.source_type in
         ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder')
-        then 'purchaseInTransit'
-        when tf.source_type in ('transferOut', 'transferIn') then 'transferInTransit'
+        then 'LOCAL_IN_TRANSIT_PURCHASE'
+        when tf.source_type in ('transferOut', 'transferIn') then 'LOCAL_IN_TRANSIT_TRANSFER'
         else '' end
         as source_type,
         case
@@ -403,16 +446,9 @@
         </if>
         where tf.is_deleted = 'f'
         and tf.dict_inventory_status = 'inTransit'
-        and tf.source_type in
-        ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder',
-        'transferOut', 'transferIn')
-        and tf.sku_id = #{skuId}
-        and tf.warehouse_id in
-        <foreach collection="localWarehouseIds" item="item" open="(" close=")" separator=",">
-            #{item}
-        </foreach>
+        and tf.source_type in ('instockForcast', 'warehouseReceive', 'purchaseStockIn', 'purchaseReturnOrder','transferOut', 'transferIn')
         ) m
-        group by source_type, source_code
+        group by source_type, source_code,warehouseId,skuId
         order by estimatedPutAwayDate desc) t
         where t.qty > 0
     </select>
@@ -492,7 +528,8 @@
         ds.code AS sourceCode,
         ds.status AS status,
         ds.suggest_delivery_qty AS qty,
-        ds.estimate_sales_date AS estimateSalesDate
+        ds.estimate_sales_date AS estimateSalesDate,
+        ds.shop_id AS receivingChannel
         FROM
             ${tableName} ds
         WHERE
@@ -510,7 +547,7 @@
                 SELECT 1
                 FROM jsonb_array_elements(wdpd.source_json) AS elem
                 WHERE elem ->> 'sourceId' = ds.id::text
-                )
+                ))
             </if>
             <!-- 当 codes 包含 'approve' 以及其他状态时 -->
             <if test="codes.size() > 1 and 'finish' in codes">
@@ -611,48 +648,23 @@
         ) m
         ) n where n.transport_qty > 0
     </select>
-    <select id="getReplenishmentPurchasePlan"
-            resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$ReplenishmentPurchaseDTO">
-        SELECT
-        ps.id AS sourceId,
-        MAX ( ps.code ) AS sourceCode,
-        MAX ( ps.status ) AS status,
-        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
-        MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
-        MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
-        'replenishment_plan' AS sourceType,
-        ps.sku_id,
-        ps.shop_id
-        FROM
-        ${tableName} ps
-        WHERE
-        ps.invalid_status = FALSE
-        AND ps.status IN
-        <foreach item="code" collection="codes" open="(" separator="," close=")">
-            #{code}
-        </foreach>
-        GROUP BY
-        ps.sku_id,
-        ps.shop_id,
-        ps.id
 
-    </select>
     <select id="getReplenishmentPurchaseMergePlan"
             resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$ReplenishmentPurchaseDTO">
         SELECT
         ps.id AS sourceId,
         MAX ( ps.code ) AS sourceCode,
         MAX ( ps.status ) AS status,
-        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.plan_purchase_qty END ) AS qty,
+        SUM ( CASE WHEN ps.status = 'draft' THEN 0 WHEN ps.status = 'waitConfirm' THEN ps.suggest_purchase_qty ELSE ps.purchase_stock_up_qty END ) AS qty,
         MAX ( ps.estimate_instock_date ) AS estimatedPutAwayDate,
         MAX ( ps.estimate_sales_date ) AS estimateSalesDate,
-        'replenishment_plan' AS sourceType,
+        'LOCAL_REPLENISHMENT_PLAN' AS sourceType,
         ps.sku_id,
         ps.shop_id
         FROM
         ${tableName} ps
         WHERE
-        ps.invalid_status = FALSE
+        ps.invalid_status = FALSE AND is_merge = #{isMerge}
         AND ps.status IN
         <foreach item="code" collection="codes" open="(" separator="," close=")">
             #{code}
@@ -661,6 +673,37 @@
         ps.sku_id,
         ps.shop_id,
         ps.id
+    </select>
+    <select id="getLocalWaitQc" resultType="com.erp.model.mrp.dto.ReplenishmentInventoryDTO$LocalWaitQcDTO">
+        SELECT
+        sku_id,
+        warehouse_id AS warehouseId,
+        SUM ( qty ) AS qty
+        FROM
+        ${tableName}
+        WHERE is_deleted = false
+        AND dict_inventory_status IN
+        <foreach item="code" collection="codes" open="(" separator="," close=")">
+            #{code}
+        </foreach>
+        GROUP BY
+        warehouse_id,sku_id
+    </select>
+    <select id="getPurchaseOrder" resultType="com.erp.model.scm.dto.PurchaseOrderDTO$ViewSubcontractPoDTO">
+        select
+        pod.sku_id,
+        po.code,
+        pod.plan_delivery_date as planDeliveryDate
+        from ${tableName} po
+        inner join ${tableDetailName} pod on po.id = pod.purchase_order_id and pod.is_deleted = false
+        <where>
+            po.code IN
+            <foreach item="code" collection="sourceCodeList" open="(" separator="," close=")">
+                #{code}
+            </foreach>
+        </where>
+
+
     </select>
 
 
