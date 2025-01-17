@@ -63,6 +63,8 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
         Set<String> purchaseVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeAging());
         Set<String> purchaseVolumeInventory = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeInventory());
+        purchaseVolumeInventory.add(CfgRuleSuggestedAmountNodeEnum.FBA_PLAN_DELIVERY_QTY.getCode());
+        purchaseVolumeInventory.add(CfgRuleSuggestedAmountNodeEnum.OVERSEAS_PLAN_DELIVERY_QTY.getCode());
         int agingDays = purchaseVolumeAging.stream()
                 .map(v -> ReplenishmentResultDTO.DetailDTO.getAttributeValue(replenishmentResultDTO.getReplenishmentDetail(), v))
                 .reduce(0, Math::addExact);

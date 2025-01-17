@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
@@ -242,6 +243,10 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
             return;
         }
 
+        //bom信息
+        List<String> skuIdList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+
         //平台信息
         List<String> platformList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
@@ -264,6 +269,11 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = CollUtil.isEmpty(ids) ? Collections.emptyList() : purchaseApplicationDetailFeign.listByMergeIdList(ids);
 
         for (PurchaseSuggestIndependentDTO.ListDTO listDTO : list) {
+
+
+            //是否是组合品
+            long count = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion()) && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())).count();
+            listDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
 
             //币别
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().

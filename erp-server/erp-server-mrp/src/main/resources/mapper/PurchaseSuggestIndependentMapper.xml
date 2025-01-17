@@ -65,7 +65,8 @@
         psm.sku_id as skuId,
         psm.plan_purchase_qty as planPurchaseQty,
         psm.purchase_stock_up_qty as purchaseStockUpQty,
-        psm.remark
+        psm.remark,
+        psm.bom_version as bomVersion
     </sql>
 
     <!-- 采购建议导出分页 -->
