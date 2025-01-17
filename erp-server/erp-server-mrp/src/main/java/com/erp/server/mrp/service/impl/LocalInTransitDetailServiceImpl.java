@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.InventoryDetailTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.LocalInTransitDetailEntity;
 import com.erp.model.mrp.vo.LocalInTransitDetailVO;
@@ -41,5 +42,15 @@ public class LocalInTransitDetailServiceImpl extends SuperServiceImpl<LocalInTra
         return getByReplenishmentId(detailId).stream()
                 .map(LocalInTransitDetailEntity::getQty)
                 .reduce(0, Math::addExact);
+    }
+
+    @Override
+    public int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params) {
+        List<LocalInTransitDetailEntity> list = list(Wrappers.<LocalInTransitDetailEntity>lambdaQuery().eq(LocalInTransitDetailEntity::getReplenishmentDetailId, params.getDetailId())
+                .eq(LocalInTransitDetailEntity::getSourceType, params.getSourceType())
+        );
+        return list.stream()
+                .map(LocalInTransitDetailEntity::getShopPreQty)
+                .reduce(0 ,Math::addExact);
     }
 }

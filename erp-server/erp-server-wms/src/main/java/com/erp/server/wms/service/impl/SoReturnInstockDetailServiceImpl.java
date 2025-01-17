@@ -177,7 +177,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     Integer receiveQty = soReturnReceiveDetailEntity.getReceiveQty();
                     //此单历史入库数量
                     Integer realQty = soReturnInstockDetailEntities.stream()
-                            .filter(req -> StringUtils.isNotBlank(req.getSoReturnDetailId()) && req.getSoReturnDetailId().equals(detailDto.getSoReturnDetailId()))
+                            .filter(req -> StringUtils.isNotBlank(req.getSourceDetailId()) && req.getSourceDetailId().equals(detailDto.getSourceDetailId()))
                             .map(SoReturnInstockDetailEntity::getRealQty)
                             .reduce(MathUtil.ZERO, Integer::sum);
                     if (receiveQty < detailDto.getRealQty() + realQty) {

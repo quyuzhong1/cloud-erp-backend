@@ -179,6 +179,12 @@ public class CustomerInfoEntity extends BaseEntity<CustomerInfoEntity> {
     private String sellerName;
 
     /**
+     * 销售部门id
+     */
+    @TableField("sales_dept_id")
+    private String salesDeptId;
+
+    /**
      * 条件字典 oms_dict 获取
      */
     @TableField("condition_dict")

@@ -25,12 +25,22 @@
         <result column="calc_version" property="calcVersion"/>
     </resultMap>
     <select id="estimatedPurchase" resultType="com.erp.model.mrp.vo.EstimatedPurchaseVO">
-        select status, qty, plan_arrival_date,estimate_sales_date, type, source_id, source_code, source_type
+        select id,
+        status,
+        qty,
+        plan_arrival_date,
+        estimate_sales_date,
+        type,
+        source_id,
+        source_code,
+        source_type,
+        receiving_channel,
+        shop_pre_qty as shopPrePurchase
         from estimated_purchase_detail
         where replenishment_detail_id = #{params.detailId}
-          and source_type = #{params.sourceType}
-          and is_deleted = false
-        <if test="params.estimateSalesDate != null" >
+        and source_type = #{params.sourceType}
+        and is_deleted = false
+        <if test="params.estimateSalesDate != null">
             and estimate_sales_date = #{params.estimateSalesDate}
         </if>
     </select>

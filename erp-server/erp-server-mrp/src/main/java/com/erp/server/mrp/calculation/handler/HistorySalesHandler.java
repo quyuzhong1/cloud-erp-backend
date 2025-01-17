@@ -2,7 +2,6 @@ package com.erp.server.mrp.calculation.handler;
 
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
-import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleSalesDenoisingDenoisingTypeEnum;
 import com.erp.model.mrp.enums.TimePeriodEnum;
@@ -24,20 +23,21 @@ public class HistorySalesHandler extends AbstractSkuCalculationHandler {
     @Resource
     private SalesEstimateHandler salesEstimateHandler;
 
+
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return salesEstimateHandler;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
         //获取销量配置
-        CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
+        CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = replenishmentResultDTO.getCfgRuleStrategy().getSalesQtyResult();
         boolean isIgnoreOutOfStock = salesQtyResult.getIsIgnoreOutOfStock();
         //开始计算去噪销量
         calculationSales(isIgnoreOutOfStock, replenishmentResultDTO, salesQtyResult.getDenoisingResults(), salesQtyResult.getDefaultDenoisingResults());

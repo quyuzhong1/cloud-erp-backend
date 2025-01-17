@@ -3,9 +3,9 @@ package com.erp.server.mrp.service.impl;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.InventoryDetailTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.OverseasInTransitDetailEntity;
 import com.erp.model.mrp.vo.OverseasInTransitDetailVO;
@@ -29,9 +29,6 @@ public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<Oversea
     @Override
     public PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params) {
         Page<OverseasInTransitDetailVO> page = baseMapper.overseasInTransitDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
-        for (OverseasInTransitDetailVO vo : page.getRecords()) {
-            vo.setStatusName(ApproveStatusEnum.getName(vo.getStatus()));
-        }
         return new PagingVO<>(page);
     }
 
@@ -45,5 +42,13 @@ public class OverseasInTransitDetailServiceImpl extends SuperServiceImpl<Oversea
         return getByReplenishmentId(detailId).stream()
                 .map(OverseasInTransitDetailEntity::getInTransitQty)
                 .reduce(0, Math::addExact);
+    }
+
+    @Override
+    public int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params) {
+        List<OverseasInTransitDetailEntity> entities = getByReplenishmentId(params.getDetailId());
+        return entities.stream()
+                .map(OverseasInTransitDetailEntity::getShopPreQty)
+                .reduce(0 ,Math::addExact);
     }
 }

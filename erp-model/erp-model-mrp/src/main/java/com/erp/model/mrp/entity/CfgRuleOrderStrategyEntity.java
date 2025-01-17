@@ -24,12 +24,20 @@ import java.io.Serializable;
 @TableName("cfg_rule_order_strategy")
 public class CfgRuleOrderStrategyEntity extends BaseEntity<CfgRuleOrderStrategyEntity> {
     /**
-    * 采购建议策略,是否拆分
+    * 采购建议策略,是否拆分组合品
     */
     @TableField("is_split")
     private Boolean isSplit;
 
+    /**
+     * 是否合并SKU集中采购
+     */
+    @TableField("is_merge_sku")
+    private Boolean isMergeSku;
+
     public static final String IS_SPLIT = "is_split";
+
+    public static final String IS_MERGE_SKU = "is_merge_sku";
 
     @Override
     public Serializable pkVal() {

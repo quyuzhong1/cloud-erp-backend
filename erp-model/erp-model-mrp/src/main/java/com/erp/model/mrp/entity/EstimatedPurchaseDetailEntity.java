@@ -87,6 +87,18 @@ public class EstimatedPurchaseDetailEntity extends BaseEntity<EstimatedPurchaseD
     @TableField("calc_version")
     private String calcVersion;
 
+    /**
+     * 收货渠道，店铺id/仓库id
+     */
+    @TableField("receiving_channel")
+    private String receivingChannel;
+
+    /**
+     * 店铺预计数量
+     */
+    @TableField("shop_pre_qty")
+    private Integer shopPreQty;
+
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 

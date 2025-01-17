@@ -15,22 +15,24 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO t, ReplenishmentResultDTO r) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return null;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO t, ReplenishmentResultDTO r) {
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO resultDTO) {
+    public void doHandle(ReplenishmentResultDTO resultDTO, List<ReplenishmentResultDTO> r) {
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = resultDTO.getCfgRuleStrategy();
         LocalDate now = LocalDate.parse(resultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         List<ReplenishmentResultDTO.RecentSuggestionDTO> recentSuggestions = new ArrayList<>();
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
@@ -47,7 +49,7 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
             recentSuggestions.add(dto);
         }
         //获取最近发货日
-        ReplenishmentResultDTO.DeliverySuggestDTO deliverySuggestDTO = resultDTO.getDeliverySuggests()
+        ReplenishmentResultDTO.DeliverySuggestDTO deliverySuggestDTO = Optional.ofNullable(resultDTO.getDeliverySuggests()).orElse(new ArrayList<>())
                 .stream()
                 .min(Comparator.comparing(ReplenishmentResultDTO.DeliverySuggestDTO::getSuggestDeliveryDate))
                 .orElse(null);
@@ -71,7 +73,7 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
         }
 
         //获取最近采购日
-        ReplenishmentResultDTO.PurchaseSuggestDTO purchaseSuggestDTO = resultDTO.getPurchaseSuggests()
+        ReplenishmentResultDTO.PurchaseSuggestDTO purchaseSuggestDTO = Optional.ofNullable(resultDTO.getPurchaseSuggests()).orElse(new ArrayList<>())
                 .stream()
                 .min(Comparator.comparing(ReplenishmentResultDTO.PurchaseSuggestDTO::getSuggestPurchaseDate))
                 .orElse(null);

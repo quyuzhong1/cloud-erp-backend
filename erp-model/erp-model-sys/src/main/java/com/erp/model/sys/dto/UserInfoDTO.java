@@ -17,7 +17,6 @@ public class UserInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BusinessOperationUserDTO {
-
         /**
          * 用户id
          */

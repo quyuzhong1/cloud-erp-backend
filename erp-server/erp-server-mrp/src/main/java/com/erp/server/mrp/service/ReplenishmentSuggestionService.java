@@ -314,23 +314,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      */
     PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto);
 
-
-    /**
-     * 根据店铺id查询销量
-     *
-     * @param shopIds        店铺id
-     * @param skuId          sku
-     * @param salesQtyResult 销量规则
-     */
-    List<LocalInventoryDTO.ShopSalesDTO> getSalesByShopIds(List<String> shopIds, String skuId, CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult);
-
     /**
      * 保存建议
      *
-     * @param cfgRuleStrategy     配置值
-     * @param replenishmentResult 建议结果
      */
-    void saveReplenishment(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult);
+    void saveReplenishment(List<ReplenishmentResultDTO> resultDTOS);
 
     /**
      * 查询需要计算的数据
@@ -418,14 +406,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     List<ReplenishmentSuggestionEntity> listByPlatform(String platformType);
 
     /**
-     * 获取店铺最近销量
-     *
-     * @param salesQtyType 销量类型
-     * @param orderType    订单类型
-     */
-    Map<String, Map<String, Integer>> getSalesHistoryMap(String salesQtyType, JSONArray orderType);
-
-    /**
      * 导出历史销量
      */
     List<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(CfgRuleCalcDTO.DownloadDTO dto, Object[] searchAfterValues);
@@ -436,4 +416,23 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     List<ReplenishmentSuggestionVO.SalesInfoVO> listSalesInfo(BaseIdDTO dto);
+
+    /**
+     * 库存总数
+     *
+     * @param params 明细id
+     */
+    Integer inventoryDetailTotal(InventoryDetailTotalDTO params);
+
+    /**
+     * 导出计算数据
+     * @param dto 参数
+     */
+    void exportCalcData(BaseIdDTO dto);
+
+    /**
+     * 导出库存预测依据
+     * @param dto 参数
+     */
+    ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(BaseIdDTO dto);
 }

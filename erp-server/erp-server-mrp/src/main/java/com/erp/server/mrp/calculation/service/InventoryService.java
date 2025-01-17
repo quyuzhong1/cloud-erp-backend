@@ -7,19 +7,10 @@ import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface InventoryService {
-
-
-    /**
-     * 计算FBA可用库存
-     *
-     * @param replenishmentResultDTO 参数
-     * @param code                   选中的code值
-     * @param stockUpResult          备货配置
-     */
-    int getFbaInTransit(ReplenishmentResultDTO replenishmentResultDTO, String code, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult);
 
     /**
      * 获取FBA预计发货
@@ -40,18 +31,19 @@ public interface InventoryService {
      * 获取本地仓在途
      *
      * @param replenishmentResultDTO 参数
-     * @param codes                  编码
      * @param cfgRuleStrategyDTO     配置
+     * @param dtoList                该sku全部店铺数据
      */
-    int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, Set<String> codes, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+    int getLocalInTransit(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList);
 
     /**
      * 获取本地仓在途
      *
      * @param replenishmentResultDTO 参数
      * @param cfgRuleStrategyDTO     配置
+     * @param dtoList                该sku全部店铺数据
      */
-    int getLocalPurchase(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+    int getLocalPurchase(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList);
 
 
     /**
@@ -75,9 +67,17 @@ public interface InventoryService {
      * @param replenishmentResultDTO  建议
      * @param endDate                 结束时间
      * @param deliveryVolumeInventory 库存建议配置
-     * @param warehouseResult         仓库配置
      */
-    int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory, CfgRuleWarehouseDTO.StrategyResultDTO warehouseResult);
+    int getInventory(ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory);
+
+    /**
+     * 根据建议配置获取库存
+     * @param suggestDTO  采购建议
+     * @param replenishmentResultDTO  建议
+     * @param endDate                 结束时间
+     * @param deliveryVolumeInventory 库存建议配置
+     */
+    int getInventoryByPurchaseSuggest(ReplenishmentResultDTO.PurchaseSuggestDTO suggestDTO,ReplenishmentResultDTO replenishmentResultDTO, LocalDate endDate, Set<String> deliveryVolumeInventory);
 
     /**
      * 补货计划
@@ -96,16 +96,18 @@ public interface InventoryService {
      * @param replenishmentResultDTO 参数
      * @param code                   选中的code值
      * @param cfgRuleStrategyDTO     配置
+     * @param dtoList                该sku全部店铺数据
      */
-    int getOverseasInTransit(ReplenishmentResultDTO replenishmentResultDTO, String code, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+    int getOverseasInTransit(ReplenishmentResultDTO replenishmentResultDTO, String code, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList);
 
 
     /**
      * 计算海外预计发货库存
      * @param replenishmentResultDTO 建议
      * @param cfgRuleStrategyDTO     配置
+     * @param dtoList                该sku全部店铺数据
      */
-    int getOverseasPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO);
+    int getOverseasPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO, List<ReplenishmentResultDTO> dtoList);
 
 
     /**
@@ -120,13 +122,14 @@ public interface InventoryService {
      * @param warehouseList          仓库
      * @param inventoryList          仓库库存
      * @param inventoryDetail        库存详情
+     * @param shopDemandQty          店铺需求数
      */
     int getAllocateQty(ReplenishmentResultDTO replenishmentResultDTO,
-                              List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList,
-                              List<LocalInventoryDTO> inventoryList,
-                              List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail,
-                              ReplenishmentInventoryTypeEnum inventoryType,
-                              CfgRuleWarehouseTypeEnum warehouseType);
+                       List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> warehouseList,
+                       List<LocalInventoryDTO> inventoryList,
+                       List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail,
+                       Map<String, Integer> shopDemandQty, ReplenishmentInventoryTypeEnum inventoryType,
+                       CfgRuleWarehouseTypeEnum warehouseType);
 
     /**
      * 获取全部库存
@@ -135,4 +138,11 @@ public interface InventoryService {
      * @param calculationDate 计算日
      */
     ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String platformType, LocalDate calculationDate);
+
+
+    /**
+     * 获取sku所有对应店铺
+     * @param dtoList 参数
+     */
+    Map<String, Integer> getShopDemandQtyMap(List<ReplenishmentResultDTO> dtoList);
 }

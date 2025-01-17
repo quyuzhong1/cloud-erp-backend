@@ -1,15 +1,12 @@
 package com.erp.rpc.sys.feign;
 
-import com.erp.model.sys.dto.DeptKingdeeDTO;
-import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -47,4 +44,10 @@ public interface KingdeeFeign {
 
     @PostMapping("/feign/kingdee/listOperatorByUserIdList")
     List<KingdeeOperatorRefPostDTO.OperatorDTO> listBusinessOperatorByUserIdList(@RequestBody  List<String> userIdList);
+
+    /**
+     * 业务员列表 用于B2B 销售订单下拉
+     */
+    @PostMapping("/feign/kingdee/listKingdeeUser")
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listKingdeeUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto);
 }

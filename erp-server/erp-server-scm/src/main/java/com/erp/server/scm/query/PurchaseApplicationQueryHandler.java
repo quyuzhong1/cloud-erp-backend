@@ -34,7 +34,12 @@ public class PurchaseApplicationQueryHandler extends AbstractQueryHandler {
                 return this.getQueryAllSql();
             }
         }
+        if("sourceCode".equals(field)){
+            return  "(pa.source_code " +compareCodeSplicingValueSql +" or " + "EXISTS (select id from  (select json_array_elements(source_json::json) ->> 'code' as source_code,id from purchase_application_detail where is_deleted = false \n" +
+                    "and id = pad.id ) as sj where sj.source_code " + compareCodeSplicingValueSql + "))";
+        }
         return null;
     }
+
 }
 

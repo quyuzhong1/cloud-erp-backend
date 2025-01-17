@@ -936,6 +936,12 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelIgnore
         private Integer boxCount;
+
+        /**
+         * 创建时间
+         */
+        @ExcelIgnore
+        private LocalDateTime createTime;
     }
     /**
      * tab

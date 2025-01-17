@@ -435,4 +435,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected List<String> getSourceCodeKeys() {
 		return null;
 	}
+
+	public abstract Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpOutputTaskRequest, DmpOutputTaskResponse dmpResponse);
 }

@@ -503,4 +503,5 @@ public class PurchaseApplicationController extends BaseController {
     public ApiResult<PurchaseApplicationDTO.SubcontractPurchasePriceDTO> batchGetSubcontractPurchasePrice(@RequestBody @Validated ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list) {
         return purchaseApplicationService.batchGetSubcontractPurchasePrice(list);
     }
+
 }
