@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 委外订单
@@ -99,9 +101,9 @@ public class SubcontractOrderController extends BaseController {
    */
    @LogAction(value = LogActionEnum.INSERT, desc = "新增委外订单")
    @PostMapping("/add")
-   public ApiResult<Void> add(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
-      subcontractOrderService.add(dto);
-      return success();
+   public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
+       SubcontractOrderEntity entity = subcontractOrderService.add(dto);
+       return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
    }
 
     /**
@@ -137,9 +139,9 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:submit",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "id")
-    public ApiResult<Void> addAndSubmit(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
-        subcontractOrderService.addAndSubmit(dto);
-        return success();
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated SubcontractOrderDTO.AddDTO dto) {
+        SubcontractOrderEntity entity = subcontractOrderService.addAndSubmit(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -175,9 +177,23 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:submit",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
-    public ApiResult<Void> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractOrderService.submit(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SubcontractOrderEntity> entityMap = subcontractOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SubcontractOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"委外订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(subcontractOrderService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("委外订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -286,9 +302,23 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:delete",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
-    public ApiResult<Void> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractOrderService.delete(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SubcontractOrderEntity> entityMap = subcontractOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SubcontractOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"委外订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(subcontractOrderService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("委外订单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -305,9 +335,23 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:cancelProcess",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
-    public ApiResult<Void> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        subcontractOrderService.cancelProcess(dto.getIds());
-        return success();
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SubcontractOrderEntity> entityMap = subcontractOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SubcontractOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"委外订单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(subcontractOrderService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("委外订单撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -324,9 +368,23 @@ public class SubcontractOrderController extends BaseController {
             menuCode = "scm:subcontractOrder:invalid",
             serviceClass = SubcontractOrderService.class,
             keyIdName = "ids")
-    public ApiResult<Void> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        subcontractOrderService.invalid(dto.getIds(),dto.getRemark());
-        return success();
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SubcontractOrderEntity> entityMap = subcontractOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SubcontractOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"委外订单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(subcontractOrderService.invalidEntity(entity, dto.getRemark()));
+            }catch (Exception e){
+                log.error("委外订单作废失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
