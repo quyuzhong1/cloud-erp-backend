@@ -13,6 +13,7 @@ import com.erp.model.mrp.enums.*;
 import lombok.*;
 import org.springframework.util.ObjectUtils;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -1151,6 +1152,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 预测类型
          * @see MetricsTypeEnum
          */
+        @NotBlank(message = "试算类型不能为空")
         private String metricsType;
     }
 
@@ -1406,13 +1408,17 @@ public class CalcSalesInfoDimDTO implements Serializable {
     @Getter
     @Setter
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class TabListDTO {
 
         /**
          * 状态
          */
-        @Dict(enumClass = CalcStatusEnum.class)
         private String status;
+        /**
+         * 状态名
+         */
+        private String statusName;
 
     }
 

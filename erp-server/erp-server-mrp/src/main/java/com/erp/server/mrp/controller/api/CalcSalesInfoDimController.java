@@ -206,7 +206,7 @@ public class CalcSalesInfoDimController extends BaseController {
 
     /**
      *
-     * 试算跟踪明细
+     * 试算跟踪翻页
      * @param params 参数
      */
     @PostMapping("/dataIdPage")

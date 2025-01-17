@@ -565,8 +565,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     @Override
     public List<CalcSalesInfoDimDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<CalcSalesInfoDimDTO.TabListDTO> list = new ArrayList<>();
-        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.DOING.getCode()));
-        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.FINISH.getCode()));
+        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.DOING.getCode(), CalcStatusEnum.DOING.getName()));
+        list.add(new CalcSalesInfoDimDTO.TabListDTO(CalcStatusEnum.FINISH.getCode(), CalcStatusEnum.DOING.getName()));
         return list;
     }
 
