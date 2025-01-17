@@ -309,6 +309,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
+        //校验数据
+        List<SoReturnInstockDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getRealQty() !=null && v.getRealQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
+
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         SoReturnInstockEntity entity = new SoReturnInstockEntity();
@@ -427,6 +438,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
+        //校验数据
+        List<SoReturnInstockDetailDTO.Update> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getRealQty() !=null && v.getRealQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
+
         String id = dto.getId();
         SoReturnInstockEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
