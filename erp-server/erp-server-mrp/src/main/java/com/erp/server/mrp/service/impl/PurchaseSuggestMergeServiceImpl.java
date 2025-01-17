@@ -936,12 +936,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
                         ObjectUtil.isNotEmpty(obj.getSourceJson()) && JSONUtil.toList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class).stream().anyMatch(e -> CharSequenceUtil.equals(e.getId(), listDTO.getId()))).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
-                    listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
-                    listDTO.setIsPush(Boolean.TRUE);
-                    listDTO.setIsPushName("已下推");
+                    childDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
+                    childDTO.setIsPush(Boolean.TRUE);
+                    childDTO.setIsPushName("已下推");
                 } else {
-                    listDTO.setIsPush(Boolean.FALSE);
-                    listDTO.setIsPushName("未下推");
+                    childDTO.setIsPush(Boolean.FALSE);
+                    childDTO.setIsPushName("未下推");
                 }
                 resultList.add(childDTO);
             }
