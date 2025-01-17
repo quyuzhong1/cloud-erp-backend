@@ -227,7 +227,8 @@
         crc.create_user_name,
         crc.create_time as createTime,
         csic.update_time as updateTime,
-        csic.update_user_name
+        csic.update_user_name,
+        csic.status
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}

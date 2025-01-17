@@ -4772,10 +4772,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
         SoB2cReceiverEntity receiver = soB2cReceiverService.getByMainId(soId);
         b2cCustomer.setShopId(shopId);
-        if (Objects.nonNull(shopInfo)) {
-            b2cCustomer.setSellerId(shopInfo.getChargeId());
-            b2cCustomer.setSellerName(shopInfo.getChargeName());
-            b2cCustomer.setCustomerName(shopInfo.getName());
+        if (Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getCustomerId())) {
+            CustomerInfoEntity customer = customerInfoService.getCustomerById(shopInfo.getCustomerId());
+            b2cCustomer.setSellerId(customer.getSellerId());
+            b2cCustomer.setSellerName(customer.getSellerName());
+            b2cCustomer.setSalesDeptId(customer.getSalesDeptId());
+            b2cCustomer.setCustomerName(customer.getName());
             b2cCustomer.setShopName(shopInfo.getName());
         }
         String country = "";
@@ -5934,15 +5936,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(soB2cReceiver)) {
             dto.setCountry(soB2cReceiver.getCountry());
         }
-        if (CharSequenceUtil.isBlank(dto.getSalesDeptId())) {
-            SysDepartmentUserNumberDTO deptUser = null;
-            if (!StringUtil.isEmpty(dto.getSellerId())) {
-                deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
-            }
-            if (Objects.nonNull(deptUser)) {
-                dto.setSalesDeptId(deptUser.getDepartmentId());
-            }
-        }
+//        if (CharSequenceUtil.isBlank(dto.getSalesDeptId())) {
+//            SysDepartmentUserNumberDTO deptUser = null;
+//            if (!StringUtil.isEmpty(dto.getSellerId())) {
+//                deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
+//            }
+//            if (Objects.nonNull(deptUser)) {
+//                dto.setSalesDeptId(deptUser.getDepartmentId());
+//            }
+//        }
 
         dto.setSalesOrgId(entity.getOrgId());
         dto.setSalesOrgName(entity.getOrgName());
