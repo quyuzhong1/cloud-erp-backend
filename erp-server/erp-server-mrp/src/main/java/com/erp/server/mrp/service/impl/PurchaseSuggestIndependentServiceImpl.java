@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -14,8 +15,10 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestIndependentDTO;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestEntity;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
@@ -43,8 +46,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -115,7 +122,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         if (ObjectUtil.isEmpty(suggestMergeEntity) || Boolean.TRUE.equals(suggestMergeEntity.getIsMerge())) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(id));
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(suggestMergeEntity.getSkuId()));
         bomChildrenSkuList = bomChildrenSkuList.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
             throw new ServiceException("选择数据非组合品");
@@ -236,6 +243,10 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
             return;
         }
 
+        //bom信息
+        List<String> skuIdList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+
         //平台信息
         List<String> platformList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
@@ -248,16 +259,33 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         List<String> shopIdList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
+        //采购建议源数据
+        List<String> purchaseSuggestIdList = list.stream().flatMap(obj -> Stream.of(obj.getSourceIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(purchaseSuggestIdList);
+
+
         //采购申请单信息
         List<String> ids = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestIndependentDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = CollUtil.isEmpty(ids) ? Collections.emptyList() : purchaseApplicationDetailFeign.listByMergeIdList(ids);
 
         for (PurchaseSuggestIndependentDTO.ListDTO listDTO : list) {
 
+            //是否是组合品
+            long count = bomChildrenSkuList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion())
+                    && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())
+                    && BomTypeEnum.COMBINATION.getType().equals(obj.getType())
+            ).count();
+            listDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
+
             //币别
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
             listDTO.setCurrencySymbol(currencySymbol);
+
+            //补货建议id
+            String sourceId = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getSourceIdJson().get(0).toString())).map(PurchaseSuggestEntity::getReplenishmentSuggestionId).findFirst().orElse(null);
+            listDTO.setSourceId(sourceId);
 
             //数据类型
             listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
@@ -278,7 +306,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
 
             //采购申请
             PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
-                ObjectUtil.isNotEmpty(obj.getSourceJson())).findFirst().orElse(null);
+                ObjectUtil.isNotEmpty(obj.getSourceJson()) && JSONUtil.toList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class).stream().anyMatch(e -> CharSequenceUtil.equals(e.getId(), listDTO.getId()))).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
                 listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
                 listDTO.setIsPush(Boolean.TRUE);

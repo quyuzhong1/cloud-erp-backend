@@ -241,7 +241,7 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购建议（合并）")
     @PostMapping(value = "/export")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = purchaseSuggestMergeService.export(pagingParamDTO);
         return flag == true ? success() : failure();

@@ -240,6 +240,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
+        if (MathUtil.compareTo(old.getPlanPurchaseQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+            throw new ServiceException("计划修正值必须大于0");
+        }
+        if (MathUtil.compareTo(old.getPurchaseStockUpQty(),MathUtil.ZERO) <= MathUtil.ZERO) {
+            throw new ServiceException("采购备货数必须大于0");
+        }
         //更新成完成状态
         old.setStatus(SuggestStatusEnum.FINISH.getCode());
         this.updateById(old);
@@ -368,7 +374,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             //查询拆分后sku对应的库存数据
             Integer inventoryQty = purchaseSuggestDTO.getInventoryQty();
             //需要合并的数据
-            List<PurchaseSuggestEntity> mergeList = list.stream().filter(obj -> obj.getSuggestPurchaseDate().isEqual(purchaseSuggestDTO.getSuggestPurchaseDate())).collect(Collectors.toList());
+            List<PurchaseSuggestEntity> mergeList = list.stream().filter(obj ->
+                    obj.getSuggestPurchaseDate().isEqual(purchaseSuggestDTO.getSuggestPurchaseDate())
+                    && CharSequenceUtil.equals(purchaseSuggestDTO.getSkuId(), obj.getSkuId())
+            ).collect(Collectors.toList());
             //需要发货的数量
             Integer totalDeliveryQty = mergeList.stream().map(PurchaseSuggestEntity::getSuggestDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             //建议采购量
@@ -387,6 +396,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                     ).findFirst().orElse(null);
             if (purchaseSuggestMergeEntity != null) {
                 addOrUpdateDTO.setId(purchaseSuggestMergeEntity.getId());
+                addOrUpdateDTO.setCode(purchaseSuggestMergeEntity.getCode());
             } else {
                 addOrUpdateDTO.setId(null);
                 // 生成单号
@@ -545,6 +555,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollectionUtils.isEmpty(purchaseSuggestMergeList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+
+        String codes = purchaseSuggestMergeList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestMergeEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(codes)) {
+            throw new ServiceException("采购建议【{}】状态未完成不支持下推", codes);
+        }
+
         PurchaseSuggestMergeDTO.ViewPushDTO viewPushDTO = new PurchaseSuggestMergeDTO.ViewPushDTO();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         viewPushDTO.setApplyUserId(loginUser.getUid());
@@ -555,8 +571,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(ids);
         if (CollectionUtils.isNotEmpty(purchaseApplicationList)) {
-            String codes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
-            throw new ServiceException(CharSequenceUtil.format("所选采购建议已下推采购申请【{}】",codes));
+            String pushCodes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
+            throw new ServiceException(CharSequenceUtil.format("所选采购建议已下推采购申请【{}】",pushCodes));
         }
 
         List<PurchaseSuggestMergeDTO.ViewPushDetailDTO> detailList = new ArrayList<>();
@@ -584,6 +600,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 pushSourceDTO.setCode(entity.getCode());
                 pushSourceDTOList.add(pushSourceDTO);
             }
+            viewPushDetailDTO.setSourceList(pushSourceDTOList);
             detailList.add(viewPushDetailDTO);
         }
         viewPushDTO.setDetailList(detailList);
@@ -593,7 +610,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     public void savePushPurchaseApplication(PurchaseSuggestMergeDTO.SavePushDTO dto) {
 
-        List<String> purchaseMergeIdList = dto.getDetailList().stream().flatMap(obj -> Stream.of(obj.getSourceList().stream().map(Object::toString).toArray(String[]::new))).collect(Collectors.toList());
+        List<String> purchaseMergeIdList = dto.getDetailList().stream().flatMap(obj -> Stream.of(obj.getSourceList().stream().map(PurchaseSuggestMergeDTO.PushSourceDTO::getId).toArray(String[]::new))).collect(Collectors.toList());
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(purchaseMergeIdList);
         if (CollectionUtils.isNotEmpty(purchaseApplicationList)) {
             String codes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
@@ -673,7 +690,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             mergeFrameDTO.setCode(purchaseSuggestMergeEntity.getCode());
             mergeFrameDTO.setSuggestPurchaseQty(purchaseSuggestMergeEntity.getSuggestPurchaseQty());
             //补货建议id
-            String sourceId = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestMergeEntity.getSourceIdJson().get(0).toString())).map(obj -> obj.getSourceIdJson().get(0).toString()).findFirst().orElse(null);
+            String sourceId = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), purchaseSuggestMergeEntity.getSourceIdJson().get(0).toString())).map(PurchaseSuggestEntity::getReplenishmentSuggestionId).findFirst().orElse(null);
             mergeFrameDTO.setSourceId(sourceId);
 
             //计划修正值,系统建议值从小到大依次分摊 = 子单系统值 / 合并单系统值 * 合并单修正数,抹零取整，最后一个相加
@@ -921,14 +938,14 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
                 //采购申请
                 PurchaseApplicationDetailDTO.PurchaseApplicationDTO purchaseApplicationDTO = purchaseApplicationList.stream().filter(obj ->
-                        ObjectUtil.isNotEmpty(obj.getSourceJson())).findFirst().orElse(null);
+                        ObjectUtil.isNotEmpty(obj.getSourceJson()) && JSONUtil.toList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class).stream().anyMatch(e -> CharSequenceUtil.equals(e.getId(), listDTO.getId()))).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(purchaseApplicationDTO)) {
-                    listDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
-                    listDTO.setIsPush(Boolean.TRUE);
-                    listDTO.setIsPushName("已下推");
+                    childDTO.setPurchaseApplicationCode(purchaseApplicationDTO.getCode());
+                    childDTO.setIsPush(Boolean.TRUE);
+                    childDTO.setIsPushName("已下推");
                 } else {
-                    listDTO.setIsPush(Boolean.FALSE);
-                    listDTO.setIsPushName("未下推");
+                    childDTO.setIsPush(Boolean.FALSE);
+                    childDTO.setIsPushName("未下推");
                 }
                 resultList.add(childDTO);
             }

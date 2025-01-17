@@ -38,6 +38,7 @@ public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
     LOCAL_WAIT_QC("LOCAL_WAIT_QC","本地仓待检"),
     LOCAL_IN_TRANSIT_QTY("LOCAL_IN_TRANSIT_QTY","本地在途"),
     LOCAL_PLAN_PURCHASE_QTY("LOCAL_PLAN_PURCHASE_QTY","预计采购"),
+
     ;
 
     private final String code;

@@ -551,7 +551,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .in(ReplenishmentSuggestionEntity::getId, ids)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
                 .set(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NOT_RESTOCKING.getCode())
-                .set(ReplenishmentSuggestionEntity::getIsManual, Boolean.TRUE)
         );
         // 操作日志
         List<Pair<String, String>> addPairList = ids.stream().map(obj -> new Pair<>(obj, replenishmentRemark)).collect(Collectors.toList());
@@ -1104,7 +1103,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                         return null;
                     }
                     List<BomChildrenSkuDTO> bomSkuList = bomChildrenSkuList.stream()
-                            .filter(e -> CharSequenceUtil.equals(e.getSkuId(), v.getSkuId()) && CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()))
+                            .filter(e -> CharSequenceUtil.equals(e.getParentSkuId(), v.getSkuId()) && CharSequenceUtil.equals(e.getType(), BomTypeEnum.COMBINATION.getType()))
                             .collect(Collectors.toList());
                     resultDTO.setBomSkuList(bomSkuList);
                     Map<LocalDate, Integer> salesHistoryDTOList = listedSalesHistory.stream()

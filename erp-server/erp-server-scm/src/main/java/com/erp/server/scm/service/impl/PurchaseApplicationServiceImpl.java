@@ -230,7 +230,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (ObjUtil.isEmpty(old)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        if (SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode().equals(dto.getSourceType())) {
+        if (SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode().equals(old.getSourceType())) {
             throw new ServiceException("补货建议下推采购申请不支持更新");
         }
 

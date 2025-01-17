@@ -1,5 +1,6 @@
 package com.erp.model.mrp.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -239,6 +240,15 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+
+        /**
+         * 是否组合品，true是，false否
+         */
+        private Boolean isCombination;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
         /**
          * 备注
          */
@@ -262,7 +272,11 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
         /**
          * 来源id
          */
-        private String sourceIdJson;
+        private JSONArray sourceIdJson;
+        /**
+         * 来源id(补货建议id)
+         */
+        private String sourceId;
         /**
          * 来源类型
          */
