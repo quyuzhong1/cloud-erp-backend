@@ -46,10 +46,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -121,17 +118,23 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         PurchaseSuggestMergeEntity suggestMergeEntity = this.getById(id);
         if (ObjectUtil.isEmpty(suggestMergeEntity) || Boolean.TRUE.equals(suggestMergeEntity.getIsMerge())) {
             throw new ServiceException(ApiError.ERROR_98004);
-        }
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(suggestMergeEntity.getSkuId()));
-        bomChildrenSkuList = bomChildrenSkuList.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
-            throw new ServiceException("选择数据非组合品");
-        }
-        //采购建议源数据
-        List<String> sourceIdList = suggestMergeEntity.getSourceIdJson().stream().map(Object::toString).collect(Collectors.toList());
+        }  //采购建议
+        List<String> sourceIdList = Stream.of(suggestMergeEntity).filter(obj -> CollectionUtils.isNotEmpty(obj.getSourceIdJson()))
+                .flatMap(obj -> Stream.of(obj.getSourceIdJson().stream().map(Object::toString).toArray(String[]::new)))
+                .distinct().collect(Collectors.toList());
         List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(purchaseSuggestList)) {
-            return Collections.emptyList();
+            throw new ServiceException("采购建议不存在");
+        }
+        //bom信息
+        List<String> skuIdList = purchaseSuggestList.stream().map(PurchaseSuggestEntity::getParentSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+        bomChildrenSkuList = bomChildrenSkuList.stream().filter(obj->
+                BomTypeEnum.COMBINATION.getType().equals(obj.getType())
+                && CharSequenceUtil.equals(obj.getBomVersion(), purchaseSuggestList.get(0).getBomVersion())
+        ).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            throw new ServiceException("选择数据非组合品");
         }
         //补货建议明细id
         String replenishSuggestDetailId = purchaseSuggestList.get(0).getSourceIdJson().get(0).toString();
@@ -242,10 +245,17 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-
+        //采购建议
+        List<String> sourceIdList = list.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getSourceIdJson()))
+                .flatMap(obj -> Stream.of(obj.getSourceIdJson().stream().map(Object::toString).toArray(String[]::new)))
+                .distinct().collect(Collectors.toList());
+        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(purchaseSuggestList)) {
+            throw new ServiceException("采购建议不存在");
+        }
         //bom信息
-        List<String> skuIdList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+        List<String> skuIdList = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getParentSkuId())).map(PurchaseSuggestEntity::getParentSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //平台信息
         List<String> platformList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
@@ -259,10 +269,6 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         List<String> shopIdList = list.stream().map(PurchaseSuggestIndependentDTO.ListDTO::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
 
-        //采购建议源数据
-        List<String> purchaseSuggestIdList = list.stream().flatMap(obj -> Stream.of(obj.getSourceIdJson().stream().map(Object::toString).toArray(String[]::new))).distinct().collect(Collectors.toList());
-        List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(purchaseSuggestIdList);
-
 
         //采购申请单信息
         List<String> ids = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestIndependentDTO.ListDTO::getId).distinct().collect(Collectors.toList());
@@ -273,7 +279,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
             //是否是组合品
             long count = bomChildrenSkuList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion())
-                    && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())
+                    && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
                     && BomTypeEnum.COMBINATION.getType().equals(obj.getType())
             ).count();
             listDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
