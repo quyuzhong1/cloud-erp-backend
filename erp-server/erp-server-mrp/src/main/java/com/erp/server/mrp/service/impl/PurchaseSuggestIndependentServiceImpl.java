@@ -164,7 +164,6 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
      */
     private  PurchaseSuggestIndependentDTO.IndependentFrameDTO getIndependentChildFrameDTO(PurchaseSuggestMergeEntity suggestMergeEntity, String replenishSuggestDetailId, BomChildrenSkuDTO bomChildrenSkuDTO) {
         PurchaseSuggestIndependentDTO.IndependentFrameDTO resultDTO = new PurchaseSuggestIndependentDTO.IndependentFrameDTO();
-        resultDTO.setCode(suggestMergeEntity.getCode());
         resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
         resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
         resultDTO.setSuggestPurchaseQty(suggestMergeEntity.getSuggestPurchaseQty() * bomChildrenSkuDTO.getQuantity());
@@ -187,6 +186,13 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         parentDTO.setPlanPurchaseQty(suggestMergeEntity.getPlanPurchaseQty());
         parentDTO.setPurchaseStockUpQty(suggestMergeEntity.getPurchaseStockUpQty());
         parentDTO.setSourceId(repleinshSuggestDetailId);
+        //说明
+        String msg = CharSequenceUtil.format("{} = ",parentDTO.getSkuNo());
+        for (BomChildrenSkuDTO skuDTO : bomChildrenSkuList) {
+            String childMsg = CharSequenceUtil.format("{}*{}",skuDTO.getQuantity(), skuDTO.getSkuNo());
+            msg = CharSequenceUtil.format("{} + {}",msg , childMsg);
+        }
+        parentDTO.setMsg(msg);
         return parentDTO;
     }
 
