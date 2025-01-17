@@ -551,6 +551,12 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         if (CollectionUtils.isEmpty(purchaseSuggestMergeList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+
+        String codes = purchaseSuggestMergeList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestMergeEntity::getCode).distinct().collect(Collectors.joining(","));
+        if (CharSequenceUtil.isNotBlank(codes)) {
+            throw new ServiceException("采购建议【{}】状态未完成不支持下推", codes);
+        }
+
         PurchaseSuggestMergeDTO.ViewPushDTO viewPushDTO = new PurchaseSuggestMergeDTO.ViewPushDTO();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         viewPushDTO.setApplyUserId(loginUser.getUid());
@@ -561,8 +567,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(ids);
         if (CollectionUtils.isNotEmpty(purchaseApplicationList)) {
-            String codes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
-            throw new ServiceException(CharSequenceUtil.format("所选采购建议已下推采购申请【{}】",codes));
+            String pushCodes = purchaseApplicationList.stream().map(PurchaseApplicationDetailDTO.PurchaseApplicationDTO::getCode).distinct().collect(Collectors.joining(","));
+            throw new ServiceException(CharSequenceUtil.format("所选采购建议已下推采购申请【{}】",pushCodes));
         }
 
         List<PurchaseSuggestMergeDTO.ViewPushDetailDTO> detailList = new ArrayList<>();

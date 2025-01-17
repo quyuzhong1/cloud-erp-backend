@@ -240,6 +240,15 @@ public class PurchaseSuggestIndependentDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+
+        /**
+         * 是否组合品，true是，false否
+         */
+        private Boolean isCombination;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
         /**
          * 备注
          */
