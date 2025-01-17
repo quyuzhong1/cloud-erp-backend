@@ -562,8 +562,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         result.setTypeName(OrderTypeEnum.getName(orderType));
         result.setSoCode(soOutstock.getSoCode());
         result.setSellerId(soOutstock.getSellerId());
-        if (!isB2c) {
-            if (CharSequenceUtil.isNotBlank(soId)){
+        if (!isB2c && CharSequenceUtil.isNotBlank(soId)) {
+//            if (){
                 SoInfoDTO.CustomerDTO soInfo = soInfoFeign.getSoBaseById(soId);
                 if (soInfo != null) {
                     result.setCustomerName(soInfo.getCustomerName());
@@ -579,7 +579,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                     result.setSalesDeptName(soInfo.getSalesDeptName());
                     result.setSalesOrgName(soInfo.getSalesOrgName());
                 }
-            }
+//            }
         } else {
             if (CharSequenceUtil.isNotBlank(soId)) {
                 SoB2cDTO.CustomerDTO customer = soB2cFeign.getB2cCustomerById(soId);
@@ -588,6 +588,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 result.setReceiverName(customer.getReceiverName());
                 result.setTelNumber(customer.getTelNumber());
                 result.setSellerName(customer.getSellerName());
+                result.setSalesDeptId(customer.getSalesDeptId());
                 result.setSalesOrgName(customer.getSalesOrgName());
                 result.setDeliveryModeName(customer.getDeliveryModeName());
                 result.setCountryId(customer.getCountry());
@@ -2861,6 +2862,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setBatchNo(transferInfoList.get(0).getBatchNo());
         }
         soOutstock.setPackDate(billDate);
+        //销售员
+        if (CharSequenceUtil.isBlank(soOutstock.getSellerId()) && CharSequenceUtil.isNotBlank(soOutstock.getCustomerId())){
+            CustomerInfoEntity customer = customerFeign.getCustomerById(soOutstock.getCustomerId());
+            soOutstock.setSellerId(Objects.nonNull(customer) ? customer.getSellerId(): CharSequenceUtil.EMPTY);
+            soOutstock.setSalesDeptId(Objects.nonNull(customer) ? customer.getSalesDeptId() : CharSequenceUtil.EMPTY);
+        }
         Boolean addResult = super.save(soOutstock);
         if (addResult) {
             soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
