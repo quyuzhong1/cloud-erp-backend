@@ -52,6 +52,10 @@ public class KingdeeBusinessOperatorDTO  {
 
         //用户id
         private String userId;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
 
     }
 }

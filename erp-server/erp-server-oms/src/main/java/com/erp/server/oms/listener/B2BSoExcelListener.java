@@ -217,6 +217,7 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             businessOperatorDTO.setOrgId(salesOrgId);
             businessOperatorDTO.setBusinessOperatorType(xsyCode);
             businessOperatorDTO.setUserId(sellerId);
+            businessOperatorDTO.setSalesDeptId(salesDeptId);
             KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
             if (Objects.isNull(businessOperator)) {
                 errorMsgList.add("金蝶未存在该销售员");

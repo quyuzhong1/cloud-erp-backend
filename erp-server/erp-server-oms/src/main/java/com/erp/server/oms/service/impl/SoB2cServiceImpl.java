@@ -11,7 +11,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -115,7 +114,6 @@ import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.sdk.third.lingxing.dto.Result;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -6018,6 +6016,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(customerInfo)) {
             dto.setSellerId(customerInfo.getSellerId());
             dto.setSellerName(customerInfo.getSellerName());
+            dto.setSalesDeptId(customerInfo.getSalesDeptId());
         } else {
             dto.setSellerId(chargeId);
             dto.setSellerName(shopInfoEntity.getChargeName());
@@ -6025,13 +6024,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.nonNull(soB2cReceiver)) {
             dto.setCountry(soB2cReceiver.getCountry());
         }
-        SysDepartmentUserNumberDTO deptUser = null;
-        if (!StringUtil.isEmpty(dto.getSellerId())) {
-            deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
+        if (CharSequenceUtil.isBlank(dto.getSalesDeptId())) {
+            SysDepartmentUserNumberDTO deptUser = null;
+            if (!StringUtil.isEmpty(dto.getSellerId())) {
+                deptUser = sysUserFeign.getDeptByUserId(dto.getSellerId());
+            }
+            if (Objects.nonNull(deptUser)) {
+                dto.setSalesDeptId(deptUser.getDepartmentId());
+            }
         }
-        if (Objects.nonNull(deptUser)) {
-            dto.setSalesDeptId(deptUser.getDepartmentId());
-        }
+
         dto.setSalesOrgId(entity.getOrgId());
         dto.setSalesOrgName(entity.getOrgName());
         // 记录是否是平台仓订单

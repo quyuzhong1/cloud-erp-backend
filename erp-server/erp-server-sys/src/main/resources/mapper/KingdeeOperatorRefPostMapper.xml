@@ -84,7 +84,9 @@
         <if test="params.orgCode != null and params.orgCode != ''">
             AND  ko.use_org_id=(SELECT id FROM  sys_accounting_company  WHERE code=#{params.orgCode} LIMIT 1)
         </if>
-
+        <if test="params.salesDeptId != null and params.salesDeptId != ''">
+            AND kd.erp_dept_id = #{params.salesDeptId}
+        </if>
         LIMIT 1
     </select>
 
@@ -95,6 +97,7 @@
                krp.kingdee_department_id AS kingdeeDepartmentId,
                kd.kingdee_dept_name  AS kingdeeDepartmentName,
                kd.erp_dept_id  AS departmentId,
+               sd.name  AS departmentName,
                su.user_name   AS userName,
                su.real_name   AS realName,
                su.mobile   AS mobile,
@@ -109,6 +112,7 @@
                            ON kd.id = krp.kingdee_department_id AND kd.is_deleted = FALSE
                  LEFT JOIN sys_user_info su
                            ON su.uid = krp.erp_user_id
+                 LEFT JOIN sys_department sd ON sd.id = kd.erp_dept_id
         WHERE ko.is_deleted = FALSE
           AND ko.type_code = #{params.type}
           AND ko.use_org_id = #{params.orgId}

@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -38,6 +39,7 @@ import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.mapper.CustomerB2bSellerChangeMapper;
@@ -54,10 +56,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER_B2B_SELLER_CHANGE;
@@ -93,6 +92,8 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -102,18 +103,13 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(StringUtils.isBlank(addDTO.getChangeSellerId())){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_92158.msg);
         }
-
-        KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-        businessOperatorDTO.setOrgCode("100");
-        businessOperatorDTO.setBusinessOperatorType(xsyCode);
-        businessOperatorDTO.setUserId(addDTO.getChangeSellerId());
-        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
-        if (Objects.isNull(businessOperator)) {
+        String changeSellerId = addDTO.getChangeSellerId();
+        FindUserDTO userByUserId = sysUserFeign.getUserByUserId(changeSellerId);
+        if (Objects.isNull(userByUserId)) {
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), ApiError.ERROR_92157.msg);
         }else{
-            addDTO.setChangeSellerName(businessOperator.getUserName());
+            addDTO.setChangeSellerName(userByUserId.getUserName());
         }
-
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(addDTO.getMainId());
         if(Objects.isNull(customerInfoEntity)){
             return BatchResultDTO.fail(addDTO.getMainId(), addDTO.getCode(), "客户信息为空");
@@ -242,17 +238,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(StringUtils.isBlank(dto.getChangeSellerId())){
             throw new ServiceException(ApiError.ERROR_92158.msg);
         }
-
-        String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
-        KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-        businessOperatorDTO.setOrgCode("100");
-        businessOperatorDTO.setBusinessOperatorType(xsyCode);
-        businessOperatorDTO.setUserId(dto.getChangeSellerId());
-        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
-        if (Objects.isNull(businessOperator)) {
+        FindUserDTO userByUserId = sysUserFeign.getUserByUserId(dto.getChangeSellerId());
+        if (Objects.isNull(userByUserId)) {
             throw new ServiceException(ApiError.ERROR_92157.msg);
         }else{
-            dto.setChangeSellerName(businessOperator.getUserName());
+            dto.setChangeSellerName(userByUserId.getUserName());
         }
         CustomerB2bSellerChangeServiceImpl bean = ApplicationContextUtils.getBean(CustomerB2bSellerChangeServiceImpl.class);
         bean.update(dto);
@@ -506,6 +496,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         //审核通过更新客户表销售员信息，更新历史销售员信息
         customerInfoEntity.setSellerId(entity.getChangeSellerId());
         customerInfoEntity.setSellerName(entity.getChangeSellerName());
+        //对于历史数据需要重新编辑部门
+        if (CharSequenceUtil.isBlank(entity.getChangeSellerDeptId())){
+            throw new ServiceException("客户销售员变更未存在销售部门，重新选择后再发起审核");
+        }
+        customerInfoEntity.setSalesDeptId(entity.getChangeSellerDeptId());
         customerInfoService.updateById(customerInfoEntity);
         customerSellerService.batchSellerHistory(Collections.singletonList(customerInfoEntity),entity.getStartDate());
 
@@ -580,16 +575,11 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         if(StringUtils.isBlank(updateDTO.getChangeSellerId())){
             throw new ServiceException(ApiError.ERROR_92158.msg);
         }
-        String xsyCode = KingdeeBusinessOperatorTypeEnum.XSY.getCode();
-        KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO businessOperatorDTO = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
-        businessOperatorDTO.setOrgCode("100");
-        businessOperatorDTO.setBusinessOperatorType(xsyCode);
-        businessOperatorDTO.setUserId(updateDTO.getChangeSellerId());
-        KingdeeOperatorRefPostDTO.OperatorDTO businessOperator = kingdeeFeign.getBusinessOperator(businessOperatorDTO);
-        if (Objects.isNull(businessOperator)) {
+        FindUserDTO userByUserId = sysUserFeign.getUserByUserId(updateDTO.getChangeSellerId());
+        if (Objects.isNull(userByUserId)) {
             throw new ServiceException(ApiError.ERROR_92157.msg);
         }else{
-            updateDTO.setChangeSellerName(businessOperator.getUserName());
+            updateDTO.setChangeSellerName(userByUserId.getUserName());
 
         }
         //销售员信息
@@ -650,7 +640,9 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         dto.setBusinessKey(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
         dto.setBusinessName(customerInfoEntity.getCode());
         dto.setUserId(userInfo.getUid());
-        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> map = BeanUtil.beanToMap(entity);
+        map.put("useOrgId",customerInfoEntity.getUseOrgId());
+        dto.setVariablesMap(map);
         ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(dto);
         if (!listApiResult.isSuccess()) {
             return BatchResultDTO.fail(entity.getId(), customerInfoEntity.getCode(), "提交流程失败");
