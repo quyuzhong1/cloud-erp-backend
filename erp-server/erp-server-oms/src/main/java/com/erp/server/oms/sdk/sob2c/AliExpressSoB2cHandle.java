@@ -235,9 +235,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
      */
     public void createAliExpressOutStock(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         //限制状态
-        List<String> deliveryStatusNameList = new ArrayList<>();
-        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SHIPPED.getName());
-        deliveryStatusNameList.add(AliexpressDeliveryOrderStatusEnum.SIGNED.getName());
+        List<String> deliveryStatusNameList = AliexpressDeliveryOrderStatusEnum.getOutStockStatusList();
         //可能一个订单有多个发货单，并且sku 跟销售订单也不一致 根据仓库分组，同个仓库生成相同的销售出库单，销售出库单的sku和数量取速卖通返回的数据 根据平台sku查询Listing信息
         List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
         deliveryDTOList = deliveryDTOList.stream().filter(v -> StringUtils.isNotBlank(v.getPlatformWarehouseName()) && deliveryStatusNameList.contains(v.getOrderStatus())).collect(Collectors.toList());
