@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-tms
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9120
+  port: 7120
 
 logging:
   config: classpath:logback-spring.xml

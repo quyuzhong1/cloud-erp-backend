@@ -2,10 +2,10 @@ spring:
   application:
     name: erp-auth
   profiles:
-    active: dev
+    active: test
 
 server:
-  port: 9030
+  port: 7030
 
 logging:
   config: classpath:logback-spring.xml

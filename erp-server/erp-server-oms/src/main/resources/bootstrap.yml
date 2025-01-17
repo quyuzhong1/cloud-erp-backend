@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-oms
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9110
+  port: 7110
 
 logging:
   config: classpath:logback-spring.xml
