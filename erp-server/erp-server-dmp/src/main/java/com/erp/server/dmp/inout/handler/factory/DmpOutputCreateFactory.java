@@ -248,7 +248,7 @@ public class DmpOutputCreateFactory{
 			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(mainDmpCfgInputConvertEntity, list);
 		}
 		String outputClass = dmpCfgOutputEntity.getOutputClass();
-		DmpOutputRocketMQTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputRocketMQTaskHandler.class);
+		DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputTaskHandler.class);
 		dmpOutputTaskHandler.getRetryPushSourceData(dmpCfgInputConvertEntityList, dmpOutputTaskRequest);
 		return dmpOutputTaskHandler.getPushJsonDataMap(dmpOutputTaskRequest, dmpResponse);
 	}

@@ -55,59 +55,8 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
 
     @Override
     protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-        Map<String, DmpSoRefundInfoEntity> dmpSoRefundInfoEntityMap = new HashMap<>();
-        Map<String, List<DmpSoRefundDetailEntity>> dmpSoRefundDetailEntityMap = new HashMap<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
-            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
-            if (CollUtil.isNotEmpty(value)) {
-                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_so_refund_info".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoRefundInfoEntity dmpSoInfoEntity = (DmpSoRefundInfoEntity) v;
-                        dmpSoRefundInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
-                    }
-                } else if ("dmp_so_refund_detail".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoRefundDetailEntity dmpSoRefundDetailEntity = (DmpSoRefundDetailEntity) v;
-                        String mainId = dmpSoRefundDetailEntity.getMainId();
-                        List<DmpSoRefundDetailEntity> list = dmpSoRefundDetailEntityMap.get(mainId);
-                        if (CollUtil.isEmpty(list)) {
-                            list = new ArrayList<>();
-                        }
-                        list.add(dmpSoRefundDetailEntity);
-                        dmpSoRefundDetailEntityMap.put(mainId, list);
-                    }
-                }
-            }
-        }
+        Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
 
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
-        Set<String> changeIds = new HashSet<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
-            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
-            if (CollUtil.isNotEmpty(value)) {
-                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_so_refund_info".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        changeIds.add(v.getId());
-                    }
-                } else if ("dmp_so_refund_detail".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoRefundDetailEntity dmpSoRefundDetailEntity = (DmpSoRefundDetailEntity) v;
-                        changeIds.add(dmpSoRefundDetailEntity.getMainId());
-                    }
-                }
-            }
-        }
-
-        Map<String, String> map = new HashMap<>();
-        for (String changId : changeIds) {
-            List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(dmpSoRefundInfoEntityMap.get(changId), dmpSoRefundDetailEntityMap.get(changId));
-            if (CollUtil.isNotEmpty(sdyDtoList)) {
-                map.put(changId, JSON.toJSONString(sdyDtoList));
-            }
-        }
         List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
         if (!map.isEmpty()) {
             LocalDateTime now = LocalDateTime.now();
@@ -310,5 +259,63 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
 
         return sdyListDTO;
 
+    }
+
+    @Override
+    public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpSoRefundInfoEntity> dmpSoRefundInfoEntityMap = new HashMap<>();
+        Map<String, List<DmpSoRefundDetailEntity>> dmpSoRefundDetailEntityMap = new HashMap<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_refund_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoRefundInfoEntity dmpSoInfoEntity = (DmpSoRefundInfoEntity) v;
+                        dmpSoRefundInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
+                    }
+                } else if ("dmp_so_refund_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoRefundDetailEntity dmpSoRefundDetailEntity = (DmpSoRefundDetailEntity) v;
+                        String mainId = dmpSoRefundDetailEntity.getMainId();
+                        List<DmpSoRefundDetailEntity> list = dmpSoRefundDetailEntityMap.get(mainId);
+                        if (CollUtil.isEmpty(list)) {
+                            list = new ArrayList<>();
+                        }
+                        list.add(dmpSoRefundDetailEntity);
+                        dmpSoRefundDetailEntityMap.put(mainId, list);
+                    }
+                }
+            }
+        }
+
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+        Set<String> changeIds = new HashSet<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_refund_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        changeIds.add(v.getId());
+                    }
+                } else if ("dmp_so_refund_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoRefundDetailEntity dmpSoRefundDetailEntity = (DmpSoRefundDetailEntity) v;
+                        changeIds.add(dmpSoRefundDetailEntity.getMainId());
+                    }
+                }
+            }
+        }
+
+        Map<String, String> map = new HashMap<>();
+        for (String changId : changeIds) {
+            List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(dmpSoRefundInfoEntityMap.get(changId), dmpSoRefundDetailEntityMap.get(changId));
+            if (CollUtil.isNotEmpty(sdyDtoList)) {
+                map.put(changId, JSON.toJSONString(sdyDtoList));
+            }
+        }
+        return map;
     }
 }
