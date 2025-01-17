@@ -121,7 +121,7 @@
         csic.mse_score as mseScore,
         csic.rmse_score as rmseScore,
         csic.status,
-        csic.serial_no
+        csic.serial_no as serialNo
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}

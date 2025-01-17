@@ -152,7 +152,7 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
         List<CalcSalesInfoDimEntity> calcSalesInfoDimList = buildCalcSalesInfoDim(addDTO, shopMap, historySaleList, entity.getId(),
                 skuMap, formulaCalcEntities, salesDenoising, calcResultList);
         calcSalesInfoDimService.saveBatch(calcSalesInfoDimList);
-        calcSalesInfoDimService.calcSalesInfo(calcResultList);
+        calcSalesInfoDimService.calcSalesInfo(calcResultList, entity.getId());
         return BatchResultDTO.success(entity.getId(), code);
     }
 

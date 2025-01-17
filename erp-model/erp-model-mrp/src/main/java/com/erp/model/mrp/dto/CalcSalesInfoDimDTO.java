@@ -362,6 +362,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算销量去噪信息
          */
         private List<CfgRuleSalesDenoisingCalcEntity> salesDenoising;
+
+        /**
+         * 状态
+         */
+        private String status;
     }
 
     @Getter
@@ -1030,7 +1035,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 序号
          */
-        private Integer serialNo;
+        private String serialNo;
     }
 
     @Getter
