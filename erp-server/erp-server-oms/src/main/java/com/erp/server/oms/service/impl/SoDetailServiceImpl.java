@@ -21,10 +21,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
-import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -141,6 +139,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private SkuMappingService skuMappingService;
     /**
      * 根据退货单详情表id查询退货单
      *
@@ -639,7 +639,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/soSku.xlsx";
+        String path = "excel/soSku.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -672,9 +672,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 19:43
      */
     @Override
-    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId,Boolean isTax) {
+    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId,Boolean isTax,String customerId) {
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList);
+        ListingInfoDTO.QueryDTO queryDTO = new ListingInfoDTO.QueryDTO();
+        queryDTO.setAuthId(customerId);
+        List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS = skuMappingService.listSkuMappingByParams(queryDTO);
+        SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList,skuMappingViewDTOS);
+
         try {
             EasyExcel.read(excelFile.getInputStream(), SoDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
