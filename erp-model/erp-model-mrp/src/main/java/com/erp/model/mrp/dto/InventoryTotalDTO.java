@@ -34,4 +34,9 @@ public class InventoryTotalDTO {
      * 店铺id
      */
     private String shopId;
+
+    /**
+     * 是否过滤0
+     */
+    private Boolean isShowZeroInventory;
 }
