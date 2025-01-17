@@ -374,7 +374,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             //查询拆分后sku对应的库存数据
             Integer inventoryQty = purchaseSuggestDTO.getInventoryQty();
             //需要合并的数据
-            List<PurchaseSuggestEntity> mergeList = list.stream().filter(obj -> obj.getSuggestPurchaseDate().isEqual(purchaseSuggestDTO.getSuggestPurchaseDate())).collect(Collectors.toList());
+            List<PurchaseSuggestEntity> mergeList = list.stream().filter(obj ->
+                    obj.getSuggestPurchaseDate().isEqual(purchaseSuggestDTO.getSuggestPurchaseDate())
+                    && CharSequenceUtil.equals(purchaseSuggestDTO.getSkuId(), obj.getSkuId())
+            ).collect(Collectors.toList());
             //需要发货的数量
             Integer totalDeliveryQty = mergeList.stream().map(PurchaseSuggestEntity::getSuggestDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             //建议采购量
@@ -393,6 +396,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                     ).findFirst().orElse(null);
             if (purchaseSuggestMergeEntity != null) {
                 addOrUpdateDTO.setId(purchaseSuggestMergeEntity.getId());
+                addOrUpdateDTO.setCode(purchaseSuggestMergeEntity.getCode());
             } else {
                 addOrUpdateDTO.setId(null);
                 // 生成单号

@@ -122,7 +122,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
         if (ObjectUtil.isEmpty(suggestMergeEntity) || Boolean.TRUE.equals(suggestMergeEntity.getIsMerge())) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(id));
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(suggestMergeEntity.getSkuId()));
         bomChildrenSkuList = bomChildrenSkuList.stream().filter(v-> BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
             throw new ServiceException("选择数据非组合品");
@@ -270,9 +270,12 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
 
         for (PurchaseSuggestIndependentDTO.ListDTO listDTO : list) {
 
-
             //是否是组合品
-            long count = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion()) && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())).count();
+            long count = bomChildrenSkuList.stream().filter(obj ->
+                    CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion())
+                    && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())
+                    && BomTypeEnum.COMBINATION.getType().equals(obj.getType())
+            ).count();
             listDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
 
             //币别
