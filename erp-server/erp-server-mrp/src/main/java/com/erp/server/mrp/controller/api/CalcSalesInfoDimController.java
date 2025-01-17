@@ -6,6 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -39,6 +40,15 @@ public class CalcSalesInfoDimController extends BaseController {
     @Resource
     private CalcSalesInfoDimService calcSalesInfoDimService;
 
+    /**
+     * tab
+     * @param dto 参数
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<CalcSalesInfoDimDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<CalcSalesInfoDimDTO.TabListDTO> tabList = calcSalesInfoDimService.tabList(dto);
+        return success(tabList);
+    }
 
     /**
      * 销量试算列表
@@ -190,6 +200,19 @@ public class CalcSalesInfoDimController extends BaseController {
     @PostMapping("/calcCompareData")
     public ApiResult<CalcSalesInfoDimDTO.CalcCompareDataDTO> calcCompareData(@RequestBody CalcSalesInfoDimDTO.CalcCompareParamsDTO dto) {
         CalcSalesInfoDimDTO.CalcCompareDataDTO result = calcSalesInfoDimService.calcCompareData(dto);
+        return success(result);
+    }
+
+
+    /**
+     *
+     * 试算跟踪翻页
+     * @param params 参数
+     */
+    @PostMapping("/dataIdPage")
+    @WebAdvanceQuery
+    public ApiResult<List<CalcSalesInfoDimDTO.DataIdPageDTO>> dataIdPage(@RequestBody @Validated CalcSalesInfoDimDTO.ParamDTO params) {
+        List<CalcSalesInfoDimDTO.DataIdPageDTO> result = calcSalesInfoDimService.dataIdPage(params);
         return success(result);
     }
 }
