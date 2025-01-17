@@ -10,6 +10,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +70,10 @@ public class VirtualInventoryDTO implements Serializable {
          * 虚拟仓冻结库存
          */
         private Integer virtualFrozenQty;
-
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
         /**
          * 虚拟库存明细
          */

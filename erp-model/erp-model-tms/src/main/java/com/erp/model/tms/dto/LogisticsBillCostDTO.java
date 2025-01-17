@@ -310,6 +310,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal actualDeductibleTax;
         
         private String logisticsBillDetailId;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**

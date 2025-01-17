@@ -339,6 +339,10 @@ public class ReplenishmentSuggestionVO {
          * 明细配置
          */
         private String cfgRule;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Getter
