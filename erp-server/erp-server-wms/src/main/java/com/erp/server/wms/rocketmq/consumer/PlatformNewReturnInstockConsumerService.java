@@ -266,7 +266,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		);
 		if(CollectionUtils.isEmpty(soB2cEntityList)){
 			log.warn("【平台退货入库】销售订单不存在:{}", dto.getPlatformOrderNo());
-			return;
+			ServiceException.runError("【平台退货入库】销售订单不存在:{}", dto.getPlatformOrderNo());
 		}
 		List<String> soIds = soB2cEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
 
@@ -281,7 +281,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		List<SoOutstockEntity> soOutstockList = soOutstockService.listBySoIds(soIds);
 		if (CollectionUtils.isEmpty(soOutstockList)){
 			log.warn("【平台退货入库】销售出库单不存在:{}", dto.getPlatformOrderNo());
-			return;
+			ServiceException.runError("【平台退货入库】销售出库单不存在:{}", dto.getPlatformOrderNo());
 		}
 		// 查询对应店铺
 		String platformShopCode = dto.getAuthId();
@@ -292,18 +292,18 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 				.collect(Collectors.toList());
 		if (CollectionUtils.isEmpty(shopIds)){
 			log.warn("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
-			return;
+			ServiceException.runError("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
 		}
 		// 对应订单
 		SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> shopIds.contains(e.getShopId())).findFirst().orElse(null);
 		if (null == soB2cEntity){
-			log.warn("【平台退货入库】销售订单不存在:{}", dto.getPlatformOrderNo());
-			return;
+			log.warn("【平台退货入库】匹配销售订单不存在:{}", dto.getPlatformOrderNo());
+			ServiceException.runError("【平台退货入库】匹配销售订单不存在:{}", dto.getAuthId());
 		}
 		ShopInfoEntity shopInfoEntity = shopList.stream().filter(e -> e.getId().equalsIgnoreCase(soB2cEntity.getShopId())).findFirst().orElse(null);
 		if (null == shopInfoEntity){
 			log.warn("【平台退货入库】店铺不存在:{}", dto.getPlatformOrderNo());
-			return;
+			ServiceException.runError("【平台退货入库】店铺不存在:店铺代号{}", dto.getAuthId());
 		}
 
 		String returnWarehouse = StringUtils.isBlank(shopInfoEntity.getReturnWarehouse()) ? shopInfoEntity.getWarehouseId() : shopInfoEntity.getReturnWarehouse();
@@ -311,7 +311,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
 		if(CollectionUtils.isEmpty(details)){
-			throw new ServiceException("明细为空");
+			ServiceException.runError("【平台退货入库】来源明细为空");
 		}
 
 		// 查询是否已关账
@@ -324,7 +324,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 
 		List<SoReturnInstockDetailEntity> detailEntityList = this.buildPlatformSoReturnInstockDetail(dto, warehouseEntity, soOutstockList);
 		if(CollectionUtils.isEmpty(detailEntityList)){
-			throw new ServiceException("没有映射");
+			ServiceException.runError("【平台退货入库】来源明细未匹配到映射");
 		}
 		SoReturnInstockEntity soReturnInstockEntity = this.buildPlatformSoReturnInstockEntity(dto, warehouseEntity, soB2cEntity, soOutstockList, shopInfoEntity);
 
@@ -338,7 +338,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	private List<SoReturnInstockDetailEntity> buildPlatformSoReturnInstockDetail(PlatformReturnInstockDTO dto, WarehouseEntity warehouseEntity, List<SoOutstockEntity> soOutstockList) {
 		List<PlatformReturnInstockDTO.Detail> details = dto.getProductDetailList();
 		if(CollectionUtils.isEmpty(details)){
-			throw new ServiceException("明细为空");
+			ServiceException.runError("【平台退货入库】来源明细为空");
 		}
 		List<String> soOutstockIds = soOutstockList.stream().map(BaseEntity::getId).collect(Collectors.toList());
 

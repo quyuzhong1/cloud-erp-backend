@@ -53,16 +53,17 @@ public interface LogisticsOrderConverter {
             @Mapping(target = "cargoType", constant = "3"),
             @Mapping(target = "refNo", source = "deliveryNo"),
             @Mapping(target = "iossNo", source = "iossCode"),
-            @Mapping(target = "vatNo", ignore = true),
+            @Mapping(target = "vatNo", source = "receiverInfoVO.receiverTaxNo"),
             @Mapping(target = "businessType", constant = "BDS"),
             //费用模式转换
             @Mapping(target = "dutyType", source = "logisticsChannelEntity.taxModel", qualifiedByName = "taxModelToDSF"),
-            //TODO 渠道产品代码
+            //渠道产品代码
             @Mapping(target = "logisticsServiceInfo.logisticsProductCode", source = "logisticsSaleChannel.code"),
             @Mapping(target = "logisticsServiceInfo.customsService", constant = "N"),
             @Mapping(target = "logisticsServiceInfo.signatureService", source = "logisticsChannelEntity.isApiSign", qualifiedByName = "booleanToYOrN"),
             //收货人
             @Mapping(target = "recipientInfo.first_name", source = "receiverInfoVO.contact"),
+            @Mapping(target = "recipientInfo.company", source = "receiverInfoVO.contact"),
             @Mapping(target = "recipientInfo.phone", source = "receiverInfoVO.telNumber"),
             @Mapping(target = "recipientInfo.email", source = "receiverInfoVO.email"),
             @Mapping(target = "recipientInfo.country", source = "receiverInfoVO.country"),
@@ -119,6 +120,7 @@ public interface LogisticsOrderConverter {
      */
     @Mappings({
             @Mapping(target = "material", source = "englishMaterial"),
+            @Mapping(target = "uses", source = "englishUsage"),
             @Mapping(target = "declare_product_code", source = "skuNo"),
             @Mapping(target = "hscode_import", source = "customsCode"),
             @Mapping(target = "declare_product_name_cn", source = "declareChineseName"),

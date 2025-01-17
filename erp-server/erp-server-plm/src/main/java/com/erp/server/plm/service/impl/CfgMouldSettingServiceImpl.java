@@ -8,13 +8,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.CfgMouldSettingDTO;
 import com.erp.model.plm.entity.CfgMouldSettingEntity;
-import com.erp.model.plm.entity.MouldDetailEntity;
 import com.erp.model.plm.entity.MouldDocInfoEntity;
+import com.erp.model.plm.entity.MouldProductEntity;
 import com.erp.model.plm.enums.MouldSettingTypeEnum;
 import com.erp.server.plm.mapper.CfgMouldSettingMapper;
 import com.erp.server.plm.service.CfgMouldSettingService;
-import com.erp.server.plm.service.MouldDetailService;
 import com.erp.server.plm.service.MouldDocInfoService;
+import com.erp.server.plm.service.MouldProductService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,7 +43,7 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
     private MouldDocInfoService mouldDocInfoService;
 
     @Resource
-    private MouldDetailService mouldDetailService;
+    private MouldProductService mouldProductService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -116,10 +116,10 @@ public class CfgMouldSettingServiceImpl extends SuperServiceImpl<CfgMouldSetting
         if (CollectionUtils.isEmpty(mouldIdList)){
             return;
         }
-        List<MouldDetailEntity> mouldInfoList = mouldDetailService.list(Wrappers.<MouldDetailEntity>lambdaQuery().in(MouldDetailEntity::getTypeId, mouldIdList));
+        List<MouldProductEntity> mouldInfoList = mouldProductService.list(Wrappers.<MouldProductEntity>lambdaQuery().in(MouldProductEntity::getTypeId, mouldIdList));
         if (!CollectionUtils.isEmpty(mouldInfoList)) {
             List<String> mouldInfoIdList = mouldInfoList.stream()
-                    .map(MouldDetailEntity::getTypeId)
+                    .map(MouldProductEntity::getTypeId)
                     .distinct()
                     .collect(Collectors.toList());
             String errorMsg = mouldList.stream()

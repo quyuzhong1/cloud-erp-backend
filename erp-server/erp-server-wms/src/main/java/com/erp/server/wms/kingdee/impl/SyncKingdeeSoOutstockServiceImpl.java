@@ -1099,7 +1099,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                                                          List<ProductDetailEntity> parentSkuList,
                                                          List<SoB2cEntity> soB2cEntities,
                                                          List<SoInfoEntity> soInfoEntities,
-                                                         List<DictBasicEntity> dictBasicEntityList) {
+                                                         List<DictBasicEntity> dictBasicEntityList,
+                                                         List<DictBasicEntity> dictList) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -1134,9 +1135,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (ObjectUtil.isNotEmpty(customerInfo)) {
             customerId = customerInfo.getId();
         }
-
-        String finalCustomerId = customerId;
-        ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(req -> finalCustomerId.equals(req.getCustomerId())).findFirst().orElse(null);
 
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
         shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + soOutstockDetailEntity.getId());
@@ -1182,15 +1180,18 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
             String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
             shudiyunB2cOrderDTO.setPlatform_name(platformName);
-        }
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
 
-        //店铺信息
-        if (ObjectUtil.isNotEmpty(shopInfoEntity)) {
-            shudiyunB2cOrderDTO.setSubplatform_no(shopInfoEntity.getDictPlatform());
-            shudiyunB2cOrderDTO.setSubplatform_name(PlatformDictEnum.getNameByCode(shopInfoEntity.getDictPlatform()));
+            String subPlatformType = customerInfo.getPlatformType();
+            if (StringUtils.isNotBlank(subPlatformType)) {
+                DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
+                }
+            }
         }
-        shudiyunB2cOrderDTO.setShop_no(entity.getCustomerId());
-        shudiyunB2cOrderDTO.setShop_name(entity.getCustomerName());
         shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
 
         //产品信息
@@ -1291,7 +1292,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                               List<ProductDetailEntity> parentSkuList,
                               List<SoB2cEntity> soB2cEntities,
                               List<SoInfoEntity> soInfoEntities,
-                              List<DictBasicEntity> dictBasicEntityList) {
+                              List<DictBasicEntity> dictBasicEntityList,
+                              List<DictBasicEntity> dictList) {
 
         for (SoOutstockDetailEntity detailEntity : detailEntities) {
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
@@ -1300,7 +1302,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             wmsPushMsgEntity.setSourceId(detailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate, currencyList, shopInfoList, customerInfoList, companyEntities, skuVOList, bomChildrenSkuDTOS, parentSkuList, soB2cEntities, soInfoEntities, dictBasicEntityList)));
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate, currencyList, shopInfoList, customerInfoList, companyEntities, skuVOList, bomChildrenSkuDTOS, parentSkuList, soB2cEntities, soInfoEntities, dictBasicEntityList, dictList)));
             wmsPushMsgService.save(wmsPushMsgEntity);
         }
     }

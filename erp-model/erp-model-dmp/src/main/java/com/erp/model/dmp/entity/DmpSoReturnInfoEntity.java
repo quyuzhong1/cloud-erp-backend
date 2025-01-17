@@ -242,6 +242,12 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     @TableField("return_method")
     private String returnMethod;
 
+    /**
+     * 平台原始销售订单号
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
+
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

@@ -11,6 +11,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.List;
 
 @Component
 public class RealSellableDaysHandler extends AbstractSkuCalculationHandler {
@@ -18,17 +19,18 @@ public class RealSellableDaysHandler extends AbstractSkuCalculationHandler {
     private DeliverySuggestHandler deliverySuggestHandler;
 
     @Override
-    public SkuCalculationHandler getNextHandler(CfgRuleStrategyDTO cfgRuleStrategy, ReplenishmentResultDTO replenishmentResult) {
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
         return deliverySuggestHandler;
     }
 
     @Override
-    public boolean shouldHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
         return true;
     }
 
     @Override
-    public void doHandle(CfgRuleStrategyDTO cfgRuleStrategyDTO, ReplenishmentResultDTO replenishmentResultDTO) {
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         //补货建议的真实可售天数（最近断货日期-今天）
         ReplenishmentResultDTO.RptOutOfStockDTO rptOutOfStockDTO = replenishmentResultDTO.getRptOutOfStocks()
                 .stream()

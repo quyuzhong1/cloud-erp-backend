@@ -49,7 +49,8 @@
         pr.reconciliation_date as reconciliationDate,
         pr.supplier_confirm_date as supplierConfirmDate,
         pr.purchase_confirm_date as purchaseConfirmDate,
-        pr.receive_date as receiveDate
+        pr.receive_date as receiveDate,
+        pr.create_time as createTime
     </sql>
 
     <!-- 分页查询 -->

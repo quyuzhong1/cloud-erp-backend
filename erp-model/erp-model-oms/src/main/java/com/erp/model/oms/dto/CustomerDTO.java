@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -84,6 +83,18 @@ public class CustomerDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          * 客户名称
          */
@@ -507,6 +518,18 @@ public class CustomerDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          * 审核状态code
          */
@@ -1193,6 +1216,251 @@ public class CustomerDTO implements Serializable {
          * 销售员部门名称
          */
         private String deptName;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingExportDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 简称
+         */
+        private String shortName;
+        /**
+         *区域
+         */
+        private String areaId;
+        private String areaName;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
+         *国家
+         */
+        private String countryId;
+        private String countryName;
+        /**
+         *省份
+         */
+        private String provinceId;
+        private String provinceName;
+        /**
+         *城市
+         */
+        private String cityId;
+        private String cityName;
+        /**
+         *销售员
+         */
+        private String sellerId;
+        private String sellerName;
+        /**
+         * 平台类型: 名称字段businessModeName
+         */
+//        @Dict(enumClass = CustomerInfoBusinessModeEnum.class)
+        private String businessMode;
+        private String businessModeName;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        private String platformTypeName;
+        /**
+         *公司类别
+         */
+        private String companyCategoryDict;
+        private String companyCategoryDictName;
+        /**
+         *单据状态
+         */
+        private ApproveStatusEnum approveStatus;
+        private String approveStatusName;
+        /**
+         *启用状态
+         */
+        private Boolean disabled;
+        private String disabledName;
+        /**
+         *使用组织
+         */
+        private String useOrgId;
+        private String useOrgName;
+        /**
+         *客户分组
+         */
+        private String groupName;
+        /**
+         *对应组织
+         */
+        private String innerOrgId;
+        private String innerOrgName;
+        /**
+         *客户属性
+         */
+        private String customerProperty;
+        /**
+         *通讯地址
+         */
+        private String mailAddress;
+        /**
+         *最新审核人
+         */
+        private String approveUserName;
+        /**
+         *创建人
+         */
+        private String createUserId;
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+
+        private List<InvoiceDTO.ViewDTO> invoiceList;
+
+        private List<CustomerDTO.PagingAddressContactExportDTO> addressContactList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class  PagingInvoiceExportDTO{
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编码
+         */
+        private String code;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingAddressContactExportDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编码
+         */
+        private String code;
+
+        //----------联系人信息-----------
+        /**
+         * 联系人
+         */
+        private String person;
+
+        /**
+         * 职位
+         */
+        private String position;
+
+        /**
+         * 联系电话
+         */
+        private String personTelNumber;
+
+        /**
+         * 邮箱
+         */
+        private String personEmail;
+        /**
+         * 是否默认
+         * true 是
+         * false 不是
+         */
+        private Boolean personIsDefault;
+        private String personIsDefaultName;
+        /**
+         * 是否禁用
+         * true 是
+         * false 不是
+         */
+        private Boolean personDisabled;
+        private String personDisabledName;
+        /**
+         *备注
+         */
+        private String personRemark;
+
+        //----------地址信息-----------
+        /**
+         * 地址
+         */
+        private String address;
+
+        /**
+         * 地址类型
+         */
+        private String type;
+        private String typeName;
+
+        /**
+         * 电话
+         */
+        private String addressTelNumber;
+
+        /**
+         * 邮箱
+         */
+        private String addressEmail;
+
+        /**
+         * 是否默认
+         * true 是
+         * false 不是
+         */
+        private Boolean addressIsDefault;
+        private String addressIsDefaultName;
+
+        /**
+         * 是否禁用
+         * true 是
+         * false 不是
+         */
+        private Boolean addressDisabled;
+        private String addressDisabledName;
+
+        /**
+         * 备注
+         */
+        private String addressRemark;
     }
 
 }

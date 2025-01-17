@@ -34,7 +34,7 @@ public interface ReplenishmentTaskService extends SuperService<ReplenishmentTask
      * @param suggestionId 建议id
      * @param code         状态
      */
-    void updateStatus(String suggestionId, String code);
+    void updateStatus(List<String> suggestionId, String code);
 
     /**
      * 编辑状态
@@ -43,4 +43,12 @@ public interface ReplenishmentTaskService extends SuperService<ReplenishmentTask
      * @param msg          信息
      */
     void updateStatus(String suggestionId, String code, String msg);
+
+    /**
+     * 批量编辑状态
+     * @param suggestionId 建议id
+     * @param code         状态
+     * @param msg          信息
+     */
+    void updateStatus(List<String> suggestionId, String code, String msg);
 }

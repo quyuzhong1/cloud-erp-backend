@@ -20,6 +20,7 @@ import com.erp.model.wms.entity.VirtualInventoryDetailHisEntity;
 import com.erp.server.wms.mapper.VirtualInventoryDetailHisMapper;
 import com.erp.server.wms.service.VirtualInventoryDetailHisService;
 import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -96,6 +97,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                 //添加虚拟仓明细每日库存
                 this.addVirtualInventoryDetailHis(localDate);
             } catch (Exception e) {
+                log.error("生成结余失败，date = {},msg = {}",localDate,e.getMessage());
                 sendWarnMsg(localDate);
             }
         }
@@ -118,9 +120,13 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
         //前一天日期
         LocalDate minusDate = localDate.minusDays(1L);
 
+        List<VirtualInventoryDetailHisEntity> oldList = Lists.newArrayList();
         List<String> virtualDetailIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getVirtualInventoryDetailId).distinct().collect(Collectors.toList());
-        List<VirtualInventoryDetailHisEntity> oldList = listByVirtualInventoryDetailIdList(virtualDetailIdList,minusDate);
-
+        List<List<String>> partitionIdList = Lists.partition(virtualDetailIdList, 50000);
+        for(List<String> idList : partitionIdList) {
+            List<VirtualInventoryDetailHisEntity> hisList =  listByVirtualInventoryDetailIdList(idList,minusDate);
+            oldList.addAll(hisList);
+        }
         //查询虚拟仓库存快照数据
         List<String> skuIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<String> warehouseIdList = virtualInventoryHisList.stream().map(VirtualInventoryDetailHisDTO.ViewDTO::getWarehouseId).distinct().collect(Collectors.toList());

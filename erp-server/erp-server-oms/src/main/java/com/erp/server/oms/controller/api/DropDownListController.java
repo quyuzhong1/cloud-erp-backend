@@ -55,6 +55,12 @@ public class DropDownListController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 根据类型和子类型获取列表
+     * @param type
+     * @param subType
+     * @return
+     */
     @GetMapping("/dict/listByType")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("type") String type,
                                                            @RequestParam(value = "subType", required = false) String subType) {

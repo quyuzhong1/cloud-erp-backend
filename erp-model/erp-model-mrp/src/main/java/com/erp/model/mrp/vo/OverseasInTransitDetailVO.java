@@ -1,5 +1,8 @@
 package com.erp.model.mrp.vo;
 
+import com.common.business.annotation.Dict;
+import com.common.business.enums.ServiceCodeNameEnum;
+import com.erp.model.mrp.enums.ReplenishmentBillStatusEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,7 +12,7 @@ import java.time.LocalDate;
 @Setter
 public class OverseasInTransitDetailVO {
 
-
+    private String id;
     /**
      * 发货单id
      */
@@ -23,11 +26,8 @@ public class OverseasInTransitDetailVO {
     /**
      * 状态
      */
+    @Dict(enumClass = ReplenishmentBillStatusEnum.class)
     private String status;
-    /**
-     * 状态名字
-     */
-    private String statusName;
 
     /**
      * 发货日期
@@ -53,4 +53,15 @@ public class OverseasInTransitDetailVO {
      * 预计到货日期
      */
     private LocalDate estimateSalesDate;
+
+    /**
+     * 店铺在途明细
+     */
+    private Integer shopInTransitQty;
+
+    /**
+     * 仓库id
+     */
+    @Dict(serviceCode = ServiceCodeNameEnum.WMS, queryFieldName = "id" , tableName = "warehouse")
+    private String warehouseId;
 }

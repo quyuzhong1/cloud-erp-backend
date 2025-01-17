@@ -98,6 +98,12 @@ public class ReplenishmentInventoryDetailEntity extends BaseEntity<Replenishment
     @TableField("calc_version")
     private String calcVersion;
 
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
+
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 

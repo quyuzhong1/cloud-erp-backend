@@ -171,6 +171,16 @@ public class SoB2cRefundDTO implements Serializable {
         /**
          * 出库数量
          */
-        private Integer outQty;;
+        private Integer outQty;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 }

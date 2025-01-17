@@ -541,6 +541,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             jsonObject.set("remark", item.getRemark());
             jsonObject.set("detailDiscountAmount", discountAmount);
+            jsonObject.set("customerPO", item.getCustomerPO());
             list.add(jsonObject);
         }
 
@@ -677,11 +678,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (StringUtils.isNotBlank(subPlatformType)) {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
-                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getName());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }
-            shudiyunB2cOrderDTO.setShop_no(customerInfo.getId());
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
             shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 

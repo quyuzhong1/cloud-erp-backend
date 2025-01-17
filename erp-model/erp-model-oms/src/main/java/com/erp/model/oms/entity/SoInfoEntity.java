@@ -310,6 +310,15 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("transaction_sub_type")
     private String transactionSubType = "offlineOrder";
 
+    /**
+     * 分区id
+     */
+    @TableField("partition_id")
+    private String partitionId;
+
+    @TableField(exist = false)
+    private String customerCountry;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

@@ -93,6 +93,18 @@ public class SoInfoDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
 
         /**
          * 审核状态code
@@ -611,6 +623,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Boolean isConstitute;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**
@@ -2303,9 +2319,47 @@ public class SoInfoDTO implements Serializable {
          */
         private String warehouseId;
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
          * 备注
          */
         private String remark;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
     }
 
     @Data
@@ -2838,5 +2892,36 @@ public class SoInfoDTO implements Serializable {
          * 子件缺货信息
          */
         private List<VirtualChildScarceDTO> childScarceList;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalDetailDTO {
+        /**
+         * 明细
+         */
+        private List<CalDTO> details;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
     }
 }

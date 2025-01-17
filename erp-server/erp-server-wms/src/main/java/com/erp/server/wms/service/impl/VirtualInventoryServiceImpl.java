@@ -517,6 +517,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getVirtualWarehouseId())).findFirst().orElse(new VirtualWarehouseEntity());
             listDTO.setVirtualWarehouseCode(virtualWarehouseEntity.getCode());
             listDTO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+            listDTO.setCreateTime(virtualWarehouseEntity.getCreateTime());
 
             //明细信息(关联查询实物库存)
             List<VirtualInventoryDTO.ListInventoryDTO> virtualInventoryDetailList = virtualInventoryList.stream().filter(obj ->

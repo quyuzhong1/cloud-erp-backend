@@ -173,6 +173,7 @@
             vmad.from_virtual_warehouse_id AS fromVirtualWarehouseId,
             vmad.from_virtual_warehouse_name AS fromVirtualWarehouseName,
             vmad.qty,
+            vmad.detail_remark as detailRemark,
             vmad.to_virtual_warehouse_id AS toVirtualWarehouseId,
             vmad.to_virtual_warehouse_name AS toVirtualWarehouseName,
             vmad.finish_description AS finishDescription,

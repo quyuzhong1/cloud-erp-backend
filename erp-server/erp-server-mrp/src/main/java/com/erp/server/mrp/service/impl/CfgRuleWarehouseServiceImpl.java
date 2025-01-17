@@ -92,7 +92,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
 
         // 记录主单操作日志
         log.info("编辑 开始记录仓库（规则设置）日志数据，id：【{}】", cfgRuleWarehouseEntity.getId());
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleWarehouseEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleWarehouseEntity.getId(), "");
+        operateLogService.addModuleOperateLogByObj(ObjectUtil.isEmpty(old) ? new CfgRuleWarehouseEntity() : old, cfgRuleWarehouseEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), cfgRuleWarehouseEntity.getId(), "");
         return Boolean.TRUE;
     }
 
@@ -217,6 +217,17 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                 .map(obj -> new CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO(obj.getWarehouseId(),obj.getWarehouseName())).distinct().collect(Collectors.toList());
     }
 
+    @Override
+    public Boolean getIsEnableVirtual(String platformType) {
+        //是否存在海外仓
+        CfgRuleWarehouseEntity cfgRuleWarehouseEntity = this.getByPlatformType(platformType);
+        Boolean isEnableOverseas = Boolean.FALSE;
+        if (ObjectUtil.isNotEmpty(cfgRuleWarehouseEntity) && Boolean.TRUE.equals(cfgRuleWarehouseEntity.getIsEnableVirtual())) {
+            isEnableOverseas = Boolean.TRUE;
+        }
+        return isEnableOverseas;
+    }
+
     /**
      * 处理验证店铺数据
      * @author will
@@ -281,8 +292,10 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
             updateDTO.setDictPlatform(virtualWarehouseDTO.getDictPlatform());
             updateDTO.setInventoryAllocateType(CharSequenceUtil.isBlank(inventoryAllocateType) ? CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode() : inventoryAllocateType);
             //店铺数据
-            List<String> relationIdList = value.stream().filter(obj -> CollectionUtils.isNotEmpty(obj.getRelationIdList())).flatMap(obj -> Stream.of(obj.getRelationIdList().stream().toArray(String[]::new))).distinct().collect(Collectors.toList());
+            List<String> relationIdList = value.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getRelationIdList).filter(CollectionUtils::isNotEmpty).flatMap(List::stream).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             updateDTO.setChannelIdList(relationIdList);
+            List<String> partitionIdList = value.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getPartitionIdList).filter(CollectionUtils::isNotEmpty).flatMap(List::stream).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            updateDTO.setPartitionIdList(partitionIdList);
             resultList.add(updateDTO);
         }
         return resultList;

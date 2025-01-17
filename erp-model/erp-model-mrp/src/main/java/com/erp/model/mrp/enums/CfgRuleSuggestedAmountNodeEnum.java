@@ -35,8 +35,10 @@ public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
     OVERSEAS_IN_TRANSIT_QTY("OVERSEAS_IN_TRANSIT_QTY","海外仓在途"),
     OVERSEAS_PLAN_DELIVERY_QTY("OVERSEAS_PLAN_DELIVERY_QTY","海外仓预计发货"),
     LOCAL_USABLE_QTY("LOCAL_USABLE_QTY","本地仓可用"),
+    LOCAL_WAIT_QC("LOCAL_WAIT_QC","本地仓待检"),
     LOCAL_IN_TRANSIT_QTY("LOCAL_IN_TRANSIT_QTY","本地在途"),
     LOCAL_PLAN_PURCHASE_QTY("LOCAL_PLAN_PURCHASE_QTY","预计采购"),
+
     ;
 
     private final String code;
@@ -66,6 +68,6 @@ public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
     }
 
     public static String getPurchaseVolumeInventory() {
-        return String.join(":", SUGGESTED_PURCHASE.getCode(), SUGGESTED_PURCHASE_QTY.getCode(), INVENTORY.getCode());
+        return String.join(":", SUGGESTED_PURCHASE.getCode(), SUGGESTED_PURCHASE_QTY.getCode(), INVENTORY.getCode(),FBA_PLAN_DELIVERY_QTY.getCode(),OVERSEAS_PLAN_DELIVERY_QTY.getCode());
     }
 }

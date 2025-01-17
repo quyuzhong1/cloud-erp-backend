@@ -72,6 +72,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.transfer.TransferCancelOrderReq;
 import com.erp.model.tms.entity.*;
@@ -559,7 +560,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             addDTO.getReceiverDTO().setCustomerId(customerId);
         }
         //新增买家信息
-        soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity.getId());
+        soB2cReceiverService.add(addDTO.getReceiverDTO(), soB2cEntity);
         //新增明细
         soB2cDetailService.add(addDTO, soB2cEntity.getId());
         //新增财务信息
@@ -1025,7 +1026,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //修改物流信息
         soB2cLogisticsService.update(updateDTO.getLogisticsDTO(), soB2cEntity.getId());
         //修改买家信息
-        soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity.getId());
+        soB2cReceiverService.update(updateDTO.getReceiverDTO(), soB2cEntity);
         //修改明细
         soB2cDetailService.update(updateDTO.getDetailList(), soB2cEntity.getId());
         //修改订单分类
@@ -3083,6 +3084,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(soB2cReceiverEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
         }
+        if(StringUtils.isNotBlank(soB2cReceiverEntity.getPartitionId())){
+            DictPartitionEntity dictPartitionEntity = FeignQuery.getById(DictPartitionEntity.class,soB2cReceiverEntity.getPartitionId());
+            if(Objects.nonNull(dictPartitionEntity)){
+                soB2cReceiverEntity.setPartitionName(dictPartitionEntity.getName());
+                soB2cReceiverEntity.setPartitionCode(dictPartitionEntity.getCode());
+            }
+        }
         SoB2cReceiverDTO.ViewDTO receiverDTO = new SoB2cReceiverDTO.ViewDTO();
         BeanMapperUtils.copy(soB2cReceiverEntity, receiverDTO);
 
@@ -3479,14 +3487,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isNotEmpty(soB2cDeliveryEntities)) {
             shippedMap = soB2cDeliveryEntities.stream()
                     .filter(v -> StringUtils.isNotBlank(v.getStatus()) && v.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()))
-                    .collect(Collectors.toMap(SoB2cDeliveryEntity::getSourceId, SoB2cDeliveryEntity::getStatus, (existing, replacement) -> existing));
+                    .collect(Collectors.toMap(SoB2cDeliveryEntity::getSourceId, SoB2cDeliveryEntity::getStatus,(existing, replacement) -> existing ));
             manualMap = soB2cDeliveryEntities.stream()
                     .filter(v -> StringUtils.isNotBlank(v.getShipmentMark())
                             && v.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode()))
                     .collect(Collectors.toMap(
                             SoB2cDeliveryEntity::getSourceId,
                             SoB2cDeliveryEntity::getShipmentMark,
-                            (existing, replacement) -> existing));
+                            (existing, replacement) -> existing ));
         }
         // 属性赋值
         for (SoB2cDTO.ListDTO data : list) {

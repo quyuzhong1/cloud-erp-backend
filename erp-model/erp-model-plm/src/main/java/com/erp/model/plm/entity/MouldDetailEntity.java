@@ -8,7 +8,6 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 
@@ -42,36 +41,6 @@ public class MouldDetailEntity extends BaseEntity<MouldDetailEntity> {
     @TableField("third_mould_no")
     private String thirdMouldNo;
     /**
-    * 模具类型
-    */
-    @TableField("type_id")
-    private String typeId;
-    /**
-    * 模具穴数
-    */
-    @TableField("mould_holes")
-    private String mouldHoles;
-    /**
-    * 模具长
-    */
-    @TableField("length")
-    private BigDecimal length;
-    /**
-    * 模具宽
-    */
-    @TableField("width")
-    private BigDecimal width;
-    /**
-    * 模具高
-    */
-    @TableField("height")
-    private BigDecimal height;
-    /**
-    * 模具材质
-    */
-    @TableField("material")
-    private String material;
-    /**
     * 模具寿命(万)(啤)
     */
     @TableField("life_cycle")
@@ -103,18 +72,6 @@ public class MouldDetailEntity extends BaseEntity<MouldDetailEntity> {
     public static final String MOULD_NO = "mould_no";
 
     public static final String THIRD_MOULD_NO = "third_mould_no";
-
-    public static final String TYPE_ID = "type_id";
-
-    public static final String MOLD_HOLES = "mold_holes";
-
-    public static final String LENGTH = "length";
-
-    public static final String WIDTH = "width";
-
-    public static final String HEIGHT = "height";
-
-    public static final String MATERIAL = "material";
 
     public static final String LIFE_CYCLE = "life_cycle";
 

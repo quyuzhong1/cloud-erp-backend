@@ -44,6 +44,7 @@ import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -54,15 +55,13 @@ import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.MachineTypeEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
-import com.erp.model.wms.enums.WorkTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -73,6 +72,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
+import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
@@ -234,6 +234,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private LogisticsFeign logisticsFeign;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
+    private OmsPushMsgService omsPushMsgService;
+
+    @Resource
+    private CfgSettingFeign fgSettingFeign;
+
     /**
      * 添加销售订单
      *
@@ -322,6 +329,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         addEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(addEntity);
+        //封装军区
+        this.buildPartition(addEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(addEntity);
 
@@ -347,6 +356,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return "";
     }
 
+    private void buildPartition(SoInfoEntity addEntity) {
+        String customerId = addEntity.getCustomerId();
+        if (StringUtils.isBlank(customerId)) {
+            return;
+        }
+        CustomerInfoEntity customerInfo = customerInfoService.getById(customerId);
+        if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) ){
+            String country = customerInfo.getCountryId();
+
+            addEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(country));
+        }
+    }
+
     /**
      * 查询虚拟仓库
      * @author will
@@ -364,6 +386,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
         platformDTO.setWarehouseIdList(Arrays.asList(entity.getWarehouseId()));
         platformDTO.setRelationId("");
+        platformDTO.setPartitionId(entity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
             entity.setVirtualWarehouseId("");
@@ -872,7 +895,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 销售数量-已出库数量
              */
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            //sku若关闭则等于0
+            if(Boolean.TRUE.equals(item.getIsClose())){
+                waitQty = 0;
+            }
             item.setWaitQty(waitQty);
+
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
             if (sku != null) {
                 item.setProductName(sku.getSkuName());
@@ -1120,6 +1148,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         draftEntity.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(draftEntity);
+        //设置军区
+        this.buildPartition(draftEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(draftEntity);
         //保存成功
@@ -1239,6 +1269,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         soInfo.setTradeTerm(dto.getTradeTerm());
         // 验证字典值
         checkDict(soInfo);
+        //封装军区
+        this.buildPartition(soInfo);
         //获取虚拟仓库
         handleVirtualWarehouse(soInfo);
 
@@ -2113,10 +2145,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(detailIds);
         //获取订单主表id
         List<String> mainIds = soDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-
-
         checkIfPushDown(mainIds);
         List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(detailIds);
+        //获取默认仓库 -- 东莞售后仓库
+        CfgSettingEntity cfgSettingEntity = fgSettingFeign.getByKey(CfgSettingEnum.WAREHOUSE_BY_SO_RETURN.getCode());
+        CfgSettingValueDTO.SoWarehouseDTO soWarehouseDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.SoWarehouseDTO.class);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -2134,6 +2167,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());
             view.setReturnDate(LocalDate.now());
+            view.setReturnAmount(view.getAmount());
+            view.setTaxReturnAmount(view.getTaxAmount());
+            //限制销售组织下的
+            if(soWarehouseDTO.getOrgId().equals(view.getSalesOrgId())){
+                view.setWarehouseId(soWarehouseDTO.getWarehouseId());
+                view.setWarehouseName(soWarehouseDTO.getWarehouseName());
+            }
         }
         return viewList;
     }
@@ -3033,7 +3073,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids) {
+        //删除和关闭状态的sku不可下推
         List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids);
+        long closeCount = soDetailEntityList.stream().filter(s -> s.getIsClose()).count();
+        if (closeCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98068);
+        }
+        soDetailEntityList = soDetailEntityList.stream()
+                .filter(v -> Boolean.FALSE.equals(v.getIsClose()))
+                .collect(Collectors.toList());
         List<String> mainIds = soDetailEntityList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoEntityList = this.listByIds(mainIds);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> allDeliveryQtyDTOList = soOutstockFeign.listDetailBySoDetailIds(ids);
@@ -3150,6 +3198,42 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto) {
+        if(CollectionUtils.isEmpty(dto)){
+            return Collections.emptyList();
+        }
+        List<SoInfoDTO.GenerateSoReturnView> resultViews = new ArrayList<>();
+        for (SoInfoDTO.CalDTO calDTO : dto) {
+            List<SoInfoDTO.GenerateSoReturnView> generateSoReturnViews = this.generateSoReturnView(Collections.singletonList(calDTO.getDetailId()));
+            if (CollectionUtils.isEmpty(generateSoReturnViews)) {
+                SoInfoDTO.GenerateSoReturnView generateSoReturnView = new SoInfoDTO.GenerateSoReturnView();
+                generateSoReturnView.setDetailId(calDTO.getDetailId());
+                generateSoReturnView.setReturnQty(calDTO.getReturnQty());
+                resultViews.add(generateSoReturnView);
+            }else {
+                generateSoReturnViews.forEach(view -> {
+                    if (Objects.equals(calDTO.getReturnQty(), view.getSalesQty())) {
+                        //退货金额
+                        view.setReturnAmount(view.getAmount());
+                        //含税退货金额
+                        view.setTaxReturnAmount(view.getTaxAmount());
+                        view.setReturnQty(calDTO.getReturnQty());
+                    } else {
+                        //退货金额
+                        BigDecimal returnAmount = soReturnService.calReturnAmount(view.getAmount(), view.getSalesQty(), calDTO.getReturnQty());
+                        view.setReturnAmount(returnAmount);
+                        //含税退货金额
+                        BigDecimal taxReturnAmount = soReturnService.calReturnAmount(view.getTaxAmount(), view.getSalesQty(), calDTO.getReturnQty());
+                        view.setTaxReturnAmount(taxReturnAmount);
+                        view.setReturnQty(calDTO.getReturnQty());
+                    }
+                });
+                resultViews.addAll(generateSoReturnViews);
+            }
+        }
+        return resultViews;
+    }
 
     /**
      * 处理导入数据
@@ -3444,6 +3528,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setReceiveAmount(receiveAmount);
             addSo.setCustomsFee(customsFee);
             addSo.setDiscountAmount(discountAmount);
+            this.buildPartition(addSo);
+            handleVirtualWarehouse(addSo);
             Boolean isAdd = Boolean.TRUE;
             List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {
@@ -3813,5 +3899,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     public List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
+
+    @Override
+    public IPage<SoInfoEntity> pagePartitionIsNull(Page query) {
+        return baseMapper.pagePartitionIsNull(query);
     }
 }

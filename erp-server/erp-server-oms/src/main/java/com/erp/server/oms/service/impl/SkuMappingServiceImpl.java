@@ -32,6 +32,7 @@ import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
 import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
@@ -49,6 +50,7 @@ import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
@@ -64,6 +66,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.checkerframework.checker.units.qual.C;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -141,6 +144,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private CustomerInfoService customerInfoService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private BomSkuFeign bomSkuFeign;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -694,7 +700,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         List<String> skuNoList = dataList.stream().map(SkuMappingDTO.ListSkuParamDTO::getSkuNo).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         if (CollectionUtils.isEmpty(skuList)) {
-            return SkuMappingConverter.INSTANCE.convertSkuDTO(dataList);
+            return Collections.EMPTY_LIST;
         }
         //重置sku含税成本
         resetSkuVo(skuList,dataList);
@@ -1589,6 +1595,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             dto.setSystemCode(shopInfoEntity.getDictPlatform());
             dto.setBillType(BusinessTypeEnum.PRODUCT.getCode());
             dto.setNextLevelId(shopInfoEntity.getId());
+            // 亚马逊指定正常任务类型兼容限流重试
+            if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())){
+                dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+            }
             createDTOList.add(dto);
         }
         try {
@@ -1638,4 +1648,26 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return baseMapper.listByAccountAndDictPlatform(params);
     }
 
+    @Override
+    public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
+        if(null ==  skuParamDTO || StringUtils.isBlank(skuParamDTO.getCutomerId())){
+            throw new ServiceException("客户id不能为空");
+        }
+        return this.baseMapper.listSkuBySkuNos(skuParamDTO);
+    }
+
+//    @Override
+//    public  List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
+//        if(StringUtils.isBlank(skuParamDTO.getCutomerId()) || CollectionUtils.isEmpty(skuParamDTO.getPlatformSkuNoList())){
+//            return Collections.emptyList();
+//        }
+//        //平台sku匹配系统sku
+//        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoDTOList = this.baseMapper.listSkuBySkuNos(skuParamDTO);
+//        List<String> skuNos = productSkuInfoDTOList.stream().map(SkuMappingDTO.ProductSkuInfoDTO::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+//        if(CollectionUtils.isEmpty(skuNos)){
+//            return Collections.emptyList();
+//        }
+//        //系统sku 获取子件
+//        return bomSkuFeign.checkExistAndListCombinationSku(skuNos);
+//    }
 }

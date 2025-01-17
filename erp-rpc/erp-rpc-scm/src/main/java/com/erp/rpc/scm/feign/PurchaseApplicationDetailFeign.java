@@ -1,5 +1,6 @@
 package com.erp.rpc.scm.feign;
 
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,4 +34,14 @@ public interface PurchaseApplicationDetailFeign {
      */
     @PostMapping("/feign/purchaseApplicationDetail/existBySkuIds")
     Boolean existBySkuIds(List<String> skuIds);
+
+    /**
+     * 根据合并id查询数量
+     * @author will
+     * @date 2025/1/7 15:23
+     * @param purchaseMergeIdList
+     * @return Integer
+     */
+    @PostMapping("/feign/purchaseApplicationDetail/listByMergeIdList")
+    List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList);
 }

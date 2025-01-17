@@ -607,13 +607,12 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     	String extendJson = dmpCfgInputEntity.getExtendJson();
 		JSONObject parseObject = JSON.parseObject(extendJson);
 		String system = parseObject.getString("system");
-		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(dmpCfgInputEntity.getTypeId())).get(0).getApiType();
 		
 		List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
 		DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO();
-		syncParamDTO.setSourceType(SourceTypeEnum.getEnum(apiType));
 		List<SyncParamDetailDTO> sourceDetailList = new ArrayList<>();
 		for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
+			syncParamDTO.setSourceType(SourceTypeEnum.getEnum(dmpPushMsgEntity.getSourceType()));
 			SyncParamDetailDTO syncParamDetailDTO = new SyncParamDetailDTO();
 			syncParamDetailDTO.setSourceId(dmpPushMsgEntity.getSourceId());
 			syncParamDetailDTO.setSyncOperate(dmpPushMsgEntity.getSyncOperate());

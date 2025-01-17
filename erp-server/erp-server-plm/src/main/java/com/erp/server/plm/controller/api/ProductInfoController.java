@@ -251,7 +251,17 @@ public class ProductInfoController extends BaseController {
     @PostMapping("/updateCategory")
     public ApiResult<Object> updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
         Boolean flag = productInfoService.updateCategory(dto);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 产品列表-更新应用分类
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品列表-更新应用分类:产品ids={productIds},分类id={categoryId}")
+    @PostMapping("/updateApplicationCategory")
+    public ApiResult<Object> updateApplicationCategory(@RequestBody @Validated MoveApplicationCategoryDTO dto) {
+        Boolean flag = productInfoService.updateApplicationCategory(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -261,7 +271,7 @@ public class ProductInfoController extends BaseController {
     @PostMapping("/remove")
     public ApiResult<Object> removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品列表-下载模板")

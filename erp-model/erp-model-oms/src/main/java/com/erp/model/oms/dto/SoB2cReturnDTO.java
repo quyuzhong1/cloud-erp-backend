@@ -381,6 +381,10 @@ public class SoB2cReturnDTO implements Serializable {
          * 系统入库时间
          */
         private LocalDateTime sysInstockTime;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     @Data

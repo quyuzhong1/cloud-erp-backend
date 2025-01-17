@@ -127,6 +127,7 @@ public class DmpInputAmzReportDownloadApiInitHandler extends DmpInputAmzCommonIn
         // 补充其他信息
         jsonObject.put("filePath", fastDFSUrl);
         jsonObject.put("reportId", reportId);
+        jsonObject.put("shopId", shopId);
 
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
     }

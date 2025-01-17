@@ -201,6 +201,8 @@ public class ProductInfoDTO {
      */
     private Integer isNoSpecAdd;
 
+    private String applicationCategoryId;
+
 
     @Data
     @NoArgsConstructor

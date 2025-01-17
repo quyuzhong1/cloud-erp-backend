@@ -277,6 +277,19 @@ public class SoB2cDTO implements Serializable {
         private String code;
 
         /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+
+        /**
          * 销售平台
          */
         private String dictPlatform;
@@ -2507,6 +2520,18 @@ public class SoB2cDTO implements Serializable {
         private String detailId;
 
         /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
          * 单据编码
          */
         private String code;
@@ -3359,5 +3384,14 @@ public class SoB2cDTO implements Serializable {
         private String postCode;
         //省
         private String provinceName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * 销售平台类型
+         */
+        List<String> dictPlatformList;
     }
 }

@@ -222,14 +222,22 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     @TableField("platform_order_code")
     private String platformOrderCode;
 
+    /**
+     * 比重
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
     @TableField(exist = false)
     private List<SoReturnInstockDetailEntity> detailEntityList;
 
     public static final String APPROVE_STATUS = "approve_status";
-
-    
-
-    
 
     public static final String SALES_ORG_ID = "sales_org_id";
 

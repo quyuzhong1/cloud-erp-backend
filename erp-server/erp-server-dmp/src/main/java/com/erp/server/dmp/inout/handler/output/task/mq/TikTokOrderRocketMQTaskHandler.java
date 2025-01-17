@@ -401,18 +401,19 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         BigDecimal taxRate = BigDecimal.ZERO;
         for (DmpSoDetailEntity dmpSoDetailEntity : dmpSoDetailEntities) {
             JSONObject jsonObject = JSONObject.parseObject(dmpSoDetailEntity.getExtendData());
+            if (ObjectUtil.isNotEmpty(jsonObject.get("itemTax"))) {
+                List<Map<String, Object>> mapList = (List<Map<String, Object>>) jsonObject.get("itemTax");
+                BigDecimal amount = mapList.stream()
+                        .filter(req -> StringUtils.isNotBlank(req.get("taxType")+"") && "SALES_TAX".equalsIgnoreCase(req.get("taxType")+""))
+                        .map(req -> MathUtil.valueOf(req.get("taxAmount")))
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal rate = mapList.stream()
+                        .map(req -> MathUtil.valueOf(req.get("taxRate")))
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
-            List<Map<String, Object>> mapList = (List<Map<String, Object>>) jsonObject.get("itemTax");
-            BigDecimal amount = mapList.stream()
-                    .filter(req -> StringUtils.isNotBlank(req.get("taxType")+"") && "SALES_TAX".equalsIgnoreCase(req.get("taxType")+""))
-                    .map(req -> MathUtil.valueOf(req.get("taxAmount")))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            BigDecimal rate = mapList.stream()
-                    .map(req -> MathUtil.valueOf(req.get("taxRate")))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-
-            taxAmount = taxAmount.add(amount);
-            taxRate = taxRate.add(rate);
+                taxAmount = taxAmount.add(amount);
+                taxRate = taxRate.add(rate);
+            }
         }
 
         return PlatformOrderFinanceDTO.builder()

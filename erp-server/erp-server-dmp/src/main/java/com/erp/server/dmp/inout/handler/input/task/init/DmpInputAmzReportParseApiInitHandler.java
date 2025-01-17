@@ -106,6 +106,7 @@ public class DmpInputAmzReportParseApiInitHandler extends DmpInputAmzCommonInitH
                 jsonObj.set("requestShopId", requestShopId);
                 jsonObj.set("platformShopCode", platformShopCode);
                 jsonObj.set("marketplaceIds", marketplaceIds);
+                jsonObj.set("reportId", reportId);
             }
         });
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJsonStr(jsonArray)));

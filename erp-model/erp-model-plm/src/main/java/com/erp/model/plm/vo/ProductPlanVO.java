@@ -140,4 +140,14 @@ public class ProductPlanVO implements Serializable {
      * 备注
      */
      private String remark;
+
+    /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类名字
+     */
+    private String applicationCategoryName;
 }
