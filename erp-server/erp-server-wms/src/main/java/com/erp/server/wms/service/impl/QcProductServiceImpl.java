@@ -10,6 +10,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcProductDTO;
+import com.erp.model.wms.dto.QcProductLogDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -78,7 +79,12 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         qcProductEntity.setMainId(billId);
         qcProductEntity.setSkuId(skuId);
         qcProductEntity.setId(id);
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(skuId));
+
+        List<String> skuIdList = Collections.singletonList(skuId);
+        if (Objects.isNull(oldEntity)) {
+            skuIdList.add(oldEntity.getSkuId());
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
         if(skuVO!=null){
@@ -103,7 +109,20 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (Objects.isNull(oldEntity)) {
             operateLogService.addModuleOperateLog("新增了质检单的产品信息", ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
         }else {
-            operateLogService.addModuleOperateLogByObj(oldEntity, qcProductEntity, ModuleTypeEnum.QC_ORDER.getCode(), billId, "","编辑了质检单的产品信息");
+            QcProductLogDTO oldQcProductLogDTO = new QcProductLogDTO();
+            QcProductLogDTO newQcProductLogDTO = new QcProductLogDTO();
+            BeanMapper.copy(oldEntity, oldQcProductLogDTO);
+            BeanMapper.copy(qcProductEntity, newQcProductLogDTO);
+
+            SkuVO oldSkuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(oldQcProductLogDTO.getSkuId())).findFirst().orElse(null);
+            if(oldSkuVO!=null){
+                oldQcProductLogDTO.setSkuName(oldSkuVO.getSkuName());
+            }
+            SkuVO newSkuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(newQcProductLogDTO.getSkuId())).findFirst().orElse(null);
+            if(newSkuVO!=null){
+                newQcProductLogDTO.setSkuName(newSkuVO.getSkuName());
+            }
+            operateLogService.addModuleOperateLogByObj(oldQcProductLogDTO, newQcProductLogDTO, ModuleTypeEnum.QC_ORDER.getCode(), billId, "","编辑了质检单的产品信息");
         }
     }
 

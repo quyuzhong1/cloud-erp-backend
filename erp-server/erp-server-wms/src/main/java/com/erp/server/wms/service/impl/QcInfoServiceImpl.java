@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -299,10 +300,47 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (Objects.isNull(qc)) {
                 operateLogService.addModuleOperateLog(String.format("新增了质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
             }else {
-                operateLogService.addModuleOperateLogByObj(qc, bill, ModuleTypeEnum.QC_ORDER.getCode(), billId, "", "");
+                addQcLog(qc, bill, billId);
             }
         }
         return result;
+    }
+
+    private void addQcLog(QcInfoEntity qc, QcInfoEntity bill, String billId) {
+        QcLogDTO oldQcLog = new QcLogDTO();
+        QcLogDTO newQcLog = new QcLogDTO();
+        BeanMapper.copy(qc, oldQcLog);
+        BeanMapper.copy(bill, newQcLog);
+
+        List<String> warehouseIdList = new ArrayList<>();
+        warehouseIdList.add(qc.getWarehouseId());
+        warehouseIdList.add(bill.getWarehouseId());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        if(CollUtil.isNotEmpty(warehouseList)){
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(s -> s.getId().equals(oldQcLog.getWarehouseId())).findFirst().orElse(null);
+            if(Objects.nonNull(warehouseEntity)){
+                oldQcLog.setWarehouseName(warehouseEntity.getName());
+            }
+            warehouseEntity = warehouseList.stream().filter(s -> s.getId().equals(newQcLog.getWarehouseId())).findFirst().orElse(null);
+            if(Objects.nonNull(warehouseEntity)){
+                newQcLog.setWarehouseName(warehouseEntity.getName());
+            }
+        }
+        List<String> supplierIdList = new ArrayList<>();
+        supplierIdList.add(qc.getSupplierId());
+        supplierIdList.add(bill.getSupplierId());
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+        if(CollUtil.isNotEmpty(supplierList)){
+            SupplierEntity supplierEntity = supplierList.stream().filter(s -> s.getId().equals(oldQcLog.getSupplierId())).findFirst().orElse(null);
+            if(Objects.nonNull(supplierEntity)){
+                oldQcLog.setSupplierName(supplierEntity.getName());
+            }
+            supplierEntity = supplierList.stream().filter(s -> s.getId().equals(newQcLog.getSupplierId())).findFirst().orElse(null);
+            if(Objects.nonNull(supplierEntity)){
+                newQcLog.setSupplierName(supplierEntity.getName());
+            }
+        }
+        operateLogService.addModuleOperateLogByObj(oldQcLog, newQcLog, ModuleTypeEnum.QC_ORDER.getCode(), billId, "", "");
     }
 
     @Override
@@ -883,7 +921,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 //                operateLogService.addModuleOperateLog(String.format("新增了质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
                 operateLogService.addModuleOperateLog("新增了暂存质检单", ModuleTypeEnum.QC_ORDER.getCode(), billId, "暂存");
             }else {
-                operateLogService.addModuleOperateLogByObj(qc, bill, ModuleTypeEnum.QC_ORDER.getCode(), billId, "", "编辑了暂存质检单");
+                addQcLog(qc, bill, billId);
             }
         }
         return result;
