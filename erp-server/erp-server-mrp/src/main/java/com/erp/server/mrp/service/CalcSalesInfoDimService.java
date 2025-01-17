@@ -23,10 +23,10 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
 
 
     /**
-     *
      * @param calcResultList 计算参数
+     * @param id             配置id
      */
-    void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList);
+    void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList, String id);
 
     /**
      * 分页
