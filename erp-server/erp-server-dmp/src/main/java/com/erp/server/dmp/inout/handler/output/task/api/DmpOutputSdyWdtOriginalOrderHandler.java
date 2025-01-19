@@ -332,6 +332,64 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
     }
 
+    @Override
+    public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpSoOriginalInfoEntity> dmpSoOriginalInfoEntityMap = new HashMap<>();
+        Map<String, List<DmpSoOriginalDetailEntity>> dmpSoOriginalDetailEntityMap = new HashMap<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_original_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoOriginalInfoEntity dmpSoOriginalInfoEntity = (DmpSoOriginalInfoEntity) v;
+                        dmpSoOriginalInfoEntityMap.put(dmpSoOriginalInfoEntity.getId(), dmpSoOriginalInfoEntity);
+                    }
+                } else if ("dmp_so_original_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoOriginalDetailEntity dmpSoOriginalDetailEntity = (DmpSoOriginalDetailEntity) v;
+                        String mainId = dmpSoOriginalDetailEntity.getMainId();
+                        List<DmpSoOriginalDetailEntity> list = dmpSoOriginalDetailEntityMap.get(mainId);
+                        if (CollUtil.isEmpty(list)) {
+                            list = new ArrayList<>();
+                        }
+                        list.add(dmpSoOriginalDetailEntity);
+                        dmpSoOriginalDetailEntityMap.put(mainId, list);
+                    }
+                }
+            }
+        }
+
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+        Set<String> changeIds = new HashSet<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_original_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        changeIds.add(v.getId());
+                    }
+                } else if ("dmp_so_original_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoOriginalDetailEntity DmpSoDetailEntity = (DmpSoOriginalDetailEntity) v;
+                        changeIds.add(DmpSoDetailEntity.getMainId());
+                    }
+                }
+            }
+        }
+
+        Map<String, String> map = new HashMap<>();
+        for (String changId : changeIds) {
+            List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(dmpSoOriginalInfoEntityMap.get(changId), dmpSoOriginalDetailEntityMap.get(changId));
+            if (CollUtil.isNotEmpty(sdyDtoList)) {
+                map.put(changId, JSON.toJSONString(sdyDtoList));
+            }
+        }
+        return map;
+    }
+
     private String wdtItemStatus(String status) {
         if ("40".equals(status)) {
             return "已发货";
