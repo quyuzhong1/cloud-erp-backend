@@ -1,0 +1,15 @@
+erp-server-admin
+erp-server-auth
+erp-server-bi
+erp-server-dmp
+erp-server-file
+erp-server-mrp
+erp-server-msg
+erp-server-oms
+erp-server-plm
+erp-server-scm
+erp-server-srm
+erp-server-sys
+erp-server-tms
+erp-server-wms
+erp-server-workflow
