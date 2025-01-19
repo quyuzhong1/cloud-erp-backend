@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-msg
   profiles:
-    active: dev
+    active: uat
 server:
   port: 9100
 

@@ -2,10 +2,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.17
+        server-addr: 172.16.100.60:30848
         namespace: uat
       config:
-        server-addr: 172.16.100.17
+        server-addr: 172.16.100.60:30848
         namespace: uat
         file-extension: yml
         shared-configs: common.yml,db-plm.yml,erp-third-party.yml,druid-common.yml
@@ -22,7 +22,7 @@ fdfs:
 sfs:
   nacos:
     application: uat-seata-server
-    server-addr: 172.16.100.17:8848
+    server-addr: 172.16.100.60:30848
     namespace: uat-seata-server
     group: UAT_SEATA_GROUP
 

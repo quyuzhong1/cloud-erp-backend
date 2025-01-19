@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-tms
   profiles:
-    active: dev
+    active: uat
 server:
   port: 9120
 
