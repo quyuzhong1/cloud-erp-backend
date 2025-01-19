@@ -93,7 +93,7 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
                && "shopee_shop".equalsIgnoreCase(shopeeShopById.getData().getType())) {
             ProductRequest productRequest = ProductRequest.builder()
                     .host(cfgAppClient.getUrl())
-                    .offset(null)
+                    .offset(0)
                     .token(shopeeShopById.getData().getAccessToken())
                     .shopId(Long.parseLong(shopeeShopById.getData().getShopeeId()))
                     .partnerId(Long.parseLong(cfgAppClient.getClientId()))

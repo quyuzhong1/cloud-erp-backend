@@ -64,7 +64,7 @@ public class DmpInputShopeeProductInitHandler extends DmpInputInitHandler{
 		ShopAuthEntity shopAuthEntity = shopAuthEntityList.get(0);
 		ProductRequest productRequest = ProductRequest.builder()
                 .host(cfgAppClientEntity.getUrl())
-                .offset(null)
+                .offset(0)
                 .token(shopAuthEntity.getAccessToken())
                 .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
                 .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
