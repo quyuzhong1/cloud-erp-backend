@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.api;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,11 @@ public class DmpOutputApiTaskHandler extends DmpOutputTaskHandler{
 	protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity,
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
 		
+	}
+
+	@Override
+	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpOutputTaskRequest, DmpOutputTaskResponse dmpResponse) {
+		return null;
 	}
 
 }

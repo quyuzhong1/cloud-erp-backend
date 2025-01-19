@@ -32,6 +32,7 @@ public interface CustomerInfoConverter {
             @Mapping(target = "originSellerName", source = "customerInfoEntity.sellerName"),
             @Mapping(target = "changeSellerId", source = "addDTO.changeSellerId"),
             @Mapping(target = "changeSellerName", source = "addDTO.changeSellerName"),
+            @Mapping(target = "changeSellerDeptId", source = "addDTO.changeSellerDeptId"),
             @Mapping(target = "startDate", source = "addDTO.startDate"),
             @Mapping(target = "id", ignore = true),
             @Mapping(target = "approveStatus", expression = "java(com.common.business.enums.ApproveStatusEnum.WAIT_SUBMIT)"),

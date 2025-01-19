@@ -405,22 +405,23 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         //销售员
         String sellerId = entity.getSellerId();
-        String deptCode = "";
+        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(salesOrgId);
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingdeeSeller = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingdeeSeller)) {
-                deptCode = kingdeeSeller.getDeptCode();
                 resultMap.put("sellerCode", kingdeeSeller.getUserPostCode());
+                resultMap.put("deptCode", kingdeeSeller.getDeptCode());
             }
         }
-        resultMap.put("deptCode", deptCode);
+
         String currency = entity.getCurrency();
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(currency));
         //结算币别
@@ -540,6 +541,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             jsonObject.set("kingdeeWarehouseCode", kingdeeWarehouseCode);
             jsonObject.set("remark", item.getRemark());
             jsonObject.set("detailDiscountAmount", discountAmount);
+            jsonObject.set("customerPO", item.getCustomerPO());
             list.add(jsonObject);
         }
 
@@ -676,7 +678,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (StringUtils.isNotBlank(subPlatformType)) {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
                     shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }

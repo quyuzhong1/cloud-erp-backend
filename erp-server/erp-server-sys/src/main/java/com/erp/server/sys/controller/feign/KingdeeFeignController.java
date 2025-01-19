@@ -2,10 +2,8 @@ package com.erp.server.sys.controller.feign;
 
 
 import com.common.core.controller.BaseController;
-import com.erp.model.sys.dto.DeptKingdeeDTO;
-import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
-import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.KingdeePostDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.KingdeeOperatorRefPostService;
@@ -92,5 +90,12 @@ public class KingdeeFeignController extends BaseController {
     }
 
 
+    /**
+     * 业务员列表 用于B2B 销售订单下拉
+     */
+    @PostMapping("/listKingdeeUser")
+    public ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listKingdeeUser (@RequestBody KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
+        return success(kingdeeOperatorRefPostService.listInfo(dto));
+    }
 
 }

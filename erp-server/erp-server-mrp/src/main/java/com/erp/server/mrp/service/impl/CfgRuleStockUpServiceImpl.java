@@ -86,7 +86,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
 
         // 记录主单操作日志
         log.info("编辑 开始记录备货（规则设置）日志数据，id：【{}】", cfgRuleStockUpEntity.getId());
-        operateLogService.addModuleOperateLogByObj(old, cfgRuleStockUpEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleStockUpEntity.getRefId(),cfgRuleStockUpEntity.getId()), "");
+        operateLogService.addModuleOperateLogByObj(ObjectUtil.isEmpty(old) ? new CfgRuleStockUpEntity() : old, cfgRuleStockUpEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleStockUpEntity.getRefId(),cfgRuleStockUpEntity.getId()), "");
         return Boolean.TRUE;
     }
 

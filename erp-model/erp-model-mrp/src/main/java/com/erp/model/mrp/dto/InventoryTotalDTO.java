@@ -20,4 +20,23 @@ public class InventoryTotalDTO {
      * 详细id
      */
     private String detailId;
+    /**
+     * 来源类型
+     */
+    private String sourceType;
+
+    /**
+     * 是否当前店铺
+     */
+    private Boolean currentShop;
+
+    /**
+     * 店铺id
+     */
+    private String shopId;
+
+    /**
+     * 是否过滤0
+     */
+    private Boolean isShowZeroInventory;
 }

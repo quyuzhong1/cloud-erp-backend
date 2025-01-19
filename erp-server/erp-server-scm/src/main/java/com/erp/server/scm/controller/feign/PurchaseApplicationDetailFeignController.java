@@ -1,7 +1,7 @@
 package com.erp.server.scm.controller.feign;
 
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
-import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.server.scm.service.PurchaseApplicationDetailService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -46,4 +46,17 @@ public class PurchaseApplicationDetailFeignController {
     Boolean existBySkuIds(@RequestBody List<String> skuIds){
         return purchaseApplicationDetailService.existBySkuIds(skuIds);
     }
+
+    /**
+     * 根据合并id集合查询合计数量
+     * @author will
+     * @date 2025/1/7 15:25
+     * @param purchaseMergeIdList
+     * @return Integer
+     */
+    @PostMapping("/listByMergeIdList")
+    private List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(@RequestBody List<String> purchaseMergeIdList){
+        return purchaseApplicationDetailService.listByMergeIdList(purchaseMergeIdList);
+    }
+
 }

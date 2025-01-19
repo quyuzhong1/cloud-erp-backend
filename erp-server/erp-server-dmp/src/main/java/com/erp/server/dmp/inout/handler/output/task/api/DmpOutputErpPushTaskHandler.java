@@ -369,6 +369,11 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		return Arrays.asList("sourceCode");
 	}
 
+	@Override
+	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpOutputTaskRequest, DmpOutputTaskResponse dmpResponse) {
+		return null;
+	}
+
 	/**
 	 * 校验数据是否删除处理
 	 */

@@ -18,6 +18,7 @@ public enum ReplenishmentInventoryTypeEnum implements EnumMessage {
     OVERSEAS_IN_TRANSIT("OVERSEAS_IN_TRANSIT", "海外仓在途"),
     OVERSEAS_ESTIMATED_DELIVERY("OVERSEAS_ESTIMATED_DELIVERY", "海外仓预计发货"),
     LOCAL_USABLE("LOCAL_USABLE", "本地可用"),
+    LOCAL_WAIT_QC("LOCAL_WAIT_QC", "本地待检"),
     LOCAL_IN_TRANSIT("LOCAL_IN_TRANSIT", "本地在途"),
     LOCAL_ESTIMATED_DELIVERY("LOCAL_ESTIMATED_DELIVERY", "预计采购")
     ;

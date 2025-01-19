@@ -26,11 +26,13 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
 
     /**
      * 添加库存sku
+     *
      * @param warehouseSkuNo
      * @param warehouseProductName
+     * @param thirdBarcode
      * @return
      */
-    String addWarehouseSku(String warehouseSkuNo, String warehouseProductName);
+    String addWarehouseSku(String warehouseSkuNo, String warehouseProductName, String thirdBarcode);
 
     /**
      * 根据平台sku 获取到对应的list

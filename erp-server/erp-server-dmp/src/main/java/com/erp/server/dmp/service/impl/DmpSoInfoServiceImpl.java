@@ -6,20 +6,13 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.common.business.constant.MongoTableNameContant;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.wrapper.FeignQuery;
-import com.common.core.anno.ParamData;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoReceiverEntity;
@@ -27,10 +20,7 @@ import com.erp.model.dmp.enums.DmpOrderReturnStatusEnum;
 import com.erp.model.dmp.gyy.GyyOrderEntity;
 import com.erp.model.dmp.gyy.bean.DeliverysBean;
 import com.erp.model.dmp.gyy.bean.DetailsBean;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoReceiverService;
@@ -281,4 +271,8 @@ public class DmpSoInfoServiceImpl extends SuperServiceImpl<DmpSoInfoMapper, DmpS
         return soReceiverEntity;
     }
 
+    @Override
+    public List<DmpSoInfoEntity> findSoMissingDetail(LocalDateTime startTime, LocalDateTime endTime, String sourceSystem, String nextLevelId) {
+        return baseMapper.findSoMissingDetail(startTime, endTime, sourceSystem, nextLevelId);
+    }
 }

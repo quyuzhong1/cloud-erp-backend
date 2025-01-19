@@ -43,7 +43,7 @@ public class SoDeliveryNoticeFeignController {
      * @date 2023-05-25 10:27
      */
     @PostMapping("/getPushDownBySoDetailIds")
-    public Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds) {
+    public List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds) {
         return soDeliveryNoticeDetailService.getPushDownBySoDetailIds(soDetailIds);
     }
 

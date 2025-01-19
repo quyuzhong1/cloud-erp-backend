@@ -1,4 +1,5 @@
 package com.erp.server.mrp.service;
+
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -6,6 +7,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.DeliverySuggestDTO;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.entity.PurchaseSuggestMergeEntity;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -110,7 +112,7 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @author will
      * @date 2024/10/31 9:26
      */
-    void generatePurchaseSuggestMerge (String purchaseSuggestId);
+    void generatePurchaseSuggestData(ReplenishmentResultDTO replenishmentResult, List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests);
     /**
      * 导入采购计划合并数据
      * @author will
@@ -118,17 +120,16 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @param excelFile
      * @param response
      */
-    void importPurchaseSuggestMerge(MultipartFile excelFile, HttpServletResponse response);
+    void importPurchaseSuggestMerge(MultipartFile excelFile,Boolean isMerge, HttpServletResponse response);
     /**
      * 根据平台和sku查询
      * @author will
      * @date 2024/11/6 10:34
-     * @param platformTypeList
      * @param platformList
      * @param skuIdList
      * @return List<PurchaseSuggestMergeEntity>
      */
-    List<PurchaseSuggestMergeEntity> listByPlatformListAndSkuIdList(List<String> platformTypeList, List<String> platformList, List<String> skuIdList);
+    List<PurchaseSuggestMergeEntity> listByPlatformListAndSkuIdList(List<String> platformList, List<String> skuIdList);
     /**
      * 查询采购bom信息
      * @author will
@@ -137,13 +138,35 @@ public interface PurchaseSuggestMergeService extends SuperService<PurchaseSugges
      * @return List<PurchaseSuggestBomDTO>
      */
     List<DeliverySuggestDTO.PurchaseSuggestBomDTO> listPurchaseSuggestBom(String id);
-
     /**
-     * 查询锁定数量
+     * 下推采购申请显示
      * @author will
-     * @date 2024/11/25 18:08
-     * @param entity
-     * @return Integer
+     * @date 2025/1/7 10:19
+     * @param ids
+     * @return ViewPushDTO
      */
-    Integer getLockingQty(PurchaseSuggestMergeEntity entity);
+    PurchaseSuggestMergeDTO.ViewPushDTO viewPushPurchaseApplication( List<String> ids);
+    /**
+     * 下推采购申请保存
+     * @author will
+     * @date 2025/1/7 11:13
+     * @param dto
+     */
+    void savePushPurchaseApplication(PurchaseSuggestMergeDTO.SavePushDTO dto);
+    /**
+     * tab列表
+     * @author will
+     * @date 2025/1/8 14:51
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<PurchaseSuggestMergeDTO.TabListDTO> tabList(PurchaseSuggestMergeDTO.TabListParamDTO dto);
+    /**
+     * 根据id查询
+     * @author will
+     * @date 2025/1/8 15:26
+     * @param id
+     * @return MergeFrameDTO
+     */
+    List<PurchaseSuggestMergeDTO.MergeFrameDTO> viewMergeFrame(String id);
 }

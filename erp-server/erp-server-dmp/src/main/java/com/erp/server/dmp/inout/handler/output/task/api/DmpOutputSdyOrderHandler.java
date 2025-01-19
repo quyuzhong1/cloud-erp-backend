@@ -70,59 +70,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
     @Override
     protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-        Map<String, DmpSoInfoEntity> DmpSoInfoEntityMap = new HashMap<>();
-        Map<String, List<DmpSoDetailEntity>> DmpSoDetailEntityMap = new HashMap<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
-            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
-            if (CollUtil.isNotEmpty(value)) {
-                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_so_info".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoInfoEntity dmpSoInfoEntity = (DmpSoInfoEntity) v;
-                        DmpSoInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
-                    }
-                } else if ("dmp_so_detail".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoDetailEntity DmpSoDetailEntity = (DmpSoDetailEntity) v;
-                        String mainId = DmpSoDetailEntity.getMainId();
-                        List<DmpSoDetailEntity> list = DmpSoDetailEntityMap.get(mainId);
-                        if (CollUtil.isEmpty(list)) {
-                            list = new ArrayList<>();
-                        }
-                        list.add(DmpSoDetailEntity);
-                        DmpSoDetailEntityMap.put(mainId, list);
-                    }
-                }
-            }
-        }
-
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
-        Set<String> changeIds = new HashSet<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
-            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
-            if (CollUtil.isNotEmpty(value)) {
-                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_so_info".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        changeIds.add(v.getId());
-                    }
-                } else if ("dmp_so_detail".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoDetailEntity DmpSoDetailEntity = (DmpSoDetailEntity) v;
-                        changeIds.add(DmpSoDetailEntity.getMainId());
-                    }
-                }
-            }
-        }
-
-        Map<String, String> map = new HashMap<>();
-        for(String changId : changeIds) {
-            List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId));
-            if(CollUtil.isNotEmpty(sdyDtoList)) {
-                map.put(changId, JSON.toJSONString(sdyDtoList));
-            }
-        }
+        Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
         List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
         if(!map.isEmpty()) {
             LocalDateTime now = LocalDateTime.now();
@@ -181,10 +129,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
     }
 
+
     /**
      * 解析订单数据
      **/
     public List<ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList1) {
+        if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
+            return Collections.emptyList();
+        }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
         if (CollUtil.isEmpty(dmpSoDetailEntities)) {
             return Collections.emptyList();
@@ -290,7 +242,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                             if(StringUtils.isNotBlank(subPlatformType)) {
                                 List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                                 if(CollUtil.isNotEmpty(dictList)) {
-                                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                                    shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getName());
                                     shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
                                 }
                             }
@@ -461,6 +413,67 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
         return shudiyunB2cOrderDTOList;
     }
+
+
+
+    @Override
+    public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpSoInfoEntity> DmpSoInfoEntityMap = new HashMap<>();
+        Map<String, List<DmpSoDetailEntity>> DmpSoDetailEntityMap = new HashMap<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoInfoEntity dmpSoInfoEntity = (DmpSoInfoEntity) v;
+                        DmpSoInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
+                    }
+                } else if ("dmp_so_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoDetailEntity DmpSoDetailEntity = (DmpSoDetailEntity) v;
+                        String mainId = DmpSoDetailEntity.getMainId();
+                        List<DmpSoDetailEntity> list = DmpSoDetailEntityMap.get(mainId);
+                        if (CollUtil.isEmpty(list)) {
+                            list = new ArrayList<>();
+                        }
+                        list.add(DmpSoDetailEntity);
+                        DmpSoDetailEntityMap.put(mainId, list);
+                    }
+                }
+            }
+        }
+
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+        Set<String> changeIds = new HashSet<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        changeIds.add(v.getId());
+                    }
+                } else if ("dmp_so_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoDetailEntity DmpSoDetailEntity = (DmpSoDetailEntity) v;
+                        changeIds.add(DmpSoDetailEntity.getMainId());
+                    }
+                }
+            }
+        }
+
+        Map<String, String> map = new HashMap<>();
+        for(String changId : changeIds) {
+            List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId));
+            if(CollUtil.isNotEmpty(sdyDtoList)) {
+                map.put(changId, JSON.toJSONString(sdyDtoList));
+            }
+        }
+        return map;
+    }
+
 
     private String wdtItemStatus(String status) {
         if ("40".equals(status)) {

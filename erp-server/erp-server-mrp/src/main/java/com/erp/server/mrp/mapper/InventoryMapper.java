@@ -3,6 +3,7 @@ package com.erp.server.mrp.mapper;
 import com.erp.model.mrp.dto.ReplenishmentInventoryDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
+import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.SubcontractOrderDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -31,12 +32,12 @@ public interface InventoryMapper {
     /**
      * 查询FBA货件数据
      */
-    List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaShipment(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentInventoryDTO.FbaInTransitDTO> getFbaShipment(@Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询FBA发货单数据
      */
-    List<ReplenishmentResultDTO.FbaInTransitDetailDTO> getFbaDelivery(@Param("result") ReplenishmentResultDTO replenishmentResultDTO, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("shipmentName") String shipmentName, @Param("shipmentDetailName") String shipmentDetailName);
+    List<ReplenishmentInventoryDTO.FbaInTransitDTO> getFbaDelivery(@Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName, @Param("shipmentName") String shipmentName, @Param("shipmentDetailName") String shipmentDetailName);
 
     /**
      * 查询物流单
@@ -94,8 +95,7 @@ public interface InventoryMapper {
     /**
      * 查询本地在途明细
      */
-    List<ReplenishmentResultDTO.LocalInTransitDetailDTO> getLocalInTransitDetail(@Param("isPurchase") Boolean isPurchase, @Param("isTransfer") Boolean isTransfer,
-                                                                                 @Param("skuId") String skuId, @Param("localWarehouseIds") List<String> localWarehouseIds, @Param("transactionFlow") String transactionFlow, @Param("instockForcast") String instockForcast, @Param("poReceive") String poReceive,
+    List<ReplenishmentInventoryDTO.LocalInTransitDTO> getLocalInTransitDetail(@Param("isPurchase") Boolean isPurchase, @Param("isTransfer") Boolean isTransfer, @Param("transactionFlow") String transactionFlow, @Param("instockForcast") String instockForcast, @Param("poReceive") String poReceive,
                                                                                  @Param("poInstock") String poInstock, @Param("poReturn") String poReturn, @Param("transferOut") String transferOut, @Param("transferIn") String transferIn);
 
     /**
@@ -140,7 +140,7 @@ public interface InventoryMapper {
     /**
      * 查询采购计划
      */
-    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
+    List<ReplenishmentInventoryDTO.EstimatedPurchaseDTO> listPurchasePlan(@Param("codes") Set<String> codes, @Param("sourceType") String sourceType, @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 
     /**
      * 查询补货计划预计采购
@@ -148,12 +148,15 @@ public interface InventoryMapper {
      * @param codes     状态
      * @param tableName 表
      */
-    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchasePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchaseMergePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName, @Param("isMerge") Boolean isMerge);
+
     /**
-     * 查询补货计划预计采购
-     *
-     * @param codes     状态
-     * @param tableName 表
+     * 查询待检库存
      */
-    List<ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO> getReplenishmentPurchaseMergePlan(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+    List<ReplenishmentInventoryDTO.LocalWaitQcDTO> getLocalWaitQc(@Param("codes") Set<String> codes, @Param("tableName") String tableName);
+
+    /**
+     * 获取采购单交货时间
+     */
+    List<PurchaseOrderDTO.ViewSubcontractPoDTO> getPurchaseOrder(@Param("sourceCodeList") List<String> sourceCodeList,  @Param("tableName") String tableName, @Param("tableDetailName") String tableDetailName);
 }

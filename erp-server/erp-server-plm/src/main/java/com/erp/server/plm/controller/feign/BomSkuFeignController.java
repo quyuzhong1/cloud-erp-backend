@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller.feign;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -144,5 +146,20 @@ public class BomSkuFeignController {
     @PostMapping("/listAllBom")
     public List<BomDTO.BomSku> listAllBom(@RequestBody List<String> childSkuIdList){
         return bomSkuService.listAllBom(childSkuIdList);
+    }
+
+    /**
+     * @description: 根据父级skuNos查询子集sku
+     * @author jack
+     * @date: 2024-11-08
+     * @param skuNos
+     * @return List<BomChildrenSkuDTO>
+     */
+    @PostMapping("/checkExistAndListCombinationSku")
+    public List<BomChildrenSkuDTO> checkExistAndListCombinationSku(@RequestBody List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
+        return bomSkuService.checkExistAndListCombinationSku(skuNos);
     }
 }

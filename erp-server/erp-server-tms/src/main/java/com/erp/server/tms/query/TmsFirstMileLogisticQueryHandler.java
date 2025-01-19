@@ -93,6 +93,33 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
             }
             super.buildSplicingSQLDTO("lb.id",QueryConditionEnum.IN_LIST,ids,QueryDataTypeEnum.STRING);
         }
+
+        if(field.equals("reconciliationStatus")){
+            return " lb.id in  (\n" +
+                    "\t\tSELECT\n" +
+                    "\t\t\tlogistics_bill_id \n" +
+                    "\t\tFROM\n" +
+                    "\t\t\t(\n" +
+                    "\t\t\tSELECT\n" +
+                    "\t\t\t\tbill.logistics_bill_id,\n" +
+                    "\t\t\t\tbill.reconciliation_status,\n" +
+                    "\t\t\t\tROW_NUMBER ( ) OVER ( PARTITION BY bill.logistics_bill_id ORDER BY bill.create_time ) AS rn \n" +
+                    "\t\t\tFROM\n" +
+                    "\t\t\t\tlogistics_bill_cost bill\n" +
+                    "\t\t\t\tINNER JOIN logistics_bill lb on lb.id = bill.logistics_bill_id and lb.is_deleted = false\n" +
+                    "\t\t\t\tLEFT JOIN tms_first_mile_reconciliation_detail tfmrd ON bill.reconciliation_id = tfmrd.main_id \n" +
+                    "\t\t\t\tAND tfmrd.is_deleted = FALSE \n" +
+                    "\t\t\t\tAND lb.order_type = 'firstMile' \n" +
+                    "\t\t\t\tAND tfmrd.\"type\" = 'actual' \n" +
+                    "\t\t\t\tAND tfmrd.reconciliation_count = 1 \n" +
+                    "\t\t\tWHERE\n" +
+                    "\t\t\t\tbill.is_deleted = FALSE \n" +
+                    "\t\t\t) AS detail \n" +
+                    "\t\tWHERE\n" +
+                    "\t\t\trn = 1 \n" +
+                    "\t\t\tAND reconciliation_status  "+compareCodeSplicingValueSql+" \n" +
+                    "\t\t) ";
+        }
         return null;
     }
 }

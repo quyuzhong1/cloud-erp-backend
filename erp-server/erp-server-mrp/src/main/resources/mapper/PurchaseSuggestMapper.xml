@@ -21,15 +21,12 @@
        <result column="estimate_instock_date" property="estimateInstockDate" />
        <result column="estimate_sales_date" property="estimateSalesDate" />
        <result column="purchase_cost" property="purchaseCost" />
-       <result column="invalid_status" property="invalidStatus" />
-       <result column="invalid_remark" property="invalidRemark" />
-       <result column="source_id" property="sourceId" />
        <result column="source_type" property="sourceType" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        ps.id,
+   <!-- 通用查询结果列 -->
+   <sql id="Base_Column_List">
+      ps.id,
         ps.create_user_id as createUserId,
         ps.create_user_name as createUserName,
         ps.create_time as createTime,
@@ -38,29 +35,16 @@
         ps.update_time as updateTime,
         ps.code,
         ps.data_type as dataType,
+        ps.suggest_delivery_qty as suggestDeliveryQty,
         ps.suggest_purchase_qty as suggestPurchaseQty,
-        pss.suggest_purchase_qty as sysSuggestPurchaseQty,
         ps.suggest_purchase_date as suggestPurchaseDate,
-        pss.suggest_purchase_date as sysSuggestPurchaseDate,
-        pss.suggest_purchase_qty as sysSuggestPurchaseDate,
         ps.logistics_method as logisticsMethod,
-        pss.logistics_method as sysLogisticsMethod,
         ps.logistics_days as logisticsDays,
-        pss.logistics_days as sysLogisticsDays,
         ps.estimate_instock_date as estimateInstockDate,
-        pss.estimate_instock_date as sysEstimateInstockDate,
         ps.estimate_sales_date as estimateSalesDate,
-        pss.estimate_sales_date as sysEstimateSalesDate,
         ps.purchase_cost as purchaseCost,
-        pss.purchase_cost as sysPurchaseCost,
-        ps.invalid_status as invalidStatus,
-        ps.invalid_remark as invalidRemark,
-        ps.invalid_time as invalidTime,
-        ps.invalid_user_id as invalidUserId,
-        ps.invalid_user_name as invalidUserName,
-        ps.source_id as sourceId,
+        ps.source_id_json as sourceIdJson,
         ps.source_type as sourceType,
-        ps.status,
         ps.currency,
         ps.platform_type as platformType,
         ps.platform,
@@ -68,89 +52,36 @@
         ps.sku_id as skuId,
         ps.plan_purchase_qty as planPurchaseQty,
         ps.purchase_stock_up_qty as purchaseStockUpQty,
+        ps.replenishment_suggestion_id,
         ps.remark
-    </sql>
+   </sql>
 
-    <!-- 采购建议导出分页 -->
-    <select id="pagingExportPurchaseSuggestion"
-            resultType="com.erp.model.mrp.dto.ReplenishmentSuggestionDTO$PurchaseSuggestionDTO">
-        select
-            <include refid="Base_Column_List"/>
-            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
-        from purchase_suggest ps
-        inner join replenishment_suggestion rs on ps.source_id = rs.id and rs.is_deleted = false
-        left join replenishment_suggestion_detail rsd on rs.id = rsd.main_id and rsd.is_deleted = false
-        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false and ps.data_type = 'auto'
-        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
-        <where>
-            ${params.sqlMap.default}
-            and ps.is_deleted = false
-        </where>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        rs.id asc
-    </select>
-
-    <!-- 列表查询 -->
-    <select id="list" resultType="com.erp.model.mrp.dto.PurchaseSuggestDTO$ListDTO">
-        select
-            <include refid="Base_Column_List"/>
-            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
-        from purchase_suggest ps
-        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false and ps.data_type = 'auto'
-        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
-        <where>
-            ps.is_deleted = false and ps.status = 'draft' and ps.source_id = #{params.sourceId}
-        </where>
-    </select>
-
-    <!-- 分页查询 -->
-    <select id="paging" resultType="com.erp.model.mrp.dto.PurchaseSuggestDTO$ListDTO">
-        select
-            <include refid="Base_Column_List"/>
-            ,pd.sku_no,pd.name as productName,pd.images_url as imagesUrl
-        from purchase_suggest ps
-        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false and ps.data_type = 'auto'
-        left join product_detail pd on ps.sku_id = pd.id and pd.is_deleted = false
-        <where>
-            ${params.sqlMap.default}
-            and ps.is_deleted = false
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
-        </where>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        ps.id desc
-    </select>
-
-    <!-- 查询可生成采购建议合并的数据 -->
+   <!-- 查询可生成采购建议合并的数据 -->
     <select id="listGeneratePurchaseSuggestMerge" resultType="com.erp.model.mrp.entity.PurchaseSuggestEntity">
-        select
+       select
             <include refid="Base_Column_List"/>
-        from purchase_suggest ps
-        left join purchase_suggest_sys pss on ps.id = pss.source_id and pss.is_deleted = false and ps.data_type = 'auto'
-        <where>
-            ps.is_deleted = false and ps.status = 'draft' and ps.invalid_status = false
-            <if test="entity != null and entity.platformType != null and entity.platformType != ''">
-                and ps.platform_type = #{entity.platformType}
-            </if>
-            <if test="entity != null and entity.platform != null and entity.platform != ''">
-                and ps.platform = #{entity.platform}
-            </if>
-            <if test="entity != null and entity.skuId != null and entity.skuId != ''">
-                and ps.sku_id = #{entity.skuId}
-            </if>
-        </where>
+       from purchase_suggest ps
+       <where>
+          ps.is_deleted = false
+          and exists (
+            select 1 from purchase_suggest_merge psm,jsonb_array_elements_text(psm.source_id_json) AS source_id where psm.is_deleted = false and psm.status = 'draft' and psm.is_merge = false and source_id = ps.id
+          )
+          <if test="platform != null and platform != ''">
+             and ps.platform = #{platform}
+          </if>
+          <if test="skuIdList != null and skuIdList.size > 0">
+             and ps.sku_id in
+            <foreach collection="skuIdList" open="(" close=")" item="item" separator=",">
+                #{item}
+            </foreach>
+          </if>
+           <if test="suggestPurchaseDateList != null and suggestPurchaseDateList.size > 0">
+               and ps.suggest_purchase_date in
+               <foreach collection="suggestPurchaseDateList" open="(" close=")" item="item" separator=",">
+                   #{item}
+               </foreach>
+           </if>
+       </where>
     </select>
-
 
 </mapper>

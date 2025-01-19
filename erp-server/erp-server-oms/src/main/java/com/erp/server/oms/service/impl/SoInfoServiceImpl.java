@@ -44,6 +44,7 @@ import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -60,10 +61,7 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
-import com.erp.model.wms.enums.MachineTypeEnum;
-import com.erp.model.wms.enums.PickingBillTypeEnum;
-import com.erp.model.wms.enums.WorkTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -238,6 +236,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private SysPartitionFeign sysPartitionFeign;
+    private OmsPushMsgService omsPushMsgService;
+
+    @Resource
+    private CfgSettingFeign fgSettingFeign;
+
     /**
      * 添加销售订单
      *
@@ -574,7 +577,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         String warehouseId = view.getWarehouseId();
         BillApproveStatusEnum approveStatus = view.getApproveStatus();
         view.setApproveStatusName(approveStatus.getName());
-
+        //部门名称
+        if (CharSequenceUtil.isNotBlank(view.getSalesDeptId())){
+            List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(view.getSalesDeptId()));
+            view.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
+        }
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attachmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
         List<String> attachmentNameList = attachmentList.stream().map(OmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
@@ -888,7 +895,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
              * 销售数量-已出库数量
              */
             Integer waitQty = qty > deliveryQty ? qty - deliveryQty : 0;
+            //sku若关闭则等于0
+            if(Boolean.TRUE.equals(item.getIsClose())){
+                waitQty = 0;
+            }
             item.setWaitQty(waitQty);
+
             SkuVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
             if (sku != null) {
                 item.setProductName(sku.getSkuName());
@@ -2133,10 +2145,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<SoDetailEntity> soDetailEntities = soDetailService.listByIds(detailIds);
         //获取订单主表id
         List<String> mainIds = soDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-
-
         checkIfPushDown(mainIds);
         List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(detailIds);
+        //获取默认仓库 -- 东莞售后仓库
+        CfgSettingEntity cfgSettingEntity = fgSettingFeign.getByKey(CfgSettingEnum.WAREHOUSE_BY_SO_RETURN.getCode());
+        CfgSettingValueDTO.SoWarehouseDTO soWarehouseDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.SoWarehouseDTO.class);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -2154,6 +2167,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(view.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             view.setCustomerName(customerInfoEntity.getName());
             view.setReturnDate(LocalDate.now());
+            view.setReturnAmount(view.getAmount());
+            view.setTaxReturnAmount(view.getTaxAmount());
+            //限制销售组织下的
+            if(soWarehouseDTO.getOrgId().equals(view.getSalesOrgId())){
+                view.setWarehouseId(soWarehouseDTO.getWarehouseId());
+                view.setWarehouseName(soWarehouseDTO.getWarehouseName());
+            }
         }
         return viewList;
     }
@@ -3053,7 +3073,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoInfoDTO.GenerateSoOutView> generateSoOutView(List<String> ids) {
+        //删除和关闭状态的sku不可下推
         List<SoDetailEntity> soDetailEntityList = soDetailService.listSoDetailByIds(ids);
+        long closeCount = soDetailEntityList.stream().filter(s -> s.getIsClose()).count();
+        if (closeCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98068);
+        }
+        soDetailEntityList = soDetailEntityList.stream()
+                .filter(v -> Boolean.FALSE.equals(v.getIsClose()))
+                .collect(Collectors.toList());
         List<String> mainIds = soDetailEntityList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoEntityList = this.listByIds(mainIds);
         List<SoOutstockDetailDTO.DeliveryQtyDTO> allDeliveryQtyDTOList = soOutstockFeign.listDetailBySoDetailIds(ids);
@@ -3170,6 +3198,42 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto) {
+        if(CollectionUtils.isEmpty(dto)){
+            return Collections.emptyList();
+        }
+        List<SoInfoDTO.GenerateSoReturnView> resultViews = new ArrayList<>();
+        for (SoInfoDTO.CalDTO calDTO : dto) {
+            List<SoInfoDTO.GenerateSoReturnView> generateSoReturnViews = this.generateSoReturnView(Collections.singletonList(calDTO.getDetailId()));
+            if (CollectionUtils.isEmpty(generateSoReturnViews)) {
+                SoInfoDTO.GenerateSoReturnView generateSoReturnView = new SoInfoDTO.GenerateSoReturnView();
+                generateSoReturnView.setDetailId(calDTO.getDetailId());
+                generateSoReturnView.setReturnQty(calDTO.getReturnQty());
+                resultViews.add(generateSoReturnView);
+            }else {
+                generateSoReturnViews.forEach(view -> {
+                    if (Objects.equals(calDTO.getReturnQty(), view.getSalesQty())) {
+                        //退货金额
+                        view.setReturnAmount(view.getAmount());
+                        //含税退货金额
+                        view.setTaxReturnAmount(view.getTaxAmount());
+                        view.setReturnQty(calDTO.getReturnQty());
+                    } else {
+                        //退货金额
+                        BigDecimal returnAmount = soReturnService.calReturnAmount(view.getAmount(), view.getSalesQty(), calDTO.getReturnQty());
+                        view.setReturnAmount(returnAmount);
+                        //含税退货金额
+                        BigDecimal taxReturnAmount = soReturnService.calReturnAmount(view.getTaxAmount(), view.getSalesQty(), calDTO.getReturnQty());
+                        view.setTaxReturnAmount(taxReturnAmount);
+                        view.setReturnQty(calDTO.getReturnQty());
+                    }
+                });
+                resultViews.addAll(generateSoReturnViews);
+            }
+        }
+        return resultViews;
+    }
 
     /**
      * 处理导入数据

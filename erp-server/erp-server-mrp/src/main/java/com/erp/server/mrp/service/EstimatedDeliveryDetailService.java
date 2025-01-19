@@ -3,6 +3,7 @@ package com.erp.server.mrp.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.InventoryDetailTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.EstimatedDeliveryDetailEntity;
 import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
@@ -38,4 +39,11 @@ public interface EstimatedDeliveryDetailService extends SuperService<EstimatedDe
      * @param replenishmentInventoryTypeEnum 类型
      */
     int totalQtyByReplenishment(String detailId, ReplenishmentInventoryTypeEnum replenishmentInventoryTypeEnum);
+
+    /**
+     * 预计发货总数量根据来源类型
+     * @param params 参数
+     * @param replenishmentInventoryTypeEnum 库存类型
+     */
+    int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params , ReplenishmentInventoryTypeEnum replenishmentInventoryTypeEnum);
 }

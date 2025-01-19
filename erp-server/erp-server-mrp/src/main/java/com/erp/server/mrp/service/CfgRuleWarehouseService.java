@@ -72,4 +72,9 @@ public interface CfgRuleWarehouseService extends SuperService<CfgRuleWarehouseEn
      * @return List<OverseasWarehouseDTO>
      */
     List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO> listOverseasWarehouse(String platformType);
+
+    /**
+     * 查询是否启用虚拟仓
+     */
+    Boolean getIsEnableVirtual(String platformType);
 }

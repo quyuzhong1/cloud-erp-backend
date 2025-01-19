@@ -22,4 +22,10 @@ public interface SalesEstimateService extends SuperService<SalesEstimateEntity> 
      * @param date 结束日期
      */
     List<SalesEstimateEntity> listByReplenishmentIdAndDay(String detailId, LocalDate date);
+
+    /**
+     * 根据补货建议明细id查询数据
+     * @param detailId 建议id
+     */
+    List<SalesEstimateEntity> listByReplenishmentId(String detailId);
 }

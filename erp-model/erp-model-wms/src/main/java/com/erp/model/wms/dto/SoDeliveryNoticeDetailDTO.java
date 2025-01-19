@@ -244,4 +244,26 @@ public class SoDeliveryNoticeDetailDTO {
         private String remark;
 
     }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDownDTO {
+        /**
+         * soDetailId
+         */
+        private String soDetailId;
+        /**
+         * sku表id
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+
+
+    }
 }

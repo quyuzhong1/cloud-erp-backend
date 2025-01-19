@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -152,6 +153,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 超出分配数量
          */
         private Integer exceedQty;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**

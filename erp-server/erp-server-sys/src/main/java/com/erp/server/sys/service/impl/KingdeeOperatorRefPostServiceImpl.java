@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -310,6 +311,10 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
                 item.setDisabled(Boolean.TRUE);
             } else {
                 item.setDisabled(Boolean.FALSE);
+            }
+            //部门为空时设置为时效
+            if (CharSequenceUtil.isBlank(item.getDepartmentId()) || CharSequenceUtil.isBlank(item.getDepartmentName())){
+                item.setDisabled(Boolean.TRUE);
             }
         }
 

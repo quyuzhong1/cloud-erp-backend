@@ -25,9 +25,19 @@ public class ReplenishmentInventoryDTO {
     private List<LocalUsableDTO> localUsableList;
 
     /**
+     * 本地待检
+     */
+    private List<LocalWaitQcDTO> localWaitQcList;
+
+    /**
      * 虚拟仓可用
      */
     private List<VirtualUsableDTO> virtualUsableList;
+
+    /**
+     * 本地在途
+     */
+    private List<LocalInTransitDTO> localInTransitList;
 
     /**
      * 预计采购
@@ -38,6 +48,13 @@ public class ReplenishmentInventoryDTO {
      * 补货计划，采购建议
      */
     private List<ReplenishmentPurchaseDTO> replenishmentPurchaseList;
+    /**
+     * FBA在途
+     */
+    private List<FbaInTransitDTO> fbaInTransitList;
+    /**
+     * FBA预计发货
+     */
 
     @Setter
     @Getter
@@ -56,6 +73,66 @@ public class ReplenishmentInventoryDTO {
         private Integer qty;
     }
 
+    @Getter
+    @Setter
+    public static class FbaInTransitDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 发货状态
+         */
+        private String status;
+
+        /**
+         * 发货日期
+         */
+        private LocalDate deliveryDate;
+
+        /**
+         * 申报数量
+         */
+        private Integer declareQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 在途
+         */
+        private Integer inTransitQty;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+    }
 
     @Setter
     @Getter
@@ -77,6 +154,23 @@ public class ReplenishmentInventoryDTO {
     @Getter
     @Setter
     public static class LocalUsableDTO {
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    @Getter
+    @Setter
+    public static class LocalWaitQcDTO {
         /**
          * sku
          */
@@ -255,5 +349,45 @@ public class ReplenishmentInventoryDTO {
          * 明细id
          */
         private JSONArray sourceIdJson;
+    }
+
+    @Getter
+    @Setter
+    public static class LocalInTransitDTO {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimatedPutAwayDate;
     }
 }

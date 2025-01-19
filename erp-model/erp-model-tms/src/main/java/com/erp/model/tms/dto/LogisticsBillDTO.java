@@ -247,6 +247,10 @@ public class LogisticsBillDTO implements Serializable {
          * 物流轨迹更新时间
          */
         private LocalDateTime trackTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
     }
 
@@ -745,8 +749,10 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号
          */
         private String trackNo;
-
-
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
     }
 
 
