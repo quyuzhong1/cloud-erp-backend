@@ -848,4 +848,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param response 响应
      */
     void importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * @description: 推送金蝶
+     * @param list
+     */
+    void sendPushTask (List<ProductDetailEntity> list, String operate);
 }
