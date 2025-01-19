@@ -789,9 +789,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
         dto.setStockInDeptId(depart.getDepartmentId());
         //生成结果
-        String createResultId = poInstockService.addAndSubmit(dto);
+        PoInstockEntity entity = poInstockService.addAndSubmit(dto);
+        String createResultId = entity.getId();
         if (CharSequenceUtil.isNotBlank(createResultId)) {
-            PoInstockEntity entity = poInstockService.getById(createResultId);
+//            PoInstockEntity entity = poInstockService.getById(createResultId);
             poInstockService.approve(entity,ApproveTypeEnum.PASS.getStatus(),"", null);
         }
     }
