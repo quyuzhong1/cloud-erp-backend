@@ -12,7 +12,7 @@ spring:
 sfs:
   nacos:
     application: uat-seata-server
-    server-addr: 172.16.100.60:30848
+    server-addr: 172.16.100.17:8848
     namespace: uat-seata-server
     group: UAT_SEATA_GROUP
 
