@@ -1,0 +1,72 @@
+package com.erp.server.dmp.controller.api;
+
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.enums.LogActionEnum;
+import com.common.business.dto.base.*;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.common.core.controller.BaseController;
+import com.erp.server.dmp.service.RulePromptWordService;
+import com.common.core.controller.vo.ApiResult;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.dmp.dto.RulePromptWordDTO;
+
+/**
+ * 汉化管理规则表
+ *
+ * @author lrp
+ * @since 2025-01-17
+ */
+@Slf4j
+@RestController
+@LogSystemModule("汉化管理规则表")
+@RequestMapping("/rulePromptWord")
+public class RulePromptWordController extends BaseController {
+
+    @Resource
+    private RulePromptWordService rulePromptWordService;
+
+    /**
+    * 新增
+    * @author lrp
+    * @date:  2025-01-17
+    * @param dto
+    * @return ApiResult<String>
+    */
+    @PostMapping("/add")
+    @LogAction(value = LogActionEnum.INSERT, desc = "汉化管理规则表新增")
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated RulePromptWordDTO.AddDTO dto) {
+        return success(rulePromptWordService.add(dto));
+    }
+
+    /**
+    * 修改
+    * @author lrp
+    * @date:  2025-01-17
+    * @param dto
+    * @return ApiResult
+    */
+    @PostMapping("/update")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "汉化管理规则表修改")
+        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+        tableField = "create_user_id",
+        menuCode = "dmp:rulePromptWord:update",
+        serviceClass = RulePromptWordService.class,
+        keyIdName = "id")
+    public ApiResult<?> update(@RequestBody @Validated RulePromptWordDTO.UpdateDTO dto) {
+        rulePromptWordService.update(dto);
+        return success();
+    }
+
+
+
+}
