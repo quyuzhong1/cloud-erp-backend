@@ -126,7 +126,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             if (CollUtil.isNotEmpty(virtualTransFlowDetailList)) {
                 return Boolean.TRUE;
             }
-            handleVirtualTransFlow(entity);
+            updateHandleVirtualTransFlow(entity);
         }
         return Boolean.TRUE;
     }
@@ -314,7 +314,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
         //更新库存
         for (VirtualTransFlowEntity flowEntity :virtualTransFlowList) {
-            handleVirtualTransFlow(flowEntity);
+            updateHandleVirtualTransFlow(flowEntity);
         }
         //重算原出库流水时间后的结余
         virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity.getBillDate());
@@ -353,7 +353,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
      * @date 2024/12/10 16:57
      * @param entity
      */
-    private void handleVirtualTransFlow(VirtualTransFlowEntity entity) {
+    @Override
+    public void updateHandleVirtualTransFlow(VirtualTransFlowEntity entity) {
         //入库
         if (entity.getQty() > MathUtil.ZERO) {
             //生成批次库存数据
