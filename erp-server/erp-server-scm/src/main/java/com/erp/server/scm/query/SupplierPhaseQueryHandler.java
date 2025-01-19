@@ -17,9 +17,10 @@ public class SupplierPhaseQueryHandler extends AbstractQueryHandler {
         if ("tab".equals(field)) {
             String status = value.toString();
             if ("waitSubmit".equals(status)) {
-                super.buildDefaultDTO("sp.approve_status", Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()));
+                super.buildDefaultDTO("sp.approve_status",ApproveStatusEnum.WAIT_SUBMIT.getStatus());
             } else if ("approveIng".equals(status)) {
-                super.buildDefaultDTO("sp.approve_status", Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()));
+//                super.buildDefaultDTO("sp.approve_status", Arrays.asList(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()));
+                super.buildDefaultDTO("sp.approve_status",  ApproveStatusEnum.APPROVE_ING.getStatus());
             } else if ("approve".equals(status)) {
                 super.buildDefaultDTO("sp.approve_status", ApproveStatusEnum.APPROVE.getStatus());
             } else if ("reject".equals(status)) {
