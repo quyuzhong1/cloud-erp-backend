@@ -2,7 +2,10 @@ package com.erp.server.mrp.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
+import com.erp.model.mrp.entity.CfgRuleSalesDenoisingCalcEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
+import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 
 import java.util.List;
 
@@ -93,4 +96,14 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param skuType      sku类型
      */
     CfgRuleSalesQtyEntity getDefaultByPlatformAndSkuType(String platformType, String skuType);
+
+    /**
+     * 同步规则配置
+     *
+     * @param cfgRuleSalesFormulaList   销量计算
+     * @param cfgRuleSalesDenoisingList 去噪配置
+     * @param suggestionList            建议
+     * @param code
+     */
+    void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList, String code);
 }

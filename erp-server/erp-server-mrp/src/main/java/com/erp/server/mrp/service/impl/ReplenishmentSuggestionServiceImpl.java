@@ -1520,6 +1520,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return result;
     }
 
+    @Override
+    public List<ReplenishmentSuggestionEntity> listByShopIdAndSkuId(List<String> shopIdList, List<String> skuIdList) {
+       return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+               .in(ReplenishmentSuggestionEntity::getShopId, shopIdList)
+               .in(ReplenishmentSuggestionEntity::getSkuId, skuIdList)
+       );
+    }
+
     /**
      * 异步获取主表数据
      *

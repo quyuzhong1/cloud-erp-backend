@@ -603,7 +603,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
-        view.setSellerName(sysUserFeign.getSysUserById(view.getSellerId()).getRealName());
+        if(CharSequenceUtil.isNotBlank(view.getSellerId())){
+            SysUserDTO user = sysUserFeign.getSysUserById(view.getSellerId());
+            view.setSellerName(Objects.nonNull(user) ? user.getRealName() : CharSequenceUtil.EMPTY);
+        }
         if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){
             List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
             view.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
