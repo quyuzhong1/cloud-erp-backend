@@ -215,4 +215,17 @@ public class CalcSalesInfoDimController extends BaseController {
         List<CalcSalesInfoDimDTO.DataIdPageDTO> result = calcSalesInfoDimService.dataIdPage(params);
         return success(result);
     }
+
+    /**
+     *
+     * 规则应用
+     * @param dto 参数
+     */
+    @PostMapping("/rulesApply")
+    public ApiResult<String> rulesApply(@RequestBody @Validated CalcSalesInfoDimDTO.RulesApplyDTO dto) {
+        calcSalesInfoDimService.rulesApply(dto);
+        return success();
+    }
+
+
 }

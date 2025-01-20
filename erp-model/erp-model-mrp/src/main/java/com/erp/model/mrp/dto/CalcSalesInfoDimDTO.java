@@ -1435,4 +1435,50 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String id;
 
     }
+
+    @Getter
+    @Setter
+    public static class RulesApplyDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "任务id")
+        private String id;
+        /**
+         * 应用方式
+         */
+        @NotBlank(message = "应用方式不能为空")
+        private String applyType;
+        /**
+         * sku
+         */
+        private List<String> skuList;
+
+        /**
+         * 平台店铺
+         */
+        private List<platformShopDTO> shopList;
+    }
+
+    @Getter
+    @Setter
+    public static class platformShopDTO {
+        /**
+         * 是否全部平台
+         */
+        private Boolean isAllPlatform;
+        /**
+         * sku
+         */
+        private List<String> platformList;
+        /**
+         * 是否全部店铺
+         */
+        private Boolean isAllShop;
+        /**
+         * 平台店铺
+         */
+        private List<String> shopList;
+    }
 }
