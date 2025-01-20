@@ -5624,8 +5624,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (!save) {
                 throw new ServiceException("soB2c订单保存失败");
             }
-            // 新增日志
-            String msg = CharSequenceUtil.format("从【{}】平台下载订单成功", dto.getDictPlatform());
+            //记录平台拉取记录
+            List<String> detailMsgList = new ArrayList<>();
+            dto.getDetails().forEach(detail -> {
+                detailMsgList.add(CharSequenceUtil.format("【平台SKU:{}平台ID:{}】*数量【{}】", detail.getPlatformSkuNo(), detail.getPlatformSpuNo(), detail.getQty())) ;
+            });
+            String msg = CharSequenceUtil.format("从【{}】平台下载订单成功,订单金额：【{}】，总计拉取【{}】个SKU,分别是：{}", dto.getDictPlatform(),entity.getAmount() + entity.getCurrency(), dto.getDetails().size(), String.join(";", detailMsgList));
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "新增操作");
             resultDTO.setSoB2cEntity(entity);
             // 记录是新增的订单
