@@ -601,12 +601,12 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         CalcSalesInfoDimEntity entity = getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("试算任务不存在"));
         ApplyTypeEnum applyType = ApplyTypeEnum.getEnum(dto.getApplyType());
         List<ReplenishmentSuggestionEntity> suggestionIdList = new ArrayList<>();
+        CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
         switch (applyType) {
             case CURRENT:
                 suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(Collections.singletonList(entity.getShopId()), Collections.singletonList(entity.getSkuId()));
                 break;
             case ALL:
-                CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
                 suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(cfgRuleCalc.getShopJson().toList(String.class), cfgRuleCalc.getSkuJson().toList(String.class));
                 break;
             case CUSTOM:
@@ -619,7 +619,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         }
         List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList = cfgRuleSalesDenoisingCalcService.listByCfgRuleCalcId(entity.getCfgRuleCalcId());
         List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList = cfgRuleSalesFormulaCalcService.listByCfgRuleCalcId(entity.getCfgRuleCalcId());
-        cfgRuleSalesQtyService.syncCfgData(cfgRuleSalesFormulaList, cfgRuleSalesDenoisingList, suggestionIdList);
+        cfgRuleSalesQtyService.syncCfgData(cfgRuleSalesFormulaList, cfgRuleSalesDenoisingList, suggestionIdList, cfgRuleCalc.getCode());
+
     }
 
     private List<String> getShopIdList(CalcSalesInfoDimDTO.RulesApplyDTO dto) {

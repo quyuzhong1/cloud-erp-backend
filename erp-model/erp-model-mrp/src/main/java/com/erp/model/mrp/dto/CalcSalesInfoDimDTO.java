@@ -1453,6 +1453,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String id;
         /**
          * 应用方式
+         * @see ApplyTypeEnum
          */
         @NotBlank(message = "应用方式不能为空")
         private String applyType;

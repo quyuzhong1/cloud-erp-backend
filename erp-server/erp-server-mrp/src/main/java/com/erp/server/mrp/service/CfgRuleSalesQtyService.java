@@ -99,9 +99,11 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
 
     /**
      * 同步规则配置
-     * @param cfgRuleSalesFormulaList 销量计算
+     *
+     * @param cfgRuleSalesFormulaList   销量计算
      * @param cfgRuleSalesDenoisingList 去噪配置
-     * @param suggestionList 建议
+     * @param suggestionList            建议
+     * @param code
      */
-    void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList);
+    void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList, String code);
 }
