@@ -116,7 +116,7 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/skuMappingBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新sku映射：ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新sku映射：ids={ids}")
     public ApiResult<List<BatchResultDTO>> skuMappingBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -354,7 +354,7 @@ public class FbaShipmentController extends BaseController {
             menuCode = "wms:fbaShipment:delete",
             serviceClass = FbaShipmentService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新生成调拨单:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "重新生成调拨单:ids={ids}")
     public ApiResult<List<BatchResultDTO>> regenerateTransferOut(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
