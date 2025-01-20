@@ -143,9 +143,15 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         }
         //无配置或者不拆分也直接返回
         CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = replenishmentResultDTO.getCfgRuleStrategy().getOrderResult();
-        if (ObjectUtil.isEmpty(orderResult) || Boolean.TRUE.equals(!orderResult.getIsSplit())) {
+        if (ObjectUtil.isEmpty(orderResult) || Boolean.FALSE.equals(orderResult.getIsSplit())) {
             return Collections.singletonList(suggestDTO);
         }
+        //配置拆分并且独立采购，仅标记bom无需进行拆分
+        if (Boolean.FALSE.equals(orderResult.getIsMergeSku())) {
+            suggestDTO.setBomVersion(bomSkuList.get(0).getBomVersion());
+            return Collections.singletonList(suggestDTO);
+        }
+
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = new ArrayList<>();
         for (BomChildrenSkuDTO bomSku : bomSkuList) {
             ReplenishmentResultDTO.PurchaseSuggestDTO childSuggestDTO = PurchaseSuggestConverter.INSTANCE.copyPurchaseSuggest(suggestDTO);
