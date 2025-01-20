@@ -1498,13 +1498,21 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                                        Map<String, CfgReconciliationFieldDTO.ErpFieldDropDownDTO> cfgErpFieldMap,
                                        Map<String, Map<String, TmsCostDetailDTO.UpdateDTO>> costDetailMap,
                                        TmsFirstMileReconciliationEntity mainEntity) {
-        // 配置来源分组
+    	if(CollUtil.isEmpty(successList)) {
+    		return;
+    	}
+    	// 配置来源分组
         Map<String, List<CfgReconciliationFieldDTO.ErpFieldDropDownDTO>> sourceTypeGroupMap = cfgErpFieldMap.values()
                 .stream()
                 .collect(Collectors.groupingBy(CfgReconciliationFieldDTO.ErpFieldDropDownDTO::getSourceType));
         
         Map<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMaps = successList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getTransportNo));
         successList = new ArrayList<>();
+        Map<String, TmsFirstMileReconciliationDetailEntity> transportNoDetailMap = lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getTransportNo, transportNoMaps.keySet())
+        		.in(TmsFirstMileReconciliationDetailEntity::getStatus, Arrays.asList(ReconciliationStatusEnum.CONFIRMED.getCode(),ReconciliationStatusEnum.DIFF_CONFIRM.getCode(),ReconciliationStatusEnum.RECONCILED.getCode()))
+        		.eq(TmsFirstMileReconciliationDetailEntity::getReconciliationType, "actual").list()
+        		.stream().collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getTransportNo, t -> t , (t1 , t2) -> t1));
+        
         for(Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {
         	String key = transportNoMap.getKey();
         	List<FirstMileReconciliationStandardExcelDTO> value = transportNoMap.getValue();
@@ -1515,7 +1523,29 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         		List<FirstMileReconciliationStandardExcelDTO> dictList = dictMap.getValue();
         		String currency = dictList.get(0).getCurrency();
         		if(dictList.stream().allMatch(d -> currency.equals(d.getCurrency()))) {
-        			successList.addAll(dictList);
+        			TmsFirstMileReconciliationDetailEntity tmsFirstMileReconciliationDetailEntity = transportNoDetailMap.get(key);
+        			boolean isValiDate = true;
+        			if(tmsFirstMileReconciliationDetailEntity != null) {
+        				String confirmedCurrency = "CNY";
+        				if(AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(dict)) {
+        					confirmedCurrency = tmsFirstMileReconciliationDetailEntity.getShippingCostCurrency();
+        				}
+        				if(AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(dict)) {
+        					confirmedCurrency = tmsFirstMileReconciliationDetailEntity.getDeclareCostCurrency();
+        				}
+        				if(AllocationFeeTypeEnum.OTHER_COST.getCode().equals(dict)) {
+        					confirmedCurrency = tmsFirstMileReconciliationDetailEntity.getOtherCostCurrency();
+        				}
+        				if(!confirmedCurrency.equals(currency)) {
+        					isValiDate = false;
+        				}
+        			}
+        			if(isValiDate) {
+        				successList.addAll(dictList);
+        			}else {
+        				dictList.forEach(d -> d.setErrorMsg(CharSequenceUtil.format("物流运单号【{}】下的【{}】分类费用币种与之前已确认币别不一致", key , DictCostCategoryEnum.getByCode(dict))));
+        				errorList.addAll(dictList);
+        			}
         		}else {
         			dictList.forEach(d -> d.setErrorMsg(CharSequenceUtil.format("物流运单号【{}】下的【{}】分类费用币种不一致", key , DictCostCategoryEnum.getByCode(dict))));
         			errorList.addAll(dictList);
