@@ -110,6 +110,14 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     @Resource
     private CalcSalesInfoFavoriteService calcSalesInfoFavoriteService;
 
+    @Lazy
+    @Resource
+    private ReplenishmentSuggestionService replenishmentSuggestionService;
+
+    @Resource
+    private CfgRuleSalesQtyService cfgRuleSalesQtyService;
+
+
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList, String id) {
         AtomicInteger index = new AtomicInteger(0);
@@ -586,6 +594,57 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     @Override
     public List<CalcSalesInfoDimDTO.DataIdPageDTO> dataIdPage(CalcSalesInfoDimDTO.ParamDTO params) {
         return baseMapper.dataIdPage(params);
+    }
+
+    @Override
+    public void rulesApply(CalcSalesInfoDimDTO.RulesApplyDTO dto) {
+        CalcSalesInfoDimEntity entity = getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("试算任务不存在"));
+        ApplyTypeEnum applyType = ApplyTypeEnum.getEnum(dto.getApplyType());
+        List<ReplenishmentSuggestionEntity> suggestionIdList = new ArrayList<>();
+        CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
+        switch (applyType) {
+            case CURRENT:
+                suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(Collections.singletonList(entity.getShopId()), Collections.singletonList(entity.getSkuId()));
+                break;
+            case ALL:
+                suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(cfgRuleCalc.getShopJson().toList(String.class), cfgRuleCalc.getSkuJson().toList(String.class));
+                break;
+            case CUSTOM:
+                List<String> shopIdList = getShopIdList(dto);
+                suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(shopIdList, dto.getSkuList());
+                break;
+        }
+        if (CollectionUtils.isEmpty(suggestionIdList)) {
+            return;
+        }
+        List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList = cfgRuleSalesDenoisingCalcService.listByCfgRuleCalcId(entity.getCfgRuleCalcId());
+        List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList = cfgRuleSalesFormulaCalcService.listByCfgRuleCalcId(entity.getCfgRuleCalcId());
+        cfgRuleSalesQtyService.syncCfgData(cfgRuleSalesFormulaList, cfgRuleSalesDenoisingList, suggestionIdList, cfgRuleCalc.getCode());
+
+    }
+
+    private List<String> getShopIdList(CalcSalesInfoDimDTO.RulesApplyDTO dto) {
+
+        List<ShopInfoEntity> list = shopInfoFeign.list().getData();
+        List<String> shopIdList = new ArrayList<>();
+        for (CalcSalesInfoDimDTO.platformShopDTO shopDTO : dto.getShopList()) {
+            if (Boolean.TRUE.equals(shopDTO.getIsAllPlatform())) {
+                return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+            }
+            if (Boolean.TRUE.equals(shopDTO.getIsAllShop())) {
+                List<String> ids = list.stream()
+                        .filter(v -> shopDTO.getPlatformList().contains(v.getDictPlatform()))
+                        .map(ShopInfoEntity::getId).collect(Collectors.toList());
+                if (!CollectionUtils.isEmpty(ids)) {
+                    shopIdList.addAll(ids);
+                }
+            }else {
+                if (!CollectionUtils.isEmpty(shopDTO.getShopList())) {
+                    shopIdList.addAll(shopDTO.getShopList());
+                }
+            }
+        }
+        return shopIdList;
     }
 
     private void processListData(List<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> records) {

@@ -134,4 +134,11 @@ public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEn
      * @param params 参数
      */
     List<CalcSalesInfoDimDTO.DataIdPageDTO> dataIdPage(CalcSalesInfoDimDTO.ParamDTO params);
+
+    /**
+     *
+     * 规则应用
+     * @param dto 参数
+     */
+    void rulesApply(CalcSalesInfoDimDTO.RulesApplyDTO dto);
 }
