@@ -14,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -152,8 +153,22 @@ public class PoReturnController extends BaseController {
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
     public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = poReturnService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoReturnEntity> entityMap = poReturnService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoReturnEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poReturnService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("采购退货单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
