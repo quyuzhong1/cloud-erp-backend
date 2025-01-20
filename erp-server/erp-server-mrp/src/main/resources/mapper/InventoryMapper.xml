@@ -53,7 +53,7 @@
             t2.sku_id,
             t1.shop_id,
             MAX(t1.ID) AS sourceId,
-            MAX(t1.code) AS sourceCode,
+            t1.code AS sourceCode,
             'firstMileDelivery' AS sourceType,
             MAX(t1.approve_status) AS status,
             MAX(t1.approve_time) AS deliveryDate,
@@ -75,7 +75,7 @@
           AND t1.approve_status = 'approve'
           AND (t2.delivery_qty - COALESCE(r.total_receive_qty, 0)) > 0
         GROUP BY
-            t2.sku_id, t1.shop_id
+            t2.sku_id, t1.shop_id,t1.code
     </select>
     <select id="getLogisticsBillBySourceIds" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
         select source_id,order_time from ${tableName} where is_deleted = false
