@@ -12,10 +12,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
@@ -69,6 +66,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_CHANGE;
 
@@ -145,7 +143,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public String add(PurchaseChangeDTO.AddDTO dto) {
+    public PurchaseChangeEntity add(PurchaseChangeDTO.AddDTO dto) {
         PurchaseChangeEntity entity = new PurchaseChangeEntity();
         BeanMapperUtils.copy(dto,entity);
         log.info("采购变更单新增");
@@ -168,7 +166,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             purchaseChangeDetailService.add(dto.getDetails(),entity.getId());
         }
 
-        return entity.getId();
+        return entity;
     }
 
     @Override
@@ -228,19 +226,17 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean invalid(List<String> ids,String reason) {
-        //根据ids查询
-        List<PurchaseChangeEntity> list = getList(ids);
+    public BatchResultDTO invalid(PurchaseChangeEntity entity,String reason) {
         //非待提交和审核不通过不能作废
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
-        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        long invalidCount = Stream.of(entity).filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
-
+        List<String> ids = Collections.singletonList(entity.getId());
         //验证存货核算是否关账
      /*   List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getChangeDate())
                         ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getChangeDate()))).
@@ -252,9 +248,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         updateInvalidStatus(ids,reason);
 
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购变更【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"作废操作");
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
     @Override
@@ -360,57 +356,41 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        //根据ids查询
-        List<PurchaseChangeEntity> list = getList(ids);
-        //待提交或审核不通过并且未作废允许提交
-        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus()) ).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
-        }
-
-        log.info("采购变更单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-        //启动流程 TODO
-
-        //更新审核状态
-        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
-        //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购变更单【%s】", ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"提交操作");
-        return Boolean.TRUE;
+    public BatchResultDTO submit(String id) {
+        //根据id查询
+       PurchaseChangeEntity entity = getById(id);
+       return this.submitEntity(entity);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(PurchaseChangeDTO.AddDTO dto) {
+    public BatchResultDTO addAndSubmit(PurchaseChangeDTO.AddDTO dto) {
         //新增
-        String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        PurchaseChangeEntity entity = this.add(dto);
+        if (StringUtils.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        return this.submit(Arrays.asList(id));
+        return this.submitEntity(entity);
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateAndSubmit(PurchaseChangeDTO.UpdateDTO dto) {
+    public BatchResultDTO updateAndSubmit(PurchaseChangeDTO.UpdateDTO dto) {
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()));
+        return this.submit(dto.getId());
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
-        //根据ids查询
-        List<PurchaseChangeEntity> list = getList(ids);
-
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
+    public BatchResultDTO cancelProcess(PurchaseChangeEntity entity) {
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购申请单撤销流程，ids=【{}】", ids);
 
         //撤销现有流程
@@ -419,9 +399,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         //更新单据为待提交
         updateApproveStatus(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购变更单【%s】取消流程", ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"取消流程操作");
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
@@ -476,6 +456,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         Page<PurchaseChangeExportExcelDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(page);
     }
+
 
     /**
      * 补货采购订单  进行采购变更时  采购退货单_退货单价，允许修改；补货采购订单_采购单价，允许修改
@@ -704,4 +685,25 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         inventoryFeign.poChangeBatch(dataList);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO submitEntity(PurchaseChangeEntity entity) {
+        //待提交或审核不通过并且未作废允许提交
+        long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus()) ).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+
+        log.info("采购变更单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        // 启动流程TODO
+
+        //更新审核状态
+        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购变更单【%s】", ModuleTypeEnum.PURCHASE_CHANGE.getCode(),pairList,"提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
 }
