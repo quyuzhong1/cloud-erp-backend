@@ -60,7 +60,6 @@ public class OverseasProviderController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "海外物流商修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
         tableField = "create_user_id",
         menuCode = "wms:overseasProvider:update",
@@ -141,7 +140,6 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:cancelAuthorize",
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
-    @LogViewService
     public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
         log.error("用户【{}】通过页面接口取消海外仓【{}】的授权", UserContext.getDefaultLoginUser().getUserName(),dto.getId());
         Boolean flag = overseasProviderService.cancelAuthorize(dto.getId());
