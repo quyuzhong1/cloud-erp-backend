@@ -4713,7 +4713,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 continue;
             }
             if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())) {
+                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
+                    || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
                 errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
             }
             productSkuBaseInfoDTO.setId(productBy.getId());
