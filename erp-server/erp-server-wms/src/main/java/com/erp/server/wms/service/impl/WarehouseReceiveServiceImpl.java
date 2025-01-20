@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -42,7 +41,6 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.WarehouseReceiveExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
-import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryUnApproveDTO;
 import com.erp.model.wms.entity.*;
@@ -63,7 +61,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -75,6 +72,7 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_WAREHOUSE_RECEIVE;
 
@@ -261,7 +259,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String add(WarehouseReceiveDTO.AddDTO dto) {
+    public WarehouseReceiveEntity add(WarehouseReceiveDTO.AddDTO dto) {
         //获取采购订单主表信息
         PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(dto.getPurchaseOrderId());
         //获取采购单供应商信息
@@ -328,8 +326,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个收货单【%s】", code), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), warehouseReceiveEntity.getId(), "新增操作");
 
-        return warehouseReceiveEntity.getId();
-
+        return warehouseReceiveEntity;
     }
 
     /**
@@ -511,12 +508,13 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
-        String id = this.add(dto);
-        if (CharSequenceUtil.isBlank(id)) {
+    public WarehouseReceiveEntity addAndSubmit(WarehouseReceiveDTO.AddDTO dto) {
+        WarehouseReceiveEntity entity = this.add(dto);
+        if (null == entity) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        return this.submit(Collections.singletonList(id));
+        this.submitEntity(entity);
+        return entity;
     }
 
     /**
@@ -1385,7 +1383,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
         }
         dto.setWarehouseReceiveDetailList(addDTOList);
-        return this.add(dto);
+        return this.add(dto).getId();
     }
 
     @Override
@@ -1965,4 +1963,128 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         return pagingTotalDTO;
     }
 
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submitEntity(WarehouseReceiveEntity mainEntity) {
+        //未作废、待提交、审核不通过才可以提交
+        long count = Stream.of(mainEntity).filter(entity -> !entity.getInvalidStatus()
+                && (entity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || entity.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+
+        if (count <= 0 ) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        //TODO 待加审核流程
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(mainEntity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个收货单【%s】", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "提交操作");
+
+        //更新审核状态
+        lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING.getStatus())
+                .in(WarehouseReceiveEntity::getId, mainEntity.getId())
+                .set(WarehouseReceiveEntity::getApproveUserId, "")
+                .set(WarehouseReceiveEntity::getApproveUserName, "")
+                .set(WarehouseReceiveEntity::getApproveTime, null)
+                .update();
+        return BatchResultDTO.success(mainEntity.getId(), mainEntity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO invalidEntity(WarehouseReceiveEntity entity, String remark) {
+        //审核不通过 待提交可以作废
+        long count = Stream.of(entity).filter(e -> !e.getInvalidStatus()
+                && (e.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                || e.getApproveStatus().equals(ApproveStatusEnum.REJECT.getStatus()))
+        ).count();
+
+        if (count <= 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+
+        List<String> ids = Collections.singletonList(entity.getId());
+
+        //修改状态为待提交
+        lambdaUpdate().set(WarehouseReceiveEntity::getInvalidStatus, Boolean.TRUE)
+                .set(WarehouseReceiveEntity::getInvalidRemark, remark)
+                .set(WarehouseReceiveEntity::getInvalidTime, LocalDateTime.now())
+                .in(WarehouseReceiveEntity::getId, ids)
+                .update();
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个收货单【%s】，作废原因：".concat(remark), ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "作废操作");
+
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
+        //如果是收货单下推的，删除时去掉收货单的收获状态和收货数量
+        List<String> idByDeliverySource = Stream.of(entity).filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
+        List<String> detailIdsByDeliverySource = receiveDetailList.stream().filter(v->idByDeliverySource.contains(v.getMainId())).map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+            srmDeliveryOrderFeign.cancelReceive(detailIdsByDeliverySource);
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcessEntity(WarehouseReceiveEntity entity) {
+        //审核中可以撤销
+        long count = Stream.of(entity).filter(e -> !e.getInvalidStatus()
+                && e.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+        ).count();
+
+        if (count <= 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+
+        //撤销现有流程
+        workflowFeign.cancelProcess(ids);
+        //修改状态为待提交
+        lambdaUpdate().set(WarehouseReceiveEntity::getApproveStatus, ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+                .in(WarehouseReceiveEntity::getId, ids)
+                .update();
+
+        //操作日志
+        List<Pair<String, String>> pairList =  Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("收货单【%s】取消流程", ModuleTypeEnum.WAREHOUSE_RECEIVE.getCode(), pairList, "取消流程操作");
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO deleteEntity(WarehouseReceiveEntity entity) {
+        //待提交支持删除
+        long count = Stream.of(entity).filter(e -> !e.getInvalidStatus()
+                && e.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus())
+        ).count();
+
+        if (count <= 0 ) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+
+        List<WarehouseReceiveDetailEntity> receiveDetailList = warehouseReceiveDetailService.listDetailByMainIds(ids);
+
+        //删除详情表
+        warehouseReceiveDetailService.delete(ids);
+
+        boolean flag = this.removeByIds(ids);
+
+        //如果是收货单下推的，删除时去掉收货单的收获状态和收货数量
+        List<String> idByDeliverySource = Stream.of(entity).filter(v-> PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode().equals(v.getSourceType())).map(WarehouseReceiveEntity::getId).distinct().collect(Collectors.toList());
+        List<String> detailIdsByDeliverySource = receiveDetailList.stream().filter(v->idByDeliverySource.contains(v.getMainId())).map(WarehouseReceiveDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(detailIdsByDeliverySource)){
+            srmDeliveryOrderFeign.cancelReceive(detailIdsByDeliverySource);
+        }
+        if (flag){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        }
+    }
 }
