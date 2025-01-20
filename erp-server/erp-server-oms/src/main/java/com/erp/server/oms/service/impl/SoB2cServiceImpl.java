@@ -1242,6 +1242,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.info("反作废 开始修改B2C销售订单表状态数据，id：【{}】", id);
         lambdaUpdate().eq(SoB2cEntity::getId, id)
                 .set(SoB2cEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                .set(SoB2cEntity::getInvalidType, CharSequenceUtil.EMPTY)
+                .set(SoB2cEntity::getInvalidRemark, CharSequenceUtil.EMPTY)
                 .update();
 
         //同步数帝云
@@ -2917,7 +2919,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //作废原单
         for (String id : ids) {
             //作废
-            this.invalid(id, CharSequenceUtil.format("B2C销售订单合并作废，合并后订单【{}】", add.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+            this.invalid(id, CharSequenceUtil.format("B2C销售订单合并作废，合并后订单【{}】", add.getCode()), SoB2cInvalidTypeEnum.ENUM_MERGE);
         }
         //操作日志
         SoB2cEntity soB2cEntity = this.getById(soId);
@@ -2952,7 +2954,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> sourceIdList = soB2cRefList.stream().map(SoB2cRefEntity::getSourceId).distinct().collect(Collectors.toList());
         for (String sourceId : sourceIdList) {
             log.info("作废原销售订单数据，id = {}", sourceId);
-            unInvalid(sourceId, SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+            unInvalid(sourceId, SoB2cInvalidTypeEnum.ENUM_MERGE);
         }
         //操作日志
         String msg = "B2C销售订单【{}】取消合并";
@@ -3730,7 +3732,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 data.setLogisticType(logisticsEntity.getLogisticType());
                 data.setLogisticTypeName(OrderLogisticTypeEnum.getName(logisticsEntity.getLogisticType()));
             }
-
+            //作废类型
+            data.setInvalidTypeName(SoB2cInvalidTypeEnum.getName(data.getInvalidType()));
 
         }
     }
