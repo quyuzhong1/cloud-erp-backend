@@ -619,10 +619,6 @@ public class FbaShipmentDTO implements Serializable {
          * 装箱清单下载状态
          */
         private String packingDownload;
-        /**
-         * 最近同步时间
-         */
-        private LocalDateTime lastSyncTime;
     }
 
     /**
