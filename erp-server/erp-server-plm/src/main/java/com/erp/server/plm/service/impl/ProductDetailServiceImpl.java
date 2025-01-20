@@ -1871,6 +1871,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.list(queryWrapper);
     }
 
+
     /**
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
      * @return java.lang.Boolean
@@ -4291,7 +4292,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BasicDictEntity> basicDictList = basicDictService.list();
         List<ProductDetailEntity> productDetailEntityList = this.list();
-        List<ProductUnitEntity> unitEntityList = productUnitService.list();
         List<BasicCategoryEntity> categoryEntityList = basicCategoryService.list();
         List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = applicationCategoryList.stream()
@@ -4318,10 +4318,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 errorMsgList.add("sku不存在，请选择导入新增");
                 continue;
             }
-            if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
-                errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
+            if (!ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
+                errorMsgList.add("仅{审核通过}的状态下可导入修改");
             }
             productSkuBaseInfoDTO.setId(productBy.getId());
             productInfoDTO.setId(productBy.getProductId());
@@ -4627,6 +4625,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
             this.inportExcel(productNoSpecDTO);
+
+            //只同步审核通过的
+            if(Objects.nonNull(productBy) && productBy.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+                //发送金蝶
+                sendPushTask(Arrays.asList(productBy), SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+                syncWangDianProductDetailService.syncDataToWangDian(productBy);
+
+                syncLingXingProductDetailService.syncDataToLingxing(productBy);
+                //增加缓存清除
+                redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productBy.getId());
+            }
         }
     }
 
@@ -4703,8 +4713,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 continue;
             }
             if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
+                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())) {
                 errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
             }
             productSkuBaseInfoDTO.setId(productBy.getId());
