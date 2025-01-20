@@ -11,10 +11,6 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.oms.dto.OperateLogDTO;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.scm.dto.OperateLogDTO;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
