@@ -106,9 +106,14 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             throw new ServiceException(10000,e.getMessage());
         } finally {
             //释放锁  锁是否存在
-            if(isLock && multiLock != null){
+            if(isLock){
                 // 释放锁
-                multiLock.unlock();
+                try {
+                    multiLock.unlock();
+                    log.info(" 释放锁成功,rLockList={}",rLockList);
+                } catch (Exception e){
+                    log.error("释放锁失败,e = {}", e);
+                }
             }
         }
         stopwatch.stop();
