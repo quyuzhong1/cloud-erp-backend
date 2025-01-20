@@ -15,6 +15,7 @@ import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
@@ -652,15 +653,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         }
         //刪除
         SoChangeTypeEnum delete = SoChangeTypeEnum.DELETE;
-        List<SoChangeDetailDTO.AddDTO> notDeleteList = detailList.stream().filter(d -> !d.getChangeType().equals(delete)).collect(Collectors.toList());
-        long qtyCount = notDeleteList.stream().filter(n -> n.getQty() <= 0).count();
-        if (qtyCount > 0) {
-            throw new ServiceException("销售数量不能小于0");
-        }
-        long priceCount = notDeleteList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
-        if (priceCount > 0) {
-            throw new ServiceException("单价不能小于0");
-        }
+
         List<SoChangeDetailDTO.UpdateDTO> deleteDetailList = listDetailParamByType(detailList, delete);
         if (CollectionUtils.isNotEmpty(deleteDetailList)) {
             List<String> soDetailIdList = deleteDetailList.stream().
@@ -669,13 +662,37 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 throw new ServiceException(ApiError.ERROR_92015);
             }
             //下推单据的数量
-            Integer pushDownCount = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
-            if (pushDownCount > 0) {
-                throw new ServiceException(ApiError.ERROR_92037);
+            List<SoDeliveryNoticeDetailDTO.PushDownDTO> pushDownDTOList = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if(CollUtil.isNotEmpty(pushDownDTOList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
+                    sb.append(String.format(ApiError.ERROR_92037.msg, pushDownDTO.getSkuNo()));
+                    sb.append("<br>");
+                }
+                throw new ServiceException(sb.toString());
+            }
+            //下推单据的数量
+            pushDownDTOList = soOutstockFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if(CollUtil.isNotEmpty(pushDownDTOList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
+                    sb.append(String.format(ApiError.ERROR_92037.msg, pushDownDTO.getSkuNo()));
+                    sb.append("<br>");
+                }
+                throw new ServiceException(sb.toString());
             }
         }
         //这个是修改
         SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
+        List<SoChangeDetailDTO.AddDTO> updateList = detailList.stream().filter(d -> d.getChangeType().equals(update)).collect(Collectors.toList());
+        long qtyCount = updateList.stream().filter(n -> n.getQty() <= 0).count();
+        if (qtyCount > 0) {
+            throw new ServiceException("销售数量不能小于0");
+        }
+        long priceCount = updateList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
+        if (priceCount > 0) {
+            throw new ServiceException("单价不能小于0");
+        }
         List<SoChangeDetailDTO.UpdateDTO> updateDetailList = listDetailParamByType(detailList, update);
         if (CollectionUtils.isNotEmpty(updateDetailList)) {
             List<String> soDetailIdList = updateDetailList.stream().
@@ -712,10 +729,18 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 throw new ServiceException(ApiError.SO_CHANGE_TERMINATE_EXIST);
             }
 
+            //下推单据的数量
+            List<SoDeliveryNoticeDetailDTO.PushDownDTO> pushDownDTOList = soOutstockFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if(CollUtil.isNotEmpty(pushDownDTOList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
+                    sb.append(String.format(ApiError.ERROR_92166.msg, pushDownDTO.getSkuNo()));
+                    sb.append("<br>");
+                }
+                throw new ServiceException(sb.toString());
+            }
         }
-
     }
-
 
     private List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIdList,SoChangeTypeEnum typeEnum) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {

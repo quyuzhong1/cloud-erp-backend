@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -142,6 +143,7 @@ public class OverseasProviderController extends BaseController {
             keyIdName = "id")
     @LogViewService
     public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
+        log.error("用户【{}】通过页面接口取消海外仓【{}】的授权", UserContext.getDefaultLoginUser().getUserName(),dto.getId());
         Boolean flag = overseasProviderService.cancelAuthorize(dto.getId());
         return flag ? success() : failure();
     }

@@ -283,4 +283,27 @@ public class ListingInfoDTO implements Serializable {
 
         private String authId;
     }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryPlatformDTO {
+        /**
+         * 平台skuNo
+         */
+        private String platformSkuNo;
+        /**
+         * 类型 platform 平台  warehouse 仓库
+         */
+        private String type;
+        /**
+         * 店铺账号
+         */
+        private String account;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+    }
 }

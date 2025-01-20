@@ -121,67 +121,67 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
 //        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
         // 分页查询
         List<LogisticsTrackDTO.UpdateTrackDTO> list =  pageDmpLogisticsTrack(query);
-        if (list.size() > MathUtil.NUMBER_100){
-
-            List<String> noList = new ArrayList<>();
-
-            //过滤掉上次已经拉取过的任务
-            Object o = redisUtil.lGet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, 0 , -1);
-            if (ObjectUtil.isNotEmpty(o)) {
-                List<List<String>> redisTrackList = (List<List<String>>) o;
-                for (List<String> strings : redisTrackList) {
-                    Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
-                    while (iterator.hasNext()) {
-                        LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
-                        if (strings.contains(dto.getId())) {
-                            iterator.remove();
-                        }
-                    }
-                }
-
-            }
-
-            //过滤后查询是否超过100条
-            if (list.size() > MathUtil.NUMBER_100){
-                //列表数据较多情况下，进行分割集合
-                List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-
-                //一次请求一百条并存储到redis下次过滤
-                List<String> collect = partition.get(0).stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
-                noList.addAll(collect);
-                // 缓存到redis
-                redisUtil.lSet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, noList);
-
-                //物流商数据处理
-                ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
-                if (Objects.nonNull(responseData)){
-                    return responseData;
-                }
-            } else {
-                // 缓存到redis
-                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO);
-
-                //物流商数据处理
-                ResponseData responseData = this.processTrackData(list, cfgAppClient);
-                if (Objects.nonNull(responseData)){
-                    return responseData;
-                }
-            }
-
-            //物流商数据处理
-/*            partition.forEach(e -> {
-                ResponseData responseData = this.processTrackData(e, cfgAppClient);
-                if (Objects.nonNull(responseData)){
-                    responseDataList.add(responseData);
-                }
-            });*/
-        }else {
+//        if (list.size() > MathUtil.NUMBER_100){
+//
+//            List<String> noList = new ArrayList<>();
+//
+//            //过滤掉上次已经拉取过的任务
+//            Object o = redisUtil.lGet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, 0 , -1);
+//            if (ObjectUtil.isNotEmpty(o)) {
+//                List<List<String>> redisTrackList = (List<List<String>>) o;
+//                for (List<String> strings : redisTrackList) {
+//                    Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
+//                    while (iterator.hasNext()) {
+//                        LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
+//                        if (strings.contains(dto.getId())) {
+//                            iterator.remove();
+//                        }
+//                    }
+//                }
+//
+//            }
+//
+//            //过滤后查询是否超过100条
+//            if (list.size() > MathUtil.NUMBER_100){
+//                //列表数据较多情况下，进行分割集合
+//                List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+//
+//                //一次请求一百条并存储到redis下次过滤
+//                List<String> collect = partition.get(0).stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
+//                noList.addAll(collect);
+//                // 缓存到redis
+//                redisUtil.lSet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, noList);
+//
+//                //物流商数据处理
+//                ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
+//                if (Objects.nonNull(responseData)){
+//                    return responseData;
+//                }
+//            } else {
+//                // 缓存到redis
+//                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO);
+//
+//                //物流商数据处理
+//                ResponseData responseData = this.processTrackData(list, cfgAppClient);
+//                if (Objects.nonNull(responseData)){
+//                    return responseData;
+//                }
+//            }
+//
+//            //物流商数据处理
+///*            partition.forEach(e -> {
+//                ResponseData responseData = this.processTrackData(e, cfgAppClient);
+//                if (Objects.nonNull(responseData)){
+//                    responseDataList.add(responseData);
+//                }
+//            });*/
+//        }else {
             //物流商数据处理
             ResponseData responseData = this.processTrackData(list, cfgAppClient);
             if (Objects.nonNull(responseData)){
                 return responseData;
             }
-        }
+//        }
         log.info("========同步物流轨迹数据完成==========");
         return null;
     }

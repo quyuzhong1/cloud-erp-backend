@@ -482,4 +482,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
 
     IPage<SoInfoEntity> pagePartitionIsNull(Page query);
+    /**
+     * 下推销售退货订单-列表查询-计算退货金额
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
+     * @Author jack
+     * @Date 2024-11-25
+     **/
+    List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto);
 }

@@ -5,12 +5,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.plm.entity.BasicCategoryEntity;
-import com.erp.model.plm.entity.BomInfoEntity;
-import com.erp.model.plm.entity.ProductBomHistoryEntity;
-import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeApplicationCategoryService;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
@@ -68,6 +65,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private DmpMqFeign dmpMqFeign;
 
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
+    @Resource
+    private SyncKingdeeApplicationCategoryService syncKingdeeApplicationCategoryService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -85,6 +88,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case PRODUCT_BOM_INFO:
                 resultList = syncBomInfo(sourceDetailList);
                 break;
+            case APPLICATION_CATEGORY:
+                resultList = syncApplicationCategory(sourceDetailList);
+                break;
             default:
                 break;
         }
@@ -96,6 +102,25 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 dmpMqFeign.sendTask(finalResultList);
             }
         });
+    }
+
+    private List<DmpPushTaskEntity> syncApplicationCategory(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<ApplicationCategoryEntity> list = applicationCategoryService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncCategory >>>> 未找到数据！");
+            return Collections.EMPTY_LIST;
+        }
+        List<DmpPushTaskEntity> resultList = new ArrayList<>();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            ApplicationCategoryEntity basicCategoryEntity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(basicCategoryEntity)) {
+                continue;
+            }
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeApplicationCategoryService.syncDataToKingdee(basicCategoryEntity, syncParamDetailDTO.getSyncOperate());
+            resultList.add(pushTaskEntity);
+        }
+        return resultList;
     }
 
     /**
@@ -203,13 +228,35 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SDY_PRODUCT_BOM_INFO:
                 resultList = newSyncSdyBomInfo(sourceDetailList);
             	break;
+            case APPLICATION_CATEGORY:
+                resultList = newSyncApplicationCategory(sourceDetailList);
+                break;
             default:
                 break;
         }
 		return resultList;
 	}
 
-	/**
+    private Map<String, Map<String, Object>> newSyncApplicationCategory(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<ApplicationCategoryEntity> list = applicationCategoryService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncCategory >>>> 未找到数据！");
+            return resultList;
+        }
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            ApplicationCategoryEntity categoryEntity = list.stream().filter(obj -> obj.getId().equals(sourceId)).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(categoryEntity)) {
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeApplicationCategoryService.newSyncDataToKingdee(categoryEntity, syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    /**
      * @description: 同步产品分类
      * @author Will
      * @date: 2023/10/30 11:22

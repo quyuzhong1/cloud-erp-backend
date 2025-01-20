@@ -1,40 +1,38 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
+import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.FirstMileDeliveryService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -57,6 +55,8 @@ public class FirstMileDeliveryController extends BaseController {
 
     @Resource
     private PackingTaskService packingTaskService;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     /**
     * 新增
@@ -281,6 +281,7 @@ public class FirstMileDeliveryController extends BaseController {
                 try {
                     PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
                     invalidResult = firstMileDeliveryService.delete(entity, packingTaskEntity);
+                    requisitionApplicationService.writeBackRequisitionDeliveryPushDownStatus(entity.getSourceId());
                 }catch (Exception e){
                     log.error("发货单删除失败",e);
                     invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
@@ -318,6 +319,8 @@ public class FirstMileDeliveryController extends BaseController {
                 try {
                     PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
                     invalidResult = firstMileDeliveryService.invalid(entity,dto.getRemark(), packingTaskEntity);
+                    requisitionApplicationService.writeBackRequisitionDeliveryPushDownStatus(entity.getSourceId());
+
                 }catch (Exception e){
                     log.error("发货单作废失败",e);
                     invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());

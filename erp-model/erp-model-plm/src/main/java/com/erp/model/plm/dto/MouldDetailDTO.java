@@ -66,36 +66,6 @@ public class MouldDetailDTO implements Serializable {
         */
         private String thirdMouldNo;
 
-        /**
-        * 模具类型
-        */
-        @Dict(tableName = "cfg_mould_setting", queryFieldName = "id")
-        private String typeId;
-
-        /**
-        * 模具穴数
-        */
-        private String mouldHoles;
-
-        /**
-        * 模具长
-        */
-        private BigDecimal length;
-
-        /**
-        * 模具宽
-        */
-        private BigDecimal width;
-
-        /**
-        * 模具高
-        */
-        private BigDecimal height;
-
-        /**
-        * 模具材质
-        */
-        private String material;
 
         /**
         * 模具寿命(万)(啤)
@@ -189,11 +159,13 @@ public class MouldDetailDTO implements Serializable {
         /**
          * 产品信息
          */
+        @Dict
         private List<MouldProductDTO.ViewDTO> productList;
 
         /**
          * 关联产品
          */
+        @Dict
         private List<MouldRefProductDTO.ViewDTO> refProductList;
 
         public static ViewDTO buildView(MouldDetailEntity entity, MouldPurchasePriceEntity purchasePrice, MouldRefundAgreementEntity refundAgreement, List<MouldRefProductEntity> refList, List<MouldProductEntity> productList) {
@@ -205,6 +177,12 @@ public class MouldDetailDTO implements Serializable {
                 MouldProductDTO.ViewDTO productDto = new MouldProductDTO.ViewDTO();
                 productDto.setMouldDetailId(viewDTO.getMouldDetailId());
                 productDto.setProductName(viewDTO.getProductName());
+                productDto.setTypeId(viewDTO.getTypeId());
+                productDto.setLength(viewDTO.getLength());
+                productDto.setHeight(viewDTO.getHeight());
+                productDto.setWidth(viewDTO.getWidth());
+                productDto.setMouldHoles(viewDTO.getMouldHoles());
+                productDto.setMaterial(viewDTO.getMaterial());
                 if (StringUtils.hasText(viewDTO.getImagesUrl())) {
                     productDto.setImagesUrl(Arrays.asList(viewDTO.getImagesUrl().split(",")));
                 } else {
@@ -337,42 +315,6 @@ public class MouldDetailDTO implements Serializable {
         * 外部模具编号(供应商)
         */
         private String thirdMouldNo;
-
-        /**
-        * 模具类型
-        */
-        @NotBlank(message = "模具类型不能为空")
-        @Size(max = 19,message = "模具类型最大长度不能超过19位")
-        private String typeId;
-
-        /**
-        * 模具穴数
-        */
-        @NotBlank(message = "模具穴数不能为空")
-        @Size(max = 255,message = "模具穴数最大长度不能超过255位")
-        private String mouldHoles;
-
-        /**
-        * 模具长
-        */
-        private BigDecimal length;
-
-        /**
-        * 模具宽
-        */
-        private BigDecimal width;
-
-        /**
-        * 模具高
-        */
-        private BigDecimal height;
-
-        /**
-        * 模具材质
-        */
-        @NotBlank(message = "模具材质不能为空")
-        @Size(max = 255,message = "模具材质最大长度不能超过255位")
-        private String material;
 
         /**
         * 模具寿命(万)(啤)

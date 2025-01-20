@@ -123,6 +123,7 @@ public enum SourceTypeEnum {
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
+    APPLICATION_CATEGORY("applicationCategory", "应用分类","application_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
     MOULD_INFO("mouldInfo", "模具管理","mould_info"),
 
@@ -229,10 +230,6 @@ public enum SourceTypeEnum {
     FIRST_MILE_ESTIMATED("first_mile_estimated", "头程暂估账单", "first_mile_estimated_bill"),
     THIRD_WAREHOUSE_RETURN_INSTOCK("third_warehouse_return_instock", "三方仓退货入库单","dmp_pull_task"),
 
-
-
-    //mrp
-    REPLENISHMENT_PLAN("replenishment_plan", "补货计划计划","replenishment_plan"),
 
     //速帝云
     SDY_DELIVERY_ORDER("sdyDeliveryOrder", "速帝云配货单","so_b2c"),

@@ -76,10 +76,16 @@ public class StocktakingTaskDetailExcelListener extends AnalysisEventListener<St
             errorMsgList.addAll(msgList);
         }
         //盘点数量
-        Integer qty = excelDTO.getQty();
-        if (qty < 0) {
-            errorMsgList.add("盘点数量不能为负数");
+        Integer qty = 0;
+        try {
+            qty = Integer.valueOf(excelDTO.getQty());
+            if (qty < 0) {
+                errorMsgList.add("盘点数量不能为负数");
+            }
+        }catch (Exception e){
+            errorMsgList.add("盘点数量不能为非整数");
         }
+
         //任务盘点单号
         String taskCode = excelDTO.getCode();
         if (!code.equals(taskCode)) {

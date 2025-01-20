@@ -150,6 +150,10 @@ public class WmsCartonDTO {
          * 箱子ID
          */
         private String cartonId;
+        /**
+         * 是否过滤0数据 true:过滤 false:不过滤(默认false)
+         */
+        private Boolean isRemoveZero;
     }
     /**
      * 装箱详情
@@ -255,6 +259,8 @@ public class WmsCartonDTO {
          */
         private String fnSku;
         private String ean;
+        //唯一值
+        private String md5;
         /**
          * 发货数量
          */

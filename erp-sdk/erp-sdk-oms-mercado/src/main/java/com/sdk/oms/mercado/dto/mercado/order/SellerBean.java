@@ -13,6 +13,6 @@ public class SellerBean {
      */
 
     @JsonProperty("id")
-    private int fid;
+    private long fid;
 
 }

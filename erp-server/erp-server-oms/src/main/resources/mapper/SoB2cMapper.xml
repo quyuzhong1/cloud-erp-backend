@@ -73,15 +73,9 @@
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.is_manual_delivery as isManualDelivery,
         sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
-        sb2cl.logistics_channel_name as logisticsChannelName,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
-             else sb2cl.actual_shipping_cost
-        end
-        as shippingCost,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
-             else sb2cl.actual_shipping_currency
-        end
-        as shippingCostCurrency,
+        sb2cl.ioss_tax_no as iossTaxNo,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
         sb2cl.logistics_channel_id as logisticsChannelId,
         sb2cl.logistics_channel_name as logisticsChannelName,
         sb2cr.customer_id as buyerId,
@@ -119,14 +113,8 @@
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
-             else sb2cl.actual_shipping_cost
-        end
-        as shippingCost,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
-             else sb2cl.actual_shipping_currency
-        end
-        as shippingCostCurrency,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
         sb2c.seller_order_code as sellerOrderCode,
         sb2c.platform_code as platformCode,
         sb2c.approve_status as approveStatus,
@@ -182,6 +170,7 @@
         sb2cl.length,
         sb2cl.width,
         sb2cl.height,
+        sb2cl.ioss_tax_no,
         sb2cr.login_id as loginId,
         sb2cr.name as buyerName,
         sb2cr.email,
@@ -260,6 +249,14 @@
 
     <!-- 合并列表查询 -->
     <select id="mergePaging" resultType="com.erp.model.oms.dto.SoB2cDTO$MergeListDTO">
+        WITH UniqueWarehouseB2C AS (
+        SELECT sb2c.id AS main_id
+        FROM so_b2c sb2c
+        JOIN so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id AND sb2cd.is_deleted = false
+        where sb2c.is_deleted = false
+        GROUP BY sb2c.id
+        HAVING COUNT(DISTINCT sb2cd.warehouse_id) = 1
+        )
         select
         sb2c.dict_platform as dictPlatform,
         sb2c.shop_id as shopId,
@@ -272,15 +269,16 @@
         sb2cd.warehouse_id as warehouseId,
         sb2cl.logistics_channel_id as logisticsChannelId
         from so_b2c sb2c
-        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
-        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
-        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        JOIN so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        JOIN so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        JOIN so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
-            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = ''
+            and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+            and sb2c.dict_platform not in ('Shopee', 'mercadolibre')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -312,7 +310,7 @@
                 </foreach>
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         group by
@@ -323,17 +321,27 @@
 
     <!-- 合并列表数量查询 -->
     <select id="mergePagingCount" resultType="java.lang.Integer">
+        WITH UniqueWarehouseB2C AS (
+        SELECT sb2c.id AS main_id
+        FROM so_b2c sb2c
+        JOIN so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id AND sb2cd.is_deleted = false
+        where sb2c.is_deleted = false
+        GROUP BY sb2c.id
+        HAVING COUNT(DISTINCT sb2cd.warehouse_id) = 1
+        )
         select
-        count(sb2c.id)
+        count(distinct sb2c.id)
         from so_b2c sb2c
-        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
-        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        JOIN so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        JOIN so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
-            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = ''
+            and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+            and sb2c.dict_platform not in ('Shopee', 'mercadolibre')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -365,7 +373,7 @@
                 </foreach>
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.logistics_channel_id
@@ -374,6 +382,14 @@
 
     <!-- 合并列表合并数据查询 -->
     <select id="listMerge" resultMap="MergeResultMap">
+        WITH UniqueWarehouseB2C AS (
+        SELECT sb2c.id AS main_id
+        FROM so_b2c sb2c
+        JOIN so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id AND sb2cd.is_deleted = false
+        where sb2c.is_deleted = false
+        GROUP BY sb2c.id
+        HAVING COUNT(DISTINCT sb2cd.warehouse_id) = 1
+        )
         select
         sb2c.id,
         sb2c.code,
@@ -406,11 +422,12 @@
         left outer join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         left outer join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         left outer join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
-            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = ''
+            and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+            and sb2c.dict_platform not in ('Shopee', 'mercadolibre')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
                 <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
@@ -472,7 +489,7 @@
                 </foreach>
             </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         order by sb2c.id desc
@@ -1150,7 +1167,6 @@
         AND so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
-        AND NOT EXISTS (SELECT * FROM oms_push_msg WHERE source_id = sod.id)
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

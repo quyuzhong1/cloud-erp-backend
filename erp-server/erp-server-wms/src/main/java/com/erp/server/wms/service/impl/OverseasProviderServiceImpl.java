@@ -167,6 +167,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         entity.setAuthTime(null);
         entity.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
         this.updateById(entity);
+        log.error("用户【{}】取消海外仓【{}】的授权",UserContext.getDefaultLoginUser().getUserName(),entity.getShortName());
         //删除数据同步任务
         String platformCode = this.getPlatFormCodeById(id);
         dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(id,null, platformCode));

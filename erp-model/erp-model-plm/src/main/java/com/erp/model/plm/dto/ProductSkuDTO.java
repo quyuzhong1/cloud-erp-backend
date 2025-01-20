@@ -181,6 +181,12 @@ public class ProductSkuDTO extends PermissionsDTO {
      * 供应商名称
      */
     private List<String> supplierNameList;
+
+    /**
+     * 应用分类id
+     */
+    private List<String> applicationCategoryIds;
+
 }
 
 

@@ -1,7 +1,10 @@
 package com.erp.server.sys.rocketmq.sync.kingdee;
 
+import java.util.Map;
+
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
+import com.erp.model.sys.entity.SysUserInfoEntity;
 
 /**
  * @author Lambda
@@ -20,5 +23,7 @@ public interface SyncKingdeeUserPostService {
      * @author Lambda
      */
     DmpPushTaskEntity syncDataToKingdee(KingdeeUserRefPostEntity entity, String code);
+    
+    Map<String , Object> newSyncDataToKingdee(KingdeeUserRefPostEntity entity, String operate);
 
 }

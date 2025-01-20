@@ -6,7 +6,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -57,6 +56,7 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.UploadSkuDTO;
 import com.erp.model.tms.dto.CfgSettingValueDTO;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
@@ -72,6 +72,7 @@ import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.listener.ProductDetailExcelListener;
+import com.erp.server.plm.listener.ProductDetailUpdateExcelListener;
 import com.erp.server.plm.mapper.ProductDetailMapper;
 import com.erp.server.plm.mapper.ProductInfoMapper;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
@@ -272,6 +273,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Resource
     private PlmAttachmentService plmAttachmentService;
 
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
@@ -333,7 +337,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProjectInfoEntity> projectList = projectInfoService.getByProductIdList(productIdList);
         List<String> sourceIds = list.stream().map(ProductDetailShowDTO::getId).collect(Collectors.toList());
         List<String> changeIngSourceIds = productChangeService.getBySourceId(sourceIds);
-
+        Map<String, String> applicationCategoryMap = applicationCategoryService.list()
+                .stream().collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
         List<String> mainSupplierIds = list.stream().map(ProductDetailShowDTO::getMainSupplier).distinct().collect(Collectors.toList());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
 
@@ -341,6 +346,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //获取子SKU集合
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(skuIdList);
         for (ProductDetailShowDTO item : list) {
+            item.setApplicationCategoryName(applicationCategoryMap.get(item.getApplicationCategoryId()));
             //查询sku是否存在子SKU
             List<BomChildrenSkuDTO> sonSkuList = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(item.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(sonSkuList)) {
@@ -413,6 +419,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
             noSpecDetailById.setCategoryIdList(categoryIdList);
+        }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -540,6 +550,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> categoryIdList = basicCategoryService.getPidList(noSpecDetailById.getCategoryId());
             noSpecDetailById.setCategoryIdList(categoryIdList);
 
+        }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(noSpecDetailById.getApplicationCategoryId());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            noSpecDetailById.setApplicationCategoryName(applicationCategory.getName());
         }
         productNoSpecDetailAllDTO.setProductNoDetailDTO(noSpecDetailById);
         //产品成本信息查询列表
@@ -697,6 +711,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //获取多级分类
             List<String> categoryIdList = basicCategoryService.getPidList(manySpecDetailById.getCategoryId());
             manySpecDetailById.setCategoryIdList(categoryIdList);
+            ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(manySpecDetailById.getApplicationCategoryId());
+            if (ObjectUtils.isNotEmpty(applicationCategory)) {
+                manySpecDetailById.setApplicationCategoryName(applicationCategory.getName());
+            }
             productManyDetail.setProductManySpecBaseDTO(manySpecDetailById);
         }
         //多规格产品明细信息
@@ -1969,13 +1987,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> secondSupplierIds = list.stream().map(ProductDetailExcelExportDTO::getSecondSupplier).distinct().collect(Collectors.toList());
             mainSupplierIds.addAll(secondSupplierIds);
             Map<String, SupplierDTO.SupplierSimpleDTO> supplierMap = supplierFeign.getSupplierSimpleInfo(mainSupplierIds);
-
+            Map<String, String> applicationCategoryMap = applicationCategoryService.list()
+                    .stream().collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName));
             String chargeId = "";
             String productPropertyId = "";
             String saleCountry = "";
             List<String> chargeIds = new ArrayList<>();
             List<String> productPropertyIdAndSaleCountrys = new ArrayList<>();
             for(ProductDetailExcelExportDTO l : list) {
+                l.setApplicationCategoryName(applicationCategoryMap.get(l.getApplicationCategoryId()));
                 chargeId = l.getChargeId();
                 if(StringUtils.isNotBlank(chargeId)) {
                     chargeIds.addAll(Arrays.stream(chargeId.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
@@ -4257,7 +4277,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailEntity> productDetailEntityList = this.list();
         List<ProductUnitEntity> unitEntityList = productUnitService.list();
         List<BasicCategoryEntity> categoryEntityList = basicCategoryService.list();
-
+        List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
+        Map<String, String> applicationCategoryMap = applicationCategoryList.stream()
+                .collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId, (o1, o2) -> o1));
 
         //根据供应商名称查询供应商信息
         List<String> mainSupplierNameList = successList.stream().map(req -> req.getMainSupplier()).distinct().collect(Collectors.toList());
@@ -4445,7 +4467,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
 
                 if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
-                    errorMsgList.add("二级类目不存在");
+                    productInfoDTO.setCategory(bestEntity.getName());
+                    productInfoDTO.setCategoryId(bestEntity.getId());
                 } else {
                     BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
@@ -4454,6 +4477,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
                         errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
                     }
+                    productInfoDTO.setCategory(secondaryCategory);
+                    productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
                 }
                 //存在错误信息则返回
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
@@ -4461,8 +4486,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     errorList.add(dto);
                     continue;
                 }
-                productInfoDTO.setCategory(secondaryCategory);
-                productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
+            }
+            String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
+            if (ObjectUtils.isEmpty(applicationCategoryId)) {
+                errorMsgList.add("应用分类不存在");
+            } else {
+                productInfoDTO.setApplicationCategoryId(applicationCategoryId);
             }
 
             //存在侵权风险
@@ -5260,6 +5289,43 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             entity.setBusinessId(productDetailEntity.getId());
             plmAttachmentService.save(entity);
         }
+    }
+
+    @Override
+    public void importProductUpdate(MultipartFile excelFile, HttpServletResponse response) {
+        List<BasicCategoryEntity> categoryList = basicCategoryService.list();
+        List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
+        Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
+        List<ProductDetailEntity> productDetailEntityList = this.list();
+        ProductDetailUpdateExcelListener excelListenerUtil = new ProductDetailUpdateExcelListener(categoryList, applicationCategoryMap, productDetailEntityList);
+        try {
+            read(excelFile.getInputStream(), ProductDetailUpdateExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
+        for (ProductInfoDTO productInfoDTO : successList) {
+            productInfoService.updateSpec(productInfoDTO);
+        }
+        if (CollectionUtils.isNotEmpty(errorList)) {
+            StringBuilder sb = new StringBuilder();
+            String excelPath = "excel/productUpdateError.xlsx";
+            String name = "导入更新";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+        }
+
     }
 
     /**

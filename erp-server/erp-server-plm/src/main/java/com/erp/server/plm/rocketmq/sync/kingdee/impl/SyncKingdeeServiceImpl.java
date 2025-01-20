@@ -2,6 +2,7 @@ package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeService;
+import com.erp.server.plm.service.ApplicationCategoryService;
 import com.erp.server.plm.service.BasicCategoryService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductDetailService;
@@ -28,6 +29,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private BasicCategoryService basicCategoryService;
 
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -50,6 +54,9 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //产品管理
         if (ApiModuleTypeEnum.ONE_LEVEL_CATEGORY.getCode().toString().equals(code) || ApiModuleTypeEnum.SECOND_LEVEL_CATEGORY.getCode().toString().equals(code)) {
             basicCategoryService.updateSyncKingdeeId(businessId,syncKingdeeId);
+        }
+        if (ApiModuleTypeEnum.APPLICATION_CATEGORY.getCode().toString().equals(code)) {
+            applicationCategoryService.updateSyncKingdeeId(businessId, syncKingdeeId);
         }
     }
 }

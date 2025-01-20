@@ -57,5 +57,5 @@ public class MercadoShopInfoDTO {
     /**
      * 平台店铺/用户id
      */
-    private Integer userId;
+    private Long userId;
 }

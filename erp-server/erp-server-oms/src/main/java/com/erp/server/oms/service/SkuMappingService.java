@@ -12,6 +12,9 @@ import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.dto.OperateLogDTO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.scm.dto.OperateLogDTO;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -76,11 +79,14 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * 更改sku 对照表
      *
      * @param dto
+     * @param skuMapping
+     * @param listing
+     * @param shopId
      * @return java.lang.String
      * @author yl
      * @date 2023-06-30 10:21
      */
-    String updatePlatformSku(SkuMappingDTO.UpdatePlatformDTO dto);
+    BatchResultDTO updatePlatformSku(SkuMappingDTO.UpdatePlatformDTO dto, SkuMappingEntity skuMapping, ListingInfoEntity listing, String shopId);
 
     /**
      * 销售订单添加客户sku
@@ -281,9 +287,9 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
                                      List<String> shopIdList,
                                      LocalDateTime platformOrderCreateTime,
                                      Boolean isExpire);
-    
+
     List<OmsPushMsgEntity> syncDataToSdy(LocalDateTime startTime , LocalDateTime endTime);
-    
+
     Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate);
 
     void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
@@ -309,4 +315,14 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
 
     Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
+    /**
+     * 根据参数获取数据列表
+     * @param params
+     * @return
+     */
+    List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(ListingInfoDTO.QueryPlatformDTO params);
+
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
+
+//    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 }

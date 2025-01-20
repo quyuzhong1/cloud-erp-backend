@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.model.mrp.dto.OtherHistorySaleQtyDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.erp.model.mrp.enums.FbaOrderTypeEnum;
 import com.erp.model.mrp.enums.OverseasOrderTypeEnum;
@@ -89,8 +88,6 @@ public class SalesInfoServiceImpl extends SuperServiceImpl<SalesInfoMapper, Sale
                 .collect(Collectors.toList());
         List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
         Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuId, (o1, o2) -> o1));
-        List<ReplenishmentSuggestionEntity> list = replenishmentSuggestionService.list();
-        Map<String, String> suggestionMap = list.stream().collect(Collectors.toMap(v -> v.getSkuId() + "-" + v.getShopId(), ReplenishmentSuggestionEntity::getId, (o1, o2) -> o1));
         List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
         Map<String, String> stringMap = mappings.stream()
                 .collect(Collectors.toMap(CfgPlatformMappingEntity::getPlatform, CfgPlatformMappingEntity::getType, (o1,o2) -> o1));
@@ -115,7 +112,7 @@ public class SalesInfoServiceImpl extends SuperServiceImpl<SalesInfoMapper, Sale
                 } else {
                     entity.setOrderType(OverseasOrderTypeEnum.OVERSEAS_WAREHOUSE.getCode());
                 }
-                entity.setReplenishmentId(suggestionMap.get(skuId + "-" + dto.getShopId()));
+                entity.setShopSkuId(dto.getShopId() + "-" + skuId);
                 historySales.add(entity);
             }
             orderHistorySalesEsService.saveAll(historySales);

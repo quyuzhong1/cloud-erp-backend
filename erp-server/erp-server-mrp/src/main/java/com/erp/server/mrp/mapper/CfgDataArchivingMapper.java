@@ -47,7 +47,7 @@ public interface CfgDataArchivingMapper extends BaseMapper<CfgDataArchivingEntit
      */
     void movePurchaseSuggestMerge();
     /**
-     * 删除建议
+     * 删除合并采购数据
      */
     void deletePurchaseSuggestMerge();
     /**
@@ -58,4 +58,8 @@ public interface CfgDataArchivingMapper extends BaseMapper<CfgDataArchivingEntit
      * 删除建议
      */
     void deletePurchaseSuggest(@Param("sourceId") String sourceId);
+    /**
+     * 删除独立采购数据
+     */
+    void deletePurchaseSuggestIndependent();
 }

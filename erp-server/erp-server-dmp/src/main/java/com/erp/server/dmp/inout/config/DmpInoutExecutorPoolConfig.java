@@ -50,4 +50,15 @@ public class DmpInoutExecutorPoolConfig {
     	service.setRejectedExecutionHandler(handler);
     	return service;
     }
+    
+    @Bean(name = "dmpListTimeExecutorPool")
+    public ExecutorService dmpListTimeExecutorPool() {
+    	ThreadPoolExecutor service = new ThreadPoolExecutor(10, 30,
+    			0L, TimeUnit.SECONDS,
+    			new LinkedBlockingQueue<Runnable>(10000));
+    	//设置线城池的饱和策略
+    	RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+    	service.setRejectedExecutionHandler(handler);
+    	return service;
+    }
 }

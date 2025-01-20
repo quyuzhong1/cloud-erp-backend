@@ -10,6 +10,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.util.List;
+
 @FeignClient(name = "erp-oms", contextId = "exportOmsFeign", configuration = ExportFeignConfig.class)
 public interface ExportOmsFeign {
 
@@ -36,7 +38,9 @@ public interface ExportOmsFeign {
     @PostMapping("/feign/export/shop")
     PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto);
     @PostMapping("/feign/export/customer")
-    PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto);
+    PagingVO<CustomerDTO.PagingExportDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/exportCustomerPairList")
+    List<cn.hutool.core.lang.Pair<Integer, List<?>>> exportCustomerPairList(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto);
     @PostMapping("/feign/export/so")
     PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto);
     @PostMapping("/feign/export/exportRefund")

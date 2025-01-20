@@ -116,6 +116,16 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
      */
     @TableField("fba_shipment_code")
     private String fbaShipmentCode;
+    /**
+     * 拣货单下推状态 not:未生成 part:部分生成 finish:已生成
+     */
+    @TableField("pick_push_down_status")
+    private String pickPushDownStatus;
+    /**
+     * 发货单下推状态 not:未生成 part:部分生成 finish:已生成
+     */
+    @TableField("delivery_push_down_status")
+    private String deliveryPushDownStatus;
 
     
 

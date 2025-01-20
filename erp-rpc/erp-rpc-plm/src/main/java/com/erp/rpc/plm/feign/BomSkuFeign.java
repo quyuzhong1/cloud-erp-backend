@@ -1,6 +1,7 @@
 package com.erp.rpc.plm.feign;
 
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.ProductBomInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,4 +23,11 @@ public interface BomSkuFeign {
      */
     @PostMapping("/listBomChildBySkuIds")
     List<BomChildrenSkuDTO> listBomChildBySkuIds(@RequestBody List<String> skuIds);
+
+    /**
+     * @description: 根据父级skuNos查询子集sku
+     * @return List<BomChildrenSkuDTO>
+     */
+    @PostMapping("/checkExistAndListCombinationSku")
+    List<BomChildrenSkuDTO> checkExistAndListCombinationSku(@RequestBody List<String> skuNos);
 }

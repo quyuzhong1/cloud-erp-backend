@@ -68,81 +68,28 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
     @Override
     protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-        Map<String, DmpSoOriginalInfoEntity> dmpSoOriginalInfoEntityMap = new HashMap<>();
-        Map<String, List<DmpSoOriginalDetailEntity>> dmpSoOriginalDetailEntityMap = new HashMap<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
-            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
-            if (CollUtil.isNotEmpty(value)) {
-                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_so_original_info".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoOriginalInfoEntity dmpSoOriginalInfoEntity = (DmpSoOriginalInfoEntity) v;
-                        dmpSoOriginalInfoEntityMap.put(dmpSoOriginalInfoEntity.getId(), dmpSoOriginalInfoEntity);
-                    }
-                } else if ("dmp_so_original_detail".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoOriginalDetailEntity dmpSoOriginalDetailEntity = (DmpSoOriginalDetailEntity) v;
-                        String mainId = dmpSoOriginalDetailEntity.getMainId();
-                        List<DmpSoOriginalDetailEntity> list = dmpSoOriginalDetailEntityMap.get(mainId);
-                        if (CollUtil.isEmpty(list)) {
-                            list = new ArrayList<>();
-                        }
-                        list.add(dmpSoOriginalDetailEntity);
-                        dmpSoOriginalDetailEntityMap.put(mainId, list);
-                    }
-                }
-            }
-        }
-
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
-        Set<String> changeIds = new HashSet<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
-            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
-            if (CollUtil.isNotEmpty(value)) {
-                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_so_original_info".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        changeIds.add(v.getId());
-                    }
-                } else if ("dmp_so_original_detail".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        DmpSoOriginalDetailEntity DmpSoDetailEntity = (DmpSoOriginalDetailEntity) v;
-                        changeIds.add(DmpSoDetailEntity.getMainId());
-                    }
-                }
-            }
-        }
-
-        Map<String, String> map = new HashMap<>();
-        for (String changId : changeIds) {
-            List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(dmpSoOriginalInfoEntityMap.get(changId), dmpSoOriginalDetailEntityMap.get(changId));
-            if (CollUtil.isNotEmpty(sdyDtoList)) {
-                map.put(changId, JSON.toJSONString(sdyDtoList));
-            }
-        }
+    	Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
         List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
         if (!map.isEmpty()) {
             LocalDateTime now = LocalDateTime.now();
             int i = 0;
             for (Map.Entry<String, String> entry : map.entrySet()) {
                 String dataId = entry.getKey();
-                List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = JSON.parseArray(entry.getValue(), ShudiyunB2cOrderDTO.class);
-                for (ShudiyunB2cOrderDTO shudiyunB2cOrderDTO : shudiyunB2cOrderDTOList) {
-                    DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                    String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                    dmpOutputTaskRecordEntity.setId(id);
-                    dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getBiz_uni_key().substring(dataId.length()));
-                    dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
-                    dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
-                    dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                    LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                    dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                    dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                    dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                    i = i + 1;
-                }
+                String value = entry.getValue();
+                ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(value, ShudiyunB2cOrderDTO.class);
+                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
+                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
+                dmpOutputTaskRecordEntity.setId(id);
+                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
+                dmpOutputTaskRecordEntity.setDataId(dataId);
+                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
+                dmpOutputTaskRecordEntity.setRequestData(value);
+                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
+                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
+                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
+                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
+                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
+                i = i + 1;
             }
         }
 
@@ -167,13 +114,12 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
     /**
      * 解析订单数据
      **/
-    public List<ShudiyunB2cOrderDTO> convert(DmpSoOriginalInfoEntity dmpSoInfoEntity, List<DmpSoOriginalDetailEntity> dmpSoDetailEntityList) {
-        if (CollUtil.isEmpty(dmpSoDetailEntityList)) {
-            return Collections.emptyList();
+    public Map<String, ShudiyunB2cOrderDTO> convert(DmpSoOriginalInfoEntity dmpSoInfoEntity, List<DmpSoOriginalDetailEntity> dmpSoDetailEntityList) {
+    	Map<String , ShudiyunB2cOrderDTO> result = new HashMap<>();
+    	if (CollUtil.isEmpty(dmpSoDetailEntityList)) {
+    		return result;
         }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        //数帝云数据结构
-        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
 
         List<String> detailIds = dmpSoDetailEntityList.stream().map(req -> req.getThirdDetailId()).distinct().collect(Collectors.toList());
         List<DmpSoDetailEntity> wdtSoDetailEntities = dmpSoDetailService.lambdaQuery().in(DmpSoDetailEntity::getThirdDetailId, detailIds).list();
@@ -191,7 +137,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {
-                return Collections.emptyList();
+            	return result;
             }
 
             //线上原始订单
@@ -264,7 +210,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                         if(StringUtils.isNotBlank(subPlatformType)) {
                             List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
                             if(CollUtil.isNotEmpty(dictList)) {
-                                shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getValue());
+                                shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getName());
                                 shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
                             }
                         }
@@ -291,7 +237,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {
-                return Collections.emptyList();
+            	return result;
             }
 
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
@@ -325,11 +271,71 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setSource_system("SDC");
             shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
 
-            shudiyunB2cOrderDTOList.add(shudiyunB2cOrderDTO);
+            result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
-        return shudiyunB2cOrderDTOList;
+        return result;
 
+    }
+
+    @Override
+    public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
+        Map<String, DmpSoOriginalInfoEntity> dmpSoOriginalInfoEntityMap = new HashMap<>();
+        Map<String, List<DmpSoOriginalDetailEntity>> dmpSoOriginalDetailEntityMap = new HashMap<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_original_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoOriginalInfoEntity dmpSoOriginalInfoEntity = (DmpSoOriginalInfoEntity) v;
+                        dmpSoOriginalInfoEntityMap.put(dmpSoOriginalInfoEntity.getId(), dmpSoOriginalInfoEntity);
+                    }
+                } else if ("dmp_so_original_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoOriginalDetailEntity dmpSoOriginalDetailEntity = (DmpSoOriginalDetailEntity) v;
+                        String mainId = dmpSoOriginalDetailEntity.getMainId();
+                        List<DmpSoOriginalDetailEntity> list = dmpSoOriginalDetailEntityMap.get(mainId);
+                        if (CollUtil.isEmpty(list)) {
+                            list = new ArrayList<>();
+                        }
+                        list.add(dmpSoOriginalDetailEntity);
+                        dmpSoOriginalDetailEntityMap.put(mainId, list);
+                    }
+                }
+            }
+        }
+
+        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+        Set<String> changeIds = new HashSet<>();
+        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
+            if (CollUtil.isNotEmpty(value)) {
+                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+                if ("dmp_so_original_info".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        changeIds.add(v.getId());
+                    }
+                } else if ("dmp_so_original_detail".equals(storageName)) {
+                    for (BaseEntity v : value) {
+                        DmpSoOriginalDetailEntity DmpSoDetailEntity = (DmpSoOriginalDetailEntity) v;
+                        changeIds.add(DmpSoDetailEntity.getMainId());
+                    }
+                }
+            }
+        }
+
+        Map<String, String> map = new HashMap<>();
+        for (String changId : changeIds) {
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOriginalInfoEntityMap.get(changId), dmpSoOriginalDetailEntityMap.get(changId));
+        	if(!result.isEmpty()) {
+            	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
+            		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
+            	}
+            }
+        }
+        return map;
     }
 
     private String wdtItemStatus(String status) {

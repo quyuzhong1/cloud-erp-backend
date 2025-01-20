@@ -78,4 +78,9 @@ public class ProductPlanSearchDTO extends SortDTO {
      * 计划上市时间结束
      */
     private LocalDate planListingDateEnd;
+
+    /**
+     * 应用分类id
+     */
+    private List<String> applicationCategoryIds;
 }

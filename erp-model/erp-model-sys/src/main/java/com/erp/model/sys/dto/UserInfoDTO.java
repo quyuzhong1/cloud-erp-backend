@@ -17,7 +17,6 @@ public class UserInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BusinessOperationUserDTO {
-
         /**
          * 用户id
          */
@@ -74,6 +73,16 @@ public class UserInfoDTO implements Serializable {
          * 部门名
          */
         private String departmentName;
+
+        /**
+         * 金蝶部门表id
+         */
+        private String kingdeeDepartmentId;
+
+        /**
+         * 金蝶部门名
+         */
+        private String kingdeeDepartmentName;
 
         /**
          * 是否禁用

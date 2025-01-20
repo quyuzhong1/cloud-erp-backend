@@ -16,32 +16,23 @@ public interface OrderHistorySalesEsRepository extends ElasticsearchRepository<O
     /**
      * 分页查询
      *
-     * @param replenishmentIds 建议id
+     * @param shopSkuIds       shopId-skuId
      * @param startDate        开始时间
      * @param endDate          结束时间
      * @param pageable         分页参数
      */
-    Page<OrderHistorySalesEsEntity> findByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<OrderHistorySalesEsEntity> findByShopSkuIdInAndDateBetween(List<String> shopSkuIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
      * 分页查询
      *
-     * @param replenishmentIds 建议id
+     * @param shopSkuIds       shopId-skuId
      * @param orderType        订单类型
      * @param startDate        开始时间
      * @param endDate          结束时间
      * @param pageable         分页参数
      */
-    Page<OrderHistorySalesEsEntity> findByReplenishmentIdInAndOrderTypeInAndDateBetween(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate, Pageable pageable);
-
-    /**
-     * 根据开始结束时间，建议id删除数据
-     *
-     * @param replenishmentIds 建议
-     * @param startDate        开始时间
-     * @param endDate          结束时间
-     */
-    void deleteByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate);
+    Page<OrderHistorySalesEsEntity> findByShopSkuIdInAndOrderTypeInAndDateBetween(List<String> shopSkuIds, JSONArray orderType, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
 
     /**

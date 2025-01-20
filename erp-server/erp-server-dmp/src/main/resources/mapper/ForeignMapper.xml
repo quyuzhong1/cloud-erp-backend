@@ -44,6 +44,7 @@
                 #{item}
             </foreach>
         </if>
+        ORDER BY lbd.update_time
          LIMIT #{query.size} OFFSET (#{query.current} -1) * #{query.size}
     </select>
 

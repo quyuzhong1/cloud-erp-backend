@@ -257,7 +257,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
 
         //销售员
         String sellerId = soInfo.getSellerId();
-
+        String salesDeptId = soInfo.getSalesDeptId();
         //客户id
         String customerId = soInfo.getCustomerId();
         //销售订单号
@@ -283,6 +283,7 @@ public class SyncKingdeeSoChangeServiceImpl implements SyncKingdeeSoChangeServic
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(salesOrgId);
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);

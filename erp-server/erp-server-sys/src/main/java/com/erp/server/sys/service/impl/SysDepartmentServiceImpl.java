@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -449,6 +450,14 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             return new ArrayList<>();
         }
         return this.lambdaQuery().in(SysDepartmentEntity::getName,deptNameList).list();
+    }
+
+    @Override
+    public List<SysDepartmentEntity> getDeptByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SysDepartmentEntity::getId,ids).list();
     }
 
     /**

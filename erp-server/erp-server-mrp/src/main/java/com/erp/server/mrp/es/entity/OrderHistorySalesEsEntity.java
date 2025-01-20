@@ -19,10 +19,10 @@ import java.time.LocalDate;
 public class OrderHistorySalesEsEntity extends BaseEsEntity {
 
     /**
-     * 建议 id
+     * sku id + 店铺id
      */
     @Field(type = FieldType.Keyword)
-    private String replenishmentId;
+    private String shopSkuId;
 
     /**
      * sku id
@@ -52,10 +52,10 @@ public class OrderHistorySalesEsEntity extends BaseEsEntity {
     @Field(type = FieldType.Keyword)
     private String orderType;
 
-    public static OrderHistorySalesEsEntity createOrderHistorySales(String replenishmentId, String orderType, LocalDate billDate, Integer qty, String skuId, String shopId) {
+    public static OrderHistorySalesEsEntity createOrderHistorySales(String orderType, LocalDate billDate, Integer qty, String skuId, String shopId) {
         OrderHistorySalesEsEntity entity = new OrderHistorySalesEsEntity();
         entity.setId(IdWorker.getIdStr());
-        entity.setReplenishmentId(replenishmentId);
+        entity.setShopSkuId(shopId + "-" + skuId);
         entity.setDate(billDate);
         entity.setOriginalSalesQty(qty);
         entity.setSkuId(skuId);
