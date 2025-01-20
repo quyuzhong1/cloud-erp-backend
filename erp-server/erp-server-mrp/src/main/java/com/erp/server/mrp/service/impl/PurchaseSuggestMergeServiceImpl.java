@@ -354,7 +354,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     private void generatePurchaseSuggestMerge (ReplenishmentResultDTO replenishmentResultDTO,List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests) {
         //无配置或者独立采购也直接返回
         CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = replenishmentResultDTO.getCfgRuleStrategy().getOrderResult();
-        if (ObjectUtil.isEmpty(orderResult) || Boolean.TRUE.equals(!orderResult.getIsMergeSku())) {
+        if (ObjectUtil.isEmpty(orderResult) || Boolean.FALSE.equals(orderResult.getIsMergeSku())) {
             return;
         }
         ReplenishmentResultDTO.BasicDTO replenishment = replenishmentResultDTO.getReplenishment();
