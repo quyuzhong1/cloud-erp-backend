@@ -240,6 +240,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
+		} else {
+			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 		}
 		if(Objects.nonNull(soOutstock)){
 			SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
