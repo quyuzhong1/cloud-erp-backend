@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-bi
   profiles:
-    active: dev
+    active: prod
 server:
   port: 9070
 

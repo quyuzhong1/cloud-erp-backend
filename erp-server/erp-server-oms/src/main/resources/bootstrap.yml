@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-oms
   profiles:
-    active: dev
+    active: prod
 server:
   port: 9110
 

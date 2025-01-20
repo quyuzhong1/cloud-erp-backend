@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-workflow
   profiles:
-    active: dev
+    active: prod
 server:
   port: 9040
 

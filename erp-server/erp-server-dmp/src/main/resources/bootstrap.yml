@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-dmp
   profiles:
-    active: dev
+    active: prod
 server:
   port: 9060
 

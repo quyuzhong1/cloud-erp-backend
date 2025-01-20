@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erp-server-bi
+  namespace: ${namespace} #namespace
+spec:
+  replicas: 2
+  minReadySeconds: 60  # 从容器启动到应用正常提供服务
+  strategy: # k8s更新策略
+    type: RollingUpdate #滚动更新
+    rollingUpdate:
+      maxSurge: 2  # 更新时允许最大激增的容器数，默认 replicas 的 1/4 向上取整
+      maxUnavailable: 1  # 更新时允许最大 unavailable 容器数，默认 replicas 的 1/4 向下取整
+  template:
+    metadata:
+      labels:
+        app: erp-server-bi
+    spec:
+      imagePullSecrets: #使用imagePullSecrets参数指定镜像拉取秘钥
+        - name: harbor-registry        #使用我们的secret，即harbor-registry
+      automountServiceAccountToken: true
+      containers:
+        - name: erp-server-bi
+          image: 172.16.100.92:5000/sdc-erp/erp-server-bi:${tag} #Tag
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "300m"
+              memory: "1Gi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms1g -Xmx3g -XX:+UseParallelGC -XX:ParallelGCThreads=2"
+            - name: TZ
+              value: "Asia/Shanghai"  # 设置时区，确保与宿主机一致
+          ports:
+            - containerPort: 9070 #修改成你项目的端口
+          volumeMounts:
+            - name: tz
+              mountPath: /etc/localtime
+      volumes:
+        - name: tz
+          hostPath:
+            path: /etc/localtime
+  selector:
+    matchLabels:
+      app: erp-server-bi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: erp-server-bi
+  namespace: ${namespace} #namespace
+spec:
+  selector:
+    app: erp-server-bi
+  ports:
+    - name: tcp
+      # 修改你的项目端口号
+      port: 9070
+      # 容器暴露的访问端口 要确定与其他服务不冲突
+      targetPort: 9070
+      nodePort: 30070
+  type: NodePort
