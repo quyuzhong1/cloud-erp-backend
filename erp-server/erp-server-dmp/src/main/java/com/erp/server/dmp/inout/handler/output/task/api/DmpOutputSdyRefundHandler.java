@@ -63,22 +63,21 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             int i = 0;
             for (Map.Entry<String, String> entry : map.entrySet()) {
                 String dataId = entry.getKey();
-                List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = JSON.parseArray(entry.getValue(), ShudiyunB2cOrderDTO.class);
-                for (ShudiyunB2cOrderDTO shudiyunB2cOrderDTO : shudiyunB2cOrderDTOList) {
-                    DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                    String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                    dmpOutputTaskRecordEntity.setId(id);
-                    dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                    dmpOutputTaskRecordEntity.setDataId(shudiyunB2cOrderDTO.getBiz_uni_key().substring(dataId.length()));
-                    dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
-                    dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(shudiyunB2cOrderDTO));
-                    dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                    LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                    dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                    dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                    dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                    i = i + 1;
-                }
+                String value = entry.getValue();
+                ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(value, ShudiyunB2cOrderDTO.class);
+                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
+                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
+                dmpOutputTaskRecordEntity.setId(id);
+                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
+                dmpOutputTaskRecordEntity.setDataId(dataId);
+                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
+                dmpOutputTaskRecordEntity.setRequestData(value);
+                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
+                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
+                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
+                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
+                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
+                i = i + 1;
             }
         }
 
@@ -103,13 +102,12 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
     /**
      * 解析订单数据
      **/
-    public List<ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
-        if (CollUtil.isEmpty(dmpSoRefundDetailEntityList) || dmpSoRefundEntity == null) {
-            return Collections.emptyList();
+    public Map<String, ShudiyunB2cOrderDTO> convert(DmpSoRefundInfoEntity dmpSoRefundEntity, List<DmpSoRefundDetailEntity> dmpSoRefundDetailEntityList) {
+    	Map<String , ShudiyunB2cOrderDTO> result = new HashMap<>();
+    	if (CollUtil.isEmpty(dmpSoRefundDetailEntityList) || dmpSoRefundEntity == null) {
+            return result;
         }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-        List<ShudiyunB2cOrderDTO> sdyListDTO = new ArrayList<>();
 
         for (DmpSoRefundDetailEntity dmpSoRefundDetailEntity : dmpSoRefundDetailEntityList) {
         	if(dmpSoRefundDetailEntity == null) {
@@ -254,10 +252,10 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setReason(dmpSoRefundEntity.getReason());
             sdyDTO.setSource_system("SDC");
             sdyDTO.setRoot_node_no_initial(dmpSoRefundEntity.getThirdCode());
-            sdyListDTO.add(sdyDTO);
+            result.put(dmpSoRefundDetailEntity.getId(), sdyDTO);
         }
 
-        return sdyListDTO;
+        return result;
 
     }
 
@@ -311,9 +309,11 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
 
         Map<String, String> map = new HashMap<>();
         for (String changId : changeIds) {
-            List<ShudiyunB2cOrderDTO> sdyDtoList = this.convert(dmpSoRefundInfoEntityMap.get(changId), dmpSoRefundDetailEntityMap.get(changId));
-            if (CollUtil.isNotEmpty(sdyDtoList)) {
-                map.put(changId, JSON.toJSONString(sdyDtoList));
+            Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoRefundInfoEntityMap.get(changId), dmpSoRefundDetailEntityMap.get(changId));
+            if(!result.isEmpty()) {
+            	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
+            		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
+            	}
             }
         }
         return map;
