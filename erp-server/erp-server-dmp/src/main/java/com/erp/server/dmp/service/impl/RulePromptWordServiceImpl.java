@@ -3,23 +3,23 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.dmp.entity.RulePromptWordEntity;
-import com.erp.server.dmp.mapper.RulePromptWordMapper;
-import com.erp.server.dmp.service.RulePromptWordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.service.CommonService;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.RulePromptWordDTO;
+import com.erp.model.dmp.entity.RulePromptWordEntity;
+import com.erp.server.dmp.mapper.RulePromptWordMapper;
+import com.erp.server.dmp.service.OperateLogService;
+import com.erp.server.dmp.service.RulePromptWordService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.RulePromptWordDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 /**
  * <p>
  * 汉化管理规则表 服务实现类
