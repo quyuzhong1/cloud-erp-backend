@@ -307,9 +307,23 @@ public class SoInfoController extends BaseController {
 //            menuCode = "oms:so:update",
 //            serviceClass = SoInfoService.class,
 //            keyIdName = "ids")
-    public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = soInfoService.updateRemark(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoInfoEntity entity = soInfoEntityList.stream().filter(v -> v.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "销售订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soInfoService.updateRemark(entity, dto.getRemark()));
+            } catch (Exception e) {
+                log.error("B2B更新销售订单备注失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

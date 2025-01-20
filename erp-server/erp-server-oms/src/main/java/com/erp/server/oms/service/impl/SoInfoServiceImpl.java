@@ -2627,15 +2627,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public Boolean updateRemark(BaseIdsDTO.RemarkDTO dto) {
-        List<SoInfoEntity> list = this.listByIds(dto.getIds());
-        if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.ERROR_92016);
-        }
-        lambdaUpdate().in(SoInfoEntity::getId, dto.getIds())
-                .set(SoInfoEntity::getRemark, dto.getRemark())
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateRemark(SoInfoEntity entity, String remark) {
+        boolean update = lambdaUpdate().in(SoInfoEntity::getId, entity.getId())
+                .set(SoInfoEntity::getRemark, remark)
                 .update(new SoInfoEntity());
-        return Boolean.TRUE;
+        if (update){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        }
     }
 
     @Override

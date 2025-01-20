@@ -364,7 +364,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
+    BatchResultDTO updateRemark(SoInfoEntity entity, String remark);
 
     /**
      * 根据销售订单判断是否已经下推过发货通知单
