@@ -275,7 +275,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList) {
+    public void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList, String code) {
         for (ReplenishmentSuggestionEntity suggestion : suggestionList) {
             //移除旧数据
             deleteByRefId(suggestion.getId());
@@ -305,6 +305,8 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                     })
                     .collect(Collectors.toList());
             cfgRuleSalesDenoisingService.saveBatch(ruleSalesDenoisingList);
+            String msg = CharSequenceUtil.format("从销量试算【试算编号：{}】应用了规则", code);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), suggestion.getId(), "应用");
         }
 
 
