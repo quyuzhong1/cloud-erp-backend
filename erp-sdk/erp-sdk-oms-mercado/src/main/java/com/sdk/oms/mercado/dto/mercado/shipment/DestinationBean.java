@@ -17,7 +17,7 @@ public class DestinationBean {
     @JsonProperty("type")
     private String type;
     @JsonProperty("receiver_id")
-    private int receiverId;
+    private long receiverId;
     @JsonProperty("receiver_name")
     private String receiverName;
     @JsonProperty("receiver_phone")
@@ -35,11 +35,11 @@ public class DestinationBean {
         this.type = type;
     }
 
-    public int getReceiverId() {
+    public long getReceiverId() {
         return receiverId;
     }
 
-    public void setReceiverId(int receiverId) {
+    public void setReceiverId(long receiverId) {
         this.receiverId = receiverId;
     }
 

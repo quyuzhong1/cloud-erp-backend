@@ -69,7 +69,9 @@
             pr.declare_element as declareElement,
             pr.latest_time as  latestTime,
             pr.declare_supplier_name as declareSupplierName,
-            pr.failure_reason as failureReason
+            pr.failure_reason as failureReason,
+            pr.create_time as createTime,
+            pr.update_time as updateTime
         from product_registration pr
         where
             ${params.sqlMap.default}

@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -90,11 +91,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	
 	protected boolean isNotValidate = false;
 	
-	@Resource
-    private MQProducerService<String> mqProducerService;
-	private static Set<String> SKU_LISTING_TIME_SET = new HashSet<>();
-	private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
-	
 	@Override
 	public void doDmpHandler(DmpOutputRequest dmpRequest, DmpOutputResponse dmpResponse, DmpHandlerChain chain) {
 		if (!(dmpRequest instanceof DmpOutputTaskRequest)) {
@@ -130,15 +126,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				.set(DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.FINISH.getCode())
 				.set(DmpOutputTaskEntity::getUpdateTime, LocalDateTime.now())
 				.update();
-		
-		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-		if(CollUtil.isNotEmpty(convertInputDmpBaseEntityListMaps)) {
-			if(convertInputDmpBaseEntityListMaps.keySet().stream().anyMatch(c -> c.getStorageName().equals("dmp_so_detail"))) {
-				dmpOutputExecutorPool.execute(() -> {
-					pushSoInfoSkuListingTime(convertInputDmpBaseEntityListMaps);
-				});
-			}
-		}
 		
 		chain.doDmpHandler(dmpRequest, dmpResponse);
 	}
@@ -205,7 +192,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		List<String> mainIds = dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().get(dmpCfgInputConvertEntity).stream().map(BaseEntity::getId).collect(Collectors.toList());
 		for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
 			DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
-			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(childDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
+			String entityName = StrUtils.underlineToCamel(childDmpCfgInputConvertEntity.getStorageName(), true);
+			try {
+				Field[] declaredFields = Class.forName("com.erp.model.dmp.entity."+ StringUtils.capitalize(entityName) +"Entity").getDeclaredFields();
+				boolean isNotHaveMain = true;
+				for(Field field : declaredFields) {
+					if(field.getName().equals("mainId")) {
+						isNotHaveMain = false;
+						break;
+					}
+				}
+				if(isNotHaveMain) {
+					continue;
+				}
+			} catch (ClassNotFoundException e) {
+				continue;
+			}
+			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(entityName + "ServiceImpl" , ServiceImpl.class);
 			QueryWrapper<?> wrapper = new QueryWrapper<>();
 			wrapper.in("main_id", mainIds);
 			List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
@@ -228,68 +231,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			}
 		}
 		return false;
-	}
-	
-	private void pushSoInfoSkuListingTime(Map<DmpCfgInputConvertEntity , List<BaseEntity>> convertInputDmpBaseEntityListMaps) {
-		Map<String , DmpSoInfoEntity> dmpSoInfoEntityMap = new HashMap<>();
-		Map<String, List<DmpSoDetailEntity>> dmpSoDetailEntityMap = new HashMap<>();
-		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
-			List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
-			if(CollUtil.isNotEmpty(value)) {
-				String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
-				if("dmp_so_info".equals(storageName)) {
-					for(BaseEntity v : value) {
-						DmpSoInfoEntity dmpSoInfoEntity = (DmpSoInfoEntity) v;
-						dmpSoInfoEntityMap.put(dmpSoInfoEntity.getId(), dmpSoInfoEntity);
-					}
-				}else if("dmp_so_detail".equals(storageName)) {
-					for(BaseEntity v : value) {
-						DmpSoDetailEntity dmpSoDetailEntity = (DmpSoDetailEntity) v;
-						String mainId = dmpSoDetailEntity.getMainId();
-						List<DmpSoDetailEntity> list = dmpSoDetailEntityMap.get(mainId);
-						if(CollUtil.isEmpty(list)) {
-							list = new ArrayList<>();
-						}
-						list.add(dmpSoDetailEntity);
-						dmpSoDetailEntityMap.put(mainId, list);
-					}
-				}
-			}
-		}
-		
-		String tag = RocketMqNewTag.DMP_PRODUCT_LISTING_TO_PLM_TAG.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
-		for(Map.Entry<String, List<DmpSoDetailEntity>> dmpSoDetailEntity : dmpSoDetailEntityMap.entrySet()) {
-			DmpSoInfoEntity dmpSoInfoEntity = dmpSoInfoEntityMap.get(dmpSoDetailEntity.getKey());
-			if(dmpSoInfoEntity != null) {
-				String sourcePlatform = dmpSoInfoEntity.getSourcePlatform();
-				if(StringUtils.isNotBlank(sourcePlatform)) {
-					List<DmpSoDetailEntity> dmpSoDetailEntityList = dmpSoDetailEntity.getValue();
-					for(DmpSoDetailEntity detailEntity : dmpSoDetailEntityList) {
-						String skuNo = detailEntity.getPlatformSku();
-						if(StringUtils.isNotBlank(skuNo)) {
-							String key = RedisKeyConstant.PRODUCT_LISTING_TIME + sourcePlatform + ":" + skuNo;
-							if(!SKU_LISTING_TIME_SET.contains(key)) {
-								Boolean hasKey = redisTemplate.hasKey(key);
-								if(hasKey) {
-									SKU_LISTING_TIME_SET.add(key);
-								}else {
-									String now = DateUtil.now();
-									Map<String, String> mqData = new HashMap<>();
-									mqData.put("sourcePlatform", sourcePlatform);
-									mqData.put("skuNo", skuNo);
-									mqData.put("listingTime", now);
-									SendResult syncSend = mqProducerService.syncClassMsg(RocketMqNewTopic.DMP_PRODUCT_LISTING_TO_PLM_TOPIC, tag
-											, JSON.toJSONString(mqData), key);
-									if(SendStatus.SEND_OK.equals(syncSend.getSendStatus())) {
-										SKU_LISTING_TIME_SET.add(key);
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
 	}
 	
 	private boolean validate(Object value , DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity) {
@@ -511,4 +452,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected List<String> getSourceCodeKeys() {
 		return null;
 	}
+
+	public abstract Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpOutputTaskRequest, DmpOutputTaskResponse dmpResponse);
 }

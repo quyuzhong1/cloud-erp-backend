@@ -48,6 +48,18 @@ public class SoB2cReceiverDTO implements Serializable {
          * 销售订单编码
          */
         private String soB2cCode;
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
     }
 
     /**

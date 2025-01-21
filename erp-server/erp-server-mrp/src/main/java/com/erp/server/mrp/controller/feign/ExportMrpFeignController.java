@@ -2,11 +2,13 @@ package com.erp.server.mrp.controller.feign;
 
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
 import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
 import com.erp.server.mrp.handler.OverseasHistoryInventoryHandler;
+import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.handler.ReplenishmentSuggestionQueryHandler;
 import com.erp.server.mrp.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -24,7 +27,7 @@ public class ExportMrpFeignController {
     private ReplenishmentSuggestionService replenishmentSuggestionService;
 
     @Resource
-    private PurchaseSuggestService purchaseSuggestService;
+    private PurchaseSuggestIndependentService purchaseSuggestIndependentService;
 
     @Resource
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
@@ -67,7 +70,7 @@ public class ExportMrpFeignController {
     @PostMapping("/listPurchaseSuggestion")
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
-        return purchaseSuggestService.listPurchaseSuggestion(dto);
+        return purchaseSuggestIndependentService.listPurchaseSuggestion(dto);
     }
 
     /**
@@ -104,9 +107,9 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingPurchaseSuggestion")
-    @WebAdvanceQuery
-    public PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto) {
-        return purchaseSuggestService.paging(dto);
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
+    public PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {
+        return purchaseSuggestIndependentService.paging(dto);
     }
 
     /**
@@ -117,7 +120,7 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingPurchaseSuggestionMerge")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingPurchaseSuggestionMerge(@RequestBody PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
         return purchaseSuggestMergeService.paging(dto);
     }
@@ -151,8 +154,8 @@ public class ExportMrpFeignController {
      * @param dto 参数
      */
     @PostMapping("/exportCalcHistorySale")
-    public PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto) {
-        return replenishmentSuggestionService.exportCalcHistorySale(dto);
+    public List<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody CfgRuleCalcDTO.DownloadDTO dto) {
+        return replenishmentSuggestionService.exportCalcHistorySale(dto, dto.getSearchAfterValues());
     }
 
     /**
@@ -201,4 +204,15 @@ public class ExportMrpFeignController {
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
         return calcSalesInfoDimService.exportMrpSalesCalcList(dto);
     }
+
+
+    /**
+     * 导出库存预测依据
+     * @param dto 参数
+     */
+    @PostMapping("/exportSuggestCalcData")
+    public ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(@RequestBody BaseIdDTO dto) {
+        return replenishmentSuggestionService.exportSuggestCalcData(dto);
+    }
+
 }

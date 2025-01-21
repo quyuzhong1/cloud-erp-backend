@@ -28,10 +28,12 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
@@ -43,6 +45,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -60,7 +63,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -133,6 +135,9 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SysDictFeign sysDictFeign;
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
@@ -1821,5 +1826,37 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             list.add(searchResultDTO);
         }
         return list;
+    }
+
+    @Override
+    public List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku) {
+        if (Objects.isNull(reportMonth)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByReceiveAndReportMonth(reportMonth,shipmentCode,asin,msku);
+    }
+
+    /**
+     * 获取站点最近同步时间
+     */
+    private LocalDateTime getLastSyncTime(String shopId, List<ShopInfoEntity> shopList, List<DmpInoutDTO.LastOneDTO> lastOneDTOS) {
+        if (StringUtils.isBlank(shopId)){
+            return null;
+        }
+        ShopInfoEntity shopInfoEntity = shopList.stream().filter(e -> e.getId().equalsIgnoreCase(shopId)).findFirst().orElse(null);
+        if (null == shopInfoEntity){
+            return null;
+        }
+        List<String> sameCodeShopId = shopList.stream()
+                .filter(e -> e.getPlatformShopCode().equalsIgnoreCase(shopInfoEntity.getPlatformShopCode()))
+                .map(BaseEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        return lastOneDTOS.stream()
+                .filter(e -> sameCodeShopId.contains(e.getNextLevelId()))
+                .map(DmpInoutDTO.LastOneDTO::getLatestUpdateTime)
+                .filter(Objects::nonNull)
+                .max(Comparator.naturalOrder())
+                .orElse(null);
     }
 }

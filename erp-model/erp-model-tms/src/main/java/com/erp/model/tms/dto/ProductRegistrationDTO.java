@@ -249,6 +249,19 @@ public class ProductRegistrationDTO implements Serializable {
         @ExcelProperty(value = "备案不通过原因")
         @ColumnWidth(30)
         private String failureReason;
+
+        /**
+         * 创建时间
+         */
+        @ExcelIgnore
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        @ExcelIgnore
+        private LocalDateTime updateTime;
+
     }
 
     /**

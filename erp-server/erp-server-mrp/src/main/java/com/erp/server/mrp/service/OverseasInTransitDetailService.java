@@ -1,10 +1,11 @@
 package com.erp.server.mrp.service;
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.InventoryDetailTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.OverseasInTransitDetailEntity;
-import com.common.business.service.SuperService;
 import com.erp.model.mrp.vo.OverseasInTransitDetailVO;
 
 import java.util.List;
@@ -19,6 +20,10 @@ import java.util.List;
  */
 public interface OverseasInTransitDetailService extends SuperService<OverseasInTransitDetailEntity> {
 
+    /**
+     * 获取海外在途明细
+     * @param params 参数
+     */
     PagingVO<OverseasInTransitDetailVO> overseasInTransitDetail(PagingDTO<ReplenishmentSuggestionDTO.DetailParamDTO> params);
 
     /**
@@ -32,4 +37,10 @@ public interface OverseasInTransitDetailService extends SuperService<OverseasInT
      * @param detailId 明细id
      */
     int totalQtyByReplenishment(String detailId);
+
+    /**
+     * 海外仓店铺在途总数量
+     * @param params 参数
+     */
+    int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params);
 }

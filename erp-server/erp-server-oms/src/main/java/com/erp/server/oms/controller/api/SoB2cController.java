@@ -9,7 +9,9 @@ import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
@@ -22,12 +24,15 @@ import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +76,8 @@ public class SoB2cController extends BaseController {
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private WorkflowFeign workflowFeign;
     /**
      * 获取状态统计
      *
@@ -227,20 +234,38 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/submit")
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
+        List<SoB2cErrorEntity> soB2cErrorEntityList = soB2cErrorService.getByMainIdsAndType(ids, SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        ProcessBusinessEntity processBusiness = workflowFeign.getProcessBusiness(SourceTypeEnum.SO_B2C.getCode());
+        for (String id : ids) {
             BatchResultDTO submit;
+            SoB2cEntity entity = soB2cEntityList.stream().filter(e -> Objects.equals(id, e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(entity)){
+                submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交失败");
+                resultDTOS.add(submit);
+                continue;
+            }
+            SoB2cErrorEntity error = soB2cErrorEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
+            SoB2cLogisticsEntity logisticsEntity = logisticsEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
             try {
-                submit = soB2cService.submit(id, Boolean.TRUE);
+                if (Objects.nonNull(processBusiness)){
+                    submit = soB2cService.submit(entity,error,logisticsEntity, Boolean.TRUE);
+                }else {
+                    soB2cService.submit(entity,error,logisticsEntity, Boolean.FALSE);
+                    submit = soB2cService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), "提审自动审核"), null, "");
+                    //速卖通平台仓订单不走任何规则
+                    if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
+                        resultDTOS.add(submit);
+                        continue;
+                    }
+                    afterApprove(id, entity);
+                }
+
             } catch (Exception e) {
                 log.error("B2C销售订单 提交审核失败", e);
-
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交失败");
-                    resultDTOS.add(submit);
-                    continue;
-                }
                 submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
@@ -268,39 +293,13 @@ public class SoB2cController extends BaseController {
                 if (Objects.nonNull(entity)) {
                     ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
                     if (approveStatus.equals(entity.getApproveStatus())) {
-
                         //速卖通平台仓订单不走任何规则
                         if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform()) && entity.hasPlatformWarehouseOrder()) {
                             resultDTOS.add(approveResult);
                             continue;
                         }
-
-                        //仓库规则
-                        SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
-                        Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
-                        if (warehouseRuleMatch) {
-                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
-                            //表示成功
-                            if(logisticsRuleResult.getIsRuleMatch()){
-                                //检查是否备案并修改状态
-                                soB2cService.checkProductRegistrationAndUpdate(id, "");
-                            }
-
-                            Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                            Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                            Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
-                            if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                                    || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                                soB2cService.getLogisticsCode(id,  Boolean.TRUE);
-                            }
-                        }
-
-                        //清除预报异常
-                        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
-                        soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+                        afterApprove(id, entity);
                     }
-                    //自动计算预估运费到订单的预估运费字段
-                    soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
                 }
             } catch (Exception e) {
                 log.error("B2C销售订单审核失败", e);
@@ -315,6 +314,39 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(approveResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 审核通过后统一处理
+     * @param id
+     * @param entity
+     */
+    private void afterApprove(String id, SoB2cEntity entity) {
+        //仓库规则
+        SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(id, null, new HashMap<>());
+        Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+        if (warehouseRuleMatch) {
+            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
+            //表示成功
+            if(logisticsRuleResult.getIsRuleMatch()){
+                //检查是否备案并修改状态
+                soB2cService.checkProductRegistrationAndUpdate(id, "");
+            }
+
+            Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
+            Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
+            Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
+            if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
+                    || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+            }
+        }
+
+        //清除预报异常
+        soB2cService.removeSignError(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+        soB2cErrorService.removeErrorOrder(entity.getId(), SoB2cErrorTypeEnum.ORDER_FORECAST.getCode());
+        //自动计算预估运费到订单的预估运费字段
+        soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
     }
 
     /**
@@ -1059,7 +1091,7 @@ public class SoB2cController extends BaseController {
      * @param dto  这里的id是 so_id列表
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogViewService
+//    @LogViewService
     @PostMapping(value = "/retryOrderForecast")
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto.getIds());
@@ -1438,6 +1470,8 @@ public class SoB2cController extends BaseController {
                 continue;
             }
             SkuVO skuVO = skuVOList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getSkuId(), dto.getTargetId())).findFirst().orElse(null);
+            //重置sku含税单价信息
+            soB2cSplitService.resetSkuVO(entity,detail,skuVO);
             if (Objects.isNull(skuVO)){
                 result = BatchResultDTO.fail(dto.getId(), entity.getCode(), StrUtil.format("更换SKU【{}】记录不存在",dto.getTargetId()));
                 resultDTOS.add(result);

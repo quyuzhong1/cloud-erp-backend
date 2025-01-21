@@ -25,6 +25,7 @@ import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemSearchResults;
 import com.erp.server.dmp.ErpServerDmpApplication;
 import com.erp.server.dmp.service.CfgAppClientService;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -86,21 +87,55 @@ public class CatalogApiTest {
 //        List<String> marketplaceIds = Arrays.asList("ATVPDKIKX0DER");
 //        List<String> identifiers = Arrays.asList("1963-US7");
 //        String identifiersType = "SKU";
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.JP;
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.FR;
 //        String shopId = "1735479610549735425";
-        String shopId = "1735516266715680769";
+        String shopId = "1735512797405515786";
         List<String> marketplaceIds = Arrays.asList(marketplaceEnum.getMarketplaceId());
         List<String> identifiers = Arrays.asList(
-                "699942852190",
-                "699973419805",
-                "699946240887",
-                "699990602211",
-                "699994473985",
-                "699961098241",
-                "708214680710",
-                "699919591947"
+                "UK0673-FBA",
+                "amzn.gr.2619-UK2-PVf8V933BDRJkov7EpoC-LN",
+                "3271-GM",
+                "3270-GM",
+                "amzn.gr.3150-EU2-pEYxFKkNj8-aUpEEMQF5-LN",
+                "amzn.gr.3033-UK2-E9fY-NTu6algOpByiQlH-AC",
+                "amzn.gr.2895-UK2-yYOm8EeJbb7zHoQCP_8o-VG",
+                "T073GBB1-GM",
+                "L024GBW1-UK2",
+                "3028-GM",
+                "3028-EU2-GM",
+                "1533-UK",
+                "1457-UK",
+                "1672-UK",
+                "3150-EU2",
+                "2120-UK",
+                "UK-0595-CN",
+                "2109-UK",
+                "1905-UK",
+                "C076CNB1-EU2",
+                "amzn.gr.2883-EU2-iUyJYj4YIMuCgPQRbnFU-AC",
+                "amzn.gr.2683-UK2-jem55U46Nl6fI8dklzgo-GD",
+                "amzn.gr.2683-UK2-jQTk-YCmiFbWt5tsijox-VG",
+                "amzn.gr.2683-UK2-NtZ5aPDaaTAegxF02gJO-VG",
+                "amzn.gr.2619-UK2-0r6-F3qHTNpkxpvGIcR1-LN",
+                "amzn.gr.2395-UK-pBYu8EyWRysmsRUuYlF3y-LN",
+                "amzn.gr.2287-UK2-pZAyfUJILKUvgdL27A8t-VG",
+                "amzn.gr.2172-UK2-sjPnizMl6X58KkweGGqZ-VG",
+                "amzn.gr.2031-EU2-qLPXsjB8gTp__58UxLQk-LN",
+                "amzn.gr.1905-UK-5pXYxLdsHJP0ceD4JVpiR-GD",
+                "UK-1171-FBA",
+                "UK-0338-CN",
+                "UK-0085-CN",
+                "amzn.gr.2109-UK-CBxwPatAOYYsZD0FCpMzn-LN",
+                "amzn.gr.3274-EU2-mJMlyu2n3pyTdvnCArrc-GD",
+                "amzn.gr.L025GBB1-UK2-SHHJcqgGgNfIx5CR-LN",
+                "amzn.gr.M015GBB1-EU2-CiBvltpeKi59z_ji-LN",
+                "2301-UK2",
+                "2872-EU5",
+                "2829A-O-EU5",
+                "B007GBB1-EU5",
+                "2958-EU2"
         );
-        String identifiersType = "JAN";
+        String identifiersType = "EAN";
 //        String identifiersType = "UPC";
 //        List<String> identifiers = Arrays.asList(
 //                "B07B9MXJTK",
@@ -125,32 +160,36 @@ public class CatalogApiTest {
 //                "B0BRLWCXN4"
 //                );
 //        String identifiersType = "ASIN";
-        List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships");;
-        String locale = null;
-        String sellerId = null;
-        List<String> keywords = null;
-        List<String> brandNames = null;
-        List<String> classificationIds = null;
-        Integer pageSize = 20;
-        String pageToken = null;
-        String keywordsLocale = null;
-        // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        if (null == shopInfoDTO) {
-            throw new ServiceException("未找到店铺授权:" + shopId);
+        List<List<String>> partition = Lists.partition(identifiers, 20);
+
+        for (List<String> partList : partition) {
+            List<String> includedData = Arrays.asList("attributes","dimensions","identifiers","images","productTypes","salesRanks","summaries","relationships");;
+            String locale = null;
+            String sellerId = null;
+            List<String> keywords = null;
+            List<String> brandNames = null;
+            List<String> classificationIds = null;
+            Integer pageSize = 20;
+            String pageToken = null;
+            String keywordsLocale = null;
+            // 获取店铺授权信息
+            AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+            if (null == shopInfoDTO) {
+                throw new ServiceException("未找到店铺授权:" + shopId);
+            }
+
+            RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
+                    .rateLimitPermit(0.5)
+                    .waitTimeOutInMilliSeconds(10000L)
+                    .build();
+            //查询商品详情
+            CatalogApi api =  CatalogApi.init(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false,  rateLimitConfig);
+//        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
+            ItemSearchResults response = api.searchCatalogItems(marketplaceIds, partList, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
+            System.out.println("CatalogItems信息");
+            System.out.println(JSONUtil.toJsonStr(response));
         }
 
-        RateLimitConfiguration rateLimitConfig = RateLimitConfigurationOnRequests.builder()
-                .rateLimitPermit(0.5)
-                .waitTimeOutInMilliSeconds(10000L)
-                .build();
-        //查询商品详情
-        CatalogApi api =  CatalogApi.init(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, false,  rateLimitConfig);
-//        CatalogApi api = CatalogApi.initApi(AmazonMarketplaceEnum.US.getEndpointsEnum(), true);
-        ItemSearchResults response = api.searchCatalogItems(marketplaceIds, identifiers, identifiersType, includedData, locale, sellerId, keywords, brandNames, classificationIds, pageSize, pageToken, keywordsLocale);
-        System.out.println("CatalogItems信息");
-        System.out.println(JSONUtil.toJsonStr(response));
-        // TODO: test validations
     }
     
 }

@@ -127,6 +127,10 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 虚拟仓id
          */
         private String virtualWarehouseId;
+        /**
+         * 关联id(店铺)
+         */
+        private String shopId;
     }
 
     @Data
@@ -187,6 +191,10 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 关联id（如店铺id）,无关联id时传空字符
          */
         private List<String> relationIdList;
+        /**
+         * 分区ids
+         */
+        private List<String> partitionIds;
 
         /**
          * 平台

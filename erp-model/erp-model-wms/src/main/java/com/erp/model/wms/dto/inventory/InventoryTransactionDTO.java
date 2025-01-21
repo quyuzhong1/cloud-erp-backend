@@ -155,4 +155,15 @@ public class InventoryTransactionDTO implements Serializable {
         inventoryTransactionDTO.setQty(qty);
         return inventoryTransactionDTO;
     }
+
+    public static InventoryTransactionDTO getInventoryTransactionDTO(InventoryStockBaseDTO stockBaseDTO) {
+        InventoryTransactionDTO inventoryTransactionDTO = new InventoryTransactionDTO();
+        inventoryTransactionDTO.setSkuId(stockBaseDTO.getSkuId());
+        inventoryTransactionDTO.setSkuNo(stockBaseDTO.getSkuNo());
+        inventoryTransactionDTO.setOrgId(stockBaseDTO.getOrgId());
+        inventoryTransactionDTO.setWarehouseId(stockBaseDTO.getWarehouseId());
+        inventoryTransactionDTO.setWarehouseLocation(stockBaseDTO.getWarehouseLocation());
+        inventoryTransactionDTO.setInventoryStatus(stockBaseDTO.getInventoryStatus().getCode());
+        return inventoryTransactionDTO;
+    }
 }

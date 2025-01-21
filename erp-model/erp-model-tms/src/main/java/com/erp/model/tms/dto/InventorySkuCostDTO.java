@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -114,6 +116,7 @@ public class InventorySkuCostDTO implements Serializable {
         /**
          * 明细记录
          */
+        @Valid
         List<InventorySkuCostDetailDTO.AddDTO> detailList;
     }
 
@@ -290,11 +293,11 @@ public class InventorySkuCostDTO implements Serializable {
          */
         private String unit;
         /**
-         * 单位成本【可排序】
+         * 材料成本【可排序】
          */
         private String productCost;
         /**
-         * 单位成本【导出使用】
+         * 材料成本【导出使用】
          */
         private String productCostStr;
         /**
@@ -304,7 +307,31 @@ public class InventorySkuCostDTO implements Serializable {
         /**
          * 创建时间【可排序】
          */
-        private LocalDate createTime;
+        private LocalDateTime createTime;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 头程运费（6位小数）
+         */
+        private String firstMileShippingCost;
+        /**
+         * 头程运费 【导出使用】
+         */
+        private String firstMileShippingCostStr;
+        /**
+         * 清关税费（6位小数）
+         */
+        private String clearanceCustomsTax;
+        /**
+         * 清关税费 【导出使用】
+         */
+        private String clearanceCustomsTaxStr;
     }
 
     /**
@@ -350,5 +377,106 @@ public class InventorySkuCostDTO implements Serializable {
          * 明细
          */
         private List<InventorySkuCostDetailDTO.AddDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuCostDTO {
+        //核算月份
+        private LocalDate allocatedMonth;
+        //币种
+        private String currency;
+        //skuId
+        private String skuId;
+        //材料成本
+        private BigDecimal productCost;
+        //头程
+        private BigDecimal firstMileShippingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
+        //仓库
+        private String warehouseId;
+        //组织
+        private String salesOrgId;
+        //汇总所有子件
+        private Boolean countAllChild;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryB2BDTO {
+        /**
+         * sku集合
+         */
+        private List<String> skuIds;
+        /**
+         * 仓库列表
+         */
+        private String warehouseId;
+        /**
+         * 销售组织列表
+         */
+        private String salesOrgId;
+        /**
+         * 账单日期
+         */
+        private LocalDate billDate;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryB2CDTO {
+        /**
+         * sku集合
+         */
+        private List<QueryB2CDetailDTO> detailDTOS;
+        /**
+         * 销售组织列表
+         */
+        private String salesOrgId;
+        /**
+         * 账单日期
+         */
+        private LocalDate billDate;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryB2CDetailDTO{
+        /**
+         * 仓库列表
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryDetailDTO{
+        private String shopId;
+        /**
+         * 销售组织列表
+         */
+        private String salesOrgId;
+        /**
+         * 仓库列表
+         */
+        private String warehouseId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 账单日期
+         */
+        private LocalDate billDate;
     }
 }

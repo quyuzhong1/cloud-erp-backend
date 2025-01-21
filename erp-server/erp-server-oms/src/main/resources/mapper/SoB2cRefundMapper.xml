@@ -50,7 +50,9 @@
             rod.sku_id as skuId,
             rod.sku_no as skuNo,
             rod.sale_qty as saleQty,
-            rod.refund_qty as refundQty
+            rod.refund_qty as refundQty,
+            ro.create_time as createTime,
+            ro.update_time as update_time
         FROM so_b2c_refund ro
         LEFT join so_b2c_refund_detail rod on ro.id = rod.main_id and rod.is_deleted = false
         WHERE  ${params.sqlMap.default}

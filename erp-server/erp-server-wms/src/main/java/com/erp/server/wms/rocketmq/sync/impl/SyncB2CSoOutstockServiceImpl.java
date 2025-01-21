@@ -27,6 +27,7 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
+import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
@@ -42,6 +43,7 @@ import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
@@ -49,6 +51,7 @@ import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -103,6 +106,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -232,9 +237,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //仓库
         soOutstock.setWarehouseId(warehouse.getId());
         soOutstock.setWarehouseName(warehouse.getName());
-
         //查询虚拟仓
-        String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(soOutstock.getWarehouseId()), shopInfo.getDictPlatform(),shopInfo.getId());
+        String virtualWarehouseId = handleVirtualWarehouse(Collections.singletonList(soOutstock.getWarehouseId()), shopInfo.getDictPlatform(),shopInfo.getId(), shopInfo.getCustomerId(), soOutstock.getCountry());
 
         //客户信息
         soOutstock.setCustomerId(shopInfo.getCustomerId());
@@ -242,8 +246,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setCustomerName(customerInfo.getName());
             soOutstock.setSellerId(customerInfo.getSellerId());
             soOutstock.setSellerName(customerInfo.getSellerName());
-            SysDepartmentUserNumberDTO dept = sysUserFeign.getDeptByUserId(customerInfo.getSellerId());
-            soOutstock.setSalesDeptId(Optional.ofNullable(dept).orElse(new SysDepartmentUserNumberDTO()).getDepartmentId());
+            soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -423,7 +426,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
         //虚拟仓库
         List<String> warehouseIdList = warehouseList.stream().map(WarehouseEntity::getId).collect(Collectors.toList());
-        String virtualWarehouseId = handleVirtualWarehouse(warehouseIdList, customerInfoEntityList.get(0).getPlatformType(),"");
+        String virtualWarehouseId = handleVirtualWarehouse(warehouseIdList, customerInfoEntityList.get(0).getPlatformType(),"", customerInfoEntityList.get(0).getId(),"" );
         /**
          * sku no list
          */
@@ -551,15 +554,28 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     /**
      * 获取虚拟仓
+     *
+     * @param warehouseIdList
+     * @param customerId
+     * @param country
      * @author will
      * @date 2024/6/13 12:07
-     * @param warehouseIdList
      */
-    private String handleVirtualWarehouse (List<String> warehouseIdList,String  dictPlatform,String shopId) {
+    private String handleVirtualWarehouse (List<String> warehouseIdList, String  dictPlatform, String shopId, String customerId, String country) {
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(dictPlatform);
         platformDTO.setRelationId(shopId);
         platformDTO.setWarehouseIdList(warehouseIdList);
+        if(StringUtils.isNotBlank(customerId)){
+            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class,customerId);
+            if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.GL.getCode())){
+                country = customerInfo.getCountryId();
+            }
+        }
+        if(StringUtils.isNotBlank(country)){
+            String partitionId = sysPartitionFeign.getPartitionByCountry(country);
+            platformDTO.setPartitionId(partitionId);
+        }
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = VirtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
         if (CollectionUtils.isEmpty(virtualWarehouseList)) {
            return CharSequenceUtil.EMPTY;

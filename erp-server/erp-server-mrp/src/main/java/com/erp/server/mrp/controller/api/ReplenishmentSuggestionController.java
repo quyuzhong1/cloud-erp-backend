@@ -3,6 +3,7 @@ package com.erp.server.mrp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -153,6 +154,16 @@ public class ReplenishmentSuggestionController extends BaseController {
     @PostMapping("/inventoryTotal")
     public ApiResult<Integer> inventoryTotal(@RequestBody @Validated InventoryTotalDTO params) {
         Integer inventoryTotal = replenishmentSuggestionService.inventoryTotal(params);
+        return success(inventoryTotal);
+    }
+
+    /**
+     * 数量统计
+     * @param params 明细id
+     */
+    @PostMapping("/inventoryDetailTotal")
+    public ApiResult<Integer> inventoryDetailTotal(@RequestBody @Validated InventoryDetailTotalDTO params) {
+        Integer inventoryTotal = replenishmentSuggestionService.inventoryDetailTotal(params);
         return success(inventoryTotal);
     }
 
@@ -716,8 +727,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/cleanHistorySalesByOrder")
     public ApiResult<String> cleanHistorySalesByOrder(@RequestParam String platformType, @RequestParam Integer cleanDay) {
-        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
-        basicReplenishmentDataService.cleanHistorySalesByOrder(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        basicReplenishmentDataService.cleanHistorySalesByOrder(LocalDate.now(), CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
         return success();
     }
 
@@ -728,8 +738,28 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/cleanHistorySalesByOutStock")
     public ApiResult<String> cleanHistorySalesByOutStock(@RequestParam String platformType, @RequestParam Integer cleanDay) {
-        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
-        basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        return success();
+    }
+
+    /**
+     * 历史销量近365天
+     * @param dto 参数
+     */
+    @PostMapping("/listSalesInfo")
+    public ApiResult<List<ReplenishmentSuggestionVO.SalesInfoVO>> listSalesInfo(@RequestBody @Validated BaseIdDTO dto) {
+        List<ReplenishmentSuggestionVO.SalesInfoVO> page = replenishmentSuggestionService.listSalesInfo(dto);
+        return success(page);
+    }
+
+
+    /**
+     * 导出计算数据
+     * @param dto 参数
+     */
+    @PostMapping("/exportCalcData")
+    public ApiResult<String> exportCalcData(@RequestBody @Validated BaseIdDTO dto) {
+        replenishmentSuggestionService.exportCalcData(dto);
         return success();
     }
 }

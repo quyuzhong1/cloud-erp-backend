@@ -7,6 +7,7 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -20,6 +21,7 @@ import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -83,13 +85,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO update(SoB2cDTO.UpdateDTO dto);
 
      /**
-     * 提交审核
-     * @author Will
-     * @date: 2023-08-18
-     * @param id
-     * @return
-     */
-    BatchResultDTO submit(String id,Boolean isProcess);
+      * 提交审核
+      *
+      * @param entity
+      * @param error
+      * @param soB2cLogisticsEntity
+      * @return
+      * @author Will
+      * @date: 2023-08-18
+      */
+    BatchResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
 
     /**
     * 审核

@@ -150,6 +150,10 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         * 渠道(店铺)id的json
         */
         private List<String> channelIdList;
+        /**
+         * 分区ids
+         */
+        private List<String> partitionIdList;
 
         /**
          * 平台

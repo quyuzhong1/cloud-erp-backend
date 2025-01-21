@@ -62,45 +62,57 @@ public class MercadoSdkClientService {
 
         String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
 
+
+        //组装授权url
+        String clientId = "3457166802805723";
+        String clientSecret = "QucvI4VWHO0w3AZftOElz5liVOurfjQG";
+        String url = "https://api.mercadolibre.com/marketplace/orders/2000010507016480";
+
+
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);
 
         //设置请求头
-        Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-102918-a4b8cdec2a33e72d1249640c9af074c3-1509269799");
-
-
-
-        List<ListingViewDTO> resultsBeanList = new ArrayList<>();
-
-        //每次最多获取200条
-        Integer pageSize = 50;
-        //当前页数
-        Integer pageNo = 0;
-        //总页数
-        Integer pageCount = 1;
-
-        Boolean nexflag = true;
-        String baseUrl = "https://api.mercadolibre.com/marketplace/claims/search";
-        while (nexflag) {
-            int offset = pageSize * pageNo;
-//user_id=1509269799
-            //入参
-            HashMap<String, Object> params = new HashMap<>();
-            params.put("user_id", 1512693686);
-            params.put("site_id", "MLM");
-            //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
-            if (!Objects.equals(apiResult.getCode(), 200)) {
-                nexflag = false;
-                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
+        Map<String, String> orderHeaderMap = new HashMap<>(1);
+        orderHeaderMap.put("Authorization", "Bearer " + "APP_USR-3457166802805723-012018-7d948085801db7d1625f3859c50f9d20-2201503196");
+//			https://api.mercadolibre.com/marketplace/orders/2000007633674134
+        //拉取数据
+        ApiResult apiResult = new ApiResult();
+        Object data = null;
+        long sleepTime = 1000;
+        int count = 0;
+        while(ObjectUtil.isEmpty(data)) {
+            apiResult = HttpCommonUtil.sendOkHttpApiResult(url, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
+            if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                if(count == 10) {
+                    throw new ServiceException("调用美客多" + url + "接口重试" + count + "失败");
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                sleepTime = sleepTime + 1000;
+                count = count + 1;
             }
-
-
+            data = apiResult.getData();
         }
 
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            System.out.println("errrrrrrrrrrrr");
+        }
+
+        //解析数据
+        com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO orderViewDTO = null;
+        ObjectMapper objectMapperBase = new ObjectMapper();
+        try {
+            orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);
+        } catch (JsonProcessingException e) {
+            log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData()));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+                    url, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData())));
+        }
+        System.out.println(orderViewDTO);
     }
 
 
@@ -623,7 +635,7 @@ public class MercadoSdkClientService {
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
             Map<String, Object> extendData = shopInfoEntity.getExtendData();
-            result.setUserId(Integer.valueOf(extendData.get("userId")+""));
+            result.setUserId(Long.valueOf(extendData.get("userId")+""));
 
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {

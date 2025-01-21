@@ -15,7 +15,7 @@ public class BuyerBeanX {
      */
 
     @JsonProperty("id")
-    private int fid;
+    private long fid;
     @JsonProperty("nickname")
     private String nickname;
     @JsonProperty("last_name")

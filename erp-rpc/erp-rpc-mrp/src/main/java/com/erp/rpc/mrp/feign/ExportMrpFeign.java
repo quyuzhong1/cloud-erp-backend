@@ -2,12 +2,15 @@ package com.erp.rpc.mrp.feign;
 
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.DynamicExcelDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 @FeignClient(name = "erp-mrp", contextId = "exportMrpFeign", configuration = ExportFeignConfig.class)
 public interface ExportMrpFeign {
@@ -40,7 +43,7 @@ public interface ExportMrpFeign {
      * 导出采购建议
      */
     @PostMapping("/feign/export/pagingPurchaseSuggestion")
-    PagingVO<PurchaseSuggestDTO.ListDTO> pagingPurchaseSuggestion(PagingDTO<PurchaseSuggestDTO.PagingParamDTO> dto);
+    PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingPurchaseSuggestion(PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto);
     /**
      * 导出采购建议（合并）
      */
@@ -69,7 +72,7 @@ public interface ExportMrpFeign {
      * @param dto 参数
      */
     @PostMapping("/feign/export/exportCalcHistorySale")
-    PagingVO<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody PagingDTO<CfgRuleCalcDTO.DownloadDTO> dto);
+    List<CfgRuleCalcDTO.HistorySaleDTO> exportCalcHistorySale(@RequestBody CfgRuleCalcDTO.DownloadDTO dto);
 
     /**
      * 导出
@@ -93,4 +96,11 @@ public interface ExportMrpFeign {
     @PostMapping("/feign/export/exportMrpSalesCalcList")
     PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
 
+
+    /**
+     * 导出库存预测依据
+     * @param dto 参数
+     */
+    @PostMapping("/feign/export/exportSuggestCalcData")
+    ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(@RequestBody BaseIdDTO dto);
 }

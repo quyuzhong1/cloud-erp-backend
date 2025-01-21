@@ -133,8 +133,10 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 			try {
 				shipmentViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ShipmentViewDTO.class);
 			} catch (JsonProcessingException e) {
+				System.out.println(e.getMessage());
+				e.printStackTrace();
 				log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", apiResult.getData());
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 			if (ObjectUtil.isEmpty(shipmentViewDTO)) {
@@ -149,5 +151,21 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 
 		return dmpInputTaskInitDTOList;
 
+	}
+
+
+	public static void main(String[] args) {
+
+		String dataJsonString = "{\"gross_amount\":3.99,\"currency_id\":\"USD\",\"receiver\":{\"user_id\":24384856,\"cost\":0,\"compensation\":0,\"save\":0,\"discounts\":[{\"rate\":1,\"type\":\"ratio\",\"promoted_amount\":4.99}],\"compensations\":[]},\"senders\":[{\"user_id\":2198665353,\"cost\":3.99,\"compensation\":0,\"save\":0,\"discounts\":[],\"compensations\":[]}]}";
+		//解析数据
+		ObjectMapper objectMapper = new ObjectMapper();
+		ShipmentViewDTO shipmentViewDTO = null;
+		try {
+			shipmentViewDTO = objectMapper.readValue(dataJsonString, ShipmentViewDTO.class);
+		} catch (JsonProcessingException e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
+		System.out.println(shipmentViewDTO);
 	}
 }

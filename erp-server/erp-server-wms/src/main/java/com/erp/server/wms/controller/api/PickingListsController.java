@@ -12,7 +12,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.server.wms.service.PickingListsService;
+import com.erp.server.wms.service.RequisitionApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +36,8 @@ public class PickingListsController extends BaseController {
 
     @Resource
     private PickingListsService pickingListsService;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     /**
      * 分页查询
@@ -88,7 +92,9 @@ public class PickingListsController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除拣货单")
     @PostMapping("/delete")
     public ApiResult<String> delete(@RequestBody BaseIdDTO dto) {
+        PickingListsEntity pickingListsEntity = pickingListsService.getById(dto.getId());
         pickingListsService.delete(dto.getId());
+        requisitionApplicationService.writeBackRequisitionPickPushDownStatus(pickingListsEntity.getSourceId());
         return success();
     }
 
@@ -111,6 +117,7 @@ public class PickingListsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出拣货单")
     @PostMapping("/export")
+    @WebAdvanceQuery
     public ApiResult<Boolean> export(@RequestBody @Validated PickingListsDTO.ExportDTO dto) {
         pickingListsService.export(dto);
         return success(true);

@@ -58,9 +58,12 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
+        //关联实体仓id集合
         private List<String> warehouseIdList;
+        //关联实体仓名称集合
+        private List<String> warehouseNameList;
     }
     @Data
     @NoArgsConstructor
@@ -70,6 +73,10 @@ public class VirtualWarehouseDTO implements Serializable {
          * 关联id（如店铺id）,无关联id时传空字符
          */
         private String relationId;
+        /**
+         * 分区id
+         */
+        private String partitionId;
 
         /**
          * 平台
@@ -116,8 +123,8 @@ public class VirtualWarehouseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        @Valid
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        @Valid
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         //        @Valid
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
@@ -136,7 +143,7 @@ public class VirtualWarehouseDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
 
@@ -344,9 +351,17 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String virtualWarehouseId;
         /**
-         * 虚拟仓id
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+        /**
+         * 店铺id
          */
         private String relationId;
+        /**
+         * 分区id
+         */
+        private String partitionId;
 
     }
     @Data
@@ -382,6 +397,10 @@ public class VirtualWarehouseDTO implements Serializable {
          * 关联id集合
          */
         private List<String> relationIdList;
+        /**
+         * 分区id集合
+         */
+        private List<String> partitionIdList;
 
     }
 }

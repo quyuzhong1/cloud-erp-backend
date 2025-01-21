@@ -342,6 +342,11 @@ public class LogisticsBillCostDTO implements Serializable {
         private String actualDeductibleTaxCurrencySymbol;
         
         private String logisticsBillDetailId;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**

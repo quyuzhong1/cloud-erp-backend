@@ -20,7 +20,7 @@ public class PlayersBean {
     @JsonProperty("type")
     private String type;
     @JsonProperty("user_id")
-    private int userId;
+    private long userId;
     @JsonProperty("available_actions")
     private List<?> availableActions;
 
@@ -40,11 +40,11 @@ public class PlayersBean {
         this.type = type;
     }
 
-    public int getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 

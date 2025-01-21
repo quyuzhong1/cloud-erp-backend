@@ -5,9 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -33,23 +31,30 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.PagingViewDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
+import com.erp.model.oms.enums.CustomerAddressTypeEnum;
+import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
+import com.erp.model.sys.entity.*;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -146,7 +151,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
     /**
      * 获取到分组的id 集合
@@ -506,7 +512,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
-        
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -581,9 +586,24 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
                 subregionName = globalArea.getSubregionName();
             }
         }
+        if(StringUtils.isNotBlank(customer.getCountryId())){
+            List<CfgCountryPartitionEntity> cfgCountryPartitionEntity = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getCountry,customer.getCountryId()).list();
+            if(CollectionUtils.isNotEmpty(cfgCountryPartitionEntity)){
+                view.setPartitionName(cfgCountryPartitionEntity.get(0).getPartitionName());
+                view.setPartitionCode(cfgCountryPartitionEntity.get(0).getPartitionCode());
+                view.setPartitionId(cfgCountryPartitionEntity.get(0).getPartitionId());
+            }
+        }
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
-        view.setSellerName(sysUserFeign.getSysUserById(view.getSellerId()).getRealName());
+        if(CharSequenceUtil.isNotBlank(view.getSellerId())){
+            SysUserDTO user = sysUserFeign.getSysUserById(view.getSellerId());
+            view.setSellerName(Objects.nonNull(user) ? user.getRealName() : CharSequenceUtil.EMPTY);
+        }
+        if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){
+            List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
+            view.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
+        }
         view.setApproveStatusName(customer.getApproveStatus().getName());
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attachmentList.stream().
@@ -1127,10 +1147,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(receiptConditionId);
             base.setReceiveConditionName(receiptCondition != null ? receiptCondition.getName() : "");
         }
-        if(StringUtils.isNotBlank(customer.getSellerId())){
-            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(customer.getSellerId());
-            base.setSalesDeptId(deptByUserId.getDepartmentId());
-            base.setSalesDeptName(deptByUserId.getDepartmentName());
+        if(StringUtils.isNotBlank(customer.getSalesDeptId())){
+            List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
+            base.setSalesDeptId(customer.getSalesDeptId());
+            base.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
         }
         return base;
     }
@@ -1635,6 +1655,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         return this.getById(id);
     }
 
+    @Override
+    public CustomerInfoEntity getCustomerByCode(String code) {
+        return this.lambdaQuery().eq(CustomerInfoEntity::getCode, code).last("limit 1").one();
+    }
+
     /**
      * 客户联系人信息
      *
@@ -2005,20 +2030,21 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     }
 
     @Override
-    public PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto) {
-        Page<CustomerDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+    public List<cn.hutool.core.lang.Pair<Integer,List<?>>> exportCustomerPairList(PagingDTO<CustomerDTO.ExportDTO> dto) {
+        List<cn.hutool.core.lang.Pair<Integer,List<?>>> pairList = new ArrayList<>();
+        Page<CustomerDTO.PagingExportDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        List<CustomerDTO.PagingExportDTO> records = page.getRecords();
+        if(CollUtil.isEmpty(records)) {
+            return pairList;
+        }
+        List<String> customerIdList = records.stream().map(CustomerDTO.PagingExportDTO::getId).collect(Collectors.toList());
 
         //平台信息
         String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
 
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        List<PagingViewDTO> records = page.getRecords();
-        if(CollUtil.isEmpty(records)) {
-        	return new PagingVO<>(page);
-        }
-		List<String> ids = records.stream().map(CustomerDTO.PagingViewDTO::getId).collect(Collectors.toList());
-        ids.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));
+        customerIdList.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
             listApiResult = workflowFeign.curApprover(dtoList);
@@ -2033,11 +2059,32 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
-        Map<String, String> currIdNameMap = FeignQuery.getByIds(DictCurrencyEntity.class , records.stream().map(CustomerDTO.PagingViewDTO::getCurrency).collect(Collectors.toList()))
-        	.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName));
-        Map<String, String> orgIdNameMap = sysUserFeign.getAccountingCompanyList(records.stream().map(CustomerDTO.PagingViewDTO::getFinancialOrganization).collect(Collectors.toList()))
-        	.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getName));
-        for (CustomerDTO.PagingViewDTO item : page.getRecords()) {
+        //省/城市
+        List<String> cityIds = records.stream().map(CustomerDTO.PagingExportDTO::getCityId).collect(Collectors.toList());
+        List<String> provinceIds = records.stream().map(CustomerDTO.PagingExportDTO::getProvinceId).collect(Collectors.toList());
+        cityIds.addAll(provinceIds);
+        List<DictCityEntity> cityList = sysUserFeign.listCityByIds(cityIds);
+        Map<String,String> cityMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(cityList)){
+            cityMap = cityList.stream().collect(Collectors.toMap(DictCityEntity::getId, DictCityEntity::getName));
+        }
+
+        //区域
+        List<String> areaIds = records.stream().map(CustomerDTO.PagingExportDTO::getAreaId).collect(Collectors.toList());
+        List<DictGlobalAreaEntity> areaList = sysUserFeign.listGlobalAreaByIds(areaIds);
+        Map<String,String> areaMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(areaList)){
+            areaMap = areaList.stream().collect(Collectors.toMap(DictGlobalAreaEntity::getId, DictGlobalAreaEntity::getRegionName));
+        }
+
+        //公司类别
+        List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
+        Map<String,String> customerCategoryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(customerCategoryList)){
+            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getId, DictBasicDTO.ViewDTO::getName));
+        }
+
+        for (CustomerDTO.PagingExportDTO item : records) {
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
             item.setDisabledName(disabledName);
@@ -2053,8 +2100,161 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             }
             //国家
             item.setCountryName(countryMap.get(item.getCountryId()));
-            item.setCurrencyName(currIdNameMap.get(item.getCurrency()));
-            item.setFinancialOrganizationName(orgIdNameMap.get(item.getFinancialOrganization()));
+            //城市
+            item.setCityName(cityMap.get(item.getCityId()));
+            //省
+            item.setProvinceName(cityMap.get(item.getProvinceId()));
+            //区域
+            item.setAreaName(areaMap.get(item.getAreaId()));
+            //平台类型
+            item.setBusinessModeName(CustomerInfoBusinessModeEnum.getName(item.getBusinessMode()));
+            //公司类别
+            item.setCompanyCategoryDictName(customerCategoryMap.get(item.getCompanyCategoryDict()));
+        }
+
+
+
+        //发票信息
+        List<InvoiceDTO.ViewDTO> invoiceList = customerInvoiceService.listByMainIds(customerIdList);
+        //发票
+        for (InvoiceDTO.ViewDTO view : invoiceList) {
+            view.setIsDefaultName(view.getIsDefault() ? "是" : "否");
+            view.setTypeName(InvoiceTypeEnum.getName(view.getType()));
+        }
+
+        //联系人信息
+        //地址信息
+        List<CustomerDTO.PagingAddressContactExportDTO> pagingAddressContactDTOS = baseMapper.listAddressContactExport(customerIdList);
+        //联系人地址
+        for (CustomerDTO.PagingAddressContactExportDTO view : pagingAddressContactDTOS) {
+            view.setPersonDisabledName(view.getPersonDisabled() ? "停用" : "启用");
+            view.setPersonIsDefaultName(view.getPersonIsDefault() ? "是" : "否");
+            view.setAddressDisabledName(view.getAddressDisabled() ? "停用" : "启用");
+            view.setAddressIsDefaultName(view.getAddressIsDefault() ? "是" : "否");
+        }
+
+        cn.hutool.core.lang.Pair customerInfo = new cn.hutool.core.lang.Pair(0,records);
+        cn.hutool.core.lang.Pair invoice = new cn.hutool.core.lang.Pair(1,invoiceList);
+        cn.hutool.core.lang.Pair addressContact = new cn.hutool.core.lang.Pair(2,pagingAddressContactDTOS);
+        pairList.add(customerInfo);
+        pairList.add(invoice);
+        pairList.add(addressContact);
+        return pairList;
+    }
+
+    @Override
+    public PagingVO<CustomerDTO.PagingExportDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto) {
+        Page<CustomerDTO.PagingExportDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        List<CustomerDTO.PagingExportDTO> records = page.getRecords();
+        if(CollUtil.isEmpty(records)) {
+            return new PagingVO<>(page);
+        }
+        List<String> customerIdList = records.stream().map(CustomerDTO.PagingExportDTO::getId).collect(Collectors.toList());
+
+        //发票信息
+        List<InvoiceDTO.ViewDTO> invoiceList = customerInvoiceService.listByMainIds(customerIdList);
+        Map<String, List<InvoiceDTO.ViewDTO>> invoiceMap = invoiceList.stream().collect(Collectors.groupingBy(InvoiceDTO.ViewDTO::getMainId));
+
+        //联系人信息
+        //地址信息
+        List<CustomerDTO.PagingAddressContactExportDTO> pagingAddressContactDTOS = baseMapper.listAddressContactExport(customerIdList);
+        Map<String, List<CustomerDTO.PagingAddressContactExportDTO>> addressContactMap = pagingAddressContactDTOS.stream().collect(Collectors.groupingBy(CustomerDTO.PagingAddressContactExportDTO::getId));
+
+        //平台信息
+        String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
+
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        customerIdList.forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.CUSTOMER_INFO.getCode(), obj)));
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
+            }
+        }
+        // 国家
+        List<DictCountryDTO.ListDTO> countryList = sysUserFeign.countryList();
+        Map<String,String> countryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(countryList)){
+            countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
+        }
+        //省/城市
+        List<String> cityIds = records.stream().map(CustomerDTO.PagingExportDTO::getCityId).collect(Collectors.toList());
+        List<String> provinceIds = records.stream().map(CustomerDTO.PagingExportDTO::getProvinceId).collect(Collectors.toList());
+        cityIds.addAll(provinceIds);
+        List<DictCityEntity> cityList = sysUserFeign.listCityByIds(cityIds);
+        Map<String,String> cityMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(cityList)){
+            cityMap = cityList.stream().collect(Collectors.toMap(DictCityEntity::getId, DictCityEntity::getName));
+        }
+
+        //区域
+        List<String> areaIds = records.stream().map(CustomerDTO.PagingExportDTO::getAreaId).collect(Collectors.toList());
+        List<DictGlobalAreaEntity> areaList = sysUserFeign.listGlobalAreaByIds(areaIds);
+        Map<String,String> areaMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(areaList)){
+            areaMap = areaList.stream().collect(Collectors.toMap(DictGlobalAreaEntity::getId, DictGlobalAreaEntity::getRegionName));
+        }
+
+        //公司类别
+        List<DictBasicDTO.ViewDTO> customerCategoryList = dictBasicService.getByKey("customerCompanyCategory");
+        Map<String,String> customerCategoryMap = new HashMap<>();
+        if(CollectionUtils.isNotEmpty(customerCategoryList)){
+            customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+        }
+
+        for (CustomerDTO.PagingExportDTO item : records) {
+            Boolean disabled = item.getDisabled();
+            String disabledName = disabled ? "停用" : "启用";
+            item.setDisabledName(disabledName);
+            ApproveStatusEnum approveStatus = item.getApproveStatus();
+            item.setApproveStatusName(approveStatus.getName());
+            //平台类型名称
+            String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformType())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setPlatformTypeName(platformTypeName);
+            //最新审核人
+            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(obj -> obj.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(obj.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
+            //国家
+            item.setCountryName(countryMap.get(item.getCountryId()));
+            //城市
+            item.setCityName(cityMap.get(item.getCityId()));
+            //省
+            item.setProvinceName(cityMap.get(item.getProvinceId()));
+            //区域
+            item.setAreaName(areaMap.get(item.getAreaId()));
+            //平台类型
+            item.setBusinessModeName(CustomerInfoBusinessModeEnum.getName(item.getBusinessMode()));
+            //公司类别
+            item.setCompanyCategoryDictName(customerCategoryMap.get(item.getCompanyCategoryDict()));
+
+            //发票
+            List<InvoiceDTO.ViewDTO> invoiceViews = invoiceMap.get(item.getId());
+            if(CollUtil.isNotEmpty(invoiceViews)){
+                for (InvoiceDTO.ViewDTO view : invoiceViews) {
+                    view.setIsDefaultName(view.getIsDefault() ? "是" : "否");
+                    view.setTypeName(InvoiceTypeEnum.getName(view.getType()));
+                    view.setCode(item.getCode());
+                    view.setName(item.getName());
+                }
+                item.setInvoiceList(invoiceViews);
+            }
+            //联系人地址
+            List<CustomerDTO.PagingAddressContactExportDTO> addressContactViews = addressContactMap.get(item.getId());
+            if(CollUtil.isNotEmpty(addressContactViews)){
+                for (CustomerDTO.PagingAddressContactExportDTO view : addressContactViews) {
+                    view.setTypeName(CustomerAddressTypeEnum.getName(view.getType()));
+                    view.setPersonDisabledName(null == view.getPersonDisabled() || view.getPersonDisabled()? "停用" : "启用");
+                    view.setPersonIsDefaultName(null == view.getPersonIsDefault() || view.getPersonIsDefault() ? "是" : "否");
+                    view.setAddressDisabledName(null == view.getAddressDisabled() || view.getAddressDisabled()? "停用" : "启用");
+                    view.setAddressIsDefaultName(null == view.getAddressIsDefault() || view.getAddressIsDefault() ? "是" : "否");
+                }
+                item.setAddressContactList(addressContactViews);
+            }
         }
         return new PagingVO<>(page);
     }
@@ -2083,5 +2283,43 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
+    }
+
+    @Override
+    public void initHistoryCustomerDeptId() {
+        List<CustomerInfoEntity> list = this.list();
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        Map<String, List<CustomerInfoEntity>> orgMap = list.stream().collect(Collectors.groupingBy(CustomerInfoEntity::getUseOrgId));
+        for (String orgId : orgMap.keySet()){
+            if (CharSequenceUtil.isBlank(orgId)){
+                continue;
+            }
+            List<CustomerInfoEntity> customerInfoEntityList = orgMap.get(orgId);
+            if (CollUtil.isEmpty(customerInfoEntityList)){
+                continue;
+            }
+            KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
+            dto.setOrgId(orgId);
+            dto.setType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+            ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listApiResult = kingdeeFeign.listKingdeeUser(dto);
+            List<UserInfoDTO.BusinessOperationUserDTO> data = listApiResult.getData();
+            if (CollUtil.isEmpty(data)){
+                continue;
+            }
+            customerInfoEntityList.forEach(customerInfoEntity -> {
+                List<UserInfoDTO.BusinessOperationUserDTO> collect = data.stream().filter(e -> Objects.equals(customerInfoEntity.getSellerId(), e.getUserId())).collect(Collectors.toList());
+                List<String> deptIds = new ArrayList<>();
+                if(CollUtil.isNotEmpty(collect)){
+                    deptIds = collect.stream().map(UserInfoDTO.BusinessOperationUserDTO::getDepartmentId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                }
+                if (1 == deptIds.size() && CharSequenceUtil.isNotBlank(deptIds.get(0))){
+                    this.lambdaUpdate().eq(CustomerInfoEntity::getId,customerInfoEntity.getId()).set(CustomerInfoEntity::getSalesDeptId, deptIds.get(0)).update();
+                }
+            });
+
+        }
+
     }
 }

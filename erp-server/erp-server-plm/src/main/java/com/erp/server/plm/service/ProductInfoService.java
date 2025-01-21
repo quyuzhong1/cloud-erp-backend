@@ -311,4 +311,10 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return List<ProductDTO>
      */
     List<ProductDetailDTO.ProductDTO> listProductBySkuIds(List<String> skuIds);
+
+    /**
+     * 更新分类
+     * @param dto 参数
+     */
+    Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto);
 }

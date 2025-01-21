@@ -54,4 +54,6 @@ public interface CustomerInvoiceService extends SuperService<CustomerInvoiceEnti
      * @return void
      */
     void updateBatchInvoice(String mainId, List<InvoiceDTO.ViewDTO> invoiceList);
+
+    List<InvoiceDTO.ViewDTO> listByMainIds(List<String> mainIds);
 }

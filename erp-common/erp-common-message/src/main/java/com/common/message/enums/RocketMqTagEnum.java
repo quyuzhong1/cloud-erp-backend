@@ -558,6 +558,10 @@ public enum RocketMqTagEnum {
      * 异步获取平台打印面单标签
      */
     ASYNC_GET_PLATFORM_LABEL_TAG(10001, RocketMqTagEnum.SYNC_TMS,"async_get_platform_label_tag"),
+    /**
+     * 异步更新物流获取记录
+     */
+    ASYNC_GET_TRACK123_LOGISTICS_TRACK(10002, RocketMqTagEnum.SYNC_TMS, "async_get_logistics_track"),
 
     //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
     /**
@@ -571,6 +575,10 @@ public enum RocketMqTagEnum {
     WDT_OTHER_OUT_STOCK_TAG(11004, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_other_out_stock_tag"),
     WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG(11005, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_virtual_allocation_handle_detail_tag"),
 
+    /**
+     * 同步产品资料到领星
+     */
+    LINGXING_PRODUCT_DETAIL_TAG(11001, RocketMqTagEnum.SYNC_LINGXING,"lingxing_product_detail_tag"),
     /**
      * 速帝云通用推送
      */
@@ -617,6 +625,7 @@ public enum RocketMqTagEnum {
     public static final String FBA_SHIPMENT = "fba_shipment";
 
     public static final String SYNC_WANGDIAN = "sync_wangdian";
+    public static final String SYNC_LINGXING = "sync_lingxing";
 
     private Integer code;
 

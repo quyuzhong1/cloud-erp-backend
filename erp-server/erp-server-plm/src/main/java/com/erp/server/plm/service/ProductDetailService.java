@@ -787,6 +787,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     String dimensionalWeightMeasure(DimensionalWeightDTO dto);
     void initProductToWangDian(List<String> ids);
+    void initProductToLingXing(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 
     /**
@@ -840,4 +841,11 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
 
     void uploadSkuImage(UploadSkuDTO dto);
+
+    /**
+     * 导入更新
+     * @param excelFile 文件
+     * @param response 响应
+     */
+    void importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
 }

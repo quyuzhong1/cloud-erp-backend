@@ -35,10 +35,13 @@ import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.pickingstrategy.WarehouseAreaDTO;
 import com.erp.model.wms.entity.DictBasicEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.model.wms.entity.WarehouseMappingEntity;
+import com.erp.model.wms.enums.*;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.WarehouseManageTypeEnum;
 import com.erp.model.wms.enums.WmsRedisKeyEnum;
@@ -654,9 +657,26 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
                 warehouseMappingService.add(addDTO);
             }
 
+            //自动创建库区，仓位
+            autoAddAreaAndLocation(warehouse);
             return warehouse.getId();
         }
         return "";
+    }
+
+    private void autoAddAreaAndLocation(WarehouseEntity warehouse) {
+        WarehouseAreaDTO.Add areaAddDTO = new WarehouseAreaDTO.Add();
+        areaAddDTO.setAreaType(WarehouseAreaTypeEnum.STAGING_AREA.getCode());
+        areaAddDTO.setWarehouseId(warehouse.getId());
+        areaAddDTO.setCode(WarehouseLocationAreaTypeEnum.PICK.getCode());
+        areaAddDTO.setName(WarehouseAreaTypeEnum.STAGING_AREA.getName());
+        String areaId = warehouseLocationService.addArea(areaAddDTO);
+        WarehouseLocationDTO.AddDTO addDTO = new WarehouseLocationDTO.AddDTO();
+        addDTO.setWarehouseId(warehouse.getId());
+        addDTO.setWarehouseAreaId(areaId);
+        addDTO.setCode("");
+        addDTO.setName("空仓位");
+        warehouseLocationService.add(addDTO);
     }
 
 
@@ -683,6 +703,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         String name = dto.getName();
         checkName(warehouseId, name);
         checkKingdeeWarehouseCode(warehouseId, code);
+        //负库存按钮调整，校验是否通过
+        if(!dto.getAllowNegativeInventory() && warehouse.getAllowNegativeInventory()){
+            List<InventoryEntity> negativeInventoryList =  inventoryService.listNegativeInventoryByWarehouseId(warehouseId);
+            if(CollectionUtils.isNotEmpty(negativeInventoryList)){
+                List<String> skuNos = negativeInventoryList.stream().map(InventoryEntity::getSkuNo).collect(Collectors.toList());
+                throw new ServiceException("仓库{}sku{}存在负库存，不允许修改为不允许负库存",warehouse.getName(),skuNos);
+            }
+        }
         //仓库下绑定第三方店铺不能修改为禁用状态
         //Delete by Edison.qu 2024-07-23 去除不必要的限制
 //        if (Objects.nonNull(dto.getDisabled()) && !Objects.equals(dto.getDisabled(), warehouse.getDisabled()) && Objects.equals(dto.getDisabled(), true)) {
@@ -1426,8 +1454,16 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
 	}
-	
-	private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
+
+    @Override
+    public List<WarehouseEntity> listByWarehouseNameList(List<String> warehouseNameList) {
+        if (CollUtil.isEmpty(warehouseNameList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
+    }
+
+    private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
 		if(this.checkOpenCloseTime(warehouseEntity)) {
 			throw new ServiceException(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL);
 		}

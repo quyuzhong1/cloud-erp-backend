@@ -499,7 +499,35 @@
         AND so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
-        AND NOT EXISTS (SELECT * FROM wms_push_msg WHERE source_id = sod.id)
         LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="listAmountBySkuIds" resultType="com.erp.model.wms.dto.SoOutstockDTO$AmountDTO"
+            parameterType="com.erp.model.wms.dto.SoOutstockDTO$ListAmountParamDTO">
+        select
+            sod.source_detail_id AS soDetailId
+        from so_outstock_detail sod
+        INNER JOIN so_outstock so on so.id = sod.main_id and so.is_deleted =FALSE
+          where
+          sod.is_deleted =FALSE
+          and sod.is_close = FALSE
+          and so.approve_status = 'approve'
+          and so.order_type ='B2B'
+        <if test="params.currency!=null and params.currency!=''">
+            and sod.currency =  #{params.currency}
+        </if>
+        <if test="params.returnCreateDate!=null and params.returnCreateDate!=''">
+            and so.actual_delivery_date &lt; #{params.returnCreateDate}
+        </if>
+          <if test="params.customerId!=null and params.customerId!=''">
+            and so.customer_id = #{params.customerId}
+        </if>
+        <if test="params.skuIds !=null and params.skuIds.size>0">
+            and sod.sku_id in
+            <foreach collection="params.skuIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by so.actual_delivery_date desc
     </select>
 </mapper>

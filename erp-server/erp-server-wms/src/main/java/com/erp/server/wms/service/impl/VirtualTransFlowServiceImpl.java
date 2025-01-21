@@ -28,10 +28,11 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryOperationModeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.VirtualTransFlowMapper;
-import com.erp.server.wms.service.VirtualInventoryHisService;
+import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +41,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,7 +68,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private VirtualInventoryHisService virtualInventoryHisService;
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
 
 
     @Override
@@ -190,6 +188,16 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
+    public List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList) {
+        if (CollUtil.isEmpty(deliveryDetailIdList)) {
+            throw new ServiceException("B2C发货单明细id不能为空");
+        }
+        return  lambdaQuery().in(VirtualTransFlowEntity::getSourceDetailId,deliveryDetailIdList)
+                .eq(VirtualTransFlowEntity::getDictBizType,VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())
+                .list();
+    }
+
+    @Override
     public List<String> listVirtualInventoryId(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable) {
         return baseMapper.listVirtualInventoryId(virtualInventoryId,virtualWarehouseId,warehouseId,skuId,fromTable);
     }
@@ -234,6 +242,26 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .eq(VirtualTransFlowEntity::getIsUnapproved,Boolean.FALSE)
                 .orderByAsc(VirtualTransFlowEntity::getBillDate)
                 .list();
+    }
+
+    @Override
+    public List<VirtualTransFlowEntity> listApproveFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        List<VirtualTransFlowEntity> list = baseMapper.listApproveFlowDetail(dto);
+        return list;
+    }
+
+    @Override
+    public void handleAddDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
+        List<VirtualTransFlowEntity> virtualTransFlowList = this.listApproveFlowDetail(dto);
+        if (CollUtil.isEmpty(virtualTransFlowList)) {
+            return;
+        }
+        virtualTransFlowDetailService.handleAddTransFlowDetail(virtualTransFlowList);
+    }
+
+    @Override
+    public void updateRemark(String id, String remark) {
+        lambdaUpdate().eq(VirtualTransFlowEntity::getId,id).set(VirtualTransFlowEntity::getRemark,remark).update();
     }
 
     /**

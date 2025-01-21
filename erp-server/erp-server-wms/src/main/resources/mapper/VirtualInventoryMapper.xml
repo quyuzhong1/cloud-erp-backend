@@ -184,7 +184,8 @@
             frozenQty,
             inTransitQty,
             waitQcQty,
-            totalVirtualQty
+            totalVirtualQty,
+            createTime
         from
         (WITH VirtualInventory AS (
             SELECT
@@ -224,6 +225,7 @@
             pd.name AS productName,
             i.warehouse_id AS warehouseId,
             wh.name AS warehouseName,
+            wh.create_time AS createTime,
             COALESCE(vi.virtualQty, 0) as virtualQty,
             COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
             COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,

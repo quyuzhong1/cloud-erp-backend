@@ -1,22 +1,20 @@
 package com.erp.server.mrp.calculation.service;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.*;
 import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.mrp.calculation.factory.CfgSettingFactory;
@@ -24,15 +22,14 @@ import com.erp.server.mrp.calculation.factory.PlatformCalculationFactory;
 import com.erp.server.mrp.calculation.handler.StockingTimeHandler;
 import com.erp.server.mrp.calculation.strategy.CfgRuleSettingStrategy;
 import com.erp.server.mrp.calculation.strategy.platform.PlatformCalculationStrategy;
-import com.erp.server.mrp.es.service.HistoryInventoryEsService;
 import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
 import com.erp.server.mrp.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
@@ -87,64 +84,82 @@ public class BasicReplenishmentDataService {
     @Resource
     private PlatformCalculationFactory platformCalculationFactory;
     @Resource
-    @Lazy
-    private DataArchivingService dataArchivingService;
-    @Resource
     private OrderHistorySalesEsService orderHistorySalesEsService;
     @Resource
     private OutStockHistorySalesEsService outStockHistorySalesEsService;
     @Resource
-    private HistoryInventoryEsService historyInventoryEsService;
-    @Resource
-    private CfgDataArchivingService cfgDataArchivingService;
-
+    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
     /**
      * 增量变动建议补货基础数据
      */
-    public void initReplenishmentSku(LocalDate calculationDate, List<CfgPlatformMappingEntity> mappings) {
-        String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
-        inventoryService.checkAllTableExists(calcDate);
-        inventoryService.saveAllHistoryInventory(calculationDate, calcDate);
-        //获取所有已审核且存在上市时间得非费用服务类sku
-        List<SkuVO> vos = plmTaskFeign.listApproveAndListingSku();
-        //获取已生成补货基础数据得信息
-        List<ReplenishmentSuggestionEntity> replenishmentSuggestion = replenishmentSuggestionService.listAllSkuAndShop();
-        Map<String, ReplenishmentSuggestionEntity> oldReplenishmentMap = replenishmentSuggestion.stream()
-                .collect(Collectors.toMap(v -> v.getSkuId() + ":" + v.getShopId(), v -> v, (o1, o2) -> o1));
+    public void initReplenishmentSku(CfgRulePlatformTypeEnum type, List<String> platformList) {
+
+        if (CollectionUtils.isEmpty(platformList)) {
+            return;
+        }
         //获取所有店铺
         ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
         if (!allShopResult.isSuccess()) {
             throw new ServiceException(allShopResult.getMsg());
         }
-        Map<String, String> mappingMap = mappings.stream().collect(Collectors.toMap(CfgPlatformMappingEntity::getPlatform, CfgPlatformMappingEntity::getType, (o1, o2) -> o1));
-        // 等待所有任务执行完毕
-        CompletableFuture.allOf(allShopResult.getData().stream()
-                .map(shopInfo -> CompletableFuture.runAsync(() -> {
-                    List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
-                    String platFormMapping = mappingMap.get(shopInfo.getDictPlatform());
-                    if (ObjectUtils.isEmpty(platFormMapping)) {
-                        return;
-                    }
-                    for (SkuVO vo : vos) {
-                        ReplenishmentSuggestionEntity entity = Optional.ofNullable(oldReplenishmentMap.get(vo.getSkuId() + ":" + shopInfo.getId())).orElse(new ReplenishmentSuggestionEntity());
-                        // 过滤掉已生成建议且 sku_no 未发生变化的 SKU，或未启用的平台
-                        if (!ObjectUtils.isEmpty(entity.getId()) && entity.getSkuNo().equals(vo.getSkuNo())) {
-                            continue;
-                        }
-                        entity.setShopId(shopInfo.getId());
-                        entity.setArea(shopInfo.getDictAreaCode());
-                        entity.setFbaWarehouseId(shopInfo.getWarehouseId());
-                        entity.setCountry(shopInfo.getDictCountryCode());
-                        entity.setPlatformType(PlatformMappingTypeEnum.getEnum(platFormMapping).getPlatformType().getCode());
-                        entity.setPlatform(shopInfo.getDictPlatform());
-                        entity.setSkuId(vo.getSkuId());
-                        entity.setSkuNo(vo.getSkuNo());
-                        entity.setReplenishmentType(ReplenishmentTypeEnum.NORMAL.getCode());
-                        suggestionLists.add(entity);
-                    }
-                    replenishmentSuggestionService.saveOrUpdateBatch(suggestionLists);
-                }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();
+        List<ShopInfoEntity> shopInfoList = allShopResult.getData().stream()
+                .filter(v -> platformList.contains(v.getDictPlatform()))
+                .collect(Collectors.toList());
+        Map<String, ShopInfoEntity> shopInfoMap = shopInfoList.stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
+        List<CfgRuleSalesQtyEntity> defaultCfgRuleSalesQty = cfgRuleSalesQtyService.listDefaultCfgRuleSalesQty(type.getCode());
+        //查询店铺有销量的sku
+        Map<String, Set<String>> shopSkuMap;
+        String salesQtyType = defaultCfgRuleSalesQty.get(0).getSalesQtyType();
+        if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(salesQtyType)) {
+            shopSkuMap = orderHistorySalesEsService.listSkuByShopId(shopInfoMap.keySet());
+        } else {
+            shopSkuMap = outStockHistorySalesEsService.listSkuByShopId(shopInfoMap.keySet());
+        }
+        List<String> skuIds = shopSkuMap.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .distinct()
+                .collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+        Map<String, String> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
+        //获取已生成补货基础数据得信息
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestion = replenishmentSuggestionService.listAllSkuAndShop(type.getCode());
+        Map<String, ReplenishmentSuggestionEntity> oldReplenishmentMap = replenishmentSuggestion.stream()
+                .collect(Collectors.toMap(v -> v.getSkuId() + ":" + v.getShopId(), v -> v, (o1, o2) -> o1));
+        List<ReplenishmentSuggestionEntity> suggestions = shopSkuMap.entrySet().stream()
+                .map(v -> CompletableFuture.supplyAsync(
+                        () -> {
+                            List<ReplenishmentSuggestionEntity> suggestionLists = new ArrayList<>();
+                            for (String skuId : v.getValue()) {
+                                ReplenishmentSuggestionEntity entity = Optional.ofNullable(oldReplenishmentMap.get(skuId + ":" + v.getKey())).orElse(new ReplenishmentSuggestionEntity());
+                                String skuNo = skuMap.get(skuId);
+                                // 过滤掉已生成建议且 sku_no 未发生变化的 SKU，或未启用的平台
+                                if (ObjectUtils.isEmpty(skuNo) || (!ObjectUtils.isEmpty(entity.getId()) && entity.getSkuNo().equals(skuNo))) {
+                                    continue;
+                                }
+                                ShopInfoEntity shopInfo = shopInfoMap.get(v.getKey());
+                                entity.setShopId(shopInfo.getId());
+                                entity.setArea(shopInfo.getDictAreaCode());
+                                entity.setFbaWarehouseId(shopInfo.getWarehouseId());
+                                entity.setCountry(shopInfo.getDictCountryCode());
+                                entity.setPlatformType(type.getCode());
+                                entity.setPlatform(shopInfo.getDictPlatform());
+                                entity.setSkuId(skuId);
+                                entity.setSkuNo(skuNo);
+                                entity.setReplenishmentType(ReplenishmentTypeEnum.NORMAL.getCode());
+                                suggestionLists.add(entity);
+                            }
+                            return suggestionLists;
+                        },
+                        threadPoolTaskExecutor))
+                .collect(Collectors.toList())
+                .stream()
+                .map(CompletableFuture::join)  // 等待每个 CompletableFuture 完成
+                .flatMap(List::stream)
+                .collect(Collectors.toList());
+        replenishmentSuggestionService.saveOrUpdateBatch(suggestions);
     }
 
 
@@ -174,19 +189,27 @@ public class BasicReplenishmentDataService {
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
         ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, platformType, calculationDate);
+        //获取策略配置
+        List<CfgRuleOrderStrategyEntity> list = cfgRuleOrderStrategyService.list();
+        CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = CollUtil.isEmpty(list) ? null : CfgRuleOrderStrategyDTO.StrategyResultDTO.buildStrategyResultDTO(list.get(0));
         //获取建议配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
-        //查询所有需要计算得数据
         List<ReplenishmentResultDTO> suggestions = replenishmentSuggestionService.listAllCalculationData(platformType, defaultCfgRuleSalesQty.get(0).getSalesQtyType(), defaultCfgRuleSalesQty.get(0).getOrderType(), calculationDate);
-        List<List<ReplenishmentResultDTO>> partition = Lists.partition(suggestions, 1000);
-        for (List<ReplenishmentResultDTO> resultDTOS : partition) {
+        //以sku为维度分组
+        Map<String, List<ReplenishmentResultDTO>> listMap = suggestions.stream()
+                .collect(Collectors.groupingBy(v -> v.getReplenishment().getSkuId()));
+        //查询所有需要计算得数据
+        for (List<ReplenishmentResultDTO> resultDTOS : listMap.values()) {
             CompletableFuture.runAsync(() -> {
-                for (ReplenishmentResultDTO dto : resultDTOS) {
-                    try {
-                        replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.IN_SYNC.getCode());
-                        ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
+                List<String> ids = resultDTOS.stream()
+                        .map(v -> v.getReplenishment().getId())
+                        .collect(Collectors.toList());
+                try {
+                    replenishmentTaskService.updateStatus(ids, SyncStatusEnum.IN_SYNC.getCode());
+                    for (ReplenishmentResultDTO dto : resultDTOS) {
                         ReplenishmentResultDTO.BasicDTO entity = dto.getReplenishment();
+                        ReplenishmentResultDTO.DetailDTO detail = dto.getReplenishmentDetail();
                         dto.setInventoryDTO(inventoryDTO);
                         dto.setShopIdByPlatform(shopIdByPlatform);
                         //初始化配置
@@ -225,19 +248,19 @@ public class BasicReplenishmentDataService {
                         cfgRuleStrategy.setStockUpResult(stockUpResult);
                         cfgRuleStrategy.setInventoryResult(inventoryResult);
                         cfgRuleStrategy.setSuggestAmountResult(suggestResult);
-                        stockingTimeHandler.handle(cfgRuleStrategy, dto);
-                        replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, dto);
-                        replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.SUCCESS_SYNC.getCode());
-                    } catch (Exception e) {
-                        log.error("计算失败 sku{},店铺{}, 原因{}", dto.getReplenishment().getSkuNo(), dto.getReplenishment().getShopId(), e.getMessage(), e);
-                        replenishmentTaskService.updateStatus(dto.getReplenishment().getId(), SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
+                        cfgRuleStrategy.setOrderResult(orderResult);
+                        dto.setCfgRuleStrategy(cfgRuleStrategy);
                     }
+                    stockingTimeHandler.handle(resultDTOS);
+                    replenishmentSuggestionService.saveReplenishment(resultDTOS);
+                    replenishmentTaskService.updateStatus(ids, SyncStatusEnum.SUCCESS_SYNC.getCode());
+                } catch (Exception e) {
+                    log.error("计算失败 sku{}, 原因{}", resultDTOS.get(0).getReplenishment().getSkuNo(), e.getMessage(), e);
+                    replenishmentTaskService.updateStatus(ids, SyncStatusEnum.FAILED_SYNC.getCode(), e.getMessage());
                 }
             }, threadPoolTaskExecutor);
         }
     }
-
-
 
 
     /**
@@ -246,72 +269,8 @@ public class BasicReplenishmentDataService {
      * @param id 主表id
      */
     public BatchResultDTO renewData(String id) {
-        ReplenishmentSuggestionEntity suggestion = replenishmentSuggestionService.getById(id);
-        ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getByMainId(id);
-        ReplenishmentResultDTO resultDTO = new ReplenishmentResultDTO();
-        ReplenishmentResultDTO.BasicDTO basicDTO = ReplenishmentResultDTO.BasicDTO.buildBasicDTO(suggestion);
-        resultDTO.setReplenishment(basicDTO);
-        ReplenishmentResultDTO.DetailDTO detailDTO = ReplenishmentResultDTO.DetailDTO.buildDetailNotId(detail);
-        detailDTO.setCalcDate(LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE));
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, LocalDate.now());
-        detailDTO.setCalcVersion(code);
-        resultDTO.setReplenishmentDetail(detailDTO);
-        resultDTO.setSalesPrice(detail.getSalesPrice());
-        resultDTO.setPurchasePrice(detail.getPurchasePrice());
-        LocalDate startDate = LocalDate.now().minusDays(361);
-        LocalDate endDate = LocalDate.now().minusDays(1);
-        //归档该条数据明细
-        dataArchivingService.dataArchiving(detail.getId());
-        cfgDataArchivingService.dataArchivingSuggestion(id);
-        //获取所有店铺
-        ApiResult<List<ShopInfoEntity>> allShopResult = shopInfoFeign.list();
-        if (!allShopResult.isSuccess()) {
-            throw new ServiceException(allShopResult.getMsg());
-        }
-        Map<String, List<String>> shopIdByPlatform = allShopResult.getData().stream()
-                .collect(Collectors.groupingBy(ShopInfoEntity::getDictPlatform, Collectors.mapping(ShopInfoEntity::getId, Collectors.toList())));
-        resultDTO.setShopIdByPlatform(shopIdByPlatform);
-        //初始化配置
-        CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
-        //获取销量配置
-        CfgRuleSalesQtyEntity defaultSalesQty = cfgRuleSalesQtyService.getDefaultByPlatformAndSkuType(suggestion.getPlatformType(), detail.getSkuType());
-        Map<LocalDate, Integer> salesHistoryMap = replenishmentSuggestionService.listSalesHistoryMap(id, defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType(), startDate, endDate);
-        resultDTO.setHistorySalesList(salesHistoryMap);
-        Map<String, Map<String, Integer>> skuSalesHistoryMap = replenishmentSuggestionService.getSalesHistoryMap(defaultSalesQty.getSalesQtyType(), defaultSalesQty.getOrderType());
-        resultDTO.setShopSalesMap(skuSalesHistoryMap.get(suggestion.getSkuId()));
-        Map<LocalDate, Integer> historyInventoryMap = historyInventoryEsService.findByReplenishmentIdAndDateBetweenMap(id, startDate, endDate);
-        resultDTO.setHistoryInventoryList(historyInventoryMap);
-        List<CfgRuleSalesFormulaEntity> defaultFormula = cfgRuleSalesFormulaService.listBySalesQtyIdList(Collections.singletonList(defaultSalesQty.getId()));
-        List<CfgRuleSalesDenoisingEntity> defaultDenoising = cfgRuleSalesDenoisingService.listBySalesQtyIdList(Collections.singletonList(defaultSalesQty.getId()));
-        CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
-        CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(basicDTO, detail.getSkuType(), defaultSalesQty, defaultFormula, defaultDenoising));
-        cfgRuleStrategy.setSalesQtyResult(salesResult);
-        List<CfgSettingDTO> settings = cfgSettingService.listAllSetting();
-        cfgRuleStrategy.setSettings(settings);
-        getCfgRuleCommon(basicDTO, cfgRuleStrategy, resultDTO);
-        //获取备货配置
-        CfgRuleStockUpEntity defaultStockUp = cfgRuleStockUpService.getDefaultByPlatform(basicDTO.getPlatformType());
-        List<CfgRuleStockingRatioEntity> defaultStockingRatio = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
-        List<CfgRuleLogisticsEntity> defaultLogistics = cfgRuleLogisticsService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
-        List<String> defaultLogisticsIds = defaultLogistics.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
-        List<CfgRuleLogisticsDetailEntity> defaultLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(defaultLogisticsIds);
-        CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
-        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(resultDTO, defaultStockUp, defaultStockingRatio, defaultLogistics, defaultLogisticsDetailList));
-        cfgRuleStrategy.setStockUpResult(stockUpResult);
-        //获取库存配置
-        CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
-        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(suggestion.getPlatformType()));
-        ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, suggestion.getPlatformType(), LocalDate.now());
-        //获取建议配置
-        CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> suggestedStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SUGGESTED_AMOUNT.getCode());
-        List<CfgRuleCommonDTO.StrategyResultDTO> suggestResult = suggestedStrategy.process(new CfgRuleCommonDTO.StrategyDTO(suggestion.getPlatformType()));
-        cfgRuleStrategy.setInventoryResult(inventoryResult);
-        cfgRuleStrategy.setSuggestAmountResult(suggestResult);
-        resultDTO.setInventoryDTO(inventoryDTO);
-        resultDTO.setOverseasProviderWarehouseList(BeanMapperUtils.copyList(OverseasProviderWarehouseDTO.class, FeignQuery.list(OverseasProviderWarehouseEntity.class)));
-        stockingTimeHandler.handle(cfgRuleStrategy, resultDTO);
-        replenishmentSuggestionService.saveReplenishment(cfgRuleStrategy, resultDTO);
-        return BatchResultDTO.success(basicDTO.getId(), detailDTO.getCalcVersion());
+
+        return null;
     }
 
     /**
@@ -353,7 +312,6 @@ public class BasicReplenishmentDataService {
      * 清洗历史库存
      *
      * @param calculationDate 计算日
-     * @param suggestions     建议数据
      * @param platformType    平台类型
      * @param cleanDay        清洗天数
      */
@@ -366,13 +324,12 @@ public class BasicReplenishmentDataService {
      * 清洗历史销量
      *
      * @param calculationDate 计算日
-     * @param suggestions     建议数据
      * @param platformType    平台类型
      * @param cleanDay        清洗天数
      */
-    public void cleanHistorySalesByOrder(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, CfgRulePlatformTypeEnum platformType, Integer cleanDay) {
+    public void cleanHistorySalesByOrder(LocalDate calculationDate, CfgRulePlatformTypeEnum platformType, Integer cleanDay) {
         PlatformCalculationStrategy platformCalculation = platformCalculationFactory.getPlatformCalculation(platformType.getCode());
-        platformCalculation.cleanHistorySalesByOrder(calculationDate, suggestions, cleanDay);
+        platformCalculation.cleanHistorySalesByOrder(calculationDate, cleanDay);
     }
 
 
@@ -380,13 +337,12 @@ public class BasicReplenishmentDataService {
      * 清洗历史销量
      *
      * @param calculationDate 计算日
-     * @param suggestions     建议数据
      * @param platformType    平台类型
      * @param cleanDay        清洗天数
      */
-    public void cleanHistorySalesByOutStock(LocalDate calculationDate, List<ReplenishmentSuggestionEntity> suggestions, CfgRulePlatformTypeEnum platformType, Integer cleanDay) {
+    public void cleanHistorySalesByOutStock(LocalDate calculationDate, CfgRulePlatformTypeEnum platformType, Integer cleanDay) {
         PlatformCalculationStrategy platformCalculation = platformCalculationFactory.getPlatformCalculation(platformType.getCode());
-        platformCalculation.cleanHistorySalesByOutStock(calculationDate, suggestions, cleanDay);
+        platformCalculation.cleanHistorySalesByOutStock(calculationDate, cleanDay);
     }
 
     /**
@@ -413,14 +369,14 @@ public class BasicReplenishmentDataService {
         List<List<ReplenishmentSuggestionEntity>> partition = Lists.partition(suggestions, 1000);
         CompletableFuture.allOf(partition.stream()
                 .map(suggestionList -> CompletableFuture.runAsync(() -> {
-                    List<String> replenishmentIds = suggestionList.stream().map(ReplenishmentSuggestionEntity::getId).distinct().collect(Collectors.toList());
+                    List<String> shopSkuIds = suggestionList.stream().map(v -> v.getShopId() + "-" + v.getSkuId()).distinct().collect(Collectors.toList());
                     Map<String, Integer> historySalesMap;
                     // 获取历史销量
                     if (SalesQtyTypeEnum.BY_CREATE_TIME.getCode().equals(cfgSalesQty.getSalesQtyType())) {
-                        historySalesMap = orderHistorySalesEsService.countQtyByReplenishmentIdsAndDate(replenishmentIds, cfgSalesQty.getOrderType(), calculationDate.minusDays(replenishmentDays.getEnd()), calculationDate.minusDays(1));
+                        historySalesMap = orderHistorySalesEsService.countQtyByShopSkuIdsAndDate(shopSkuIds, cfgSalesQty.getOrderType(), calculationDate.minusDays(replenishmentDays.getEnd()), calculationDate.minusDays(1));
                     } else {
                         // 以销售出库单出库时间计算销量
-                        historySalesMap = outStockHistorySalesEsService.countQtyByReplenishmentIdsAndDate(replenishmentIds, cfgSalesQty.getOrderType(), calculationDate.minusDays(replenishmentDays.getEnd()), calculationDate.minusDays(1));
+                        historySalesMap = outStockHistorySalesEsService.countQtyByShopSkuIdsAndDate(shopSkuIds, cfgSalesQty.getOrderType(), calculationDate.minusDays(replenishmentDays.getEnd()), calculationDate.minusDays(1));
                     }
                     List<String> skuIds = suggestionList.stream().map(ReplenishmentSuggestionEntity::getSkuId).distinct().collect(Collectors.toList());
                     List<SkuVO> vos = plmTaskFeign.listSkuCostByIds(skuIds);
@@ -450,7 +406,8 @@ public class BasicReplenishmentDataService {
                         boolean isOver180Days = sale.getListingTime().plusDays(replenishmentDays.getStart()).isBefore(calculationDate);
                         int saleQty = Optional.ofNullable(historySalesMap.get(entity.getId())).orElse(0);
                         details.add(detail);
-                        if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0) {
+                        if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0 &&
+                                ReplenishmentTypeEnum.NORMAL.getCode().equals(entity.getReplenishmentType())) {
                             notRestockingId.add(entity.getId());
                         } else {
                             suggestionIds.add(entity.getId());

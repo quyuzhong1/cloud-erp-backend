@@ -30,7 +30,7 @@ public class ShippingAddressBean {
      */
 
     @JsonProperty("address_id")
-    private int addressId;
+    private long addressId;
     @JsonProperty("address_line")
     private String addressLine;
     @JsonProperty("street_name")
@@ -54,9 +54,9 @@ public class ShippingAddressBean {
     @JsonProperty("agency")
     private AgencyBean agency;
     @JsonProperty("latitude")
-    private int latitude;
+    private long latitude;
     @JsonProperty("longitude")
-    private int longitude;
+    private long longitude;
     @JsonProperty("geolocation_type")
     private Object geolocationType;
     @JsonProperty("geolocation_last_updated")
@@ -68,11 +68,11 @@ public class ShippingAddressBean {
     @JsonProperty("types")
     private List<String> types;
 
-    public int getAddressId() {
+    public long getAddressId() {
         return addressId;
     }
 
-    public void setAddressId(int addressId) {
+    public void setAddressId(long addressId) {
         this.addressId = addressId;
     }
 
@@ -164,7 +164,7 @@ public class ShippingAddressBean {
         this.agency = agency;
     }
 
-    public int getLatitude() {
+    public long getLatitude() {
         return latitude;
     }
 
@@ -172,7 +172,7 @@ public class ShippingAddressBean {
         this.latitude = latitude;
     }
 
-    public int getLongitude() {
+    public long getLongitude() {
         return longitude;
     }
 

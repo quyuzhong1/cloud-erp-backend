@@ -33,7 +33,7 @@ public class LeadTimeBean {
     @JsonProperty("cost_type")
     private String costType;
     @JsonProperty("service_id")
-    private int serviceId;
+    private long serviceId;
     @JsonProperty("estimated_delivery_time")
     private EstimatedDeliveryTimeBean estimatedDeliveryTime;
 

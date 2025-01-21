@@ -188,6 +188,12 @@ public class WarehouseReceiveEntity extends BaseEntity<WarehouseReceiveEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 来源单号
+     */
+    @TableField("source_code")
+    private String sourceCode;
+
     @Override
     public Serializable pkVal() {
         return null;

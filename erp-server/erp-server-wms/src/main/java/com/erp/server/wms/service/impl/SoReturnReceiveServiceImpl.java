@@ -1,11 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
@@ -52,7 +53,6 @@ import com.erp.server.wms.mapper.SoReturnReceiveMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -121,6 +121,8 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private SoReturnNoticeDetailService soReturnNoticeDetailService;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
@@ -205,8 +207,17 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnReceiveDTO.Add dto) {
+        //校验数据
+        List<SoReturnReceiveDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getReceiveQty() !=null && v.getReceiveQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
         //生成单号
-//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.THQS, BusinessNoTypeEnum.CODE_THQS.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_THQS);
         //获取组织信息
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(dto.getSalesOrgId()));
@@ -254,11 +265,15 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 if (ObjectUtil.isEmpty(soReturnEntity)) {
                     throw new ServiceException(ApiError.ERROR_92023);
                 }
+                if(null != soReturnEntity){
+                    entity.setSourceCode(soReturnEntity.getCode());
+                }
                 //获取销售单信息
-                SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
-                entity.setSourceCode(soReturnEntity.getCode());
-                entity.setSoCode(soInfoEntity.getCode());
-                entity.setSoId(soInfoEntity.getId());
+                if (CharSequenceUtil.isNotBlank(soReturnEntity.getSourceId())){
+                    SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(soReturnEntity.getSourceId());
+                    entity.setSoCode(Objects.nonNull(soInfoEntity) ? soInfoEntity.getCode() : CharSequenceUtil.EMPTY);
+                    entity.setSoId(Objects.nonNull(soInfoEntity) ? soInfoEntity.getId() : CharSequenceUtil.EMPTY);
+                }
             }
         }
 
@@ -278,6 +293,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
         entity.setWarehouseKeeperId(dto.getWarehouseKeeperId());
         entity.setWarehouseKeeperName(warehouseKeeperUserName);
+        //币种
+        entity.setCurrency(dto.getCurrency());
+        entity.setCurrencySymbol(dto.getCurrencySymbol());
         this.save(entity);
         //操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个销售退货签收单【%s】", code), ModuleTypeEnum.SO_RETURN_RECEIVE.getCode(), entity.getId(), "新增操作");
@@ -289,6 +307,16 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnReceiveDTO.Update dto) {
+        //校验数据
+        List<SoReturnReceiveDetailDTO.Update> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getReceiveQty() !=null && v.getReceiveQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
 
         SoReturnReceiveEntity entity = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){
@@ -366,6 +394,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                     }
                 }
             }
+            viewDTO.setExchangeRate(detailEntity.getExchangeRate());
             detailViewDTOS.add(detailView);
         }
         viewDTO.setDetailList(detailViewDTOS);
@@ -670,6 +699,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         for (String id : soReturnNoticeIdList) {
             List<SoReturnNoticeDTO.GenerateSoReturnReceiveView> viewList = list.stream().filter(req -> req.getMainId().equals(id)).collect(Collectors.toList());
             SoReturnNoticeEntity noticeEntity = soReturnNoticeService.getById(id);
+            List<SoReturnNoticeDetailEntity> soReturnNoticeDetailEntities = soReturnNoticeDetailService.listDetailByMainId(id);
             SoReturnReceiveDTO.Add dto = new SoReturnReceiveDTO.Add();
             dto.setSourceType(SourceTypeEnum.SO_RETURN_NOTICE.getCode());
             dto.setWarehouseId(noticeEntity.getWarehouseId());
@@ -695,6 +725,25 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 detailAddDTO.setRemark(view.getRemark());
                 detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                 detailAddDTO.setNoticeDetailId(view.getId());
+                detailAddDTO.setReturnReasonDict(view.getReturnReasonDict());
+                detailAddDTO.setReturnTypeDict(view.getReturnTypeDict());
+                detailAddDTO.setIsChildSkuNo(view.getIsChildSkuNo());
+                SoReturnNoticeDetailEntity soReturnNoticeDetailEntity = soReturnNoticeDetailEntities.stream().filter(v -> v.getId().equals(view.getId())).findFirst().orElse(null);
+                detailAddDTO.setExchangeRate(soReturnNoticeDetailEntity.getExchangeRate());
+                if (Objects.equals(soReturnNoticeDetailEntity.getReturnQty(), view.getReceiveQty())) {
+                    detailAddDTO.setReturnAmount(soReturnNoticeDetailEntity.getReturnAmount());
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeDetailEntity.getTaxReturnAmount());
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeDetailEntity.getReturnAmountLocalCurrency());
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeDetailEntity.getTaxReturnAmountLocalCurrency());
+                } else {
+                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getReturnAmount(), soReturnNoticeDetailEntity.getReturnQty(), view.getReceiveQty()));
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnNoticeDetailEntity.getTaxReturnAmount(), soReturnNoticeDetailEntity.getReturnQty(), view.getReceiveQty()));
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnNoticeDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnNoticeDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                }
+                dto.setCurrency(noticeEntity.getCurrency());
+                dto.setCurrencySymbol(noticeEntity.getCurrencySymbol());
+                dto.setCustomerId(view.getCustomerId());
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);
@@ -730,13 +779,6 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         if (receiveCount > 0) {
             throw new ServiceException(ApiError.ERROR_99081);
         }
-
-/*        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIds(ids);
-        long qcCount = qcInfoEntities.stream().filter(req -> QcBillStatusEnum.FINISH_QC.equals(req.getQcStatus()) || QcBillStatusEnum.EXEMPTION.equals(req.getQcStatus())).count();
-        if (qcCount != qcInfoEntities.size()) {
-            throw new ServiceException(ApiError.ERROR_99082);
-        }*/
-
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         //获取sku的id集合
         List<String> skuIdList = list.stream().map(SoReturnReceiveDTO.ReceiveGenerateSoReturnInstockView::getSkuId).collect(Collectors.toList());
@@ -758,6 +800,9 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         List<SoReturnReceiveEntity> soReturnReceiveEntities = this.listByIds(receiveIds);
         List<String> returnIds = soReturnReceiveEntities.stream().map(SoReturnReceiveEntity::getSourceId).collect(Collectors.toList());
         List<SoReturnEntity> returnEntityList = soReturnFeign.listByIds(returnIds);
+        //退货入库单
+        List<SoReturnInstockDetailEntity> soReturnInstockDetailEntities = soReturnInstockDetailService.listDetailBySourceDetailIds(receiveDetailIds);
+
         //销售单id
         List<String> soIds = returnEntityList.stream().map(SoReturnEntity::getSourceId).collect(Collectors.toList());
         //根据销售单获取出库单
@@ -777,7 +822,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             view.setWarehouseName(warehouseDto.getName());
             view.setInstockDate(LocalDate.now());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(view.getId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
-
+            Integer realQty = soReturnInstockDetailEntities.stream().filter(r -> r.getSourceDetailId().equals(view.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(req -> req.getId().equals(soReturnReceiveDetailEntity.getSourceDetailId())).findFirst().orElse(new SoReturnDetailEntity());
             SoDetailEntity soDetailEntity = soDetailEntities.stream().filter(req -> req.getId().equals(soReturnDetailEntity.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             view.setSalesQty(soDetailEntity.getQty());
@@ -785,7 +830,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
             view.setDeliveryQty(actualQty);
             view.setMustQty(soReturnReceiveDetailEntity.getReturnQty());
             view.setReceiveQty(soReturnReceiveDetailEntity.getReceiveQty());
-            view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty());
+            view.setRealQty(soReturnReceiveDetailEntity.getReceiveQty() - realQty);
         }
         return list;
     }

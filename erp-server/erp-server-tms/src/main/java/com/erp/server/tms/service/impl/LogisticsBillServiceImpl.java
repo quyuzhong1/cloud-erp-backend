@@ -212,15 +212,14 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean remove(LogisticsBillDTO.RemoveDTO dto) {
         List<String> outstockIdList = dto.getOutstockIdList();
         List<LogisticsBillEntity> billEntityList = listByOutstockIds(outstockIdList);
         if (CollectionUtils.isNotEmpty(billEntityList)) {
-            List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
-            List<LogisticsBillEntity> logisticsBillEntityList = this.listByIds(ids);
+            List<String> ids = billEntityList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList());
             //同步速递云运单
-            logisticsBillEntityList.forEach(req -> pushSdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
-
+            billEntityList.forEach(req -> pushSdyFieldHandler(req, SyncOperateEnum.OPERATE_DELETE.getCode()));
             logisticsBillDetailService.removeByMainIds(ids,true);
             return this.removeByIds(ids);
         }
@@ -535,6 +534,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             return LogisticsBillDTO.GenerateBillResultDTO.builder()
                     .trackNo(orderResult.getData().getTrackNo())
                     .transportNo(orderResult.getData().getTransportNo())
+                    .iossTaxNo(CharSequenceUtil.isNotBlank(orderResult.getData().getIossTaxNo()) ? orderResult.getData().getIossTaxNo() : CharSequenceUtil.EMPTY)
                     .build();
         } else {
             LogisticsOrderResponseVO responseVO = orderResult.getData();
@@ -1299,7 +1299,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
      */
     public void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum) {
         List<LogisticsBillDetailEntity> detailEntityList = logisticsBillDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, operateEnum);
+        List<LogisticsBillDetailEntity> detailEntities = detailEntityList.stream()
+                .filter(req -> CharSequenceUtil.isNotBlank(req.getTrackStatus()))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(detailEntities)) {
+            syncLogisticsBillService.syncDataToSdy(entity, detailEntities, operateEnum);
+        }
     }
 
     @Override

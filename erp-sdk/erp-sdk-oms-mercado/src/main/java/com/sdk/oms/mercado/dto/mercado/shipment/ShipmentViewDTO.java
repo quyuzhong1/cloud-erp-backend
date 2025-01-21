@@ -67,7 +67,7 @@ public class ShipmentViewDTO {
     @JsonProperty("logistic")
     private LogisticBean logistic;
     @JsonProperty("sender_id")
-    private int senderId;
+    private long senderId;
     @JsonProperty("tags")
     private List<?> tags;
 

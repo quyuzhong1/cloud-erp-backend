@@ -210,7 +210,7 @@
         where lbd.track_status not in('sign','manualComplete','systemComplete')
         and lbd.is_deleted = false AND lc.name != ''
         <if test="query.trackTime != null">
-            and lbd.track_time &lt; #{query.trackTime}
+            and lbd.update_time &lt; #{query.trackTime}
         </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
             and lb.order_type in ('B2B','B2C')
@@ -299,4 +299,23 @@
                        LIMIT 1
                    )
     </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingViewDTO">
+        select ls.id,
+               ls.supplier_name as name,
+               ls.short_name as shortName,
+               ls.type,
+               lc.id as channelId,
+               lc.name as channelName
+        from logistics_supplier ls
+        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        where ${params.sqlMap.default}
+        and ls.is_deleted = false
+        and lc.disabled = false
+        and ls.disabled = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+
 </mapper>

@@ -2,8 +2,8 @@ package com.erp.model.mrp.vo;
 
 import cn.hutool.json.JSONArray;
 import com.common.business.annotation.Dict;
-import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -45,8 +45,15 @@ public class InventoryDetailVO {
     private String warehouseType;
 
     /**
+     *
+     */
+    @Dict(enumClass = CfgRulePlatformTypeEnum.class)
+    private String platformType;
+
+    /**
      * 平台
      */
+
     private String dictPlatform;
 
     /**
@@ -86,6 +93,11 @@ public class InventoryDetailVO {
      * 店铺名字
      */
     private String shopName;
+
+    /**
+     * 店铺需求数
+     */
+    private Integer shopRequireQty;
     /**
      * 数量
      */

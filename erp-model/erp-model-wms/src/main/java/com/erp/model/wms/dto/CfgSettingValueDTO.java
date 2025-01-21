@@ -239,4 +239,38 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private String autoInStockSetting;
     }
+    /**
+     * 委外入库
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubcontractReturnStock {
+        /**
+         * 自动入库配置
+         * manual 不自动 auto 自动  semiAuto 部分自动
+         */
+        private String autoReturnStockSetting = "semiAuto";
+    }
+
+    /**
+     * 仓库
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoWarehouseDTO{
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 销售组织id
+         */
+        private String orgId;
+    }
 }

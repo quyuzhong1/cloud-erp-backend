@@ -118,7 +118,10 @@ public class SkuMappingDTO implements Serializable {
 //        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
 //        @Size(max = 30,message = "平台类型: goodcang=谷仓，iml=艾姆勒 最大长度不能超过30位")
 //        private String dictPlatform;
-
+        /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
     }
 
     @Data
@@ -204,6 +207,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 店铺
          */
+        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
@@ -223,7 +227,10 @@ public class SkuMappingDTO implements Serializable {
         @NotNull(message = "平台sku不能为null")
         @Size(max = 200, message = "平台SKU最大100字符")
         private String platformSkuNo;
-
+        /**
+         * 平台产品ID
+         */
+        private String platformSpuNo;
         /**
          * 平台sku 名
          */
@@ -231,8 +238,10 @@ public class SkuMappingDTO implements Serializable {
 
 
         private List<SkuMappingExtendListDTO> extendList;
-
-
+        /**
+         * 同账号同平台SKU批量更新 默认 true  false 不更新
+         */
+        private Boolean batchUpdateSamePlatform;
     }
 
     /**
@@ -301,6 +310,10 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotNull(message = "生效时间不能为空")
         private LocalDateTime effectiveTime;
+        /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
 
     }
 
@@ -399,6 +412,10 @@ public class SkuMappingDTO implements Serializable {
          * 平台更新时间
          */
         private LocalDateTime platformUpdateTime;
+        /**
+         * 系统创建时间
+         */
+        private LocalDateTime systemCreateTime;
 
 
         /**
@@ -475,6 +492,10 @@ public class SkuMappingDTO implements Serializable {
          * 是否是捆绑商品:true=是，false=否
          */
         private Boolean isCombination;
+        /**
+         * 来源类型  selfAdd系统新增，third第三方同步
+         */
+        private String sourceType;
         /**
          * 仓库发货配置
          */
@@ -608,6 +629,31 @@ public class SkuMappingDTO implements Serializable {
     public static class ProductSkuInfoDTO {
 
         /**
+         *
+         */
+        private String id;
+        /**
+         *
+         */
+        private String shopId;
+        /**
+         *
+         */
+        private String customerId;
+        /**
+         *
+         */
+        private String listingId;
+        /**
+         *
+         */
+        private String dictPlatform;
+        /**
+         *
+         */
+        private String platformName;
+
+        /**
          * sku id
          */
         private String skuId;
@@ -633,6 +679,7 @@ public class SkuMappingDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuName;
+
     }
 
     /**
@@ -683,6 +730,10 @@ public class SkuMappingDTO implements Serializable {
          * 店铺Id
          */
         private String shopId;
+        /**
+         * 订单日期
+         */
+        private LocalDateTime billDate;
 
         public ListSkuParamDTO(String skuNo, String warehouseId, String dictPlatform) {
             this.skuNo = skuNo;
@@ -891,6 +942,17 @@ public class SkuMappingDTO implements Serializable {
          * 净重
          */
         private BigDecimal netWeight;
+
+        /**
+         * 成本价格来源
+         */
+        private String costSource;
+        //材料成本
+        private BigDecimal productCost;
+        //头程运费
+        private BigDecimal firstMileShippingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
     }
 
 

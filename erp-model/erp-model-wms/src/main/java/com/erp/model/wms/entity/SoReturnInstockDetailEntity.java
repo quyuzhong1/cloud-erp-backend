@@ -155,6 +155,37 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
      */
     @TableField(exist = false)
     private LocalDateTime approveTime;
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+
+    /**
+     * 是否子sku
+     */
+    private Boolean isChildSkuNo;
+
+    /**
+     *退货金额
+     */
+    @TableField("return_amount")
+    private BigDecimal returnAmount;
+    /**
+     *含税退货金额
+     */
+    @TableField("tax_return_amount")
+    private BigDecimal taxReturnAmount;
+    /**
+     *退货金额（本位币）
+     */
+    @TableField("return_amount_local_currency")
+    private BigDecimal returnAmountLocalCurrency;
+    /**
+     *含税退货金额（本位币）
+     */
+    @TableField("tax_return_amount_local_currency")
+    private BigDecimal taxReturnAmountLocalCurrency;
 
     public static final String MAIN_ID = "main_id";
 

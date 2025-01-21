@@ -15,6 +15,7 @@ import javax.annotation.Resource;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.exception.ServiceException;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -272,26 +273,22 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
         //销售员
         String sellerId = entity.getSellerId();
-        String deptCode = "";
-
-
-
+        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(useOrgCode);
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
-                deptCode=kingSellerInfo.getDeptCode();
+                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
             }
         }
-
-        resultMap.put("sellerDeptCode", deptCode);
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
         DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("settleModeCode", settleMode.getRemark());
@@ -359,10 +356,12 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		Map<String, Object> resultMap = new HashMap<>();
 		
 		String subPlatformType = entity.getPlatformType();
+		String subPlatformTypeName = entity.getPlatformType();
 		if(StringUtils.isNotBlank(subPlatformType)) {
 			List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
 			if(CollUtil.isNotEmpty(dictList)) {
-				subPlatformType = dictList.get(0).getValue();
+				subPlatformType = dictList.get(0).getName();
+                subPlatformTypeName = dictList.get(0).getValue();
 			}
 		}
 		
@@ -372,11 +371,19 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 			.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
-		
-		resultMap.put("oms_system", "SDC");
+
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        DictBasicEntity dictBasicEntity = dictBasicEntityList.stream().filter(req -> req.getValue().equals(entity.getPlatformType())).findFirst().orElse(null);
+
+        resultMap.put("oms_system", "SDC");
 		resultMap.put("biz_uni_key", entity.getId());
 		resultMap.put("platform_code", entity.getPlatformType());
+		if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+            resultMap.put("platform_name", dictBasicEntity.getName());
+        }
 		resultMap.put("sub_platform_code", subPlatformType);
+		resultMap.put("sub_platform_name", subPlatformTypeName);
 		resultMap.put("shop_code", entity.getCode());
 		resultMap.put("shop_site", entity.getCountryId());
 		resultMap.put("shop_name", entity.getName());

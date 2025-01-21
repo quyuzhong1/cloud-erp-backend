@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
@@ -202,6 +203,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 来源详情表id
          */
         private String sourceDetailId;
+
+        /**
+         * 来源详情表id
+         */
+        private JSONArray sourceJson;
     }
 
     @Data

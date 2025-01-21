@@ -8,7 +8,9 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -502,6 +504,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         //根据详情获取订单主表
         List<String> soIdList = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(soIdList)) {
+            return resultList;
+        }
+
         List<SoB2cEntity> soB2cEntities = soB2cService.listByIds(soIdList);
         if (CollectionUtils.isEmpty(soB2cEntities)) {
             log.error("newSyncSdyDeliveryOrder >>>> 未找到数据！");
@@ -515,7 +521,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomBySkuIds(skuIds);
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> parentSkuList = new ArrayList<>();

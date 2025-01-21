@@ -76,6 +76,7 @@ public class CfgDataArchivingServiceImpl extends SuperServiceImpl<CfgDataArchivi
         baseMapper.deleteDeliverySuggest(sourceId);
         baseMapper.deletePurchaseSuggest(sourceId);
         if (ObjectUtils.isEmpty(sourceId)) {
+            baseMapper.deletePurchaseSuggestIndependent();
             baseMapper.deletePurchaseSuggestMerge();
         }
     }

@@ -92,6 +92,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     @Lazy
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
+    @Resource
+    private SoOutstockService soOutstockService;
 
 
     @Override
@@ -993,5 +995,29 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
         
         return true;
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceIdList(List<String> sourceIdList) {
+        return baseMapper.listSoOutstockBySourceIdList(sourceIdList);
+    }
+
+    @Override
+    public List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            return new ArrayList<>();
+        }
+        List<SoDeliveryNoticeDetailDTO.PushDownDTO> result = new ArrayList<>();
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = baseMapper.listBySoDetailIds(soDetailIds);
+        if(CollUtil.isNotEmpty(soOutstockDetailEntityList)){
+            for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+                SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
+                pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
+                pushDownDTO.setSkuId(detailEntity.getSkuId());
+                pushDownDTO.setSkuNo(detailEntity.getSkuNo());
+                result.add(pushDownDTO);
+            }
+        }
+        return result;
     }
 }

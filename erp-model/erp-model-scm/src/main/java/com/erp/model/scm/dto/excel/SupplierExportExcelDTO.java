@@ -28,6 +28,10 @@ public class SupplierExportExcelDTO implements Serializable {
     @ColumnWidth(20)
     private String  code;
 
+    /**
+     * 外部平台编号
+     */
+    private String voucherNo;
 
     /**
      * 名称

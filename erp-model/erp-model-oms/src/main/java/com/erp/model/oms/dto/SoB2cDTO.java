@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -274,6 +275,19 @@ public class SoB2cDTO implements Serializable {
          * 单据编码
          */
         private String code;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
 
         /**
          * 销售平台
@@ -659,6 +673,10 @@ public class SoB2cDTO implements Serializable {
          * 是否超出范围派送
          */
         private Boolean isOutOfRangeDelivery;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
     }
 
     @Data
@@ -1117,7 +1135,15 @@ public class SoB2cDTO implements Serializable {
          * 接口：oms/common/enumDropDown?type=OrderSubType
          */
         private String transactionSubType;
+        /**
+         * 第三方编号
+         */
+        private String thirdCode;
 
+        /**
+         * 第三方来源系统
+         */
+        private String thirdSystem;
     }
 
 
@@ -1961,6 +1987,22 @@ public class SoB2cDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 成本来源
+         */
+        private String costSource;
+        /**
+         * 材料成本（本位币）
+         */
+        private BigDecimal productCost;
+        /**
+         * 头程运费（本位币）
+         */
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（本位币）
+         */
+        private BigDecimal clearanceCustomsTax;
     }
 
     /**
@@ -2326,6 +2368,7 @@ public class SoB2cDTO implements Serializable {
          */
         private  String sellerName;
 
+        private String salesDeptId;
         private String salesOrgId;
 
         private String salesOrgName;
@@ -2477,6 +2520,18 @@ public class SoB2cDTO implements Serializable {
          */
         private String detailId;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          * 单据编码
          */
@@ -2837,6 +2892,10 @@ public class SoB2cDTO implements Serializable {
          * 高
          */
         private BigDecimal height;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
 
         //-------------------------------------------- 买家信息 ---------------------------------------------------------------------------------------
 
@@ -3326,5 +3385,14 @@ public class SoB2cDTO implements Serializable {
         private String postCode;
         //省
         private String provinceName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * 销售平台类型
+         */
+        List<String> dictPlatformList;
     }
 }

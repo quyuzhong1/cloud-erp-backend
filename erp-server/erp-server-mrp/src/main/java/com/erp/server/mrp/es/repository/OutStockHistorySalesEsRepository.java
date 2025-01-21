@@ -16,30 +16,29 @@ public interface OutStockHistorySalesEsRepository extends ElasticsearchRepositor
     /**
      * 分页查询
      *
-     * @param replenishmentIds 建议id
+     * @param shopSkuIds       shopId-skuId
      * @param startDate        开始时间
      * @param endDate          结束时间
      * @param pageable         分页参数
      */
-    Page<OutStockHistorySalesEsEntity> findByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<OutStockHistorySalesEsEntity> findByShopSkuIdInAndDateBetween(List<String> shopSkuIds, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
      * 分页查询
      *
-     * @param replenishmentIds 建议id
+     * @param shopSkuIds       shopId-skuId
      * @param orderType        单据类型
      * @param startDate        开始时间
      * @param endDate          结束时间
      * @param pageable         分页参数
      */
-    Page<OutStockHistorySalesEsEntity> findByReplenishmentIdInAndOrderTypeInAndDateBetween(List<String> replenishmentIds, JSONArray orderType, LocalDate startDate, LocalDate endDate, Pageable pageable);
+    Page<OutStockHistorySalesEsEntity> findByShopSkuIdInAndOrderTypeInAndDateBetween(List<String> shopSkuIds, JSONArray orderType, LocalDate startDate, LocalDate endDate, Pageable pageable);
 
     /**
-     * 根据开始结束时间，建议id删除数据
+     * 根据开始结束时间删除数据
      *
-     * @param replenishmentIds 建议
      * @param startDate        开始时间
      * @param endDate          结束时间
      */
-    void deleteByReplenishmentIdInAndDateBetween(List<String> replenishmentIds, LocalDate startDate, LocalDate endDate);
+    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
 }

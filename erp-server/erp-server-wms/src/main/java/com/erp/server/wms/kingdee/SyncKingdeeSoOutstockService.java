@@ -74,12 +74,13 @@ public interface SyncKingdeeSoOutstockService {
                                                   List<ProductDetailEntity> parentSkuList,
                                                   List<SoB2cEntity> soB2cEntities,
                                                   List<SoInfoEntity> soInfoEntities,
-                                                  List<DictBasicEntity> dictBasicEntityList);
+                                                  List<DictBasicEntity> dictBasicEntityList,
+                                                  List<DictBasicEntity> dictList);
 
     /**
      * 同步数帝云
      */
     void syncDataToSdy(SoOutstockEntity entity, List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate);
 
-    void syncDataToSdy(SoOutstockEntity entityList, List<SoOutstockDetailEntity> detailEntities, String operate, List<CurrencyDTO.ViewDTO> currencyList, List<ShopInfoEntity> shopInfoList, List<CustomerInfoEntity> customerInfoList, List<BaseIdDTO.CodeDTO> companyEntities, List<SkuVO> skuVOList, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, List<ProductDetailEntity> parentSkuList, List<SoB2cEntity> soB2cEntities, List<SoInfoEntity> soInfoEntities, List<DictBasicEntity> dictBasicEntityList);
+    void syncDataToSdy(SoOutstockEntity entityList, List<SoOutstockDetailEntity> detailEntities, String operate, List<CurrencyDTO.ViewDTO> currencyList, List<ShopInfoEntity> shopInfoList, List<CustomerInfoEntity> customerInfoList, List<BaseIdDTO.CodeDTO> companyEntities, List<SkuVO> skuVOList, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, List<ProductDetailEntity> parentSkuList, List<SoB2cEntity> soB2cEntities, List<SoInfoEntity> soInfoEntities, List<DictBasicEntity> dictBasicEntityList, List<DictBasicEntity> dictList);
 }

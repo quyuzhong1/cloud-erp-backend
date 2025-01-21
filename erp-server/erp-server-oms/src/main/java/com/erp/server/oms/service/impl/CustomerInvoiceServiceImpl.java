@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -158,5 +159,22 @@ public class CustomerInvoiceServiceImpl extends SuperServiceImpl<CustomerInvoice
 
     private List<CustomerInvoiceEntity> listBaseByMainId(String mainId) {
         return this.lambdaQuery().eq(CustomerInvoiceEntity::getMainId, mainId).list();
+    }
+
+    /**
+     * 根据主表信息 获取发票信息
+     * @param mainIds
+     * @return java.util.List<com.erp.model.oms.dto.InvoiceDTO.ViewDTO>
+     * @author jack
+     * @date 2024-12-23
+     */
+    @Override
+    public List<InvoiceDTO.ViewDTO> listByMainIds(List<String> mainIds) {
+        if(CollUtil.isEmpty(mainIds)){
+            return new ArrayList<>();
+        }
+        List<CustomerInvoiceEntity> dbList = lambdaQuery().in(CustomerInvoiceEntity::getMainId, mainIds).list();
+        List<InvoiceDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, InvoiceDTO.ViewDTO.class);
+        return resultList;
     }
 }

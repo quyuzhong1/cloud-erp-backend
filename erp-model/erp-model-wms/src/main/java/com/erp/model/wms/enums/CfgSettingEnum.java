@@ -16,6 +16,7 @@ public enum CfgSettingEnum implements EnumMessage {
     FINISH_PACKING_NOTICE("finishPackingNotice","装箱完成通知"),
     CFG_PRINT("cfgPrint", "打印配置"),
     SUBCONTRACT_IN_STOCK("subcontractInStock", "委外入库"),
+    SUBCONTRACT_RETURN_STOCK("subcontractReturnStock", "委外退货"),
     WAREHOUSE_LOCATION_MOVE_BLACKLIST("warehouseLocationMoveBlacklist","库位移动同步旺店通黑名单"),
     FS_REQUISITION_WAITHANDLE_NOTICE("fsRequisitionWaitHandle","飞书要货申请待处理配置"),
     FS_REQUISITION_HANDLEING_NOTICE("fsRequisitionHandleIngNotice","飞书要货申请处理中配置"),
@@ -24,7 +25,8 @@ public enum CfgSettingEnum implements EnumMessage {
     FS_REQUISITION_NOTICE("fsRequisitionNotice","飞书要货申请通知配置"),
     FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE("fsWarehouseLocationReplenishNotice","飞书仓位补货通知配置"),
     FS_REQUISITION_CHANGE_SUBMIT_NOTICE("fsRequisitionChangeSubmitHandleNotice","飞书要货申请提交通知配置"),
-    FS_REQUISITION_CHANGE_APPROVE_NOTICE("fsRequisitionChangeApproveHandleNotice","飞书要货申请审核通知配置")
+    FS_REQUISITION_CHANGE_APPROVE_NOTICE("fsRequisitionChangeApproveHandleNotice","飞书要货申请审核通知配置"),
+    WAREHOUSE_BY_SO_RETURN("warehouseBySoReturn","东莞售后仓库配置")
     ;
 
     /**

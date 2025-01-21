@@ -36,9 +36,11 @@ public interface PackingTaskDetailMapper extends BaseMapper<PackingTaskDetailEnt
 
     /**
      * 模糊搜索
+     *
      * @param taskId
      * @param searchKey
+     * @param searchMode
      * @return
      */
-    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(@Param("taskId")String taskId, @Param("searchKey") String searchKey);
+    List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(@Param("taskId")String taskId, @Param("searchKey") String searchKey, @Param("searchMode") String searchMode);
 }

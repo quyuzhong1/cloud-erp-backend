@@ -211,6 +211,18 @@ public class DictCountryDTO implements Serializable {
          */
         private String subregionName;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
     }
 
     @Data

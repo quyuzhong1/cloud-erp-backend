@@ -33,13 +33,20 @@ public class SkuMappingWarehouseImportExcelDTO {
     @ExcelProperty(value = "库存产品名称", index = 1)
     @FieldValid(fieldName = "库存产品名称", isNotBlank = true, maxLength = 200)
     private String warehouseProductName;
+    /**
+     * 三方仓商品条码
+     */
+    @ColumnWidth(50)
+    @ExcelProperty(value = "三方仓商品条码", index = 2)
+    @FieldValid(fieldName = "三方仓商品条码", maxLength = 200)
+    private String thirdBarcode;
 
 
     /**
      * 对照关系适用于该服务商所有仓库
      */
     @ColumnWidth(50)
-    @ExcelProperty(value = "对照关系适用于该服务商所有仓库", index = 2)
+    @ExcelProperty(value = "对照关系适用于该服务商所有仓库", index = 3)
     @FieldValid(fieldName = "对照关系适用于该服务商所有仓库", isNotBlank = true, maxLength = 200)
     private String hasMappingAllStr;
 
@@ -47,7 +54,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      * 仓库名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "仓库名称", index = 3)
+    @ExcelProperty(value = "仓库名称", index = 4)
     @FieldValid(fieldName = "仓库名称", maxLength = 200)
     private String warehouseName;
 
@@ -55,7 +62,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      * 服务商
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "服务商", index = 4)
+    @ExcelProperty(value = "服务商", index = 5)
     @FieldValid(fieldName = "服务商", maxLength = 200)
     private String platformName;
 
@@ -64,7 +71,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      * sku
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "SKU", index = 5)
+    @ExcelProperty(value = "SKU", index = 6)
     @FieldValid(fieldName = "sku", isNotBlank = true, maxLength = 200)
     private String skuNo;
 
@@ -72,7 +79,7 @@ public class SkuMappingWarehouseImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 6)
+    @ExcelProperty(value = "错误数据", index = 7)
     private String errorMsg;
 
     @ExcelIgnore

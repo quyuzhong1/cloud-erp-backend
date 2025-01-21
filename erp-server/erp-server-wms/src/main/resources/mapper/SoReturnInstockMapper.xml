@@ -41,7 +41,14 @@
         sri.return_logistic_code as returnLogisticCode,
         srid.warehouse_id,
         srid.warehouse_name,
-        srid.warehouse_location
+        srid.warehouse_location,
+        sri.currency,
+        sri.currency_symbol,
+        srid.exchange_rate ,
+        srid.return_amount ,
+        srid.tax_return_amount ,
+        srid.return_amount_local_currency ,
+        srid.tax_return_amount_local_currency
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id
         WHERE
@@ -116,7 +123,14 @@
         sri.return_logistic_code as returnLogisticCode,
         srid.warehouse_id,
         srid.warehouse_name,
-        srid.warehouse_location
+        srid.warehouse_location,
+        sri.currency,
+        sri.currency_symbol,
+        srid.exchange_rate ,
+        srid.return_amount ,
+        srid.tax_return_amount ,
+        srid.return_amount_local_currency ,
+        srid.tax_return_amount_local_currency
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
         WHERE
@@ -191,7 +205,6 @@
         AND so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
-        AND NOT EXISTS (SELECT * FROM wms_push_msg WHERE source_id = sod.id)
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

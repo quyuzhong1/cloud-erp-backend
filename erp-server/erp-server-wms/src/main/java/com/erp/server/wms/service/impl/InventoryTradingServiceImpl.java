@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -139,6 +138,10 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionDTO    交易记录
      */
     private void checkHasApproved(InventoryTransactionDTO transactionDTO) {
+        //采购订单结束交货不需要校验
+        if (CharSequenceUtil.equals(transactionDTO.getDictBizType(),InventoryBusinessTypeEnum.PURCHASE_ORDER_FINISH.getCode())) {
+            return;
+        }
         TransactionFlowEntity transactionFlow;
         LambdaQueryWrapper<TransactionFlowEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
@@ -501,38 +504,24 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         if(null != transactionDTO.getInventoryId()) {
             inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
         }else{
-            inventoryEntity = inventoryService.getInventory(transactionDTO.getSkuId(), transactionDTO.getWarehouseId(), transactionDTO.getWarehouseLocation(), transactionDTO.getInventoryStatus());
+            inventoryEntity = inventoryService.getInventory(transactionDTO);
         }
 
         log.info("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
-        if(null == inventoryEntity) {
-            inventoryEntity=new InventoryEntity();
-            inventoryEntity.setSkuId(transactionDTO.getSkuId());
-            inventoryEntity.setSkuNo(transactionDTO.getSkuNo());
-            inventoryEntity.setOrgId(transactionDTO.getOrgId());
-            inventoryEntity.setWarehouseId(transactionDTO.getWarehouseId());
-            inventoryEntity.setWarehouseLocation(transactionDTO.getWarehouseLocation());
-            inventoryEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());
-            inventoryEntity.setQty(transactionDTO.getQty());
-            inventoryEntity.setCreateTime(LocalDateTime.now());
-            inventoryEntity.setCreateUserId(transactionDTO.getUserId());
-            inventoryEntity.setCreateUserName(transactionDTO.getUserName());
-            inventoryEntity.setUpdateTime(LocalDateTime.now());
-            inventoryEntity.setUpdateUserId(transactionDTO.getUserId());
-            inventoryEntity.setUpdateUserName(transactionDTO.getUserName());
-            inventoryService.save(inventoryEntity);
-        }else{
-            LambdaUpdateWrapper<InventoryEntity> wrapper = new LambdaUpdateWrapper<>();
-            wrapper.setSql("qty = qty + " +transactionDTO.getQty())
-                    .set(InventoryEntity::getSkuNo, transactionDTO.getSkuNo())
-                    .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
-                    .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
-                    .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
-                    //条件
-                    .eq(InventoryEntity::getId, inventoryEntity.getId());
-
-            inventoryService.update(wrapper);
+        if(null == inventoryEntity || null == inventoryEntity.getId()) {
+            log.warn("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
+            throw new ServiceException(ApiError.ERROR_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
         }
+        LambdaUpdateWrapper<InventoryEntity> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.setSql("qty = qty + " +transactionDTO.getQty())
+                .set(InventoryEntity::getSkuNo, transactionDTO.getSkuNo())
+                .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
+                .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
+                .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
+                //条件
+                .eq(InventoryEntity::getId, inventoryEntity.getId());
+
+        inventoryService.update(wrapper);
 
         if(null == transactionDTO.getInventoryId()) {
             //方面后续记录流水与历史库存

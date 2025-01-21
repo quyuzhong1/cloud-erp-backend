@@ -125,7 +125,15 @@ public class SoDetailDTO implements Serializable {
          * 价税合计（折前）
          */
         private BigDecimal taxAmountBefore;
+        /**
+         * 成本来源
+         */
+        private String costSource;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 
@@ -383,6 +391,14 @@ public class SoDetailDTO implements Serializable {
          * 删除状态（数帝云用）
          */
         private Boolean isDeleted;
+        /**
+         * 成本来源
+         */
+        private String costSource;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**
@@ -568,6 +584,10 @@ public class SoDetailDTO implements Serializable {
          */
         @Size(max = 200, message = "备注最大200字符")
         private String remark;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 
@@ -880,7 +900,7 @@ public class SoDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDetailView {
         /**
-         * id
+         * 退货订单明细id
          */
         private String id;
         /**
@@ -888,7 +908,7 @@ public class SoDetailDTO implements Serializable {
          */
         private String soId;
         /**
-         * 主表id
+         * 退货订单id
          */
         private String mainId;
         /**
@@ -1009,9 +1029,33 @@ public class SoDetailDTO implements Serializable {
          */
         private String platformSkuNo;
         /**
+         * 平台sku名称
+         */
+        private String platformSkuName;
+        /**
          * 是否子sku
          */
         private Boolean isChildSkuNo = false;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
 
@@ -1451,7 +1495,10 @@ public class SoDetailDTO implements Serializable {
          * 销售金额（折后）本位币
          */
         private BigDecimal amountLocalCurrency;
-
+        /**
+         * 成本来源
+         */
+        private String costSource;
     }
 
     /**

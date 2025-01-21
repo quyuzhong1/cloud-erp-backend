@@ -184,4 +184,14 @@ public class ProductPlanDTO implements Serializable {
      */
     private Boolean isDelayApproval;
 
+    /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类名字
+     */
+    private String applicationCategoryName;
+
 }

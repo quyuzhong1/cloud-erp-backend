@@ -28,7 +28,10 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.*;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.MouldRefundStatusEnum;
@@ -68,7 +71,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -182,6 +184,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                             viewDTO.setImagesUrl(new ArrayList<>());
                         }
                         viewDTO.setProductName(v.getProductName());
+                        viewDTO.setTypeId(v.getTypeId());
+                        viewDTO.setLength(v.getLength());
+                        viewDTO.setWidth(v.getWidth());
+                        viewDTO.setHeight(v.getHeight());
+                        viewDTO.setMouldHoles(v.getMouldHoles());
+                        viewDTO.setMaterial(v.getMaterial());
                         return viewDTO;
                     })
                     .collect(Collectors.toList());
@@ -309,12 +317,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                 if (!ObjectUtils.isEmpty(viewDTO)) {
                     MouldInfoDTO.LogDetailDTO oldDetailDTO = new MouldInfoDTO.LogDetailDTO();
                     oldDetailDTO.setThirdMouldNo(viewDTO.getThirdMouldNo());
-                    oldDetailDTO.setTypeName(mouldTypeMap.get(viewDTO.getTypeId()));
-                    oldDetailDTO.setMouldHoles(viewDTO.getMouldHoles());
-                    oldDetailDTO.setLength(MathUtil.divide(viewDTO.getLength(), new BigDecimal(10), 2));
-                    oldDetailDTO.setWidth(MathUtil.divide(viewDTO.getWidth(), new BigDecimal(10), 2));
-                    oldDetailDTO.setHeight(MathUtil.divide(viewDTO.getHeight(), new BigDecimal(10), 2));
-                    oldDetailDTO.setMaterial(viewDTO.getMaterial());
                     oldDetailDTO.setLifeCycle(viewDTO.getLifeCycle());
                     oldDetailDTO.setDevelopCycle(viewDTO.getDevelopCycle());
                     oldDetailDTO.setEnableDate(viewDTO.getEnableDate());
@@ -331,7 +333,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     oldDetailDTO.setRefundAmount(viewDTO.getRefundAmount());
                     String oldProductList = Optional.ofNullable(viewDTO.getProductList()).orElse(new ArrayList<>())
                             .stream()
-                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl())
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + Optional.ofNullable(mouldTypeMap.get(v.getTypeId())).orElse("")
+                                    + "：模具穴数" + v.getMouldHoles() + "模具长" + v.getLength() + "：模具宽" + v.getWidth() +
+                                    "模具高" + v.getHeight() + "：模具材质" + v.getMaterial())
                             .collect(Collectors.joining(","));
                     oldDetailDTO.setProductList(oldProductList);
                     String oldRefProductList = Optional.ofNullable(viewDTO.getRefProductList()).orElse(new ArrayList<>())
@@ -341,12 +345,6 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     oldDetailDTO.setRefProductList(oldRefProductList);
                     MouldInfoDTO.LogDetailDTO logDetailDTO = new MouldInfoDTO.LogDetailDTO();
                     logDetailDTO.setThirdMouldNo(updateDTO.getThirdMouldNo());
-                    logDetailDTO.setTypeName(mouldTypeMap.get(updateDTO.getTypeId()));
-                    logDetailDTO.setMouldHoles(updateDTO.getMouldHoles());
-                    logDetailDTO.setLength(MathUtil.divide(updateDTO.getLength(), new BigDecimal(10), 2));
-                    logDetailDTO.setWidth(MathUtil.divide(updateDTO.getWidth(), new BigDecimal(10), 2));
-                    logDetailDTO.setHeight(MathUtil.divide(updateDTO.getHeight(), new BigDecimal(10), 2));
-                    logDetailDTO.setMaterial(updateDTO.getMaterial());
                     logDetailDTO.setLifeCycle(updateDTO.getLifeCycle());
                     logDetailDTO.setDevelopCycle(updateDTO.getDevelopCycle());
                     logDetailDTO.setEnableDate(updateDTO.getEnableDate());
@@ -363,7 +361,10 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                     logDetailDTO.setRefundAmount(updateDTO.getRefundAmount());
                     String productList = Optional.ofNullable(updateDTO.getProductList()).orElse(new ArrayList<>())
                             .stream()
-                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl())
+                            .map(v -> "产品名称" + v.getProductName() + "：图片地址" + v.getImagesUrl() + "模具类型" + Optional.ofNullable(mouldTypeMap.get(v.getTypeId())).orElse("")
+                                    + "：模具穴数" + v.getMouldHoles() + "模具长" + v.getLength() + "：模具宽" + v.getWidth() +
+                                    "模具高" + v.getHeight() + "：模具材质" + v.getMaterial()
+                            )
                             .collect(Collectors.joining(","));
                     logDetailDTO.setProductList(productList);
                     String refProductList = Optional.ofNullable(updateDTO.getRefProductList()).orElse(new ArrayList<>())
@@ -499,14 +500,20 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
     private void verifyData(List<MouldDetailDTO.ViewDTO> viewDTOS) {
         for (MouldDetailDTO.ViewDTO viewDTO : viewDTOS) {
             StringBuilder msg = new StringBuilder();
-            if (StringUtils.isEmpty(viewDTO.getTypeId())) {
-                msg.append("模具类型不能为空,");
+            if (CollectionUtils.isEmpty(viewDTO.getProductList())) {
+                msg.append("模具产品不能为空,");
+                continue;
             }
-            if (StringUtils.isEmpty(viewDTO.getMouldHoles())) {
-                msg.append("模具穴数不能为空,");
-            }
-            if (StringUtils.isEmpty(viewDTO.getMaterial())) {
-                msg.append("模具材质不能为空,");
+            for (MouldProductDTO.ViewDTO dto : viewDTO.getProductList()) {
+                if (StringUtils.isEmpty(dto.getTypeId())) {
+                    msg.append("模具类型不能为空,");
+                }
+                if (StringUtils.isEmpty(dto.getMouldHoles())) {
+                    msg.append("模具穴数不能为空,");
+                }
+                if (StringUtils.isEmpty(dto.getMaterial())) {
+                    msg.append("模具材质不能为空,");
+                }
             }
             if (ObjectUtils.isEmpty(viewDTO.getLifeCycle())) {
                 msg.append("模具寿命(万)(啤)不能为空,");
@@ -957,9 +964,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             dto.setSupplierName(supplierMap.get(dto.getSupplierId()));
             dto.setTypeName(mouldSettingMap.get(dto.getTypeId()));
             dto.setWarehouseLocationName(warehouseLocationMap.get(dto.getWarehouseLocation()));
-            dto.setLength(MathUtil.divide(dto.getLength(), new BigDecimal(10), 2));
-            dto.setWidth(MathUtil.divide(dto.getWidth(), new BigDecimal(10), 2));
-            dto.setHeight(MathUtil.divide(dto.getHeight(), new BigDecimal(10), 2));
+            dto.setLength(dto.getLength());
+            dto.setWidth(dto.getWidth());
+            dto.setHeight(dto.getHeight());
             if (!ObjectUtils.isEmpty(dto.getImagesUrl())) {
                 dto.setImageUrl(dto.getImagesUrl().split(",")[0]);
             }
@@ -1034,9 +1041,12 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         List<KingdeePaymentConditionEntity> paymentConditionList = FeignQuery.list(KingdeePaymentConditionEntity.class);
         Map<String, String> paymentConditionNameMap = paymentConditionList.stream()
                 .collect(Collectors.toMap(KingdeePaymentConditionEntity::getName, KingdeePaymentConditionEntity::getCode, (o1, o2) -> o1));
+        List<SupplierEntity> supplierList = FeignQuery.list(SupplierEntity.class);
+        Map<String, String> supplierMap = supplierList.stream()
+                .collect(Collectors.toMap(SupplierEntity::getName, SupplierEntity::getId, (o1, o2) -> o1));
         List<CfgMouldSettingEntity> cfgMouldSettingList = cfgMouldSettingService.mouldList();
         Map<String, String> typeNameMap = cfgMouldSettingList.stream().collect(Collectors.toMap(CfgMouldSettingEntity::getName, CfgMouldSettingEntity::getId, (o1, o2) -> o1));
-        MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap, dictBasicNameMap, paymentConditionNameMap);
+        MouldInfoExcelListener excelListenerUtil = new MouldInfoExcelListener(typeNameMap, dictBasicNameMap, paymentConditionNameMap, supplierMap);
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), MouldInfoImportDTO.MouldInfoExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -1047,6 +1057,9 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
             throw new ServiceException(ApiError.ERROR_1016);
         }
         List<MouldDetailDTO.ViewDTO> successList = excelListenerUtil.getSuccessList();
+        for (MouldDetailDTO.ViewDTO dto : successList) {
+            dto.setMouldNo(null);
+        }
         String url = "";
         List<MouldInfoImportDTO.MouldInfoExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (!CollectionUtils.isEmpty(errorList)) {

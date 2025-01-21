@@ -130,6 +130,8 @@ public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 			try {
 				costDTO = objectMapper.readValue(JSONUtil.toJsonStr(shipmentResult.getData()), CostDTO.class);
 			} catch (JsonProcessingException e) {
+				System.out.println(e.getMessage());
+				e.printStackTrace();
 				log.error("美客多费用明细接口数据解析错误，数据={}", shipmentResult.getData());
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 费用明细数据解析失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));

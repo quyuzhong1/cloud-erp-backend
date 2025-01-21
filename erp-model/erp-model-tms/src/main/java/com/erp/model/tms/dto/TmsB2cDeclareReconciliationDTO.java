@@ -246,6 +246,15 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          */
         private LocalDateTime payTime;
 
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
@@ -372,6 +381,16 @@ public class TmsB2cDeclareReconciliationDTO implements Serializable {
          * 报关对账单明细
          */
         private List<TmsB2cDeclareReconciliationDetailDTO.ViewDTO> detailList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**

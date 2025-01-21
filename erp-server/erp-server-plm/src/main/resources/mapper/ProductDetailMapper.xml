@@ -95,7 +95,8 @@
         pd.warehouse_location,
         pd.warehouse_location_large,
         pi.iterate_ref_sku_id,
-        pi.iterate_ref_sku_no
+        pi.iterate_ref_sku_no,
+        pi.application_category_id
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -126,7 +127,14 @@
             AND pd.is_change = #{params.isChange}
         </if>
 
-        <if test="params.statusList != null and params.statusList.size > 0 ">
+        <if test="params.applicationCategoryIds != null and params.applicationCategoryIds.size > 0 ">
+            AND pi.application_category_id in
+            <foreach collection="params.applicationCategoryIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+
+          <if test="params.statusList != null and params.statusList.size > 0 ">
             AND pd.status in
             <foreach collection="params.statusList" item="item" open="(" separator="," close=")">
                 #{item}
@@ -359,7 +367,8 @@
                pi.sample_fee,
                pi.is_customized,
                pi.sales_channel,
-               pd.status
+               pd.status,
+               pi.application_category_id
         FROM product_info pi
                  LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
                  LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
@@ -406,7 +415,8 @@
                pi.sample_fee,
                pi.is_customized,
                pi.sales_channel,
-               pd.status
+               pd.status,
+               pi.application_category_id
         FROM product_info pi
                  LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
                  LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
@@ -441,7 +451,8 @@
                pi.sales_channel,
                pi.type,
                pi.iterate_ref_sku_id,
-               pi.iterate_ref_sku_no
+               pi.iterate_ref_sku_no,
+               pi.application_category_id
         FROM product_info pi
         WHERE pi.is_deleted = FALSE
           AND pi.id = #{productId}
@@ -533,7 +544,8 @@
         pi.iterate_ref_sku_id,
         pi.iterate_ref_sku_no,
         pd.warehouse_location,
-        pd.warehouse_location_large
+        pd.warehouse_location_large,
+        pi.application_category_id
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
@@ -765,6 +777,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pc.retail_price,
+        pc.tax_rate,
         ppk.product_length as productLength,
         ppk.product_width as productWidth,
         ppk.product_height as productHeight,
@@ -1856,6 +1869,7 @@
         pc.actual_tax_cost,
         pc.target_tax_cost,
         pc.retail_price,
+        pc.tax_rate,
         pp.moq,
         pp.main_supplier as supplierId,
         pp.main_supplier as mainSupplier,
@@ -2132,7 +2146,7 @@
         WHERE
             pd.is_deleted = FALSE
           AND pd.status = '2'
-          AND pc.to_declare_price = 0
+          AND (pc.to_declare_price = 0 or pc.to_declare_price is null)
     </select>
 
     <select id="listSkuPurchaseBySkuIds" resultType="com.erp.model.plm.vo.SkuVO">

@@ -10,6 +10,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -359,4 +360,16 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
      * @return
      */
     List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(List<String> businessCodes);
+
+    /**
+     * 获取当前月份内符合条件的发货列表
+     * @param approveStatus
+     * @param sourceType
+     * @param reportMonth
+     * @param shipmentCode
+     * @param asin
+     * @param msku
+     * @return
+     */
+    List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(String approveStatus, String sourceType, LocalDate reportMonth, String shipmentCode, String asin, String msku);
 }
