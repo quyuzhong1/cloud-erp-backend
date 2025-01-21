@@ -1596,12 +1596,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 //预计费用
                 TmsCostDetailDTO.CostViewDTO estimateCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ESTIMATED.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostViewDTO());
                 if(Objects.nonNull(estimateCost.getCostValue())){
-                    costDTO.setCompleteEstimatedFee(currencySymbol+estimateCost.getCostValue());
+                    costDTO.setCompleteEstimatedFee(CurrencyEnum.getSymbolByCode(estimateCost.getCurrency())+estimateCost.getCostValue());
                 }
                 //实际费用
                 TmsCostDetailDTO.CostViewDTO actualCost = value.stream().filter(v->v.getType().equals(LogisticsBillCostTypeEnum.ACTUAL.getCode())).findFirst().orElse(new TmsCostDetailDTO.CostViewDTO());
                 if(Objects.nonNull(actualCost.getCostValue())){
-                    costDTO.setCompleteActualFee(currencySymbol+actualCost.getCostValue());
+                    costDTO.setCompleteActualFee(CurrencyEnum.getSymbolByCode(actualCost.getCurrency())+actualCost.getCostValue());
                 }
                 resultList.add(costDTO);
             });
