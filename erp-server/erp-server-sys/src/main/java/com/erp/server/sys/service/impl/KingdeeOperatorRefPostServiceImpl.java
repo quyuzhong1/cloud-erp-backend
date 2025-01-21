@@ -298,7 +298,7 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         }
         String userId = UserContext.getDefaultLoginUser().getUid();
         dbList.forEach(item -> {
-            if (item.getUserId().equals(userId)){
+            if (CharSequenceUtil.isNotBlank(item.getUserId()) && item.getUserId().equals(userId)){
                 item.setIsMyState(1);
             }else {
                 item.setIsMyState(0);
