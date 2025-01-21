@@ -160,9 +160,12 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     @Override
     public Map<String, String> validateCategoryCurrency(List<TmsCostDetailEntity> list){
     	Map<String, String> categoryList = new HashMap<>();
+    	if(CollUtil.isEmpty(list)) {
+    		return categoryList;
+    	}
     	List<String> cfgCostIds = list.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
 		Map<String, String> costCategoryMap = tmsCfgCostService.listByIds(cfgCostIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, TmsCfgCostEntity::getDictCostCategory));
-		Map<String, List<TmsCostDetailEntity>> costCategoryAddDataDTOMaps = list.stream().collect(Collectors.groupingBy(v -> costCategoryMap.get(v.getCfgCostId()) + "_" + v.getType()));
+		Map<String, List<TmsCostDetailEntity>> costCategoryAddDataDTOMaps = list.stream().filter(l -> l.getCostValue().compareTo(BigDecimal.ZERO) != 0).collect(Collectors.groupingBy(v -> costCategoryMap.get(v.getCfgCostId()) + "_" + v.getType()));
 		for(Map.Entry<String, List<TmsCostDetailEntity>> costCategoryAddDataDTOMap : costCategoryAddDataDTOMaps.entrySet()) {
 			List<TmsCostDetailEntity> costCategoryList = costCategoryAddDataDTOMap.getValue();
 			String categoryCurrency = costCategoryList.get(0).getCurrency();
