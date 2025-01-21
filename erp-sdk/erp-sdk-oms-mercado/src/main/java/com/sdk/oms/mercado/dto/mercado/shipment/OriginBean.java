@@ -12,13 +12,13 @@ public class OriginBean {
      */
 
     @JsonProperty("sender_id")
-    private int senderId;
+    private long senderId;
     @JsonProperty("shipping_address")
     private ShippingAddressBean shippingAddress;
     @JsonProperty("type")
     private String type;
 
-    public int getSenderId() {
+    public long getSenderId() {
         return senderId;
     }
 
