@@ -262,7 +262,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .stream()
                 .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
 
-
+        Map<String, String> idSymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         for (TmsFirstMileReconciliationDetailDTO.ExportDetailDTO data : list) {
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
@@ -296,6 +296,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 }
 
             }
+            data.setShippingCostStr(idSymbolMap.get(data.getShippingCostCurrency()) + data.getShippingCost());
+            data.setDeclareCostStr(idSymbolMap.get(data.getDeclareCostCurrency()) + data.getDeclareCost());
+            data.setOtherTaxCostStr(idSymbolMap.get(data.getOtherTaxCurrency()) + data.getOtherTaxCost());
+            data.setOtherCostStr(idSymbolMap.get(data.getOtherCostCurrency()) + data.getOtherCost());
         }
     }
 

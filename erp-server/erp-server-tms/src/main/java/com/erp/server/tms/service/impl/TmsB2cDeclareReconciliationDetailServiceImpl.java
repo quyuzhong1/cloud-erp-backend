@@ -1033,6 +1033,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
         //国家信息
         List<String> countryIdList = list.stream().map(TmsB2cDeclareReconciliationDetailDTO.ListDTO::getCountry).collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+        Map<String, String> idSymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         for (TmsB2cDeclareReconciliationDetailDTO.ListDTO listDTO :list) {
             //店铺名称
             String shopName = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), listDTO.getShopId()))
@@ -1046,6 +1047,10 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             listDTO.setInstockForecastStatus(InstockForecastStatusEnum.UPLOAD_SUCCESS.getCode());
             listDTO.setInstockForecastStatusName(InstockForecastStatusEnum.UPLOAD_SUCCESS.getName());
             listDTO.setStatusName(TmsB2cDeclareReconciliationStatusEnum.getName(listDTO.getStatus()));
+            
+            listDTO.setActualShippingCostStr(idSymbolMap.get(listDTO.getActualShippingCurrency()) + listDTO.getActualShippingCost());
+            listDTO.setActualDeclareCostStr(idSymbolMap.get(listDTO.getActualDeclareCurrency()) + listDTO.getActualDeclareCost());
+            listDTO.setActualOtherCostStr(idSymbolMap.get(listDTO.getActualOtherCurrency()) + listDTO.getActualOtherCost());
         }
     }
 
