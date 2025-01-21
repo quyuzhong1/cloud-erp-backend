@@ -110,7 +110,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                             //建议采购量
                             LocalDate calcDate = suggestDTO.getSuggestPurchaseDate().plusDays(Math.min(agingDays, days));
                             //按是否存在bom重新赋值
-                            int suggestDeliveryQty = (CharSequenceUtil.isBlank(suggestDTO.getBomVersion()) && ObjectUtil.isNotEmpty(suggestDTO.getQuantity())) ? totalSuggestQty : totalSuggestQty * suggestDTO.getQuantity();
+                            int suggestDeliveryQty = (CharSequenceUtil.isBlank(suggestDTO.getBomVersion()) || ObjectUtil.isEmpty(suggestDTO.getQuantity())) ? totalSuggestQty : totalSuggestQty * suggestDTO.getQuantity();
                             suggestDTO.setSuggestDeliveryQty(suggestDeliveryQty);
 
                             int inventory = inventoryService.getInventoryByPurchaseSuggest(suggestDTO,replenishmentResultDTO, calcDate, purchaseVolumeInventory);
