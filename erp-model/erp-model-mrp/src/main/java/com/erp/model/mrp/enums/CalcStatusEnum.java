@@ -1,6 +1,8 @@
 package com.erp.model.mrp.enums;
 
 import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -22,5 +24,14 @@ public enum CalcStatusEnum implements EnumMessage {
     @Override
     public String getName() {
         return name;
+    }
+
+    public static String getNameByCode(String code) {
+        for (CalcStatusEnum typeEnum : CalcStatusEnum.values()) {
+            if (typeEnum.getCode().equals(code)) {
+                return typeEnum.getName();
+            }
+        }
+        throw new ServiceException(ApiError.ERROR_9028);
     }
 }
