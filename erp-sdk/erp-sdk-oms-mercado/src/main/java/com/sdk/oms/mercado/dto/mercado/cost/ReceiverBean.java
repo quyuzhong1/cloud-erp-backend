@@ -17,9 +17,9 @@ public class ReceiverBean {
      */
 
     @JsonProperty("user_id")
-    private int userId;
+    private long userId;
     @JsonProperty("cost")
-    private int cost;
+    private double cost;
     @JsonProperty("compensation")
     private int compensation;
     @JsonProperty("save")
@@ -29,7 +29,7 @@ public class ReceiverBean {
     @JsonProperty("compensations")
     private List<?> compensations;
 
-    public int getUserId() {
+    public long getUserId() {
         return userId;
     }
 
@@ -37,7 +37,7 @@ public class ReceiverBean {
         this.userId = userId;
     }
 
-    public int getCost() {
+    public double getCost() {
         return cost;
     }
 
