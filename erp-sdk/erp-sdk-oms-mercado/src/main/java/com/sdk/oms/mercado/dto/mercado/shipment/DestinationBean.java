@@ -39,7 +39,7 @@ public class DestinationBean {
         return receiverId;
     }
 
-    public void setReceiverId(int receiverId) {
+    public void setReceiverId(long receiverId) {
         this.receiverId = receiverId;
     }
 

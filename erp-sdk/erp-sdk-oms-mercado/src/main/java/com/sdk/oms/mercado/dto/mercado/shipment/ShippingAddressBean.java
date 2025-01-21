@@ -72,7 +72,7 @@ public class ShippingAddressBean {
         return addressId;
     }
 
-    public void setAddressId(int addressId) {
+    public void setAddressId(long addressId) {
         this.addressId = addressId;
     }
 
