@@ -599,6 +599,7 @@ public class SoInfoController extends BaseController {
         List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.calReturnAmountByQty(calDTO.getDetails());
         return success(list);
     }
+
     /**
      * 补录销售订单毛利历史数据
      *

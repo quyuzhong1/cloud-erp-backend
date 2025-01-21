@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task;
 
+import java.lang.reflect.Field;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -191,7 +192,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		List<String> mainIds = dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().get(dmpCfgInputConvertEntity).stream().map(BaseEntity::getId).collect(Collectors.toList());
 		for(int i = 1; i < dmpCfgInputConvertEntityList.size(); i++) {
 			DmpCfgInputConvertEntity childDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(i);
-			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(childDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
+			String entityName = StrUtils.underlineToCamel(childDmpCfgInputConvertEntity.getStorageName(), true);
+			try {
+				Field[] declaredFields = Class.forName("com.erp.model.dmp.entity."+ StringUtils.capitalize(entityName) +"Entity").getDeclaredFields();
+				boolean isNotHaveMain = true;
+				for(Field field : declaredFields) {
+					if(field.getName().equals("mainId")) {
+						isNotHaveMain = false;
+						break;
+					}
+				}
+				if(isNotHaveMain) {
+					continue;
+				}
+			} catch (ClassNotFoundException e) {
+				continue;
+			}
+			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(entityName + "ServiceImpl" , ServiceImpl.class);
 			QueryWrapper<?> wrapper = new QueryWrapper<>();
 			wrapper.in("main_id", mainIds);
 			List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
@@ -435,4 +452,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected List<String> getSourceCodeKeys() {
 		return null;
 	}
+
+	public abstract Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpOutputTaskRequest, DmpOutputTaskResponse dmpResponse);
 }

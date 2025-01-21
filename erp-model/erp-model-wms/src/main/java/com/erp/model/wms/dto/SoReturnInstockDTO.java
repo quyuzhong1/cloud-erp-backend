@@ -268,6 +268,35 @@ public class SoReturnInstockDTO {
          */
         private String warehouseLocation;
         /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
          * 来源类型
          */
         private String sourceType;

@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.validator.AddGroup;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -135,6 +134,11 @@ public class SoDetailDTO implements Serializable {
          * 成本来源
          */
         private String costSource;
+
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
 
@@ -400,6 +404,10 @@ public class SoDetailDTO implements Serializable {
          * 成本来源
          */
         private String costSource;
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**
@@ -1034,6 +1042,10 @@ public class SoDetailDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        private String platformSkuName;
         /**
          * 是否子sku
          */

@@ -46,6 +46,8 @@
         sb2c.package_status as packageStatus,
         sb2c.transfer_status as transferStatus,
         sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
         sb2c.amount as amount,
         sb2c.currency as currency,
         sb2c.exchange_rate as exchangeRate,
@@ -133,6 +135,8 @@
         sb2c.is_change_sku as isChangeSku,
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
         sb2cd.id as detailId,
         sb2cd.platform_spu_no as platformSpuNo,
         sb2cd.platform_sku_no as platformSkuNo,
@@ -1165,7 +1169,6 @@
         AND so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
-        AND NOT EXISTS (SELECT * FROM oms_push_msg WHERE source_id = sod.id)
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

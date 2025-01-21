@@ -135,7 +135,7 @@ public interface InventorySkuCostService extends SuperService<InventorySkuCostEn
      * @param month
      * @return
      */
-    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month);
+    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month, String warehouseId);
 
     /**
      * sku成本根据sku查询

@@ -286,9 +286,9 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
                                      List<String> shopIdList,
                                      LocalDateTime platformOrderCreateTime,
                                      Boolean isExpire);
-    
+
     List<OmsPushMsgEntity> syncDataToSdy(LocalDateTime startTime , LocalDateTime endTime);
-    
+
     Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate);
 
     void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
@@ -322,4 +322,5 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
 
     Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
+//    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 }

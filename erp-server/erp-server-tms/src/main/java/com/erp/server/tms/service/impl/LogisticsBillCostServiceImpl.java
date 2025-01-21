@@ -1826,7 +1826,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		Map<String, String> feeTypeSettingMaps = new HashMap<>();
 		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
 		String weightPackageAllocation = allocationSettingDTO.getWeightPackageAllocation();
-		AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
+        String packageOrgId = allocationSettingDTO.getPackageOrgId();
+        String packageWarehouseId = allocationSettingDTO.getPackageWarehouseId();
+        AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
 		for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
 			if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageShippingCost());
@@ -1846,12 +1848,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		LocalDate parse = LocalDate.parse(reportDate + "-01", formatter);
 		List<InventorySkuCostEntity> inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, parse)
 				.eq(InventorySkuCostEntity::getStatus, "approve")
-				.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+				.in(CharSequenceUtil.isBlank(packageOrgId),InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+				.eq(CharSequenceUtil.isNotBlank(packageOrgId),InventorySkuCostEntity::getCompanyId, packageOrgId)
 				.list();
 		Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
 			idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
 			List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
+                    .in(CharSequenceUtil.isBlank(packageWarehouseId),InventorySkuCostDetailEntity::getWarehouseId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()))
+                    .eq(CharSequenceUtil.isNotBlank(packageWarehouseId), InventorySkuCostDetailEntity::getWarehouseId,packageWarehouseId)
 				.in(InventorySkuCostDetailEntity::getSkuId , soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
 			if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
 				for(InventorySkuCostDetailEntity i : inventorySkuCostDetailEntityList) {

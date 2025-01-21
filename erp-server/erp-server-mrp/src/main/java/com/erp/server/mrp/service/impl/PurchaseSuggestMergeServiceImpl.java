@@ -45,6 +45,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
@@ -886,8 +887,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             throw new ServiceException("采购建议不存在");
         }
         //bom信息
-        List<String> skuIdList = purchaseSuggestList.stream().map(PurchaseSuggestEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+        List<String> skuIdList = purchaseSuggestList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getParentSkuId())).map(PurchaseSuggestEntity::getParentSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
 
         //采购申请单信息
         List<String> ids = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getStatus(), SuggestStatusEnum.FINISH.getCode())).map(PurchaseSuggestMergeDTO.ListDTO::getId).distinct().collect(Collectors.toList());
@@ -933,7 +934,11 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
                 childDTO.setSourceIdJson(listDTO.getSourceIdJson());
 
                 //是否是组合品
-                long count = bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion()) && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())).count();
+                long count = bomChildrenSkuList.stream().filter(obj ->
+                        CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion())
+                                && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                                && BomTypeEnum.COMBINATION.getType().equals(obj.getType())
+                ).count();
                 childDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);
 
                 //采购申请

@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -224,6 +225,16 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnNoticeDTO.Add dto) {
+        //校验数据
+        List<SoReturnNoticeDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getReturnQty() !=null && v.getReturnQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
         //获取退货单信息
         SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(dto.getSourceId());
         //获取核算公司
@@ -395,6 +406,16 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnNoticeDTO.Update dto) {
+        //校验数据
+        List<SoReturnNoticeDetailDTO.Update> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getReturnQty() !=null && v.getReturnQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
         //获取核算公司
         SoReturnNoticeEntity entity = this.getById(dto.getId());
         if(!entity.getReturnLogisticCode().equals(dto.getReturnLogisticCode())){

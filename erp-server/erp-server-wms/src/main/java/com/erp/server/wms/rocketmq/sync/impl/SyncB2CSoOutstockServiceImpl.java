@@ -246,8 +246,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setCustomerName(customerInfo.getName());
             soOutstock.setSellerId(customerInfo.getSellerId());
             soOutstock.setSellerName(customerInfo.getSellerName());
-            SysDepartmentUserNumberDTO dept = sysUserFeign.getDeptByUserId(customerInfo.getSellerId());
-            soOutstock.setSalesDeptId(Optional.ofNullable(dept).orElse(new SysDepartmentUserNumberDTO()).getDepartmentId());
+            soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());

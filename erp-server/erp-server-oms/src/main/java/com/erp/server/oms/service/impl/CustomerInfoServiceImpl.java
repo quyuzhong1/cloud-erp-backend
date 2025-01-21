@@ -45,6 +45,7 @@ import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -602,7 +603,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
-        view.setSellerName(sysUserFeign.getSysUserById(view.getSellerId()).getRealName());
+        if(CharSequenceUtil.isNotBlank(view.getSellerId())){
+            SysUserDTO user = sysUserFeign.getSysUserById(view.getSellerId());
+            view.setSellerName(Objects.nonNull(user) ? user.getRealName() : CharSequenceUtil.EMPTY);
+        }
         if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){
             List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
             view.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
@@ -2313,8 +2317,12 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             }
             customerInfoEntityList.forEach(customerInfoEntity -> {
                 List<UserInfoDTO.BusinessOperationUserDTO> collect = data.stream().filter(e -> Objects.equals(customerInfoEntity.getSellerId(), e.getUserId())).collect(Collectors.toList());
-                if (1 == collect.size() && CharSequenceUtil.isNotBlank(collect.get(0).getDepartmentId())){
-                    this.lambdaUpdate().eq(CustomerInfoEntity::getId,customerInfoEntity.getId()).set(CustomerInfoEntity::getSalesDeptId, collect.get(0).getDepartmentId()).update();
+                List<String> deptIds = new ArrayList<>();
+                if(CollUtil.isNotEmpty(collect)){
+                    deptIds = collect.stream().map(UserInfoDTO.BusinessOperationUserDTO::getDepartmentId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                }
+                if (1 == deptIds.size() && CharSequenceUtil.isNotBlank(deptIds.get(0))){
+                    this.lambdaUpdate().eq(CustomerInfoEntity::getId,customerInfoEntity.getId()).set(CustomerInfoEntity::getSalesDeptId, deptIds.get(0)).update();
                 }
             });
 

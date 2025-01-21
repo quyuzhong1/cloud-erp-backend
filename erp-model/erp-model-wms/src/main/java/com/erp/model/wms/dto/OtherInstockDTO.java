@@ -141,7 +141,6 @@ public class OtherInstockDTO implements Serializable {
          */
         private String thirdCode;
 
-
         /**
          * 备注
          */
@@ -151,6 +150,16 @@ public class OtherInstockDTO implements Serializable {
          * 退货物流单号
          */
         private String returnLogisticCode;
+
+        /**
+         * 入库类型
+         */
+        private String type;
+
+        /**
+         * 入库类型名称
+         */
+        private String typeName;
     }
 
     @Data

@@ -1800,4 +1800,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return Boolean.TRUE;
     }
 
+//    @Override
+//    public  List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
+//        if(StringUtils.isBlank(skuParamDTO.getCutomerId()) || CollectionUtils.isEmpty(skuParamDTO.getPlatformSkuNoList())){
+//            return Collections.emptyList();
+//        }
+//        //平台sku匹配系统sku
+//        List<SkuMappingDTO.ProductSkuInfoDTO> productSkuInfoDTOList = this.baseMapper.listSkuBySkuNos(skuParamDTO);
+//        List<String> skuNos = productSkuInfoDTOList.stream().map(SkuMappingDTO.ProductSkuInfoDTO::getSkuNo).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+//        if(CollectionUtils.isEmpty(skuNos)){
+//            return Collections.emptyList();
+//        }
+//        //系统sku 获取子件
+//        return bomSkuFeign.checkExistAndListCombinationSku(skuNos);
+//    }
 }

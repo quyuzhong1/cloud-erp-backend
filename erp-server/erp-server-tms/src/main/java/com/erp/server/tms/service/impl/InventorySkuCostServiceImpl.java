@@ -377,11 +377,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     }
 
     @Override
-    public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month) {
-        if (CharSequenceUtil.isBlank(orgId) && CharSequenceUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds) && Objects.isNull(month)){
+    public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month, String warehouseId) {
+        if (CharSequenceUtil.isBlank(orgId) && CharSequenceUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds) && Objects.isNull(month) && CharSequenceUtil.isBlank(warehouseId)){
             return Collections.emptyList();
         }
-        return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status,month);
+        return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status,month,warehouseId);
     }
 
     @Override

@@ -235,10 +235,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     private LogisticsFeign logisticsFeign;
 
     @Resource
-    private CfgSettingFeign fgSettingFeign;
+    private SysPartitionFeign sysPartitionFeign;
 
     @Resource
-    private SysPartitionFeign sysPartitionFeign;
+    private CfgSettingFeign fgSettingFeign;
     /**
      * 添加销售订单
      *
