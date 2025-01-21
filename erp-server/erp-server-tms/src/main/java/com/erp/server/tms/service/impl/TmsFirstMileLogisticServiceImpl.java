@@ -625,51 +625,55 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             List<CostViewDTO> costDetailList = logisticsBillIdDetailListMap.get(id);
             
             BigDecimal estimatedFee = BigDecimal.ZERO;
-            for(CostViewDTO costViewDTO : costDetailList) {
-            	if(LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(costViewDTO.getType())) {
-            		String mainId = costViewDTO.getMainId();
-            		String currency = costViewDTO.getCurrency();
-            		BigDecimal rate = BigDecimal.ONE;
-            		if(!"CNY".equals(currency)) {
-            			String date = costIdDtoMap.get(mainId).getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            			String key = date + "_" + currency;
-                		rate = rateMap.get(key);
-                		if(rate == null){
-                			rate = dmpTaskFeign.getRate(date, currency);
-                			if(rate == null) {
-                				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
-                			}
-        	            }
-                		rateMap.put(key, rate);
-            		}
-            		
-            		estimatedFee = estimatedFee.add(costViewDTO.getCostValue().multiply(rate));
-            	}
+            if(CollUtil.isNotEmpty(costDetailList)) {
+            	for(CostViewDTO costViewDTO : costDetailList) {
+                	if(LogisticsBillCostTypeEnum.ESTIMATED.getCode().equals(costViewDTO.getType())) {
+                		String mainId = costViewDTO.getMainId();
+                		String currency = costViewDTO.getCurrency();
+                		BigDecimal rate = BigDecimal.ONE;
+                		if(!"CNY".equals(currency)) {
+                			String date = costIdDtoMap.get(mainId).getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                			String key = date + "_" + currency;
+                    		rate = rateMap.get(key);
+                    		if(rate == null){
+                    			rate = dmpTaskFeign.getRate(date, currency);
+                    			if(rate == null) {
+                    				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                    			}
+            	            }
+                    		rateMap.put(key, rate);
+                		}
+                		
+                		estimatedFee = estimatedFee.add(costViewDTO.getCostValue().multiply(rate));
+                	}
+                }
             }
             
             estimatedFee = estimatedFee.setScale(4, RoundingMode.DOWN);
             pagingVO.setEstimatedFee(estimatedFee);
             
             BigDecimal actualFee = BigDecimal.ZERO;
-            for(CostViewDTO costViewDTO : costDetailList) {
-            	if(LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(costViewDTO.getType())) {
-            		String mainId = costViewDTO.getMainId();
-            		String currency = costViewDTO.getCurrency();
-            		BigDecimal rate = BigDecimal.ONE;
-            		if(!"CNY".equals(currency)) {
-            			String date = costIdDtoMap.get(mainId).getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            			String key = date + "_" + currency;
-                		rate = rateMap.get(key);
-                		if(rate == null){
-                			rate = dmpTaskFeign.getRate(date, currency);
-                			if(rate == null) {
-                				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
-                			}
-        	            }
-                		rateMap.put(key, rate);
-            		}
-            		actualFee = actualFee.add(costViewDTO.getCostValue().multiply(rate));
-            	}
+            if(CollUtil.isNotEmpty(costDetailList)) {
+            	for(CostViewDTO costViewDTO : costDetailList) {
+                	if(LogisticsBillCostTypeEnum.ACTUAL.getCode().equals(costViewDTO.getType())) {
+                		String mainId = costViewDTO.getMainId();
+                		String currency = costViewDTO.getCurrency();
+                		BigDecimal rate = BigDecimal.ONE;
+                		if(!"CNY".equals(currency)) {
+                			String date = costIdDtoMap.get(mainId).getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                			String key = date + "_" + currency;
+                    		rate = rateMap.get(key);
+                    		if(rate == null){
+                    			rate = dmpTaskFeign.getRate(date, currency);
+                    			if(rate == null) {
+                    				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                    			}
+            	            }
+                    		rateMap.put(key, rate);
+                		}
+                		actualFee = actualFee.add(costViewDTO.getCostValue().multiply(rate));
+                	}
+                }
             }
             
             actualFee = actualFee.setScale(4, RoundingMode.DOWN);
