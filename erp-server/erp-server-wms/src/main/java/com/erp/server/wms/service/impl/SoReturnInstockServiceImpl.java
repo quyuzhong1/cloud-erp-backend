@@ -309,6 +309,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public String add(SoReturnInstockDTO.Add dto) {
+        //校验数据
+        List<SoReturnInstockDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getRealQty() !=null && v.getRealQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
+
         //生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTH);
         SoReturnInstockEntity entity = new SoReturnInstockEntity();
@@ -427,6 +438,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoReturnInstockDTO.Update dto) {
+        //校验数据
+        List<SoReturnInstockDetailDTO.Update> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getRealQty() !=null && v.getRealQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
+
         String id = dto.getId();
         SoReturnInstockEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
@@ -1669,6 +1691,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         detailEntityList.forEach(v->v.setMainId(soReturnInstockEntity.getId()));
         soReturnInstockDetailService.saveBatch(detailEntityList);
+        // 无客户信息不审核通过
+        if (StringUtils.isBlank(soReturnInstockEntity.getCustomerId())){
+            operateLogService.addModuleOperateLog(String.format("三方仓销售退货入库单【%s】无客户信息不自动审核通过", code), ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), soReturnInstockEntity.getId(), "审核操作");
+            return;
+        }
         //审核
         this.approve(soReturnInstockEntity,ApproveTypeEnum.PASS.getStatus(),"三方仓新增自动审核通过",false);
     }

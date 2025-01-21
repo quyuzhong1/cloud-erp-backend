@@ -184,10 +184,6 @@ public class TbTaskTypeService {
             return;
         }
 
-        if (dmpBasicSystemEntity.getCode().equals("TikTok")) {
-            System.out.println("123");
-        }
-
         //获取系统id
         String systemId = dmpBasicSystemEntity.getId();
 

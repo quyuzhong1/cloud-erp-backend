@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
@@ -107,12 +108,9 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         //销量去噪
         cfgRuleSalesDenoisingService.update(updateDetailDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity.getId(),updateDetailDTO.getIsCustom());
 
-        if (CollectionUtils.isEmpty(oldList)) {
-            return cfgRuleSalesQtyEntity.getId();
-        }
         // 记录主单操作日志
         log.info("编辑 开始记录销量（规则设置）日志数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
-        operateLogService.addModuleOperateLogByObj(oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleSalesQtyEntity.getRefId(),cfgRuleSalesQtyEntity.getId()), "");
+        operateLogService.addModuleOperateLogByObj(CollUtil.isEmpty(oldList) ? new CfgRuleSalesQtyEntity () : oldList.get(0), cfgRuleSalesQtyEntity, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleSalesQtyEntity.getRefId(),cfgRuleSalesQtyEntity.getId()), "");
         return cfgRuleSalesQtyEntity.getId();
     }
 

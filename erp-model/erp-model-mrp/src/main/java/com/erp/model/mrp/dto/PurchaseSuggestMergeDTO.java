@@ -6,10 +6,8 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -46,6 +44,43 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+
+        /**
+         * 是否时合并采购
+         */
+        private Boolean isMerge;
+
+    }
+    /**
+     * 列表Tab参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListParamDTO {
+
+        /**
+         * 是否是合并采购
+         */
+        private Boolean isMerge;
+    }
+
+    /**
+     * tab
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        private String tabFlag;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
 
     }
 
@@ -266,14 +301,22 @@ public class PurchaseSuggestMergeDTO implements Serializable {
         private JSONArray sourceIdJson;
 
         /**
-         * 来源id，备货建议id
-         */
-        private String sourceId;
-
-        /**
          * bom版本
          */
         private String bomVersion;
+
+        /**
+         * 是否下推
+         */
+        private Boolean isPush;
+        /**
+         * 是否下推名称
+         */
+        private String isPushName;
+        /**
+         * 采购申请单号
+         */
+        private String purchaseApplicationCode;
     }
 
 
@@ -410,6 +453,10 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 编码
+         */
+        private String code;
     }
 
     /**
@@ -483,6 +530,10 @@ public class PurchaseSuggestMergeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * 是否合并
+         */
+        private Boolean isMerge;
 
         /**
         * 创建类型
@@ -644,5 +695,191 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 备注
          */
         private String remark;
+    }
+
+    /**
+     * 下推显示DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewPushDTO{
+        /**
+         * 申请人id
+         */
+        private String applyUserId;
+        /**
+         * 明细
+         */
+        private List<ViewPushDetailDTO> detailList;
+    }
+
+    /**
+     * 下推显示明细DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewPushDetailDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 采购备货数
+         */
+        private Integer purchaseStockUpQty;
+        /**
+         * 单相数量
+         */
+        private Integer unitQty;
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
+        /**
+         * 来源信息
+         */
+        private List<PushSourceDTO> sourceList;
+    }
+
+    /**
+     * 下推显示明细DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushSourceDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 编号
+         */
+        private String code;
+        /**
+         * 数量
+         */
+        private Integer qty;
+    }
+
+    /**
+     * 下推保存DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SavePushDTO {
+        /**
+         * 是否提交审核
+         */
+        private Boolean isSubmit;
+        /**
+         * 申请日期
+         */
+        @NotNull(message = "申请日期不能为空")
+        private LocalDate applyDate;
+        /**
+         * 申请人
+         */
+        private String applyUserId;
+        /**
+         * 是否新品首批，false否，true是
+         */
+        @NotNull(message = "是否新品首批不能为空")
+        private Boolean isFirstMassProduct;
+        /**
+         * 申请部门
+         */
+        private String applyDeptId;
+
+        /**
+         * 明细
+         */
+        @NotEmpty(message = "明细数据不能为空")
+        @Valid
+        private List<SavePushDetailDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SavePushDetailDTO {
+        /**
+         * SKU*
+         */
+        @NotBlank(message = "sku不能为空")
+        private String skuId;
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "目的仓库不能为空")
+        private String destWarehouseId;
+        /**
+         * 采购组织id
+         */
+        @NotBlank(message = "采购组织不能为空")
+        private String purchaseOrgId;
+        /**
+         * 采购备货数
+         */
+        private Integer purchaseStockUpQty;
+        /**
+         * 单相数量
+         */
+        private Integer unitQty;
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliveryDate;
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 来源信息
+         */
+        private List<PushSourceDTO> sourceList;
+    }
+
+
+    /**
+     * 独立采购弹框信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MergeFrameDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 建议采购量
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 计划修正数量
+         */
+        private Integer planPurchaseQty;
+        /**
+         * 采购备货数
+         */
+        private Integer purchaseStockUpQty;
+        /**
+         * 来源id(补货建议明细id)
+         */
+        private String sourceId;
     }
 }

@@ -8,7 +8,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * 速卖通发货状态枚举类
@@ -74,5 +78,27 @@ public enum AliexpressDeliveryOrderStatusEnum implements EnumMessage {
             }
         }
         return null;
+    }
+
+    /**
+     * 速卖通发货单已出库状态
+     */
+    public static List<String> getOutStockStatusList() {
+        // 已签收
+        // 目的国清关完成
+        // 已发货
+        // 分拨中心出库
+        // 交航成功
+        // 配送失败
+        return Stream.of(
+                        AliexpressDeliveryOrderStatusEnum.SHIPPED,
+                        AliexpressDeliveryOrderStatusEnum.SIGNED,
+                        AliexpressDeliveryOrderStatusEnum.TO_COUNTRY_CLEARANCE,
+                        AliexpressDeliveryOrderStatusEnum.DISTRIBUTION_CENTER_DELIVERY,
+                        AliexpressDeliveryOrderStatusEnum.SUCCESS_DELIVERY,
+                        AliexpressDeliveryOrderStatusEnum.DELIVERY_FAILED
+                )
+                .map(AliexpressDeliveryOrderStatusEnum::getName)
+                .collect(Collectors.toList());
     }
 }

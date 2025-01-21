@@ -64,7 +64,7 @@ public class BodyBean {
     @JsonProperty("title")
     private String title;
     @JsonProperty("seller_id")
-    private int sellerId;
+    private long sellerId;
     @JsonProperty("category_id")
     private String categoryId;
     @JsonProperty("user_product_id")

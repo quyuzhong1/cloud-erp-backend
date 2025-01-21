@@ -158,6 +158,16 @@ public class ReplenishmentSuggestionController extends BaseController {
     }
 
     /**
+     * 数量统计
+     * @param params 明细id
+     */
+    @PostMapping("/inventoryDetailTotal")
+    public ApiResult<Integer> inventoryDetailTotal(@RequestBody @Validated InventoryDetailTotalDTO params) {
+        Integer inventoryTotal = replenishmentSuggestionService.inventoryDetailTotal(params);
+        return success(inventoryTotal);
+    }
+
+    /**
      * 库存预测明细
      * @param dto 参数
      */
@@ -717,8 +727,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/cleanHistorySalesByOrder")
     public ApiResult<String> cleanHistorySalesByOrder(@RequestParam String platformType, @RequestParam Integer cleanDay) {
-        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
-        basicReplenishmentDataService.cleanHistorySalesByOrder(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        basicReplenishmentDataService.cleanHistorySalesByOrder(LocalDate.now(), CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
         return success();
     }
 
@@ -729,8 +738,7 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @GetMapping("/cleanHistorySalesByOutStock")
     public ApiResult<String> cleanHistorySalesByOutStock(@RequestParam String platformType, @RequestParam Integer cleanDay) {
-        List<ReplenishmentSuggestionEntity> suggestionList = replenishmentSuggestionService.listByPlatform(platformType);
-        basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), suggestionList, CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
+        basicReplenishmentDataService.cleanHistorySalesByOutStock(LocalDate.now(), CfgRulePlatformTypeEnum.getEnum(platformType), cleanDay);
         return success();
     }
 
@@ -742,5 +750,16 @@ public class ReplenishmentSuggestionController extends BaseController {
     public ApiResult<List<ReplenishmentSuggestionVO.SalesInfoVO>> listSalesInfo(@RequestBody @Validated BaseIdDTO dto) {
         List<ReplenishmentSuggestionVO.SalesInfoVO> page = replenishmentSuggestionService.listSalesInfo(dto);
         return success(page);
+    }
+
+
+    /**
+     * 导出计算数据
+     * @param dto 参数
+     */
+    @PostMapping("/exportCalcData")
+    public ApiResult<String> exportCalcData(@RequestBody @Validated BaseIdDTO dto) {
+        replenishmentSuggestionService.exportCalcData(dto);
+        return success();
     }
 }

@@ -859,10 +859,6 @@ public class DeliverySuggestDTO implements Serializable {
     @NoArgsConstructor
     public static class PurchaseSuggestBomDTO {
         /**
-         * 补货建议id
-         */
-        private String sourceId;
-        /**
          * 采购建议编码
          */
         private String code;

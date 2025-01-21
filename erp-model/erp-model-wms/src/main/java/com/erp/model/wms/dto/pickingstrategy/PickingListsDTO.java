@@ -74,6 +74,10 @@ public class PickingListsDTO {
          * 更新时间
          */
         private LocalDateTime updateTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Getter

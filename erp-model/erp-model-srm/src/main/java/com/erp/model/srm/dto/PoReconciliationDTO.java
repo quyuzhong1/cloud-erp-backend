@@ -12,6 +12,7 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -175,6 +176,11 @@ public class PoReconciliationDTO implements Serializable {
          * 收到单据日期【可排序】
          */
         private LocalDate receiveDate;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**

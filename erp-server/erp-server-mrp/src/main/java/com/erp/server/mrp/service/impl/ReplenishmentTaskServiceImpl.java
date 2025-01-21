@@ -55,13 +55,20 @@ public class ReplenishmentTaskServiceImpl extends SuperServiceImpl<Replenishment
     }
 
     @Override
-    public void updateStatus(String suggestionId, String code) {
+    public void updateStatus(List<String> suggestionId, String code) {
         updateStatus(suggestionId, code, null);
     }
 
     @Override
     public void updateStatus(String suggestionId, String code, String msg) {
         update(Wrappers.<ReplenishmentTaskEntity>lambdaUpdate().eq(ReplenishmentTaskEntity::getReplenishmentId, suggestionId)
+                .set(ReplenishmentTaskEntity::getStatus, code)
+                .set(ReplenishmentTaskEntity::getReturnMsg, msg));
+    }
+
+    @Override
+    public void updateStatus(List<String> suggestionId, String code, String msg) {
+        update(Wrappers.<ReplenishmentTaskEntity>lambdaUpdate().in(ReplenishmentTaskEntity::getReplenishmentId, suggestionId)
                 .set(ReplenishmentTaskEntity::getStatus, code)
                 .set(ReplenishmentTaskEntity::getReturnMsg, msg));
     }

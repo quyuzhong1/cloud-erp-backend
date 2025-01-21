@@ -34,6 +34,8 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.CustomerDTO.PagingViewDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
@@ -47,9 +49,12 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
@@ -146,7 +151,8 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Resource
+    private KingdeeFeign kingdeeFeign;
 
     /**
      * 获取到分组的id 集合
@@ -506,7 +512,6 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
-        
         for (CustomerDTO.PagingViewDTO item : list) {
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
@@ -591,8 +596,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
-
-        view.setSellerName(sysUserFeign.getUserByUserId(view.getSellerId()).getRealName());
+        if(CharSequenceUtil.isNotBlank(view.getSellerId())){
+            SysUserDTO user = sysUserFeign.getSysUserById(view.getSellerId());
+            view.setSellerName(Objects.nonNull(user) ? user.getRealName() : CharSequenceUtil.EMPTY);
+        }
+        if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){
+            List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
+            view.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
+        }
         view.setApproveStatusName(customer.getApproveStatus().getName());
         List<OmsAttachmentDTO.UpdateDTO> attachmentList = omsAttachmentService.getByBusinessIds(Arrays.asList(id));
         List<String> attachmentUrlList = attachmentList.stream().
@@ -1136,10 +1147,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             KingdeeReceiptConditionEntity receiptCondition = kingdeeReceiptConditionService.getById(receiptConditionId);
             base.setReceiveConditionName(receiptCondition != null ? receiptCondition.getName() : "");
         }
-        if(StringUtils.isNotBlank(customer.getSellerId())){
-            SysDepartmentUserNumberDTO deptByUserId = sysUserFeign.getDeptByUserId(customer.getSellerId());
-            base.setSalesDeptId(deptByUserId.getDepartmentId());
-            base.setSalesDeptName(deptByUserId.getDepartmentName());
+        if(StringUtils.isNotBlank(customer.getSalesDeptId())){
+            List<SysDepartmentEntity> departmentEntityList = sysUserFeign.getDeptByIds(Collections.singletonList(customer.getSalesDeptId()));
+            base.setSalesDeptId(customer.getSalesDeptId());
+            base.setSalesDeptName(CollUtil.isNotEmpty(departmentEntityList) ? departmentEntityList.get(0).getName() : CharSequenceUtil.EMPTY);
         }
         return base;
     }
@@ -1642,6 +1653,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             return null;
         }
         return this.getById(id);
+    }
+
+    @Override
+    public CustomerInfoEntity getCustomerByCode(String code) {
+        return this.lambdaQuery().eq(CustomerInfoEntity::getCode, code).last("limit 1").one();
     }
 
     /**
@@ -2267,5 +2283,43 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         }
         resultList = resultList.stream().sorted(Comparator.comparing(CustomerDTO.InfoDTO::getDisabled)).collect(Collectors.toList());
         return resultList;
+    }
+
+    @Override
+    public void initHistoryCustomerDeptId() {
+        List<CustomerInfoEntity> list = this.list();
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        Map<String, List<CustomerInfoEntity>> orgMap = list.stream().collect(Collectors.groupingBy(CustomerInfoEntity::getUseOrgId));
+        for (String orgId : orgMap.keySet()){
+            if (CharSequenceUtil.isBlank(orgId)){
+                continue;
+            }
+            List<CustomerInfoEntity> customerInfoEntityList = orgMap.get(orgId);
+            if (CollUtil.isEmpty(customerInfoEntityList)){
+                continue;
+            }
+            KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto = new KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO();
+            dto.setOrgId(orgId);
+            dto.setType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
+            ApiResult<List<UserInfoDTO.BusinessOperationUserDTO>> listApiResult = kingdeeFeign.listKingdeeUser(dto);
+            List<UserInfoDTO.BusinessOperationUserDTO> data = listApiResult.getData();
+            if (CollUtil.isEmpty(data)){
+                continue;
+            }
+            customerInfoEntityList.forEach(customerInfoEntity -> {
+                List<UserInfoDTO.BusinessOperationUserDTO> collect = data.stream().filter(e -> Objects.equals(customerInfoEntity.getSellerId(), e.getUserId())).collect(Collectors.toList());
+                List<String> deptIds = new ArrayList<>();
+                if(CollUtil.isNotEmpty(collect)){
+                    deptIds = collect.stream().map(UserInfoDTO.BusinessOperationUserDTO::getDepartmentId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                }
+                if (1 == deptIds.size() && CharSequenceUtil.isNotBlank(deptIds.get(0))){
+                    this.lambdaUpdate().eq(CustomerInfoEntity::getId,customerInfoEntity.getId()).set(CustomerInfoEntity::getSalesDeptId, deptIds.get(0)).update();
+                }
+            });
+
+        }
+
     }
 }

@@ -3,6 +3,7 @@ package com.erp.server.mrp.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.InventoryDetailTotalDTO;
 import com.erp.model.mrp.dto.ReplenishmentSuggestionDTO;
 import com.erp.model.mrp.entity.LocalInTransitDetailEntity;
 import com.erp.model.mrp.vo.LocalInTransitDetailVO;
@@ -32,4 +33,10 @@ public interface LocalInTransitDetailService extends SuperService<LocalInTransit
      * @param detailId 明细id
      */
     int totalQtyByReplenishment(String detailId);
+
+    /**
+     * 预计发货总数量根据来源类型
+     * @param params 参数
+     */
+    int totalQtyByReplenishmentAndSourceType(InventoryDetailTotalDTO params);
 }

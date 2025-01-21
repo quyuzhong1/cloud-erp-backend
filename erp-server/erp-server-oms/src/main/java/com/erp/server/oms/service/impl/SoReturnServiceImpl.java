@@ -237,6 +237,15 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         String sourceId = dto.getSourceId();
         String customerId = dto.getCustomerId();
         List<SoReturnDetailDTO.Add> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getReturnQty() !=null && v.getReturnQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
+
         //客户跟销售单号不为空时，校验是否为销售单号下的客户
         if(StringUtils.isNotBlank(sourceId) && StringUtils.isNotBlank(customerId)){
             Optional<SoInfoEntity> soInfoEntity = soInfoService.lambdaQuery()
@@ -274,6 +283,14 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
         String sourceId = dto.getSourceId();
         String customerId = dto.getCustomerId();
         List<SoReturnDetailDTO.Update> detailList = dto.getDetailList();
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException("明细不能为空");
+        }else{
+            boolean allMatch = detailList.stream().allMatch(v -> v.getReturnQty() !=null && v.getReturnQty() > 0);
+            if(Boolean.FALSE.equals(allMatch)){
+                throw new ServiceException("退货数量不能小于1");
+            }
+        }
         //客户跟销售单号不为空时，校验是否为销售单号下的客户
         if(StringUtils.isNotBlank(sourceId) && StringUtils.isNotBlank(customerId)){
             Optional<SoInfoEntity> soInfoEntity = soInfoService.lambdaQuery()

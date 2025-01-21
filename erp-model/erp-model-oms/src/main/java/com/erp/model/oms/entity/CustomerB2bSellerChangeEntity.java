@@ -59,6 +59,11 @@ public class CustomerB2bSellerChangeEntity extends BaseEntity<CustomerB2bSellerC
     @TableField("change_seller_name")
     private String changeSellerName;
     /**
+     * 变更后销售部门id
+     */
+    @TableField("change_seller_dept_id")
+    private String changeSellerDeptId;
+    /**
     * 开始日期
     */
     @TableField("start_date")

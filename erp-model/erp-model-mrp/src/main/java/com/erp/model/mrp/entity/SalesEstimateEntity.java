@@ -1,5 +1,6 @@
 package com.erp.model.mrp.entity;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
@@ -7,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -58,6 +60,24 @@ public class SalesEstimateEntity extends BaseEntity<SalesEstimateEntity> {
     @TableField("calc_version")
     private String calcVersion;
 
+    /**
+     * 销量类型：default=默认，dynamic=动态、fixed=固定
+     */
+    @TableField("type")
+    private String type;
+    /**
+     * 销量默认类型：dynamic=动态、fixed=固定
+     */
+    @TableField("default_type")
+    private String defaultType;
+    /**
+     * 固定值
+     */
+    @TableField("fixed_value")
+    private Integer fixedValue;
+
+    @TableField(value = "percent_json", jdbcType = JdbcType.OTHER)
+    private JSONObject percentJson;
 
     public static final String REPLENISHMENT_DETAIL_ID = "replenishment_detail_id";
 

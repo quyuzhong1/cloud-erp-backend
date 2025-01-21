@@ -7,10 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
@@ -45,6 +48,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.erp.server.dmp.service.DmpCfgOutputService;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -242,13 +246,38 @@ public class DmpOutputCreateFactory{
 				dmpOutputTaskRequest.getChangeConvertInputMongoEntityListMaps().put(mainDmpCfgInputConvertEntity, findMongoData);
 			}
 		}else if(DmpInputTaskStatusEnum.DMP.getCode().equals(inputStatus)) {
+			String extendJson = dmpCfgOutputEntity.getExtendJson();
+			List<BaseEntity> list = null;
+			if(StringUtils.isNotBlank(extendJson)) {
+				JSONObject parseObject = JSON.parseObject(extendJson);
+				String tableName = parseObject.getString("tableName");
+				ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(tableName, true) + "ServiceImpl" , ServiceImpl.class);
+				list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));
+				if(CollUtil.isEmpty(list)) {
+					return null;
+				}
+				String parentPropertie = parseObject.getString("parentPropertie");
+				if(StringUtils.isBlank(parentPropertie)) {
+					parentPropertie = "id";
+				}
+				String childPropertie = parseObject.getString("childPropertie");
+				if(StringUtils.isBlank(childPropertie)) {
+					childPropertie = "mainId";
+				}
+				queryParams = new ArrayList<>();
+				List<Object> values = new ArrayList<>();
+				for(BaseEntity l : list) {
+					values.add(BeanUtil.beanToMap(l, childPropertie).get(childPropertie));
+				}
+				queryParams.add(new QueryParam(QueryTypeEnum.IN, parentPropertie, values));
+			}
 			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(mainDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
-			List<BaseEntity> list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));
+			list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));
 			dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(mainDmpCfgInputConvertEntity, list);
 			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(mainDmpCfgInputConvertEntity, list);
 		}
 		String outputClass = dmpCfgOutputEntity.getOutputClass();
-		DmpOutputRocketMQTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputRocketMQTaskHandler.class);
+		DmpOutputTaskHandler dmpOutputTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputTaskHandler.class);
 		dmpOutputTaskHandler.getRetryPushSourceData(dmpCfgInputConvertEntityList, dmpOutputTaskRequest);
 		return dmpOutputTaskHandler.getPushJsonDataMap(dmpOutputTaskRequest, dmpResponse);
 	}

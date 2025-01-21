@@ -407,7 +407,11 @@ public class CustomerDTO implements Serializable {
 
         @NotBlank(message = "销售员不能为空")
         private String sellerId;
-
+        /**
+         * 销售部门id
+         */
+        @NotBlank(message = "销售部门id不能为空")
+        private String salesDeptId;
         /**
          * 来源id
          */
@@ -617,6 +621,15 @@ public class CustomerDTO implements Serializable {
          * 销售员名称
          */
         private String sellerName;
+        /**
+         * 销售部门id
+         */
+        @NotBlank(message = "销售部门id不能为空")
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
         /**
          * 付款方
@@ -837,6 +850,11 @@ public class CustomerDTO implements Serializable {
 
         @NotBlank(message = "销售员不能为空")
         private String sellerId;
+            /**
+             * 销售部门id
+             */
+            @NotBlank(message = "销售部门id不能为空")
+            private String salesDeptId;
         /**
          * 付款方
          */

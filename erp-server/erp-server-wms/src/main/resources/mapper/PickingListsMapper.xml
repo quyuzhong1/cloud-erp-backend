@@ -25,22 +25,23 @@
 
 
     <select id="paging" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$PagingView">
-        select id,
-               update_time,
-               update_user_name,
-               code,
-               warehouse_id,
-               warehouse_name,
-               source_id,
-               source_type,
-               source_code,
-               sku_total,
-               location_total
-        from picking_lists
+        select pl.id,
+               pl.update_time,
+               pl.update_user_name,
+               pl.code,
+               pl.warehouse_id,
+               pl.warehouse_name,
+               pl.source_id,
+               pl.source_type,
+               pl.source_code,
+               pl.sku_total,
+               pl.location_total,
+               pl.create_time as createTime
+        from picking_lists pl
         where ${params.sqlMap.default}
-          and source_type = #{params.sourceType}
-          and is_deleted = false
-        order by create_time desc, id desc
+          and pl.source_type = #{params.sourceType}
+          and pl.is_deleted = false
+        order by pl.create_time desc, pl.id desc
     </select>
 
     <select id="exportInfo" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$ExportInfoDTO">
