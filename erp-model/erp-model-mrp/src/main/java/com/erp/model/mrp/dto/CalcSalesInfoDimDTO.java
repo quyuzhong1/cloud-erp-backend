@@ -13,6 +13,7 @@ import com.erp.model.mrp.enums.*;
 import lombok.*;
 import org.springframework.util.ObjectUtils;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -1447,7 +1448,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String id;
         /**
          * 应用方式
-         * @see ApplyTypeEnum
+         * @see com.erp.model.mrp.enums.ApplyTypeEnum
          */
         @NotBlank(message = "应用方式不能为空")
         private String applyType;
