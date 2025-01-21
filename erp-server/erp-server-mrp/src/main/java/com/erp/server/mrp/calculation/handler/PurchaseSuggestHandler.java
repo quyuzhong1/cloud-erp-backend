@@ -149,6 +149,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         //配置拆分并且独立采购，仅标记bom无需进行拆分
         if (Boolean.FALSE.equals(orderResult.getIsMergeSku())) {
             suggestDTO.setBomVersion(bomSkuList.get(0).getBomVersion());
+            suggestDTO.setParentSkuId(bomSkuList.get(0).getParentSkuId());
             return Collections.singletonList(suggestDTO);
         }
 
