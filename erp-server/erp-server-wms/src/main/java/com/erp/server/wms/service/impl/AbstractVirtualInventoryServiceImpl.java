@@ -113,7 +113,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
                 // 释放锁
                 try {
                     multiLock.unlock();
-                    log.info(" 释放锁成功,rLockList={}",rLockList);
+                    log.warn(" 释放锁成功,rLockList={}",rLockList);
                 } catch (Exception e){
                     log.error("释放锁失败,e = {}", e);
                 }
