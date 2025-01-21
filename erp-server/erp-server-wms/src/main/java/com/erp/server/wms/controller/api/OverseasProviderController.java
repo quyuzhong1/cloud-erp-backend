@@ -121,7 +121,7 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:authorize",
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
-    @LogViewService
+//    @LogViewService
     public ApiResult authorize(@RequestBody @Validated OverseasProviderDTO.AuthorizeParamDTO dto) {
         Boolean flag = overseasProviderService.authorize(dto);
         return flag ? success() : failure();
@@ -140,7 +140,7 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:cancelAuthorize",
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
-    @LogViewService
+//    @LogViewService
     public ApiResult cancelAuthorize(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = overseasProviderService.cancelAuthorize(dto.getId());
         return flag ? success() : failure();

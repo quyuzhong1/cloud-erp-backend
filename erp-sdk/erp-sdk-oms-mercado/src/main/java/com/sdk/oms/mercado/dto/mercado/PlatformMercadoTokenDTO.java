@@ -26,7 +26,8 @@ public class PlatformMercadoTokenDTO {
     @SerializedName("scope")
     private String scope;
     @SerializedName("user_id")
-    private int userId;
+    private long userId;
     @SerializedName("refresh_token")
     private String refreshToken;
 }
+

@@ -62,45 +62,38 @@ public class MercadoSdkClientService {
 
         String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
 
-        //入参
-        HashMap<String, Object> orderParams = new HashMap<>(1);
 
-        //设置请求头
-        Map<String, String> headerMap = new HashMap<>(1);
-        headerMap.put("Authorization", "Bearer APP_USR-3457166802805723-102918-a4b8cdec2a33e72d1249640c9af074c3-1509269799");
+        //组装授权url
+        String clientId = "3457166802805723";
+        String clientSecret = "QucvI4VWHO0w3AZftOElz5liVOurfjQG";
+        String redirectUri = "https://erp.ulanzi.cn:8060/store-permission-result";
+        String url = "https://api.mercadolibre.com";
 
+        String path = "/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s";
+        String baseUrl = String.format(url + path, clientId, clientSecret, "TG-678ddf78f6d7ee0001c3559c-2201503196");
 
+        //入参（无）
+        Map<String, Object> param = new HashMap<>();
 
-        List<ListingViewDTO> resultsBeanList = new ArrayList<>();
+        //请求头（无）
+        Map<String, String> headerMap = new HashMap<>();
 
-        //每次最多获取200条
-        Integer pageSize = 50;
-        //当前页数
-        Integer pageNo = 0;
-        //总页数
-        Integer pageCount = 1;
+        //发起POST请求
+        String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
 
-        Boolean nexflag = true;
-        String baseUrl = "https://api.mercadolibre.com/marketplace/claims/search";
-        while (nexflag) {
-            int offset = pageSize * pageNo;
-//user_id=1509269799
-            //入参
-            HashMap<String, Object> params = new HashMap<>();
-            params.put("user_id", 1512693686);
-            params.put("site_id", "MLM");
-            //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
-            if (!Objects.equals(apiResult.getCode(), 200)) {
-                nexflag = false;
-                log.error("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多items/search数据失败，返回值 responseMap={}",
-                        baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
-            }
-
-
+        //解析数据
+        PlatformMercadoRefreshTokenDTO refreshTokenDTO = null;
+        try {
+            refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
+//            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
+        } catch (Exception e) {
+            log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
+                    bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
         }
-
+        if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+        }
     }
 
 
@@ -623,7 +616,7 @@ public class MercadoSdkClientService {
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
             Map<String, Object> extendData = shopInfoEntity.getExtendData();
-            result.setUserId(Integer.valueOf(extendData.get("userId")+""));
+            result.setUserId(Long.valueOf(extendData.get("userId")+""));
 
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {
