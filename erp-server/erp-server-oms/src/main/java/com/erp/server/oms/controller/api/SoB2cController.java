@@ -1092,7 +1092,7 @@ public class SoB2cController extends BaseController {
      * @param dto  这里的id是 so_id列表
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogViewService
+//    @LogViewService
     @PostMapping(value = "/retryOrderForecast")
     public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto.getIds());

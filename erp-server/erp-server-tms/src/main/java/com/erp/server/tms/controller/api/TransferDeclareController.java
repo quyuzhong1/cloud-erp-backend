@@ -268,7 +268,7 @@ public class TransferDeclareController extends BaseController {
      * @param dtos
      * @return com.common.core.controller.vo.ApiResult
      **/
-    @LogViewService
+//    @LogViewService
     @PostMapping(value = "/instockForecast")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
