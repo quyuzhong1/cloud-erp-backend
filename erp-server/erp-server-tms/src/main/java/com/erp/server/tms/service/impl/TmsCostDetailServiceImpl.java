@@ -277,7 +277,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
                     LogisticsBillCostEntity costEntity = logisticsBillCostService.getById(mainId);
                     currency = null == costEntity ? "" : costEntity.getCurrency();
                 } else {
-                    currency = "";
+                    currency = "CNY";
                 }
                break;
             case SELF_DELIVER:
