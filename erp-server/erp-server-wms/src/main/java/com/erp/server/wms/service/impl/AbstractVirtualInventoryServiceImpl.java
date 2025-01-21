@@ -115,7 +115,7 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
                     multiLock.unlock();
                     log.warn(" 释放锁成功,paramList = {}",JSON.toJSONString(paramList));
                 } catch (Exception e){
-                    log.error("释放锁失败,e = {}", e);
+                    log.warn(" 释放锁失败,paramList = {},e = {}",JSON.toJSONString(paramList),e);
                 }
             }
         }
