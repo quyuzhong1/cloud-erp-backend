@@ -12,6 +12,6 @@ public class BuyerBean {
      */
 
     @JsonProperty("id")
-    private int fid;
+    private long fid;
 
 }
