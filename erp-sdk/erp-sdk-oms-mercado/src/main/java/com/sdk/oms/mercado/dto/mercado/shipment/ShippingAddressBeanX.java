@@ -30,7 +30,7 @@ public class ShippingAddressBeanX {
      */
 
     @JsonProperty("address_id")
-    private int addressId;
+    private long addressId;
     @JsonProperty("address_line")
     private String addressLine;
     @JsonProperty("street_name")
@@ -68,11 +68,11 @@ public class ShippingAddressBeanX {
     @JsonProperty("types")
     private List<String> types;
 
-    public int getAddressId() {
+    public long getAddressId() {
         return addressId;
     }
 
-    public void setAddressId(int addressId) {
+    public void setAddressId(long addressId) {
         this.addressId = addressId;
     }
 
