@@ -22,7 +22,7 @@ public class OriginBean {
         return senderId;
     }
 
-    public void setSenderId(int senderId) {
+    public void setSenderId(long senderId) {
         this.senderId = senderId;
     }
 
