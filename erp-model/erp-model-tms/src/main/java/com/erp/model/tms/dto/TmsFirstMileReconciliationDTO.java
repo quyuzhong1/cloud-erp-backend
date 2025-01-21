@@ -233,7 +233,7 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
         /**
          * 实际物流费用币种
          */
-        private String actualShippingCostCurrency = "CNY";;
+        private String actualShippingCostCurrency = "CNY";
         
         /**
          * 实际物流费用币种符号

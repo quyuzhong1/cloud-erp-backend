@@ -566,7 +566,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 .stream()
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getMainId));
 
-
         //币别信息
         List<String> currencyIdList = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
@@ -608,6 +607,17 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             }
 
             data.setPayStatusName(TmsB2cDeclareReconciliationPayStatusEnum.getName(data.getPayStatus()));
+            
+            BigDecimal actualShippingCost = BigDecimal.ZERO;
+            BigDecimal actualDeclareCost = BigDecimal.ZERO;
+            BigDecimal actualOtherCost = BigDecimal.ZERO;
+            List<TmsFirstMileReconciliationDetailEntity> detailList = detailGroupMap.get(data.getId());
+            if(CollUtil.isNotEmpty(detailList)) {
+            	
+            }
+            data.setActualShippingCost(actualShippingCost);
+            data.setActualDeclareCost(actualDeclareCost);
+            data.setActualOtherCost(actualOtherCost);
         }
     }
 
