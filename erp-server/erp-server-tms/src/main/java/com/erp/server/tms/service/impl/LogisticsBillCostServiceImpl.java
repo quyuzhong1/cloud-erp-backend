@@ -1712,6 +1712,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
         updateDataDTO.setCostDetailList(updateDetailList);
+        tmsCostDetailService.deleteByMainIdList(Arrays.asList(dto.getId()));
 		this.update(updateDataDTO , false);
 	}
 
