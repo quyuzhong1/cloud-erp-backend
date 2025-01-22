@@ -131,8 +131,10 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
@@ -1478,7 +1480,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration, isUpdateTransferStatus);
 
         //如果有物流单号 就要去取消
-        if (StringUtils.isNotBlank(code) && !Objects.equals(logisticsChannelId,existChannelId)) {
+        if (StringUtils.isNotBlank(code) && !Objects.equals(logisticsChannelId,existChannelId) && soB2cLogisticsEntity.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())) {
             //已存在的渠道为空
             if (StringUtils.isBlank(existChannelId)) {
                 throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
@@ -8761,6 +8763,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
         //物流渠道下单平台
         String logisticsPlatform = channelConstraintDTO.getLogisticsPlatform();
+        if(StringUtils.isBlank(logisticsPlatform)){
+            logisticsPlatform = PlatformDictEnum.CUSTOMIZE.getCode();
+        }
         if (StrUtil.isBlank(logisticsEntity.getLogisticsChannelId()) || StrUtil.isBlank(logisticsPlatform)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL, entity.getCode());
         }
@@ -9412,5 +9417,37 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getSoOutstockDate,LocalDate.parse(soOutstockDate))
                 .eq(SoB2cEntity::getId,soId)
                 .update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException {
+        SoB2cEntity soB2cEntity = this.getById(dto.getId());
+        if(Objects.isNull(soB2cEntity)){
+            throw new ServiceException("销售订单不存在");
+        }
+        SoB2cLogisticsEntity soB2cLogisticsEntity = this.soB2cLogisticsService.getByMainId(dto.getId());
+        if(Objects.isNull(soB2cLogisticsEntity)){
+            throw new ServiceException("销售订单物流信息不存在");
+        }
+        if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode()) && soB2cLogisticsEntity.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())){
+            throw new ServiceException("已获取第三方物流单号不支持上传物流面单");
+        }
+        MultipartFile multipartFile = dto.getFile();
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            throw new ServiceException("文件不能为空");
+        }
+        // 获取文件的内容类型并检查是否为PDF
+        if(!"application/pdf".equals(multipartFile.getContentType())){
+            throw new ServiceException("文件格式不正确，请上传PDF格式的文件");
+        }
+        String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
+
+        soB2cLabelService.ManualUploadLabel(base64,dto.getId());
+        String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
+
+        operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
+
+        return "";
     }
 }

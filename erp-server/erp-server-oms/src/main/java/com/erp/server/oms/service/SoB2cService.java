@@ -23,6 +23,7 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -1045,4 +1046,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param soOutstockDate
      */
     void writeBackSoOutstockDate(String soId, String soOutstockDate);
+
+    String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
 }

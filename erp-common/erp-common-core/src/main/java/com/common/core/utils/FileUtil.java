@@ -431,4 +431,18 @@ public class FileUtil {
         // 截取文件名的部分（去掉后缀）
         return fileName.substring(0, lastDotIndex);
     }
+
+    public static String convertToBase64AndCheckIfPdf(MultipartFile multipartFile) throws IOException {
+        // 检查文件是否为空
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            throw new ServiceException("文件不能为空");
+        }
+
+        // 将文件内容转换为Base64编码的字符串
+        byte[] fileContent = multipartFile.getBytes();
+        String base64Encoded = Base64.encode(fileContent);
+        // 返回结果
+        return base64Encoded;
+    }
+
 }
