@@ -933,7 +933,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         diffListDTO.setOtherTaxCost(actualOtherTaxCostExchange.subtract(estimatedOtherTaxCostExchange).setScale(4, RoundingMode.DOWN));
         diffListDTO.setOtherTaxCurrency("CNY");
         diffListDTO.setOtherTaxCurrencySymbol(idSymbolMap.get("CNY"));
-        diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedTotalLogisticsCost));
+        diffListDTO.setTotalLogisticsCost(actualListDTO.getTotalLogisticsCost().subtract(estimatedListDTO.getTotalLogisticsCost()));
     }
 
 
@@ -1519,7 +1519,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMaps = successList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getTransportNo));
         successList = new ArrayList<>();
         Map<String, TmsFirstMileReconciliationDetailEntity> transportNoDetailMap = lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getTransportNo, transportNoMaps.keySet())
-        		.in(TmsFirstMileReconciliationDetailEntity::getStatus, Arrays.asList(ReconciliationStatusEnum.CONFIRMED.getCode(),ReconciliationStatusEnum.DIFF_CONFIRM.getCode(),ReconciliationStatusEnum.RECONCILED.getCode()))
+        		.ne(TmsFirstMileReconciliationDetailEntity::getMainId, mainEntity.getId())
         		.eq(TmsFirstMileReconciliationDetailEntity::getType, "actual").list()
         		.stream().collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getTransportNo, t -> t , (t1 , t2) -> t1));
         
@@ -1553,7 +1553,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         			if(isValiDate) {
         				successList.addAll(dictList);
         			}else {
-        				dictList.forEach(d -> d.setErrorMsg(CharSequenceUtil.format("物流运单号【{}】下的【{}】分类费用币种与之前已确认币别不一致", key , DictCostCategoryEnum.getName(dict))));
+        				dictList.forEach(d -> d.setErrorMsg(CharSequenceUtil.format("物流运单号【{}】下的【{}】分类费用币种与其他周期对账单币别不一致", key , DictCostCategoryEnum.getName(dict))));
         				errorList.addAll(dictList);
         			}
         		}else {
