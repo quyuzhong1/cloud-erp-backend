@@ -94,6 +94,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/collect")
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<PagingVO<ProductShowDTO>> collect(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.collect(dto);
         return success(pagingVO);
