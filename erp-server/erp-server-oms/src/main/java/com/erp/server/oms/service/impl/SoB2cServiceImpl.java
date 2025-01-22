@@ -8651,6 +8651,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
         //物流渠道下单平台
         String logisticsPlatform = channelConstraintDTO.getLogisticsPlatform();
+        if(StringUtils.isBlank(logisticsPlatform)){
+            logisticsPlatform = PlatformDictEnum.CUSTOMIZE.getCode();
+        }
         if (StrUtil.isBlank(logisticsEntity.getLogisticsChannelId()) || StrUtil.isBlank(logisticsPlatform)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL, entity.getCode());
         }
