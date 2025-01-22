@@ -26,6 +26,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import org.apache.poi.ss.formula.functions.T;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -1037,4 +1038,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 销售统计导出查询
      */
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
 }
