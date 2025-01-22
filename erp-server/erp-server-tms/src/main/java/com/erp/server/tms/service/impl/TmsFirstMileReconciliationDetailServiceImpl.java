@@ -1520,7 +1520,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         successList = new ArrayList<>();
         Map<String, TmsFirstMileReconciliationDetailEntity> transportNoDetailMap = lambdaQuery().in(TmsFirstMileReconciliationDetailEntity::getTransportNo, transportNoMaps.keySet())
         		.in(TmsFirstMileReconciliationDetailEntity::getStatus, Arrays.asList(ReconciliationStatusEnum.CONFIRMED.getCode(),ReconciliationStatusEnum.DIFF_CONFIRM.getCode(),ReconciliationStatusEnum.RECONCILED.getCode()))
-        		.eq(TmsFirstMileReconciliationDetailEntity::getReconciliationType, "actual").list()
+        		.eq(TmsFirstMileReconciliationDetailEntity::getType, "actual").list()
         		.stream().collect(Collectors.toMap(TmsFirstMileReconciliationDetailEntity::getTransportNo, t -> t , (t1 , t2) -> t1));
         
         for(Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {

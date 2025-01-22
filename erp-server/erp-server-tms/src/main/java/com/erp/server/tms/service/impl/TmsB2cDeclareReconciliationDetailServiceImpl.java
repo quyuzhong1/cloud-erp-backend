@@ -329,7 +329,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
     		xgDto.setType(LogisticsBillCostTypeEnum.ACTUAL.getCode());
     		xgDto.setCfgCostId(xgCostId);
     		xgDto.setSourceType(SourceTypeEnum.TMS_B2C_DECLARE_RECONCILIATION.getCode());
-    		dgDto.setCurrency(currency);
+    		xgDto.setCurrency(currency);
     		updateList.add(xgDto);
             
             tmsCostDetailService.batchUpdate(updateList,detailEntity.getId(),DictCostAttributionEnum.DECLARE,Boolean.FALSE);

@@ -815,6 +815,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setEstimatedShippingCost(BigDecimal.ZERO);
                 listDTO.setEstimatedShippingCostCurrencySymbol("¥");
             }
+            listDTO.setEstimatedShippingCostStr(listDTO.getEstimatedShippingCostCurrencySymbol() + listDTO.getEstimatedShippingCost());
             
             //预估关税费用
             costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DECLARE_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -826,6 +827,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setEstimatedDeclareCost(BigDecimal.ZERO);
                 listDTO.setEstimatedDeclareCostCurrencySymbol("¥");
             }
+            listDTO.setEstimatedDeclareCostStr(listDTO.getEstimatedDeclareCostCurrencySymbol() + listDTO.getEstimatedDeclareCost());
             
             //预估其他费用
             costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.OTHER_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -837,6 +839,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setEstimatedOtherCost(BigDecimal.ZERO);
                 listDTO.setEstimatedOtherCostCurrencySymbol("¥");
             }
+            listDTO.setEstimatedOtherCostStr(listDTO.getEstimatedOtherCostCurrencySymbol() + listDTO.getEstimatedOtherCost());
             
             //预估可抵扣税金
             costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode() + "_" + LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -848,6 +851,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setEstimatedDeductibleTax(BigDecimal.ZERO);
                 listDTO.setEstimatedDeductibleTaxCurrencySymbol("¥");
             }
+            listDTO.setEstimatedDeductibleTaxStr(listDTO.getEstimatedDeductibleTaxCurrencySymbol() + listDTO.getEstimatedDeductibleTax());
+            
             //实际运费
             BigDecimal exchangeActualShippingCost = BigDecimal.ZERO;
             costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.SHIPPING_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
@@ -873,9 +878,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setActualShippingCost(BigDecimal.ZERO);
                 listDTO.setActualShippingCostCurrencySymbol("¥");
             }
+            listDTO.setActualShippingCostStr(listDTO.getActualShippingCostCurrencySymbol() + listDTO.getActualShippingCost());
 
             //运费差异
             listDTO.setDiffShippingCost(MathUtil.subtract(exchangeActualShippingCost,exchangeEstimatedShippingCost).setScale(4, RoundingMode.DOWN));
+            listDTO.setDiffShippingCostStr(listDTO.getDiffShippingCostCurrencySymbol() + listDTO.getDiffShippingCost());
 
             //实际报关费
             costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DECLARE_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
@@ -887,6 +894,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setActualDeclareCost(BigDecimal.ZERO);
                 listDTO.setActualDeclareCostCurrencySymbol("¥");
             }
+            listDTO.setActualDeclareCostStr(listDTO.getActualDeclareCostCurrencySymbol() + listDTO.getActualDeclareCost());
 
             //实际其他费用
             costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.OTHER_COST.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
@@ -898,6 +906,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setActualOtherCost(BigDecimal.ZERO);
                 listDTO.setActualOtherCostCurrencySymbol("¥");
             }
+            listDTO.setActualOtherCostStr(listDTO.getActualOtherCostCurrencySymbol() + listDTO.getActualOtherCost());
             
             //实际可抵扣税金
             costList = costListMap.get(listDTO.getId() + "_" + DictCostCategoryEnum.DEDUCTIBLE_TAX.getCode() + "_" + LogisticsBillCostTypeEnum.ACTUAL.getCode());
@@ -909,6 +918,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	listDTO.setActualDeductibleTax(BigDecimal.ZERO);
                 listDTO.setActualDeductibleTaxCurrencySymbol("¥");
             }
+            listDTO.setActualDeductibleTaxStr(listDTO.getActualDeductibleTaxCurrencySymbol() + listDTO.getActualDeductibleTax());
             
             //费用规则
             listDTO.setFeeRuleName(ShippingFeeRuleEnum.getName(listDTO.getFeeRule()));
@@ -1640,9 +1650,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			editViewDTO.setEstimatedValue(estimatedList.stream().map(TmsCostDetailEntity::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
 			if(CollUtil.isNotEmpty(actualList)) {
 				editViewDTO.setCurrency(actualList.get(0).getCurrency());
+			}else {
+				editViewDTO.setCurrency("CNY");
 			}
 			if(CollUtil.isNotEmpty(estimatedList)) {
 				editViewDTO.setEstimatedCurrency(estimatedList.get(0).getCurrency());
+			}else {
+				editViewDTO.setEstimatedCurrency("CNY");
 			}
 			costDetailList.add(editViewDTO);
 		}
@@ -1699,6 +1713,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
         updateDataDTO.setCostDetailList(updateDetailList);
+        tmsCostDetailService.deleteByMainIdList(Arrays.asList(dto.getId()));
 		this.update(updateDataDTO , false);
 	}
 
