@@ -284,7 +284,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 						.collect(Collectors.toMap(UpdateDTO::getCfgCostId, t -> t));
 				for(TmsCostDetailEntity tmsCostDetailEntity : tmsCostDetailEntityList) {
 					UpdateDTO dbUpdateDto = cfgIdDtoMap.get(tmsCostDetailEntity.getCfgCostId());
-					if(dbUpdateDto == null) {
+					if(dbUpdateDto == null && isImport) {
 						TmsCostDetailDTO.UpdateDTO dto = new TmsCostDetailDTO.UpdateDTO();
 						dto.setCostValue(tmsCostDetailEntity.getCostValue());
 						dto.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
@@ -297,10 +297,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 					if(dbCostValue == null) {
 						dbCostValue = BigDecimal.ZERO;
 					}
-					BigDecimal costValue = dbUpdateDto.getCostValue();
-					if(costValue == null) {
-						costValue = BigDecimal.ZERO;
+					BigDecimal costValue = BigDecimal.ZERO;
+					if(dbUpdateDto != null && dbUpdateDto.getCostValue() != null) {
+						costValue = dbUpdateDto.getCostValue();
 					}
+					
 					if(throwFlag && dbCostValue.compareTo(costValue) != 0) {
 						throw new ServiceException("核算状态为暂估确认，不能修改预估金额");
 					}
@@ -1713,7 +1714,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }
         }
         updateDataDTO.setCostDetailList(updateDetailList);
-        tmsCostDetailService.deleteByMainIdList(Arrays.asList(dto.getId()));
 		this.update(updateDataDTO , false);
 	}
 
