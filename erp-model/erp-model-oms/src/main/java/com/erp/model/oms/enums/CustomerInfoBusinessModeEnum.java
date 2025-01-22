@@ -16,7 +16,7 @@ public enum CustomerInfoBusinessModeEnum implements EnumMessage {
 	O2B("o2b", "线上2B"),
 	O2C("o2c", "线上2C"),
 	X2B("x2b", "线下2B"),
-	X2C("x2c", "线上2C"),
+	X2C("x2c", "线下2C"),
 	O2O("o2o", "O2O"),
     ;
     /**

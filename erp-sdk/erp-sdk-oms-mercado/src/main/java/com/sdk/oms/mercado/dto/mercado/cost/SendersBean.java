@@ -17,7 +17,7 @@ public class SendersBean {
      */
 
     @JsonProperty("user_id")
-    private int userId;
+    private long userId;
     @JsonProperty("cost")
     private double cost;
     @JsonProperty("compensation")
@@ -29,11 +29,11 @@ public class SendersBean {
     @JsonProperty("compensations")
     private List<CompensationsBean> compensations;
 
-    public int getUserId() {
+    public long getUserId() {
         return userId;
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(long userId) {
         this.userId = userId;
     }
 
