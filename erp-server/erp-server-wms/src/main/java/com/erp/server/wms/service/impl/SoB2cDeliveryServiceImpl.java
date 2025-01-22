@@ -1460,10 +1460,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
             //查询是否允许打印面单和配货单
             LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
-            if (ObjectUtil.isEmpty(authDTO)) {
-                waybillDTO.setErrorMsg(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST.msg);
-                waybillDTO.setDisabled(Boolean.TRUE);
-            }
+//            if (ObjectUtil.isEmpty(authDTO)) {
+//                waybillDTO.setErrorMsg(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_AUTU_EXIST.msg);
+//                waybillDTO.setDisabled(Boolean.TRUE);
+//            }
 
             // 配货单需要根据渠道查询是否是自定义配置，自定义配置需要组装数据
             LogisticsPrintTypeDTO.ViewDTO logisticsPrintTypeEntity = logisticsPrintTypeEntities.stream()
