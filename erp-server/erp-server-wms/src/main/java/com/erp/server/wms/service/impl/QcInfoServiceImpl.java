@@ -83,6 +83,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_DAILY_QC_BILL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_BILL;
@@ -206,7 +207,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean add(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity add(QcInfoDTO.SaveOrUpdateDTO dto) {
         //质检单
         QcInfoEntity bill = new QcInfoEntity();
         String code = "";
@@ -306,8 +307,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }else {
                 addQcLog(qc, bill, billId);
             }
+            return bill;
+        } else {
+            return null;
         }
-        return result;
     }
 
     private void addQcLog(QcInfoEntity qc, QcInfoEntity bill, String billId) {
@@ -487,7 +490,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity finish(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
         if (Objects.isNull(bill)) {
@@ -583,9 +586,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
-            operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");
+            operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
+        } else {
+            return null;
         }
-        return result;
     }
 
     /**
@@ -863,7 +867,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean draft(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity draft(QcInfoDTO.SaveOrUpdateDTO dto) {
         //质检单
         QcInfoEntity bill = new QcInfoEntity();
         String billId = dto.getId();
@@ -928,8 +932,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             }else {
                 addQcLog(qc, bill, billId);
             }
+            operateLogService.addModuleOperateLog("新增了一个暂存质检单", ModuleTypeEnum.QC_ORDER.getCode(), billId, "暂存操作");
+            return bill;
+        } else {
+            return null;
         }
-        return result;
     }
 
 
@@ -943,7 +950,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean exemption(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity exemption(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
         if (Objects.isNull(bill)) {
@@ -1037,8 +1044,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcResultService.sendQcResultMsg(Collections.singletonList(id));
             //操作日志
             operateLogService.addModuleOperateLog(String.format("完成免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), id, "免检");
+            operateLogService.addModuleOperateLog(String.format("完成一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), id, "新增操作");
+            return bill;
+        } else {
+            return null;
         }
-        return result;
     }
 
     private void checkPurchaseOrderDetailId(String purchaseOrderId, String purchaseOrderDetailId) {
@@ -1054,7 +1064,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     /**
      * 批量完成质检单
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 15:37
@@ -1062,19 +1072,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean batchFinish(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
+    public BatchResultDTO finish(QcInfoEntity entity) {
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
-        List<QcInfoEntity> qcList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(qcList)) {
-            throw new ServiceException(ApiError.ERROR_99015);
-        }
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99018);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
+
         //批量检查
         batchCheckQcQty(qcList, false);
         LocalDateTime now = LocalDateTime.now();
@@ -1102,9 +1108,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //新品首批回填SKU的尺寸信息
             updateProductPack(ids);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
         }
-        return result;
-
     }
 
 
@@ -1117,15 +1124,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchExemption(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO batchExemption(QcInfoEntity entity) {
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         long count = qcList.stream().filter(s -> !Arrays.asList(QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_QC.getCode()).contains(s.getQcStatus().getCode())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99020);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         //批量检查
         batchCheckQcQty(qcList, true);
         LocalDateTime now = LocalDateTime.now();
@@ -1154,26 +1159,26 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("质检单【%s】免检操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "免检");
-        return result;
-
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        }
     }
 
 
     /**
      * 批量取消 质检单
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 17:13
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchCancel(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO batchCancel(QcInfoEntity entity) {
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
         if (count > 0) {
@@ -1186,22 +1191,28 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("质检单【%s】取消操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "取消质检");
-        return this.updateBatchById(qcList);
+        boolean result = this.updateBatchById(qcList);
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        }
     }
 
 
     /**
      * 删除质检单
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 17:21
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO delete(QcInfoEntity entity) {
+        List<String> ids = Collections.singletonList(entity.getId());
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         List<String> statusList = new ArrayList<>(3);
         statusList.add(QcBillStatusEnum.DRAFT.getCode());
         statusList.add(QcBillStatusEnum.WAIT_QC.getCode());
@@ -1219,22 +1230,27 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcRemarkService.removeByMainIds(ids);
         qcReportDetailService.removeByMainIds(ids);
         qcProductService.removeByMainIds(ids);
-        return result;
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        }
     }
 
 
     /**
      * 撤销
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 17:30
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO cancelProcess(QcInfoEntity entity) {
+        List<String> ids = Collections.singletonList(entity.getId());
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         List<String> statusList = new ArrayList<>(2);
         statusList.add(QcBillStatusEnum.EXEMPTION.getCode());
         statusList.add(QcBillStatusEnum.FINISH_QC.getCode());
@@ -1262,7 +1278,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("质检单【%s】撤销质检", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "撤销质检");
-        return this.updateBatchById(qcList);
+        boolean result = this.updateBatchById(qcList);
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        }
     }
 
 

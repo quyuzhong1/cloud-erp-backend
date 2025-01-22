@@ -16,6 +16,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.QcInfoEntity;
 import com.erp.server.wms.query.QcInfoQueryHandler;
 import com.erp.server.wms.service.QcInfoService;
 import com.erp.server.wms.service.QcResultService;
@@ -27,6 +28,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -89,9 +91,9 @@ public class QcInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "暂存质检单")
     @PostMapping("/draft")
-    public ApiResult draft(@RequestBody QcInfoDTO.SaveOrUpdateDTO dto) {
-        Boolean result = qcInfoService.draft(dto);
-        return result ? success() : failure();
+    public ApiResult<?> draft(@RequestBody QcInfoDTO.SaveOrUpdateDTO dto) {
+        QcInfoEntity entity = qcInfoService.draft(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
     /**
@@ -107,9 +109,9 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:add",
             serviceClass = QcInfoService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated({AddGroup.class,UpdateGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
-        Boolean result = qcInfoService.add(dto);
-        return result ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated({AddGroup.class,UpdateGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
+        QcInfoEntity entity = qcInfoService.add(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
 
@@ -134,9 +136,9 @@ public class QcInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "完成质检:id={id}")
     @PostMapping("/finish")
-    public ApiResult finish(@RequestBody @Validated({AddGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
-        Boolean result = qcInfoService.finish(dto);
-        return result ? success() : failure();
+    public ApiResult<?> finish(@RequestBody @Validated({AddGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
+        QcInfoEntity entity = qcInfoService.finish(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
     /**
@@ -152,9 +154,9 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:batchExemption",
             serviceClass = QcInfoService.class,
             keyIdName = "id")
-    public ApiResult exemption(@RequestBody @Validated({UpdateGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
-        Boolean result = qcInfoService.exemption(dto);
-        return result ? success() : failure();
+    public ApiResult<?> exemption(@RequestBody @Validated({UpdateGroup.class}) QcInfoDTO.SaveOrUpdateDTO dto) {
+        QcInfoEntity entity = qcInfoService.exemption(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
 
@@ -171,10 +173,25 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:batchFinish",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult actionFinish(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = qcInfoService.batchFinish(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<?> actionFinish(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, QcInfoEntity> entityMap = qcInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            QcInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"质检单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(qcInfoService.finish(entity));
+            }catch (Exception e){
+                log.error("质检单完成质检失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
 
     /**
@@ -190,9 +207,23 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:batchExemption",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult batchExemption(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = qcInfoService.batchExemption(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<?> batchExemption(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, QcInfoEntity> entityMap = qcInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            QcInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"质检单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(qcInfoService.batchExemption(entity));
+            }catch (Exception e){
+                log.error("质检单完成质检失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -209,9 +240,23 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:batchCancel",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult batchCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = qcInfoService.batchCancel(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<?> batchCancel(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, QcInfoEntity> entityMap = qcInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            QcInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"质检单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(qcInfoService.batchCancel(entity));
+            }catch (Exception e){
+                log.error("质检单完成质检失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -228,9 +273,23 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:delete",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = qcInfoService.delete(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, QcInfoEntity> entityMap = qcInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            QcInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"质检单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(qcInfoService.delete(entity));
+            }catch (Exception e){
+                log.error("质检单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -247,9 +306,23 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:cancelProcess",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean result = qcInfoService.cancelProcess(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<?> cancelProcess(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, QcInfoEntity> entityMap = qcInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            QcInfoEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "质检单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(qcInfoService.delete(entity));
+            } catch (Exception e) {
+                log.error("质检单删除失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -258,7 +331,7 @@ public class QcInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检单")
     @PostMapping("/exportQcBill")
-    public ApiResult exportWarehouse(@RequestBody @Valid QcInfoDTO.ExportDTO dto) {
+    public ApiResult<?> exportWarehouse(@RequestBody @Valid QcInfoDTO.ExportDTO dto) {
         qcInfoService.exportQcBill(dto);
         return success();
     }
@@ -275,7 +348,7 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:assign",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult assign(@RequestBody @Valid QcInfoDTO.AssignDTO dto) {
+    public ApiResult<?> assign(@RequestBody @Valid QcInfoDTO.AssignDTO dto) {
         Boolean result = qcInfoService.assign(dto);
         return result ? success() : failure();
     }
@@ -292,7 +365,7 @@ public class QcInfoController extends BaseController {
             menuCode = "wms:qcBill:updateHandleMode",
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
-    public ApiResult updateHandleMode(@RequestBody @Valid QcResultDTO.UpdateHandleModeDTO dto) {
+    public ApiResult<?> updateHandleMode(@RequestBody @Valid QcResultDTO.UpdateHandleModeDTO dto) {
         Boolean result = qcInfoService.updateHandleMode(dto);
         return result ? success() : failure();
     }
@@ -342,7 +415,7 @@ public class QcInfoController extends BaseController {
 
 
     @PostMapping("/test")
-    public ApiResult test(@RequestBody List<String> ids) {
+    public ApiResult<?> test(@RequestBody List<String> ids) {
         qcResultService.sendQcResultMsg(ids);
         return success();
     }
@@ -356,7 +429,7 @@ public class QcInfoController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "退货签收单下推质检单")
     @PostMapping("/returnReceiveGenerateQCSave")
-    public ApiResult returnReceiveGenerateQCSave(@RequestBody List<String> ids) {
+    public ApiResult<?> returnReceiveGenerateQCSave(@RequestBody List<String> ids) {
         Boolean flag = qcInfoService.returnReceiveGenerateQCSave(ids);
         return Objects.equals(flag, Boolean.TRUE) ? success() : failure();
     }
@@ -379,7 +452,7 @@ public class QcInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出质检单日报")
     @PostMapping("/exportDailyQcBill")
-    public ApiResult exportDailyExcel(@RequestBody @Valid QcInfoDTO.ExportDTO dto) {
+    public ApiResult<?> exportDailyExcel(@RequestBody @Valid QcInfoDTO.ExportDTO dto) {
         qcInfoService.exportDailyExcel(dto);
         return success();
     }

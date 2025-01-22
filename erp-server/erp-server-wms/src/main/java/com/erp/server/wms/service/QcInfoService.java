@@ -28,7 +28,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param dto
      * @return
      */
-    Boolean add(QcInfoDTO.SaveOrUpdateDTO dto);
+    QcInfoEntity add(QcInfoDTO.SaveOrUpdateDTO dto);
     /**
      * 根据采购id查询
      */
@@ -69,7 +69,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto);
+    QcInfoEntity finish(QcInfoDTO.SaveOrUpdateDTO dto);
 
     /**
      * 更新产品信息
@@ -83,7 +83,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean draft(QcInfoDTO.SaveOrUpdateDTO dto);
+    QcInfoEntity draft(QcInfoDTO.SaveOrUpdateDTO dto);
 
     
     /**
@@ -93,7 +93,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean exemption(QcInfoDTO.SaveOrUpdateDTO dto);
+    QcInfoEntity exemption(QcInfoDTO.SaveOrUpdateDTO dto);
 
 
 
@@ -102,10 +102,10 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * 批量完成质检单
      * @author yl
      * @date 2023-04-20 15:37
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean batchFinish(List<String> ids);
+    BatchResultDTO finish(QcInfoEntity entity);
 
     /**
      * 批量完成免检
@@ -113,26 +113,26 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @date 2023-04-20 16:50
      * @return java.lang.Boolean
      */
-    Boolean batchExemption(List<String> ids);
+    BatchResultDTO batchExemption(QcInfoEntity entity);
 
     /**
      * 批量取消 质检单
      * @author yl
      * @date 2023-04-20 17:13
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean batchCancel(List<String> ids);
+    BatchResultDTO batchCancel(QcInfoEntity entity);
 
     /**
      * 删除质检单
      * @author yl
      * @date 2023-04-20 17:21
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean delete(List<String> ids);
-    
+    BatchResultDTO delete(QcInfoEntity entity);
+
     /**
      * 撤销
      * @author yl
@@ -140,7 +140,7 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(QcInfoEntity entity);
 
     /**
      * 分配质检员
