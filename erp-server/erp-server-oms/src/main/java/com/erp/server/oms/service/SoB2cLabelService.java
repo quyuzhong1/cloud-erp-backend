@@ -41,4 +41,6 @@ public interface SoB2cLabelService extends SuperService<SoB2cLabelEntity> {
      * @return java.util.List<com.erp.model.oms.entity.SoB2cLabelEntity>
      **/
     List<SoB2cLabelEntity> listSoB2cLabelByMainIds(List<String> mainIds);
+
+    void ManualUploadLabel(String base64, String id);
 }
