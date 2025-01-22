@@ -90,6 +90,9 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         BeanMapperUtils.copy(logisticsDTO, entity);
         entity.setMainId(mainId);
         handleLogisticsData(entity);
+        if(StringUtils.isNotBlank(entity.getCode()) ){
+            entity.setSourceSystem(SoB2cLogisticSourceSystemEnum.ERP.getCode());
+        }
         return this.save(entity);
     }
 
