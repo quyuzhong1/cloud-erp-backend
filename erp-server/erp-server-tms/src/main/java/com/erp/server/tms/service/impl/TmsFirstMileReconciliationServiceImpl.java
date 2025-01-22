@@ -617,10 +617,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             BigDecimal actualShippingCost = BigDecimal.ZERO;
             BigDecimal actualDeclareCost = BigDecimal.ZERO;
             BigDecimal actualOtherCost = BigDecimal.ZERO;
+            BigDecimal actualOtherTaxCost = BigDecimal.ZERO;
             List<TmsFirstMileReconciliationDetailEntity> detailList = detailGroupMap.get(data.getId());
             if(CollUtil.isNotEmpty(detailList)) {
             	for(TmsFirstMileReconciliationDetailEntity detail : detailList) {
-            		if(detail.getReconciliationType().equals("actual")) {
+            		if(detail.getType().equals("actual")) {
             			BigDecimal cost = detail.getShippingCost();
             			String currency = detail.getShippingCostCurrency();
                 		BigDecimal rate = rateMap.get(currency);
@@ -659,13 +660,27 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 			rateMap.put(currency, rate);
                 		}
                 		actualOtherCost = actualOtherCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		
+                		cost = detail.getOtherTaxCost();
+            			currency = detail.getOtherTaxCurrency();
+                		rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualOtherTaxCost = actualOtherTaxCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
             		}
             	}
             }
             data.setActualShippingCost(actualShippingCost);
             data.setActualDeclareCost(actualDeclareCost);
             data.setActualOtherCost(actualOtherCost);
-            data.setTotalCost(actualShippingCost.add(actualDeclareCost).add(actualOtherCost));
+            data.setActualOtherTaxCost(actualOtherTaxCost);
+            data.setTotalCost(actualShippingCost.add(actualDeclareCost).add(actualOtherCost).add(actualOtherTaxCost));
         }
     }
 
