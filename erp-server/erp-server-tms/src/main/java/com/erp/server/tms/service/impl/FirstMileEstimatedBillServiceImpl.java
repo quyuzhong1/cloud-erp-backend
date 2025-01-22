@@ -220,6 +220,12 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 					}
                 }
                 item.setCostTotal(total.setScale(4, RoundingMode.DOWN));
+                
+                item.setCostTotalStr(item.getCostTotalCurrencySymbol() + item.getCostTotal());
+                item.setLogisticsCostStr(item.getLogisticsCostCurrencySymbol() + item.getLogisticsCost());
+                item.setCustomsClearanceCostStr(item.getCustomsClearanceCostCurrencySymbol() + item.getCustomsClearanceCost());
+                item.setOtherTaxCostStr(item.getOtherTaxCostCurrencySymbol() + item.getOtherTaxCost());
+                item.setOtherCostStr(item.getOtherCostCurrencySymbol() + item.getOtherCost());
             }
 
             //预计重量
