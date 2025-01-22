@@ -1172,7 +1172,10 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             }else {
                 //如果费用明细为空，则判断对账单次数是否大于1 大于1则创建费用明细
                 if (Objects.equals(DetailReconciliationTypeEnum.ACTUAL.getCode(), detailEntity.getType())){
-                    buildFirstMileCostDetail(detailEntity,entity);
+                	List<TmsCostDetailEntity> dbActualList = tmsCostDetailService.lambdaQuery().eq(TmsCostDetailEntity::getMainId, entity.getId()).eq(TmsCostDetailEntity::getType, DetailReconciliationTypeEnum.ACTUAL.getCode()).list();
+                    if(CollUtil.isEmpty(dbActualList)) {
+                    	buildFirstMileCostDetail(detailEntity,entity);
+                    }
                 }
             }
             entity.setReconciliationStatus(actualDetailEntity.getStatus());
@@ -1528,6 +1531,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     			}
     		});
     		
+    		Map<String, List<AddDataDTO>> cfgCostIdMaps = value.stream().collect(Collectors.groupingBy(AddDataDTO::getCfgCostId));
+    		value = new ArrayList<>();
+    		for(Map.Entry<String, List<AddDataDTO>> cfgCostIdMap : cfgCostIdMaps.entrySet()) {
+    			List<AddDataDTO> groupValue = cfgCostIdMap.getValue();
+    			AddDataDTO v = groupValue.get(0);
+				String estimatedCurrency = v.getEstimatedCurrency();
+				String currency = v.getCurrency();
+    			if(groupValue.stream().anyMatch(g -> !estimatedCurrency.equals(g.getEstimatedCurrency()))) {
+    				throw new ServiceException("【" + tmsCfgCostService.getById(cfgCostIdMap.getKey()).getCostName() + "】相同费用类型预估金额存在不同币别");
+    			}
+    			if(groupValue.stream().anyMatch(g -> !currency.equals(g.getCurrency()))) {
+    				throw new ServiceException("【" + tmsCfgCostService.getById(cfgCostIdMap.getKey()).getCostName() + "】相同费用类型实际金额存在不同币别");
+    			}
+    			v.setEstimatedValue(groupValue.stream().filter(g -> g.getEstimatedValue() != null).map(AddDataDTO::getEstimatedValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+    			v.setCostValue(groupValue.stream().filter(g -> g.getCostValue() != null).map(AddDataDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+    			value.add(v);
+    		}
+    		
 			AddDataDTO dto = value.get(0);
     		String sourceId = dto.getSourceId();
     		LogisticsBillCostEntity logisticsBillCostEntity = getById(sourceId);
@@ -1685,6 +1706,24 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				d.setEstimatedCurrency(CurrencyEnum.CNY.getCurrencyCode());
 			}
 		});
+		
+		Map<String, List<EditDataDTO>> cfgCostIdMaps = dtoList.stream().collect(Collectors.groupingBy(EditDataDTO::getCfgCostId));
+		dtoList = new ArrayList<>();
+		for(Map.Entry<String, List<EditDataDTO>> cfgCostIdMap : cfgCostIdMaps.entrySet()) {
+			List<EditDataDTO> groupValue = cfgCostIdMap.getValue();
+			EditDataDTO v = groupValue.get(0);
+			String estimatedCurrency = v.getEstimatedCurrency();
+			String currency = v.getCurrency();
+			if(groupValue.stream().anyMatch(g -> !estimatedCurrency.equals(g.getEstimatedCurrency()))) {
+				throw new ServiceException("【" + tmsCfgCostService.getById(cfgCostIdMap.getKey()).getCostName() + "】相同费用类型预估金额存在不同币别");
+			}
+			if(groupValue.stream().anyMatch(g -> !currency.equals(g.getCurrency()))) {
+				throw new ServiceException("【" + tmsCfgCostService.getById(cfgCostIdMap.getKey()).getCostName() + "】相同费用类型实际金额存在不同币别");
+			}
+			v.setEstimatedValue(groupValue.stream().filter(g -> g.getEstimatedValue() != null).map(EditDataDTO::getEstimatedValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+			v.setCostValue(groupValue.stream().filter(g -> g.getCostValue() != null).map(EditDataDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
+			dtoList.add(v);
+		}
 		
 		LogisticsBillCostDTO.UpdateDTO updateDataDTO = new LogisticsBillCostDTO.UpdateDTO();
 		EditDataDTO dto = dtoList.get(0);
