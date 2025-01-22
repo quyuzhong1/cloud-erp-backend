@@ -1174,6 +1174,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
                 	List<TmsCostDetailEntity> dbActualList = tmsCostDetailService.lambdaQuery().eq(TmsCostDetailEntity::getMainId, entity.getId()).eq(TmsCostDetailEntity::getType, DetailReconciliationTypeEnum.ACTUAL.getCode()).list();
                     if(CollUtil.isEmpty(dbActualList)) {
                     	buildFirstMileCostDetail(detailEntity,entity);
+                    }else {
+                    	entity.setUpdateList(BeanUtil.copyToList(dbActualList, TmsCostDetailDTO.UpdateDTO.class));
                     }
                 }
             }
