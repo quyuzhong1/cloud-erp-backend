@@ -165,9 +165,9 @@ public class ExpressShipperService {
         params.put("timestamp", timeStamp);
         params.put("msgData", msgData);
         params.put("msgDigest", CallExpressServiceTools.getMsgDigest(msgData, timeStamp, md5Key));
-        log.info("====调用实际请求：{}", params);
+        log.warn("====顺丰调用实际请求：{}", params);
         String result = HttpClientUtil.post(host, params);
-        log.info("====返回结果：{}", params);
+        log.warn("====顺丰返回结果：{}", params);
         BaseResponse baseResponse = JSONUtil.toBean(result, BaseResponse.class);
         BaseResult baseResult = JSONUtil.toBean(baseResponse.getApiResultData(), BaseResult.class);
         return baseResult;

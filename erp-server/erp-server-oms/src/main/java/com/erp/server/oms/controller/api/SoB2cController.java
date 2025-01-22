@@ -12,6 +12,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogViewService;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1565,5 +1567,16 @@ public class SoB2cController extends BaseController {
     public ApiResult tempTikTokOrderDate() {
         Boolean result = soB2cService.tempTikTokOrderDate();
         return result ? success():failure();
+    }
+
+    /**
+     * 上传物流面单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/uploadLogisticLabel")
+    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) throws IOException {
+        return success(soB2cService.uploadLogisticLabel(dto));
     }
 }
