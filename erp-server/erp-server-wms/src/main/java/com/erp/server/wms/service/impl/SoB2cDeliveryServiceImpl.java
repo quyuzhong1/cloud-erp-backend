@@ -1505,28 +1505,29 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
 
             //判断打印类型校验
-            LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
-
-            switch (SoB2cDeliveryPrintTypeEnum.getByCode(param.getPrintType())){
-                case LOGISTICS_BILL :
-                    //打印面单预览
-                    if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
-                        waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.msg, logisticsPlatformEnum.getName()));
-                        waybillDTO.setDisabled(Boolean.TRUE);
-                    }
-                    break;
-                case ALLOCATE_CARGO_BILL :
-                    //打印配货单预览
-                    if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity) && LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
-                        if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
-                            waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL.msg, logisticsPlatformEnum.getName()));
+            if(Objects.nonNull(authDTO)){
+                LogisticsPlatformEnum logisticsPlatformEnum = LogisticsPlatformEnum.getByCode(authDTO.getLogisticsPlatform());
+                switch (SoB2cDeliveryPrintTypeEnum.getByCode(param.getPrintType())){
+                    case LOGISTICS_BILL :
+                        //打印面单预览
+                        if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintLabel())) {
+                            waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_LOGISTICS_BILL.msg, logisticsPlatformEnum.getName()));
                             waybillDTO.setDisabled(Boolean.TRUE);
                         }
-                    }
-                    break;
-                case ALL :
-                default:
-                    break;
+                        break;
+                    case ALLOCATE_CARGO_BILL :
+                        //打印配货单预览
+                        if (ObjectUtil.isNotEmpty(logisticsPrintTypeEntity) && LogisticsLabelTypeEnum.AUTHORITY.getCode().equals(logisticsPrintTypeEntity.getLabelType())) {
+                            if ("N".equalsIgnoreCase(logisticsPlatformEnum.getPrintDelivery())) {
+                                waybillDTO.setErrorMsg(CharSequenceUtil.format(ApiError.LOGISTICS_NOT_PRINT_ALLOCATE_CARGO_BILL.msg, logisticsPlatformEnum.getName()));
+                                waybillDTO.setDisabled(Boolean.TRUE);
+                            }
+                        }
+                        break;
+                    case ALL :
+                    default:
+                        break;
+                }
             }
 
             //详情
