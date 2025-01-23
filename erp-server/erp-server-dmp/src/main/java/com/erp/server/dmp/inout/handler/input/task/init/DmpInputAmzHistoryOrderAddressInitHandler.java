@@ -56,8 +56,10 @@ public class DmpInputAmzHistoryOrderAddressInitHandler extends DmpInputAmzHistor
             ServiceException.runError("找不到mongo订单明细");
         }
         for (PlatformAmazonOrderDTO orderMongoDatum : orderMongoData) {
-
             Address shippingAddress = orderMongoDatum.getOrder().getShippingAddress();
+            if (null == shippingAddress) {
+                continue;
+            }
             BuyerInfo buyerInfo = orderMongoDatum.getOrder().getBuyerInfo();
             JSONObject jsonObject = setAmazonOrderIdAndToJsonObject(shippingAddress,
                     buyerInfo,
@@ -65,7 +67,6 @@ public class DmpInputAmzHistoryOrderAddressInitHandler extends DmpInputAmzHistor
                     orderMongoDatum.getPlatformShopCode()
             );
             curJsonList.add(jsonObject);
-
         }
 
         return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSONArray.toJSONString(curJsonList)));
