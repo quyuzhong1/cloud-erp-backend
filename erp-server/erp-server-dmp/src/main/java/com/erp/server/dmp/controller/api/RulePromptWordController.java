@@ -1,6 +1,10 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.erp.model.bi.dto.BiTargetYearDTO;
+import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -34,6 +38,29 @@ public class RulePromptWordController extends BaseController {
 
     @Resource
     private RulePromptWordService rulePromptWordService;
+    /**
+     * 新增
+     * @author lrp
+     * @date:  2025-01-17
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/paging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<RulePromptWordDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<RulePromptWordDTO.PagingParamDTO> dto) {
+        return success(rulePromptWordService.paging(dto));
+    }
+
+    /**
+     * 详情
+     * @author lrp
+     * @date:  2025-01-17
+     */
+    @GetMapping("/view")
+    public ApiResult<RulePromptWordDTO.ViewDTO> view(@RequestParam("id") String id) {
+        RulePromptWordDTO.ViewDTO viewDTO = rulePromptWordService.view(id);
+        return success(viewDTO);
+    }
 
     /**
     * 新增
@@ -64,6 +91,19 @@ public class RulePromptWordController extends BaseController {
         keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated RulePromptWordDTO.UpdateDTO dto) {
         rulePromptWordService.update(dto);
+        return success();
+    }
+
+    /**
+     * 修改状态
+     * @author lrp
+     * @date:  2025-01-17
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/batchUpdateStatus")
+    public ApiResult<?> batchUpdateStatus(@RequestBody @Validated RulePromptWordDTO.UpdateStatusDTO dto) {
+        rulePromptWordService.batchUpdateStatus(dto);
         return success();
     }
 

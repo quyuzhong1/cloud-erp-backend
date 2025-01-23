@@ -2,24 +2,43 @@ package com.erp.server.dmp.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.common.core.dto.SpElExpressionDTO;
+import com.common.core.entity.ConditionElement;
+import com.common.core.server.rule.SpElServer;
+import com.erp.model.dmp.dto.ThirdShopDTO;
+import com.erp.model.dmp.entity.RulePromptWordEntity;
+import com.erp.model.dmp.dto.RuleConditionDTO;
+import com.erp.model.oms.entity.RuleDeliveryWarehouseEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.dmp.mapper.RulePromptWordMapper;
+import com.erp.server.dmp.service.RuleConditionService;
+import com.erp.server.dmp.service.RulePromptWordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.RulePromptWordDTO;
-import com.erp.model.dmp.entity.RulePromptWordEntity;
-import com.erp.server.dmp.mapper.RulePromptWordMapper;
 import com.erp.server.dmp.service.OperateLogService;
-import com.erp.server.dmp.service.RulePromptWordService;
+
+import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import com.erp.model.dmp.dto.RulePromptWordDTO;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import java.util.Optional;
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 汉化管理规则表 服务实现类
@@ -34,10 +53,26 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Resource
+    private RuleConditionService ruleConditionService;
+
+    @Resource
+    private SpElServer spElServer;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(RulePromptWordDTO.AddDTO addDTO) {
+        List<RuleConditionDTO.AddDTO> conditionList = addDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getCompare(), c.getValue(),
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
+        SpElExpressionDTO expressionDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression = expressionDTO.getExpression();
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+        }
         RulePromptWordEntity rulePromptWordEntity = new RulePromptWordEntity();
         BeanMapperUtils.copy(addDTO, rulePromptWordEntity);
 
@@ -49,12 +84,14 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
         if(!save) {
             throw new ServiceException("汉化管理规则单保存失败");
         }
-
+        String id = rulePromptWordEntity.getId();
+        //保存规则条件
+        ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "汉化管理规则单" , rulePromptWordEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, rulePromptWordEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), rulePromptWordEntity.getId(), "新增操作");
+
 
         return new BaseResultDTO.AddDTO(rulePromptWordEntity.getId(), rulePromptWordEntity.getId());
     }
@@ -67,23 +104,68 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     public Boolean update(RulePromptWordDTO.UpdateDTO addOrUpdateDTO) {
         RulePromptWordEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "汉化管理规则单"));
+        List<RuleConditionDTO.UpdateDTO> conditionList = addOrUpdateDTO.getConditionList();
+        List<ConditionElement> conditionElementList = conditionList.stream().
+                map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
+                        c.getCompare(), c.getValue(),
+                        c.getRightBracket(), c.getLogic(),"")).collect(Collectors.toList());
+        SpElExpressionDTO expressionDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
+        String expression = expressionDTO.getExpression();
+        Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
+        if (!checkResult) {
+            throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
+        }
         RulePromptWordEntity rulePromptWordEntity =  BeanMapperUtils.map(RulePromptWordEntity.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(rulePromptWordEntity);
-        log.info("编辑 开始修改汉化管理规则单数据，id：【{}】", old.getId());
         boolean save = super.updateById(rulePromptWordEntity);
         if(!save) {
             throw new ServiceException("汉化管理规则单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录汉化管理规则单日志数据，id：【{}】", rulePromptWordEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), rulePromptWordEntity.getId(), "汉化管理规则单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, rulePromptWordEntity, null, rulePromptWordEntity.getId(), msg);
+        ruleConditionService.updateRuleCondition(rulePromptWordEntity.getId(), conditionList);
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), rulePromptWordEntity.getId(), "汉化管理规则单");
+        operateLogService.addModuleOperateLogByObj(old, rulePromptWordEntity, ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), rulePromptWordEntity.getId(), msg);
         return Boolean.TRUE;
+
+    }
+
+    @Override
+    public PagingVO<RulePromptWordDTO.ListDTO> paging(PagingDTO<RulePromptWordDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+
+        IPage<RulePromptWordDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public RulePromptWordDTO.ViewDTO view(String id) {
+        RulePromptWordEntity rulePromptWordEntity = this.getById(id);
+        if(null == rulePromptWordEntity){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "汉化管理单");
+        }
+        RulePromptWordDTO.ViewDTO viewDTO = BeanMapperUtils.map(RulePromptWordDTO.ViewDTO.class, rulePromptWordEntity);
+        String type = DictBasicTypeEnum.FIELD.getType();
+        List<RuleConditionDTO.ViewDTO> conditionList = ruleConditionService.listByRuleId(id, type);
+        viewDTO.setConditionList(conditionList);
+        return viewDTO;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchUpdateStatus(RulePromptWordDTO.UpdateStatusDTO dto) {
+        List<RulePromptWordEntity> rulePromptWordEntityList = this.listByIds(dto.getIds());
+        if(CollectionUtils.isEmpty(rulePromptWordEntityList)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "汉化管理单");
+        }
+        rulePromptWordEntityList = rulePromptWordEntityList.stream().filter(v->!v.getDisabled().equals(dto.getDisabled())).collect(Collectors.toList());
+        rulePromptWordEntityList.forEach(v->{
+            operateLogService.addModuleOperateLog(StrUtil.format("[{}]启用状态[{}]变更为[{}]",v.getName(),v.getDisabled()?"禁用":"启用",dto.getDisabled()?"禁用":"启用"), ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), v.getId(), "状态更新");
+            v.setDisabled(dto.getDisabled());
+        });
+        this.updateBatchById(rulePromptWordEntityList);
     }
 
 

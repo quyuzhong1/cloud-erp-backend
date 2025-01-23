@@ -1,4 +1,7 @@
 package com.erp.server.dmp.mapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.dmp.dto.RulePromptWordDTO;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -16,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface RulePromptWordMapper extends BaseMapper<RulePromptWordEntity> {
 
+    IPage<RulePromptWordDTO.ListDTO> paging(Page query, RulePromptWordDTO.PagingParamDTO params);
 }

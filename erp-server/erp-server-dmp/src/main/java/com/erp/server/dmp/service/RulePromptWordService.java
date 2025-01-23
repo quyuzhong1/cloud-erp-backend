@@ -1,8 +1,11 @@
 package com.erp.server.dmp.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.RulePromptWordDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -33,4 +36,9 @@ public interface RulePromptWordService extends SuperService<RulePromptWordEntity
     Boolean update(RulePromptWordDTO.UpdateDTO dto);
 
 
+    PagingVO<RulePromptWordDTO.ListDTO> paging(PagingDTO<RulePromptWordDTO.PagingParamDTO> dto);
+
+    RulePromptWordDTO.ViewDTO view(String id);
+
+    void batchUpdateStatus(RulePromptWordDTO.UpdateStatusDTO dto);
 }

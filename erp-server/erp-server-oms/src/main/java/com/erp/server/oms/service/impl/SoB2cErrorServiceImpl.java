@@ -111,13 +111,14 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     }
 
     @Override
-    public void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson) {
+    public void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson,String code) {
         SoB2cErrorEntity soB2cErrorEntity = new SoB2cErrorEntity();
         soB2cErrorEntity.setMainId(mainId);
         soB2cErrorEntity.setType(type);
         soB2cErrorEntity.setMessage(message);
         soB2cErrorEntity.setParamJson(paramJson);
         soB2cErrorEntity.setReturnJson(returnJson);
+        soB2cErrorEntity.setCode(code);
         this.save(soB2cErrorEntity);
         soB2cService.addSignError(mainId,type);
     }
