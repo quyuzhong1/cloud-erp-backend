@@ -64,3 +64,25 @@ spec:
       targetPort: 9120
       nodePort: 30120
   type: NodePort
+
+---
+
+apiVersion: autoscaling/v2beta2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-erp-server-tms
+  namespace: uat
+spec:
+  maxReplicas: 2 # 最大扩容到10个节点（pod）
+  minReplicas: 1 # 最小扩容1个节点（pod）
+  metrics:
+    - resource:
+        name: cpu
+        target:
+          averageUtilization: 80 # CPU 平局资源使用率达到40%就开始扩容，低于40%就是缩容
+          type: Utilization
+      type: Resource
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: erp-server-tms
