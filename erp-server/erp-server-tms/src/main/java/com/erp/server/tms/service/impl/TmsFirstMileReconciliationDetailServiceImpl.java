@@ -1546,6 +1546,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         				if(AllocationFeeTypeEnum.OTHER_COST.getCode().equals(dict)) {
         					confirmedCurrency = tmsFirstMileReconciliationDetailEntity.getOtherCostCurrency();
         				}
+        				if(AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(dict)) {
+        					confirmedCurrency = tmsFirstMileReconciliationDetailEntity.getOtherTaxCurrency();
+        				}
         				if(!confirmedCurrency.equals(currency)) {
         					isValiDate = false;
         				}
