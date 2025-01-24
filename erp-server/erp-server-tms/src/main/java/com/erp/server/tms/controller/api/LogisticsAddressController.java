@@ -68,6 +68,7 @@ public class LogisticsAddressController extends BaseController {
      * @return
      */
     @PostMapping("/export")
+    @WebAdvanceQuery
     public ApiResult<Object>exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto) {
         Boolean result = logisticsAddressService.exportExcel(dto);
         return result ? success() : failure();
