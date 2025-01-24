@@ -63,7 +63,7 @@ public class ReportFormsManageServiceImpl extends SuperServiceImpl<ReportFormsMa
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         //  单据日期范围
         AdvanceQueryDTO advanceQueryDTO = pagingDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "bill_date".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
-        if(null != advanceQueryDTO){
+        if(null != advanceQueryDTO && null != advanceQueryDTO.getValue()){
             // 单据开始时间
             LocalDate startTime = null;
             // 单据订单结束时间
