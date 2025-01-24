@@ -11,6 +11,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
@@ -294,7 +295,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     omsPushMsgEntity.setSourceCode(soB2cEntity.getCode() + "_" + soB2cDetailEntity.getSkuNo());
                     omsPushMsgEntity.setSyncOperate(operate);
                     Map<String, Object> map = new HashMap<>();
-                    map.put("isQuerySync", Boolean.TRUE);
+                    map.put(DmpOutputConstant.IS_QUERY_SYNC, Boolean.TRUE);
                     map.put("detailId", soB2cDetailEntity.getId());
                     map.put("operate", operate);
                     omsPushMsgEntity.setPushData(JSON.toJSONString(map));

@@ -21,6 +21,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -765,7 +766,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             omsPushMsgEntity.setSourceCode(view.getCode() + "_" + soDetailEntity.getSkuNo());
             omsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
-            map.put("isQuerySync", Boolean.TRUE);
+            map.put(DmpOutputConstant.IS_QUERY_SYNC, Boolean.TRUE);
             map.put("detailId", soDetailEntity.getId());
             map.put("operate", operate);
             omsPushMsgEntity.setPushData(JSON.toJSONString(map));
