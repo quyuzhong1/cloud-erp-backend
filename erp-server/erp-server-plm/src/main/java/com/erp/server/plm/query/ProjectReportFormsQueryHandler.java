@@ -32,6 +32,24 @@ public class ProjectReportFormsQueryHandler extends AbstractQueryHandler {
             }
             return " ps.sale_state " + compareCodeSplicingValueSql;
         }
+        if ("pi.approval_status".equals(field)) {
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)) {
+                return " pi.approval_status is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)) {
+                return " pi.approval_status is not null";
+            }
+            return " pi.approval_status " + compareCodeSplicingValueSql;
+        }
+        if ("poi.project_status".equals(field)) {
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)) {
+                return "poi.project_status is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)) {
+                return "poi.project_status is not null";
+            }
+            return " poi.project_status " + compareCodeSplicingValueSql;
+        }
         return null;
     }
 
