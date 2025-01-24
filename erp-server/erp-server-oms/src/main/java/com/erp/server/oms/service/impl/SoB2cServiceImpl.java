@@ -1698,8 +1698,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     if (isApiWarehouse) {
                         soB2cErrorService.removeErrorOrder(id, type);
                     } else {
+                        String code = "";
+                        if (e instanceof ServiceException) {
+                            // 如果是ServiceException，则获取其错误代码
+                            code = ((ServiceException) e).getCode().toString();
+                        }
                         //添加异常信息
-                        soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
+                        soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
                     }
                     log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
                     return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
@@ -1745,8 +1750,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (isApiWarehouse) {
                 soB2cErrorService.removeErrorOrder(id, type);
             } else {
+                String code = "";
+                if (e instanceof ServiceException) {
+                    // 如果是ServiceException，则获取其错误代码
+                    code = ((ServiceException) e).getCode().toString();
+                }
                 //添加异常信息
-                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson);
+                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
             }
             //获取物流单号失败销售订单自动反审核
             //1.26.2 去掉该功能
@@ -2396,7 +2406,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!apiResult.isSuccess()) {
             String message = apiResult.getMsg();
             //生成异常订单信息
-            soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult));
+            soB2cErrorService.generateErrorOrder(mainId, type, message, JSONObject.toJSONString(createOutboundReq), JSONObject.toJSONString(apiResult),apiResult.getCode().toString());
             throw new ServiceException(ApiError.DEFAULT.code, message);
         } else {
             String shippingOrderNo = apiResult.getData();
@@ -7612,6 +7622,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     error.setMainId(shippingOrderDTO.getSoId())
                             .setType(shippingOrderDTO.getType())
                             .setMessage(shippingOrderDTO.getMessage())
+                            .setCode(shippingOrderDTO.getCode())
                             .setParamJson(shippingOrderDTO.getSoId());
                     addOrUpdateErrors.add(error);
                 }

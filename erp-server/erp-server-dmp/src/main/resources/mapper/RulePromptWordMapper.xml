@@ -33,6 +33,28 @@
         is_deleted,
         name, disabled, desc, tips, solution, index
     </sql>
+    <select id="paging" resultType="com.erp.model.dmp.dto.RulePromptWordDTO$ListDTO">
+        select rpw.id,
+               rpw.index,
+               rpw.name,
+               rpw.desc,
+               rpw.disabled,
+               rpw.create_user_name as createUserName,
+               rpw.create_time as createTime,
+        rpw.update_user_name as update_user_name,
+        rpw.update_time as update_time
+        from
+                     rule_prompt_word rpw
+        where ${params.sqlMap.default}
+        and rpw.is_deleted = false
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        rpw.create_time DESC
+    </select>
 
 
 </mapper>
