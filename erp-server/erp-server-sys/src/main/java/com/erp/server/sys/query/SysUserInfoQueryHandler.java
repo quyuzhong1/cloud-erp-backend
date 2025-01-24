@@ -54,6 +54,16 @@ public class SysUserInfoQueryHandler extends AbstractQueryHandler {
         if ("department_id".equals(field)){
             return " sui.uid in ( select sdu.user_id from sys_department_user sdu where sdu.department_id  " + compareCodeSplicingValueSql + ")";
         }
+        QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
+        if ("sui.user_state".equals(field)) {
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)) {
+                return "sui.user_state is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)) {
+                return "sui.user_state is not null";
+            }
+            return " sui.user_state " + compareCodeSplicingValueSql;
+        }
         return null;
     }
 }

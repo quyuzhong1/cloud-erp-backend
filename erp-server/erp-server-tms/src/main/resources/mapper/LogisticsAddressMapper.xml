@@ -122,7 +122,7 @@
             address_second AS addressSecond,
             zip_code AS zipCode
         FROM logistics_address la
-        WHERE la.is_deleted=FALSE
+        WHERE ${params.sqlMap.default} and la.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
                 AND la.id IN
