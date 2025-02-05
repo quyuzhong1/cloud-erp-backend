@@ -55,6 +55,11 @@
         </if>
         rpw.create_time DESC
     </select>
+    <select id="list" resultType="com.erp.model.dmp.entity.RulePromptWordEntity">
+        select *
+        from rule_prompt_word
+        where is_deleted = false
+    </select>
 
 
 </mapper>

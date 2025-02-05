@@ -171,7 +171,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
 
     @Override
     public List<RulePromptWordDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<RulePromptWordEntity> list = this.list();
+        List<RulePromptWordEntity> list = baseMapper.list();
         List<RulePromptWordDTO.TabListDTO> resultList = new ArrayList<>(2);
         RulePromptWordDTO.TabListDTO tabListDTO = new RulePromptWordDTO.TabListDTO();
         tabListDTO.setTabFlag("false");
