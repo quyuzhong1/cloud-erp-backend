@@ -188,12 +188,13 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus() ? "automatic" : "");
 
         // 平台订单原始取消状态(已退款,部分退款)
-        DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
-        if (DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
-            orderDTO.setIsCancel(Boolean.FALSE);
-        } else {
-            orderDTO.setIsCancel(Boolean.TRUE);
-        }
+//        DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
+//        if (DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
+//            orderDTO.setIsCancel(Boolean.FALSE);
+//        } else {
+//            orderDTO.setIsCancel(Boolean.TRUE);
+//        }
+        orderDTO.setIsCancel(dmpSoInfoEntity.getInvalidStatus());
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
@@ -213,6 +214,11 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         return orderDTO;
     }
 
+    public static void main(String[] args) {
+    	DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode("");
+    	System.out.println(DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum));
+	}
+    
     /**
      * 批量转换明细
      */
