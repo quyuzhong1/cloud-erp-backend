@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -166,6 +167,23 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
             v.setDisabled(dto.getDisabled());
         });
         this.updateBatchById(rulePromptWordEntityList);
+    }
+
+    @Override
+    public List<RulePromptWordDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<RulePromptWordEntity> list = this.list();
+        List<RulePromptWordDTO.TabListDTO> resultList = new ArrayList<>(2);
+        RulePromptWordDTO.TabListDTO tabListDTO = new RulePromptWordDTO.TabListDTO();
+        tabListDTO.setTabFlag("false");
+        tabListDTO.setTabFlagName("启用");
+        tabListDTO.setCount((int) list.stream().filter(v -> v.getDisabled().equals(false)).count());
+        resultList.add(tabListDTO);
+        RulePromptWordDTO.TabListDTO tabListDTO2 = new RulePromptWordDTO.TabListDTO();
+        tabListDTO2.setTabFlag("true");
+        tabListDTO2.setTabFlagName("停用");
+        tabListDTO2.setCount((int) list.stream().filter(v -> v.getDisabled().equals(true)).count());
+        resultList.add(tabListDTO2);
+        return resultList;
     }
 
 
