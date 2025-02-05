@@ -5,6 +5,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.oms.dto.RuleDeliveryWarehouseDTO;
+import com.erp.model.tms.dto.LogisticsBillDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -24,6 +25,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.RulePromptWordDTO;
 
+import java.util.List;
+
 /**
  * 汉化管理规则表
  *
@@ -38,6 +41,18 @@ public class RulePromptWordController extends BaseController {
 
     @Resource
     private RulePromptWordService rulePromptWordService;
+    /**
+     * tabList
+     * @author lrp
+     * @date:  2025-01-17
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<RulePromptWordDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(rulePromptWordService.tabList(dto));
+    }
+
     /**
      * 新增
      * @author lrp
