@@ -85,6 +85,11 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<CfgConditionDTO.ListDTO> listPromptWorkCondition() {
+        return baseMapper.listDeclareCondition();
+    }
+
 
     /**
     * 新增修改处理数据

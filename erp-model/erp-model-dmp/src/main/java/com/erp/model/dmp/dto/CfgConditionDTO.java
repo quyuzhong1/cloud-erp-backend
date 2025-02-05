@@ -22,6 +22,59 @@ import javax.validation.constraints.Size;
 public class CfgConditionDTO implements Serializable {
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+
+        /**
+         * 条件字段 对应dict_rule_condition key
+         */
+        private String conditionField;
+
+        /**
+         * 字段名
+         */
+        private String conditionFieldName;
+
+
+
+        /**
+         * 空间 如时间戳 输入框之类
+         */
+        private String controls;
+
+        /**
+         * 对应api url
+         */
+        private String apiUrl;
+
+        /**
+         * 请求方式
+         */
+        private String requestMethod;
+
+
+        /**
+         * 对应下拉的绑定的字段
+         */
+        private String label;
+
+        /**
+         * 对应下拉的显示中文的名 的字段
+         */
+        private String value;
+
+        /**
+         * json 格式
+         */
+        private String param;
+
+        private String searchKey;
+
+        private String remoteLabel;
+
+
+    }
 
 
     /**

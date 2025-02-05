@@ -41,6 +41,23 @@
         is_deleted,
         condition_field, logic, controls, api_url, condition_field_name, request_method, param, label, value, index, search_key, remote_label, value_type, remark
     </sql>
+    <select id="listDeclareCondition" resultType="com.erp.model.dmp.dto.CfgConditionDTO$ListDTO">
+
+        SELECT
+            condition_field ,
+            condition_field_name,
+            request_method,
+            controls,
+            api_url,
+            param,
+            label,
+            value,
+            search_key,
+            remote_label
+        FROM cfg_condition
+        WHERE is_deleted=FALSE and condition_field in ('logisticsSupplier','thirdWarehouse','salePlatform','errorCode','errorMsg','platformType')
+        ORDER BY index ASC
+    </select>
 
 
 </mapper>
