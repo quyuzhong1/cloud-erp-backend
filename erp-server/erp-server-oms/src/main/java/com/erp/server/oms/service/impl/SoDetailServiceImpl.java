@@ -682,7 +682,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         ListingInfoDTO.QueryDTO queryDTO = new ListingInfoDTO.QueryDTO();
         queryDTO.setAuthId(customerId);
         List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS = skuMappingService.listSkuMappingByParams(queryDTO);
-        SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList,skuMappingViewDTOS);
+        SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList,skuMappingViewDTOS,isTax);
 
         try {
             EasyExcel.read(excelFile.getInputStream(), SoDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -781,7 +781,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "销售订单错误信息.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, SoDetailImportExcelDTO.class);
-            if (file != null && !file.isDirectory()) {
+            if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
