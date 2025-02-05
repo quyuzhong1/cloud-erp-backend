@@ -2,12 +2,9 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -20,7 +17,6 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.ShopDTO.ShopBatchUpdateDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.oms.query.ShopQueryHandler;
@@ -29,7 +25,6 @@ import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -37,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -526,5 +520,18 @@ public class ShopInfoController extends BaseController {
         viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());
         viewParamDTO.setSysId(shopId);
         return dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
+    }
+
+    /**
+     * 获取已授权店铺 (多平台)
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author Will
+     * @date: 2023/10/18 10:00
+     */
+    @PostMapping("/listAuthPlatform")
+    public ApiResult<List<ShopInfoEntity>> listAuthPlatform(@RequestBody List<String> platformDTO) {
+        List<ShopInfoEntity> list = shopInfoService.listAuthPlatform(platformDTO);
+        return success(list);
     }
 }
