@@ -214,11 +214,6 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         return orderDTO;
     }
 
-    public static void main(String[] args) {
-    	DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode("");
-    	System.out.println(DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum));
-	}
-    
     /**
      * 批量转换明细
      */
