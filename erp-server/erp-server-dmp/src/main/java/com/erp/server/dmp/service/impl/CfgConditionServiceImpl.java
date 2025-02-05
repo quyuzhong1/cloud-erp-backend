@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.core.enums.RuleCompareEnum;
 import com.erp.model.dmp.entity.CfgConditionEntity;
 import com.erp.server.dmp.mapper.CfgConditionMapper;
 import com.erp.server.dmp.service.CfgConditionService;
@@ -88,6 +89,38 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
     @Override
     public List<CfgConditionDTO.ListDTO> listPromptWorkCondition() {
         return baseMapper.listDeclareCondition();
+    }
+
+    @Override
+    public List<CfgConditionDTO.TreeDTO> tree() {
+
+        List<CfgConditionEntity> conditionEntityList = this.list();
+        List<CfgConditionDTO.TreeDTO> resultList = new ArrayList<>(conditionEntityList.size());
+        Map<String, String> map = new HashMap<>();
+        for (RuleCompareEnum item : RuleCompareEnum.values()) {
+            map.put(item.getCode(), item.getName());
+        }
+
+        for (CfgConditionEntity item : conditionEntityList) {
+            String conditionField = item.getConditionField();
+            CfgConditionDTO.TreeDTO tree = new CfgConditionDTO.TreeDTO();
+            tree.setConditionField(conditionField);
+            String logicStr = item.getLogic();
+            List<String> logicList = Arrays.asList(logicStr.split(","));
+            List<CfgConditionDTO.TreeDTO> childrenList = new ArrayList<>(logicList.size());
+            for (String logic : logicList) {
+                CfgConditionDTO.TreeDTO children = new CfgConditionDTO.TreeDTO();
+                children.setConditionField(conditionField);
+                children.setLogic(logic);
+                children.setLogicName(map.getOrDefault(logic, ""));
+                childrenList.add(children);
+            }
+            tree.setChildren(childrenList);
+            resultList.add(tree);
+
+
+        }
+        return resultList;
     }
 
 

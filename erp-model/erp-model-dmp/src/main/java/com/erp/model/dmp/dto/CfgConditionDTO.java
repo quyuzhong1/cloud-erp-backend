@@ -1,10 +1,12 @@
 package com.erp.model.dmp.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -21,6 +23,37 @@ import javax.validation.constraints.Size;
 @NoArgsConstructor
 public class CfgConditionDTO implements Serializable {
 
+    /**
+     * 树状结构
+     */
+    @Data
+    @NoArgsConstructor
+    public static class TreeDTO {
+
+        /**
+         * 条件字段
+         */
+        private String conditionField;
+
+
+        /**
+         * 逻辑关系
+         */
+        private String logic;
+
+        /**
+         * 逻辑关系名
+         */
+        private String logicName;
+
+
+
+
+        @JsonInclude(value= JsonInclude.Include.NON_NULL)
+        private List<TreeDTO> children;
+
+
+    }
 
     @Data
     @NoArgsConstructor

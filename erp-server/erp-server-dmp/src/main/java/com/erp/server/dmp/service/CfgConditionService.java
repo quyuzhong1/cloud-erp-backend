@@ -36,4 +36,6 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
 
 
     List<CfgConditionDTO.ListDTO> listPromptWorkCondition();
+
+    List<CfgConditionDTO.TreeDTO> tree();
 }

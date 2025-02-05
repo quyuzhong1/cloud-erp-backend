@@ -82,5 +82,17 @@ public class CfgConditionController extends BaseController {
         List<CfgConditionDTO.ListDTO> result = cfgConditionService.listPromptWorkCondition();
         return success(result);
     }
+    /**
+     * 条件 树结构
+     * @author yl
+     * @date 2023-10-08 15:08
+     * @param
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.CfConditionDTO.TreeDTO>>
+     */
+    @GetMapping("/tree")
+    public ApiResult<List<CfgConditionDTO.TreeDTO>> tree() {
+        List<CfgConditionDTO.TreeDTO> result = cfgConditionService.tree();
+        return success(result);
+    }
 
 }
