@@ -685,7 +685,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             dto.setProductName(skuVO.getSkuName());
             dto.setCountryName(dictCountry.getNameCn());
             dto.setShopName(shopInfoEntity.getName());
-            dto.setStatusName(CalcStatusEnum.getNameByCode(dto.getStatus()));
+            dto.setStatusName(CalcStatusEnum.getName(dto.getStatus()));
         }
     }
 
