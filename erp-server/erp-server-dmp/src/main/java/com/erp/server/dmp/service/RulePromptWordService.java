@@ -41,4 +41,6 @@ public interface RulePromptWordService extends SuperService<RulePromptWordEntity
     RulePromptWordDTO.ViewDTO view(String id);
 
     void batchUpdateStatus(RulePromptWordDTO.UpdateStatusDTO dto);
+
+    List<RulePromptWordDTO.TabListDTO> tabList(PermissionsDTO dto);
 }
