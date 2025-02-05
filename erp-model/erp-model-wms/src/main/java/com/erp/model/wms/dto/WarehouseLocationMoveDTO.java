@@ -5,7 +5,6 @@ import com.common.business.dto.base.SortDTO;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
@@ -453,7 +452,6 @@ public class WarehouseLocationMoveDTO implements Serializable {
         /**
          * 仓位移动明细
          */
-        @Valid
         @NotEmpty(message = "仓位移动明细不能为空")
         private List<WarehouseLocationMoveDetailDTO.AddDTO> detailList;
         /**
