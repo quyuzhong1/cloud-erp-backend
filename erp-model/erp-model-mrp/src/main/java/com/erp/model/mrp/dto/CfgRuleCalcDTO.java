@@ -357,8 +357,10 @@ public class CfgRuleCalcDTO implements Serializable {
         /**
          * 状态
          */
-        @Dict(enumClass = CalcStatusEnum.class)
         private String status;
-
+        /**
+         * 状态名
+         */
+        private String statusName;
     }
 }

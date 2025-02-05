@@ -206,7 +206,7 @@ public class CalcSalesInfoDimController extends BaseController {
 
     /**
      *
-     * 试算跟踪明细
+     * 试算跟踪翻页
      * @param params 参数
      */
     @PostMapping("/dataIdPage")
@@ -225,6 +225,17 @@ public class CalcSalesInfoDimController extends BaseController {
     public ApiResult<String> rulesApply(@RequestBody @Validated CalcSalesInfoDimDTO.RulesApplyDTO dto) {
         calcSalesInfoDimService.rulesApply(dto);
         return success();
+    }
+
+    /**
+     *
+     * 规则应用
+     * @param dto 参数
+     */
+    @PostMapping("/rulesApplyDetail")
+    public ApiResult<CalcSalesInfoDimDTO.RulesApplyDetailDTO> rulesApplyDetail(@RequestBody @Validated CalcSalesInfoDimDTO.RulesApplyDTO dto) {
+        CalcSalesInfoDimDTO.RulesApplyDetailDTO detailDTO = calcSalesInfoDimService.rulesApplyDetail(dto);
+        return success(detailDTO);
     }
 
 

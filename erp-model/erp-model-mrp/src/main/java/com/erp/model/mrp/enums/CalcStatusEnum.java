@@ -1,10 +1,10 @@
 package com.erp.model.mrp.enums;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.constant.EnumMessage;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 
 @Getter
 @AllArgsConstructor
@@ -26,12 +26,24 @@ public enum CalcStatusEnum implements EnumMessage {
         return name;
     }
 
-    public static String getNameByCode(String code) {
+    public static CalcStatusEnum getEnum(String code) {
         for (CalcStatusEnum typeEnum : CalcStatusEnum.values()) {
             if (typeEnum.getCode().equals(code)) {
-                return typeEnum.getName();
+                return typeEnum;
             }
         }
-        throw new ServiceException(ApiError.ERROR_9028);
+        return null;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        for (CalcStatusEnum statusEnum : CalcStatusEnum.values()) {
+            if (CharSequenceUtil.equals(code,statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
     }
 }

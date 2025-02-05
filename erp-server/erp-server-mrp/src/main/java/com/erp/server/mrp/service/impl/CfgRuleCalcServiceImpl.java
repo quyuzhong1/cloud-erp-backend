@@ -403,8 +403,8 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     @Override
     public List<CfgRuleCalcDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<CfgRuleCalcDTO.TabListDTO> list = new ArrayList<>();
-        list.add(new CfgRuleCalcDTO.TabListDTO(CalcStatusEnum.DOING.getCode()));
-        list.add(new CfgRuleCalcDTO.TabListDTO(CalcStatusEnum.FINISH.getCode()));
+        list.add(new CfgRuleCalcDTO.TabListDTO(CalcStatusEnum.DOING.getCode(), CalcStatusEnum.DOING.getName()));
+        list.add(new CfgRuleCalcDTO.TabListDTO(CalcStatusEnum.FINISH.getCode(), CalcStatusEnum.DOING.getName()));
         return list;
     }
 

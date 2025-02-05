@@ -1157,6 +1157,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 预测类型
          * @see MetricsTypeEnum
          */
+        @NotBlank(message = "试算类型不能为空")
         private String metricsType;
     }
 
@@ -1412,13 +1413,17 @@ public class CalcSalesInfoDimDTO implements Serializable {
     @Getter
     @Setter
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class TabListDTO {
 
         /**
          * 状态
          */
-        @Dict(enumClass = CalcStatusEnum.class)
         private String status;
+        /**
+         * 状态名
+         */
+        private String statusName;
 
     }
 
@@ -1448,7 +1453,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String id;
         /**
          * 应用方式
-         * @see com.erp.model.mrp.enums.ApplyTypeEnum
+         * @see ApplyTypeEnum
          */
         @NotBlank(message = "应用方式不能为空")
         private String applyType;
@@ -1460,27 +1465,33 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 平台店铺
          */
-        private List<platformShopDTO> shopList;
+        private List<PlatformShopDTO> shopList;
     }
 
     @Getter
     @Setter
-    public static class platformShopDTO {
-        /**
-         * 是否全部平台
-         */
-        private Boolean isAllPlatform;
+    public static class PlatformShopDTO {
         /**
          * sku
          */
         private List<String> platformList;
         /**
-         * 是否全部店铺
-         */
-        private Boolean isAllShop;
-        /**
          * 平台店铺
          */
         private List<String> shopList;
+    }
+
+    @Getter
+    @Setter
+    public static class RulesApplyDetailDTO {
+
+        /**
+         * sku
+         */
+        private List<CfgRuleCalcDTO.SkuDTO> skuList;
+        /**
+         * 平台店铺
+         */
+        private List<PlatformShopDTO> shopList;
     }
 }

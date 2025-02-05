@@ -442,4 +442,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(BaseIdDTO dto);
+
+    /**
+     * 通过店铺和sku查询建议id
+     * @param shopIdList 店铺id
+     * @param skuIdList  skuid
+     */
+    List<ReplenishmentSuggestionEntity> listByShopIdAndSkuId(List<String> shopIdList, List<String> skuIdList);
 }
