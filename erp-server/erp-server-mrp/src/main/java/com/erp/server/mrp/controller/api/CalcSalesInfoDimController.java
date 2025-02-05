@@ -227,5 +227,16 @@ public class CalcSalesInfoDimController extends BaseController {
         return success();
     }
 
+    /**
+     *
+     * 规则应用
+     * @param dto 参数
+     */
+    @PostMapping("/rulesApplyDetail")
+    public ApiResult<CalcSalesInfoDimDTO.RulesApplyDetailDTO> rulesApplyDetail(@RequestBody @Validated CalcSalesInfoDimDTO.RulesApplyDTO dto) {
+        CalcSalesInfoDimDTO.RulesApplyDetailDTO detailDTO = calcSalesInfoDimService.rulesApplyDetail(dto);
+        return success(detailDTO);
+    }
+
 
 }
