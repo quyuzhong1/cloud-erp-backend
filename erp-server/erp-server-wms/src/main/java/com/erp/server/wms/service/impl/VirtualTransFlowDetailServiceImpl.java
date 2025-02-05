@@ -153,7 +153,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                 .collect(Collectors.toList());
         Integer virtualDetailQty = this.baseMapper.virtualDetailQty(virtualInvDetailId, startDate);
         // 重算库存流水
-        overrideFlowByVirtualInventoryDetailId(flowList,virtualDetailQty);
+        overrideFlowByVirtualInventoryDetailId(flowList,MathUtil.valueOfZero(virtualDetailQty));
         log.info("###VirtualTransFlowDetailServiceImpl:::overrideVirtualTransFlowDetail 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvDetailId, LocalDateTime.now());
     }
 
