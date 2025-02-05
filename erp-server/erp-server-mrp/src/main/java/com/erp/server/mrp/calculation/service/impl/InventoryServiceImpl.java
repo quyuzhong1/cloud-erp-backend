@@ -236,7 +236,7 @@ public class InventoryServiceImpl implements InventoryService {
     private void getLocalInTransit(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String baseKey, ReplenishmentInventoryDTO dto, String calcDate) {
         Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getLocalInTransit());
         if (CollectionUtils.isEmpty(codes)) {
-            dto.setFbaInTransitList(Collections.emptyList());
+            dto.setLocalInTransitList(Collections.emptyList());
             return;
         }
         boolean isPurchase = codes.contains(CfgRuleInventoryNodeEnum.LOCAL_IN_TRANSIT_PURCHASE.getCode());
