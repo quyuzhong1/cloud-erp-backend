@@ -14,7 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="name" property="name" />
        <result column="disabled" property="disabled" />
-       <result column="desc" property="desc" />
+       <result column="description" property="description" />
        <result column="tips" property="tips" />
        <result column="solution" property="solution" />
        <result column="index" property="index" />
@@ -31,13 +31,13 @@
         update_time,
         version,
         is_deleted,
-        name, disabled, desc, tips, solution, index
+        name, disabled, description, tips, solution, index
     </sql>
     <select id="paging" resultType="com.erp.model.dmp.dto.RulePromptWordDTO$ListDTO">
         select rpw.id,
                rpw.index,
                rpw.name,
-               rpw.desc,
+               rpw.description,
                rpw.disabled,
                rpw.create_user_name as createUserName,
                rpw.create_time as createTime,

@@ -108,7 +108,7 @@ public class RulePromptWordDTO implements Serializable {
         /**
          * 规则描述
          */
-        private String desc;
+        private String description;
 
         /**
          * 禁用状态false 未禁用
@@ -163,7 +163,7 @@ public class RulePromptWordDTO implements Serializable {
         /**
         * 规则描述
         */
-        private String desc;
+        private String description;
 
         /**
         * 提示
@@ -230,7 +230,7 @@ public class RulePromptWordDTO implements Serializable {
         /**
         * 规则描述
         */
-        private String desc;
+        private String description;
 
         /**
         * 提示

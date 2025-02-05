@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -37,8 +36,8 @@ public class RulePromptWordEntity extends BaseEntity<RulePromptWordEntity> {
     /**
     * 规则描述
     */
-    @TableField("desc")
-    private String desc;
+    @TableField("description")
+    private String description;
     /**
     * 提示
     */
