@@ -20,6 +20,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.dmp.dto.CfgConditionDTO;
 
+import java.util.List;
+
 /**
  * 条件配置表
  *
@@ -67,6 +69,18 @@ public class CfgConditionController extends BaseController {
         return success();
     }
 
-
+    /**
+     * 汉化管理的条件下拉
+     *
+     * @param
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.CfConditionDTO.CommonDTO>>
+     * @author yl
+     * @date 2023-10-08 14:38
+     */
+    @GetMapping("/listPromptWorkCondition")
+    public ApiResult<List<CfgConditionDTO.ListDTO>> listPromptWorkCondition() {
+        List<CfgConditionDTO.ListDTO> result = cfgConditionService.listPromptWorkCondition();
+        return success(result);
+    }
 
 }

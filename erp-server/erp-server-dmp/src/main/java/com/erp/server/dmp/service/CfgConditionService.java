@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.CfgConditionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 条件配置表 服务类
@@ -33,4 +35,5 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
     Boolean update(CfgConditionDTO.UpdateDTO dto);
 
 
+    List<CfgConditionDTO.ListDTO> listPromptWorkCondition();
 }
