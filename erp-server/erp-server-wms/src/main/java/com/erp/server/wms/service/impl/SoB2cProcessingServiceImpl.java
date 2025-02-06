@@ -30,10 +30,8 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 
 import java.time.LocalDate;
@@ -77,12 +75,12 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     /**
     * 修改
     */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean addOrUpdate(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
+        //删除多余b2c订单
+        baseMapper.deleteB2cOrder();
+
         if (CollUtil.isEmpty(list)) {
-            log.warn("删除数据！size= {}",list.size());
-            lambdaUpdate().remove();
             return Boolean.TRUE;
         }
         // 数据处理
@@ -296,26 +294,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             }
             newList.add(entity);
         }
-        List<String> deleteIds = getDeleteIds(newList, oldList);
-        if (CollUtil.isNotEmpty(deleteIds)) {
-            log.warn("删除数据！size= {}",deleteIds.size());
-            List<List<String>> detailIdListPartition = Lists.partition(deleteIds, 50000);
-            //查询加工单数据
-            for (List<String> removeIds : detailIdListPartition) {
-                this.baseMapper.deleteByIdList(removeIds);
-            }
-        }
         return newList;
-    }
-
-    /**
-     * 查询需要删除的数据
-     */
-    private List<String> getDeleteIds(List<SoB2cProcessingEntity> newList, List<SoB2cProcessingEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(SoB2cProcessingEntity::getId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(SoB2cProcessingEntity::getId).collect(Collectors.toList());
-        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**
