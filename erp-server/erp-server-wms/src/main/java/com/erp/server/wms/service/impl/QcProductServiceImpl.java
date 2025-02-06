@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -80,8 +81,9 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         qcProductEntity.setSkuId(skuId);
         qcProductEntity.setId(id);
 
-        List<String> skuIdList = Collections.singletonList(skuId);
-        if (Objects.isNull(oldEntity)) {
+        List<String> skuIdList = new ArrayList<>();
+        skuIdList.add(skuId);
+        if (!Objects.isNull(oldEntity)) {
             skuIdList.add(oldEntity.getSkuId());
         }
         List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
