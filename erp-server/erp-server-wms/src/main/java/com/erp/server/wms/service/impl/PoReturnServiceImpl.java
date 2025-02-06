@@ -870,9 +870,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         //查询配置判断是否自动生成
         String returnCfg = cfgSettingService.getSubcontractReturnStockSetting();
-        if(CfgSettingSubcontractTypeEnum.MANUAL.getCode().equals(returnCfg)){
-            return null;
-        }
 
         //查询委外订单记录
         String sourceId = purchaseOrderEntity.getSourceId();
@@ -885,8 +882,6 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         List<SubcontractOrderDetailEntity> subcontractOrderDetailEntityList = scmTaskFeign.listSubcontractDetailByMainIds(Collections.singletonList(sourceId));
         //全部委外订单
         List<SubcontractOrderEntity> subcontractOrderEntityList = scmTaskFeign.listSubcontractOrderByIds(Collections.singletonList(sourceId));
-        //汇总成品采购订单id
-        String purchaseOrderId = entity.getPurchaseOrderId();
         //汇总成品采购订单明细ids
         List<String> purcechaseOrderDetailIds = poReturnDetailList.stream().filter(Objects::nonNull).map(PoReturnDetailEntity::getPurchaseOrderDetailId).distinct().collect(Collectors.toList());
         //成品采购订单明细
@@ -948,14 +943,14 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             SubcontractReturnDTO.AddDTO addDTO = buildSubcontractReturnAddDTO(entity,poReturnDetailList,orderEntity,subcontractOrderEntity,purchaseOrderSupplierEntity,detailEntityList,subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailList);
             //构建采购退货单
             PurchaseReturnOrderDTO.AddDTO addDTO1 = buildPoReturnAddDTO(entity, poReturnDetailList, orderEntity, subcontractOrderEntity, purchaseOrderSupplierEntity, detailEntityList, subcontractOrderDetailEntityList1, bomList, parentSubcontractOrderDetailList);
+            //自动生成委外退货单
+            addDTOS.add(addDTO);
+
             //如果配置为部分自动并且不符合条件则跳过
-            if(CfgSettingSubcontractTypeEnum.SEMI_AUTO.getCode().equals(returnCfg) &&
-                    (!entity.getSupplierId().equals(addDTO.getSupplierId())
-                    || !entity.getSupplierId().equals(addDTO1.getSupplierId()))){
+            if(CfgSettingSubcontractTypeEnum.MANUAL.getCode().equals(returnCfg) || (CfgSettingSubcontractTypeEnum.SEMI_AUTO.getCode().equals(returnCfg) &&
+                     !entity.getSupplierId().equals(addDTO1.getSupplierId()))){
                 continue;
             }
-
-            addDTOS.add(addDTO);
             addDTO1.setChildSubcontractCode(addDTO.getCode());
             returnAddDTOList.add(addDTO1);
         }

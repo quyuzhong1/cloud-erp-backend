@@ -112,7 +112,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (ObjUtil.isEmpty(entity)) {
             throw new ServiceException("未找到流水数据");
         }
-
         entity.setParentVirtualTransFlowId(virtualTransFlowEntity.getParentVirtualTransFlowId());
         WmsVirtualDetailMsgEntity virtualDetailMsgEntity = wmsVirtualDetailMsgService.getById(msgId);
         if (ObjectUtil.isEmpty(virtualDetailMsgEntity) || !CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
@@ -122,7 +121,12 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (InventoryOperationModeEnum.UN_APPROVE.getCode().equals(entity.getOperationMode())) {
             handleVirtualTransFlowUnapproved(entity);
         } else {
-            handleVirtualTransFlow(entity);
+            //查询流水数据是否已经生成了库龄流水数据
+            List<VirtualTransFlowDetailEntity> virtualTransFlowDetailList = this.listByVirtualTransFlowId(entity.getId());
+            if (CollUtil.isNotEmpty(virtualTransFlowDetailList)) {
+                return Boolean.TRUE;
+            }
+            updateHandleVirtualTransFlow(entity);
         }
         return Boolean.TRUE;
     }
@@ -149,7 +153,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                 .collect(Collectors.toList());
         Integer virtualDetailQty = this.baseMapper.virtualDetailQty(virtualInvDetailId, startDate);
         // 重算库存流水
-        overrideFlowByVirtualInventoryDetailId(flowList,virtualDetailQty);
+        overrideFlowByVirtualInventoryDetailId(flowList,MathUtil.valueOfZero(virtualDetailQty));
         log.info("###VirtualTransFlowDetailServiceImpl:::overrideVirtualTransFlowDetail 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvDetailId, LocalDateTime.now());
     }
 
@@ -310,7 +314,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
         //更新库存
         for (VirtualTransFlowEntity flowEntity :virtualTransFlowList) {
-            handleVirtualTransFlow(flowEntity);
+            updateHandleVirtualTransFlow(flowEntity);
         }
         //重算原出库流水时间后的结余
         virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity.getBillDate());
@@ -349,7 +353,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
      * @date 2024/12/10 16:57
      * @param entity
      */
-    private void handleVirtualTransFlow(VirtualTransFlowEntity entity) {
+    @Override
+    public void updateHandleVirtualTransFlow(VirtualTransFlowEntity entity) {
         //入库
         if (entity.getQty() > MathUtil.ZERO) {
             //生成批次库存数据

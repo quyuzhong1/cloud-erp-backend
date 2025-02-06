@@ -104,45 +104,31 @@
     </select>
 
     <select id="page" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
-        select t.warehouse_id AS warehouseId,
-                t.org_id AS orgId,
-                t.sku_id AS skuId,
-                t.sku_no AS skuNo,
-                t.product_name AS productName,
-                t.product_img_url AS productImgUrl,
-                t.spu_no AS spuNo,
-                t.sale_state AS saleState,
-                t.usable_qty AS usableQty,
-                t.frozen_qty AS frozenQty,
-                t.intransit_qty AS intransitQty,
-                t.waitqc_qty AS waitqcQty,
-                t.real_qty AS realQty
-        from (
-                select max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
-                sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
-                    select max(it.warehouse_id) as warehouse_id,
-                    max(it.org_id) as org_id,
-                    max(it.sku_id) as sku_id,
-                    max(it.sku_no) as sku_no,
-                    max(pd.name) as product_name,
-                    max(pd.images_url) as product_img_url,
-                    max(pi.spu_no) as spu_no,
-                    max(ps.sale_state) as sale_state,
-                    sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
-                    sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty,
-                    sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransit_qty,
-                    sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqc_qty
-                    from inventory it
-                    left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
-                    left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
-                    left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
+        SELECT
+            it.warehouse_id AS warehouseId,
+            it.org_id AS orgId,
+            it.sku_id AS skuId,
+            pd.sku_no AS skuNo,
+            pd.name AS productName,
+            pd.images_url AS productImgUrl,
+            pi.spu_no AS spuNo,
+            ps.sale_state AS saleState,
+            SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'inTransit' THEN it.qty ELSE 0 END) AS intransitQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'waitQc' THEN it.qty ELSE 0 END) AS waitqcQty,
+            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty
+        FROM inventory it
+        LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
+        LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
         <where>
             ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
-                and it.sku_no in
+                and pd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -177,63 +163,43 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.hideZeroInventory">
+                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
-        group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status
-        ) m
-        group by m.warehouse_id,m.org_id,m.sku_id
-        ) t
-        <where>
-            <if test="params.hideZeroInventory">
-                and  t.real_qty != 0
-            </if>
-        </where>
+        GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.warehouse_id, t.sku_no
+        it.warehouse_id, pd.sku_no
     </select>
 
     <select id="exportInv" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
-        select t.warehouse_id AS warehouseId,
-               t.org_id AS orgId,
-               t.sku_id AS skuId,
-               t.sku_no AS skuNo,
-               t.product_name AS productName,
-               t.product_img_url AS productImgUrl,
-               t.spu_no AS spuNo,
-               t.sale_state AS saleState,
-               t.usable_qty AS usableQty,
-               t.frozen_qty AS frozenQty,
-               t.intransit_qty AS intransitQty,
-               t.waitqc_qty AS waitqcQty,
-               t.real_qty AS realQty,
-               t.warehouse_location AS warehouseLocation
-        from (
-        select max(m.warehouse_location) AS warehouse_location, max(m.warehouse_id) as warehouse_id,max(m.org_id) as org_id,max(m.sku_id) as sku_id,max(m.sku_no) as sku_no,max(m.product_name) as product_name,max(m.product_img_url) as product_img_url,max(m.spu_no) as spu_no,max(m.sale_state) as sale_state,
-        sum(m.usable_qty) as usable_qty,sum(m.frozen_qty) as frozen_qty,sum(m.intransit_qty) as intransit_qty,sum(m.waitqc_qty) as waitqc_qty,sum(m.usable_qty) + sum(m.frozen_qty) as real_qty from  (
-        select max(it.warehouse_id) as warehouse_id,
-        max(it.org_id) as org_id,
-        max(it.sku_id) as sku_id,
-        max(it.sku_no) as sku_no,
-        max(pd.name) as product_name,
-        max(pd.images_url) as product_img_url,
-        max(pi.spu_no) as spu_no,
-        max(ps.sale_state) as sale_state,
-        max(it.warehouse_location) AS warehouse_location,
-        sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
-        sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty,
-        sum(case when it.dict_inventory_status = 'inTransit' then it.qty else 0 end) as intransit_qty,
-        sum(case when it.dict_inventory_status = 'waitQc' then it.qty else 0 end) as waitqc_qty
-        from inventory it
-        left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
-        left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
-        left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
+        SELECT
+            it.warehouse_id AS warehouseId,
+            it.org_id AS orgId,
+            it.sku_id AS skuId,
+            pd.sku_no AS skuNo,
+            pd.name AS productName,
+            pd.images_url AS productImgUrl,
+            pi.spu_no AS spuNo,
+            ps.sale_state AS saleState,
+            SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'inTransit' THEN it.qty ELSE 0 END) AS intransitQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'waitQc' THEN it.qty ELSE 0 END) AS waitqcQty,
+            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
+            it.warehouse_location AS warehouseLocation
+        FROM inventory it
+        LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
+        LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
         <where>
             it.is_deleted = false
             <if test="params.skuIdList != null and params.skuIdList.size != ''">
@@ -243,7 +209,7 @@
                 </foreach>
             </if>
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
-                and it.sku_no in
+                and pd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
@@ -272,26 +238,21 @@
                     #{item}
                 </foreach>
             </if>
+            <if test="params.hideZeroInventory">
+                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
-                group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status,it.warehouse_location
-            ) m
-            group by m.warehouse_id,m.org_id,m.sku_id,m.warehouse_location
-        ) t
-        <where>
-            <if test="params.hideZeroInventory">
-                and  t.real_qty != 0
-            </if>
-        </where>
+        GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state,it.warehouse_location
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.warehouse_id, t.sku_no
+        t.warehouse_id, pd.sku_no
     </select>
     <select id="inventoryAgePage" resultType="java.util.LinkedHashMap">
         select
@@ -891,220 +852,173 @@
         GROUP BY it.warehouse_id, it.sku_id
     </select>
     <select id="pageByArea" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
-        select t.warehouse_id    AS warehouseId,
-               t.org_id          AS orgId,
-               t.sku_id          AS skuId,
-               t.sku_no          AS skuNo,
-               t.product_name    AS productName,
-               t.product_img_url AS productImgUrl,
-               t.spu_no          AS spuNo,
-               t.sale_state      AS saleState,
-               t.usable_qty      AS usableQty,
-               t.frozen_qty      AS frozenQty,
-               t.real_qty        AS realQty,
-               t.area_code       AS warehouseArea
-        from (select max(m.warehouse_id)                   as warehouse_id,
-                     max(m.org_id)                         as org_id,
-                     max(m.sku_id)                         as sku_id,
-                     max(m.sku_no)                         as sku_no,
-                     max(m.product_name)                   as product_name,
-                     max(m.product_img_url)                as product_img_url,
-                     max(m.spu_no)                         as spu_no,
-                     max(m.sale_state)                     as sale_state,
-                     max(m.area_code)                      as area_code,
-                     sum(m.usable_qty)                     as usable_qty,
-                     sum(m.frozen_qty)                     as frozen_qty,
-                     sum(m.usable_qty) + sum(m.frozen_qty) as real_qty
-              from (select max(it.warehouse_id)                                                      as warehouse_id,
-                           max(it.org_id)                                                            as org_id,
-                           max(it.sku_id)                                                            as sku_id,
-                           max(it.sku_no)                                                            as sku_no,
-                           max(pd.name)                                                              as product_name,
-                           max(pd.images_url)                                                        as product_img_url,
-                           max(pi.spu_no)                                                            as spu_no,
-                           max(ps.sale_state)                                                        as sale_state,
-                           max(wl.area_code)                                                         as area_code,
-                           sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end) as usable_qty,
-                           sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end) as frozen_qty
-                    from inventory it
-                             left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
-                             left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
-                             left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
-                             left join (select distinct s.code as location_code, wa.code as area_code, s.warehouse_id, wa.name as area_name
-                                        from warehouse_location s
-                                                 left join warehouse_location wa
-                                                           on s.parent_id = wa.id and s.is_deleted = false and wa.is_deleted = false) wl
-                                       on it.warehouse_location = wl.location_code and it.warehouse_id = wl.warehouse_id
-                    <where>
-                        ${params.sqlMap.default} and it.is_deleted = false
-                        <if test="params.productName != null and params.productName != ''">
-                            and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
-                        </if>
-                        <if test="params.skuNoList != null and params.skuNoList.size != ''">
-                            and it.sku_no in
-                            <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                                #{item}
-                            </foreach>
-                        </if>
-                        <if test="params.skuIdList != null and params.skuIdList.size != ''">
-                            and it.sku_id in
-                            <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
-                                #{item}
-                            </foreach>
-                        </if>
-                        <if test="params.spuNoList != null and params.spuNoList.size != ''">
-                            and pi.spu_no in
-                            <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
-                                #{item}
-                            </foreach>
-                        </if>
-                        <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
-                            and ps.sale_state in
-                            <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
-                                #{item}
-                            </foreach>
-                        </if>
-                        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
-                            and it.warehouse_id in
-                            <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                                #{item}
-                            </foreach>
-                        </if>
-                        <if test="params.orgIdList != null and params.orgIdList.size != ''">
-                            and it.org_id in
-                            <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
-                                #{item}
-                            </foreach>
-                        </if>
-                        <if test="params.warehouseAreaName != null and params.warehouseAreaName != ''">
-                            and wl.area_name = #{params.warehouseAreaName}
-                        </if>
-                        <if test="params.permissionSql != null and params.permissionSql != ''">
-                            ${params.permissionSql}
-                        </if>
-                    </where>
-                    group by it.warehouse_id, it.org_id, it.sku_id, it.dict_inventory_status, wl.area_code) m
-              group by m.warehouse_id, m.org_id, m.sku_id, m.area_code) t
-                <where>
-                    <if test="params.hideZeroInventory">
-                        and  t.real_qty != 0
-                    </if>
-                </where>
-        order by
-            <if test="params.sortList != null and params.sortList.size > 0">
-                <foreach collection="params.sortList" item="item" separator="," close=",">
-                    ${item.field} ${item.sort}
+        SELECT
+            it.warehouse_id AS warehouseId,
+            it.org_id AS orgId,
+            it.sku_id AS skuId,
+            pd.sku_no AS skuNo,
+            pd.name AS productName,
+            pd.images_url AS productImgUrl,
+            pi.spu_no AS spuNo,
+            ps.sale_state AS saleState,
+            SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
+            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
+            wl.area_code AS warehouseArea
+        FROM inventory it
+        LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
+        LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+        LEFT JOIN (
+            SELECT DISTINCT
+            s.code AS location_code,
+            wa.code AS area_code,
+            s.warehouse_id,
+            wa.name AS area_name
+            FROM warehouse_location s
+            LEFT JOIN warehouse_location wa ON s.parent_id = wa.id
+            WHERE s.is_deleted = FALSE AND wa.is_deleted = FALSE
+        ) wl ON it.warehouse_location = wl.location_code AND it.warehouse_id = wl.warehouse_id
+        <where>
+            ${params.sqlMap.default} and it.is_deleted = false
+            <if test="params.productName != null and params.productName != ''">
+                and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                and pd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
                 </foreach>
             </if>
-            t.warehouse_id, t.sku_no
-    </select>
-    <select id="pageByLocation" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
-        select t.warehouse_id       AS warehouseId,
-                t.org_id             AS orgId,
-                t.sku_id             AS skuId,
-                t.sku_no             AS skuNo,
-                t.product_name       AS productName,
-                t.product_img_url    AS productImgUrl,
-                t.spu_no             AS spuNo,
-                t.sale_state         AS saleState,
-                t.usable_qty         AS usableQty,
-                t.frozen_qty         AS frozenQty,
-                t.real_qty           AS realQty,
-                t.warehouse_location AS warehouseLocation
-            from (select max(m.warehouse_location)             AS warehouse_location,
-                        max(m.warehouse_id)                   as warehouse_id,
-                        max(m.org_id)                         as org_id,
-                        max(m.sku_id)                         as sku_id,
-                        max(m.sku_no)                         as sku_no,
-                        max(m.product_name)                   as product_name,
-                        max(m.product_img_url)                as product_img_url,
-                        max(m.spu_no)                         as spu_no,
-                        max(m.sale_state)                     as sale_state,
-                        sum(m.usable_qty)                     as usable_qty,
-                        sum(m.frozen_qty)                     as frozen_qty,
-                        sum(m.usable_qty) + sum(m.frozen_qty) as real_qty
-                from (select max(it.warehouse_id)                                                         as warehouse_id,
-                            max(it.org_id)                                                               as org_id,
-                            max(it.sku_id)                                                               as sku_id,
-                            max(it.sku_no)                                                               as sku_no,
-                            max(pd.name)                                                                 as product_name,
-                            max(pd.images_url)                                                           as product_img_url,
-                            max(pi.spu_no)                                                               as spu_no,
-                            max(ps.sale_state)                                                           as sale_state,
-                            max(it.warehouse_location)                                                   AS warehouse_location,
-                            sum(case when it.dict_inventory_status = 'usable' then it.qty else 0 end)    as usable_qty,
-                            sum(case when it.dict_inventory_status = 'frozen' then it.qty else 0 end)    as frozen_qty
-                        from inventory it
-                            left join product_detail pd on pd.id = it.sku_id AND pd.is_deleted = FALSE
-                            left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
-                            left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
-                        <where>
-                            ${params.sqlMap.default} and it.is_deleted = false
-                            <if test="params.productName != null and params.productName != ''">
-                                and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
-                            </if>
-                            <if test="params.skuNoList != null and params.skuNoList.size != ''">
-                                and it.sku_no in
-                                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
-                                    #{item}
-                                </foreach>
-                            </if>
-                            <if test="params.skuIdList != null and params.skuIdList.size != ''">
-                                and it.sku_id in
-                                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
-                                    #{item}
-                                </foreach>
-                            </if>
-                            <if test="params.spuNoList != null and params.spuNoList.size != ''">
-                                and pi.spu_no in
-                                <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
-                                    #{item}
-                                </foreach>
-                            </if>
-                            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
-                                and ps.sale_state in
-                                <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
-                                    #{item}
-                                </foreach>
-                            </if>
-                            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
-                                and it.warehouse_id in
-                                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
-                                    #{item}
-                                </foreach>
-                            </if>
-                            <if test="params.orgIdList != null and params.orgIdList.size != ''">
-                                and it.org_id in
-                                <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
-                                    #{item}
-                                </foreach>
-                            </if>
-                            <if test="codeList != null and codeList.size > 0">
-                                and it.warehouse_location in
-                                <foreach collection="codeList" item="code" open="(" close=")" separator=",">
-                                    #{code}
-                                </foreach>
-                            </if>
-                            <if test="params.permissionSql != null and params.permissionSql != ''">
-                                ${params.permissionSql}
-                            </if>
-                        </where>
-                group by it.warehouse_id,it.org_id,it.sku_id,it.dict_inventory_status,it.warehouse_location
-                ) m
-        group by m.warehouse_id,m.org_id,m.sku_id,m.warehouse_location
-        ) t
-        <where>
+            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                and it.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                and pi.spu_no in
+                <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                and ps.sale_state in
+                <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                and it.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.orgIdList != null and params.orgIdList.size != ''">
+                and it.org_id in
+                <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseAreaName != null and params.warehouseAreaName != ''">
+                and wl.area_name = #{params.warehouseAreaName}
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
             <if test="params.hideZeroInventory">
-                and  t.real_qty != 0
+                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
             </if>
         </where>
+        GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state,wl.area_code
         order by
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">
                     ${item.field} ${item.sort}
                 </foreach>
             </if>
-        t.warehouse_id, t.sku_no
+        it.warehouse_id, pd.sku_no
+    </select>
+    <select id="pageByLocation" resultType="com.erp.model.wms.dto.inventory.InventoryDTO$PagingViewDTO">
+        SELECT
+            it.warehouse_id AS warehouseId,
+            it.org_id AS orgId,
+            it.sku_id AS skuId,
+            pd.sku_no AS skuNo,
+            pd.name AS productName,
+            pd.images_url AS productImgUrl,
+            pi.spu_no AS spuNo,
+            ps.sale_state AS saleState,
+            SUM(CASE WHEN it.dict_inventory_status = 'usable' THEN it.qty ELSE 0 END) AS usableQty,
+            SUM(CASE WHEN it.dict_inventory_status = 'frozen' THEN it.qty ELSE 0 END) AS frozenQty,
+            SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) AS realQty,
+            it.warehouse_location AS warehouseLocation
+        FROM inventory it
+        LEFT JOIN product_detail pd ON pd.id = it.sku_id AND pd.is_deleted = FALSE
+        LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
+        LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
+        <where>
+            ${params.sqlMap.default} and it.is_deleted = false
+            <if test="params.productName != null and params.productName != ''">
+                and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
+            </if>
+            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                and pd.sku_no in
+                <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                and it.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                and pi.spu_no in
+                <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                and ps.sale_state in
+                <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                and it.warehouse_id in
+                <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.orgIdList != null and params.orgIdList.size != ''">
+                and it.org_id in
+                <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="codeList != null and codeList.size > 0">
+                and it.warehouse_location in
+                <foreach collection="codeList" item="code" open="(" close=")" separator=",">
+                    #{code}
+                </foreach>
+            </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+            <if test="params.hideZeroInventory">
+                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
+            </if>
+        </where>
+        GROUP BY it.warehouse_id, it.org_id, it.sku_id, pd.sku_no, pd.name, pd.images_url, pi.spu_no, ps.sale_state, it.warehouse_location
+        order by
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+        it.warehouse_id, pd.sku_no
     </select>
     <select id="countByWarehouse" resultType="java.lang.Long">
         SELECT COUNT(*)

@@ -49,6 +49,7 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.*;
@@ -7970,6 +7971,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<String> shopIdList = records.stream().map(SoB2cAbnormalDTO.ListDTO::getShopId).collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
 
+        List<String> needPromptErrorIds = records.stream().filter(v->SoB2cErrorTypeEnum.needPrompt(v.getErrorType())).map(SoB2cAbnormalDTO.ListDTO::getErrorId).collect(Collectors.toList());
+        Map<String,Map<String, Object>> map =  soB2cErrorService.handleMatchJson(needPromptErrorIds);
+        Map<String, RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
         for (SoB2cAbnormalDTO.ListDTO listDTO : records) {
             //审核状态
             listDTO.setApproveStatusName(ApproveStatusEnum.getName(listDTO.getApproveStatus()));
@@ -7983,7 +7987,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
                 listDTO.setShopName(shopInfoEntity.getName());
             }
+            if(Objects.nonNull(rulePromptWordEntityMap.get(listDTO.getErrorId()))){
+                RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(listDTO.getErrorId());
+                listDTO.setFailureReason(rulePromptWordEntity.getTips());
+                listDTO.setSolution(rulePromptWordEntity.getSolution());
+            }
         }
+
     }
 
     /**

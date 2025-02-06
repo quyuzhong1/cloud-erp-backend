@@ -95,7 +95,7 @@ public class VirtualInventoryAgeDTO implements Serializable {
         /**
          * 冻结差异
          */
-        private Boolean frozenIsDiff;
+        private String frozenIsDiff;
         /**
          * 统计日期
          */
