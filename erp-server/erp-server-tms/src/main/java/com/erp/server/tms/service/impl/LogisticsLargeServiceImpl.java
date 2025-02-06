@@ -446,7 +446,32 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             throw new ServiceException("头程费用SKU分摊明细记录不存在");
         }
 
+        TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity = null;
+        addDTO.setFreightCurrency("CNY");
+        addDTO.setMiscFeeCurrency("CNY");
+        addDTO.setDutyCurrency("CNY");
+        addDTO.setOtherTaxCurrency("CNY");
+        if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
+        	reconciliationDetailEntity = tmsFirstMileReconciliationDetailService.getById(firstMileSkuCostAllocationEntity.getReconciliationDetailId());
+        	if(reconciliationDetailEntity != null) {
+            	addDTO.setFreightCurrency(reconciliationDetailEntity.getShippingCostCurrency());
+                addDTO.setMiscFeeCurrency(reconciliationDetailEntity.getOtherCostCurrency());
+                addDTO.setDutyCurrency(reconciliationDetailEntity.getDeclareCostCurrency());
+                addDTO.setOtherTaxCurrency(reconciliationDetailEntity.getOtherTaxCurrency());
+            }
+        }else {
+        	List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(Collections.singletonList(entity.getLogisticsBillId()), ConfirmStatusEnum.CONFIRM.getCode());
+        	if(CollUtil.isNotEmpty(estimatedBillEntityList)) {
+        		View estimatedBillEntity = estimatedBillEntityList.get(0);
+        		addDTO.setFreightCurrency(estimatedBillEntity.getLogisticsCostCurrency());
+                addDTO.setMiscFeeCurrency(estimatedBillEntity.getOtherCostCurrency());
+                addDTO.setDutyCurrency(estimatedBillEntity.getCustomsClearanceCostCurrency());
+                addDTO.setOtherTaxCurrency(estimatedBillEntity.getOtherTaxCostCurrency());
+        	}
+        }
+        
         //头程运费
+        rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), addDTO.getFreightCurrency());
         FirstMileSkuCostAllocationDetailEntity detailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.SHIPPING_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
@@ -464,6 +489,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //杂费
+        rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), addDTO.getMiscFeeCurrency());
         FirstMileSkuCostAllocationDetailEntity otherCostDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
@@ -477,6 +503,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //关税
+        rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), addDTO.getDutyCurrency());
         FirstMileSkuCostAllocationDetailEntity declareCostDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.DECLARE_COST.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
@@ -489,6 +516,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         }
 
         //其他税金
+        rate = dmpTaskFeign.getRate(monthEntity.getMonth().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), addDTO.getOtherTaxCurrency());
         FirstMileSkuCostAllocationDetailEntity otherTaxFeeDetailEntity = costAllocationDetailEntities.stream()
                 .filter(req -> AllocationFeeTypeEnum.OTHER_TAX_FEE.getCode().equals(req.getFeeType()))
                 .findFirst().orElse(null);
@@ -501,10 +529,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setActualTaxOtherTax(otherTaxFeeDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
         }
 
-        addDTO.setFreightCurrency("CNY");
-        addDTO.setMiscFeeCurrency("CNY");
-        addDTO.setDutyCurrency("CNY");
-        addDTO.setOtherTaxCurrency("CNY");
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
         	//头程对账单主信息
             TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
@@ -515,7 +539,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ACTUAL.getCode());
 
             //重量
-            TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity = tmsFirstMileReconciliationDetailService.getById(firstMileSkuCostAllocationEntity.getReconciliationDetailId());
             if (ObjectUtil.isNotEmpty(reconciliationDetailEntity) &&  reconciliationDetailEntity.getBillingWeight().compareTo(BigDecimal.ZERO) > 0) {
                 addDTO.setWeight(reconciliationDetailEntity.getBillingWeight());
                 addDTO.setLogisticsBillingWeight(reconciliationDetailEntity.getBillingWeight());
@@ -528,13 +551,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 }
             }
             
-            if(reconciliationDetailEntity != null) {
-            	addDTO.setFreightCurrency(reconciliationDetailEntity.getShippingCostCurrency());
-                addDTO.setMiscFeeCurrency(reconciliationDetailEntity.getOtherCostCurrency());
-                addDTO.setDutyCurrency(reconciliationDetailEntity.getDeclareCostCurrency());
-                addDTO.setOtherTaxCurrency(reconciliationDetailEntity.getOtherTaxCurrency());
-            }
-
             //付款状态
             addDTO.setPayStatus(reconciliationEntity.getPayStatus());
             addDTO.setDeductibleTaxPayStatus(reconciliationEntity.getPayStatus());
@@ -561,16 +577,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 hedgingEstimated(estimatedList.get(0), addDTO.getReconciliationMonth());
             }
         } else {
-        	List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(Collections.singletonList(entity.getLogisticsBillId()), ConfirmStatusEnum.CONFIRM.getCode());
-        	if(CollUtil.isNotEmpty(estimatedBillEntityList)) {
-        		View estimatedBillEntity = estimatedBillEntityList.get(0);
-        		addDTO.setFreightCurrency(estimatedBillEntity.getLogisticsCostCurrency());
-                addDTO.setMiscFeeCurrency(estimatedBillEntity.getOtherCostCurrency());
-                addDTO.setDutyCurrency(estimatedBillEntity.getCustomsClearanceCostCurrency());
-                addDTO.setOtherTaxCurrency(estimatedBillEntity.getOtherTaxCostCurrency());
-        	}
-        	
-        	
             //预估账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
 
