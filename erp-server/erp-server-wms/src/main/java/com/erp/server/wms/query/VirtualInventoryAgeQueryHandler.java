@@ -15,6 +15,13 @@ public class VirtualInventoryAgeQueryHandler extends AbstractQueryHandler {
                 return "(case when vih.virtualQty = 0 then 0.00 else round(vidh.inventoryAgeQty * 1.0 / vih.virtualQty,4) end) = (case when vih.virtualQty = 0 then 0.00 else round(vidh.backInventoryAgeQty / vih.virtualQty,4) end)";
             }
         }
+        if("frozenIsDiff".equals(field)) {
+            if ((Boolean) value) {
+                return "vih.virtualFrozenQty != COALESCE(cp.frozenQty,0)";
+            } else {
+                return "vih.virtualFrozenQty = COALESCE(cp.frozenQty,0)";
+            }
+        }
         return null;
     }
 }

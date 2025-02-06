@@ -67,6 +67,9 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
     @Resource
     private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
+    @Resource
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
+
     /**
      * 允许录入负数的库存业务单据（临时打开）
      */
@@ -270,8 +273,8 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             if (!CharSequenceUtil.equals(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),param.getSourceType().getCode())) {
                  return;
             }
-            //入库添加本地任务表数据
-            addWmsVirtualDetailMsg(transFlowEntity);
+            //入库同步生成库龄数据
+            virtualTransFlowDetailService.updateHandleVirtualTransFlow(transFlowEntity);
         }
     }
 

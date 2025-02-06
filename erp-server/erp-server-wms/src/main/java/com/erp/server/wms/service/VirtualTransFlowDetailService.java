@@ -95,4 +95,12 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @param value
      */
     void handleAddTransFlowDetail(List<VirtualTransFlowEntity> value);
+    /**
+     * 更新库存流水明细数据
+     * @Auther will
+     * @Date 2025/1/19 10:26
+     * @param entity
+     * @return void
+     */
+    void updateHandleVirtualTransFlow(VirtualTransFlowEntity entity);
 }
