@@ -73,13 +73,12 @@
         vw.name as virtualWarehouseName
     </sql>
 
-    <!-- 删除 -->
-    <delete id="deleteByIdList">
-        DELETE FROM so_b2b_processing WHERE is_deleted = false
-        and id in
-        <foreach collection="removeIds" open="(" close=")" item="item" separator=",">
-            #{item}
-        </foreach>
+    <!-- 删除多余b2c订单 -->
+    <delete id="deleteB2bOrder">
+        DELETE
+        FROM so_b2b_processing
+        WHERE is_deleted = false
+          and so_id not in (select id from so_info where is_deleted = false)
     </delete>
 
     <!-- 分页查询 -->
