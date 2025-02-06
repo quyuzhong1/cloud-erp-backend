@@ -929,7 +929,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             flag++;
         }
         tikTokPramDTO.setSplittableGroups(splittableGroups);
-        soB2cService.invalid(entity.getId(),  CharSequenceUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        soB2cService.invalid(entity.getId(),  CharSequenceUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_SPLIT);
 
         //操作日志
         String msg = "从【{}】拆分出新订单";
@@ -1157,7 +1157,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         soB2cService.deleteById(targetIdList,entity.getCode());
         //反作废合并前的数据
         log.info("反作废原B2C销售订单数据，id = {}", entity.getId());
-        soB2cService.unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        soB2cService.unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_SPLIT);
         //操作日志
         String msg = "从【{}】取消拆分";
         operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消拆分");

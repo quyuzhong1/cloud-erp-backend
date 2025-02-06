@@ -54,7 +54,7 @@ public interface InventorySkuCostMapper extends BaseMapper<InventorySkuCostEntit
      * @param month
      * @return
      */
-    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(@Param("orgId") String orgId, @Param("skuIds") List<String> skuIds, @Param("status") String status, @Param("month")LocalDate month);
+    List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(@Param("orgId") String orgId, @Param("skuIds") List<String> skuIds, @Param("status") String status, @Param("month")LocalDate month, @Param("warehouseId") String warehouseId);
 
     /**
      * 获取sku成本

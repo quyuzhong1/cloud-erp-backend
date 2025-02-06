@@ -1,10 +1,16 @@
 package com.erp.server.oms.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.entity.RulePromptWordEntity;
+import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -56,7 +62,7 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @param paramJson 参数
      *
      */
-    void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson);
+    void generateErrorOrder(String mainId, String type, String message, String paramJson, String returnJson, String errorCode);
 
     /**  删除异常订单
      * @description
@@ -157,4 +163,12 @@ public interface SoB2cErrorService extends IService<SoB2cErrorEntity> {
      * @return
      */
     Boolean deleteAll(SoB2cErrorDTO.DeleteDetailDTO dto);
+
+    Map<String,Map<String, Object>> handleMatchJson(List<String> soErrorIds);
+
+    Map<String,RulePromptWordEntity> getRulePromptWord(Map<String,Map<String, Object>> map);
+
+    Boolean exportErrorPools();
+
+    PagingVO<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
 }

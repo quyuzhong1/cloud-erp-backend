@@ -81,7 +81,8 @@
         SELECT
             c.id,c.code as code, c.status,c.allocated_month as allocatedMonth, to_char(C.allocated_month, 'YYYY-MM') AS allocatedMonthStr,
             c.currency, c.currency_symbol, c.exchange_rate,c.company_id, c.company_name as companyName,cd.id as detailId,cd.sku_no as skuNo, cd.sku_id,
-            cd.product_name, cd.unit, cd.product_cost as productCost,c.create_user_name as createUserName,c.create_time as createTime
+            cd.product_name, cd.unit, cd.product_cost as productCost,c.create_user_name as createUserName,c.create_time as createTime,
+            cd.warehouse_id,cd.warehouse_name
         FROM  inventory_sku_cost c
         LEFT JOIN  inventory_sku_cost_detail cd ON cd.main_id=c.id and cd.is_deleted=false
         where c.is_deleted = false
@@ -99,6 +100,9 @@
         </if>
         <if test="month != null">
             and c.allocated_month = #{month}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            and cd.warehouse_id = #{warehouseId}
         </if>
     </select>
     <select id="listSkuCost" resultType="com.erp.model.tms.dto.InventorySkuCostDTO$SkuCostDTO">
