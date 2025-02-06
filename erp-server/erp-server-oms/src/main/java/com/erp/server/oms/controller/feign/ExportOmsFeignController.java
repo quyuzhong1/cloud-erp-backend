@@ -29,6 +29,8 @@ public class ExportOmsFeignController {
     @Resource
     private SoB2cService soB2cService;
     @Resource
+    private SoB2cErrorService soB2cErrorService;
+    @Resource
     private SoB2cDeclareProductService soB2cDeclareProductService;
     @Resource
     private SkuMappingService skuMappingService;
@@ -71,6 +73,11 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
     public PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
         return soB2cService.exportSoB2CAbnormal(dto);
+    }
+    @PostMapping("/soB2CAbnormalPools")
+    @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
+    public PagingVO<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
+        return soB2cErrorService.exportSoB2CAbnormalPools(dto);
     }
 
     @PostMapping("/soB2C")
