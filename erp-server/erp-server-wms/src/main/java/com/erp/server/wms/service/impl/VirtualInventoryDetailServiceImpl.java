@@ -444,7 +444,6 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             //差异
             boolean isDiff = MathUtil.compareTo(listDTO.getAvgInventoryAge(), listDTO.getBackAvgInventoryAge()) != MathUtil.ZERO;
             listDTO.setIsDiff(isDiff?"是":"否");
-
             HashMap<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = new HashMap<>();
             //总数量
             Integer totalQty = virtualInventoryHisList.stream().filter(obj ->

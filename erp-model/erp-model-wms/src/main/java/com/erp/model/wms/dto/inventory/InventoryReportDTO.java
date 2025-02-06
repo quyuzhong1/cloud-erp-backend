@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -458,7 +457,7 @@ public class InventoryReportDTO implements Serializable {
          * 日期类型 (approveDate审核日期，billDate单据日期)
          * /api/wms/dict/list，字典inventoryDate
          */
-        @NotBlank(message = "日期类型不能为空")
+        //@NotBlank(message = "日期类型不能为空")
         private String dateType;
 
         /**
