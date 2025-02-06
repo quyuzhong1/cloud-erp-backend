@@ -8,6 +8,7 @@ import com.erp.model.tms.enums.DictCostAttributionEnum;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -93,5 +94,5 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
      */
     void removeByMainIds(List<String> costIds);
     
-    Map<String, String> validateCategoryCurrency(List<TmsCostDetailEntity> list);
+    Set<String> validateCategoryCurrency(List<TmsCostDetailEntity> list);
 }

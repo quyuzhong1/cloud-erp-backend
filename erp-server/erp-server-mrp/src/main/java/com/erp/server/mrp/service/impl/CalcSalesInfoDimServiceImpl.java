@@ -634,6 +634,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             List<String> shopIds = map.values()
                     .stream()
                     .flatMap(Collection::stream)
+                    .distinct()
                     .collect(Collectors.toList());
             platformShopDTO.setShopList(shopIds);
         }

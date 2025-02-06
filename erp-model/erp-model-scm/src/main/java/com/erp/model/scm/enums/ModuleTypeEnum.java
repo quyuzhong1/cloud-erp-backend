@@ -127,6 +127,7 @@ public enum ModuleTypeEnum {
     PRODUCT_DETAIL("113", "产品明细"),
     REMOTE_POSTCODE("114", "偏远邮编"),
     FBA_TRANSIT_CALCULATE_REPORT("114", "FBA在途核对报表"),
+    RULE_PROMPT_WORD("115", "汉化管理"),
     ;
 
 

@@ -46,6 +46,8 @@
         sb2c.package_status as packageStatus,
         sb2c.transfer_status as transferStatus,
         sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
         sb2c.amount as amount,
         sb2c.currency as currency,
         sb2c.exchange_rate as exchangeRate,
@@ -133,6 +135,8 @@
         sb2c.is_change_sku as isChangeSku,
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
         sb2cd.id as detailId,
         sb2cd.platform_spu_no as platformSpuNo,
         sb2cd.platform_sku_no as platformSkuNo,
@@ -902,12 +906,14 @@
             sb2cl.logistics_channel_name as logisticsChannelName,
             sb2c.pay_time as payTime,
             sbe.message,
-            sbe.signOrderErrorTime
+            sbe.signOrderErrorTime,
+        sbe.id as errorId,
+        sbe.type as errorType
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
