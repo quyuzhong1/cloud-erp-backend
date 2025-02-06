@@ -325,11 +325,4 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
 
 //    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 
-    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
-
-    String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
-
-    String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
-
-    Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
 }
