@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -35,12 +34,11 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -1792,6 +1790,26 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         });
         shopAuthService.batchUpdateShopAuthById(authList);
         return true;
+    }
+
+    @Override
+    public List<ShopInfoEntity> listAuthPlatform(List<String> platformDTO) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Collections.singletonList(userInfo.getUid()));
+        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+            return Collections.emptyList();
+        }
+        ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
+        List<String> shopIdList;
+        if (CollectionUtils.isNotEmpty(platformDTO)) {
+            shopIdList = viewDTO.getDetailList().stream().filter(obj -> platformDTO.contains(obj.getDictPlatform())).map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+        } else {
+            shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+        }
+        if (CollectionUtils.isEmpty(shopIdList)) {
+            return Collections.emptyList();
+        }
+        return this.listByIds(shopIdList);
     }
 
     @Override
