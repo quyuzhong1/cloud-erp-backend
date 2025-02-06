@@ -325,16 +325,17 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
             	List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
             	validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
             }
-            Map<String, String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
+            Set<String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
             if(!validateCategoryCurrency.isEmpty()) {
             	Map<String, String> costIdTypeListMap = new HashMap<>();
-            	for(Map.Entry<String, String> validateCategory : validateCategoryCurrency.entrySet()) {
-            		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue())).collect(Collectors.toList());
+            	for(String validateCategory : validateCategoryCurrency) {
+            		String[] split = validateCategory.split("_");
+            		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1])).collect(Collectors.toList());
             		for(UpdateDTO remove : removeList) {
             			String costName = cfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), remove.getCfgCostId())).findFirst().orElse(null).getCostName();
-            			costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(validateCategory.getKey()) + "-" + LogisticsBillCostTypeEnum.getName(validateCategory.getValue()) + "分类下所有费用币种必须一致");
+            			costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
             		}
-            		updateList.removeIf(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue()));
+            		updateList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));
             	}
             	if(!costIdTypeListMap.isEmpty()) {
             		jsonObject.set(errorIndex.toString(),FieldValidUtil.getMsgSort(new ArrayList<>(costIdTypeListMap.values())));
