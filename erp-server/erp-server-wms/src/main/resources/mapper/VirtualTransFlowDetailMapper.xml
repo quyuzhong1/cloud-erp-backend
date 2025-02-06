@@ -95,23 +95,24 @@
     <!-- 查询即时库存明细id -->
     <select id="listVirtualInventoryDetailIdList" resultType="java.lang.String">
         select
-            distinct virtual_inventory_detail_id
-        from virtual_trans_flow_detail
-        where is_deleted = false
+            distinct vtfd.virtual_inventory_detail_id
+        from virtual_trans_flow_detail vtfd
+        inner join virtual_trans_flow  vtf  on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
+        where vtfd.is_deleted = false
         <if test="skuId != null and skuId != ''">
-            and sku_id = #{skuId}
+            and vtf.sku_id = #{skuId}
         </if>
-        <if test="virtualInventoryDetailId != null and virtualInventoryDetailId != ''">
-            and virtual_inventory_detail_id = #{virtualInventoryDetailId}
+        <if test="virtualInventoryId != null and virtualInventoryId != ''">
+            and vtf.virtual_inventory_id = #{virtualInventoryId}
         </if>
         <if test="virtualWarehouseId != null and virtualWarehouseId != ''">
-            and virtual_warehouse_id = #{virtualWarehouseId}
+            and vtf.virtual_warehouse_id = #{virtualWarehouseId}
         </if>
         <if test="warehouseId != null and warehouseId != ''">
-            and warehouse_id = #{warehouseId}
+            and vtf.warehouse_id = #{warehouseId}
         </if>
         <if test="fromTable != null and fromTable != ''">
-            and virtual_inventory_detail_id in (select virtual_inventory_detail_id from virtual_inventory_detail_temp)
+            and vtfd.virtual_inventory_detail_id in (select virtual_inventory_detail_id from virtual_inventory_detail_temp)
         </if>
     </select>
 
