@@ -452,7 +452,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (detailEntity != null && detailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setFreightCalculationFactor(detailEntity.getAllocatedAmount().divide(detailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
-        addDTO.setFreightCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             BigDecimal firstMileFreightAmount = detailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN);
             addDTO.setFirstMileEstimatedFreightTax(firstMileFreightAmount);
@@ -470,8 +469,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (otherCostDetailEntity != null && otherCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDestMiscFeeFactor(otherCostDetailEntity.getAllocatedAmount().divide(otherCostDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setMiscFeeCurrency(logisticsBillCostEntity.getCurrency());
+        
         if (ObjectUtil.isNotEmpty(otherCostDetailEntity)) {
             addDTO.setEstimatedDestMiscFee(otherCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
             addDTO.setActualDestMiscFee(otherCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
@@ -484,8 +482,6 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         if (declareCostDetailEntity != null && declareCostDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
             addDTO.setDutyCalculationFactor(declareCostDetailEntity.getAllocatedAmount().divide(declareCostDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setDutyCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(declareCostDetailEntity)) {
             addDTO.setEstimatedDutyAmount(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
             addDTO.setActualDutyAmount(declareCostDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
@@ -499,15 +495,17 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             addDTO.setOtherTaxCalculationFactor(otherTaxFeeDetailEntity.getAllocatedAmount().divide(otherTaxFeeDetailEntity.getAmount(), 4, RoundingMode.DOWN));
         }
 
-        // TODO 暂时取物流单的 后期取大类的
-        addDTO.setOtherTaxCurrency(logisticsBillCostEntity.getCurrency());
         if (ObjectUtil.isNotEmpty(otherTaxFeeDetailEntity)) {
             addDTO.setEstimatedTaxOtherTax(otherTaxFeeDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
             addDTO.setActualTaxOtherTax(otherTaxFeeDetailEntity.getAllocatedAmount().divide(rate, 4, RoundingMode.DOWN));
         }
 
+        addDTO.setFreightCurrency("CNY");
+        addDTO.setMiscFeeCurrency("CNY");
+        addDTO.setDutyCurrency("CNY");
+        addDTO.setOtherTaxCurrency("CNY");
         if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(firstMileSkuCostAllocationEntity.getBillSourceType())) {
-            //头程对账单主信息
+        	//头程对账单主信息
             TmsFirstMileReconciliationEntity reconciliationEntity = tmsFirstMileReconciliationService.getById(entity.getReconciliationId());
             if (ObjectUtil.isEmpty(reconciliationEntity)) {
                 throw new ServiceException("头程对账单主信息未找到");
@@ -527,6 +525,13 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                     addDTO.setWeight(grossWeight);
                     addDTO.setLogisticsBillingWeight(grossWeight);
                 }
+            }
+            
+            if(reconciliationDetailEntity != null) {
+            	addDTO.setFreightCurrency(reconciliationDetailEntity.getShippingCostCurrency());
+                addDTO.setMiscFeeCurrency(reconciliationDetailEntity.getOtherCostCurrency());
+                addDTO.setDutyCurrency(reconciliationDetailEntity.getDeclareCostCurrency());
+                addDTO.setOtherTaxCurrency(reconciliationDetailEntity.getOtherTaxCurrency());
             }
 
             //付款状态
