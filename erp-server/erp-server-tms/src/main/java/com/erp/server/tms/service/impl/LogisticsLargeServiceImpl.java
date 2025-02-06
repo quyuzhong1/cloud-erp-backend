@@ -31,6 +31,7 @@ import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.FirstMileEstimatedBillDTO.View;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.SoOutstockDTO;
@@ -560,6 +561,16 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 hedgingEstimated(estimatedList.get(0), addDTO.getReconciliationMonth());
             }
         } else {
+        	List<FirstMileEstimatedBillDTO.View> estimatedBillEntityList = firstMileEstimatedBillService.listByLogisticsBillIds(Collections.singletonList(entity.getLogisticsBillId()), ConfirmStatusEnum.CONFIRM.getCode());
+        	if(CollUtil.isNotEmpty(estimatedBillEntityList)) {
+        		View estimatedBillEntity = estimatedBillEntityList.get(0);
+        		addDTO.setFreightCurrency(estimatedBillEntity.getLogisticsCostCurrency());
+                addDTO.setMiscFeeCurrency(estimatedBillEntity.getOtherCostCurrency());
+                addDTO.setDutyCurrency(estimatedBillEntity.getCustomsClearanceCostCurrency());
+                addDTO.setOtherTaxCurrency(estimatedBillEntity.getOtherTaxCostCurrency());
+        	}
+        	
+        	
             //预估账单
             addDTO.setReconciliationBillType(ReconciliationBillTypeEnum.ESTIMATED.getCode());
 
