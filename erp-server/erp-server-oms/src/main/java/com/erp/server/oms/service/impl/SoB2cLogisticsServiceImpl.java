@@ -524,32 +524,4 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         this.lambdaUpdate().eq(SoB2cLogisticsEntity::getMainId, b2cSoId)
                 .set(SoB2cLogisticsEntity::getEstimatedShippingCost, totalShippingCost).set(SoB2cLogisticsEntity::getEstimatedShippingCurrency,currency).update();
     }
-
-    private LogisticsBillDTO.AddDTO buildLogisticsBill(SoB2cLogisticsEntity entity, SoB2cEntity mainEntity) {
-        LogisticsBillDTO.AddDTO addDTO = new LogisticsBillDTO.AddDTO();
-        addDTO.setShopId(mainEntity.getShopId());
-        addDTO.setShopName(mainEntity.getShopName());
-        addDTO.setSalesPlatform(LogisticsPlatformEnum.SHOPEE.getCode());
-        addDTO.setDeliveryTime(entity.getDeliveryTime());
-        addDTO.setOrderTime(mainEntity.getPayTime());
-        addDTO.setTransportNo(entity.getCode());
-        addDTO.setDetailList(buildDetailList(entity));
-        addDTO.setSourceId(mainEntity.getId());
-        addDTO.setSourceCode(mainEntity.getPlatformCode());
-        addDTO.setSourceType(SourceTypeEnum.SO_B2C.getCode());
-        addDTO.setOutstockId("");
-        addDTO.setOutstockCode("");
-        addDTO.setChannelId(entity.getLogisticsChannelId());
-        addDTO.setOrderType(OrderTypeEnum.B2C.getCode());
-        return addDTO;
-    }
-
-    private List<LogisticsBillDetailDTO.AddDTO> buildDetailList(SoB2cLogisticsEntity entity) {
-        List<LogisticsBillDetailDTO.AddDTO> addDTOList = new ArrayList<>();
-        LogisticsBillDetailDTO.AddDTO addDTO = new LogisticsBillDetailDTO.AddDTO();
-        addDTO.setTrackNo(entity.getCode());
-        addDTO.setTrackStatus("0");
-        addDTOList.add(addDTO);
-        return addDTOList;
-    }
 }
