@@ -136,7 +136,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        csic.update_time desc, csic.id desc
+        crc.create_time desc,serial_no
     </select>
 
     <select id="pagingTemplate" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$TemplateViewDTO">
@@ -257,6 +257,6 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        csic.update_time desc, csic.id desc
+        crc.create_time desc,serial_no
     </select>
 </mapper>
