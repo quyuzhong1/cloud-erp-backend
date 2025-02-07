@@ -220,6 +220,15 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO);
 
     /**
+     * @Description 新增无规格sku信息 并推送金蝶
+     * @Author jack
+     * @Date 2025-02-07
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    Boolean inportExcelAndSync(ProductNoSpecDTO productNoSpecDTO,ProductDetailEntity productBy);
+
+    /**
      * 导出excel的sku数据
      *
      * @param productSkuExcelDTO productSkuExcelDTO

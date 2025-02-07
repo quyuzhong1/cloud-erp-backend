@@ -376,6 +376,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-17 11:17
      */
     @Override
+    @Transactional
     public Boolean updateCategory(MoveCategoryDTO dto) {
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
         if (Objects.isNull(category)) {
@@ -2681,6 +2682,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     @Override
+    @Transactional
     public Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto) {
 
         List<ProductInfoEntity> list = new ArrayList<>();
