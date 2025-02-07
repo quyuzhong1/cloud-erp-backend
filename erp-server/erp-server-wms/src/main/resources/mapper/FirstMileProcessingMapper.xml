@@ -75,10 +75,11 @@
 
     <!-- 删除多余头程订单 -->
     <delete id="deleteFirstMileOrder">
-        DELETE
-        FROM first_mile_processing
-        WHERE is_deleted = false
-          and requisition_application_id not in (select id from requisition_application where is_deleted = false)
+        DELETE FROM first_mile_processing fmp
+            USING requisition_application ra
+        WHERE fmp.requisition_application_id = ra.id
+          AND ra.is_deleted = true
+          AND fmp.is_deleted = false;
     </delete>
 
     <!-- 分页查询 -->
