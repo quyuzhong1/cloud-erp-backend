@@ -345,7 +345,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
-                .code(dmpSoInfoEntity.getLogisticsCode())
+//                .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(dmpSoInfoEntity.getLogisticsName())
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
                 .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())
