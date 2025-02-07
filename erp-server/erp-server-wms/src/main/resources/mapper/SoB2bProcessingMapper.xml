@@ -75,10 +75,11 @@
 
     <!-- 删除多余b2c订单 -->
     <delete id="deleteB2bOrder">
-        DELETE
-        FROM so_b2b_processing
-        WHERE is_deleted = false
-          and so_id not in (select id from so_info where is_deleted = false)
+        DELETE FROM so_b2b_processing sbp
+            USING so_info si
+        WHERE sbp.so_id = si.id
+          AND si.is_deleted = true
+          AND sbp.is_deleted = false;
     </delete>
 
     <!-- 分页查询 -->
