@@ -1207,10 +1207,11 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         OtherInstockEntity dbEntity = this.getOne(Wrappers.<OtherInstockEntity>lambdaQuery()
                 .eq(OtherInstockEntity::getThirdCode, dto.getThirdCode()),false);
         if(Objects.nonNull(dbEntity)){
-            if(Objects.nonNull(dbEntity.getApproveTime()) && dto.getCheckTime().isAfter(dbEntity.getApproveTime())){
-                //反审核重新生成
-                service.disApproveAndGenerate(dbEntity.getId(),dto);
-            }
+//            if(Objects.nonNull(dbEntity.getApproveTime()) && dto.getCheckTime().isAfter(dbEntity.getApproveTime())){
+//                
+//            }
+            //反审核重新生成
+            service.disApproveAndGenerate(dbEntity.getId(),dto);
         }else{
             //查询是否有已审核的销售退货入库单
             SoReturnInstockEntity entity = soReturnInstockService.getOne(Wrappers.<SoReturnInstockEntity>lambdaQuery()
