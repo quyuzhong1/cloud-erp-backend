@@ -243,7 +243,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     //店铺信息
                     ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shopInfoEntity)) {
-                        throw new ServiceException(ApiError.ERROR_92058);
+                        continue;
                     }
                     ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
                     viewShopDTO.setShopId(shopSysUserAuthEntity.getShopId());
