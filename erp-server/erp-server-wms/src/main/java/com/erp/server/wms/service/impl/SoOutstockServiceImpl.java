@@ -1013,9 +1013,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
 
-    //TODO 物流单
-//    @Async("saveLogisticsBill")
+
     @Override
+    @Transactional(rollbackFor = Exception.class)
     @DataIdempotent(keyIdName = "entity.code" , businessType = "saveLogisticsBill")
     public void saveLogisticsBill(SoOutstockEntity entity) {
     		if(CollUtil.isNotEmpty(FeignQuery.create(LogisticsBillEntity.class).eq(LogisticsBillEntity::getOutstockId, entity.getId()).list())) {
