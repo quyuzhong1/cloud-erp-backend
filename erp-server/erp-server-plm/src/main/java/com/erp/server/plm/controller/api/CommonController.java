@@ -109,7 +109,7 @@ public class CommonController extends BaseController {
      * @Date 2022/10/9 17:35
      **/
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传文件:文件名={name}")
-    @PostMapping("/upload22")
+    @PostMapping("/upload")
     public ApiResult<List<String>> upload(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = new ArrayList<>();
         for (MultipartFile file : multipartFile) {
@@ -128,7 +128,7 @@ public class CommonController extends BaseController {
      * @return ApiResult<List<String>>
      */
     @LogAction(value = LogActionEnum.UPLOAD, desc = "上传图片:文件名={name}")
-    @PostMapping("/upload")
+    @PostMapping("/uploadImg")
     public ApiResult<List<String>> uploadImg(@RequestParam("multipartFile") MultipartFile[] multipartFile, HttpServletRequest request) {
         List<String> list = commonService.uploadImg(multipartFile);
         return this.success(list);
