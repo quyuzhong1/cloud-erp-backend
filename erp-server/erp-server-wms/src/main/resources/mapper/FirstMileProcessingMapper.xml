@@ -72,13 +72,14 @@
         vw.name as virtualWarehouseName
     </sql>
 
-    <!-- 删除 -->
-    <delete id="deleteByIdList">
-        DELETE FROM first_mile_processing WHERE is_deleted = false
-        and id in
-        <foreach collection="removeIds" open="(" close=")" item="item" separator=",">
-            #{item}
-        </foreach>
+
+    <!-- 删除多余头程订单 -->
+    <delete id="deleteFirstMileOrder">
+        DELETE FROM first_mile_processing fmp
+            USING requisition_application ra
+        WHERE fmp.requisition_application_id = ra.id
+          AND ra.is_deleted = true
+          AND fmp.is_deleted = false;
     </delete>
 
     <!-- 分页查询 -->

@@ -28,9 +28,7 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 
 import javax.annotation.Resource;
@@ -73,12 +71,13 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     /**
     * 修改
     */
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean addOrupdate(List<FirstMileProcessingDTO.AddOrUpdateDTO> list) {
+
+        //删除多余头程订单
+        baseMapper.deleteFirstMileOrder();
+
         if (CollUtil.isEmpty(list)) {
-            log.warn("删除数据！size= {}",list.size());
-            lambdaUpdate().remove();
             return Boolean.TRUE;
         }
         // 数据处理
@@ -271,26 +270,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             }
             newList.add(entity);
         }
-        List<String> deleteIds = getDeleteIds(newList, oldList);
-        if (CollUtil.isNotEmpty(deleteIds)) {
-            log.warn("删除数据！size= {}",deleteIds.size());
-            List<List<String>> detailIdListPartition = Lists.partition(deleteIds, 50000);
-            //查询加工单数据
-            for (List<String> removeIds : detailIdListPartition) {
-                this.baseMapper.deleteByIdList(removeIds);
-            }
-        }
         return newList;
-    }
-
-    /**
-     * 查询需要删除的数据
-     */
-    private List<String> getDeleteIds(List<FirstMileProcessingEntity> newList, List<FirstMileProcessingEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(FirstMileProcessingEntity::getId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(FirstMileProcessingEntity::getId).collect(Collectors.toList());
-        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
     /**
