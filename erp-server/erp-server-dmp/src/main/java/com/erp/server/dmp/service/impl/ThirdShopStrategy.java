@@ -140,6 +140,7 @@ public class ThirdShopStrategy implements ThirdMappingStrategy {
             }
             viewDTO.setName(thirdShopEntity.getName());
             viewDTO.setThirdId(thirdMappingEntity.getThirdId());
+            viewDTO.setThirdName(thirdMappingEntity.getThirdName());
             viewDTO.setCode(thirdShopEntity.getCode());
             viewDTO.setId(thirdMappingEntity.getId());
             viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
