@@ -69,6 +69,9 @@ public enum PlatformDictEnum implements EnumMessage {
     LING_XING("lingxing", "领星", "领星", "54"),
     RAKUTEN("Rakuten", "乐天", "乐天", "55"),
     EBAY("eBay", "eBay", "eBay", "56"),
+
+
+    CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),
         ;
 
 

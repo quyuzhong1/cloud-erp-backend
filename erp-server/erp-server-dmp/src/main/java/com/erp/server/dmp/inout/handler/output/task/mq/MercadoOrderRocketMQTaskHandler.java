@@ -188,12 +188,13 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setInvalidType(dmpSoInfoEntity.getInvalidStatus() ? "automatic" : "");
 
         // 平台订单原始取消状态(已退款,部分退款)
-        DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
-        if (DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
-            orderDTO.setIsCancel(Boolean.FALSE);
-        } else {
-            orderDTO.setIsCancel(Boolean.TRUE);
-        }
+//        DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpSoInfoEntity.getReturnStatus());
+//        if (DmpOrderReturnStatusEnum.NOT_RETURN.equals(dmpBasicSystemCodeEnum)) {
+//            orderDTO.setIsCancel(Boolean.FALSE);
+//        } else {
+//            orderDTO.setIsCancel(Boolean.TRUE);
+//        }
+        orderDTO.setIsCancel(dmpSoInfoEntity.getInvalidStatus());
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
@@ -344,7 +345,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         }
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
-                .code(dmpSoInfoEntity.getLogisticsCode())
+//                .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(dmpSoInfoEntity.getLogisticsName())
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
                 .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())

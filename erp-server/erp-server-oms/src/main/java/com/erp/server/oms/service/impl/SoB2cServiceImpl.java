@@ -1480,7 +1480,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         updatePackageAndTransferStatus(id, packageStatus, transferStatus, isRegistration, isUpdateTransferStatus);
 
         //如果有物流单号 就要去取消
-        if (StringUtils.isNotBlank(code) && !Objects.equals(logisticsChannelId,existChannelId)) {
+        if (StringUtils.isNotBlank(code) && !Objects.equals(logisticsChannelId,existChannelId) && soB2cLogisticsEntity.getSourceSystem().equals(SoB2cLogisticSourceSystemEnum.THIRD.getCode())) {
             //已存在的渠道为空
             if (StringUtils.isBlank(existChannelId)) {
                 throw new ServiceException(ApiError.CANCEL_LOGISTICS_ID_NOT_EXIST);
@@ -2561,12 +2561,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST.msg + logisticsEntity.getLogisticsChannelId());
         }
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsEntity.getLogisticsChannelId());
-        if (Objects.isNull(auth)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST.msg + logisticsEntity.getLogisticsChannelId());
-        }
+
         //三方仓直接调接口，不生成拦截单
-        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
+        if (Objects.nonNull(auth) && OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
+            LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
             //API海外物流拦截
             BatchResultDTO resultDTO = this.overseasProviderIntercept(entity, platformEnum, detailList.get(0).getWarehouseId(), remark);
             return resultDTO;
@@ -8680,6 +8678,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal minCustomsAmount = channelConstraintDTO.getMinCustomsAmount();
         //物流渠道下单平台
         String logisticsPlatform = channelConstraintDTO.getLogisticsPlatform();
+        if(StringUtils.isBlank(logisticsPlatform)){
+            logisticsPlatform = PlatformDictEnum.CUSTOMIZE.getCode();
+        }
         if (StrUtil.isBlank(logisticsEntity.getLogisticsChannelId()) || StrUtil.isBlank(logisticsPlatform)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL, entity.getCode());
         }
