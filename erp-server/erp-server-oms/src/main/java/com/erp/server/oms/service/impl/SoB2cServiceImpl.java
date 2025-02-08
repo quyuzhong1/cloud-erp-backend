@@ -2551,12 +2551,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST.msg + logisticsEntity.getLogisticsChannelId());
         }
         LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsEntity.getLogisticsChannelId());
-        if (Objects.isNull(auth)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST.msg + logisticsEntity.getLogisticsChannelId());
-        }
+
         //三方仓直接调接口，不生成拦截单
-        LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
-        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
+        if (Objects.nonNull(auth) && OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
+            LogisticsPlatformEnum platformEnum = LogisticsPlatformEnum.getByCode(auth.getLogisticsPlatform());
             //API海外物流拦截
             BatchResultDTO resultDTO = this.overseasProviderIntercept(entity, platformEnum, detailList.get(0).getWarehouseId(), remark);
             return resultDTO;
