@@ -506,6 +506,7 @@ public class ThirdWarehouseStrategy implements ThirdMappingStrategy {
                 viewDTO.setCode(overseasWarehouse.getPlatformWarehouseCode());
             }
             viewDTO.setThirdId(thirdMappingEntity.getThirdId());
+            viewDTO.setThirdName(thirdMappingEntity.getThirdName());
             viewDTO.setId(thirdMappingEntity.getId());
             viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
             viewDTO.setSysTypeName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));

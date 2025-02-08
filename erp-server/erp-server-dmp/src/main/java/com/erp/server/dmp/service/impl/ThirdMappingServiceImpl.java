@@ -441,49 +441,11 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         }
         log.debug("校验结果：{}" , result);
     }
-
-    //    @Override
-//    public ThirdMappingDTO.MappingViewDTO view(ThirdMappingDTO.ViewParamDTO viewParamDTO) {
-//        String type = viewParamDTO.getType();
-//        return thirdMappingContext.executeStrategy(type, wmsWarehouseFeign, shopInfoFeign, overseasProviderFeign,
-//                thirdMappingService, thirdWarehouseService, thirdShopService, viewParamDTO);
-//    }
     @Override
     public ThirdMappingDTO.MappingViewDTO view(ThirdMappingDTO.ViewParamDTO viewParamDTO) {
         ThirdMappingStrategy strategy = getStrategy(viewParamDTO.getType());
         return strategy.view(viewParamDTO);
     }
-
-//    @Override
-//    public ThirdMappingDTO.MappingViewDTO view(ThirdMappingDTO.ViewParamDTO viewParamDTO) {
-//        ThirdMappingDTO.MappingViewDTO mappingViewDTO = new ThirdMappingDTO.MappingViewDTO();
-//        String sysId = viewParamDTO.getSysId();
-//        if (ThirdSysTypeEnum.SHOP.getCode().equals(viewParamDTO.getType())) {
-//            //获取系统店铺
-//            ShopInfoEntity shopInfo = shopInfoFeign.getShopInfoById(sysId);
-//            if (Objects.isNull(shopInfo)) {
-//                return mappingViewDTO;
-//            }
-//            makeShopViewDto(viewParamDTO, sysId, mappingViewDTO, shopInfo);
-//        } else {
-//            //获取系统仓库
-//            List<WarehouseDTO.ListDTO> listDTOS =
-//                    Optional.ofNullable(wmsWarehouseFeign.listByIds(Collections.singletonList(sysId))).orElse(new ArrayList<>());
-//            if (CollectionUtils.isEmpty(listDTOS)) {
-//                return mappingViewDTO;
-//            }
-//            makeWarehouseViewDto(viewParamDTO, sysId, mappingViewDTO, listDTOS);
-//        }
-//        return mappingViewDTO;
-//    }
-
-//    private void makeShopViewDto(ThirdMappingDTO.ViewParamDTO viewParamDTO, String sysId, ThirdMappingDTO.MappingViewDTO mappingViewDTO, ShopInfoEntity shopInfo) {
-//        //获取第三方数据信息
-//        List<ThirdMappingDTO.ViewDTO> viewDTOList = new ArrayList<>();
-//        List<ThirdMappingEntity> thirdMappingEntityList = getList(viewParamDTO.getType(), sysId);
-//
-//        ThirdShopStrategy.getViewVo(mappingViewDTO, shopInfo, thirdShopService, viewDTOList, thirdMappingEntityList);
-//    }
 
     /**
      * 根据类型和系统id获取数据
@@ -497,14 +459,6 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
         return baseMapper.selectList(new LambdaQueryWrapper<ThirdMappingEntity>().eq(ThirdMappingEntity::getSysId, sysId)
                 .eq(ThirdMappingEntity::getType, type));
     }
-
-//    private void makeWarehouseViewDto(ThirdMappingDTO.ViewParamDTO viewParamDTO, String sysId, ThirdMappingDTO.MappingViewDTO mappingViewDTO, List<WarehouseDTO.ListDTO> listDTOS) {
-//        //获取第三方数据信息
-//        List<ThirdMappingDTO.ViewDTO> viewDTOList = new ArrayList<>();
-//        List<ThirdMappingEntity> thirdMappingEntityList = getList(viewParamDTO.getType(), sysId);
-//
-//        ThirdWarehouseStrategy.getViewDto(mappingViewDTO, listDTOS, thirdWarehouseService, overseasProviderFeign, viewDTOList, thirdMappingEntityList);
-//    }
 
     @Override
     public Boolean getWhetherBind(ThirdMappingDTO.ViewParamDTO viewParamDTO) {

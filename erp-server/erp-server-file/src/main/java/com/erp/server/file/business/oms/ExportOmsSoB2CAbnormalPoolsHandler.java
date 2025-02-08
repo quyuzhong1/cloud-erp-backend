@@ -41,6 +41,6 @@ public class ExportOmsSoB2CAbnormalPoolsHandler extends AbstractPageFileEventHan
 
     @Override
     public String getExcelPath() {
-        return "excel/oms/soB2cAbnormal.xlsx";
+        return "excel/oms/soB2cAbnormalPools.xlsx";
     }
 }
