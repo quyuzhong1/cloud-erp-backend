@@ -74,6 +74,12 @@ public class RuleConditionEntity extends BaseEntity<RuleConditionEntity> {
     @TableField(exist = false)
     private String fieldName;
 
+    /**
+     * 对应的值类型
+     */
+    @TableField(exist = false)
+    private String valueType;
+
     public static final String LEFT_BRACKET = "left_bracket";
 
     public static final String FIELD = "field";
