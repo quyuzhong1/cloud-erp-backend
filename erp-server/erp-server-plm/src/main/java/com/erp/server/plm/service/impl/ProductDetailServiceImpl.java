@@ -4409,51 +4409,55 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //产品分类
             String category = dto.getMainCategory();
-            BasicCategoryEntity basicCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(category) && req.getPid().equals("0")).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(basicCategoryEntity)) {
-                errorMsgList.add("产品分类一级类目不存在");
-            } else {
-                //父级品类
-                List<BasicCategoryEntity> categoryList = new ArrayList<>();
-                this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
-                if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                    errorMsgList.add(ApiError.ERROR_95091.msg);
-                }
-                //一级品类
-                BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_95091.msg);
-                }
-                //二级品类
-                String secondaryCategory = dto.getSecondaryCategory();
-                BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
-
-                if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
-                    productInfoDTO.setCategory(bestEntity.getName());
-                    productInfoDTO.setCategoryId(bestEntity.getId());
+            if(StringUtils.isNotBlank(category)){
+                BasicCategoryEntity basicCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(category) && req.getPid().equals("0")).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(basicCategoryEntity)) {
+                    errorMsgList.add("产品分类一级类目不存在");
                 } else {
-                    BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
-                        errorMsgList.add(ApiError.ERROR_95092.msg);
+                    //父级品类
+                    List<BasicCategoryEntity> categoryList = new ArrayList<>();
+                    this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
+                    if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
+                        errorMsgList.add(ApiError.ERROR_95091.msg);
                     }
-                    if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
-                        errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
+                    //一级品类
+                    BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+                        errorMsgList.add(ApiError.ERROR_95091.msg);
                     }
-                    productInfoDTO.setCategory(secondaryCategory);
-                    productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
-                }
-                //存在错误信息则返回
-                if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorMsgList)) {
-                    dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                    errorList.add(dto);
-                    continue;
+                    //二级品类
+                    String secondaryCategory = dto.getSecondaryCategory();
+                    BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
+
+                    if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
+                        productInfoDTO.setCategory(bestEntity.getName());
+                        productInfoDTO.setCategoryId(bestEntity.getId());
+                    } else {
+                        BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
+                        if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
+                            errorMsgList.add(ApiError.ERROR_95092.msg);
+                        }
+                        if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
+                            errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
+                        }
+                        productInfoDTO.setCategory(secondaryCategory);
+                        productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
+                    }
+                    //存在错误信息则返回
+                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorMsgList)) {
+                        dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                        errorList.add(dto);
+                        continue;
+                    }
                 }
             }
-            String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
-            if (ObjectUtils.isEmpty(applicationCategoryId)) {
-                errorMsgList.add("应用分类不存在");
-            } else {
-                productInfoDTO.setApplicationCategoryId(applicationCategoryId);
+            if(StringUtils.isNotBlank(dto.getApplicationCategoryName())){
+                String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
+                if (ObjectUtils.isEmpty(applicationCategoryId)) {
+                    errorMsgList.add("应用分类不存在");
+                } else {
+                    productInfoDTO.setApplicationCategoryId(applicationCategoryId);
+                }
             }
             // 一级供应商
             String mainSupplier = dto.getMainSupplier();
@@ -4888,53 +4892,56 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //产品分类
             String category = dto.getMainCategory();
-            BasicCategoryEntity basicCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(category) && req.getPid().equals("0")).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(basicCategoryEntity)) {
-                errorMsgList.add("产品分类一级类目不存在");
-            } else {
-                //父级品类
-                List<BasicCategoryEntity> categoryList = new ArrayList<>();
-                this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
-                if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
-                    errorMsgList.add(ApiError.ERROR_95091.msg);
-                }
-                //一级品类
-                BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
-                    errorMsgList.add(ApiError.ERROR_95091.msg);
-                }
-                //二级品类
-                String secondaryCategory = dto.getSecondaryCategory();
-                BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
-
-                if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
-                    productInfoDTO.setCategory(bestEntity.getName());
-                    productInfoDTO.setCategoryId(bestEntity.getId());
+            if(StringUtils.isNotBlank(category)){
+                BasicCategoryEntity basicCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(category) && req.getPid().equals("0")).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(basicCategoryEntity)) {
+                    errorMsgList.add("产品分类一级类目不存在");
                 } else {
-                    BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
-                        errorMsgList.add(ApiError.ERROR_95092.msg);
+                    //父级品类
+                    List<BasicCategoryEntity> categoryList = new ArrayList<>();
+                    this.setParentEntity(basicCategoryEntity.getId(), categoryList, categoryEntityList);
+                    if (com.baomidou.mybatisplus.core.toolkit.CollectionUtils.isEmpty(categoryList)) {
+                        errorMsgList.add(ApiError.ERROR_95091.msg);
                     }
-                    if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
-                        errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
+                    //一级品类
+                    BasicCategoryEntity bestEntity = categoryList.stream().filter(obj -> "0".equals(obj.getPid())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(bestEntity) || StringUtils.isBlank(bestEntity.getCode())) {
+                        errorMsgList.add(ApiError.ERROR_95091.msg);
                     }
-                    productInfoDTO.setCategory(secondaryCategory);
-                    productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
-                }
-                //存在错误信息则返回
-                if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorMsgList)) {
-                    dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                    errorList.add(dto);
-                    continue;
-                }
-            }
-            String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
-            if (ObjectUtils.isEmpty(applicationCategoryId)) {
-                errorMsgList.add("应用分类不存在");
-            } else {
-                productInfoDTO.setApplicationCategoryId(applicationCategoryId);
-            }
+                    //二级品类
+                    String secondaryCategory = dto.getSecondaryCategory();
+                    BasicCategoryEntity secondaryCategoryEntity = categoryEntityList.stream().filter(req -> req.getName().equals(secondaryCategory) && !req.getPid().equals("0")).findFirst().orElse(null);
 
+                    if (ObjectUtils.isEmpty(secondaryCategoryEntity)) {
+                        productInfoDTO.setCategory(bestEntity.getName());
+                        productInfoDTO.setCategoryId(bestEntity.getId());
+                    } else {
+                        BasicCategoryEntity secondEntity = categoryList.stream().filter(obj -> secondaryCategoryEntity.getPid().equals(obj.getId())).findFirst().orElse(null);
+                        if (ObjectUtils.isEmpty(secondEntity) || StringUtils.isBlank(secondaryCategoryEntity.getCode())) {
+                            errorMsgList.add(ApiError.ERROR_95092.msg);
+                        }
+                        if (!bestEntity.getId().equals(secondaryCategoryEntity.getPid())) {
+                            errorMsgList.add("产品分类一级类目和二级类目的关系不匹配");
+                        }
+                        productInfoDTO.setCategory(secondaryCategory);
+                        productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
+                    }
+                    //存在错误信息则返回
+                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorMsgList)) {
+                        dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                        errorList.add(dto);
+                        continue;
+                    }
+                }
+            }
+            if(StringUtils.isNotBlank(dto.getApplicationCategoryName())){
+                String applicationCategoryId = applicationCategoryMap.get(dto.getApplicationCategoryName());
+                if (ObjectUtils.isEmpty(applicationCategoryId)) {
+                    errorMsgList.add("应用分类不存在");
+                } else {
+                    productInfoDTO.setApplicationCategoryId(applicationCategoryId);
+                }
+            }
             //存在侵权风险
             String pirateRisk = dto.getPirateRisk();
             if (StringUtils.isNotBlank(pirateRisk)) {
