@@ -407,13 +407,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         soOutstock.setSalesOrgId(soCustomer.getSalesOrgId());
         soOutstock.setSalesOrgName(soCustomer.getSalesOrgName());
         soOutstock.setSellerId(soCustomer.getSellerId());
+        soOutstock.setSellerName(soCustomer.getSellerName());
         soOutstock.setCountry(soCustomer.getCountryId());
         if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
             soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
         }
-        if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
-            soOutstock.setSellerId(soCustomer.getCustomerSellerId());
-        }
+//        if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
+//            soOutstock.setSellerId(soCustomer.getCustomerSellerId());
+//            soOutstock.setSalesDeptId(soCustomer.getSalesDeptId());
+//        }
         //仓库id
         String warehouseKeeperId = soOutstock.getWarehouseKeeperId();
         String sellerId = soOutstock.getSellerId();
@@ -427,11 +429,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstock.setWarehouseKeeperName(warehouseKeeperName);
                 //销售员
                 String sellerName = userList.stream().filter(obj -> obj.getUserId().equals(sellerId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getUserName())).orElse("");
-                soOutstock.setSellerName(sellerName);
-                if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
-                    String saleDeptId = userList.stream().filter(obj -> obj.getUserId().equals(sellerId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getDepartmentId())).orElse("");
-                    soOutstock.setSalesDeptId(saleDeptId);
+                if (CharSequenceUtil.isNotBlank(sellerName)){
+                    soOutstock.setSellerName(sellerName);
                 }
+//                if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
+//                    String saleDeptId = userList.stream().filter(obj -> obj.getUserId().equals(sellerId)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getDepartmentId())).orElse("");
+//                    soOutstock.setSalesDeptId(saleDeptId);
+//                }
             }
         }
 
