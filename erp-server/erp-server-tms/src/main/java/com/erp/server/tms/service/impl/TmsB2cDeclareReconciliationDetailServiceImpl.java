@@ -606,21 +606,22 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             	List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
             	validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
             }
-            Map<String, String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
+            Set<String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
             if(!validateCategoryCurrency.isEmpty()) {
             	Map<String, Set<String>> costIdTypeListMap = new HashMap<>();
-            	for(Map.Entry<String, String> validateCategory : validateCategoryCurrency.entrySet()) {
-            		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue())).collect(Collectors.toList());
+            	for(String validateCategory : validateCategoryCurrency) {
+            		String[] split = validateCategory.split("_");
+            		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1])).collect(Collectors.toList());
             		for(UpdateDTO remove : removeList) {
             			String costName = erpFieldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), remove.getCfgCostId())).findFirst().orElse(null).getErpFieldName();
             			Set<String> set = costIdTypeListMap.get(costName);
             			if(CollUtil.isEmpty(set)) {
             				set = new HashSet<>();
             			}
-            			set.add(AllocationFeeTypeEnum.getName(validateCategory.getKey()) + "-" + LogisticsBillCostTypeEnum.getName(validateCategory.getValue()) + "分类下所有费用币种必须一致");
+            			set.add(AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
             			costIdTypeListMap.put(costName, set);
             		}
-            		updateList.removeIf(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue()));
+            		updateList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));
             	}
             	if(!costIdTypeListMap.isEmpty()) {
             		for(DeclareReconciliationStandardExcelDTO excelDTO : value) {
@@ -829,16 +830,17 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             	List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
             	validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
             }
-            Map<String, String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
+            Set<String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
             if(!validateCategoryCurrency.isEmpty()) {
             	Map<String, String> costIdTypeListMap = new HashMap<>();
-            	for(Map.Entry<String, String> validateCategory : validateCategoryCurrency.entrySet()) {
-            		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue())).collect(Collectors.toList());
+            	for(String validateCategory : validateCategoryCurrency) {
+            		String[] split = validateCategory.split("_");
+            		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1])).collect(Collectors.toList());
             		for(UpdateDTO remove : removeList) {
             			String costName = erpFieldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), remove.getCfgCostId())).findFirst().orElse(null).getErpFieldName();
-            			costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(validateCategory.getKey()) + "-" + LogisticsBillCostTypeEnum.getName(validateCategory.getValue()) + "分类下所有费用币种必须一致");
+            			costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
             		}
-            		updateList.removeIf(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue()));
+            		updateList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));
             	}
             	if(!costIdTypeListMap.isEmpty()) {
             		jsonObject.set("错误信息",FieldValidUtil.getMsgSort(new ArrayList<>(costIdTypeListMap.values())));

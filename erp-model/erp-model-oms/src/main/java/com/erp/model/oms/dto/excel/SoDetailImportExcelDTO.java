@@ -48,7 +48,7 @@ public class SoDetailImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "销售单价", index = 3)
-    @FieldValid(fieldName = "销售单价", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "销售单价", formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String  price;
 
 
@@ -60,12 +60,19 @@ public class SoDetailImportExcelDTO {
     @FieldValid(fieldName = "税率",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String taxRate;
 
+    /**
+     * 含税单价
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "含税单价", index = 5)
+    @FieldValid(fieldName = "含税单价", formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    private String  taxPrice;
 
     /**
      * 是否赠品
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "是否赠品", index = 5)
+    @ExcelProperty(value = "是否赠品", index = 6)
     @FieldValid(fieldName = "是否赠品",isNotBlank = true,fieldValues = "是,否")
     private String isGift;
 
@@ -73,7 +80,7 @@ public class SoDetailImportExcelDTO {
      * 是否补发
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "是否补发", index = 6)
+    @ExcelProperty(value = "是否补发", index = 7)
     @FieldValid(fieldName = "是否补发",isNotBlank = true,fieldValues = "是,否")
     private String isReissue;
 
@@ -81,7 +88,7 @@ public class SoDetailImportExcelDTO {
      * 是否补发
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "是否关闭", index = 7)
+    @ExcelProperty(value = "是否关闭", index = 8)
     @FieldValid(fieldName = "是否关闭",fieldValues = "是,否")
     private String isClose;
 
@@ -91,7 +98,7 @@ public class SoDetailImportExcelDTO {
      * 备注
      */
     @ColumnWidth(40)
-    @ExcelProperty(value = "备注", index = 8)
+    @ExcelProperty(value = "备注", index = 9)
     @FieldValid(fieldName = "备注",maxLength=200)
     private String remark;
 
@@ -101,7 +108,7 @@ public class SoDetailImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 9)
+    @ExcelProperty(value = "错误数据", index = 10)
     private String errorMsg;
 
 

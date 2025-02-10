@@ -280,6 +280,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CharSequenceUtil.isBlank(firstMileDeliveryEntity.getDestWarehouseId())) {
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "发货单目的仓不能为空");
         }
+        if (CharSequenceUtil.isBlank(firstMileDeliveryEntity.getDeliveryWarehouseId())) {
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "发货单发货仓不能为空");
+        }
         List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(firstMileDeliveryEntity.getDestWarehouseId()));
         if (CollectionUtils.isEmpty(updateDTOS)) {
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), CharSequenceUtil.format("发货单目的仓记录【{}】不存在", firstMileDeliveryEntity.getDestWarehouseName()));
@@ -486,8 +489,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
                     .collect(Collectors.toList());
         }
+        //当前组织
+        String orgId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstOrgId()) ? allocationSettingDTO.getFirstOrgId() : reportPeriodMonth.getOrgId();
+        String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
-        List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(reportPeriodMonth.getOrgId(), skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth());
+        List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(orgId, skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth(),toWarehouseId);
         //保存分摊主表记录
         service.saveOrUpdate(entity);
         // 操作日志
@@ -1239,12 +1245,17 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //构造数据
             FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
                     .setSourceId(deliveryEntity.getId()).setSourceCode(deliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth);
-            BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
-            if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
-                log.info("自动计算费用分摊成功：{}", resultDTO.getMsg());
-            } else {
-                log.error("自动计算费用分摊失败：{}", resultDTO.getMsg());
+            try {
+                BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
+                if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
+                    log.info("自动计算费用分摊成功：{}", resultDTO.getMsg());
+                } else {
+                    log.error("自动计算费用分摊失败：{}", resultDTO.getMsg());
+                }
+            }catch (Exception e){
+                log.error("自动计算费用分摊异常：{}", e.getMessage());
             }
+
         }
         log.info("autoGenerateFirstMileCostAllocation ----end");
     }

@@ -691,12 +691,12 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 	@Override
 	public void dmpRelationMoveToHistoryTable(String beforeUpdateTime, String size) {
 		this.getBaseMapper().dmpRelationMoveToHistoryTable(beforeUpdateTime, size);
-		redisUtil.del(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
 	}
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void dmpOutputMoveToHistoryTable(String beforeUpdateTime, String size) {
 		this.getBaseMapper().dmpOutputMoveToHistoryTable(beforeUpdateTime, size);
+		redisUtil.del(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
 	}
 }

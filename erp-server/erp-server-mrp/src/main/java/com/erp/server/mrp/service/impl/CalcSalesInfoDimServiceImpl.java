@@ -599,21 +599,9 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
     @Override
     public void rulesApply(CalcSalesInfoDimDTO.RulesApplyDTO dto) {
         CalcSalesInfoDimEntity entity = getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("试算任务不存在"));
-        ApplyTypeEnum applyType = ApplyTypeEnum.getEnum(dto.getApplyType());
-        List<ReplenishmentSuggestionEntity> suggestionIdList = new ArrayList<>();
         CfgRuleCalcEntity cfgRuleCalc = cfgRuleCalcService.getById(entity.getCfgRuleCalcId());
-        switch (applyType) {
-            case CURRENT:
-                suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(Collections.singletonList(entity.getShopId()), Collections.singletonList(entity.getSkuId()));
-                break;
-            case ALL:
-                suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(cfgRuleCalc.getShopJson().toList(String.class), cfgRuleCalc.getSkuJson().toList(String.class));
-                break;
-            case CUSTOM:
-                List<String> shopIdList = getShopIdList(dto);
-                suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(shopIdList, dto.getSkuList());
-                break;
-        }
+        List<String> shopIdList = getShopIdList(dto);
+        List<ReplenishmentSuggestionEntity> suggestionIdList = replenishmentSuggestionService.listByShopIdAndSkuId(shopIdList, dto.getSkuList());
         if (CollectionUtils.isEmpty(suggestionIdList)) {
             return;
         }
@@ -623,15 +611,48 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     }
 
+    @Override
+    public CalcSalesInfoDimDTO.RulesApplyDetailDTO rulesApplyDetail(CalcSalesInfoDimDTO.RulesApplyDTO dto) {
+        CalcSalesInfoDimEntity entity = getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("试算任务不存在"));
+        CalcSalesInfoDimDTO.RulesApplyDetailDTO  detailDTO = new CalcSalesInfoDimDTO.RulesApplyDetailDTO();
+        List<CalcSalesInfoDimDTO.PlatformShopDTO> shopList = new ArrayList<>();
+        CalcSalesInfoDimDTO.PlatformShopDTO platformShopDTO = new CalcSalesInfoDimDTO.PlatformShopDTO();
+        List<CfgRuleCalcDTO.SkuDTO> skuDTOList = new ArrayList<>();
+        if (ApplyTypeEnum.CURRENT.getCode().equals(dto.getApplyType())) {
+            skuDTOList.add(new CfgRuleCalcDTO.SkuDTO(entity.getSkuId(), entity.getSkuNo()));
+            platformShopDTO.setPlatformList(Collections.singletonList(entity.getPlatform()));
+            platformShopDTO.setShopList(Collections.singletonList(entity.getShopId()));
+        } else if (ApplyTypeEnum.ALL.getCode().equals(dto.getApplyType())) {
+            List<CalcSalesInfoDimEntity> list = list(Wrappers.<CalcSalesInfoDimEntity>lambdaQuery().eq(CalcSalesInfoDimEntity::getCfgRuleCalcId, entity.getCfgRuleCalcId()));
+            skuDTOList = list.stream()
+                    .map(v -> new CfgRuleCalcDTO.SkuDTO(v.getSkuId(), v.getSkuNo()))
+                    .distinct()
+                    .collect(Collectors.toList());
+            Map<String, List<String>> map = list.stream()
+                    .collect(Collectors.groupingBy(CalcSalesInfoDimEntity::getPlatform, Collectors.mapping(CalcSalesInfoDimEntity::getShopId, Collectors.toList())));
+            platformShopDTO.setPlatformList(new ArrayList<>(map.keySet()));
+            List<String> shopIds = map.values()
+                    .stream()
+                    .flatMap(Collection::stream)
+                    .distinct()
+                    .collect(Collectors.toList());
+            platformShopDTO.setShopList(shopIds);
+        }
+        shopList.add(platformShopDTO);
+        detailDTO.setSkuList(skuDTOList);
+        detailDTO.setShopList(shopList);
+        return detailDTO;
+    }
+
     private List<String> getShopIdList(CalcSalesInfoDimDTO.RulesApplyDTO dto) {
 
         List<ShopInfoEntity> list = shopInfoFeign.list().getData();
         List<String> shopIdList = new ArrayList<>();
-        for (CalcSalesInfoDimDTO.platformShopDTO shopDTO : dto.getShopList()) {
-            if (Boolean.TRUE.equals(shopDTO.getIsAllPlatform())) {
+        for (CalcSalesInfoDimDTO.PlatformShopDTO shopDTO : dto.getShopList()) {
+            if (CollectionUtils.isEmpty(shopDTO.getPlatformList())) {
                 return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
             }
-            if (Boolean.TRUE.equals(shopDTO.getIsAllShop())) {
+            if (CollectionUtils.isEmpty(shopDTO.getShopList())) {
                 List<String> ids = list.stream()
                         .filter(v -> shopDTO.getPlatformList().contains(v.getDictPlatform()))
                         .map(ShopInfoEntity::getId).collect(Collectors.toList());
@@ -639,9 +660,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
                     shopIdList.addAll(ids);
                 }
             }else {
-                if (!CollectionUtils.isEmpty(shopDTO.getShopList())) {
-                    shopIdList.addAll(shopDTO.getShopList());
-                }
+                shopIdList.addAll(shopDTO.getShopList());
             }
         }
         return shopIdList;

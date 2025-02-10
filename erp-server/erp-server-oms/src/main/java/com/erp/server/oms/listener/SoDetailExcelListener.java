@@ -1,8 +1,10 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
@@ -29,6 +31,8 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
      * sku 信息
      */
     List<SkuVO> skuList;
+    //是否含税
+    Boolean isTax;
 
     List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS;
 
@@ -46,8 +50,10 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
      * 带过来
      *
      * @param skuList
+     * @param isTax
      */
-    public SoDetailExcelListener(List<SkuVO> skuList,List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS) {
+    public SoDetailExcelListener(List<SkuVO> skuList, List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS, Boolean isTax) {
+        this.isTax = isTax;
         this.skuList = skuList;
         this.skuMappingViewDTOS = skuMappingViewDTOS;
     }
@@ -69,6 +75,9 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         List<String> errorMsgList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+        }
+        if(CharSequenceUtil.isAllBlank(soDetailImportExcelDTO.getPrice(), soDetailImportExcelDTO.getTaxPrice())){
+            errorMsgList.add("销售单价和含税单价必须填写一个");
         }
         String skuNo = soDetailImportExcelDTO.getSkuNo();
 
@@ -100,6 +109,10 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
                     }
                 }
             }
+        }
+        //是否含税标识
+        if (Objects.nonNull(isTax) && isTax && CharSequenceUtil.isBlank(soDetailImportExcelDTO.getTaxRate())){
+            errorMsgList.add("税率不能为空");
         }
         //存在错误数据则直接返回
         if (!errorMsgList.isEmpty()) {
@@ -134,7 +147,18 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         }
         //价格
         String priceStr = soDetailImportExcelDTO.getPrice();
-        addDTO.setPrice(new BigDecimal(priceStr));
+        String taxPriceStr = soDetailImportExcelDTO.getTaxPrice();
+        if (CharSequenceUtil.isBlank(priceStr) && CharSequenceUtil.isNotBlank(taxPriceStr)){
+            //含税单价=销售单价*（税率+1）
+            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
+            //含税单价
+            BigDecimal price = MathUtil.divide(taxPrice, multiplyTax);
+            addDTO.setPrice(price);
+        }else {
+            BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
+            addDTO.setPrice(price);
+        }
         addDTO.setTaxRate(taxRate);
         addDTO.setRemark(soDetailImportExcelDTO.getRemark());
         addDTO.setPlatformSkuNo(soDetailImportExcelDTO.getPlatformSkuNo());

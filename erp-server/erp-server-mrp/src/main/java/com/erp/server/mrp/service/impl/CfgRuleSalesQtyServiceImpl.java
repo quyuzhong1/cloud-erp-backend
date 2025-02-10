@@ -292,6 +292,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                         CfgRuleSalesFormulaEntity dto = new CfgRuleSalesFormulaEntity();
                         BeanUtils.copyProperties(v, dto);
                         dto.setSalesQtyId(cfgRuleSalesQtyEntity.getId());
+                        dto.setId(null);
                         return dto;
                     })
                     .collect(Collectors.toList());
@@ -301,6 +302,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                         CfgRuleSalesDenoisingEntity dto = new CfgRuleSalesDenoisingEntity();
                         BeanUtils.copyProperties(v, dto);
                         dto.setSalesQtyId(cfgRuleSalesQtyEntity.getId());
+                        dto.setId(null);
                         return dto;
                     })
                     .collect(Collectors.toList());

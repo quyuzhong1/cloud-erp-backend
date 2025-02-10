@@ -142,14 +142,15 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     	if(CollUtil.isEmpty(list)) {
     		return;
     	}
-		Map<String, String> categoryList = this.validateCategoryCurrency(list);
+    	Set<String> categoryList = this.validateCategoryCurrency(list);
 		if(!categoryList.isEmpty()) {
 			StringBuilder sb = new StringBuilder();
-			for(Map.Entry<String, String> category : categoryList.entrySet()) {
+			for(String category : categoryList) {
 				sb.append("【");
-	    		sb.append(AllocationFeeTypeEnum.getName(category.getKey()));
+	    		String[] split = category.split("_");
+				sb.append(AllocationFeeTypeEnum.getName(split[0]));
 				sb.append("-");
-				sb.append(LogisticsBillCostTypeEnum.getName(category.getValue()));
+				sb.append(LogisticsBillCostTypeEnum.getName(split[1]));
 				sb.append("】");
 				sb.append("、");
 			}
@@ -158,10 +159,10 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
     }
     
     @Override
-    public Map<String, String> validateCategoryCurrency(List<TmsCostDetailEntity> list){
-    	Map<String, String> categoryList = new HashMap<>();
+    public Set<String> validateCategoryCurrency(List<TmsCostDetailEntity> list){
+    	Set<String> set = new HashSet<>();
     	if(CollUtil.isEmpty(list)) {
-    		return categoryList;
+    		return set;
     	}
     	List<String> cfgCostIds = list.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
 		Map<String, String> costCategoryMap = tmsCfgCostService.listByIds(cfgCostIds).stream().collect(Collectors.toMap(TmsCfgCostEntity::getId, TmsCfgCostEntity::getDictCostCategory));
@@ -170,10 +171,10 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 			List<TmsCostDetailEntity> costCategoryList = costCategoryAddDataDTOMap.getValue();
 			String categoryCurrency = costCategoryList.get(0).getCurrency();
 			if(costCategoryList.stream().anyMatch(d -> !categoryCurrency.equals(d.getCurrency()))) {
-				categoryList.put(costCategoryMap.get(costCategoryList.get(0).getCfgCostId()) , costCategoryList.get(0).getType());
+				set.add(costCategoryMap.get(costCategoryList.get(0).getCfgCostId()) + "_" + costCategoryList.get(0).getType());
 			}
 		}
-		return categoryList;
+		return set;
     }
     
     /**

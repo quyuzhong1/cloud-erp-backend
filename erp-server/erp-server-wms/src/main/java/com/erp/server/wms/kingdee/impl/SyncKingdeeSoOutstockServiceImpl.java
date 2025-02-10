@@ -22,6 +22,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
@@ -529,16 +530,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("platformType", salesPlatformCode);
         }
 
-        //部门
-        if (CharSequenceUtil.isNotBlank(soInfoById.getSalesDeptId())) {
-            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-            dto.setDeptId(entity.getSalesDeptId());
-            dto.setOrgId(entity.getSalesOrgId());
-            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
-            if (ObjectUtil.isNotEmpty(deptKingdee)) {
-                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
-            }
-        }
+//        //部门
+//        if (CharSequenceUtil.isNotBlank(soInfoById.getSalesDeptId())) {
+//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            dto.setDeptId(entity.getSalesDeptId());
+//            dto.setOrgId(entity.getSalesOrgId());
+//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+//        }
 
         //销售员
         String sellerId = entity.getSellerId();
@@ -556,6 +557,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
         //销售员
@@ -1023,7 +1025,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
         resultMap.put("currencyCode", viewDTO.getKingdeeCode());
         //结算组织
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+        if (CollectionUtils.isNotEmpty(accountingCompanyList) && Objects.isNull(resultMap.get("salesOrgCode"))) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(salesOrgId)).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
@@ -1271,7 +1273,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
-            map.put("isQuerySync", Boolean.TRUE);
+            map.put(DmpOutputConstant.IS_QUERY_SYNC, Boolean.TRUE);
             map.put("detailId", soOutstockDetailEntity.getId());
             map.put("operate", operate);
             wmsPushMsgEntity.setPushData(JSON.toJSONString(map));

@@ -209,7 +209,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .collect(Collectors.toList());
         Integer virtualQty = this.baseMapper.getVirtualQty(virtualInvId, startDate);
         // 重算库存流水
-        overrideFlowByVirtualInventoryId(flowList, ObjUtil.isNull(virtualQty) ? MathUtil.ZERO : virtualQty);
+        overrideFlowByVirtualInventoryId(flowList, MathUtil.valueOfZero(virtualQty));
         log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvId, LocalDateTime.now());
     }
 

@@ -53,7 +53,6 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @author yl
      * @date 2023-08-21 9:48
      * @param dto
-     * @param matchResult
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.PagingViewDTO>
      */
     List<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto);
@@ -117,6 +116,8 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      */
     List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@Param("params") ListingInfoDTO.QueryDTO params);
 
+    IPage<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(Page<T> query, @Param("params")SkuMappingDTO.CustomerPagingParamDTO params);
+
     /**
      * 根据参数获取数据列表
      * @param params
@@ -125,5 +126,4 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(@Param("params") ListingInfoDTO.QueryPlatformDTO params);
 
 
-    IPage<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(Page<T> query, @Param("params")SkuMappingDTO.CustomerPagingParamDTO params);
 }

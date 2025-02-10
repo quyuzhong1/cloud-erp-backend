@@ -700,7 +700,6 @@ public class ProductDetailController extends BaseController {
     public void exportUpdateTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productUpdateTemplate.xlsx";
         String excelName = "template.xlsx";
-
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
             InputStream inputStream = resourceLoader.getResource(path).getInputStream();
@@ -729,9 +728,19 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+    public void exportTemplate(@RequestParam(value = "importType") Integer importType,HttpServletRequest request, HttpServletResponse response) {
+        String path = "";
         String excelName = "template.xlsx";
+        if(importType == 1){//导入新增
+            path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+        }else if(importType == 2){//导入更新（待审核）
+            path = "classpath:excel/productUpdateNotApproveTemplate.xlsx";
+        }else if(importType == 3){//导入更新（已审核）
+            path = "classpath:excel/productUpdateApproveTemplate.xlsx";
+        }
+        if(StringUtils.isEmpty(path)){
+            throw new ServiceException(ApiError.ERROR_99999);
+        }
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {

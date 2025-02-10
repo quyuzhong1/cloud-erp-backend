@@ -1050,21 +1050,22 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             	List<String> cfgCostIds = validateList.stream().map(TmsCostDetailEntity::getCfgCostId).collect(Collectors.toList());
             	validateList.addAll(tmsCostDetailEntityList.stream().filter(t -> !cfgCostIds.contains(t.getCfgCostId())).collect(Collectors.toList()));
             }
-            Map<String, String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
+            Set<String> validateCategoryCurrency = tmsCostDetailService.validateCategoryCurrency(validateList);
             if(!validateCategoryCurrency.isEmpty()) {
             	Map<String, Set<String>> costIdTypeListMap = new HashMap<>();
-            	for(Map.Entry<String, String> validateCategory : validateCategoryCurrency.entrySet()) {
-            		List<UpdateDTO> removeList = updateDetailList.stream().filter(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue())).collect(Collectors.toList());
+            	for(String validateCategory : validateCategoryCurrency) {
+            		String[] split = validateCategory.split("_");
+            		List<UpdateDTO> removeList = updateDetailList.stream().filter(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1])).collect(Collectors.toList());
             		for(UpdateDTO remove : removeList) {
             			String costName = tmsCfgCostList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), remove.getCfgCostId())).findFirst().orElse(null).getCostName();
             			Set<String> set = costIdTypeListMap.get(costName);
             			if(CollUtil.isEmpty(set)) {
             				set = new HashSet<>();
             			}
-            			set.add(AllocationFeeTypeEnum.getName(validateCategory.getKey()) + "-" + LogisticsBillCostTypeEnum.getName(validateCategory.getValue()) + "分类下所有费用币种必须一致");
+            			set.add(AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
             			costIdTypeListMap.put(costName, set);
             		}
-            		updateDetailList.removeIf(u -> u.getDictCostCategory().equals(validateCategory.getKey()) && u.getType().equals(validateCategory.getValue()));
+            		updateDetailList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));
             	}
             	if(!costIdTypeListMap.isEmpty()) {
             		for(LogisticsBillCostExcelDTO excelDTO : value) {
@@ -1596,7 +1597,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
     			}
     		}
     		addDTO.setCostDetailList(costDetailList);
-    		addList.add(this.add(addDTO));
+    		try {
+				addList.add(this.add(addDTO));
+			} catch (ServiceException e) {
+				throw new ServiceException("物流运单号：" + logisticsBillCostEntity.getTransportNo() + e.getMessage());
+			}
     	}
 
 		return addList;
@@ -1882,7 +1887,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		Map<String, String> feeTypeSettingMaps = new HashMap<>();
 		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
 		String weightPackageAllocation = allocationSettingDTO.getWeightPackageAllocation();
-		AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
+        String packageOrgId = allocationSettingDTO.getPackageOrgId();
+        String packageWarehouseId = allocationSettingDTO.getPackageWarehouseId();
+        AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
 		for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
 			if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getPackageShippingCost());
@@ -1902,12 +1909,15 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 		LocalDate parse = LocalDate.parse(reportDate + "-01", formatter);
 		List<InventorySkuCostEntity> inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, parse)
 				.eq(InventorySkuCostEntity::getStatus, "approve")
-				.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+				.in(CharSequenceUtil.isBlank(packageOrgId),InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+				.eq(CharSequenceUtil.isNotBlank(packageOrgId),InventorySkuCostEntity::getCompanyId, packageOrgId)
 				.list();
 		Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
 			idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
 			List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
+                    .in(CharSequenceUtil.isBlank(packageWarehouseId),InventorySkuCostDetailEntity::getWarehouseId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()))
+                    .eq(CharSequenceUtil.isNotBlank(packageWarehouseId), InventorySkuCostDetailEntity::getWarehouseId,packageWarehouseId)
 				.in(InventorySkuCostDetailEntity::getSkuId , soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
 			if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
 				for(InventorySkuCostDetailEntity i : inventorySkuCostDetailEntityList) {

@@ -1465,27 +1465,33 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 平台店铺
          */
-        private List<platformShopDTO> shopList;
+        private List<PlatformShopDTO> shopList;
     }
 
     @Getter
     @Setter
-    public static class platformShopDTO {
-        /**
-         * 是否全部平台
-         */
-        private Boolean isAllPlatform;
+    public static class PlatformShopDTO {
         /**
          * sku
          */
         private List<String> platformList;
         /**
-         * 是否全部店铺
-         */
-        private Boolean isAllShop;
-        /**
          * 平台店铺
          */
         private List<String> shopList;
+    }
+
+    @Getter
+    @Setter
+    public static class RulesApplyDetailDTO {
+
+        /**
+         * sku
+         */
+        private List<CfgRuleCalcDTO.SkuDTO> skuList;
+        /**
+         * 平台店铺
+         */
+        private List<PlatformShopDTO> shopList;
     }
 }

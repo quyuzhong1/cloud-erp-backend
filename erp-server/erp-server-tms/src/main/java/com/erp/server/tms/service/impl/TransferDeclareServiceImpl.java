@@ -1098,7 +1098,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 		Map<String, String> feeTypeSettingMaps = new HashMap<>();
 		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
 		String transferAllocation = allocationSettingDTO.getTransferAllocation();
-		AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
+        String transferOrgId = allocationSettingDTO.getTransferOrgId();
+        String transferWarehouseId = allocationSettingDTO.getTransferWarehouseId();
+        AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
 		for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
 			if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getTransferShippingCost());
@@ -1163,13 +1165,17 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, parse)
 							.eq(InventorySkuCostEntity::getStatus, "approve")
 							.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+                            .in(CharSequenceUtil.isBlank(transferOrgId),InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+                            .eq(CharSequenceUtil.isNotBlank(transferOrgId),InventorySkuCostEntity::getCompanyId, transferOrgId)
 							.list();
 				}
 				Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 				if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
 					idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, j -> j));
 					List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
-						.in(InventorySkuCostDetailEntity::getSkuId , dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
+                            .in(CharSequenceUtil.isBlank(transferWarehouseId),InventorySkuCostDetailEntity::getWarehouseId, dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()))
+                            .eq(CharSequenceUtil.isNotBlank(transferWarehouseId), InventorySkuCostDetailEntity::getWarehouseId,transferWarehouseId)
+                            .in(InventorySkuCostDetailEntity::getSkuId , dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
 					if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
 						for(InventorySkuCostDetailEntity j : inventorySkuCostDetailEntityList) {
 							InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(j.getMainId());
