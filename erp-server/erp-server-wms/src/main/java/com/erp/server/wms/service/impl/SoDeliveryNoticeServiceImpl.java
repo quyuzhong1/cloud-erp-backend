@@ -793,21 +793,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listNoInventoryOrPicking(id, noInventorySkuIds);
-        entityList = entityList.stream().filter(v -> Boolean.FALSE.equals(v.getIsClose())).collect(Collectors.toList());
-//        long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
-//        if (closeCount > 0) {
-//            throw new ServiceException(ApiError.ERROR_98068);
-//        }
         boolean allNoInventorySku = Boolean.FALSE;
         if(CollectionUtils.isNotEmpty(entityList)){
             allNoInventorySku = entityList.stream().allMatch(v -> noInventorySkuIds.contains(v.getSkuId()));
-        }else {
-            throw new ServiceException(ApiError.ERROR_98068);
+
+            long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
+            if (closeCount > 0) {
+                throw new ServiceException(ApiError.ERROR_98068);
+            }
         }
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
         if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {
             throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
         }
+
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
         //包含组合产品的发货通知单，必须有关联的下推的加工组装单且加工单审核通过
         List<String> skuIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
