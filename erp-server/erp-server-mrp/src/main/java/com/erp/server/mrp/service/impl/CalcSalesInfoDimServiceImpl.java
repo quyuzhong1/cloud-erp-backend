@@ -649,10 +649,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<ShopInfoEntity> list = shopInfoFeign.list().getData();
         List<String> shopIdList = new ArrayList<>();
         for (CalcSalesInfoDimDTO.PlatformShopDTO shopDTO : dto.getShopList()) {
-            if (CollectionUtils.isEmpty(shopDTO.getPlatformList()) && shopDTO.getPlatformList().contains("")) {
+            if (CollectionUtils.isEmpty(shopDTO.getPlatformList()) || shopDTO.getPlatformList().contains("")) {
                 return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
             }
-            if (CollectionUtils.isEmpty(shopDTO.getShopList()) && shopDTO.getPlatformList().contains("")) {
+            if (CollectionUtils.isEmpty(shopDTO.getShopList()) || shopDTO.getShopList().contains("")) {
                 List<String> ids = list.stream()
                         .filter(v -> shopDTO.getPlatformList().contains(v.getDictPlatform()))
                         .map(ShopInfoEntity::getId).collect(Collectors.toList());
