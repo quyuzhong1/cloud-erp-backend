@@ -57,11 +57,11 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_so_out_stock_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_so_out_stock_consumer",
-        consumeMode = ConsumeMode.CONCURRENTLY
-)
+//@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
+//        selectorExpression = "third_system_so_out_stock_tag",
+//        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_so_out_stock_consumer",
+//        consumeMode = ConsumeMode.CONCURRENTLY
+//)
 public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
