@@ -1126,7 +1126,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }else {
             	LogisticsBillDetailDTO.AddDTO addDetailDTO = new LogisticsBillDetailDTO.AddDTO();
-                addDetailDTO.setTrackNo("");
+                addDetailDTO.setTrackNo(CharSequenceUtil.isNotBlank(addDTO.getTransportNo()) ? addDTO.getTransportNo() : CharSequenceUtil.EMPTY);
                 detailList.add(addDetailDTO);
             }
             //非第三方仓和平台仓发货 则默认为自发货
