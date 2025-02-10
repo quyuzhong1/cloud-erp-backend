@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -34,6 +35,18 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class SoB2cDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class UploadFileDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private MultipartFile file;
+    }
 
     @Data
     @NoArgsConstructor
@@ -1626,6 +1639,16 @@ public class SoB2cDTO implements Serializable {
          */
         private List<String> countryIdList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -1710,6 +1733,11 @@ public class SoB2cDTO implements Serializable {
          * 主表信息
          */
         private List<MergeMainDTO> mainList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data

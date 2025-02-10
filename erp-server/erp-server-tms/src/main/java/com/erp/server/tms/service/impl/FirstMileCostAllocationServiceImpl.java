@@ -1237,12 +1237,17 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //构造数据
             FirstMileCostAllocationEntity entity = new FirstMileCostAllocationEntity()
                     .setSourceId(deliveryEntity.getId()).setSourceCode(deliveryEntity.getCode()).setReportPeriodMonth(reportPeriodMonth);
-            BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
-            if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
-                log.info("自动计算费用分摊成功：{}", resultDTO.getMsg());
-            } else {
-                log.error("自动计算费用分摊失败：{}", resultDTO.getMsg());
+            try {
+                BatchResultDTO resultDTO = service.calcAllocatedCost(entity, deliveryEntity, deliveryDetailEntityList1);
+                if (Boolean.TRUE.equals(resultDTO.getSuccess())) {
+                    log.info("自动计算费用分摊成功：{}", resultDTO.getMsg());
+                } else {
+                    log.error("自动计算费用分摊失败：{}", resultDTO.getMsg());
+                }
+            }catch (Exception e){
+                log.error("自动计算费用分摊异常：{}", e.getMessage());
             }
+
         }
         log.info("autoGenerateFirstMileCostAllocation ----end");
     }

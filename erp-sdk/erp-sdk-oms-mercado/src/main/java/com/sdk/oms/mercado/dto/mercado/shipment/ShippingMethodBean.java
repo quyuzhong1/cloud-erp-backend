@@ -15,7 +15,7 @@ public class ShippingMethodBean {
      */
 
     @JsonProperty("id")
-    private int fid;
+    private long fid;
     @JsonProperty("type")
     private String type;
     @JsonProperty("name")

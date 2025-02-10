@@ -5,12 +5,16 @@
     <select id="paging" resultType="com.erp.model.plm.dto.ProductArchiveDTO">
 
         SELECT p.id AS product_id, p.name,p.grade,p.charge_name AS productChargeName,pi.project_status,
-        pi.charge_name AS projectChargeName,p.create_time  productCreateTime,pa.archive_time
+        pi.charge_name AS projectChargeName,
+        p.create_time as  productCreateTime,
+        p.create_time as createTime,
+        p.update_time as updateTime,
+        pa.archive_time
         FROM product_info p LEFT JOIN project_info pi
         ON p.id=pi.product_id AND pi.is_deleted = FALSE
         INNER JOIN product_archive pa
         ON pa.product_id=p.id AND pa.is_deleted = FALSE
-        WHERE p.is_deleted = FALSE
+        WHERE ${params.sqlMap.default} and p.is_deleted = FALSE
             <if test="params.categoryId!=null and params.categoryId!=''  ">
                 AND P.category_id=#{params.categoryId}
             </if>

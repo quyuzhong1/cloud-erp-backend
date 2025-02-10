@@ -72,6 +72,20 @@
             vih.is_deleted = false and vih.date = #{params.date}
             GROUP BY
             vi.sku_id, vi.warehouse_id, vi.virtual_warehouse_id
+        ),CombinedProcessing AS (
+            SELECT
+                sku_id,
+                warehouse_id,
+                virtual_warehouse_id,
+                SUM(frozen_qty) AS frozenQty
+            FROM (
+            SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM first_mile_processing WHERE is_deleted = false
+            UNION ALL
+            SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2b_processing WHERE is_deleted = false
+            UNION ALL
+            SELECT sku_id,warehouse_id,virtual_warehouse_id,frozen_qty FROM so_b2c_processing WHERE is_deleted = false
+            ) AS combined
+            GROUP BY sku_id, warehouse_id, virtual_warehouse_id
         )
         select
             vidh.date as date,
@@ -88,10 +102,13 @@
             vih.virtualUsableQty,
             vih.virtualFrozenQty,
             case when vih.virtualQty = 0 then 0 else round(vidh.inventoryAgeQty * 1.0 / vih.virtualQty,4) end as avgInventoryAge,
-            case when vih.virtualQty = 0 then 0 else round(vidh.backInventoryAgeQty / vih.virtualQty,4) end as backAvgInventoryAge
+            case when vih.virtualQty = 0 then 0 else round(vidh.backInventoryAgeQty / vih.virtualQty,4) end as backAvgInventoryAge,
+            COALESCE(cp.frozenQty,0) as frozenQty,
+            case when vih.virtualFrozenQty = COALESCE(cp.frozenQty,0) then '否' else '是' end as frozenIsDiff
         from virtualInventoryDetailHis vidh
         left join VirtualInventoryHis vih on vidh.sku_id = vih.sku_id
         and vidh.warehouse_id = vih.warehouse_id and vidh.virtual_warehouse_id = vih.virtual_warehouse_id
+        left join CombinedProcessing cp on vidh.sku_id = cp.sku_id and vidh.warehouse_id = cp.warehouse_id and vidh.virtual_warehouse_id = cp.virtual_warehouse_id
         left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
         left join warehouse wh on vidh.warehouse_id = wh.id and wh.is_deleted = false
         left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false

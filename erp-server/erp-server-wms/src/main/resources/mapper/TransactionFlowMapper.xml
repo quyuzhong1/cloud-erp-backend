@@ -55,6 +55,9 @@
         t.instock_batch_date
         FROM
         transaction_flow t
+        left join product_detail pd on pd.id = t.sku_id
+        left join product_info pi on pd.product_id = pi.id
+        left join product_sale ps on ps.sku_id = pd.id
         WHERE ${params.sqlMap.default}
         and t.is_deleted = false
         AND t.warehouse_id = #{params.warehouseId}
@@ -83,11 +86,16 @@
             t.dict_inventory_status as inventoryStatus,
             t.qty,
             t.cur_inventory_qty as afterQty,
-            t.instock_batch_date AS instockBatchDate
+            t.instock_batch_date AS instockBatchDate,
+            t.create_time AS createTime,
+            t.update_time AS updateTime
         FROM
             transaction_flow t
+            left join product_detail pd on pd.id = t.sku_id
+            left join product_info pi on pd.product_id = pi.id
+            left join product_sale ps on ps.sku_id = pd.id
         WHERE
-            t.is_deleted = false
+            ${params.sqlMap.default} and t.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
         and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35','49','50')
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
@@ -168,8 +176,11 @@
         t.instock_batch_date AS instockBatchDate
         FROM
         transaction_flow t
+        left join product_detail pd on pd.id = t.sku_id
+        left join product_info pi on pd.product_id = pi.id
+        left join product_sale ps on ps.sku_id = pd.id
         WHERE
-        t.is_deleted = false
+            ${params.sqlMap.default} and t.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
         and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35')
         <if test="params.ids != null and params.ids.size != ''">
@@ -328,7 +339,10 @@
                         #{item}
                     </foreach>
                 </if>
-            ) m 
+            ) m
+        <where>
+            ${params.sqlMap.default}
+        </where>
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
@@ -395,7 +409,7 @@
         left join product_detail pd on pd.id = tf.sku_id
         left join product_info pi on pd.product_id = pi.id
         <where>
-            tf.is_deleted = false
+            ${params.sqlMap.default} and tf.is_deleted = false
             <if test="params.skuNoList != null and params.skuNoList.size != ''">
                 and tf.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -470,7 +484,7 @@
             left join product_info pi on pd.product_id = pi.id
             left join product_sale ps on ps.sku_id = pd.id
             <where>
-                       tf.is_deleted = false
+                        ${params.sqlMap.default} and tf.is_deleted = false
                        <if test="params.skuNoList != null and params.skuNoList.size != ''">
                             and tf.sku_no in
                             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -555,7 +569,7 @@
                 left join product_info pi on pd.product_id = pi.id
                 left join product_sale ps on ps.sku_id = pd.id
                 <where>
-                    tf.is_deleted = false
+                    ${params.sqlMap.default} and tf.is_deleted = false
                     <if test="params.skuIdList != null and params.skuIdList.size != ''">
                         and tf.sku_id in
                         <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
@@ -674,7 +688,7 @@
             max(tf.org_id) as orgId
             from transaction_flow tf
             <where>
-                tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
+                ${params.sqlMap.default} and tf.is_deleted = false and (tf.dict_inventory_status = 'frozen' or tf.dict_inventory_status = 'usable')
                 <if test="params.dateType != null and params.dateType != '' and params.dateType == 'approveDate'">
                     and (#{params.date}::TIMESTAMP + INTERVAL '1 DAY' ) > tf.trade_time
                 </if>

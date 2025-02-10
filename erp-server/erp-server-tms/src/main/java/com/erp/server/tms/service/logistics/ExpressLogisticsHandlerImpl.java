@@ -61,35 +61,40 @@ public class ExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         ValidatorUtil.validateEntity(orderRequest);
         try {
             baseResult = expressShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
-            //转换实体
-            if (baseResult.isSuccess()) {
-                OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
-                responseVO.setDeliveryNo(orderResponse.getOrderId());
-                List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
-                if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
-                    WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
-                    if (Objects.nonNull(waybillNoInfo)) {
-                        responseVO.setTransportNo(waybillNoInfo.getWaybillNo());
-                        responseVO.setTrackNo(waybillNoInfo.getWaybillNo());
+            if(Objects.isNull(baseResult)){
+                responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), "顺丰请求接口返回为空");
+            }else{
+                //转换实体
+                if (baseResult.isSuccess()) {
+                    OrderResponse orderResponse = JSONUtil.toBean(baseResult.getMsgData(), OrderResponse.class);
+                    responseVO.setDeliveryNo(orderResponse.getOrderId());
+                    List<WaybillNoInfo> waybillNoInfoList = orderResponse.getWaybillNoInfoList();
+                    if (CollectionUtils.isNotEmpty(waybillNoInfoList)) {
+                        WaybillNoInfo waybillNoInfo = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 1).findFirst().orElse(null);
+                        if (Objects.nonNull(waybillNoInfo)) {
+                            responseVO.setTransportNo(waybillNoInfo.getWaybillNo());
+                            responseVO.setTrackNo(waybillNoInfo.getWaybillNo());
+                        }
+                        List<WaybillNoInfo> collect = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 2).collect(Collectors.toList());
+                        if (CollectionUtils.isNotEmpty(collect)) {
+                            responseVO.setMore(true);
+                            List<LogisticsOrderResponseVO> vos = new ArrayList<>(collect.size());
+                            collect.forEach(waybillNoInfoList2 -> {
+                                vos.add(LogisticsOrderResponseVO.builder()
+                                        .deliveryNo(orderResponse.getOrderId())
+                                        .trackNo(waybillNoInfoList2.getWaybillNo())
+                                        .transportNo(waybillNoInfoList2.getWaybillNo()).build());
+                            });
+                            responseVO.setLogisticsOrderResponseVOS(vos);
+                        }
                     }
-                    List<WaybillNoInfo> collect = waybillNoInfoList.stream().filter(e -> e.getWaybillType() == 2).collect(Collectors.toList());
-                    if (CollectionUtils.isNotEmpty(collect)) {
-                        responseVO.setMore(true);
-                        List<LogisticsOrderResponseVO> vos = new ArrayList<>(collect.size());
-                        collect.forEach(waybillNoInfoList2 -> {
-                            vos.add(LogisticsOrderResponseVO.builder()
-                                    .deliveryNo(orderResponse.getOrderId())
-                                    .trackNo(waybillNoInfoList2.getWaybillNo())
-                                    .transportNo(waybillNoInfoList2.getWaybillNo()).build());
-                        });
-                        responseVO.setLogisticsOrderResponseVOS(vos);
-                    }
+                    success = true;
+                    responseVO.success();
+                } else {
+                    responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), baseResult.getErrorMsg());
                 }
-                success = true;
-                responseVO.success();
-            } else {
-                responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), baseResult.getErrorMsg());
             }
+
         } catch (UnsupportedEncodingException e) {
             responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), e.getMessage());
         }

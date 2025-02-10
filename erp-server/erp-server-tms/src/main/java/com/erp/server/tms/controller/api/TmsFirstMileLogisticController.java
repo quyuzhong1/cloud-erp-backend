@@ -122,7 +122,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             keyIdName = "id")
     @LogAction(value = LogActionEnum.INSERT, desc = "头程物流单新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Valid TmsFirstMileLogisticDTO.AddDTO dto) {
-        return success(tmsFirstMileLogisticService.add(dto));
+        return success(tmsFirstMileLogisticService.addFirstMileLogistics(dto));
     }
 
     /**

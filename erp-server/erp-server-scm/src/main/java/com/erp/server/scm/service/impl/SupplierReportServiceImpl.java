@@ -10,6 +10,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.SupplierReportDTO;
+import com.erp.model.scm.enums.QcInsideTypeEnum;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.QcInfoDTO;
@@ -51,6 +52,12 @@ public class SupplierReportServiceImpl implements SupplierReportService {
     public PagingVO<SupplierReportDTO.PagingViewDTO> supplierPaging(PagingDTO<SupplierReportDTO.PagingSearchParamDTO> paramDTO) {
         paramDTO.getParams().setPermissionSql(paramDTO.getPermissionSql());
         Page query = new Page(paramDTO.getCurrPage(), paramDTO.getPageSize());
+        if (null != paramDTO.getParams() && QcInsideTypeEnum.INSIDE_QC.getCode().equalsIgnoreCase(paramDTO.getParams().getQcType())){
+            paramDTO.getParams().setIsInside(true);
+        }
+        if (null != paramDTO.getParams() && QcInsideTypeEnum.OUTSIDE_QC.getCode().equalsIgnoreCase(paramDTO.getParams().getQcType())){
+            paramDTO.getParams().setIsInside(false);
+        }
         IPage<SupplierReportDTO.PagingViewDTO> pageData = supplierReportMapper.getPurchasePaging(query, paramDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(pageData);

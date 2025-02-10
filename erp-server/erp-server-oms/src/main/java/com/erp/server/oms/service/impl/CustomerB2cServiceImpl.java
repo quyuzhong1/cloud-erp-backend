@@ -56,6 +56,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -300,34 +301,35 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         int allCount = approveCountList.stream().mapToInt(CustomerB2CDTO.ApproveCountDTO::getCount).sum();
         CustomerB2CDTO.TabListDTO all = new CustomerB2CDTO.TabListDTO();
         all.setCount(allCount);
-        all.setSearchType(SearchType.ALL);
+        all.setTabFlag("all");
+        all.setTabFlagName("全部");
         resultList.add(all);
         //待审核
-        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
-        CustomerB2CDTO.TabListDTO waitApprove = new CustomerB2CDTO.TabListDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitApprove.setCount(waitApproveCount);
-        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
+        CustomerB2CDTO.TabListDTO waitApprove = createTabListDTO(approveCountList, ApproveStatusEnum.APPROVE_ING);
         resultList.add(waitApprove);
 
         //已审核
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        CustomerB2CDTO.TabListDTO approve = new CustomerB2CDTO.TabListDTO();
-        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        approve.setCount(approveCount);
-        approve.setSearchType(approveStatus);
+        CustomerB2CDTO.TabListDTO approve = createTabListDTO(approveCountList, ApproveStatusEnum.APPROVE);
         resultList.add(approve);
+
         //审核不通过
-        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-        CustomerB2CDTO.TabListDTO reject = new CustomerB2CDTO.TabListDTO();
-        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        reject.setCount(rejectCount);
-        reject.setSearchType(rejectStatus);
+        CustomerB2CDTO.TabListDTO reject = createTabListDTO(approveCountList, ApproveStatusEnum.REJECT);
         resultList.add(reject);
         return resultList;
+    }
+
+
+    /**
+     * 创建tab
+     */
+    private static CustomerB2CDTO.TabListDTO createTabListDTO(List<CustomerB2CDTO.ApproveCountDTO> approveCountList, ApproveStatusEnum approveIngEnum) {
+        CustomerB2CDTO.TabListDTO waitApprove = new CustomerB2CDTO.TabListDTO();
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveIngEnum.getStatus())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitApprove.setCount(waitApproveCount);
+        waitApprove.setTabFlag(approveIngEnum.getStatus());
+        waitApprove.setTabFlagName(approveIngEnum.getName());
+        return waitApprove;
     }
 
     /**
@@ -797,7 +799,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             item.setApproveStatusName(approveStatus.getName());
         }
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/CustomerExport.xlsx";
+        String excelPath = "excel/CustomerB2cExport.xlsx";
         String name = "客户列表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);

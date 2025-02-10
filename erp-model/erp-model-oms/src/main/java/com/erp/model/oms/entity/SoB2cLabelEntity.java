@@ -35,6 +35,11 @@ public class SoB2cLabelEntity extends BaseEntity<SoB2cLabelEntity> {
     @TableField("logistics_label_base64")
     private String logisticsLabelBase64;
 
+    /**
+     * 来源类型
+     */
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String MAIN_ID = "main_id";
 

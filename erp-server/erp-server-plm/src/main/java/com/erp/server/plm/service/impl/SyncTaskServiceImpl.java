@@ -216,6 +216,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 break;
             case PRODUCT_DETAIL:
                 resultList = newSyncProductDetail(sourceDetailList);
+                break;
             case SDY_PRODUCT_DETAIL:
             	resultList = newSyncSdyProductDetail(sourceDetailList);
                 break;

@@ -1,6 +1,7 @@
 package com.erp.model.scm.dto;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 委外订单请求响应实体
@@ -36,15 +38,19 @@ public class SubcontractOrderDTO implements Serializable {
      public static class TabListDTO {
 
          /**
-         * 类型 （toBeApprove 待审批 toBeCreate 待到货 created 已到货 reject 不通过）
-         */
-         private String searchType;
-
-         /**
          * 数量
          */
          private Integer count;
 
+         /**
+          * 类型 （toBeApprove 待审批 toBeCreate 待到货 created 已到货 reject 不通过）
+          */
+         private String tabFlag;
+
+         /**
+          * tab名称
+          */
+         private String tabFlagName;
      }
 
     @Data
@@ -70,6 +76,16 @@ public class SubcontractOrderDTO implements Serializable {
      @Data
      @NoArgsConstructor
      public static class PagingParamDTO extends SortDTO {
+
+         /**
+          * 页面高级查询
+          */
+         private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+         /**
+          * sqlMap 默认key default
+          */
+         private Map<String, String> sqlMap;
 
          /**
          * 搜索类型

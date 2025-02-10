@@ -205,7 +205,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(TmsFirstMileLogisticDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO addFirstMileLogistics(TmsFirstMileLogisticDTO.AddDTO addDTO) {
         //发货单id
         String outstockId = addDTO.getOutstockId();
         FirstMileDeliveryDTO.GenerateLogisticDTO generateLogisticDTO = this.getGenerateLogisticDTO(outstockId,addDTO.getIsAuto());
@@ -225,7 +225,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             tmsFirstMileLogisticEntity.setRemark(generateLogisticDTO.getRemark());
         }
         if(StringUtils.isNotBlank(addDTO.getTransportNo())){
-            List<LogisticsBillEntity> logisticsBillEntityList = this.listByTransportNo(Arrays.asList(addDTO.getTransportNo()));
+            List<LogisticsBillEntity> logisticsBillEntityList = this.listByTransportNo(Collections.singletonList(addDTO.getTransportNo()));
             if(CollectionUtils.isNotEmpty(logisticsBillEntityList)){
                 throw new ServiceException("运单号已存在，不能重复新增");
             }
@@ -1817,7 +1817,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
         addDTO.setOutstockId(autoGenerateBillDTO.getId());
         addDTO.setIsAuto(true);
-        this.add(addDTO);
+        this.addFirstMileLogistics(addDTO);
         return BatchResultDTO.success(autoGenerateBillDTO.getId(),"", "头程物流单创建成功");
     }
 
@@ -1850,7 +1850,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
         addDTO.setOutstockId(firstMileDeliveryEntity.getId());
         //走TMS生成物流单逻辑
-        this.add(addDTO);
+        this.addFirstMileLogistics(addDTO);
         return BatchResultDTO.success(addDTO.getOutstockId(),"", "头程物流单创建成功");
     }
 }

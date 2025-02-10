@@ -61,7 +61,15 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             sysDepartment.setParentId("0");
         }
         sysDepartment.setId(id);
-
+        
+        String name = sysDepartment.getName();
+        if(StringUtils.isBlank(name)) {
+        	throw new ServiceException("部门名称不能为空");
+        }
+        Integer nameCount = lambdaQuery().eq(SysDepartmentEntity::getName, name).ne(SysDepartmentEntity::getId, id).count();
+        if(nameCount != null && nameCount > 0) {
+        	throw new ServiceException("存在相同部门名称");
+        }
         SysDepartmentEntity entity = this.getById(id);
 
         //编号赋值，为兼容历史数据修改数据无编码时也重新生成编码
@@ -220,7 +228,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:sys:listDept",keyGenerator = "myKeyGenerator")
+//    @Cacheable(cacheNames = "cache:sys:listDept",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
                 .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
@@ -261,7 +269,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:sys:getDeptList",keyGenerator = "myKeyGenerator")
+//    @Cacheable(cacheNames = "cache:sys:getDeptList",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentDTO> getDeptList() {
 
         return baseMapper.getDeptList();

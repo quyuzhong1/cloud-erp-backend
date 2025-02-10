@@ -1,8 +1,10 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -11,15 +13,14 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.plm.dto.AuditParamDTO;
-import com.erp.model.plm.dto.HandleTaskScheduleDTO;
-import com.erp.model.plm.dto.ProjectPlanTaskDTO;
-import com.erp.model.plm.dto.SearchPagingDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.ProjectTaskPlanAutoVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import com.erp.server.plm.query.ProjectScheduleHandler;
 import com.erp.server.plm.service.ProjectPlanService;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -51,6 +52,19 @@ public class ProjectScheduleController extends BaseController {
 
 
     /**
+     * 获取状态统计
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "plm:product:schedule:paging",
+            tableAlias = "pp"
+    )
+    public ApiResult<List<ProjectScheduleDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(projectPlanService.tabList(dto));
+    }
+
+    /**
      * 产品排期 分页
      *
      * @param
@@ -62,6 +76,7 @@ public class ProjectScheduleController extends BaseController {
             menuCode = "plm:product:schedule:paging",
             tableAlias = "pp"
     )
+    @WebAdvanceQuery(handler = ProjectScheduleHandler.class)
     public ApiResult<PagingVO<SchedulePagingVO>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
         PagingVO<SchedulePagingVO> pagingVO = projectPlanService.paging(dto);
         return success(pagingVO);

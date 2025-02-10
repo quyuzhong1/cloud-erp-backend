@@ -13,7 +13,7 @@ public class OffsetBean {
     @JsonProperty("date")
     private String date;
     @JsonProperty("shipping")
-    private int shipping;
+    private long shipping;
 
     public String getDate() {
         return date;
@@ -23,7 +23,7 @@ public class OffsetBean {
         this.date = date;
     }
 
-    public int getShipping() {
+    public long getShipping() {
         return shipping;
     }
 

@@ -186,7 +186,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setSearchType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
         return list;
@@ -195,10 +196,10 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     public void exportList(SubcontractOrderDTO.ExportDTO param, HttpServletResponse response) {
         //列表Tab查询状态处理
-        Boolean isFlag = doOpHandleTableParam(param);
-        if (!isFlag) {
-            return;
-        }
+//        Boolean isFlag = doOpHandleTableParam(param);
+//        if (!isFlag) {
+//            return;
+//        }
         List<SubcontractOrderDTO.ListDTO> list = this.baseMapper.listExport(param);
         if(CollUtil.isEmpty(list)) {
            return;

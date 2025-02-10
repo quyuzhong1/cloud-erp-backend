@@ -284,6 +284,7 @@ public class WarehouseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓库数据")
     @PostMapping("/exportWarehouse")
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.ExportDTO dto) {
         warehouseService.exportWarehouse(dto);
         return success();
