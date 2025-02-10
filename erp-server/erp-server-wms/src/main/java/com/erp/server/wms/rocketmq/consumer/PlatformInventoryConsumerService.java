@@ -52,10 +52,10 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_inventory_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_inventory_consumer",
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
+//        selectorExpression = "third_system_inventory_tag",
+//        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_inventory_consumer",
+//        consumeMode = ConsumeMode.ORDERLY)
 public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
