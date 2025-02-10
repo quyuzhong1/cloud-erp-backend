@@ -31,10 +31,10 @@ import java.util.Map;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
-        selectorExpression = "kingdee_other_outstock_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_OTHER_OUTSTOCK,
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC,
+//        selectorExpression = "kingdee_other_outstock_tag",
+//        consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_OTHER_OUTSTOCK,
+//        consumeMode = ConsumeMode.ORDERLY)
 public class KingdeeOtherOutstockConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource
     private KingdeeOtherOutstockConsumerService kingdeeOtherOutstockConsumerService;

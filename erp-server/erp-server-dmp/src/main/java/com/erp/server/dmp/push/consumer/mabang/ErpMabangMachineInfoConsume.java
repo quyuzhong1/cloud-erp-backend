@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, selectorExpression = "erp_dmp_machine_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_MACHINE_INFO_TO_DMP)
+//@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, selectorExpression = "erp_dmp_machine_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_MACHINE_INFO_TO_DMP)
 public class ErpMabangMachineInfoConsume implements RocketMQListener<MabangMachineInfoDTO> {
 
     @Autowired
