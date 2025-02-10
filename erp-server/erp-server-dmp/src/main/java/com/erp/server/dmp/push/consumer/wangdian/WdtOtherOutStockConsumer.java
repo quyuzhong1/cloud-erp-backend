@@ -49,10 +49,10 @@ import java.util.concurrent.TimeUnit;
  */
 @Component
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC,
-        selectorExpression = "wdt_other_out_stock_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_WDT_OTHER_OUT_STOCK,
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC,
+//        selectorExpression = "wdt_other_out_stock_tag",
+//        consumerGroup = RocketMqConsumerGroup.SYNC_WDT_OTHER_OUT_STOCK,
+//        consumeMode = ConsumeMode.ORDERLY)
 public class WdtOtherOutStockConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
