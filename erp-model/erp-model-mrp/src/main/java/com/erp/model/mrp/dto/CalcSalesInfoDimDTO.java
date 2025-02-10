@@ -1194,7 +1194,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 相似度
          */
-        private BigDecimal similarity;
+        private BigDecimal similarity = BigDecimal.ZERO;
 
         /**
          * 销量
