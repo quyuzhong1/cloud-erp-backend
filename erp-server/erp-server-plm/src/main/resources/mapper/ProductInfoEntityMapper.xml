@@ -205,9 +205,10 @@
         p.approval_time AS project_init_date,
         pi.project_launch_date,
         pi.project_finish_date,
+        p.application_category_id,
+        pi.project_finish_date,
         p.create_time,
-        p.update_time,
-        p.application_category_id
+        p.update_time
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt

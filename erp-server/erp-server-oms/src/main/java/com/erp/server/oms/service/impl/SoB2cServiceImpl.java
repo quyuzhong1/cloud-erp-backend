@@ -11,6 +11,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -9376,4 +9377,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         return "";
     }
+
+    @Override
+    public IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.productSalesPaging(query, params, skuIdList);
+    }
+
+    @Override
+    public Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.listProductSalesExport(query, params, skuIdList);
+    }
+
 }

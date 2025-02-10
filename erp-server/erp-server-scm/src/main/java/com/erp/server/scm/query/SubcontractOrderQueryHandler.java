@@ -35,6 +35,10 @@ public class SubcontractOrderQueryHandler extends AbstractQueryHandler {
             super.buildDefaultDTO("so.approve_status", value.toString());
         }
 
+        if ("poCode".equals(field)) {
+            return "EXISTS (select source_id from purchase_order where is_deleted = false and source_id = so.id and code "+ compareCodeSplicingValueSql +" )";
+        }
+
         if ("tab".equals(field)) {
             List<String> approveStatusList = new ArrayList<>(1);
             List<String> arrivalStatusList = new ArrayList<>(2);
