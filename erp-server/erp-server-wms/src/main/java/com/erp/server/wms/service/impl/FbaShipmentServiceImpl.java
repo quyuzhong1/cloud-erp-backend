@@ -14,6 +14,8 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.DictKindgeeConstant;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.*;
@@ -22,6 +24,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -31,17 +34,16 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.DmpPullShipmentDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.ShopInfoDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
+import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -137,6 +139,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     private SysDictFeign sysDictFeign;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+    private Object pageWarehouseProduct;
 
     @Override
     public PagingVO<FbaShipmentDTO.ListDTO> paging(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
@@ -1839,7 +1842,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     /**
      * 获取站点最近同步时间
      */
-    private LocalDateTime getLastSyncTime(String shopId, List<ShopInfoEntity> shopList, List<DmpInoutDTO.LastOneDTO> lastOneDTOS) {
+    private DmpInoutDTO.LastOneDTO getLastSyncTime(String shopId, List<ShopInfoEntity> shopList, List<DmpInoutDTO.LastOneDTO> lastOneDTOS) {
         if (StringUtils.isBlank(shopId)){
             return null;
         }
@@ -1853,10 +1856,59 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                 .distinct()
                 .collect(Collectors.toList());
         return lastOneDTOS.stream()
-                .filter(e -> sameCodeShopId.contains(e.getNextLevelId()))
-                .map(DmpInoutDTO.LastOneDTO::getLatestUpdateTime)
-                .filter(Objects::nonNull)
-                .max(Comparator.naturalOrder())
+                .filter(e -> sameCodeShopId.contains(e.getNextLevelId()) && null != e.getLatestUpdateTime())
+                .max(Comparator.comparing(DmpInoutDTO.LastOneDTO::getLatestUpdateTime))
                 .orElse(null);
+    }
+
+
+    @Override
+    public PagingVO<FbaShipmentDTO.SyncViewDTO> syncPaging(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        // 指定亚马逊
+        List<AdvanceQueryDTO> advanceQueryDTOList = advanceQueryDTO.getParams().getAdvanceQueryDTOList();
+        AdvanceQueryDTO queryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("si.dict_platform",QueryConditionEnum.EQ, PlatformDictEnum.AMAZON.getCode(),QueryDataTypeEnum.STRING);
+        if (CollectionUtils.isEmpty(advanceQueryDTOList)){
+            advanceQueryDTOList = Collections.singletonList(queryDTO);
+            advanceQueryDTO.getParams().setAdvanceQueryDTOList(advanceQueryDTOList);
+        } else {
+            advanceQueryDTOList.add(queryDTO);
+        }
+        PagingVO<ShopDTO.PagingViewDTO> pageData = shopInfoFeign.paging(advanceQueryDTO);
+        List<ShopDTO.PagingViewDTO> list = pageData.getList();
+        if (CollectionUtils.isEmpty(list)) {
+            return new PagingVO<>();
+        }
+        // 店铺信息
+        List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
+        // 同步记录
+        List<DmpInoutDTO.LastOneDTO> lastOneDTOS = new LinkedList<>();
+        if (CollectionUtils.isNotEmpty(list)){
+            // 查询最近同步任务
+            List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
+            list.forEach(v->{
+                DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
+                commonDTO.setSystemCode(PlatformDictEnum.AMAZON.getCode());
+                commonDTO.setBillType(BusinessTypeEnum.FBA_SHIPMENT.getCode());
+                commonDTO.setNextLevelId(v.getId());
+                commonDTOList.add(commonDTO);
+            });
+            lastOneDTOS = dmpInoutTaskFeign.newInputTaskList(commonDTOList);
+        }
+
+        List<DmpInoutDTO.LastOneDTO> finalLastOneDTOS = lastOneDTOS;
+        List<FbaShipmentDTO.SyncViewDTO> resultList = list.stream().map(e -> {
+            FbaShipmentDTO.SyncViewDTO syncViewDTO = new FbaShipmentDTO.SyncViewDTO();
+            syncViewDTO.setShopId(e.getId());
+            syncViewDTO.setShopName(e.getName());
+            syncViewDTO.setAuthStatus(e.getAuthStatus());
+            syncViewDTO.setAuthStatusName(e.getAuthStatusName());
+            // 最近同步时间
+            DmpInoutDTO.LastOneDTO lastDTO = getLastSyncTime(e.getId(), shopList, finalLastOneDTOS);
+            syncViewDTO.setLastSyncTime(null == lastDTO ? null : lastDTO.getLatestUpdateTime());
+            syncViewDTO.setSyncResult(null == lastDTO ? "未同步" : lastDTO.getStatusName());
+            return syncViewDTO;
+        }).collect(Collectors.toList());
+
+        return new PagingVO<>(resultList, pageData.getTotalPage(), advanceQueryDTO.getPageSize(), advanceQueryDTO.getCurrPage());
     }
 }
