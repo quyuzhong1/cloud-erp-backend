@@ -9,7 +9,6 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -23,7 +22,6 @@ import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.io.IOException;
@@ -1028,16 +1026,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param soOutstockDate
      */
     void writeBackSoOutstockDate(String soId, String soOutstockDate);
-
-    /**
-     * 销售统计
-     */
-    IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
-
-    /**
-     * 销售统计导出查询
-     */
-    Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
 
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
 
