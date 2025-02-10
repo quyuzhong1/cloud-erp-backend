@@ -15,7 +15,6 @@ import javax.sql.DataSource;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
-import org.python.modules.synchronize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -34,8 +33,8 @@ import com.erp.model.dmp.entity.DmpCfgInputDetailEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgMqEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputDataEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.enums.DmpCfgDbDbTypeEnum;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -50,6 +49,7 @@ import com.erp.server.dmp.service.DmpCfgInputDetailService;
 import com.erp.server.dmp.service.DmpCfgInputService;
 import com.erp.server.dmp.service.DmpCfgMqService;
 import com.erp.server.dmp.service.DmpCfgOutputBlackService;
+import com.erp.server.dmp.service.DmpCfgOutputDataService;
 import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.netflix.client.ClientException;
 import com.zaxxer.hikari.HikariConfig;
@@ -92,6 +92,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	
 	private List<DmpCfgOutputBlackEntity> dmpCfgOutputBlackCache;
 	
+	private List<DmpCfgOutputDataEntity> dmpCfgOutputDataCache;
+	
 	private List<OverseasProviderEntity> overseasProviderEntityCache;
 	
 	private List<DmpCfgApiEntity> dmpCfgApiEntityCache;
@@ -116,6 +118,8 @@ public class DmpHandlerCache implements CommandLineRunner{
 	private DmpCfgMqService dmpCfgMqService;
 	@Autowired
 	private DmpCfgOutputBlackService dmpCfgOutputBlackService;
+	@Autowired
+	private DmpCfgOutputDataService dmpCfgOutputDataService;
 	@Autowired
 	private DmpCfgApiService dmpCfgApiService;
 	@Autowired
@@ -206,6 +210,14 @@ public class DmpHandlerCache implements CommandLineRunner{
 					.eq(DmpCfgOutputBlackEntity::getDisabled, false).list();
 		}
 		return dmpCfgOutputBlackCache.stream().filter(paramPredicate).collect(Collectors.toList());
+	}
+	
+	public List<DmpCfgOutputDataEntity> getDmpCfgOutputDataEntityList(Predicate<? super DmpCfgOutputDataEntity> paramPredicate) {
+		if(dmpCfgOutputDataCache == null) {
+			dmpCfgOutputDataCache = dmpCfgOutputDataService.lambdaQuery()
+					.eq(DmpCfgOutputDataEntity::getDisabled, false).list();
+		}
+		return dmpCfgOutputDataCache.stream().filter(paramPredicate).collect(Collectors.toList());
 	}
 	
 	public List<DmpCfgOutputEntity> getDmpCfgOutputEntityList(Predicate<? super DmpCfgOutputEntity> paramPredicate) {
@@ -495,6 +507,19 @@ public class DmpHandlerCache implements CommandLineRunner{
 						.gt(DmpCfgDbEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
 						.list());
 			}, 4, freshCacheTime, TimeUnit.SECONDS);
+			
+			Executors.newScheduledThreadPool(1).scheduleAtFixedRate(() -> {
+				List<DmpCfgOutputDataEntity> dmpCfgOutputDataEntityFreshList = dmpCfgOutputDataService.lambdaQuery()
+						.gt(DmpCfgOutputDataEntity::getUpdateTime, DateUtil.offsetSecond(new Date(), -(freshCacheTime + 1)))
+						.list();
+				if(CollUtil.isNotEmpty(dmpCfgOutputDataEntityFreshList)) {
+					List<String> newIds = dmpCfgOutputDataEntityFreshList.stream().map(DmpCfgOutputDataEntity::getId).collect(Collectors.toList());
+					dmpCfgOutputDataCache.removeIf(d -> newIds.contains(d.getId()));
+					dmpCfgOutputDataCache.addAll(dmpCfgOutputDataEntityFreshList.stream()
+							.filter(d -> Boolean.FALSE.equals(d.getDisabled())).collect(Collectors.toList()));
+				}
+				
+			}, 5, freshCacheTime, TimeUnit.SECONDS);
 		}
 	}
 	
