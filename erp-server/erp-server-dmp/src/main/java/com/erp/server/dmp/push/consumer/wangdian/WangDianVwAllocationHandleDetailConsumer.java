@@ -28,10 +28,10 @@ import java.util.stream.Collectors;
 
 @Component
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC,
-        selectorExpression = "wdt_virtual_allocation_handle_detail_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL,
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC,
+//        selectorExpression = "wdt_virtual_allocation_handle_detail_tag",
+//        consumerGroup = RocketMqConsumerGroup.SYNC_WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL,
+//        consumeMode = ConsumeMode.ORDERLY)
 public class WangDianVwAllocationHandleDetailConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource
     private DmpPushTaskService dmpPushTaskService;
