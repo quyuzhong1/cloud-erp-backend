@@ -113,6 +113,16 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
                 super.buildSplicingSQLDTO("p.create_user_id", QueryConditionEnum.NOT_IN_LIST, createChargeDeptUserIdList, QueryDataTypeEnum.STRING);
             }
         }
+
+        if ("pi.project_status".equals(field)) {
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)) {
+                return "pi.project_status is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)) {
+                return "pi.project_status is not null";
+            }
+            return " pi.project_status " + compareCodeSplicingValueSql;
+        }
         return null;
     }
 
