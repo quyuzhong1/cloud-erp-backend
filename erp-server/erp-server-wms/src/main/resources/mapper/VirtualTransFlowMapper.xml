@@ -211,8 +211,8 @@
     <select id="listApproveFlowDetail" resultType="com.erp.model.wms.entity.VirtualTransFlowEntity">
         select
             <include refid="Base_Column_List" />
-        from virtual_trans_flow vtf where is_deleted = false and is_unapproved = false
-        and (source_type = '' or (dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
+        from virtual_trans_flow vtf where is_deleted = false
+        and ((source_type = '' and ((dict_inventory_status = 'usable' ) or (dict_inventory_status = 'frozen' and 0 > qty)) ) or (dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
                  or ((dict_inventory_status = 'usable' and 0 > qty  and source_type in ('virtualWarehouseAllocation','soOutstock')) or (dict_inventory_status = 'frozen' and 0 > qty and source_type in ('machineInfo','transferInfo','soOutstock'))))
         <if test="dto.ids != null and dto.ids.size > 0">
             and vtf.id in

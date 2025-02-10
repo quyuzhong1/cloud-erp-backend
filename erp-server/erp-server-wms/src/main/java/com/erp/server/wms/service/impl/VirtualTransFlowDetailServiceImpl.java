@@ -188,16 +188,21 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                 continue;
             }
             try {
-                //入库
-                if (entity.getQty() > MathUtil.ZERO) {
-                    //生成批次库存数据
-                    VirtualInventoryDetailEntity inventoryDetailEntity =  addVirtualInventoryDetail(entity);
+                //反审
+                if (InventoryOperationModeEnum.UN_APPROVE.getCode().equals(entity.getOperationMode())) {
+                    handleVirtualTransFlowUnapproved(entity);
+                } else {
                     //入库
-                    instockVirtualTransFlowDetail(entity,inventoryDetailEntity);
-                    continue;
+                    if (entity.getQty() > MathUtil.ZERO) {
+                        //生成批次库存数据
+                        VirtualInventoryDetailEntity inventoryDetailEntity =  addVirtualInventoryDetail(entity);
+                        //入库
+                        instockVirtualTransFlowDetail(entity,inventoryDetailEntity);
+                        continue;
+                    }
+                    //出库
+                    handleOutstockVirtualTransFlowDetail(entity);
                 }
-                //出库
-                handleOutstockVirtualTransFlowDetail(entity);
             } catch (Exception e) {
                 log.error("虚拟仓流水更新失败，msg = {}",e.getMessage());
                 virtualTransFlowService.updateRemark(entity.getId(),"虚拟仓流水更新失败");
