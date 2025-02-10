@@ -72,6 +72,9 @@ public class QueryUtils {
      */
     public static String splicingCompareValueSQL(QueryConditionEnum condEnum, AdvanceQueryDTO dto){
         StringBuilder sql = new StringBuilder();
+        if(QueryDataTypeEnum.NUMBER.getCode().equals(dto.getDataType()) && !StringUtils.isNumeric(dto.getValue().toString())){
+            throw new ServiceException("数字类型的值必须为数字");
+        }
         //starts_with 和 ends_with 处理成like，为空和不为空和between不处理
         if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum)){
             sql.append(QueryConditionEnum.CONTAINS.getCode()).append(" ");
