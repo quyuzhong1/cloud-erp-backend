@@ -24,6 +24,7 @@ import com.erp.model.dmp.entity.RuleConditionEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
+import com.erp.model.dmp.entity.CfgConditionEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -428,6 +429,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         }
 
         List<RulePromptWordEntity> ruleOrderApprovalList = FeignQuery.list(RulePromptWordEntity.class);
+        ruleOrderApprovalList = ruleOrderApprovalList.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(ruleOrderApprovalList)){
             return new HashMap<>();
         }
@@ -435,7 +437,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         ruleOrderApprovalList = ruleOrderApprovalList.stream().sorted(Comparator.comparing(RulePromptWordEntity::getIndex)).collect(Collectors.toList());
         List<String> ruleIdList = ruleOrderApprovalList.stream().map(RulePromptWordEntity::getId).collect(Collectors.toList());
         //规则条件
-        List<RuleConditionEntity> allRuleConditionList = FeignQuery.getByIds(RuleConditionEntity.class,ruleIdList);
+        List<RuleConditionEntity> allRuleConditionList = this.listDbRuleIds(ruleIdList);
         if(CollectionUtils.isEmpty(allRuleConditionList)){
             return new HashMap<>();
         }
@@ -506,6 +508,28 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
     */
     private void handleData(SoB2cErrorEntity soB2cErrorEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    public List<RuleConditionEntity> listDbRuleIds(List<String> ruleIdList) {
+        if (CollectionUtils.isEmpty(ruleIdList)) {
+            return Collections.emptyList();
+        }
+        List<RuleConditionEntity> allRuleConditionList = FeignQuery.create(RuleConditionEntity.class).in(RuleConditionEntity::getRuleId,ruleIdList).list();
+        if (CollectionUtils.isEmpty(allRuleConditionList)) {
+            return Collections.emptyList();
+        }
+        //根据index排序
+        allRuleConditionList.sort(Comparator.comparing(RuleConditionEntity::getIndex));
+        List<String> fieldList = allRuleConditionList.stream().map(RuleConditionEntity::getField).distinct().collect(Collectors.toList());
+        //配置的字段
+        List<CfgConditionEntity> cfgConditionList = FeignQuery.create(CfgConditionEntity.class).in(CfgConditionEntity::getConditionField,fieldList).list();
+        for (RuleConditionEntity item : allRuleConditionList) {
+            String fieldFlag = item.getField();
+            String valueType = cfgConditionList.stream().filter(c -> c.getConditionField().equals(fieldFlag)).
+                    findFirst().map(CfgConditionEntity::getValueType).orElse("String");
+            item.setValueType(valueType);
+        }
+        return allRuleConditionList;
     }
 
 
