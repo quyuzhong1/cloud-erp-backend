@@ -288,6 +288,10 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.ne(DmpPushMsgEntity::getId, dataId)
 						.ne(DmpPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_DELETE.getCode())
 						.list();
+				if(CollUtil.isEmpty(leSourceList)) {
+					dmpOutputUtils.updateStatus(id, DmpOutputTaskRecordStatusEnum.ERROR.getCode(), "首次不允许推送删除操作" , "");
+					return;
+				}
 				List<DmpOutputTaskRecordEntity> leOutputRecordList = dmpOutputTaskRecordService.lambdaQuery()
 					.in(DmpOutputTaskRecordEntity::getDataId, leSourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
 					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())

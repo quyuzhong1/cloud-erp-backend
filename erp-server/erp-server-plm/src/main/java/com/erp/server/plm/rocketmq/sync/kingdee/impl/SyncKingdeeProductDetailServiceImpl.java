@@ -99,6 +99,9 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
+//    	if() {
+//    		
+//    	}
         //生成任务
        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     }
