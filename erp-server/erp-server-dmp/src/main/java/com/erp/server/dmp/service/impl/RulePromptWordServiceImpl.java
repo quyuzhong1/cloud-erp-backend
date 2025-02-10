@@ -138,7 +138,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
         }
 
         ruleConditionService.updateRuleCondition(rulePromptWordEntity.getId(), conditionList);
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), rulePromptWordEntity.getId(), "汉化管理规则单");
+        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), rulePromptWordEntity.getName(), "汉化管理规则单");
         operateLogService.addModuleOperateLogByObj(old, rulePromptWordEntity, ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), rulePromptWordEntity.getId(), msg);
         return Boolean.TRUE;
 
