@@ -150,7 +150,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 运费收入
     */
     @TableField("shipping_amount")
-    private BigDecimal shippingAmount;
+    private BigDecimal shippingAmount = BigDecimal.ZERO;
     /**
     * 平台费
     */
