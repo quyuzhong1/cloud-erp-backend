@@ -1,5 +1,6 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -152,4 +153,10 @@ public interface ShopInfoFeign {
      */
     @GetMapping("feign/shop/listShopInfoByPlatform")
     List<String> listShopInfoByPlatform(@RequestParam String platform);
+
+    /**
+     * 高级查询分页店铺
+     */
+    @PostMapping("feign/shop/paging")
+    PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
 }

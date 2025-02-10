@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import cn.hutool.core.lang.Tuple;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -265,4 +266,11 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      * @return
      */
     List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku);
+
+
+    /**
+     * 货件最新同步任务
+     *
+     */
+    PagingVO<FbaShipmentDTO.SyncViewDTO> syncPaging(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
 }
