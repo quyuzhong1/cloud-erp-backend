@@ -206,7 +206,6 @@
         pi.project_launch_date,
         pi.project_finish_date,
         p.application_category_id,
-        pi.project_finish_date,
         p.create_time,
         p.update_time
         FROM product_info p
