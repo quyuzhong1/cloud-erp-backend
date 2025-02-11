@@ -1019,8 +1019,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     private void fillCustomerDb(List<SkuMappingDTO.CustomerPagingViewDTO> list,PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
+        //平台信息
+        String type = DictBasicTypeEnum.SALES_PLATFORM.getType();
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(type);
         for (SkuMappingDTO.CustomerPagingViewDTO item : list) {
             item.setMatchResultStr(ListingMatchResultEnum.getName(item.getMatchResult()));
+            String platformTypeName = dictList.stream().filter(obj -> obj.getValue().equals(item.getPlatformName())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setPlatformName(platformTypeName);
             if(StringUtils.isNotBlank(item.getProductImageUrl()) && dto.getParams().isExport()){
                 item.setImageByte(FastDFSClientUtil.getFileByte(item.getProductImageUrl()));
             }
