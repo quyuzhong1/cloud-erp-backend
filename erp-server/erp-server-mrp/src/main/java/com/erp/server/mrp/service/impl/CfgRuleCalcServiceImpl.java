@@ -159,19 +159,19 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
     private List<CalcSalesInfoHisEsEntity> mergeSales(
             List<CalcSalesInfoHisEsEntity> historySales,
             List<CalcSalesInfoHisEsEntity> customSales) {
-        Map<LocalDate, CalcSalesInfoHisEsEntity> historyMap = historySales.stream()
+        Map<CfgRuleCalcDTO.GroupDTO, CalcSalesInfoHisEsEntity> historyMap = historySales.stream()
                 .collect(Collectors.toMap(
-                        CalcSalesInfoHisEsEntity::getDate,
+                        v-> new CfgRuleCalcDTO.GroupDTO(v.getSkuId(), v.getShopId(), v.getDate()),
                         entity -> entity,
                         (existing, replacement) -> existing
                 ));
-        Map<LocalDate, CalcSalesInfoHisEsEntity> customMap = customSales.stream()
+        Map<CfgRuleCalcDTO.GroupDTO, CalcSalesInfoHisEsEntity> customMap = customSales.stream()
                 .collect(Collectors.toMap(
-                        CalcSalesInfoHisEsEntity::getDate,
+                        v-> new CfgRuleCalcDTO.GroupDTO(v.getSkuId(), v.getShopId(), v.getDate()),
                         entity -> entity,
                         (existing, replacement) -> replacement
                 ));
-        Set<LocalDate> allDates = new HashSet<>();
+        Set<CfgRuleCalcDTO.GroupDTO> allDates = new HashSet<>();
         allDates.addAll(historyMap.keySet());
         allDates.addAll(customMap.keySet());
         return allDates.stream()

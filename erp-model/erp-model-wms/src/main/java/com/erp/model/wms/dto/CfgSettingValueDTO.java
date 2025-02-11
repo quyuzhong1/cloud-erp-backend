@@ -1,9 +1,6 @@
 package com.erp.model.wms.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
@@ -272,5 +269,15 @@ public class CfgSettingValueDTO implements Serializable {
          * 销售组织id
          */
         private String orgId;
+    }
+
+    @Getter
+    @Setter
+    public static class QcUserDTO {
+
+        /**
+         * 名字
+         */
+        private String name;
     }
 }

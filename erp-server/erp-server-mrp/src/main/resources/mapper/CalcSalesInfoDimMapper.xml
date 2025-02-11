@@ -121,7 +121,12 @@
         csic.mse_score as mseScore,
         csic.rmse_score as rmseScore,
         csic.status,
-        csic.serial_no as serialNo
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore,
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
@@ -136,7 +141,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        csic.update_time desc, csic.id desc
+        crc.create_time desc,serial_no
     </select>
 
     <select id="pagingTemplate" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$TemplateViewDTO">
@@ -257,6 +262,6 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        csic.update_time desc, csic.id desc
+        crc.create_time desc,serial_no
     </select>
 </mapper>

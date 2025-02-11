@@ -338,6 +338,7 @@ public class CfgRuleCalcDTO implements Serializable {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode
     public static class SkuDTO {
         /**
          * SKU

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -193,6 +194,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     private QcInfoQueryHandler qcInfoQueryHandler;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     /**
      * 保存 质检单
@@ -2428,8 +2432,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public List<SysUserInfoEntity> listQcUser() {
-        List<SysUserInfoEntity> sysUserInfoEntities = sysUserFeign.listUserByDept("品质中心");
-        return sysUserInfoEntities;
+
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.QC_USER.getCode());
+        if (ObjectUtils.isEmpty(cfgSettingEntity)) {
+            throw new ServiceException("未配置质检员，请联系IT处理");
+        }
+        CfgSettingValueDTO.QcUserDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.QcUserDTO.class);
+        return sysUserFeign.listUserByDept(dto.getName());
     }
 
     @Transactional(rollbackFor = Exception.class)

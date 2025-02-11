@@ -44,7 +44,7 @@ import java.util.stream.Stream;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, selectorExpression = "erp_dmp_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_TRANSFER_INFO_TO_DMP)
+//@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, selectorExpression = "erp_dmp_transfer_info_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_TRANSFER_INFO_TO_DMP)
 public class ErpMabangTransferInfoConsume implements RocketMQListener<MabangTransferInfoDTO> {
 
     @Autowired

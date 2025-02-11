@@ -18,7 +18,7 @@ import javax.annotation.Resource;
 
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_return_order_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_RETURN_ORDER_TO_WMS)
+//@RocketMQMessageListener(topic = RocketMqTopic.DMP_SYNC_TASK_TOPIC, selectorExpression = "sync_kingdee_return_order_to_wms_tag", consumerGroup = RocketMqConsumerGroup.SYNC_KINGDEE_RETURN_ORDER_TO_WMS)
 public class SyncKingdeeReturnOrderCustomer implements RocketMQListener<Object> {
 
     @Resource

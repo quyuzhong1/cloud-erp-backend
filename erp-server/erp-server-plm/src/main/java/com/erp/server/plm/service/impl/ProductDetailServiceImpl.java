@@ -4870,7 +4870,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 continue;
             }
             if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())) {
+                    || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
+                    || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
                 errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(dto);
@@ -6238,7 +6239,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * @date: 2024/5/20 12:41
      * @param list
      */
-    private void sendPushTask (List<ProductDetailEntity> list, String operate) {
+    @Override
+    public void sendPushTask (List<ProductDetailEntity> list, String operate) {
         //审核通过发送金蝶
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         list.forEach(obj -> {
@@ -6502,6 +6504,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductPackEntity entity = new ProductPackEntity();
         BeanUtils.copyProperties(viewDTO, entity);
         productPackService.saveOrUpdate(entity);
+
+        if(StringUtils.isNotBlank(entity.getSkuId())){
+            ProductDetailEntity productDetailEntity = getById(entity.getSkuId());
+            //只同步审核通过的
+            if(Objects.nonNull(productDetailEntity) && productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+                //发送金蝶
+                sendPushTask(Arrays.asList(productDetailEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+
+                syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+
+                syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
+                //增加缓存清除
+                redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
+            }
+        }
         return BatchResultDTO.success(viewDTO.getSkuId(), viewDTO.getSkuNo(), "操作成功");
     }
 

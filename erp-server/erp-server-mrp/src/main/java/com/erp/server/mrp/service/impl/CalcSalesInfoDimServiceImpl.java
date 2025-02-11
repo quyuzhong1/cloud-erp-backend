@@ -289,6 +289,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         salesEstimateDTO.setMaeScore(entity.getMaeScore());
         salesEstimateDTO.setMseScore(entity.getMseScore());
         salesEstimateDTO.setRmseScore(entity.getRmseScore());
+        salesEstimateDTO.setMonthMapeScore(entity.getMonthMapeScore());
+        salesEstimateDTO.setMonthR2Score(entity.getMonthR2Score());
+        salesEstimateDTO.setMonthMaeScore(entity.getMonthMaeScore());
+        salesEstimateDTO.setMonthMseScore(entity.getMonthMseScore());
+        salesEstimateDTO.setMonthRmseScore(entity.getMonthRmseScore());
         return salesEstimateDTO;
     }
 
@@ -649,10 +654,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<ShopInfoEntity> list = shopInfoFeign.list().getData();
         List<String> shopIdList = new ArrayList<>();
         for (CalcSalesInfoDimDTO.PlatformShopDTO shopDTO : dto.getShopList()) {
-            if (CollectionUtils.isEmpty(shopDTO.getPlatformList())) {
+            if (CollectionUtils.isEmpty(shopDTO.getPlatformList()) || shopDTO.getPlatformList().contains("")) {
                 return list.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
             }
-            if (CollectionUtils.isEmpty(shopDTO.getShopList())) {
+            if (CollectionUtils.isEmpty(shopDTO.getShopList()) || shopDTO.getShopList().contains("")) {
                 List<String> ids = list.stream()
                         .filter(v -> shopDTO.getPlatformList().contains(v.getDictPlatform()))
                         .map(ShopInfoEntity::getId).collect(Collectors.toList());

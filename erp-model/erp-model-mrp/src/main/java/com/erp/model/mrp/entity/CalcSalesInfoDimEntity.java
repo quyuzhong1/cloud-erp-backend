@@ -126,6 +126,32 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     @TableField("serial_no")
     private String serialNo;
 
+    /**
+     * MAE
+     */
+    @TableField("month_mae_score")
+    private BigDecimal monthMaeScore;
+    /**
+     * MSE
+     */
+    @TableField("month_mse_score")
+    private BigDecimal monthMseScore;
+    /**
+     * RMSE
+     */
+    @TableField("month_rmse_score")
+    private BigDecimal monthRmseScore;
+    /**
+     * MAPE
+     */
+    @TableField("month_mape_score")
+    private BigDecimal monthMapeScore;
+    /**
+     * R2
+     */
+    @TableField("month_r2_score")
+    private BigDecimal monthR2Score;
+
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";

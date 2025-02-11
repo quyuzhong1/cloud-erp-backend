@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,8 +12,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
@@ -24,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
@@ -35,6 +39,8 @@ import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProductInfoMapper;
+import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -205,6 +211,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private ProjectTaskProgressService projectTaskProgressService;
     @Resource
     private ApplicationCategoryService applicationCategoryService;
+
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
+
+    @Resource
+    private SyncLingXingProductDetailService syncLingXingProductDetailService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
@@ -403,8 +418,34 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+
         }
         return Boolean.TRUE;
+    }
+
+    //推送至金蝶、旺店通、领星
+    private void sendPushTask(List<String> productIdList,String operate ){
+        //只同步审核通过的
+        List<ProductDetailEntity> productDetailEntities = productDetailService.listSkuByProductIds(productIdList)
+                .stream()
+                .filter(v -> v.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode()))
+                .collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(productDetailEntities)){
+            //增加缓存清除
+            List<String> productDetailIdList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO,productDetailIdList);
+
+            //审核通过发送金蝶
+            productDetailService.sendPushTask(productDetailEntities, operate);
+            //审核通过发送旺店通
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntities);
+            //审核通过发送领星
+            syncLingXingProductDetailService.syncDataToLingxing(productDetailEntities);
+        }
     }
 
 
@@ -2710,6 +2751,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }

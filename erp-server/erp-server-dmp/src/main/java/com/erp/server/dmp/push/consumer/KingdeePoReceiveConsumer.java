@@ -26,7 +26,7 @@ import java.util.Map;
  **/
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_po_receive_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_PO_RECEIVE, consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC, selectorExpression = "kingdee_po_receive_tag", consumerGroup = RocketMqConsumerGroup.SYNC_ERP_PO_RECEIVE, consumeMode = ConsumeMode.ORDERLY)
 public class KingdeePoReceiveConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource
     private KingdeePoReceiveConsumerService kingdeePoReceiveConsumerService;
