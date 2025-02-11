@@ -43,7 +43,7 @@ public interface ProjectReportFormsService {
      * @Author Luo_WG
      * @Date 2023/6/19 10:39
      **/
-    Boolean exportExcelTaskDetail(ProjectReportFormsDTO.TaskDetailParam dto);
+    Boolean exportExcelTaskDetail(ProjectReportFormsDTO.PagingParam dto);
 
     PagingVO<ProjectReportFormsDTO.PagingView> exportProductPurchaseBusiness(PagingDTO<ProjectReportFormsDTO.PagingParam> dto);
 
