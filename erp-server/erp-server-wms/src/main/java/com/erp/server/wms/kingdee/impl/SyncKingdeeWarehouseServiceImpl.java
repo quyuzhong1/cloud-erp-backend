@@ -18,6 +18,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -246,7 +247,11 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
         wmsPushMsgEntity.setSyncOperate(operate);
-        wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        }else {
+        	wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        }
         
         wmsPushMsgService.save(wmsPushMsgEntity);
 	}
