@@ -50,6 +50,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.mapper.DmpOutputTaskRecordMapper;
 import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -651,10 +652,10 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 				DataSource dataSource = dmpHandlerCache.getDataSource(dbId);
 				String sqlQuery = dmpCfgOutputDataEntity.getSqlString().replace("?", sourceDetailList.stream().map(SyncParamDetailDTO::getSourceId).collect(Collectors.joining("','", "('", "')")));
 				try {
-					Map<String, Map<String, Object>> sourceResult = this.queryDatabase(dataSource, sqlQuery);
+					Map<String, List<Map<String, Object>>> sourceResult = DmpHandlerUtils.queryDatabase(dataSource, sqlQuery);
 					result = new HashMap<>();
 					for(SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
-						result.put(syncParamDetailDTO.getDataId(), sourceResult.get(syncParamDetailDTO.getSourceId()));
+						result.put(syncParamDetailDTO.getDataId(), DmpHandlerUtils.parseDbColumnName(sourceResult.get(syncParamDetailDTO.getSourceId())));
 					}
 				} catch (SQLException e) {
 					throw new RuntimeException("查询组装数据失败" , e);
@@ -684,54 +685,6 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 		return new ArrayList<>();
     }
     
-    private Map<String, Map<String, Object>> queryDatabase(DataSource dataSource, String sqlQuery) throws SQLException {
-    	Map<String, Map<String, Object>> result = new HashMap<>();
-        Connection connection = null;
-        Statement statement = null;
-        ResultSet resultSet = null;
-
-        try {
-            connection = dataSource.getConnection();
-            statement = connection.createStatement();
-            resultSet = statement.executeQuery(sqlQuery);
-
-            ResultSetMetaData metaData = resultSet.getMetaData();
-            int columnCount = metaData.getColumnCount();
-
-            if (resultSet.next()) {
-            	Map<String, Object> resultMap = new HashMap<>();
-            	String dataIdValue = "";
-                for (int i = 1; i <= columnCount; i++) {
-                    String columnName = metaData.getColumnName(i);
-                    Object columnValue = resultSet.getObject(i);
-                    if(columnName.equals("querySourceId")) {
-                    	dataIdValue = columnValue.toString();
-                    }
-                    resultMap.put(columnName, columnValue);
-                }
-                result.put(dataIdValue , resultMap);
-            }
-
-        } catch (SQLException e) {
-            throw e;
-        } finally {
-            try {
-                if (resultSet != null) {
-                    resultSet.close();
-                }
-                if (statement != null) {
-                    statement.close();
-                }
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException e) {
-                log.error("关闭dmpCfgDbEntity查询的连接异常" , e);
-            }
-        }
-
-        return result;
-    }
 
     @Override
     public DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO) {
