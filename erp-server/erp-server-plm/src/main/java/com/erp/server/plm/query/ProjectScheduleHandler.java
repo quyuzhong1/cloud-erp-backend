@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 
@@ -46,15 +47,14 @@ public class ProjectScheduleHandler extends AbstractQueryHandler {
             //获取我的待办信息
             List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
             // ids
-            List<String> idList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+            List<String> idList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).filter(Objects::nonNull).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(idList)) {
-                return super.getSplicingSQL();
+                return super.getQueryEmptySql();
             }
             statusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
             statusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
-
-            super.buildDefaultDTO("pp.id", idList);
-            super.buildDefaultDTO("pp.status", statusList);
+            super.buildSplicingSQLDTO("pp.id", QueryConditionEnum.IN_LIST, idList, QueryDataTypeEnum.STRING);
+            super.buildSplicingSQLDTO("pp.status", QueryConditionEnum.IN_LIST, statusList, QueryDataTypeEnum.STRING);
         }
         return null;
     }

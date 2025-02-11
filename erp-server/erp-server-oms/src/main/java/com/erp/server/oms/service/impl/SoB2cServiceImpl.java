@@ -11,6 +11,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -1627,6 +1628,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(soB2cLogisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
+        String returnId = entity.getId();
         //如果有物流单号 就要去取消
         if (StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())) {
             if (TransferStatusEnum.SUCCESS.getCode().equals(entity.getTransferStatus())) {
@@ -1705,10 +1707,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             code = ((ServiceException) e).getCode().toString();
                         }
                         //添加异常信息
-                        soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
+                        returnId = soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
                     }
                     log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
-                    return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+                    return BatchResultDTO.fail(returnId, entity.getCode(), message);
                 }
             }
             if (Objects.isNull(resultDTO)) {
@@ -1757,14 +1759,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     code = ((ServiceException) e).getCode().toString();
                 }
                 //添加异常信息
-                soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
+                returnId = soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
             }
             //获取物流单号失败销售订单自动反审核
             //1.26.2 去掉该功能
 //            this.disApprove(id);
             log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
         }
-        return BatchResultDTO.fail(entity.getId(), entity.getCode(), message);
+        return BatchResultDTO.fail(returnId, entity.getCode(), message);
     }
 
     /**
@@ -1947,7 +1949,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY, keyName = "id", waiteTime = 60)
     public BatchResultDTO getLogisticsCode(String id, Boolean isDelivery) {
-        return soB2cService.getLogisticsCodeInner(id,isDelivery);
+        BatchResultDTO batchResultDTO = soB2cService.getLogisticsCodeInner(id,isDelivery);
+        if(!batchResultDTO.getSuccess()){
+            Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(Arrays.asList(batchResultDTO.getId()));
+            Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
+            if(rulePromptWordEntityMap.containsKey(batchResultDTO.getId())){
+                RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(batchResultDTO.getId());
+                batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+            }
+        }
+        return batchResultDTO;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -2052,7 +2063,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsChannelId, overseasWarehouseList.get(0), list);
             } catch (Exception e) {
                 log.error("B2C订单【{}】下出库单异常>>>{}", entity.getCode(), e.getMessage());
-                return BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                SoB2cErrorEntity soB2cErrorEntity = soB2cErrorService.getByMainIdAndType(entity.getId(),SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                BatchResultDTO batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                if(Objects.nonNull(soB2cErrorEntity)){
+                    Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(Arrays.asList(soB2cErrorEntity.getId()));
+                    Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
+                    if(rulePromptWordEntityMap.containsKey(soB2cErrorEntity.getId())){
+                        RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(soB2cErrorEntity.getId());
+                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                    }
+                }
+                return batchResultDTO;
             }
         } else {
             //生成发货单
@@ -7625,7 +7646,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .setParamJson(shippingOrderDTO.getSoId());
                     addOrUpdateErrors.add(error);
                 }
-                resultDTOList.add(BatchResultDTO.fail(shippingOrderDTO.getSoId(), shippingOrderDTO.getCode(), shippingOrderDTO.getMessage()));
+                BatchResultDTO batchResultDTO = BatchResultDTO.fail(shippingOrderDTO.getSoId(), shippingOrderDTO.getCode(), shippingOrderDTO.getMessage());
+                Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(Arrays.asList(error.getId()));
+                Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
+                if(rulePromptWordEntityMap.containsKey(error.getId())){
+                    RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(error.getId());
+                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                }
+                resultDTOList.add(batchResultDTO);
             }
             updateList.add(soB2cEntity);
             updateInstockForcastList.add(updateForcastStatusDTO);
@@ -9376,4 +9404,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         return "";
     }
+
+    @Override
+    public IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.productSalesPaging(query, params, skuIdList);
+    }
+
+    @Override
+    public Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.listProductSalesExport(query, params, skuIdList);
+    }
+
 }

@@ -12,6 +12,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.server.plm.query.ProductActhQueryHandler;
 import com.erp.server.plm.service.ProductArchiveService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -45,7 +46,7 @@ public class ProductArchiveController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:archive:paging", tableAlias = "pt")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = ProductActhQueryHandler.class)
     public ApiResult<PagingVO<ProductArchiveDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductArchiveDTO> pagingVO = productArchiveService.paging(dto);
 

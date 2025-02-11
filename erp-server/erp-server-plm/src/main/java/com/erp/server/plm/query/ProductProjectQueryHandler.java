@@ -32,7 +32,7 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("sku_no".equals(field)) {
-            return "exists ( SELECT id FROM product_detail pd WHERE pd.sku_no "+ compareCodeSplicingValueSql + ")";
+            return "p.id IN ( SELECT pd.product_id FROM product_detail pd WHERE pd.sku_no "+ compareCodeSplicingValueSql + ")";
         }
         // 类型
         QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
@@ -93,10 +93,11 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
             if (CollectionUtils.isEmpty(teamChargeDeptUserIdList)) {
                 teamChargeDeptUserIdList = Collections.singletonList("-1");
             }
+            String memberIdsStr = QueryUtils.listToStringValue(teamChargeDeptUserIdList, QueryDataTypeEnum.STRING);
             if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.IN_LIST.equals(queryConditionEnum)) {
-                super.buildSplicingSQLDTO("exists ( select id from project_members where product_id = p.id and  is_deleted = false and ", QueryConditionEnum.IN_LIST, teamChargeDeptUserIdList, QueryDataTypeEnum.STRING);
+                return " exists ( select id from project_members where product_id = p.id and  is_deleted = false and member_id in "+ memberIdsStr + " ) ";
             } else {
-                super.buildSplicingSQLDTO("exists ( select id from project_members where product_id = p.id and  is_deleted = false and ", QueryConditionEnum.NOT_IN_LIST, teamChargeDeptUserIdList, QueryDataTypeEnum.STRING);
+                return " exists ( select id from project_members where product_id = p.id and  is_deleted = false and member_id not in "+ memberIdsStr + " ) ";
             }
         }
 
@@ -111,6 +112,16 @@ public class ProductProjectQueryHandler extends AbstractQueryHandler {
             } else {
                 super.buildSplicingSQLDTO("p.create_user_id", QueryConditionEnum.NOT_IN_LIST, createChargeDeptUserIdList, QueryDataTypeEnum.STRING);
             }
+        }
+
+        if ("pi.project_status".equals(field)) {
+            if (QueryConditionEnum.IS_NULL.equals(queryConditionEnum)) {
+                return "pi.project_status is null";
+            }
+            if (QueryConditionEnum.NOT_NULL.equals(queryConditionEnum)) {
+                return "pi.project_status is not null";
+            }
+            return " pi.project_status " + compareCodeSplicingValueSql;
         }
         return null;
     }

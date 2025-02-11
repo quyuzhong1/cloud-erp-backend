@@ -2604,8 +2604,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         //两个都是
         if (size == 2) {
+            String userId = UserContext.getDefaultLoginUser().getUid();
             //收藏的项目
-            List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
+            List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList, userId);
             fillPagingDb(list);
             List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
             for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
@@ -2629,8 +2630,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (size != 2) {
             //产品导出
             if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
+                String userId = UserContext.getDefaultLoginUser().getUid();
                 //我的项目
-                List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
+                List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList, userId);
                 fillPagingDb(list);
                 StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/product.xlsx";

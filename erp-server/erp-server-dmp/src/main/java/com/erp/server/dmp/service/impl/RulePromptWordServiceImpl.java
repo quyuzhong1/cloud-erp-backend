@@ -25,6 +25,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
 
 import com.common.core.exception.ServiceException;
+import io.seata.common.util.StringUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,6 +72,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
         SpElExpressionDTO expressionDTO = spElServer.getConditionExpression(conditionElementList, Map.class);
         String expression = expressionDTO.getExpression();
         Boolean checkResult = spElServer.checkExpressionIsEnabled(expression);
+        this.checkNameUnique(addDTO.getName(), null);
         if (!checkResult) {
             throw new ServiceException(ApiError.ERROR_RULE_EXPRESSION_ERROR);
         }
@@ -89,7 +91,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
         //保存规则条件
         ruleConditionService.saveRuleCondition(id, conditionList);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "汉化管理规则单" , rulePromptWordEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据名称为【{}】", UserContext.getDefaultLoginUser().getUserName(), "汉化管理规则单" , rulePromptWordEntity.getName());
 
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), rulePromptWordEntity.getId(), "新增操作");
 
@@ -98,6 +100,15 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     }
 
     /**
+     * 校验名称唯一
+     */
+    public void checkNameUnique(String name, String id) {
+        RulePromptWordEntity rulePromptWordEntity = this.lambdaQuery().eq(RulePromptWordEntity::getName, name).ne(StringUtils.isNotBlank(id),RulePromptWordEntity::getId,id).last("limit 1").one();
+        if (rulePromptWordEntity != null) {
+            throw new ServiceException(ApiError.ERROR_NAME_EXIST,name);
+        }
+    }
+    /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
@@ -105,6 +116,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
     public Boolean update(RulePromptWordDTO.UpdateDTO addOrUpdateDTO) {
         RulePromptWordEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "汉化管理规则单"));
+        this.checkNameUnique(addOrUpdateDTO.getName(), addOrUpdateDTO.getId());
         List<RuleConditionDTO.UpdateDTO> conditionList = addOrUpdateDTO.getConditionList();
         List<ConditionElement> conditionElementList = conditionList.stream().
                 map(c -> new ConditionElement(c.getLeftBracket(), c.getField(),
@@ -126,7 +138,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
         }
 
         ruleConditionService.updateRuleCondition(rulePromptWordEntity.getId(), conditionList);
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), rulePromptWordEntity.getId(), "汉化管理规则单");
+        String msg = StrUtil.format("用户【{}】编辑名称为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), rulePromptWordEntity.getName(), "汉化管理规则单");
         operateLogService.addModuleOperateLogByObj(old, rulePromptWordEntity, ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), rulePromptWordEntity.getId(), msg);
         return Boolean.TRUE;
 
@@ -163,7 +175,7 @@ public class RulePromptWordServiceImpl extends SuperServiceImpl<RulePromptWordMa
         }
         rulePromptWordEntityList = rulePromptWordEntityList.stream().filter(v->!v.getDisabled().equals(dto.getDisabled())).collect(Collectors.toList());
         rulePromptWordEntityList.forEach(v->{
-            operateLogService.addModuleOperateLog(StrUtil.format("[{}]启用状态[{}]变更为[{}]",v.getName(),v.getDisabled()?"禁用":"启用",dto.getDisabled()?"禁用":"启用"), ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), v.getId(), "状态更新");
+            operateLogService.addModuleOperateLog(StrUtil.format("[{}]启用状态[{}]变更为[{}]",v.getName(),v.getDisabled()?"停用":"启用",dto.getDisabled()?"停用":"启用"), ModuleTypeEnum.RULE_PROMPT_WORD.getCode(), v.getId(), "状态更新");
             v.setDisabled(dto.getDisabled());
         });
         this.updateBatchById(rulePromptWordEntityList);

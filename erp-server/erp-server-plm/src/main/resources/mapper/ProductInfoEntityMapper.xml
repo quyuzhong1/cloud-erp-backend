@@ -205,9 +205,10 @@
         p.approval_time AS project_init_date,
         pi.project_launch_date,
         pi.project_finish_date,
+        p.application_category_id,
+        pi.project_finish_date,
         p.create_time,
-        p.update_time,
-        p.application_category_id
+        p.update_time
         FROM product_info p
         LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
@@ -380,7 +381,7 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE ${params.sqlMap.default} and p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE AND user_id=#{userId})
         <if test="params.applicationCategoryIds != null and params.applicationCategoryIds.size > 0 ">
@@ -850,7 +851,9 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default} AND
+        p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         <if test="params.applicationCategoryIds != null and params.applicationCategoryIds.size > 0 ">
             AND p.application_category_id in
@@ -1159,7 +1162,9 @@
         WHERE pt.is_deleted = FALSE
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
         p.project_charge_id=#{userId} or p.id in (select product_id from project_task where is_deleted=false and
         string_to_array( charge_id,',') &amp;&amp; string_to_array(#{userId}, ',')))
@@ -1302,7 +1307,9 @@
         FROM product_info p
         INNER JOIN project_task pt
         ON p.id = pt.product_id AND pt.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         AND (string_to_array( p.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') or
         p.project_charge_id=#{userId} or string_to_array( pt.charge_id,',') &amp;&amp; string_to_array(#{userId}, ',') )
@@ -1457,10 +1464,10 @@
         GROUP BY pt.product_id) pp on p.id = pp.product_id
         LEFT JOIN project_phase pph on pp.product_id = pph.product_id and pp.seq = pph.seq AND pph.is_deleted = FALSE
         WHERE
-        ${params.sqlMap.default} and
+        ${params.sqlMap.default} AND
         p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
-        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE AND user_id=#{userId})
         <if test="params.applicationCategoryIds != null and params.applicationCategoryIds.size > 0 ">
             AND p.application_category_id in
             <foreach collection="params.applicationCategoryIds" item="item" open="(" separator="," close=")">
@@ -1601,7 +1608,9 @@
         FROM product_info p
         INNER JOIN project_task pt
         ON p.id = pt.product_id AND pt.is_deleted = FALSE
-        WHERE p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default}
+        AND p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
         AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
         <choose>
