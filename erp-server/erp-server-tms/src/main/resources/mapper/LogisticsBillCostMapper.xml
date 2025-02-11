@@ -38,6 +38,14 @@
         is_deleted,
         reconciliation_status, channel_id, logistics_bill_id, actual_weight, volume_weight, billing_weight, estimated_shipping_cost , billing_weight_logistics, actual_shipping_cost, diff_shipping_cost, currency, remark
     </sql>
+    <update id="updateShopChargeId">
+        update logistics_bill_cost lbc
+        set shop_charge_id = #{userId},shop_charge_name = #{userName},update_time = NOW()
+        FROM  logistics_bill lb
+        WHERE lb.id = lbc.logistics_bill_id
+          and lb.is_deleted = false
+          and lbc.is_deleted = false and lb.shop_id = #{shopId}
+    </update>
 
     <!-- tab列表 -->
     <select id="listCount" resultType="java.lang.Integer">
