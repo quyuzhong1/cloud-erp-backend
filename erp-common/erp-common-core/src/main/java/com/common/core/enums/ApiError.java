@@ -1190,6 +1190,10 @@ public enum ApiError implements Serializable {
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),
     ERROR_INVENTORY_NOT_EXIST(92250, "仓库:【{}】,SKU:【{}】,库存状态:【{}】,库存不存在"),
+    WAREHOUSE_AREA_NOT_EXIST(92251, "库区信息不存在"),
+    WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
+    WAREHOUSE_AREA_USED(92253, "库区被使用后，库存类型禁止修改"),
+    WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1575,8 +1579,10 @@ public enum ApiError implements Serializable {
     ERROR_HIS_SALES_IS_DIFFERENT(97032,"选中的数据，历史销量不一致，无法进行比较"),
     ERROR_VERIFY_START_CALC_DATE(97033,"试算开始日期不能晚于当前日期"),
     ERROR__VERIFY_END_CALC_DATE(97034,"试算结束日期不能晚于试算开始日期"),
-    ERROR__VERIFY_END_DATE(97034,"结束日期不能晚于选中数据最小试算结束日期"),
-    ERROR__VERIFY_START_DATE(97034,"开始日期不能早于选中数据试算开始日期"),
+    ERROR__VERIFY_CALC_DATE(97035,"试算结束日期,试算开始日期不能相差一年"),
+    ERROR__VERIFY_END_DATE(97036,"结束日期不能晚于选中数据最小试算结束日期"),
+    ERROR__VERIFY_START_DATE(97037,"开始日期不能早于选中数据试算开始日期"),
+    ERROR__CALC_SIZE(97038,"一个模板下，以“SKU*店铺”计算，最多支持999999条任务"),
 
 
 

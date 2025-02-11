@@ -1,10 +1,12 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ReportDTO;
+import com.erp.server.oms.service.ReportManagerService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -28,7 +30,7 @@ import javax.annotation.Resource;
 public class ReportManagerController extends BaseController {
 
     @Resource
-    private SoB2cService soB2cService;
+    private ReportManagerService reportManagerService;
 
     /**
      * 产品销售分页查询
@@ -36,8 +38,9 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesPaging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ReportDTO.ProductSalesPagingViewDTO>> queryProductSalesByPage(@RequestBody @Validated PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        PagingVO<ReportDTO.ProductSalesPagingViewDTO> pagingVO = soB2cService.productSalesPaging(dto);
+        PagingVO<ReportDTO.ProductSalesPagingViewDTO> pagingVO = reportManagerService.productSalesPaging(dto);
         return success(pagingVO);
     }
 
@@ -47,9 +50,9 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesExport")
+    @WebAdvanceQuery
     public ApiResult<Object> productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto) {
-        Boolean result = soB2cService.productSalesExport(dto);
+        Boolean result = reportManagerService.productSalesExport(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
-
     }
 }

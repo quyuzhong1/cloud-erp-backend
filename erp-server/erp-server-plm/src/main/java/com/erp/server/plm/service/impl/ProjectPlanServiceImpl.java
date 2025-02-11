@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.map.MapUtil;
@@ -12,10 +13,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.BaseStatusEnum;
-import com.common.business.enums.SkuApproveConfigureEnum;
-import com.common.business.enums.UserTypeEnum;
-import com.common.business.enums.WorkflowBusinessEnum;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.*;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -32,6 +31,8 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.vo.*;
 import com.erp.model.sys.dto.SysCalendarDTO;
 import com.erp.model.sys.vo.SysCalendarListVO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
+import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
@@ -1353,6 +1354,36 @@ public class ProjectPlanServiceImpl extends ServiceImpl<ProjectPlanMapper, Proje
             return true;
         }
         return false;
+    }
+
+
+    @Override
+    public List<ProjectScheduleDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<ProjectScheduleDTO.TabListDTO> resultList = new LinkedList<>();
+        ProjectScheduleDTO.PagingParamDTO searchParam = new ProjectScheduleDTO.PagingParamDTO();
+        searchParam.setPermissionSql(dto.getPermissionSql());
+
+        Integer waitCount = 0;
+        //待审核
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        //获取我的待办信息
+        List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+        List<String> idList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(idList)) {
+            List<String> statusList = new ArrayList<>();
+            statusList.add(BaseStatusEnum.WAIT_AUDIT.getStatus());
+            statusList.add(BaseStatusEnum.AUDIT_ING.getStatus());
+            List<ProjectScheduleDTO.TabListDTO> list = baseMapper.tabList(dto, idList, statusList);waitCount = list.stream().filter(e -> BaseStatusEnum.WAIT_AUDIT.getStatus().equalsIgnoreCase(e.getTabFlag()))
+                    .map(ProjectScheduleDTO.TabListDTO::getCount)
+                    .findFirst()
+                    .orElse(null);
+        }
+        List<ProjectScheduleDTO.TabListDTO> list = baseMapper.tabList(dto, null,null);
+        resultList.add(new ProjectScheduleDTO.TabListDTO("all","全部" ,list.stream().mapToInt(ProjectScheduleDTO.TabListDTO::getCount).sum()));
+
+        resultList.add(new ProjectScheduleDTO.TabListDTO(BaseStatusEnum.WAIT_AUDIT.getStatus(),"待我审核" ,waitCount));
+        // 计算合计数量
+        return resultList;
     }
 
 }

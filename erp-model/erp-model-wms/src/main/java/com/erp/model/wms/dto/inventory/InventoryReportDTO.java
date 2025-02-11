@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.inventory;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -11,6 +12,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 库存报表请求响应实体
@@ -52,6 +54,14 @@ public class InventoryReportDTO implements Serializable {
          * 库存组织 接口地址： /sys/company/list
          */
         private List<String> orgIdList;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -97,6 +107,16 @@ public class InventoryReportDTO implements Serializable {
          * 勾选的数据行
          */
         private List<ExportTransportItem> items;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -334,12 +354,14 @@ public class InventoryReportDTO implements Serializable {
         private List<InventoryAgeRangeDTO> userRangeList;
 
         /**
-         * 结束入库日期
+         * 页面高级查询
          */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
         /**
-        @JsonIgnore
-        private LocalDate endDate;
-        */
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -415,6 +437,16 @@ public class InventoryReportDTO implements Serializable {
          */
         @JsonIgnore
         private List<String> skuIdList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -497,6 +529,14 @@ public class InventoryReportDTO implements Serializable {
          * 勾选数据
          */
         private List<CheckData> checkData;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**

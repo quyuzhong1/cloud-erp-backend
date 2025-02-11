@@ -118,7 +118,24 @@ public class ShippingTemplateServiceImpl extends SuperServiceImpl<ShippingTempla
     @Override
     public List<ShippingTemplateDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<ShippingTemplateDTO.TabListDTO> dbList = baseMapper.tabList(dto.getPermissionSql());
-        return dbList;
+        List<ShippingTemplateDTO.TabListDTO> resultList = new LinkedList<>();
+        // 全部
+        resultList.add(new ShippingTemplateDTO.TabListDTO("all", dbList.size(), "全部"));
+        // 启用
+        long trueCount = dbList.stream()
+                .filter(e -> "f".equalsIgnoreCase(e.getTabFlag()))
+                .map(ShippingTemplateDTO.TabListDTO::getCount)
+                .findFirst()
+                .orElse(0);
+        resultList.add(new ShippingTemplateDTO.TabListDTO("false", (int) trueCount, "启用"));
+        // 停用
+        long falseCount = dbList.stream()
+                .filter(e -> "t".equalsIgnoreCase(e.getTabFlag()))
+                .map(ShippingTemplateDTO.TabListDTO::getCount)
+                .findFirst()
+                .orElse(0);
+        resultList.add(new ShippingTemplateDTO.TabListDTO("true", (int) falseCount, "停用"));
+        return resultList;
     }
 
     @Override

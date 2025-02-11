@@ -75,7 +75,7 @@ public class InventoryDTO implements Serializable {
          * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位<br/>
          * 接口地址：/wms/dict/drop/down?type=inventoryDimension
          */
-        @NotBlank
+//        @NotBlank
         private String dimension;
 
         /**
@@ -92,6 +92,16 @@ public class InventoryDTO implements Serializable {
          * SKU ID编码集合
          */
         private List<String> skuIdList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -260,6 +270,16 @@ public class InventoryDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -679,6 +699,16 @@ public class InventoryDTO implements Serializable {
          */
         private List<LocalDate> billDateList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -745,6 +775,16 @@ public class InventoryDTO implements Serializable {
          * 单据日期
          */
         private List<LocalDate> billDateList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -892,6 +932,16 @@ public class InventoryDTO implements Serializable {
          */
         private String syncKingdeeStatusName;
 
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
     }
 
     /**
@@ -905,7 +955,7 @@ public class InventoryDTO implements Serializable {
          * 日期类型 (approveDate审核日期，billDate单据日期)
          * /api/wms/dict/list，字典inventoryDate
          */
-        @NotBlank(message = "日期类型不能为空")
+//        @NotBlank(message = "日期类型不能为空")
         private String dateType;
 
 
@@ -917,7 +967,7 @@ public class InventoryDTO implements Serializable {
         /**
          * 日期范围
          */
-        @NotEmpty(message = "日期范围不能为空")
+//        @NotEmpty(message = "日期范围不能为空")
         private List<LocalDate> dateList;
 
 
@@ -930,6 +980,16 @@ public class InventoryDTO implements Serializable {
          * 仓库id集合
          */
         private List<String> warehouseIdList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -987,6 +1047,16 @@ public class InventoryDTO implements Serializable {
          * 仓库id集合
          */
         private List<String> warehouseIdList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -1754,5 +1824,10 @@ public class InventoryDTO implements Serializable {
          * 数量
          */
         private long count;
+
+        /**
+         * 名称
+         */
+        private String tabFlagName;
     }
 }

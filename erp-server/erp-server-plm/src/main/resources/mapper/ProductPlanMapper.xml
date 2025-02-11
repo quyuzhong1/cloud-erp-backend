@@ -33,7 +33,7 @@
         inner join (select product_plan_id,max(id) as id from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id) b
         on a.product_plan_id = b.product_plan_id and a.id = b.id) ppr  on pp.id = ppr.product_plan_id
         <where>
-            pp.is_deleted = false
+            ${params.sqlMap.default} and pp.is_deleted = false
             <if test="params.type != null and params.type != '' and params.type == '1'.toString()">
                and pp.product_status in ('','1')
             </if>
@@ -148,7 +148,7 @@
         left join product_plan_sale pps on pp.id = pps.product_plan_id and pps.is_deleted = false
         left join (select product_plan_id,string_agg(remark,',') as remark from product_plan_remark where  is_deleted = false and remark != '' group by product_plan_id )ppr  on pp.id = ppr.product_plan_id
         <where>
-            pp.is_deleted = false
+            ${params.sqlMap.default} and pp.is_deleted = false
             <if test="params.type != null and params.type != '' and params.type == '1'.toString()">
                 and pp.product_status = ''
             </if>
@@ -544,4 +544,25 @@
         group by to_char(pst.status_time,'MM')
     </select>
 
+    <select id="tabList" resultType="java.lang.Integer">
+        select
+            count(id)
+        from  product_plan pp
+        <where>
+            pp.is_deleted = false
+            <if test="null != params.type and params.type != '' and params.type == '1'.toString()">
+                and pp.product_status in ('','1')
+            </if>
+            <if test="null != params.type and params.type != '' and params.type == '2'.toString()">
+                and pp.product_status in ('3','4','5','6')
+            </if>
+            <if test="null != params.type and params.type != '' and params.type == '3'.toString()">
+                and pp.product_status in ('4','5','6')
+            </if>
+
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
 </mapper>

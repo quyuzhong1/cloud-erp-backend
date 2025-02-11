@@ -85,7 +85,7 @@ public class ExportMrpSalesCalcHandler extends AbstractPageFileEventHandler<Pair
             dto.setParams(exportSalesInfoDTO);
             PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> data = getListExportData(dto);
             if (!CollectionUtils.isEmpty(data.getList())) {
-                List<CalcSalesInfoDimDTO.ExportResultDTO> list = (List<CalcSalesInfoDimDTO.ExportResultDTO>) data.getList();
+                List<CalcSalesInfoDimDTO.ExportResultDTO> list = data.getList();
                 list.forEach(obj -> {
                     salesInfoDenoising.addAll(obj.getSalesInfoDenoising());
                     salesInfoEstimate.addAll(obj.getSalesInfoEstimate());

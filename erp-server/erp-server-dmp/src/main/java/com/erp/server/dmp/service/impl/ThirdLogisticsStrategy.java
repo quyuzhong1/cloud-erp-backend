@@ -140,6 +140,7 @@ public class ThirdLogisticsStrategy implements ThirdMappingStrategy {
             viewDTO.setThirdLogisticsTypeId(thirdLogisticsEntity.getLogisticsTypeId());
             viewDTO.setThirdLogisticsTypeName(thirdLogisticsEntity.getLogisticsTypeName());
             viewDTO.setThirdId(thirdMappingEntity.getThirdId());
+            viewDTO.setThirdName(thirdMappingEntity.getThirdName());
             viewDTO.setId(thirdMappingEntity.getId());
             viewDTO.setSysType(thirdMappingEntity.getThirdSysType());
             viewDTO.setSysTypeName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));

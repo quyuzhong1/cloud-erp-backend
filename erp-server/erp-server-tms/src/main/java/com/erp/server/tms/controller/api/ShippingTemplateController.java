@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,6 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.server.tms.query.ShippingTemplateQueryHandler;
 import com.erp.server.tms.service.ShippingTemplateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -74,6 +76,7 @@ public class ShippingTemplateController extends BaseController {
             menuCode = "tms:shippingTemplate:paging",
             tableAlias = "st"
     )
+    @WebAdvanceQuery(handler = ShippingTemplateQueryHandler.class)
     public ApiResult<PagingVO<ShippingTemplateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
         PagingVO<ShippingTemplateDTO.ListDTO> pagingVO = shippingTemplateService.paging(dto);
         return success(pagingVO);
@@ -171,6 +174,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出运费模板")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = ShippingTemplateQueryHandler.class)
     public ApiResult<Object>exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto) {
         Boolean flag = shippingTemplateService.exportExcel(dto);
         return flag == true ? success() : failure();

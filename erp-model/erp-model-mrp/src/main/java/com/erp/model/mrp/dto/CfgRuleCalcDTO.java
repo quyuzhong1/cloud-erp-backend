@@ -2,9 +2,11 @@ package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.annotation.Dict;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.mrp.entity.CfgRuleCalcEntity;
+import com.erp.model.mrp.enums.CalcStatusEnum;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -82,6 +84,12 @@ public class CfgRuleCalcDTO implements Serializable {
          * 试算配置名称
          */
         private String name;
+
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
 
         /**
          * 默认日销量
@@ -330,6 +338,7 @@ public class CfgRuleCalcDTO implements Serializable {
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
+    @EqualsAndHashCode
     public static class SkuDTO {
         /**
          * SKU
@@ -339,5 +348,20 @@ public class CfgRuleCalcDTO implements Serializable {
          * SKU
          */
         private String skuNo;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 状态
+         */
+        private String status;
+        /**
+         * 状态名
+         */
+        private String statusName;
     }
 }

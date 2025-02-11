@@ -2,6 +2,7 @@ package com.erp.server.plm.controller.api;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -21,6 +22,7 @@ import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
+import com.erp.server.plm.query.ProductDetailQueryHandler;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -122,6 +124,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/list")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
@@ -697,7 +700,6 @@ public class ProductDetailController extends BaseController {
     public void exportUpdateTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productUpdateTemplate.xlsx";
         String excelName = "template.xlsx";
-
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
             InputStream inputStream = resourceLoader.getResource(path).getInputStream();
@@ -726,9 +728,19 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+    public void exportTemplate(@RequestParam(value = "importType") Integer importType,HttpServletRequest request, HttpServletResponse response) {
+        String path = "";
         String excelName = "template.xlsx";
+        if(importType == 1){//导入新增
+            path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+        }else if(importType == 2){//导入更新（待审核）
+            path = "classpath:excel/productUpdateNotApproveTemplate.xlsx";
+        }else if(importType == 3){//导入更新（已审核）
+            path = "classpath:excel/productUpdateApproveTemplate.xlsx";
+        }
+        if(StringUtils.isEmpty(path)){
+            throw new ServiceException(ApiError.ERROR_99999);
+        }
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -759,6 +771,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
     public ApiResult<Boolean> exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
         return success(true);

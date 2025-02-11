@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,8 +12,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
@@ -24,6 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
@@ -35,6 +39,8 @@ import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProductInfoMapper;
+import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -206,6 +212,15 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Resource
     private ApplicationCategoryService applicationCategoryService;
 
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
+
+    @Resource
+    private SyncLingXingProductDetailService syncLingXingProductDetailService;
+
+    @Resource
+    private RedisUtil redisUtil;
+
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
 
     /**
@@ -376,6 +391,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-17 11:17
      */
     @Override
+    @Transactional
     public Boolean updateCategory(MoveCategoryDTO dto) {
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
         if (Objects.isNull(category)) {
@@ -402,8 +418,34 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+
         }
         return Boolean.TRUE;
+    }
+
+    //推送至金蝶、旺店通、领星
+    private void sendPushTask(List<String> productIdList,String operate ){
+        //只同步审核通过的
+        List<ProductDetailEntity> productDetailEntities = productDetailService.listSkuByProductIds(productIdList)
+                .stream()
+                .filter(v -> v.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode()))
+                .collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(productDetailEntities)){
+            //增加缓存清除
+            List<String> productDetailIdList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO,productDetailIdList);
+
+            //审核通过发送金蝶
+            productDetailService.sendPushTask(productDetailEntities, operate);
+            //审核通过发送旺店通
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntities);
+            //审核通过发送领星
+            syncLingXingProductDetailService.syncDataToLingxing(productDetailEntities);
+        }
     }
 
 
@@ -497,10 +539,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -550,7 +592,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @param deptIdList
      * @return List<String>
      */
-    private List<String> handleDept(List<String> deptIdList) {
+    @Override
+    public List<String> handleDept(List<String> deptIdList) {
         if (CollectionUtils.isEmpty(deptIdList)) {
             return Collections.EMPTY_LIST;
         }
@@ -586,10 +629,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //我的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -620,10 +663,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //收藏的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.collect(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -939,10 +982,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return dataList;
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return dataList;
+//        }
         dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         return dataList;
     }
@@ -2399,10 +2442,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
 
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+//        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
@@ -2499,10 +2542,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
 
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+//        }
         //两个都是
         if (size == 2) {
             List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
@@ -2595,15 +2638,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
 
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
+//        }
 
         //两个都是
         if (size == 2) {
+            String userId = UserContext.getDefaultLoginUser().getUid();
             //收藏的项目
-            List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
+            List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList, userId);
             fillPagingDb(list);
             List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
             for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
@@ -2627,8 +2671,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (size != 2) {
             //产品导出
             if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
+                String userId = UserContext.getDefaultLoginUser().getUid();
                 //我的项目
-                List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
+                List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList, userId);
                 fillPagingDb(list);
                 StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/product.xlsx";
@@ -2680,6 +2725,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     @Override
+    @Transactional
     public Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto) {
 
         List<ProductInfoEntity> list = new ArrayList<>();
@@ -2705,6 +2751,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }

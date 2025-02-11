@@ -1,5 +1,6 @@
 package com.erp.model.plm.vo;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.excel.EasyExcelLocalDateConverter;
 import com.common.core.excel.EasyExcelLocalTimeConverter;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * @author Cloud
@@ -86,5 +88,15 @@ public class ProjectTaskTimeRecordPageVO implements Serializable {
 
     private String taskIds;
 
+    /**
+     * 创建时间
+     */
+    @ExcelIgnore
+    private LocalDateTime createTime;
 
+    /**
+     * 更新时间
+     */
+    @ExcelIgnore
+    private LocalDateTime updateTime;
 }

@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -22,6 +24,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -250,23 +253,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
-    /**
-     * 报表管理 销售统计
-     * @author yl
-     * @date 2023-09-01 11:19
-     * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
-     */
-    PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
 
-    /**
-     * 导出 销售统计
-     * @author yl
-     * @date 2023-09-04 16:39
-     * @param dto
-     * @return java.lang.Boolean
-     */
-    Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO dto);
     /**
      * @description: 查看财务信息
      * @author Will
@@ -971,11 +958,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(PagingDTO<SoB2cDTO.ExportParamDTO> dto);
 
     /**
-     * 导出销售额
-     * @param dto 参数
-     */
-    PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
-    /**
      * 查询所有虚拟仓B2C销售订单数据
      * @author will
      * @date 2024/9/26 17:11
@@ -1048,4 +1030,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void writeBackSoOutstockDate(String soId, String soOutstockDate);
 
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
+
+    /**
+     * 销售统计
+     */
+    IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    /**
+     * 销售统计导出查询
+     */
+    Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
 }
