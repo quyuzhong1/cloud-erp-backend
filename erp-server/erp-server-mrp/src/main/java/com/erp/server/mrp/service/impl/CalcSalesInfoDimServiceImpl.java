@@ -470,7 +470,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         //获取真实销量
         CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
         LocalDate startCalcDate = ObjectUtils.isEmpty(dto.getStartDate()) ? resultDTO.getStartCalcDate() : dto.getStartDate();
-        Map<String, String> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, CalcSalesInfoDimDTO.CompareResultDTO::getName));
+        Map<String, CalcSalesInfoDimDTO.CompareResultDTO> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, v -> v, (o1,o2) -> o1));
         List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getSkuId(),
                 startCalcDate, endCalcDate);
         Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
@@ -494,13 +494,15 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoDimDTO.LineDTO> calcList = new ArrayList<>();
         for (Map.Entry<String, List<BigDecimal>> entry : calcDataList.entrySet()) {
             CalcSalesInfoDimDTO.LineDTO lineDTO = new CalcSalesInfoDimDTO.LineDTO();
-            lineDTO.setName(calcNameMap.get(entry.getKey()));
+            CalcSalesInfoDimDTO.CompareResultDTO compareResultDTO = calcNameMap.get(entry.getKey());
+            lineDTO.setName(compareResultDTO.getName());
+            lineDTO.setCode(compareResultDTO.getCode());
             lineDTO.setQty(entry.getValue());
             calcList.add(lineDTO);
         }
         DataDifferenceCalculator.compareMultiplePredictions(calcList, basicData, dto.getMetricsType());
         List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
-        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", new BigDecimal(100), basicData));
+        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量","", new BigDecimal(100), basicData));
         lineList.addAll(calcList);
         CalcSalesInfoDimDTO.CalcCompareDTO calcCompareDTO = new CalcSalesInfoDimDTO.CalcCompareDTO();
         calcCompareDTO.setDateList(dateList);
