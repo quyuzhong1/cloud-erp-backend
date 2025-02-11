@@ -120,22 +120,27 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList, String id) {
-        AtomicInteger index = new AtomicInteger(0);
-        CompletableFuture.allOf(calcResultList.stream()
-                        .map(v -> CompletableFuture.runAsync(() -> executeTask(v, index), threadPoolTaskExecutor))
-                        .toArray(CompletableFuture[]::new))
-                .thenRunAsync(() -> {
-                    boolean allTasksFinished = calcResultList.stream().allMatch(task -> CalcStatusEnum.FINISH.getCode().equals(task.getStatus()));
-                    if (allTasksFinished) {
-                        CfgRuleCalcEntity entity = new CfgRuleCalcEntity();
-                        entity.setId(id);
-                        entity.setStatus(CalcStatusEnum.FINISH.getCode());
-                        cfgRuleCalcService.updateById(entity);
-                    }
-                });
+        CompletableFuture.runAsync(() -> {
+            AtomicInteger index = new AtomicInteger(0);
+            List<String> statusList = calcResultList.stream()
+                    .map(v -> CompletableFuture.supplyAsync(() -> {
+                        executeTask(v, index);
+                        return v.getStatus();
+                    }, threadPoolTaskExecutor)).collect(Collectors.toList()).stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            boolean allTasksFinished = statusList.stream().allMatch(task -> CalcStatusEnum.FINISH.getCode().equals(task));
+            if (allTasksFinished) {
+                CfgRuleCalcEntity entity = new CfgRuleCalcEntity();
+                entity.setId(id);
+                entity.setStatus(CalcStatusEnum.FINISH.getCode());
+                cfgRuleCalcService.updateById(entity);
+            }
+        }, threadPoolTaskExecutor);
     }
 
     private void executeTask(CalcSalesInfoDimDTO.CalcResultDTO dto, AtomicInteger index) {
+        try {
         CalcSalesInfoDimEntity entity = new CalcSalesInfoDimEntity();
         entity.setSerialNo(String.format("%06d", index.incrementAndGet()));
         entity.setId(dto.getCalcSalesInfoDimId());
@@ -161,6 +166,10 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         entity.setStatus(CalcStatusEnum.FINISH.getCode());
         dto.setStatus(CalcStatusEnum.FINISH.getCode());
         updateById(entity);
+        } catch (Exception e) {
+            dto.setStatus(CalcStatusEnum.DOING.getCode());
+            log.error("计算失败，原因：{}", e.getMessage(), e);
+        }
     }
 
     /**
@@ -512,7 +521,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         //获取真实销量
         CalcSalesInfoDimDTO.CompareResultDTO resultDTO = list.get(0);
         LocalDate startCalcDate = ObjectUtils.isEmpty(dto.getStartDate()) ? resultDTO.getStartCalcDate() : dto.getStartDate();
-        Map<String, String> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, CalcSalesInfoDimDTO.CompareResultDTO::getName));
+        Map<String, CalcSalesInfoDimDTO.CompareResultDTO> calcNameMap = list.stream().collect(Collectors.toMap(CalcSalesInfoDimDTO.CompareResultDTO::getId, v -> v, (o1,o2) -> o1));
         List<OrderHistorySalesEsEntity> salesInfos = orderHistorySalesEsService.findByShopIdAndSkuIdAndDateBetween(resultDTO.getShopId(), resultDTO.getSkuId(),
                 startCalcDate, endCalcDate);
         Map<LocalDate, Integer> hisSalesMap = salesInfos.stream()
@@ -536,13 +545,15 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         List<CalcSalesInfoDimDTO.LineDTO> calcList = new ArrayList<>();
         for (Map.Entry<String, List<BigDecimal>> entry : calcDataList.entrySet()) {
             CalcSalesInfoDimDTO.LineDTO lineDTO = new CalcSalesInfoDimDTO.LineDTO();
-            lineDTO.setName(calcNameMap.get(entry.getKey()));
+            CalcSalesInfoDimDTO.CompareResultDTO compareResultDTO = calcNameMap.get(entry.getKey());
+            lineDTO.setName(compareResultDTO.getName());
+            lineDTO.setCode(compareResultDTO.getCode());
             lineDTO.setQty(entry.getValue());
             calcList.add(lineDTO);
         }
         DataDifferenceCalculator.compareMultiplePredictions(calcList, basicData, dto.getMetricsType());
         List<CalcSalesInfoDimDTO.LineDTO> lineList = new ArrayList<>();
-        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量", new BigDecimal(100), basicData));
+        lineList.add(new CalcSalesInfoDimDTO.LineDTO("真实销量","", new BigDecimal(100), basicData));
         lineList.addAll(calcList);
         CalcSalesInfoDimDTO.CalcCompareDTO calcCompareDTO = new CalcSalesInfoDimDTO.CalcCompareDTO();
         calcCompareDTO.setDateList(dateList);

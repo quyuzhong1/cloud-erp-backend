@@ -182,7 +182,7 @@
                csid.his_data_md5,
                crc.start_calc_date,
                crc.end_calc_date,
-               crc.name
+               crc.name,crc.code
         from calc_sales_info_dim csid
                  inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where csid.is_deleted = false
@@ -201,7 +201,7 @@
         csid.his_data_md5,
         crc.start_calc_date,
         crc.end_calc_date,
-        crc.name
+        crc.name,crc.code
         from calc_sales_info_dim csid
         inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where csid.is_deleted = false
