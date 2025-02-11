@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -50,14 +50,12 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -257,8 +255,21 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     }
 
     @Override
-    public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param) {
-        downloadTaskFeign.saveDownloadTask("出入库列表数据", EXPORT_WMS_INVENTORY_IN_OUT_STOCK_SUMMARY.getCode(), param);
+    public void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response) {
+//        // 查询数据
+//        List<InventoryDTO.InOutStockSummaryPagingViewDTO> dataList = this.baseMapper.exportSummaryList(param);
+//
+//        // 填充数据
+//        InventoryDTO.InOutStockSummarySearchParamDTO paramD = BeanMapperUtils.map(InventoryDTO.InOutStockSummarySearchParamDTO.class, param);
+//        fillTransactionSummary(dataList,paramD);
+        PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO = new PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO>();
+        pagingParamDTO.setParams(BeanUtil.copyProperties(param, InventoryDTO.InOutStockSummarySearchParamDTO.class));
+        pagingParamDTO.setPageSize(-1);
+
+        // 导出
+        PagingVO<InOutStockSummaryPagingViewDTO> pagingSummary = this.pagingSummary(pagingParamDTO);
+        List<InOutStockSummaryPagingViewDTO> dataList = (List<InOutStockSummaryPagingViewDTO>)pagingSummary.getList();
+        exportTransactionSummaryExcel(dataList, response);
     }
 
     @Override

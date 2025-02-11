@@ -10,6 +10,7 @@ import com.erp.model.wms.entity.TransactionFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -90,7 +91,7 @@ public interface TransactionFlowService extends SuperService<TransactionFlowEnti
      *
      * @param param
      */
-    void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param);
+    void exportSummaryExcel(InventoryDTO.ExcelInOutStockSummarySearchParamDTO param, HttpServletResponse response);
 
     /**
      * 在途查询分页查询

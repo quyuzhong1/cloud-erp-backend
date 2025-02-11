@@ -95,8 +95,27 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
     }
 
     @Override
-    public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.TaskDetailParam dto) {
-        downloadTaskFeign.saveDownloadTask("项目任务明细", EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL.getCode(), dto);
+    public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.PagingParam dto) {
+        List<Integer> statusList = new ArrayList<>();
+        dto.setApprovalStatusList(statusList);
+        if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(dto.getApprovalStatus())) {
+            List<Integer> statusCodeList = Arrays.asList(ApprovalStatusEnum.values()).stream().filter(req -> !ApprovalStatusEnum.APPROVAL.getCode().equals(req.getCode())).map(ApprovalStatusEnum::getCode).collect(Collectors.toList());
+            statusList.addAll(statusCodeList);
+            dto.setApprovalStatusList(statusList);
+        }
+        if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getApprovalStatus())) {
+            statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
+            dto.setProjectStatusList(statusList);
+        }
+        if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getApprovalStatus())) {
+            statusList.add(ProjectStateEnum.FINISH.getState());
+            dto.setProjectStatusList(statusList);
+        }
+        List<ProjectReportFormsDTO.PagingView> pagingViews = baseMapper.projectReportFormsExportExcel(dto);
+        List<String> ids = pagingViews.stream().map(ProjectReportFormsDTO.PagingView::getId).distinct().collect(Collectors.toList());
+        ProjectReportFormsDTO.TaskDetailParam param = new ProjectReportFormsDTO.TaskDetailParam();
+        param.setIds(ids);
+        downloadTaskFeign.saveDownloadTask("项目任务明细", EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL.getCode(), param);
         return Boolean.TRUE;
     }
 
