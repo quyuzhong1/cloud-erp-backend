@@ -154,11 +154,37 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
         //计算吻合度
         calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
+        //计算月吻合度
+        calculationMonthSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
         calcSalesInfoDenoisingService.saveBatch(calculationSales);
         calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
         entity.setStatus(CalcStatusEnum.FINISH.getCode());
         dto.setStatus(CalcStatusEnum.FINISH.getCode());
         updateById(entity);
+    }
+
+    private void calculationMonthSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto,
+                                            List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList,
+                                            Map<LocalDate, Integer> hisSalesMap,
+                                            CalcSalesInfoDimEntity entity) {
+
+        List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
+                .map(CalcSalesInfoEstimateEntity::getQty)
+                .collect(Collectors.toList());
+        List<BigDecimal> basicData = new ArrayList<>();
+        //组装历史真实销量
+        LocalDate date = dto.getStartCalcDate();
+        while (!date.isAfter(dto.getEndCalcDate())) {
+            basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
+            date = date.plusDays(1);
+        }
+        DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId());
+        entity.setMonthMapeScore(metricsResult.getMAPEScore());
+        entity.setMonthMaeScore(metricsResult.getMAEScore());
+        entity.setMonthMseScore(metricsResult.getMSEScore());
+        entity.setMonthRmseScore(metricsResult.getRMSEScore());
+        entity.setMonthR2Score(metricsResult.getR2Score());
+
     }
 
     /**
