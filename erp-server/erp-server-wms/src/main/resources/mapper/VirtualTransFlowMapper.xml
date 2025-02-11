@@ -212,8 +212,18 @@
         select
             <include refid="Base_Column_List" />
         from virtual_trans_flow vtf where is_deleted = false
-        and ((source_type = '' and ((dict_inventory_status = 'usable' ) or (dict_inventory_status = 'frozen' and 0 > qty)) ) or (dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
-                 or ((dict_inventory_status = 'usable' and 0 > qty  and source_type in ('virtualWarehouseAllocation','soOutstock')) or (dict_inventory_status = 'frozen' and 0 > qty and source_type in ('machineInfo','transferInfo','soOutstock'))))
+        and (
+            (source_type = '' and ((dict_inventory_status = 'usable' ) or (dict_inventory_status = 'frozen' and 0 > qty)) )
+                or (dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
+                or (
+                    (dict_inventory_status = 'usable' and 0 > qty  and source_type in ('virtualWarehouseAllocation','soOutstock'))
+                     or (dict_inventory_status = 'frozen' and 0 > qty and (source_type in ('machineInfo','transferInfo','soOutstock') or (source_type = 'soB2cDelivery' and dict_biz_type = '06')) )
+                    )
+            )
+        and (
+        (dict_inventory_status = 'usable' and qty > 0  and source_type in ('soOutstock') and operation_mode = 'unApprove')
+        or (dict_inventory_status = 'frozen' and qty > 0 and source_type in ('machineInfo','transferInfo','soOutstock') and operation_mode = 'unApprove')
+        )
         <if test="dto.ids != null and dto.ids.size > 0">
             and vtf.id in
             <foreach collection="dto.ids" open="(" close=")" separator="," item="item" >
