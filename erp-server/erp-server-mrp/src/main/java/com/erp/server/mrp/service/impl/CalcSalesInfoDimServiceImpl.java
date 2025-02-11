@@ -163,20 +163,41 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         updateById(entity);
     }
 
+    /**
+     * 计算月份吻合度
+     * @param dto                       参数
+     * @param calcSalesInfoEstimateList 参数
+     * @param hisSalesMap               参数
+     * @param entity                    参数
+     */
     private void calculationMonthSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto,
                                             List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList,
                                             Map<LocalDate, Integer> hisSalesMap,
                                             CalcSalesInfoDimEntity entity) {
-
         List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
-                .map(CalcSalesInfoEstimateEntity::getQty)
+                .collect(Collectors.toMap(CalcSalesInfoEstimateEntity::getMonth, CalcSalesInfoEstimateEntity::getQty, BigDecimal::add))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
+
         List<BigDecimal> basicData = new ArrayList<>();
-        //组装历史真实销量
-        LocalDate date = dto.getStartCalcDate();
-        while (!date.isAfter(dto.getEndCalcDate())) {
-            basicData.add(new BigDecimal(Optional.ofNullable(hisSalesMap.get(date)).orElse(0)));
-            date = date.plusDays(1);
+        List<String> monthList = calcSalesInfoEstimateList.stream()
+                .map(CalcSalesInfoEstimateEntity::getMonth)
+                .distinct()
+                .sorted(Comparator.comparing(v -> v))
+                .collect(Collectors.toList());
+        for (String month : monthList) {
+            Map<String, BigDecimal> monthlySales = hisSalesMap.entrySet().stream()
+                    .collect(Collectors.groupingBy(
+                            entry -> entry.getKey().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                            Collectors.mapping(
+                                    entry -> BigDecimal.valueOf(Optional.ofNullable(entry.getValue()).orElse(0)),
+                                    Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                            )
+                    ));
+            basicData.add(Optional.ofNullable(monthlySales.get(month)).orElse(BigDecimal.ZERO));
         }
         DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId());
         entity.setMonthMapeScore(metricsResult.getMAPEScore());
@@ -184,7 +205,6 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         entity.setMonthMseScore(metricsResult.getMSEScore());
         entity.setMonthRmseScore(metricsResult.getRMSEScore());
         entity.setMonthR2Score(metricsResult.getR2Score());
-
     }
 
     /**
