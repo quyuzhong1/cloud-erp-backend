@@ -105,7 +105,7 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         }
         if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getApprovalStatus())) {
             statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
-            dto.setProjectStatusList(statusList);
+            dto.setApprovalStatusList(statusList);
         }
         if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getApprovalStatus())) {
             statusList.add(ProjectStateEnum.FINISH.getState());
@@ -122,6 +122,8 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
     @Override
     public PagingVO<ProjectReportFormsDTO.PagingView> exportProductPurchaseBusiness(PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
 
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page<ProjectReportFormsDTO.PagingView> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         List<Integer> statusList = new ArrayList<>();
         dto.getParams().setApprovalStatusList(statusList);
         if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(dto.getParams().getApprovalStatus())) {
@@ -131,14 +133,14 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         }
         if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getParams().getApprovalStatus())) {
             statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
-            dto.getParams().setProjectStatusList(statusList);
+            dto.getParams().setApprovalStatusList(statusList);
         }
         if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getParams().getApprovalStatus())) {
             statusList.add(ProjectStateEnum.FINISH.getState());
             dto.getParams().setProjectStatusList(statusList);
         }
+        Page<ProjectReportFormsDTO.PagingView> page = baseMapper.projectReportFormsExportExcel(query, dto.getParams());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        Page<ProjectReportFormsDTO.PagingView> page = baseMapper.projectReportFormsExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         for (ProjectReportFormsDTO.PagingView pagingView : page.getRecords()) {
             FindUserDTO findUserDTO = userList.stream().filter(req -> req.getUserId().equals(pagingView.getProjectChargeId())).findFirst().orElse(null);
             if (!ObjectUtils.isEmpty(findUserDTO)) {
