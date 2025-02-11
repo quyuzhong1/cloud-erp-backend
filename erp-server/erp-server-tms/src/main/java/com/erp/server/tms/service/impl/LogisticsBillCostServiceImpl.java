@@ -21,7 +21,9 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
+import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.tms.entity.*;
+import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.server.tms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -172,6 +174,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private UserInfoFeign userInfoFeign;
 
     @Resource
     private TmsCostDetailService tmsCostDetailService;
@@ -1076,14 +1080,11 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
     @Override
     public Boolean updateShopCharge(LogisticsBillCostDTO.UpdateShopChargeDTO dto) {
-        //根据店铺查询物流单
-        List<LogisticsBillEntity> logisticsBillList = logisticsBillService.listByShopIdList(Arrays.asList(dto.getShopId()));
-        if (CollectionUtils.isEmpty(logisticsBillList)) {
-            return Boolean.TRUE;
+        SysUserInfoEntity user = userInfoFeign.info(dto.getShopChargeId());
+        if (ObjectUtil.isEmpty(user)) {
+            throw new ServiceException("未找到店铺负责人");
         }
-        List<String> logisticsBillIdList = logisticsBillList.stream().map(LogisticsBillEntity::getId).distinct().collect(Collectors.toList());
-        //更新店铺负责人
-        updateShopChargeId(logisticsBillIdList,dto.getShopChargeId());
+        baseMapper.updateShopChargeId(dto.getShopId(),dto.getShopChargeId(),user.getUserName());
         return Boolean.TRUE;
     }
 
@@ -1363,29 +1364,6 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             this.removeByIds(costIds);
         }
     }
-
-
-    /**
-     * @description: 更新店铺负责人
-     * @author Will
-     * @date: 2024/5/13 9:13
-     * @param logisticsBillIdList
-     * @param shopChargeId
-     */
-    private void updateShopChargeId(List<String> logisticsBillIdList,String shopChargeId) {
-        if (CollectionUtils.isEmpty(logisticsBillIdList)) {
-            return;
-        }
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(shopChargeId);
-        if (ObjectUtil.isEmpty(findUserDTO)) {
-            throw new ServiceException("未找到店铺负责人");
-        }
-        lambdaUpdate().in(LogisticsBillCostEntity::getLogisticsBillId,logisticsBillIdList)
-                .set(LogisticsBillCostEntity::getShopChargeId,shopChargeId)
-                .set(LogisticsBillCostEntity::getShopChargeName,findUserDTO.getUserName())
-                .update();
-    }
-
 
     /**
      * @description: 数据验证
