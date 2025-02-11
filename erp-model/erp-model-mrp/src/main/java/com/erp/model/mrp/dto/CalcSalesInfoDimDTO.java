@@ -437,6 +437,26 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * R2
          */
         private BigDecimal r2Score;
+        /**
+         * MAE
+         */
+        private BigDecimal monthMaeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal monthMseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal monthRmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal monthMapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal monthR2Score;
 
     }
 
@@ -1036,6 +1056,27 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 序号
          */
         private String serialNo;
+
+        /**
+         * MAE
+         */
+        private BigDecimal monthMaeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal monthMseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal monthRmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal monthMapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal monthR2Score;
     }
 
     @Getter
@@ -1408,6 +1449,26 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 状态名
          */
         private String statusName;
+        /**
+         * MAE
+         */
+        private BigDecimal monthMaeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal monthMseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal monthRmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal monthMapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal monthR2Score;
     }
 
     @Getter

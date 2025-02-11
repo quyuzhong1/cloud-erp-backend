@@ -289,6 +289,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         salesEstimateDTO.setMaeScore(entity.getMaeScore());
         salesEstimateDTO.setMseScore(entity.getMseScore());
         salesEstimateDTO.setRmseScore(entity.getRmseScore());
+        salesEstimateDTO.setMonthMapeScore(entity.getMonthMapeScore());
+        salesEstimateDTO.setMonthR2Score(entity.getMonthR2Score());
+        salesEstimateDTO.setMonthMaeScore(entity.getMonthMaeScore());
+        salesEstimateDTO.setMonthMseScore(entity.getMonthMseScore());
+        salesEstimateDTO.setMonthRmseScore(entity.getMonthRmseScore());
         return salesEstimateDTO;
     }
 
