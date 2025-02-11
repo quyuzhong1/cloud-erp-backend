@@ -9405,14 +9405,4 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return "";
     }
 
-    @Override
-    public IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
-        return baseMapper.productSalesPaging(query, params, skuIdList);
-    }
-
-    @Override
-    public Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
-        return baseMapper.listProductSalesExport(query, params, skuIdList);
-    }
-
 }

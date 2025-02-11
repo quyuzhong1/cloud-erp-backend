@@ -1041,13 +1041,4 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
 
-    /**
-     * 销售统计
-     */
-    IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
-
-    /**
-     * 销售统计导出查询
-     */
-    Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
-}
+   }

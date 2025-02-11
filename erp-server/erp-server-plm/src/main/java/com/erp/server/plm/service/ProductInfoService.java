@@ -323,8 +323,4 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      */
     Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto);
 
-    /**
-     * 部门信息校验和查询
-     */
-    List<String> handleDept(List<String> deptIdList);
 }
