@@ -78,6 +78,12 @@ public class CfgRuleCalcEntity extends BaseEntity<CfgRuleCalcEntity> {
     @TableField("code")
     private String code;
 
+    /**
+     * 状态
+     */
+    @TableField("status")
+    private String status;
+
     public static final String SKU_JSON = "sku_json";
 
     public static final String CALC_DATE = "calc_date";

@@ -25,19 +25,6 @@
         <result column="remark" property="remark"/>
     </resultMap>
 
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        sku_id, sku_no, country, shop_id, platform, sales_qty_json, avg_sales_qty_json, month_sales_estimate_qty_json, month_real_sales_qty_json, cfg_rule_calc_id, remark
-    </sql>
     <select id="paging" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$PagingView">
         select csic.id,
                csic.update_time updateTime,
@@ -51,7 +38,8 @@
                csic.month_sales_estimate_qty_json,
                csic.month_real_sales_qty_json,
                csic.cfg_rule_calc_id,
-               csic.similarity as similarity
+               csic.r2_score as r2Score,
+               csic.mape_score as mapeScore
         from calc_sales_info_dim csic
         where ${params.sqlMap.default}
           and csic.is_deleted = FALSE
@@ -76,7 +64,8 @@
                csic.remark,
                csic.cfg_rule_calc_id,
                crc.name,
-               crc.code
+               crc.code,
+               csic.status
         from calc_sales_info_dim csic
                  inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where csic.id = #{id}
@@ -126,7 +115,13 @@
         csic.update_time updateTime,
         csic.update_user_name,
         csic.remark,
-        csic.similarity
+        csic.r2_score as r2Score,
+        csic.mape_score as mapeScore,
+        csic.mae_score as maeScore,
+        csic.mse_score as mseScore,
+        csic.rmse_score as rmseScore,
+        csic.status,
+        csic.serial_no as serialNo
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
@@ -141,9 +136,9 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        csic.update_time desc
-
+        crc.create_time desc,serial_no
     </select>
+
     <select id="pagingTemplate" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$TemplateViewDTO">
         select crc.id as cfgRuleCalcId,
         crc.create_user_name,
@@ -153,7 +148,8 @@
         crc.name,
         crc.code,
         crc.start_calc_date startCalcDate,
-        crc.end_calc_date endCalcDate
+        crc.end_calc_date endCalcDate,
+        crc.status
         from cfg_rule_calc as crc
         where ${params.sqlMap.default}
         and crc.is_deleted = FALSE
@@ -222,12 +218,31 @@
         csic.platform,
         csic.country,
         crc.sale_type as saleType,
-        csic.similarity,
+        csic.r2_score as r2Score,
+        csic.mape_score as mapeScore,
+        csic.mae_score as maeScore,
+        csic.mse_score as mseScore,
+        csic.rmse_score as rmseScore,
         csic.remark,
         crc.create_user_name,
         crc.create_time as createTime,
         csic.update_time as updateTime,
-        csic.update_user_name
+        csic.update_user_name,
+        csic.status
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by csic.update_time desc,csic.id desc
+    </select>
+    <select id="dataIdPage" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$DataIdPageDTO">
+
+        select crc.id as cfgRuleCalcId,
+        csic.id
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
@@ -236,6 +251,12 @@
             and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
             and user_id = #{uid})
         </if>
-        order by csic.update_time desc,csic.id desc
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        crc.create_time desc,serial_no
     </select>
 </mapper>
