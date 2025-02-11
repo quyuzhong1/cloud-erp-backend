@@ -7646,14 +7646,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .setParamJson(shippingOrderDTO.getSoId());
                     addOrUpdateErrors.add(error);
                 }
-                BatchResultDTO batchResultDTO = BatchResultDTO.fail(shippingOrderDTO.getSoId(), shippingOrderDTO.getCode(), shippingOrderDTO.getMessage());
-                Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(Arrays.asList(error.getId()));
-                Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
-                if(rulePromptWordEntityMap.containsKey(error.getId())){
-                    RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(error.getId());
-                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
-                }
-                resultDTOList.add(batchResultDTO);
+                resultDTOList.add(BatchResultDTO.fail(shippingOrderDTO.getSoId(), shippingOrderDTO.getCode(), shippingOrderDTO.getMessage()));
             }
             updateList.add(soB2cEntity);
             updateInstockForcastList.add(updateForcastStatusDTO);
@@ -7664,6 +7657,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //更新操作同个事务
         soB2cService.orderForecastUpdateSoAndError(updateList, deleteErrorIds, addOrUpdateErrors, updateLogisticList);
+        if(CollectionUtils.isNotEmpty(addOrUpdateErrors)) {
+            List<String> errorIds = addOrUpdateErrors.stream().map(SoB2cErrorEntity::getId).collect(Collectors.toList());
+            Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(errorIds);
+            Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
+            addOrUpdateErrors.forEach(v->{
+                BatchResultDTO batchResultDTO = resultDTOList.stream().filter(t->t.getId().equals(v.getMainId())).findFirst().orElse(null);
+                if(Objects.isNull(batchResultDTO)){
+                    return;
+                }
+                if(rulePromptWordEntityMap.containsKey(v.getId())){
+                    RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(v.getId());
+                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                }
+            });
+        }
 
         return resultDTOList;
     }
