@@ -120,19 +120,23 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList, String id) {
-        AtomicInteger index = new AtomicInteger(0);
-        CompletableFuture.allOf(calcResultList.stream()
-                        .map(v -> CompletableFuture.runAsync(() -> executeTask(v, index), threadPoolTaskExecutor))
-                        .toArray(CompletableFuture[]::new))
-                .thenRunAsync(() -> {
-                    boolean allTasksFinished = calcResultList.stream().allMatch(task -> CalcStatusEnum.FINISH.getCode().equals(task.getStatus()));
-                    if (allTasksFinished) {
-                        CfgRuleCalcEntity entity = new CfgRuleCalcEntity();
-                        entity.setId(id);
-                        entity.setStatus(CalcStatusEnum.FINISH.getCode());
-                        cfgRuleCalcService.updateById(entity);
-                    }
-                });
+        CompletableFuture.runAsync(() -> {
+            AtomicInteger index = new AtomicInteger(0);
+            List<String> statusList = calcResultList.stream()
+                    .map(v -> CompletableFuture.supplyAsync(() -> {
+                        executeTask(v, index);
+                        return v.getStatus();
+                    }, threadPoolTaskExecutor)).collect(Collectors.toList()).stream()
+                    .map(CompletableFuture::join)
+                    .collect(Collectors.toList());
+            boolean allTasksFinished = statusList.stream().allMatch(task -> CalcStatusEnum.FINISH.getCode().equals(task));
+            if (allTasksFinished) {
+                CfgRuleCalcEntity entity = new CfgRuleCalcEntity();
+                entity.setId(id);
+                entity.setStatus(CalcStatusEnum.FINISH.getCode());
+                cfgRuleCalcService.updateById(entity);
+            }
+        }, threadPoolTaskExecutor);
     }
 
     private void executeTask(CalcSalesInfoDimDTO.CalcResultDTO dto, AtomicInteger index) {
@@ -162,6 +166,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             updateById(entity);
         } catch (Exception e) {
             dto.setStatus(CalcStatusEnum.DOING.getCode());
+            log.error("计算失败，原因：{}", e.getMessage(), e);
         }
     }
 
