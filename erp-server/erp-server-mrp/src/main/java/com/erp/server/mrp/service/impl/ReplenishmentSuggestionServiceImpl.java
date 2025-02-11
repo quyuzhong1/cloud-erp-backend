@@ -1213,6 +1213,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    public List<ReplenishmentSuggestionEntity> listByShopIdAndSkuId(List<String> shopIdList, List<String> skuIdList) {
+       return list(Wrappers.<ReplenishmentSuggestionEntity>lambdaQuery()
+               .in(ReplenishmentSuggestionEntity::getShopId, shopIdList)
+               .in(ReplenishmentSuggestionEntity::getSkuId, skuIdList)
+       );
+    }
+
+    @Override
     public Integer inventoryDetailTotal(InventoryDetailTotalDTO params) {
         ReplenishmentInventoryTypeEnum inventoryType = ReplenishmentInventoryTypeEnum.of(params.getType());
         int totalQty = 0;

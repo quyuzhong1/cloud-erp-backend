@@ -1,12 +1,7 @@
 package com.erp.server.oms.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
@@ -365,4 +360,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      */
     Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
 
+    /**
+     * 获取已授权店铺 (多平台)
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author Will
+     * @date: 2023/10/18 10:00
+     */
+    List<ShopInfoEntity> listAuthPlatform(List<String> platformDTO);
 }

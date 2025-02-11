@@ -5,7 +5,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
@@ -14,10 +16,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
-import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
-import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
-import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
-import com.erp.model.mrp.entity.ReplenishmentSuggestionDetailEntity;
+import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesQtyMapper;
@@ -272,6 +271,47 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
                 .eq(CfgRuleSalesQtyEntity::getPlatformType, platformType)
                 .eq(CfgRuleSalesQtyEntity::getType, skuType)
                 .last("LIMIT 1"));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList, String code) {
+        for (ReplenishmentSuggestionEntity suggestion : suggestionList) {
+            //移除旧数据
+            deleteByRefId(suggestion.getId());
+            //保存新数据
+            CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity = new CfgRuleSalesQtyEntity();
+            cfgRuleSalesQtyEntity.setId(IdWorker.getIdStr());
+            cfgRuleSalesQtyEntity.setSalesQtyType(SalesQtyTypeEnum.BY_CREATE_TIME.getCode());
+            cfgRuleSalesQtyEntity.setPlatformType(suggestion.getPlatformType());
+            cfgRuleSalesQtyEntity.setRefId(suggestion.getId());
+            cfgRuleSalesQtyEntity.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            save(cfgRuleSalesQtyEntity);
+            List<CfgRuleSalesFormulaEntity> ruleSalesFormulaList = cfgRuleSalesFormulaList.stream()
+                    .map(v -> {
+                        CfgRuleSalesFormulaEntity dto = new CfgRuleSalesFormulaEntity();
+                        BeanUtils.copyProperties(v, dto);
+                        dto.setSalesQtyId(cfgRuleSalesQtyEntity.getId());
+                        dto.setId(null);
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+            cfgRuleSalesFormulaService.saveBatch(ruleSalesFormulaList);
+            List<CfgRuleSalesDenoisingEntity> ruleSalesDenoisingList = cfgRuleSalesDenoisingList.stream()
+                    .map(v -> {
+                        CfgRuleSalesDenoisingEntity dto = new CfgRuleSalesDenoisingEntity();
+                        BeanUtils.copyProperties(v, dto);
+                        dto.setSalesQtyId(cfgRuleSalesQtyEntity.getId());
+                        dto.setId(null);
+                        return dto;
+                    })
+                    .collect(Collectors.toList());
+            cfgRuleSalesDenoisingService.saveBatch(ruleSalesDenoisingList);
+            String msg = CharSequenceUtil.format("从销量试算【试算编号：{}】应用了规则", code);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), suggestion.getId(), "应用");
+        }
+
+
     }
 
     @Override

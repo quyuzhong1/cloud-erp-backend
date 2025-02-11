@@ -2,7 +2,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -22,6 +21,7 @@ import com.erp.model.plm.dto.ProductInfoDTO;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
 import com.erp.model.sys.entity.MessageEntity;
 import com.erp.model.sys.entity.MessageUserReadEntity;
@@ -42,14 +42,13 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcResultMapper;
 import com.erp.server.wms.service.DictBasicService;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcResultService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,6 +97,9 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
 
     @Resource
     private MessageUserReadFeign messageUserReadFeign;
+
+    @Resource
+    private OperateLogService operateLogService;
     /**
      * 质检信息 暂存
      *
@@ -111,9 +113,12 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
     @Transactional(rollbackFor = Exception.class)
     public void add(String billId, QcResultDTO.AddDTO qcInfo) {
         QcResultEntity qcResultEntity = new QcResultEntity();
+        QcResultEntity oldEntity = null;
         String id = qcInfo.getId();
         if (CharSequenceUtil.isBlank(id)) {
             id = IdWorker.getIdStr();
+        }else{
+            oldEntity = getById(id);
         }
 
         String qcType = qcInfo.getQcType();
@@ -137,6 +142,12 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
         wmsAttachmentService.batchSave(qcAttachmentUrlList,qcAttachmentNameList, WmsConstant.QC_ATTACHMENT, id);
         this.saveOrUpdate(qcResultEntity);
 
+        //操作日志
+        if (Objects.isNull(oldEntity)) {
+            operateLogService.addModuleOperateLog("新增了质检单的质检信息", ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
+        }else {
+            operateLogService.addModuleOperateLogByObj(oldEntity, qcResultEntity, ModuleTypeEnum.QC_ORDER.getCode(), billId, "", "编辑了质检单的质检信息");
+        }
     }
 
 
