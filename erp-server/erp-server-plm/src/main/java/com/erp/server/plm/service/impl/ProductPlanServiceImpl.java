@@ -9,11 +9,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.TabListDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.MonthEnum;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.*;
 import com.common.business.enums.ProductTypeEnum;
-import com.common.business.enums.SeasonEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -34,6 +34,7 @@ import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductPlanExcelListener;
@@ -1053,6 +1054,33 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 productPlanEntity.setProjectApprovalDate(projectApprovalDate.toLocalDate());
             }
         }
+    }
+
+    @Override
+    public List<TabListDTO> tabList(PermissionsDTO dto) {
+        List<TabListDTO> resultList = new LinkedList<>();
+        ProductPlanSearchDTO productPlanSearchDTO = new ProductPlanSearchDTO();
+        productPlanSearchDTO.setPermissionSql(dto.getPermissionSql());
+        productPlanSearchDTO.setType("0");
+
+        Integer allCount = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("all","全部" , allCount));
+
+        // 尚未开始
+        productPlanSearchDTO.setType("1");
+        Integer type1Count = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("1","尚未开始" ,type1Count));
+
+        // 已立项
+        productPlanSearchDTO.setType("2");
+        Integer type2Count = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("2","已立项" ,type2Count));
+
+        // 开发中
+        productPlanSearchDTO.setType("3");
+        Integer type3Count = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("3","开发中" ,type3Count));
+        return resultList;
     }
 
 }

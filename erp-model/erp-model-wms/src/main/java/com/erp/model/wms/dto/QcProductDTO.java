@@ -5,7 +5,10 @@ import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -236,10 +239,5 @@ public class QcProductDTO {
          * 产品名称地址集合
          */
         private List<String> productImageNameList;
-
-
-
-
-
     }
 }

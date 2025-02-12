@@ -1627,6 +1627,16 @@ public class SoB2cDTO implements Serializable {
          */
         private List<String> countryIdList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -1711,6 +1721,11 @@ public class SoB2cDTO implements Serializable {
          * 主表信息
          */
         private List<MergeMainDTO> mainList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data

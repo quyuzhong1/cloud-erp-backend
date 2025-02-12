@@ -3,6 +3,7 @@ package com.erp.server.mrp.controller.api;
 
 import com.common.business.dto.base.BatchParamsDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -31,6 +32,16 @@ public class CfgRuleCalcController extends BaseController {
 
     @Resource
     private CfgRuleCalcService cfgRuleCalcService;
+
+    /**
+     * tab
+     * @param dto 参数
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<CfgRuleCalcDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        List<CfgRuleCalcDTO.TabListDTO> tabList = cfgRuleCalcService.tabList(dto);
+        return success(tabList);
+    }
 
     /**
     * 新增

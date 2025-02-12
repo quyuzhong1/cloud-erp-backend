@@ -27,6 +27,7 @@ import com.erp.model.plm.vo.PreTaskListVO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProjectTaskExcelListener;
+import com.erp.server.plm.query.ProjectTaskAllQueryHandler;
 import com.erp.server.plm.query.ProjectTaskQueryHandler;
 import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
@@ -581,6 +582,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/all/paging")
+    @WebAdvanceQuery(handler = ProjectTaskAllQueryHandler.class)
     public ApiResult<PagingVO<TaskPagingShowDTO>> expertPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.expertPaging(searchParamDTO);
         return success(pagingVO);
@@ -598,6 +600,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/assignToMe/paging")
+    @WebAdvanceQuery(handler = ProjectTaskAllQueryHandler.class)
     public ApiResult<PagingVO<TaskPagingShowDTO>> assignToMePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
         return success(pagingVO);
@@ -614,6 +617,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/assignToMe/waitFinish/paging")
+    @WebAdvanceQuery(handler = ProjectTaskAllQueryHandler.class)
     public ApiResult<PagingVO<TaskPagingShowDTO>> assignToMeWaitFinishPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.assignToMePaging(searchParamDTO);
         return success(pagingVO);
@@ -625,6 +629,7 @@ public class ProjectTaskController extends BaseController {
      * @return
      */
     @PostMapping("/assignToMe/waitAudit/paging")
+    @WebAdvanceQuery(handler = ProjectTaskAllQueryHandler.class)
     public ApiResult<PagingVO<TaskPagingShowDTO>> assignToMeWaitAuditPaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.assignToMeWaitAuditPaging(searchParamDTO);
         return success(pagingVO);
@@ -641,6 +646,7 @@ public class ProjectTaskController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/myCreate/paging")
+    @WebAdvanceQuery(handler = ProjectTaskAllQueryHandler.class)
     public ApiResult<PagingVO<TaskPagingShowDTO>> myCreatePaging(@Validated @RequestBody PagingDTO<TaskSearchParamDTO> searchParamDTO) {
         PagingVO<TaskPagingShowDTO> pagingVO = projectTaskService.myCreatePaging(searchParamDTO);
         return success(pagingVO);

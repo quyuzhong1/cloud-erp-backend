@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
@@ -11,6 +12,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -137,10 +139,7 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -2688,6 +2687,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public PagingVO<SoB2cDTO.MergeListDTO> mergePaging(PagingDTO<SoB2cDTO.MergePagingParamDTO> pagingParamDTO) {
+        StopWatch stopWatch = new StopWatch("mergePaging");
+        stopWatch.start("query");
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         //查询店铺设置权限
@@ -2696,8 +2697,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return new PagingVO(new Page<>());
         }
         IPage<SoB2cDTO.MergeListDTO> pageData = this.baseMapper.mergePaging(query, pagingParamDTO.getParams(), shopAuthResultDTO);
+        stopWatch.stop();
+        stopWatch.start("fillMergeData");
         List<SoB2cDTO.MergeListDTO> records = pageData.getRecords();
         fillMergeData(records, shopAuthResultDTO);
+        stopWatch.stop();
+        log.warn(stopWatch.prettyPrint());
         return new PagingVO(pageData);
     }
 
@@ -3967,9 +3972,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(shopList)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        Map<String, ShopInfoEntity> shopMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity()));
         //国家信息
         List<String> countryIdList = shopList.stream().map(ShopInfoEntity::getDictCountryCode).collect(Collectors.toList());
-        List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByIds(countryIdList);
+        Map<String, String> countryMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(countryIdList)){
+            List<DictCountryEntity> dictCountryList = sysDictFeign.listCountryByIds(countryIdList);
+            if(CollUtil.isNotEmpty(dictCountryList)){
+                countryMap = dictCountryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn));
+            }
+        }
 
         //平台
         List<String> platformList = records.stream().map(SoB2cDTO.MergeListDTO::getDictPlatform)
@@ -4017,21 +4029,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             log.error("未发现产品详细，skuIdList = {}", skuIdList);
             throw new ServiceException(ApiError.ERROR_95084);
         }
+        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuName));
+
 
         for (SoB2cDTO.MergeListDTO mergeListDTO : records) {
 
             //店铺信息
-            ShopInfoEntity shopInfoEntity = shopList.stream().filter(obj -> obj.getId().equals(mergeListDTO.getShopId())).findFirst().orElse(null);
+            ShopInfoEntity shopInfoEntity = shopMap.getOrDefault(mergeListDTO.getShopId(),null);
             if (ObjectUtils.isEmpty(shopInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92058);
             }
             mergeListDTO.setShopName(shopInfoEntity.getName());
             //国家信息
-            if (CollectionUtils.isNotEmpty(dictCountryList)) {
-                String countryName = dictCountryList.stream().filter(obj -> obj.getId().equals(shopInfoEntity.getDictCountryCode()))
-                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getNameCn())).orElse("");
-                mergeListDTO.setCountyName(countryName);
-            }
+            mergeListDTO.setCountyName(countryMap.getOrDefault(shopInfoEntity.getDictCountryCode(), CharSequenceUtil.EMPTY));
             //主表数据
             if (CollectionUtils.isNotEmpty(mergeMainList)) {
                 List<SoB2cDTO.MergeMainDTO> mainList = mergeMainList.stream().filter(obj -> mergeListDTO.getDictPlatform().equals(obj.getDictPlatform())
@@ -4056,9 +4066,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     }
                     ids.add(mergeMainDTO.getId());
                     //产品名称
-                    String productName = skuList.stream().filter(obj -> obj.getSkuId().equals(mergeMainDTO.getSkuId())).findFirst()
-                            .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
-                    mergeMainDTO.setProductName(productName);
+                    mergeMainDTO.setProductName(skuMap.getOrDefault(mergeMainDTO.getSkuId(),CharSequenceUtil.EMPTY));
                     //本位币金额
                     mergeMainDTO.setAmount(MathUtil.multiply(mergeMainDTO.getSourceAmount(), mergeMainDTO.getExchangeRate()));
                     mergeMainDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
@@ -5234,55 +5242,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
-    /**
-     * 报表管理 销售统计
-     *
-     * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
-     * @author yl
-     * @date 2023-09-01 11:19
-     */
-    @Override
-    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        ReportDTO.ProductSalesPagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
-        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        //sku 创建时间
-        List<LocalDateTime> skuCreateTimeList = params.getSkuCreateTimeList();
-        List<String> skuIdList = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
-            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
-            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(skuIdList)) {
-                return new PagingVO<>(new Page<>());
-            }
-        }
-        IPage pageData = baseMapper.productSalesPaging(query, params, skuIdList);
-        List<ReportDTO.ProductSalesPagingViewDTO> list = pageData.getRecords();
-        Duration between = LocalDateTimeUtil.between(params.getOrderCreateTimeList().get(0), params.getOrderCreateTimeList().get(1));
-        long diffDays = between.toDays();
-        if (diffDays == 0) {
-            diffDays = 1;
-        }
-        fillProductSalesList(list, diffDays);
-        return new PagingVO<>(pageData);
 
-    }
-
-
-    /**
-     * 导出 销售统计
-     *
-     * @param params
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-09-04 16:39
-     */
-    @Override
-    public Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO params) {
-        downloadTaskFeign.saveDownloadTask("产品销售统计", EXPORT_OMS_SO_B2C_PRODUCT_SALES.getCode(), params);
-        return Boolean.TRUE;
-    }
 
     @Override
     public SoB2cDTO.FinancialInfoDTO getFinancialInfoById(SoB2cDTO.FinancialParamDTO dto) {
@@ -5532,45 +5492,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         soB2cFinanceService.add(addDTO);
     }
 
-    /**
-     * 填充销售订单数据
-     *
-     * @param list
-     * @param diffDays
-     */
-    private void fillProductSalesList(List<ReportDTO.ProductSalesPagingViewDTO> list, long diffDays) {
-        List<String> shopIdList = list.stream().map(ReportDTO.ProductSalesPagingViewDTO::getShopId).collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = CollectionUtils.isNotEmpty(shopIdList) ? shopInfoService.listByIds(shopIdList) : Collections.emptyList();
-        //平台skuno
-        List<String> platformSkuNoList = list.stream().map(ReportDTO.ProductSalesPagingViewDTO::getPlatformSkuNo).collect(Collectors.toList());
-
-        List<SkuMappingDTO.SkuDTO> skuInfoList = skuMappingService.listByPlatformSkuNoList(platformSkuNoList);
-        for (ReportDTO.ProductSalesPagingViewDTO item : list) {
-            String shopId = item.getShopId();
-            //平台sku
-            String platformSkuNo = item.getPlatformSkuNo();
-            SkuMappingDTO.SkuDTO sku = skuInfoList.stream().filter(s -> s.getPlatformSkuNo().equals(platformSkuNo)).
-                    findFirst().orElse(null);
-            String productSkuNo = "";
-            String sellerSkuNo = "";
-            if (Objects.nonNull(sku)) {
-                productSkuNo = sku.getProductSkuNo();
-                sellerSkuNo = sku.getFlagSkuNo();
-            }
-            item.setProductSkuNo(productSkuNo);
-            item.setSellerSkuNo(sellerSkuNo);
-            String shopName = shopInfoList.stream().filter(s -> s.getId().equals(shopId)).
-                    findFirst().map(ShopInfoEntity::getName).orElse("");
-            item.setShopName(shopName);
-            Integer qty = item.getQty();
-            Integer avgQty = Math.toIntExact(qty / diffDays);
-            item.setAvgQty(avgQty);
-            BigDecimal amount = item.getAmount();
-            BigDecimal avgAmount = amount.divide(new BigDecimal(diffDays), 4, RoundingMode.HALF_UP);
-            item.setAvgAmount(avgAmount);
-
-        }
-    }
 
 
     @Override
@@ -7291,28 +7212,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return new PagingVO<>(records, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
-    @Override
-    public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        //sku 创建时间
-        List<LocalDateTime> skuCreateTimeList = dto.getParams().getSkuCreateTimeList();
-        List<String> skuIdList = Lists.newArrayList();
-        if (CollectionUtils.isNotEmpty(skuCreateTimeList)) {
-            List<ProductDetailEntity> skuList = plmTaskFeign.listByCreateTimeList(skuCreateTimeList);
-            skuIdList = skuList.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(skuIdList)) {
-                return new PagingVO<>();
-            }
-        }
-        //获取到产品销售统计导出的数据
-        Page<ReportDTO.ProductSalesPagingViewDTO> page = baseMapper.listProductSalesExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), skuIdList);
-        Duration between = LocalDateTimeUtil.between(dto.getParams().getOrderCreateTimeList().get(0), dto.getParams().getOrderCreateTimeList().get(1));
-        long diffDays = between.toDays();
-        if (diffDays == 0) {
-            diffDays = 1;
-        }
-        fillProductSalesList(page.getRecords(), diffDays);
-        return new PagingVO<>(page);
-    }
 
     @Override
     public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail() {
@@ -9448,4 +9347,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         return "";
     }
+
+    @Override
+    public IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.productSalesPaging(query, params, skuIdList);
+    }
+
+    @Override
+    public Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList) {
+        return baseMapper.listProductSalesExport(query, params, skuIdList);
+    }
+
 }

@@ -123,8 +123,6 @@ public class QcInfoEntity extends BaseEntity<QcInfoEntity> {
     private String sourceCode;
 
 
-    
-
     public static final String QC_DEPT_ID = "qc_dept_id";
 
     public static final String QC_DEPT_NAME = "qc_dept_name";

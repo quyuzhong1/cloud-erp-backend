@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -12,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.server.wms.query.OverseasInventoryQueryHandler;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +56,7 @@ public class OverseasInventoryController extends BaseController {
             menuCode = "wms:overseasInventory:paging",
             tableAlias = "oi"
     )
+    @WebAdvanceQuery(handler = OverseasInventoryQueryHandler.class)
     public ApiResult<PagingVO<OverseasInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<OverseasInventoryDTO.PagingParamDTO> dto) {
         PagingVO<OverseasInventoryDTO.ListDTO> result = overseasInventoryService.paging(dto);
         return success(result);
@@ -85,6 +88,7 @@ public class OverseasInventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外仓库存")
     @PostMapping(value = "/exportExcel")
+    @WebAdvanceQuery(handler = OverseasInventoryQueryHandler.class)
     public ApiResult<?> exportExcel(@RequestBody @Validated OverseasInventoryDTO.ExportDTO dto) {
         Boolean flag = overseasInventoryService.exportExcel(dto);
         return flag ? success() : failure();

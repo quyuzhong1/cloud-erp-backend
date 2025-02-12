@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -116,14 +115,16 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         int allCount = dbList.stream().mapToInt(StocktakingTaskDTO.TabDTO::getCount).sum();
         all.setTabFlag(WmsConstant.ALL);
         all.setCount(allCount);
+        all.setTabFlagName("全部");
         tabList.add(all);
-        for (ApproveStatusEnum approveStatus : ApproveStatusEnum.values()) {
+        for (ApproveStatusWithoutRejectEnum approveStatus : ApproveStatusWithoutRejectEnum.values()) {
             String tabFlag = approveStatus.getStatus();
             StocktakingTaskDTO.TabDTO tabDTO = new StocktakingTaskDTO.TabDTO();
             tabDTO.setTabFlag(tabFlag);
             int count = dbList.stream().filter(a -> tabFlag.equals(a.getTabFlag())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
             tabDTO.setCount(count);
+            tabDTO.setTabFlagName(approveStatus.getName());
             tabList.add(tabDTO);
         }
         return tabList;
@@ -140,12 +141,12 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         StocktakingTaskDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        String tabFlag = params.getTabFlag();
-        //对应tab的状态
-        List<String> tabList = new ArrayList<>(1);
-        if (!WmsConstant.ALL.equals(tabFlag)) {
-            tabList.add(tabFlag);
-        }
+//        String tabFlag = params.getTabFlag();
+//        //对应tab的状态
+//        List<String> tabList = new ArrayList<>(1);
+//        if (!WmsConstant.ALL.equals(tabFlag)) {
+//            tabList.add(tabFlag);
+//        }
         List<String> mainIdList = new ArrayList<>();
         //仓库id
         String warehouseId = params.getWarehouseId();
@@ -157,7 +158,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
             }
             mainIdList.addAll(mainIds);
         }
-        IPage pageData = baseMapper.paging(query, params, tabList, mainIdList);
+        IPage pageData = baseMapper.paging(query, params, null, mainIdList);
         List<StocktakingTaskDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);

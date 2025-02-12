@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
@@ -12,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * @Date 2023-04-17 10:32
  * @Created by yl
  */
-public enum QcBillStatusEnum {
+public enum QcBillStatusEnum implements EnumMessage {
 
     DRAFT("draft", "暂存"),
     WAIT_QC("waitQc", "待质检"),

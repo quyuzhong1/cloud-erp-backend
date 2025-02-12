@@ -13,6 +13,7 @@ import com.erp.model.mrp.enums.*;
 import lombok.*;
 import org.springframework.util.ObjectUtils;
 
+import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -39,8 +40,8 @@ public class CalcSalesInfoDimDTO implements Serializable {
     /**
      * 高级查询参数
      */
-    @Data
-    @NoArgsConstructor
+    @Setter
+    @Getter
     public static class PagingParamDTO extends SortDTO {
 
         /**
@@ -63,8 +64,8 @@ public class CalcSalesInfoDimDTO implements Serializable {
     /**
      * 高级查询参数
      */
-    @Data
-    @NoArgsConstructor
+    @Getter
+    @Setter
     public static class ParamDTO extends SortDTO {
 
         /**
@@ -180,9 +181,13 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String cfgRuleCalcId;
 
         /**
-         * 相似度
+         * MAPE
          */
-        private BigDecimal similarity;
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
     }
 
     @Getter
@@ -309,7 +314,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 编码
          */
         private String code;
-
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
     }
 
     @Getter
@@ -353,6 +362,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算销量去噪信息
          */
         private List<CfgRuleSalesDenoisingCalcEntity> salesDenoising;
+
+        /**
+         * 状态
+         */
+        private String status;
     }
 
     @Getter
@@ -404,9 +418,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private List<Integer> realSalesList;
 
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
 
     }
 
@@ -563,7 +593,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * 偏差比例
          */
-        private BigDecimal deviationRatio;
+        private String deviationRatio;
         /**
          * 近三日销量
          */
@@ -638,9 +668,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private BigDecimal threeHundredAndSixtySalesQty;
 
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
 
         public static SalesInfoEstimateDTO buildSalesInfoEstimateDTO(CalcSalesInfoEstimateEntity entity, ExportDTO record, String shopName, String platform, Map<LocalDate, Integer> realSalesQtyMap) {
             StringBuilder salesInfoEstimateType = new StringBuilder();
@@ -680,9 +726,10 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setSalesInfoEstimateType(salesInfoEstimateType.toString());
             dto.setRule(rule);
             dto.setEstimateQty(entity.getQty());
-            Integer realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
+            int realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
             dto.setRealSalesQty(realQty);
-            dto.setDeviationRatio(realQty == 0 ? BigDecimal.ZERO : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP));
+            String deviationRatio = realQty == 0 ? "∞" : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP).multiply(new BigDecimal(100)) + "%";
+            dto.setDeviationRatio(deviationRatio);
             dto.setAvgThreeSalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE.getName()));
             dto.setAvgSevenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.SEVEN.getName()));
             dto.setAvgFourteenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.FOURTEEN.getName()));
@@ -701,7 +748,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setOneHundredAndEightySalesQty(salesQtyMap.get(TimePeriodEnum.ONE_HUNDRED_AND_EIGHTY.getName()));
             dto.setTwoHundredAndSeventySalesQty(salesQtyMap.get(TimePeriodEnum.TWO_HUNDRED_AND_SEVENTY.getName()));
             dto.setThreeHundredAndSixtySalesQty(salesQtyMap.get(TimePeriodEnum.THREE_HUNDRED_AND_SIXTY.getName()));
-            dto.setSimilarity(record.getSimilarity());
+            dto.setR2Score(record.getR2Score());
+            dto.setMapeScore(record.getMapeScore());
+            dto.setMaeScore(record.getMaeScore());
+            dto.setMseScore(record.getMseScore());
+            dto.setRmseScore(record.getRmseScore());
             return dto;
         }
     }
@@ -722,6 +773,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "试算模板不能为空")
         private String cfgRuleCalcId;
     }
 
@@ -775,9 +827,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private LocalDate endCalcDate;
 
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
     }
 
     @Getter
@@ -939,9 +1007,36 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private Boolean favorite;
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
+
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
+
+        /**
+         * 序号
+         */
+        private String serialNo;
     }
 
     @Getter
@@ -999,6 +1094,12 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+
+        /**
+         * 状态
+         */
+        @Dict(enumClass = CalcStatusEnum.class)
+        private String status;
     }
 
     /**
@@ -1052,6 +1153,13 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 结束日期
          */
         private LocalDate endDate;
+
+        /**
+         * 预测类型
+         * @see MetricsTypeEnum
+         */
+        @NotBlank(message = "试算类型不能为空")
+        private String metricsType;
     }
 
     /**
@@ -1085,9 +1193,14 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String name;
 
         /**
+         * 模板编码
+         */
+        private String code;
+
+        /**
          * 相似度
          */
-        private BigDecimal similarity;
+        private BigDecimal similarity = BigDecimal.ZERO;
 
         /**
          * 销量
@@ -1132,6 +1245,10 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算模板名字
          */
         private String name;
+        /**
+         * code
+         */
+        private String code;
         /**
          * 试算开始日期
          */
@@ -1249,9 +1366,25 @@ public class CalcSalesInfoDimDTO implements Serializable {
          */
         private String platform;
         /**
-         * 相似度
+         * MAE
          */
-        private BigDecimal similarity;
+        private BigDecimal maeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal mseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal rmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal mapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal r2Score;
 
         /**
          * 修改人名称
@@ -1275,5 +1408,100 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 备注
          */
         private String remark;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 状态名
+         */
+        private String statusName;
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 状态
+         */
+        private String status;
+        /**
+         * 状态名
+         */
+        private String statusName;
+
+    }
+
+    @Getter
+    @Setter
+    public static class DataIdPageDTO {
+
+        /**
+         * 配置id
+         */
+        private String cfgRuleCalcId;
+        /**
+         * 主表id
+         */
+        private String id;
+
+    }
+
+    @Getter
+    @Setter
+    public static class RulesApplyDTO {
+
+        /**
+         * id
+         */
+        @NotBlank(message = "任务id")
+        private String id;
+        /**
+         * 应用方式
+         * @see ApplyTypeEnum
+         */
+        @NotBlank(message = "应用方式不能为空")
+        private String applyType;
+        /**
+         * sku
+         */
+        private List<String> skuList;
+
+        /**
+         * 平台店铺
+         */
+        private List<PlatformShopDTO> shopList;
+    }
+
+    @Getter
+    @Setter
+    public static class PlatformShopDTO {
+        /**
+         * sku
+         */
+        private List<String> platformList;
+        /**
+         * 平台店铺
+         */
+        private List<String> shopList;
+    }
+
+    @Getter
+    @Setter
+    public static class RulesApplyDetailDTO {
+
+        /**
+         * sku
+         */
+        private List<CfgRuleCalcDTO.SkuDTO> skuList;
+        /**
+         * 平台店铺
+         */
+        private List<PlatformShopDTO> shopList;
     }
 }

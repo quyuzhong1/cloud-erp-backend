@@ -31,6 +31,8 @@
             pott.thisWeekUnfinishedCount,
             poi.end_time AS planStartDate,
             poi.start_time AS planEndDate,
+            poi.create_time AS createTime,
+            poi.update_time AS updatetime,
             CASE WHEN pott.finished_count = pott.total_task_count THEN to_date( pott.reality_end_time, 'YYYY-MM-dd' ) ELSE null END as actualFinishDate
         FROM product_info pi
         LEFT JOIN project_info poi ON pi.id = poi.product_id AND poi.is_deleted = FALSE
@@ -89,7 +91,7 @@
             WHERE pot.is_deleted = FALSE
             GROUP BY pot.product_id
         ) pott ON pott.product_id = pi.id
-        WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
+        WHERE ${params.sqlMap.default} and pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
         <if test="params.chargeIdSplit != null and params.chargeIdSplit != ''">
             AND string_to_array(pi.charge_id,',') &amp;&amp; string_to_array(#{params.chargeIdSplit},',')
         </if>
@@ -254,8 +256,9 @@
             WHERE pot.is_deleted = FALSE
             GROUP BY pot.product_id
         ) pott ON pott.product_id = pi.id
-        WHERE pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
-
+        WHERE
+        ${params.sqlMap.default} and
+        pi.is_deleted = FALSE AND pi.is_finished_product_dev = 1
         <if test="params.ids != null and params.ids.size > 0">
             AND pi.id IN
             <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
