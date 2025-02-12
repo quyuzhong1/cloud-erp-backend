@@ -264,6 +264,18 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         lambdaUpdate().eq(VirtualTransFlowEntity::getId,id).set(VirtualTransFlowEntity::getRemark,remark).update();
     }
 
+    @Override
+    public VirtualTransFlowEntity getUnApprovedTxnFlowBySourceDetailId(String sourceType, String sourceDetailId, LocalDateTime dateTime) {
+        return   lambdaQuery()
+                .eq(VirtualTransFlowEntity::getSourceType, sourceType)
+                .eq(VirtualTransFlowEntity::getSourceDetailId, sourceDetailId)
+                .eq(VirtualTransFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
+                .eq(VirtualTransFlowEntity::getIsUnapproved, Boolean.FALSE)
+                .le(VirtualTransFlowEntity::getTradeTime, dateTime)
+                .last("limit 1")
+                .one();
+    }
+
     /**
      * 重算库存流水
      * @author will
