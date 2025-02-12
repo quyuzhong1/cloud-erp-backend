@@ -212,7 +212,6 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             if (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
                     || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
                     || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())) {
-                transFlowEntity.setParentVirtualTransFlowId(txnFlow.getId());
                 addWmsVirtualDetailMsg(transFlowEntity);
             }
         });
