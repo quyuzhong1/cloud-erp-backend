@@ -270,7 +270,6 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .eq(VirtualTransFlowEntity::getSourceType, sourceType)
                 .eq(VirtualTransFlowEntity::getSourceDetailId, sourceDetailId)
                 .eq(VirtualTransFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
-                .eq(VirtualTransFlowEntity::getIsUnapproved, Boolean.FALSE)
                 .le(VirtualTransFlowEntity::getTradeTime, dateTime)
                 .last("limit 1")
                 .one();
