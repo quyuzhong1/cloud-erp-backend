@@ -653,7 +653,7 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
-        ORDER BY li.platform_sku_no,li.create_time DESC
+        ORDER BY li.create_time DESC, li.platform_sku_no
     </select>
     <select id="listByAccountAndDictPlatform" resultType="com.erp.model.oms.dto.SkuMappingDTO$PagingViewDTO">
         SELECT
