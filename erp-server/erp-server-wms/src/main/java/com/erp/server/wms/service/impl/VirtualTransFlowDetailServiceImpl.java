@@ -288,9 +288,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             throw new ServiceException("暂未入库反审，不支持消费");
         }
         //根据当前流水id查询原流水信息
-        VirtualTransFlowEntity parentEntity = virtualTransFlowService.getUnApprovedTxnFlowBySourceDetailId(entity.getSourceType(), entity.getSourceDetailId(),entity.getTradeTime());
-
-        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getById(parentEntity.getId());
+        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getUnApprovedTxnFlowBySourceDetailId(entity.getSourceType(), entity.getSourceDetailId(),entity.getTradeTime());
         if (ObjUtil.isEmpty(oldTransFlowEntity)) {
             throw new ServiceException("未找到原虚拟仓出库库存流水信息");
         }
@@ -301,7 +299,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
          * 4、重算原出库流水时间后的结余
          */
         //删除原有出库库龄流水信息
-        List<VirtualTransFlowDetailEntity> oldFlowDetailList = this.listByVirtualTransFlowId(parentEntity.getId());
+        List<VirtualTransFlowDetailEntity> oldFlowDetailList = this.listByVirtualTransFlowId(oldTransFlowEntity.getId());
         if (CollUtil.isEmpty(oldFlowDetailList)) {
             throw new ServiceException("未找到原虚拟仓出库库龄流水信息");
         }
