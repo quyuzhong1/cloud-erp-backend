@@ -180,8 +180,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
     @Override
     public void handleAddTransFlowDetail(List<VirtualTransFlowEntity> value) {
-        List<VirtualTransFlowEntity> list = value.stream().sorted(Comparator.comparing(VirtualTransFlowEntity::getTradeTime)).collect(Collectors.toList());
-        for (VirtualTransFlowEntity entity : list) {
+        for (VirtualTransFlowEntity entity : value) {
             List<VirtualTransFlowDetailEntity> flowDetailList = this.listByVirtualTransFlowId(entity.getId());
             if (CollUtil.isNotEmpty(flowDetailList)) {
                 continue;
@@ -203,7 +202,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                     handleOutstockVirtualTransFlowDetail(entity);
                 }
             } catch (Exception e) {
-                log.error("虚拟仓流水更新失败，msg = {}",e.getMessage());
+                log.error("虚拟仓流水更新失败，id = {}，msg = {}",entity.getId(),e.getMessage());
                 virtualTransFlowService.updateRemark(entity.getId(),"虚拟仓流水更新失败");
             }
         }
