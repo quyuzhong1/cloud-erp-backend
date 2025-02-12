@@ -662,6 +662,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     */
     private void approveProcess(FirstMileDeliveryEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        entity.setDeliveryDate(dto.getDeliveryDate());
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
