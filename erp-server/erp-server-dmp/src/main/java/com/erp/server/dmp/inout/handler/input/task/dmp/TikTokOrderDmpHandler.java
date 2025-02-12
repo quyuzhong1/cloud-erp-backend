@@ -177,9 +177,11 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 //发货时间
                 Object deliveryTimeObj = dmpDataMap.get("deliveryTime");
                 if (deliveryTimeObj != null) {
-                    // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj + "")), ZoneId.systemDefault());
-                    dmpDataMap.put("deliveryTime", payTime);
+                    if (Long.valueOf(deliveryTimeObj + "") > 0) {
+                        // 使用Instant类将Unix时间戳转换为LocalDateTime对象
+                        LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj + "")), ZoneId.systemDefault());
+                        dmpDataMap.put("deliveryTime", payTime);
+                    }
                 }
 
                 //支付信息
