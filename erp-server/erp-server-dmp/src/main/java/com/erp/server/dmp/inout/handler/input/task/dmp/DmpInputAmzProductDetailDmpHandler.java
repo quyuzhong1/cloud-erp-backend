@@ -62,10 +62,10 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
         paramDataList.add(new ParamData(NEXT_LEVEL_ID, NEXT_LEVEL_ID, PannoEnum.EQ, shopId));
         List<Map<String, Object>> listingDetailMongoData = mongoService.findMongoData(paramDataList, childMongoStorageName);
 
-        // 当前站点所以价格信息
-        List<ParamData> paramDataPricingList = new ArrayList<>();
-        paramDataPricingList.add(new ParamData(SHOP_ID, SHOP_ID, PannoEnum.EQ, shopId));
-        List<Map<String, Object>> listingPricingMongoData = mongoService.findMongoData(paramDataPricingList, AMAZON_LISTING_PRICING_DATA);
+        // 当前站点所有价格信息
+//        List<ParamData> paramDataPricingList = new ArrayList<>();
+//        paramDataPricingList.add(new ParamData(SHOP_ID, SHOP_ID, PannoEnum.EQ, shopId));
+//        List<Map<String, Object>> listingPricingMongoData = mongoService.findMongoData(paramDataPricingList, AMAZON_LISTING_PRICING_DATA);
 
         // 按listing报告内容
         List<ParamData> chlidParamDataList = new ArrayList<>();
@@ -94,23 +94,24 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
             if (StringUtils.isNotBlank(asin1)) {
                 // 默认asin=asin1
                 listingMongoDataItem.put("asin", asin1);
-            }
-            // 匹配价格信息补充ASIN
-            Map<String, Object> pricingMap = listingDetailMongoData
-                    .stream()
-                    .filter(e -> e.getOrDefault(SELLER_SKU, "").toString().equalsIgnoreCase(sellerSku))
-                    .findFirst()
-                    .orElse(null);
-            if (null != pricingMap){
-                Object productObj = pricingMap.get("product");
-                if (null != productObj){
-                    JSONObject productJsonObj = JSONObject.parseObject(JSONUtil.toJsonStr(productObj));
-                    JSONObject identifiersObj = productJsonObj.getJSONObject("identifiers");
-                    if (null != identifiersObj){
-                        IdentifierType identifiertype = identifiersObj.toJavaObject(IdentifierType.class);
-                        ASINIdentifier marketplaceASIN = identifiertype.getMarketplaceASIN();
-                        if (null != marketplaceASIN){
-                            listingMongoDataItem.put("asin", marketplaceASIN.getASIN());
+            } else {
+                // 匹配明细信息补充ASIN
+                Map<String, Object> detailMap = listingDetailMongoData
+                        .stream()
+                        .filter(e -> e.getOrDefault(SELLER_SKU, "").toString().equalsIgnoreCase(sellerSku))
+                        .findFirst()
+                        .orElse(null);
+                if (null != detailMap){
+                    Object productObj = detailMap.get("product");
+                    if (null != productObj){
+                        JSONObject productJsonObj = JSONObject.parseObject(JSONUtil.toJsonStr(productObj));
+                        JSONObject identifiersObj = productJsonObj.getJSONObject("identifiers");
+                        if (null != identifiersObj){
+                            IdentifierType identifiertype = identifiersObj.toJavaObject(IdentifierType.class);
+                            ASINIdentifier marketplaceASIN = identifiertype.getMarketplaceASIN();
+                            if (null != marketplaceASIN){
+                                listingMongoDataItem.put("asin", marketplaceASIN.getASIN());
+                            }
                         }
                     }
                 }
