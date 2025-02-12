@@ -211,7 +211,6 @@
     <select id="listApproveFlowDetail" resultType="com.erp.model.wms.entity.VirtualTransFlowEntity">
         select
             <include refid="Base_Column_List" />
-            ,vtf.id as parentVirtualTransFlowId
         from virtual_trans_flow vtf where is_deleted = false
         and ((
             (source_type = '' and ((dict_inventory_status = 'usable' ) or (dict_inventory_status = 'frozen' and 0 > qty)) )
@@ -234,5 +233,6 @@
         <if test="dto.startDate != null">
             and vtf.bill_date >= #{dto.startDate}
         </if>
+        order by vtf.trade_time asc
     </select>
 </mapper>
