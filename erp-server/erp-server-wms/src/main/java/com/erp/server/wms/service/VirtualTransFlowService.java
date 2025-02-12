@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -9,6 +10,7 @@ import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -105,6 +107,14 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      */
     List<ReportOrderSalesDTO.LastVirtualQtyDTO> listLastVirtualQty(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList, LocalDate localDate);
     /**
+     * 查询流水
+     * @author will
+     * @date 2024/12/20 9:50
+     * @param deliveryDetailIdList
+     * @return List<VirtualTransFlowEntity>
+     */
+    List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList);
+    /**
      * 查询虚拟仓即时库存id
      * @author will
      * @date 2024/12/12 11:44
@@ -163,11 +173,12 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      */
     void updateRemark(String id, String remark);
     /**
-     * 查询流水
-     * @author will
-     * @date 2024/12/20 9:50
-     * @param deliveryDetailIdList
-     * @return List<VirtualTransFlowEntity>
+     *
+     * @Auther will
+     * @Date 2025/2/12 09:40
+     * @param sourceType
+     * @param sourceDetailId
+     * @return VirtualTransFlowEntity
      */
-    List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList);
+    VirtualTransFlowEntity getUnApprovedTxnFlowBySourceDetailId(String sourceType, String sourceDetailId, LocalDateTime dateTime);
 }
