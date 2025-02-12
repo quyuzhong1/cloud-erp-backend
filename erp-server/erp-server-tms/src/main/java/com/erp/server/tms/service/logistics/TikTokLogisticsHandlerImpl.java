@@ -6,6 +6,8 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -13,6 +15,7 @@ import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
 import com.sdk.tms.tiktok.service.TikTokShipperService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -66,8 +69,17 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
+    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        return null;
+    }
+
+    @Override
     public ApiResult<Object>authorization(Map<String, String> authMap) {
-        return ApiResult.error(-1, "功能未开放");
+        List<ShippingProvidersBean> providersBeanList = tikTokShipperService.sendTikTokLogisticsChannel(authMap.get("shopId"));
+        if(CollectionUtils.isEmpty(providersBeanList)){
+            return failure("授权失败");
+        }
+        return success("授权成功");
     }
 
     @Override

@@ -205,20 +205,33 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public Map<String, String> addShopeeShopAuth(Map<String, String> authMap) {
+    public Map<String, String> addShopeeShopAuth(Map<String, String> authMap, String logisticsPlatform) {
         //获取oms已授权店铺
         ApiResult<List<ShopAuthEntity>> result = null;
         try {
-            result = shopeeFeign.getShopeeShopList(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode());
+            if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+                result = shopeeFeign.getShopeeShopList(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode(),"");
+            }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
+                result = shopeeFeign.getShopeeShopList("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.TIK_TOK.getCode());
+            }else{
+                throw new ServiceException("不支持的平台，请联系IT处理");
+            }
         } catch (Exception e) {
             log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
         }
         if (result != null && (!result.isSuccess() || CollectionUtil.isEmpty(result.getData()))) {
-            throw new ServiceException("请先完成Shopee店铺授权后再执行物流授权");
+            throw new ServiceException("请先完成店铺授权后再执行物流授权");
         }
         //根据主店铺获取子店铺token
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        AppClientEnum appClientEnum;
+        if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.TIKTOK_ACCESS_TOKEN;
+        }else{
+            throw new ServiceException("不支持的平台，请联系IT处理");
+        }
         findDTO.setBusinessType(appClientEnum.getBusinessType());
         findDTO.setDictPlatform(appClientEnum.getPlatform());
         findDTO.setPlatformType(appClientEnum.getPlatformType());
@@ -226,15 +239,20 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         try {
             cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         }catch (Exception e){
-            log.error("erp-dmp服务获取虾皮配置信息异常：{}",e.getMessage());
+            log.error("erp-dmp服务获取配置信息异常：{}",e.getMessage());
         }
         if (Objects.isNull(cfgAppClient)) {
-            throw new ServiceException("请先完成Shopee中台授权后再执行物流授权");
+            throw new ServiceException("请先完成中台授权后再执行物流授权");
         }
         ShopAuthEntity shopAuthEntity = result.getData().get(0);
-        authMap.put("shopId",shopAuthEntity.getShopeeId());
-        authMap.put("token",shopAuthEntity.getAccessToken());
-        authMap.put("host",cfgAppClient.getUrl());
+        if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId",shopAuthEntity.getShopeeId());
+            authMap.put("token",shopAuthEntity.getAccessToken());
+            authMap.put("host",cfgAppClient.getUrl());
+        }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId",shopAuthEntity.getShopId());
+        }
+
         return authMap;
     }
 
@@ -317,7 +335,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     public Map<String, String> getLogisticsAuthConfig(String authId,String shopId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             return service.getLogisticsAuthConfigByShopId(shopId);
         }else {
