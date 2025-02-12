@@ -500,9 +500,9 @@ public class LingxingApiUtils {
     /**
      * 检查sku未同步领星
      */
-    public static void checkSkuSyncLx(List<String> skuIds) {
-        List<String> skuIdentifierList = queryLxExistSkuNoList(skuIds);
-        boolean match = skuIds.stream().anyMatch(e -> !skuIdentifierList.contains(e));
+    public static void checkSkuSyncLx(List<String> skuNoList) {
+        List<String> skuIdentifierList = queryLxExistSkuNoList(skuNoList);
+        boolean match = skuNoList.stream().anyMatch(e -> !skuIdentifierList.contains(e));
         if (match){
             ServiceException.runError("存在SKU未同步领星");
         }
