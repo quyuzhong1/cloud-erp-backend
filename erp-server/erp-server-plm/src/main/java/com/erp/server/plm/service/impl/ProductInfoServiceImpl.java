@@ -437,7 +437,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(CollUtil.isNotEmpty(productDetailEntities)){
             //增加缓存清除
             List<String> productDetailIdList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
-            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO,productDetailIdList);
+            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO,productDetailIdList.toArray());
 
             //审核通过发送金蝶
             productDetailService.sendPushTask(productDetailEntities, operate);
