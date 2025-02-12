@@ -20,6 +20,7 @@ import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfiguration;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.RateLimitConfigurationOnRequests;
 import com.erp.sdk.oms.amz.spapi.api.CatalogApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonIdentifiersTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.Item;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.ItemSearchResults;
@@ -82,7 +83,7 @@ public class CatalogApiTest {
 //        List<String> identifiers = Arrays.asList("1963-US7");
 //        String identifiersType = "SKU";
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.FR;
-        String shopId = "1735512797405515786";
+        String shopId = "1735509194041200644";
 //        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.JP;
 //        String shopId = "1735553314990329858";
         List<String> marketplaceIds = Arrays.asList(marketplaceEnum.getMarketplaceId());
@@ -154,17 +155,14 @@ public class CatalogApiTest {
 //                "B0C581CX5P",
 //                "B0BRLWCXN4"
 //                );
-        String identifiersType = "EAN";
+        String identifiersType = AmazonIdentifiersTypeEnum.EAN.getCode();
         List<String> identifiers = Arrays.asList(
-                "6975357304948",
-                "6975357305174",
-                "6975357306331"
+                "767311325276"
         );
         List<List<String>> partition = Lists.partition(identifiers, 20);
 
         for (List<String> partList : partition) {
             List<String> includedData = Arrays.asList("attributes", "dimensions", "identifiers", "images", "productTypes", "salesRanks", "summaries", "relationships");
-            ;
             String locale = null;
             String sellerId = null;
             List<String> keywords = null;
