@@ -405,8 +405,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
-            shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
-
+            if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getPlatformCode())) {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
+            } else {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
+            }
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
