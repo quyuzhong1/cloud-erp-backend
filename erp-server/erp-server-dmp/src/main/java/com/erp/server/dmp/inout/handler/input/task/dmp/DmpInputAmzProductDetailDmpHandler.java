@@ -39,6 +39,8 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
     public static final String SPU_ID = "spu_id";
     public static final String SELLER_SKU = "sellerSKU";
 
+    public static final String SELLER_SKU_OTHER = "sellerSku";
+
     public static final String AMAZON_LISTING_DATA = "amazon_listing_data";
 
     public static final String AMAZON_LISTING_PRICING_DATA = "amazon_listing_pricing_data";
@@ -83,8 +85,13 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
             }
             String sellerSku = listingMongoDataItem.getOrDefault(SELLER_SKU, "").toString();
             if (StringUtils.isBlank(sellerSku)) {
-                continue;
+                // 兼容来源驼峰
+                sellerSku = listingMongoDataItem.getOrDefault(SELLER_SKU_OTHER, "").toString();
             }
+            if (StringUtils.isBlank(sellerSku)){
+               ServiceException.runError(" sellerSku 解析为空");
+            }
+
             String productIdType = listingMongoDataItem.getOrDefault("productIdType", "").toString();
             if ("1".equalsIgnoreCase(productIdType)) {
                 // 标准类型asin=productId
@@ -96,9 +103,10 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
                 listingMongoDataItem.put("asin", asin1);
             } else {
                 // 匹配明细信息补充ASIN
+                String finalSellerSku = sellerSku;
                 Map<String, Object> detailMap = listingDetailMongoData
                         .stream()
-                        .filter(e -> e.getOrDefault(SELLER_SKU, "").toString().equalsIgnoreCase(sellerSku))
+                        .filter(e -> e.getOrDefault(SELLER_SKU, "").toString().equalsIgnoreCase(finalSellerSku))
                         .findFirst()
                         .orElse(null);
                 if (null != detailMap){
