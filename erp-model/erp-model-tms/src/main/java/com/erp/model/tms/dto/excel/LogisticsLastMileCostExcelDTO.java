@@ -46,8 +46,8 @@ public class LogisticsLastMileCostExcelDTO implements Serializable {
     /**
      * 币种
      */
-    @ExcelProperty(value = "币种[默认￥]", index = 4)
-    @FieldValid(fieldName = "币种", maxLength = 32)
+    @ExcelProperty(value = "*币种", index = 4)
+    @FieldValid(fieldName = "币种",isNotBlank = true, maxLength = 32)
     private String currency;
 
     /**
