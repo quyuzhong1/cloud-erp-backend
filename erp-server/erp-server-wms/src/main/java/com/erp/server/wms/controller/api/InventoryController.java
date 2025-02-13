@@ -132,6 +132,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "出入库列表导出")
     @PostMapping(value = "/exportExcelInOutStockSummary")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<Boolean> exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
         transactionFlowService.exportSummaryExcel(dto,response);
         return success(true);

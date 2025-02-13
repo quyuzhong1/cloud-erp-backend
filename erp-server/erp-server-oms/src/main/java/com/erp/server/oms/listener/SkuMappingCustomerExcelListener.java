@@ -113,6 +113,11 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 errorList.add(excelDTO);
                 continue;
             }
+            if(customerInfo.getDisabled()){
+                excelDTO.setErrorMsg("客户已禁用");
+                errorList.add(excelDTO);
+                continue;
+            }
             SkuVO skuVO = skuList.stream().filter(v->v.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
             if(Objects.isNull(skuVO)){
                 excelDTO.setErrorMsg("产品sku不存在");

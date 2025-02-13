@@ -233,5 +233,6 @@
         <if test="dto.startDate != null">
             and vtf.bill_date >= #{dto.startDate}
         </if>
+        order by vtf.trade_time asc
     </select>
 </mapper>

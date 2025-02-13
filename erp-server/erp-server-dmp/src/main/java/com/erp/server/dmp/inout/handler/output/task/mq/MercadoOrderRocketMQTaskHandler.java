@@ -222,6 +222,8 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         //优惠金额
         BigDecimal totalDiscount = dmpSoInfoEntityList.stream().map(DmpSoInfoEntity::getTotalDiscount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         orderDTO.setTotalDiscount(totalDiscount);
+        //扩展字段
+        orderDTO.setExtendData(dmpSoInfoEntityList.get(0).getExtendData());
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntityList, dmpSoDetailEntityList);
