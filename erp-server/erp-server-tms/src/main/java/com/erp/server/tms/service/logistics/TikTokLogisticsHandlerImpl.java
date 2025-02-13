@@ -3,21 +3,26 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
+import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDetailDTO;
+import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
 import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
 import com.sdk.tms.tiktok.service.TikTokShipperService;
 import io.seata.common.util.StringUtils;
@@ -26,10 +31,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.IOException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * TikTok物流
@@ -143,6 +147,40 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.TIK_TOK;
+    }
+    /**
+     * 获取标签
+     *
+     * @return
+     */
+
+    @Override
+    public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsGetLabelVOList) throws IOException {
+        LogisticsGetLabelVO logisticsGetLabelVO = logisticsGetLabelVOList.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
+        assert logisticsGetLabelVO != null;
+        Map<String, String> authMap = logisticsGetLabelVO.getAuthMap();
+        String shopId = authMap.get("shopId");
+        TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(shopId);
+        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
+        for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
+            if(StringUtils.isBlank(vo.getPackageId())){
+                throw new ServiceException("包裹id不能为空");
+            }
+            PackageDocumentDTO packageDocumentDTO = tikTokSdkClientService.getPackageDocument(tikTokShopInfoDTO,vo.getPackageId(),"SHIPPING_LABEL");
+            if(StringUtils.isBlank(packageDocumentDTO.getData().getDocUrl())){
+                throw new ServiceException("获取标签失败");
+            }else{
+                String base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl());
+                String prefix = "data:application/pdf;base64,";
+                LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
+                        .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
+                        .transportNoList(Collections.singletonList(vo.getTransportNo()))
+                        .trackNoList(Collections.singletonList(vo.getTrackNo()))
+                        .base64(prefix + base64).build();
+                resultList.add(response);
+            }
+        }
+        return success(resultList);
     }
 
     @Override
