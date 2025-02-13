@@ -237,8 +237,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      */
     List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(LogisticsBillDetailQueryDTO query);
 
-    PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto);
-
     /**
      * 获取物流类型/仓库类型下 渠道列表
      * @param platform 物流平台
@@ -254,4 +252,8 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
      * @return
      */
     Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode);
+
+    PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto);
+
+    void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto);
 }

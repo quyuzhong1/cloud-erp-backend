@@ -32,8 +32,8 @@ public class ShopeeFeignController extends BaseController {
      * @return
      */
     @GetMapping("/getShopeeShopList")
-    public ApiResult<List<ShopAuthEntity>> getShopeeShopList(@RequestParam(value = "type") String type,@RequestParam(value = "status") String status) {
-        return success(shopAuthService.getShopeeShopList(type,status));
+    public ApiResult<List<ShopAuthEntity>> getShopeeShopList(@RequestParam(value = "type") String type,@RequestParam(value = "status") String status,@RequestParam(value = "dictPlatform") String dictPlatform) {
+        return success(shopAuthService.getShopeeShopList(type,status, dictPlatform));
     }
 
     /**

@@ -10,6 +10,7 @@ import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -61,15 +62,18 @@ public class LogisticsAuthController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流授权表新增")
+    @Transactional(rollbackFor = Exception.class)
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAuthDTO.AddDTO dto) {
-        BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
         Map<String, String> authMap = dto.getFieldMap();
         String logisticsPlatform = dto.getLogisticsPlatform();
+        if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+            authMap = logisticsAuthService.addShopeeShopAuth(authMap, logisticsPlatform);
+        }
+        BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
         String id = result.getId();
         if (StringUtils.isNotBlank(id)) {
-            if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
-                authMap = logisticsAuthService.addShopeeShopAuth(authMap);
-            }
             //先进行授权是否成功鉴权
             ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
             if (apiResult.isSuccess()) {
@@ -122,7 +126,7 @@ public class LogisticsAuthController extends BaseController {
         String id = result.getId();
         if (StringUtils.isNotBlank(id)) {
             if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
-                authMap = logisticsAuthService.addShopeeShopAuth(authMap);
+                authMap = logisticsAuthService.addShopeeShopAuth(authMap, logisticsPlatform);
             }
             //先进行授权是否成功鉴权
             ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
