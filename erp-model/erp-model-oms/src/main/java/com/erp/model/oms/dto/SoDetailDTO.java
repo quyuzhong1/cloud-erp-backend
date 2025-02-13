@@ -549,6 +549,7 @@ public class SoDetailDTO implements Serializable {
          */
         private Boolean isClose;
 
+        private String platformSkuNo;
         /**
          * 采购单价
          */
