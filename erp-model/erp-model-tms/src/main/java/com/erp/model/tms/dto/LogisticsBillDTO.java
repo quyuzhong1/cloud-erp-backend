@@ -703,6 +703,10 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String packageNumber;
         /**
+         * 包裹id【tiktok下单使用】
+         */
+        private String packageId;
+        /**
          * 销售平台
          */
         private String salesPlatform;

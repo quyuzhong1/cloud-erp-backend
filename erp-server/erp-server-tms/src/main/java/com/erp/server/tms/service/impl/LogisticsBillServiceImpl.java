@@ -514,6 +514,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 deliveryNo(dto.getOrderCode()).
                 platformCode(dto.getPlatformCode()).
                 packageNumber(dto.getPackageNumber()).
+                packageId(dto.getPackageId()).
                 country(country).
                 voecTaxNo(dto.getVoecTaxNo()).
                 iossCode(getIossCodeByCountry(country,logisticsChannel.getIsIossPrepay(),dto.getIossTaxNo())).
@@ -524,6 +525,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 logisticsProductVOList(productVOS).
                 logisticsChannelEntity(logisticsChannel).
                 logisticsSaleChannel(saleChannel).
+                deliveryType(logisticsChannel.getDeliveryType()).
                 build();
         //根据规则处理物流单请求参数
         logisticsOrderVO = cfgRuleFeign.handleRuleOrderLogistic(LogisticsOrderRuleVO.builder().logisticsOrderVO(logisticsOrderVO).map(map).build());

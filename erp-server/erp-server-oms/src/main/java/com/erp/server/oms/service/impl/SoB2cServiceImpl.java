@@ -1868,6 +1868,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<LogisticsProductVO> productVOS = new ArrayList<>(declareList.size());
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+        if(CollectionUtils.isNotEmpty(detailList)){
+            result.setPackageId(detailList.get(0).getPlatformPackageId());
+        }
         List<String> skuIdList = declareList.stream().map(SoB2cDeclareProductEntity::getSkuId).distinct().collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(skuIdList);
         declareList.forEach(soB2cDeclareProductEntity -> {

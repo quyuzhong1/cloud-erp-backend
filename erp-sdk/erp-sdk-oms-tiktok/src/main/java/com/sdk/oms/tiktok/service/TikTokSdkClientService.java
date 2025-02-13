@@ -45,6 +45,7 @@ import com.sdk.oms.tiktok.dto.tiktok.listing.view.SkusBean;
 import com.sdk.oms.tiktok.dto.tiktok.order.OrderDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrderViewDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.view.OrdersBean;
+import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDetailDTO;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOther;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderUS;
@@ -989,12 +990,12 @@ public class TikTokSdkClientService {
 
     public static void main(String[] args) {
         String url = TikTokConstant.URL;
-        String path = "/fulfillment/" + TikTokConstant.VERSION + "/packages/" + "1159856476975565342"+"/shipping_documents" ;
+        String path = "/fulfillment/" + TikTokConstant.VERSION + "/packages/" + "1159856476975565342" ;
         String clientSecret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
         String clientId = "6buinkjt3hmld";
 
         String shopCipher = "ROW_7UdPPQAAAAAGSBiq11mBcg8dYgNF1C5x";
-        String token = "ROW_fQ6IcAAAAACj-JAAAriAWjVtF2MrUIFdHRZvljXhCfG7h6gK9L_d7XUiGvUrvVcL5dTSfrmArwcZToZCJ724bMWtyrfq1KcdT5ve4dG2uiO_z2pUxpVdbKBBBL5je8rsqPSnJNVwI_5cWqbLpqCtj3V880HaU6ysbs5PcoGykcgHFKR0hv38yEJJUGGCHGF9qrb1Lz6cPDNm6DJPDQpwsBLTb5jydbVR";
+        String token = "ROW_cn1zDgAAAACj-JAAAriAWjVtF2MrUIFdHRZvljXhCfG7h6gK9L_d7XUiGvUrvVcL5dTSfrmArwcZToZCJ724bMWtyrfq1KcdT5ve4dG2uiO_z2pUxpVdbIVY40RLr6IM0A-WY2-FcV2pMcL6PK8ppBi-dNMFbn4RAlUH9NpLEyHqO7f5wZJsZg6dDAW4uKb47YSe-2ZSToiJjNY6tqCMu5vw4d0Shj_m";
 
         // 定义查询参数
         Map<String, Object> params = new HashMap<>();
@@ -1029,9 +1030,9 @@ public class TikTokSdkClientService {
                     url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         //解析数据
-        ShipOrderUS shipOrderUS = null;
+        PackageDetailDTO shipOrderUS = null;
         try {
-            shipOrderUS = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), ShipOrderUS.class);
+            shipOrderUS = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), PackageDetailDTO.class);
         } catch (Exception e) {
             throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, TikTok订单发货（美国站）返回值 responseMap={}，转换成实体错误", apiResult.getData()));
         }
@@ -1208,6 +1209,56 @@ public class TikTokSdkClientService {
         return shipOrderUS;
     }
 
+
+    public PackageDetailDTO getPackageDetail(TikTokShopInfoDTO tikTokShopInfoDTO, String packageId) {
+        String url = TikTokConstant.URL;
+        String path = "/fulfillment/" + TikTokConstant.VERSION + "/packages/" + packageId ;
+        String clientSecret = tikTokShopInfoDTO.getClientSecret();
+        String clientId = tikTokShopInfoDTO.getClientId();
+
+        String shopCipher = tikTokShopInfoDTO.getShopCipher();
+        String token = tikTokShopInfoDTO.getAccessToken();
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("access_token", token);
+        params.put("document_type", "SHIPPING_LABEL");
+        params.put("app_key", clientId);
+        params.put("shop_cipher", shopCipher);
+        Long timestamp = System.currentTimeMillis() / 1000;
+        params.put("timestamp", timestamp);
+        params.put("version", TikTokConstant.VERSION);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("x-tts-access-token", token);
+        headerMap.put("content-type", "application/json");
+
+        //组装入参排序计算签名字符串
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, "");
+
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSHA256(input, clientSecret);
+
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, TikTok查询包裹明细失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询包裹明细失败，返回值 responseMap={}",
+                    url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        //解析数据
+        PackageDetailDTO result = null;
+        try {
+            result = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), PackageDetailDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, TikTok查询包裹明细（美国站）返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+        }
+
+        return result;
+    }
 
     /**
      * 订单发货（非美国站点）
