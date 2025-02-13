@@ -62,11 +62,11 @@ public class DmpHistorySyncThirdController extends BaseController {
 
         List<ProductInfo> collect = skuVOS.stream().map(e -> new ProductInfo(
                 LingxingApiUtils.convertLxSku(e.getSkuNo()),
-                LingxingApiUtils.convertLxProductName(e.getSkuName()),
-                e.getSkuId())).collect(Collectors.toList());
+                LingxingApiUtils.convertLxProductName(e.getSkuName())))
+                .collect(Collectors.toList());
         for (ProductInfo productInfo : collect) {
             boolean exist = jsonArray.stream()
-                    .anyMatch(e -> productInfo.getSkuIdentifier().toString().equalsIgnoreCase(((JSONObject) e).getString("sku_identifier")));
+                    .anyMatch(e -> productInfo.getSku().equalsIgnoreCase(((JSONObject) e).getString("sku")));
             if (exist){
                 LingxingApiUtils.updateProduct(productInfo);
                 continue;
