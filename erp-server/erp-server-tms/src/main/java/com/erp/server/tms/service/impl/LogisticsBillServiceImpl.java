@@ -33,6 +33,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -1004,6 +1005,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
         List<String> soIds = list.stream().map(req -> req.getB2cSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
         List<String> errorList = new ArrayList<>();
         for (LogisticsBillDTO.PrintLogisticsWaybillDTO dto : list) {
@@ -1070,6 +1072,8 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 LogisticsSaleChannelEntity entity = new LogisticsSaleChannelEntity();
                 entity.setCode(channelEntity.getCode());
                 getLabelVO.setLogisticsSaleChannelEntity(entity);
+                String packageId = soB2cDetailEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId()) && StringUtils.isNotBlank(v.getPlatformPackageId())).map(SoB2cDetailEntity::getPlatformPackageId).findFirst().orElse("");
+                getLabelVO.setPackageId(packageId);
                 labelVOArrayList.add(getLabelVO);
                 //发起请求第三方接口获取标签信息
                 ApiResult<List<LogisticsPrintLabelResponse>> labelList = null;
