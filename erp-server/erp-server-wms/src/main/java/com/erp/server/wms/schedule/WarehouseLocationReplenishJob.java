@@ -59,11 +59,6 @@ public class WarehouseLocationReplenishJob {
 
         //即时库存数据
         List<String> warehouseIds = list.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
-        List<String> skuIds = list.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-//        List<String> warehouseLocations = list.stream().map(item -> item.getWarehouseLocation()).distinct().collect(Collectors.toList());
-//        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
-//        searchParamDTO.setWarehouseIdList(warehouseIds);
-//        searchParamDTO.setSkuIdList(skuIds);
         InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
         Map<String, String> map = new HashMap<>();
         map.put("default", "1=1");
