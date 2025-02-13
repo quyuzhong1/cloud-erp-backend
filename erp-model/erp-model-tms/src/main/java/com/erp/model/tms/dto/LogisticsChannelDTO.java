@@ -402,7 +402,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 纸张大小
          */
         private String paperSize;
-
+        /**
+         * 是否推送海外仓面单
+         */
+        private Boolean isPushOverseasWarehouseLabel;
         /**
          * 分拣码
          */
@@ -706,6 +709,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @Size(max = 30, message = "分拣码最大长度不能超过10位")
         private String sortingCode;
+
+        /**
+         * 是否推送海外仓面单
+         */
+        private Boolean isPushOverseasWarehouseLabel;
 
 
         /**
