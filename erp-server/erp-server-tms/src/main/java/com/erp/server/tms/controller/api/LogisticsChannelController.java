@@ -246,6 +246,20 @@ public class LogisticsChannelController extends BaseController {
     }
 
     /**
+     * 平台标发设置
+     *
+     * @param dto
+     * @return ApiResult
+     * @author Lambda
+     * @date: 2023-11-02
+     */
+    @PostMapping("/platformSignSetting")
+    public ApiResult<Object>platformSignSetting(@RequestBody @Validated LogisticsChannelDTO.PlatformSignSettingDTO dto) {
+        logisticsChannelService.platformSignSetting(dto);
+        return success();
+    }
+
+    /**
      * paging
      *
      */

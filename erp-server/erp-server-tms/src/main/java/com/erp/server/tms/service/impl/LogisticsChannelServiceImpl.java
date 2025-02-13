@@ -795,4 +795,20 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         }
         return new PagingVO<>(pageData);
     }
+
+    @Override
+    public void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto) {
+        LogisticsChannelEntity old = this.getById(dto.getId());
+        if (null == old){
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+        }
+        //更新配置
+        this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())
+                .set(LogisticsChannelEntity::getIsPlatformShip, dto.getIsPlatformShip()).update();
+        String msgFormat = "由【%s】改为【%s】";
+        // 操作日志
+        String msg = CharSequenceUtil.format("用户【{}】修改渠道【{}】平台标发【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
+                String.format(msgFormat,old.getIsPlatformShip()?"是":"否", dto.getIsPlatformShip()?"是":"否"));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "平台标发");
+    }
 }
