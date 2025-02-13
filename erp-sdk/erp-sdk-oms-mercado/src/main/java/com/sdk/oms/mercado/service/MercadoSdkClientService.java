@@ -493,7 +493,7 @@ public class MercadoSdkClientService {
      * @param shippingId
      * @return
      */
-    private ShipmentViewDTO getShippingRecords(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
+    public ShipmentViewDTO getShippingRecords(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
         String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "";
 
         //入参

@@ -1847,6 +1847,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             JSONObject jsonObject = JSONObject.parseObject(entity.getLabelJson());
             result.setPackageNumber(jsonObject.getString("package_number"));
         }
+        //物流id 美客多
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform()) && Objects.nonNull(entity.getLabelJson())) {
+            JSONObject jsonObject = JSONObject.parseObject(entity.getLabelJson());
+            Long shipmentId = jsonObject.getLong("shipmentId");
+            if (Objects.isNull(shipmentId)){
+                throw new ServiceException("美客多订单物流id不能为空");
+            }
+            result.setShipmentId(shipmentId);
+        }
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(shopAuth) && isAliExpress) {
             throw new ServiceException(ApiError.SHOP_NOT_AUTH_ERROR);

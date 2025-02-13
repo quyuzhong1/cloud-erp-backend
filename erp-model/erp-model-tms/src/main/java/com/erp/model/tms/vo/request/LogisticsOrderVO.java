@@ -33,6 +33,10 @@ public class LogisticsOrderVO implements Serializable {
      */
     private String oaid;
     /**
+     * 订单对应物流id
+     */
+    private Long shipmentId;
+    /**
      * 顺丰月结卡号
      */
     private String monthlyCard;
