@@ -1065,7 +1065,7 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
             			if(CollUtil.isEmpty(set)) {
             				set = new HashSet<>();
             			}
-            			set.add(AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
+            			set.add(AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有一级费用币种必须一致");
             			costIdTypeListMap.put(costName, set);
             		}
             		updateDetailList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));

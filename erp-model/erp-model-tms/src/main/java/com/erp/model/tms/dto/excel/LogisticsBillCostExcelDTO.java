@@ -69,8 +69,8 @@ public class LogisticsBillCostExcelDTO  implements Serializable {
     /**
      * 币种
      */
-    @ExcelProperty(value = "*币种", index = 7)
-    @FieldValid(fieldName = "币种",isNotBlank = true,enumClass = CurrencyEnum.class)
+    @ExcelProperty(value = "*实际币种", index = 7)
+    @FieldValid(fieldName = "实际币种",isNotBlank = true,enumClass = CurrencyEnum.class)
     private String  currency;
 
     /**
