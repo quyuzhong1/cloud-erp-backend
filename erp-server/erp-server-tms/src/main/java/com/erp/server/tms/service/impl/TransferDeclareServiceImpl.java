@@ -1270,13 +1270,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							costViewDTOList = new ArrayList<>();
 						}
 						BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-						String allocatedCurrency = mainIdCurrencyMap.get(t.getMainId());
-						if(StringUtils.isBlank(allocatedCurrency)) {
-							allocatedCurrency = "CNY";
-						}
-//						if(CollUtil.isNotEmpty(costViewDTOList)) {
-//							allocatedCurrency = costViewDTOList.get(0).getCurrency();
+//						String allocatedCurrency = mainIdCurrencyMap.get(t.getMainId());
+//						if(StringUtils.isBlank(allocatedCurrency)) {
+//							allocatedCurrency = "CNY";
 //						}
+						String allocatedCurrency = "CNY";
+						if(CollUtil.isNotEmpty(costViewDTOList)) {
+							allocatedCurrency = costViewDTOList.get(0).getCurrency();
+						}
 						String key = reportDate + "_" + allocatedCurrency;
 						BigDecimal rate = rateMap.get(key);
 						if(rate == null) {
