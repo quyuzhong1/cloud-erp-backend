@@ -794,6 +794,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(CollectionUtils.isNotEmpty(machineInfoEntityList)){
             throw new ServiceException("存在关联的加工单{}，头程发货单禁止删除",machineInfoEntityList.stream().map(MachineInfoEntity::getCode).collect(Collectors.toList()));
         }
+        //存在下游单据（海外入库单），不能删除
+        List<OverseasWarehouseInboundEntity> inboundEntityList = overseasWarehouseInboundService.listBySourceIds(Collections.singletonList(entity.getId()));
+        if (CollUtil.isNotEmpty(inboundEntityList)){
+            throw new ServiceException("存在下游海外入库单【{}】，禁止删除", inboundEntityList.stream().map(OverseasWarehouseInboundEntity::getCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(",")));
+        }
         //删除装箱信息
         if(Objects.nonNull(packingTask)){
             packingTaskService.delete(packingTask);
