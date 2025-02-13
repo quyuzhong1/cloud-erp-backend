@@ -1735,14 +1735,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
             }
 
-            if (Boolean.TRUE.equals(isDelivery)) {
-                //提交发货
-                submitDelivery(id);
-            }
-
             this.lambdaUpdate().eq(SoB2cEntity::getId, id).
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            if (Boolean.TRUE.equals(isDelivery)) {
+                try {
+                    //提交发货
+                    submitDelivery(id);
+                }catch (Exception e){
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                    addError.setParamJson("");
+                    addError.setReturnJson("");
+                    addError.setMainId(id);
+                    addError.setMessage(e.getMessage());
+                    soB2cErrorService.add(addError);
+                }
+            }
             return BatchResultDTO.success(entity.getId(), transportNo, "获取物流单号");
         } catch (Exception e) {
             String type = SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
