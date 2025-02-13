@@ -42,7 +42,9 @@
             MAX ( CASE WHEN lbc.TYPE = 'estimated' THEN lbc.id END ) AS id,
             MAX(CASE WHEN type = 'estimated' then main_id end ) as mainId,
             SUM(CASE WHEN lbc.type = 'estimated' then lbc.cost_value end ) as estimatedFee,
+            MAX(CASE WHEN lbc.type = 'estimated' then lbc.currency end ) as estimatedCurrency,
             SUM(CASE WHEN lbc.type = 'actual' then lbc.cost_value end ) as actualFee,
+            MAX(CASE WHEN lbc.type = 'actual' then lbc.currency end ) as actualCurrency,
                cc.dict_cost_category as costCode,
                cc.cost_name as costName
         from tms_cost_detail lbc

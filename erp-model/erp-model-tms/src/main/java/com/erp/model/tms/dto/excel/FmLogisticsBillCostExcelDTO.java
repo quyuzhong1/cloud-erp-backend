@@ -26,6 +26,9 @@ public class FmLogisticsBillCostExcelDTO implements Serializable {
 
     @ExcelProperty(value = "预估费用")
     private BigDecimal cost;
+    
+    @ExcelProperty(value = "*币种")
+    private String currency;
 
     /**
      * 错误信息

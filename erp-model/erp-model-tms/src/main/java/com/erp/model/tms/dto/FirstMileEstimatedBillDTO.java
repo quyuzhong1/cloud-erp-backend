@@ -99,26 +99,81 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 预计费用总计
          */
         private BigDecimal costTotal = BigDecimal.ZERO;
+        
+        /**
+         * 预计费用总计币别符号
+         */
+        private String costTotalCurrencySymbol = "¥";
+        
+        private String costTotalStr;
 
         /**
          * 预计物流运费（总）
          */
         private BigDecimal logisticsCost = BigDecimal.ZERO;
+        
+        /**
+         * 预计物流运费（总）币别符
+         */
+        private String logisticsCostCurrency = "CNY";
+        
+        /**
+         * 预计物流运费（总）币别符号
+         */
+        private String logisticsCostCurrencySymbol = "¥";
+        
+        private String logisticsCostStr;
 
         /**
          * 预计报关费用（总）
          */
         private BigDecimal customsClearanceCost = BigDecimal.ZERO;
+        
+        /**
+         * 预计报关费用（总）币别
+         */
+        private String customsClearanceCostCurrency = "CNY";
+        
+        /**
+         * 预计报关费用（总）币别符号
+         */
+        private String customsClearanceCostCurrencySymbol = "¥";
+        
+        private String customsClearanceCostStr;
 
         /**
          * 预计其他税费（总）
          */
         private BigDecimal otherTaxCost = BigDecimal.ZERO;
+        
+        /**
+         * 预计其他税费（总）币别
+         */
+        private String otherTaxCostCurrency = "CNY";
+        
+        /**
+         * 预计其他税费（总）币别符号
+         */
+        private String otherTaxCostCurrencySymbol = "¥";
+        
+        private String otherTaxCostStr;
 
         /**
          * 预计其他费用（总）
          */
         private BigDecimal otherCost = BigDecimal.ZERO;
+        
+        /**
+         * 预计其他费用（总）币别
+         */
+        private String otherCostCurrency = "CNY";
+        
+        /**
+         * 预计其他费用（总）币别符号
+         */
+        private String otherCostCurrencySymbol = "¥";
+        
+        private String otherCostStr;
 
         /**
          * 预计计费重
@@ -267,6 +322,12 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 分类费用合计(人民币)
          */
         private BigDecimal costValue = BigDecimal.ZERO;
+        
+        /**
+         * 币种
+         */
+        private String currency;
+        
     }
 
     @Data
