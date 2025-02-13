@@ -157,12 +157,12 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.success(Collections.emptyList());
     }
 
     @Override
     public ApiResult<Object>authorization(Map<String, String> authMap) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.success();
     }
 
     @Override
