@@ -1735,6 +1735,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             this.lambdaUpdate().eq(SoB2cEntity::getId, id).
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
+            if(resultDTO.getIsPlatformShip()){
+                //更新平台已标发
+                soB2cDetailList.forEach(v->v.setIsSignShipped(true));
+                soB2cDetailService.updateBatchById(soB2cDetailList);
+            }
             return BatchResultDTO.success(entity.getId(), transportNo, "获取物流单号");
         } catch (Exception e) {
             String type = SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode();

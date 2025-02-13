@@ -761,6 +761,10 @@ public class LogisticsBillDTO implements Serializable {
          * ioss税号
          */
         private String iossTaxNo;
+        /**
+         * 是否修改平台已标发货状态
+         */
+        private Boolean isPlatformShip = false;
     }
 
 

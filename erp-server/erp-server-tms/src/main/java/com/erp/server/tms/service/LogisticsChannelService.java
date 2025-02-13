@@ -254,4 +254,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode);
 
     PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto);
+
+    void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto);
 }

@@ -223,6 +223,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("shipment_over_limit_rate")
     private BigDecimal shipmentOverLimitRate;
 
+    /**
+     * 是否平台发货  true代表物流下单后后续无需平台标发
+     */
+    @TableField("is_platform_ship")
+    private Boolean isPlatformShip;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String FIELD_NAME = "name";
