@@ -154,7 +154,7 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 				sb.append("】");
 				sb.append("、");
 			}
-			throw new ServiceException(sb.substring(0, sb.length() - 1) + "分类下所有费用币种必须一致");
+			throw new ServiceException(sb.substring(0, sb.length() - 1) + "分类下所有一级费用币种必须一致");
 		}
     }
     
