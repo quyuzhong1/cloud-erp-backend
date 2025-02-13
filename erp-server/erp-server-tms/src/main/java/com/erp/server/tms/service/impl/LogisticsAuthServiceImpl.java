@@ -213,6 +213,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 result = shopeeFeign.getShopeeShopList(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode(),"");
             }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
                 result = shopeeFeign.getShopeeShopList("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.TIK_TOK.getCode());
+            }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+                result = shopeeFeign.getShopeeShopList("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE.getCode());
             }else{
                 throw new ServiceException("不支持的平台，请联系IT处理");
             }
@@ -229,6 +231,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
             appClientEnum = AppClientEnum.TIKTOK_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
         }else{
             throw new ServiceException("不支持的平台，请联系IT处理");
         }
@@ -251,6 +255,9 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             authMap.put("host",cfgAppClient.getUrl());
         }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId",shopAuthEntity.getShopId());
+            authMap.put("token",shopAuthEntity.getAccessToken());
         }
 
         return authMap;
