@@ -75,8 +75,8 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     /**
      * 是否推送海外仓面单
      */
-    @TableField("is_push_overseas_warehouse_label")
-    private Boolean isPushOverseasWarehouseLabel;
+    @TableField("is_push_label")
+    private Boolean isPushLabel;
     /**
     * 纸张长
     */

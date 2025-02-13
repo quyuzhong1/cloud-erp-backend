@@ -410,7 +410,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 是否推送海外仓面单
          */
-        private Boolean isPushOverseasWarehouseLabel;
+        private Boolean isPushLabel;
         /**
          * 分拣码
          */
@@ -718,7 +718,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 是否推送海外仓面单
          */
-        private Boolean isPushOverseasWarehouseLabel;
+        private Boolean isPushLabel;
 
 
         /**
