@@ -4,15 +4,25 @@ package com.erp.server.tms.service.logistics;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
+import com.erp.model.tms.vo.request.LogisticsOrderVO;
+import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
+import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDetailDTO;
+import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
+import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
 import com.sdk.tms.tiktok.service.TikTokShipperService;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -35,6 +45,8 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     private TikTokShipperService tikTokShipperService;
 
+    @Resource
+    private TikTokSdkClientService tikTokSdkClientService;
 
     /**
      * 查询店铺
@@ -66,8 +78,66 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
 
     @Override
+    public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
+        Map<String, String> authMap = logisticsOrderVO.getAuthMap();
+        String shopId = authMap.get("shopId");
+        String packageId = logisticsOrderVO.getPackageId();
+        String deliveryType = logisticsOrderVO.getDeliveryType();
+        if(StringUtils.isBlank(packageId)){
+            throw new ServiceException("包裹id不能为空");
+        }
+        if(StringUtils.isBlank(deliveryType)){
+            throw new ServiceException("发货方式不能为空");
+        }
+        TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(shopId);
+        //先查询是否有跟踪号，没有再下单
+        PackageDetailDTO packageDetailDTO;
+        try {
+            packageDetailDTO = tikTokSdkClientService.getPackageDetail(tikTokShopInfoDTO,packageId);
+        }catch (Exception e){
+            return failure("获取跟踪异常："+e.getMessage());
+        }
+        if(StringUtils.isNotBlank(packageDetailDTO.getData().getTracking_number())){
+            return success(LogisticsOrderResponseVO.builder()
+                    .transportNo(packageDetailDTO.getData().getTracking_number())
+                    .deliveryNo(logisticsOrderVO.getDeliveryNo())
+                    .trackNo(packageDetailDTO.getData().getTracking_number())
+                    .build());
+        }
+        ShipOrderOtherParam paramDTO = new ShipOrderOtherParam();
+        if(DeliveryTypeEnum.DOOR_PICKUP.getCode().equals(deliveryType)){
+            paramDTO.setHandoverMethod("PICKUP");
+        }else{
+            paramDTO.setHandoverMethod("DROP_OFF");
+        }
+        try {
+            tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO,packageId,paramDTO);
+        }catch (Exception e){
+            return failure("向平台下物流单异常："+e.getMessage());
+        }
+        try {
+            packageDetailDTO = tikTokSdkClientService.getPackageDetail(tikTokShopInfoDTO,packageId);
+        }catch (Exception e){
+            return failure("获取跟踪异常："+e.getMessage());
+        }
+        if(StringUtils.isNotBlank(packageDetailDTO.getData().getTracking_number())){
+            return success(LogisticsOrderResponseVO.builder()
+                    .transportNo(packageDetailDTO.getData().getTracking_number())
+                    .deliveryNo(logisticsOrderVO.getDeliveryNo())
+                    .trackNo(packageDetailDTO.getData().getTracking_number())
+                    .build());
+        }else{
+            return failure("跟踪号获取为空，请稍后重试");
+        }
+    }
+
+    @Override
     public ApiResult<Object>authorization(Map<String, String> authMap) {
-        return ApiResult.error(-1, "功能未开放");
+        List<ShippingProvidersBean> providersBeanList = tikTokShipperService.sendTikTokLogisticsChannel(authMap.get("shopId"));
+        if(CollectionUtils.isEmpty(providersBeanList)){
+            return failure("授权失败");
+        }
+        return success("授权成功");
     }
 
     @Override

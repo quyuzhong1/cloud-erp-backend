@@ -73,6 +73,11 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("paper_size")
     private String paperSize;
     /**
+     * 是否推送海外仓面单
+     */
+    @TableField("is_push_overseas_warehouse_label")
+    private Boolean isPushOverseasWarehouseLabel;
+    /**
     * 纸张长
     */
     @TableField("paper_length")

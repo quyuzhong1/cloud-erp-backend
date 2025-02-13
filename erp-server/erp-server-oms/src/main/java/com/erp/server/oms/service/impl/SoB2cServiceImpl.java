@@ -1860,6 +1860,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             JSONObject jsonObject = JSONObject.parseObject(entity.getLabelJson());
             result.setPackageNumber(jsonObject.getString("package_number"));
         }
+        //物流id 美客多
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform()) && Objects.nonNull(entity.getLabelJson())) {
+            JSONObject jsonObject = JSONObject.parseObject(entity.getLabelJson());
+            Long shipmentId = jsonObject.getLong("shipmentId");
+            if (Objects.isNull(shipmentId)){
+                throw new ServiceException("美客多订单物流id不能为空");
+            }
+            result.setShipmentId(shipmentId);
+        }
         ShopAuthEntity shopAuth = shopAuthService.getByShopId(shopId);
         if (Objects.isNull(shopAuth) && isAliExpress) {
             throw new ServiceException(ApiError.SHOP_NOT_AUTH_ERROR);
@@ -1881,6 +1890,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<LogisticsProductVO> productVOS = new ArrayList<>(declareList.size());
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+        if(CollectionUtils.isNotEmpty(detailList)){
+            result.setPackageId(detailList.get(0).getPlatformPackageId());
+        }
         List<String> skuIdList = declareList.stream().map(SoB2cDeclareProductEntity::getSkuId).distinct().collect(Collectors.toList());
         List<LogisticsProductDTO.ProductDTO> skuInfoList = logisticsProductFeign.listLogisticsProduct(skuIdList);
         declareList.forEach(soB2cDeclareProductEntity -> {

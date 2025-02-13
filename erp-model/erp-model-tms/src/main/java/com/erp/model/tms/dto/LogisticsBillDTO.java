@@ -657,6 +657,10 @@ public class LogisticsBillDTO implements Serializable {
          *订单对应收货地址OAID 目前速卖通用到
          */
         private String oaid;
+        /**
+         * 物流id
+         */
+        private Long shipmentId;
 
         @NotBlank(message = "渠道不能为空")
         private String channelId;
@@ -702,6 +706,10 @@ public class LogisticsBillDTO implements Serializable {
          * 包裹号【虾皮下单使用】
          */
         private String packageNumber;
+        /**
+         * 包裹id【tiktok下单使用】
+         */
+        private String packageId;
         /**
          * 销售平台
          */

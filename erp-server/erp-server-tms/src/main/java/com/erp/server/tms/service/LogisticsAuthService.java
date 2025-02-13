@@ -6,7 +6,6 @@ import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -152,8 +151,10 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
 
     /**
      * 虾皮新增店铺授权
+     *
      * @param authMap
+     * @param logisticsPlatform
      * @return
      */
-    Map<String, String> addShopeeShopAuth(Map<String, String> authMap);
+    Map<String, String> addShopeeShopAuth(Map<String, String> authMap, String logisticsPlatform);
 }
