@@ -35,7 +35,7 @@ public class CfgNoticeController extends BaseController {
     private CfgNoticeService cfgNoticeService;
 
     /**
-     *
+     * 分页查询
      * @Auther will
      * @Date 2025/2/13 14:51
      * @param dto
