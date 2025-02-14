@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum CfgVirtualNoticeTargetTypeEnum implements EnumMessage {
 
-    BY_USER("byUser","发送到人员"),
-    BY_GROUP("byGroup","发送到群"),
+    NOTICE_USER("noticeUser","通知人员"),
+    NOTICE_GROUP("noticeGroup","通知群"),
     ;
 
     /**

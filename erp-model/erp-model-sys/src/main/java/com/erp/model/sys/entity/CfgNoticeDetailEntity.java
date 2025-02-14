@@ -1,13 +1,15 @@
 package com.erp.model.sys.entity;
 
+import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
 
 
 /**
@@ -32,8 +34,8 @@ public class CfgNoticeDetailEntity extends BaseEntity<CfgNoticeDetailEntity> {
     /**
     * 通知json
     */
-    @TableField("notice_value_json")
-    private String noticeValueJson;
+    @TableField(value = "notice_value_json", jdbcType = JdbcType.OTHER)
+    private JSONObject noticeValueJson;
     /**
     * 主表id
     */

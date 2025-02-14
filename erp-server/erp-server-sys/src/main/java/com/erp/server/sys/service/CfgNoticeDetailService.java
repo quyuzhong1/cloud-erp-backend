@@ -1,9 +1,8 @@
 package com.erp.server.sys.service;
+
+import com.common.business.service.SuperService;
 import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.CfgNoticeDetailDTO;
 
 import java.util.List;
 
@@ -17,14 +16,6 @@ import java.util.List;
  */
 public interface CfgNoticeDetailService extends SuperService<CfgNoticeDetailEntity> {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2025-02-13
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgNoticeDetailDTO.AddDTO dto);
     /**
      * 新增通知对象
      * @Auther will

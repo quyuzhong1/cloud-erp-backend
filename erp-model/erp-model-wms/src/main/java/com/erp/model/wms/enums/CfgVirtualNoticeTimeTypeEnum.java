@@ -11,8 +11,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
  */
 public enum CfgVirtualNoticeTimeTypeEnum implements EnumMessage {
 
-    BY_DAY("byDay","按天"),
-    BY_WEEK("byWeek","按周"),
+    NOTICE_DAY("noticeDay","按天"),
+    NOTICE_WEEK("noticeWeek","按周"),
     ;
 
     /**

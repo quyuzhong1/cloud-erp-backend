@@ -91,7 +91,10 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         if(!save) {
             throw new ServiceException("通知配置单保存失败");
         }
-
+        //新增通知对象信息
+        cfgNoticeDetailService.addOrUpdateNoticeObjectList(addOrUpdateDTO.getNoticeObjectDTOList(), cfgNoticeEntity.getId());
+        //新增通知对象信息
+        cfgNoticeDetailService.addNOrUpdateoticeTimeList(addOrUpdateDTO.getNoticeTimeDTOList(), cfgNoticeEntity.getId());
         return Boolean.TRUE;
     }
 
@@ -99,15 +102,15 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
     public PagingVO<CfgNoticeDTO.ListDTO> paging(PagingDTO<CfgNoticeDTO.SearchParamDTO> pagingDTO) {
         CfgNoticeDTO.SearchParamDTO params = pagingDTO.getParams();
         params.setPermissionSql(pagingDTO.getPermissionSql());
-        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        Page<Object> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<CfgNoticeDTO.ListDTO> pageData = this.baseMapper.paging(query, params);
         List<CfgNoticeDTO.ListDTO> records = pageData.getRecords();
         if (CollectionUtils.isEmpty(records)) {
-            return new PagingVO(pageData);
+            return new PagingVO<>(pageData);
         }
         //数据赋值处理
         doOpHandlePaging(records);
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -122,7 +125,6 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "通知配置单明细");
         }
         CfgNoticeDTO.ViewDTO viewDTO = BeanMapperUtils.map(CfgNoticeDTO.ViewDTO.class, cfgNoticeEntity);
-        // TODO 数据赋值处理
         List<CfgNoticeDTO.NoticeObjectDTO> noticeObjectDTOList = new ArrayList<>();
         List<CfgNoticeDTO.NoticeTimeDTO> noticeTimeDTOList = new ArrayList<>();
         for (CfgNoticeDetailEntity detailEntity : cfgdetailList) {
@@ -140,6 +142,8 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
                     break;
             }
         }
+        viewDTO.setNoticeObjectDTOList(noticeObjectDTOList);
+        viewDTO.setNoticeRuleDTOList(noticeTimeDTOList);
         return viewDTO;
     }
 
