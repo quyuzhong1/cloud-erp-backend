@@ -1172,10 +1172,12 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 				Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 				if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
 					idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, j -> j));
-					List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
-                            .in(CharSequenceUtil.isBlank(transferWarehouseId),InventorySkuCostDetailEntity::getWarehouseId, dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()))
-                            .eq(CharSequenceUtil.isNotBlank(transferWarehouseId), InventorySkuCostDetailEntity::getWarehouseId,transferWarehouseId)
-                            .in(InventorySkuCostDetailEntity::getSkuId , dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
+                    List<String> warehouseIds = dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                    List<String> skuIds = dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                    List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
+                            .in(CharSequenceUtil.isBlank(transferWarehouseId) && CollUtil.isNotEmpty(warehouseIds),InventorySkuCostDetailEntity::getWarehouseId, warehouseIds)
+                            .eq(CharSequenceUtil.isNotBlank(transferWarehouseId), InventorySkuCostDetailEntity::getWarehouseId, transferWarehouseId)
+                            .in(InventorySkuCostDetailEntity::getSkuId ,skuIds).list();
 					if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
 						for(InventorySkuCostDetailEntity j : inventorySkuCostDetailEntityList) {
 							InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(j.getMainId());
