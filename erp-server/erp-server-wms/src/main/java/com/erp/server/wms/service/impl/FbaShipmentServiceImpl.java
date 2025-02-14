@@ -1882,10 +1882,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
         // 同步记录
         List<DmpInoutDTO.LastOneDTO> lastOneDTOS = new LinkedList<>();
-        if (CollectionUtils.isNotEmpty(list)){
+        if (CollectionUtils.isNotEmpty(shopList)){
             // 查询最近同步任务
             List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
-            list.forEach(v->{
+            shopList.forEach(v->{
                 DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
                 commonDTO.setSystemCode(PlatformDictEnum.AMAZON.getCode());
                 commonDTO.setBillType(BusinessTypeEnum.FBA_SHIPMENT.getCode());
@@ -1909,6 +1909,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             return syncViewDTO;
         }).collect(Collectors.toList());
 
-        return new PagingVO<>(resultList, pageData.getTotalPage(), advanceQueryDTO.getPageSize(), advanceQueryDTO.getCurrPage());
+        return new PagingVO<>(resultList, pageData.getTotalCount(), advanceQueryDTO.getPageSize(), advanceQueryDTO.getCurrPage());
     }
 }
