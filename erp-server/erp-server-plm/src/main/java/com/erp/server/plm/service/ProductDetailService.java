@@ -238,6 +238,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
 
+    PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO>productSkuExcelDTO );
+
     /**
      * 根据sku id集合
      * @author yl

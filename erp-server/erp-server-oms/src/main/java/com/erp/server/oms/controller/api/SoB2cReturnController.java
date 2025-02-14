@@ -60,7 +60,7 @@ public class SoB2cReturnController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/export")
+    @PostMapping("/)
     @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
     public ApiResult export(@RequestBody @Validated SoB2cReturnDTO.PagingParamDTO dto) {
         soB2cReturnService.exportExcel(dto);
