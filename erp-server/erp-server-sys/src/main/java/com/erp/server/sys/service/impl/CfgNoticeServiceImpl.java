@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -20,6 +21,7 @@ import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
 import com.erp.model.wms.enums.CfgVirtualNoticeNodeTypeEnum;
+import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
 import com.erp.model.wms.enums.CfgVirtualNoticeRuleTypeEnum;
 import com.erp.server.sys.mapper.CfgNoticeMapper;
 import com.erp.server.sys.service.CfgNoticeDetailService;
@@ -122,16 +124,22 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         CfgNoticeDTO.ViewDTO viewDTO = BeanMapperUtils.map(CfgNoticeDTO.ViewDTO.class, cfgNoticeEntity);
         // TODO 数据赋值处理
         List<CfgNoticeDTO.NoticeObjectDTO> noticeObjectDTOList = new ArrayList<>();
+        List<CfgNoticeDTO.NoticeTimeDTO> noticeTimeDTOList = new ArrayList<>();
         for (CfgNoticeDetailEntity detailEntity : cfgdetailList) {
 
-            case "noticeObject":
-                CfgNoticeDTO.NoticeObjectDTO noticeObjectDTO = new CfgNoticeDTO.NoticeObjectDTO();
-                BeanMapperUtils.copy(detailEntity, noticeObjectDTO);
-                noticeObjectDTOList.add(noticeObjectDTO);
-                break;
-
+            switch (Objects.requireNonNull(CfgVirtualNoticeObjectTypeEnum.getEnum(detailEntity.getNoticeType()))) {
+                case NOTICE_USER:
+                case NOTICE_GROUP:
+                    CfgNoticeDTO.NoticeObjectDTO noticeObjectDTO = BeanUtil.toBean(detailEntity.getNoticeValueJson(), CfgNoticeDTO.NoticeObjectDTO.class);
+                    noticeObjectDTOList.add(noticeObjectDTO);
+                    break;
+                case NOTICE_DAY:
+                case NOTICE_WEEK:
+                    CfgNoticeDTO.NoticeTimeDTO noticeTimeDTO = BeanUtil.toBean(detailEntity.getNoticeValueJson(), CfgNoticeDTO.NoticeTimeDTO.class);
+                    noticeTimeDTOList.add(noticeTimeDTO);
+                    break;
+            }
         }
-
         return viewDTO;
     }
 
