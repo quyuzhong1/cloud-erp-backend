@@ -263,8 +263,29 @@ public class ProductInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品列表-移动分类:产品ids={productIds},分类id={categoryId}")
     @PostMapping("/updateCategory")
     public ApiResult<Object> updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
-        Boolean flag = productInfoService.updateCategory(dto);
-        return flag ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getProductIds())
+                .stream()
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
+        for (String id : dto.getProductIds()) {
+            ProductInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = productInfoService.updateCategory(new MoveCategoryDTO(Collections.singletonList(id), dto.getCategoryId()));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"移动分类成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"移动分类失败"));
+                }
+            }catch (Exception e){
+                log.error("移动分类失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
