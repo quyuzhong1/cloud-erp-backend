@@ -25,41 +25,17 @@ import java.math.BigDecimal;
 @TableName("cfg_rule_stock_up")
 public class CfgRuleStockUpEntity extends BaseEntity<CfgRuleStockUpEntity> {
 
+
     /**
-    * 采购审批天数（天）
+    * 平台安全天数（天）
     */
-    @TableField("purchase_approve_days")
-    private Integer purchaseApproveDays;
+    @TableField("platform_safe_days")
+    private Integer platformSafeDays;
     /**
-    * 生产周期天数（天）
-    */
-    @TableField("production_days")
-    private Integer productionDays;
-    /**
-    * 供应商发货天数（天）
-    */
-    @TableField("supplier_delivery_days")
-    private Integer supplierDeliveryDays;
-    /**
-    * 质检入库天数（天）
-    */
-    @TableField("qc_days")
-    private Integer qcDays;
-    /**
-    * 采购频率天数（天）
-    */
-    @TableField("purchase_cycle_days")
-    private Integer purchaseCycleDays;
-    /**
-    * 安全天数（天）
-    */
-    @TableField("safe_days")
-    private Integer safeDays;
-    /**
-    * 入库天数（天）
-    */
-    @TableField("instock_days")
-    private Integer instockDays;
+     * 海外仓安全天数（天）
+     */
+    @TableField("overseas_safe_days")
+    private Integer overseasSafeDays;
     /**
     * 常规品备货系数
     */
@@ -71,10 +47,10 @@ public class CfgRuleStockUpEntity extends BaseEntity<CfgRuleStockUpEntity> {
     @TableField("new_stocking_ratio")
     private BigDecimal newStockingRatio;
     /**
-    * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+    * 平台类型
     */
-    @TableField("platform_type")
-    private String platformType;
+    @TableField("platform")
+    private String platform;
     /**
     * 关联id
     */
@@ -85,27 +61,19 @@ public class CfgRuleStockUpEntity extends BaseEntity<CfgRuleStockUpEntity> {
     */
     @TableField("ref_type")
     private String refType;
+    /**
+     * 是否同常规品配置一致,true是，false否
+     */
+    @TableField("is_cfg_same")
+    private Boolean isCfgSame;
 
 
-    public static final String PURCHASE_APPROVE_DAYS = "purchase_approve_days";
-
-    public static final String PRODUCTION_DAYS = "production_days";
-
-    public static final String SUPPLIER_DELIVERY_DAYS = "supplier_delivery_days";
-
-    public static final String QC_DAYS = "qc_days";
-
-    public static final String PURCHASE_CYCLE_DAYS = "purchase_cycle_days";
-
-    public static final String SAFE_DAYS = "safe_days";
-
-    public static final String INSTOCK_DAYS = "instock_days";
 
     public static final String STOCKING_RATIO = "stocking_ratio";
 
     public static final String NEW_STOCKING_RATIO = "new_stocking_ratio";
 
-    public static final String PLATFORM_TYPE = "platform_type";
+    public static final String PLATFORM = "platform";
 
     public static final String REF_ID = "ref_id";
 

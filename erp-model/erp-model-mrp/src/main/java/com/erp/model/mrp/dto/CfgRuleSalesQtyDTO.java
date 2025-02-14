@@ -137,6 +137,42 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     public static class UpdateDTO {
 
         /**
+         * 断货数据是否从历史销量中排除,true是，false否
+         */
+        @NotNull(message = "")
+        private Boolean isIgnoreOutOfStock;
+
+        /**
+         * sales_qty_type
+         * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
+         */
+        private String salesQtyType;
+
+        /**
+         * 订单类型，订单类型，亚马逊取FbaOrderTypeEnum，海外取OverseasOrderTypeEnum
+         */
+        private List<String> orderType;
+
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        @NotBlank(message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)不能为空")
+        @Size(max = 32,message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
+        private String platformType;
+
+        /**
+         * 关联id
+         */
+        @Size(max = 19,message = "关联id最大长度不能超过19位")
+        private String refId;
+
+        /**
+         * 关联类型
+         */
+        @Size(max = 32,message = "关联类型最大长度不能超过32位")
+        private String refType;
+
+        /**
          * 是否同常规品设置
          */
         @NotNull(message = "是否同常规品设置不能为空")

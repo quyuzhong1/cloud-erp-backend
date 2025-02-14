@@ -86,7 +86,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list,cfgRuleExpireTime.getId(),oldList,isCustom);
+        handleData(list,cfgRuleExpireTime.getId(),oldList,isCustom, isOverseas);
         log.info("编辑 开始修改时效物流（规则设置）数据，id：【{}】", cfgRuleExpireTime.getId());
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
@@ -265,7 +265,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleLogisticsEntity> list,String expireTimeId,List<CfgRuleLogisticsEntity> oldList,Boolean isCustom) {
+    private void handleData(List<CfgRuleLogisticsEntity> list, String expireTimeId, List<CfgRuleLogisticsEntity> oldList, Boolean isCustom, boolean isOverseas) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -285,6 +285,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             }
             //时效主表id
             logisticsEntity.setExpireTimeId(expireTimeId);
+            logisticsEntity.setPlatformType(isOverseas ? CfgRulePlatformTypeEnum.OVERSEAS.getCode() : CfgRulePlatformTypeEnum.AMAZON.getCode());
             //相同物流方式赋值id
             CfgRuleLogisticsEntity entity = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getLogisticsMethod(), logisticsEntity.getLogisticsMethod())).findFirst().orElse(null);
             if (!ObjectUtils.isEmpty(entity)) {
