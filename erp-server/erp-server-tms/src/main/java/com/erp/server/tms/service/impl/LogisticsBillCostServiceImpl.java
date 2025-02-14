@@ -1892,11 +1892,13 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				.list();
 		Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
-			idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
+            List<String> warehouseIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<String> skuIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, i -> i));
 			List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
-                    .in(CharSequenceUtil.isBlank(packageWarehouseId),InventorySkuCostDetailEntity::getWarehouseId, soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()))
+                    .in(CharSequenceUtil.isBlank(packageWarehouseId) && CollUtil.isNotEmpty(warehouseIds),InventorySkuCostDetailEntity::getWarehouseId, warehouseIds)
                     .eq(CharSequenceUtil.isNotBlank(packageWarehouseId), InventorySkuCostDetailEntity::getWarehouseId,packageWarehouseId)
-				.in(InventorySkuCostDetailEntity::getSkuId , soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
+				.in(InventorySkuCostDetailEntity::getSkuId , skuIds).list();
 			if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
 				for(InventorySkuCostDetailEntity i : inventorySkuCostDetailEntityList) {
 					InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(i.getMainId());
