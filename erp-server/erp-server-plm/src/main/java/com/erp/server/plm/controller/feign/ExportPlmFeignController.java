@@ -7,6 +7,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
 import com.erp.server.plm.query.*;
@@ -44,6 +45,8 @@ public class ExportPlmFeignController {
     private PilotApplicationService pilotApplicationService;
     @Resource
     private MouldInfoService mouldInfoService;
+    @Resource
+    private ProductInfoService productInfoService;
     @PostMapping("/exportBom")
     @WebAdvanceQuery(handler = BomInfoHandler.class)
     public PagingVO<BomExportExcelVO> exportBom(@RequestBody PagingDTO<SearchPagingDTO> dto) {
@@ -113,5 +116,17 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery
     public PagingVO<MouldInfoDTO.OrderTrackingDetailExportDTO> exportOrderTrackingDetail(@RequestBody PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto) {
         return mouldInfoService.exportOrderTrackingDetail(dto);
+    }
+
+    @PostMapping("/productShow")
+    @WebAdvanceQuery
+    public PagingVO<ProductShowDTO> exportProductShow(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        return productInfoService.exportProductShow(dto);
+    }
+
+    @PostMapping("/projectTask")
+    @WebAdvanceQuery
+    public PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProjectTask(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        return productInfoService.exportProductTaskExcelDTO(dto);
     }
 }
