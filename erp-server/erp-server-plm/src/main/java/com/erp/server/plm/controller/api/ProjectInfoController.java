@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -10,16 +11,19 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.enums.ProjectStateEnum;
 import com.erp.server.plm.service.ProjectInfoService;
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.index.qual.SameLen;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品开发管理
@@ -30,6 +34,7 @@ import java.util.List;
  * @author yl
  * @since 2022-09-13
  */
+@Slf4j
 @RestController
 @LogSystemModule("产品开发管理")
 @RequestMapping("project")
@@ -164,8 +169,29 @@ public class ProjectInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-暂停项目:ids={ids}")
     @PostMapping("/suspend")
     public ApiResult<Object> suspend(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = projectInfoService.suspend(dto.getIds());
-        return flag ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+        for (String id : dto.getIds()) {
+            ProjectInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = projectInfoService.suspend(dto.getIds());
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"暂停项目成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"暂停项目失败"));
+                }
+            }catch (Exception e){
+                log.error("暂停项目失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
