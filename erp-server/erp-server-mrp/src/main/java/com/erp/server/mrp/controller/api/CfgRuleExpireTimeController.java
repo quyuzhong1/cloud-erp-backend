@@ -13,9 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 
 /**
- * <p>
  * 时效配置表 前端控制器
- * </p>
  *
  * @author liaohui
  * @since 2025-02-13
