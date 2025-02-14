@@ -4,6 +4,7 @@ package com.erp.server.plm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -14,12 +15,14 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProductProgressStatusEnum;
 import com.erp.server.plm.query.ProductProjectQueryHandler;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.SysCodeService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -29,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品开发管理
@@ -36,6 +40,7 @@ import java.util.*;
  * @author yl
  * @since 2022-09-13
  */
+@Slf4j
 @RestController
 @LogSystemModule("产品开发管理")
 @RequestMapping("product")
@@ -438,8 +443,29 @@ public class ProductInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "确认立项:ids={ids}")
     @PostMapping("/batchEstablish")
     public ApiResult<Object> batchArchive(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
-        boolean flag = productInfoService.batchEstablish(dto);
-        return flag ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
+        for (String id : dto.getIds()) {
+            ProductInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = productInfoService.batchEstablish(Collections.singletonList(id), dto.getLocalDate());
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getSpuNo(),"产品立项成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getSpuNo(),"产品立项失败"));
+                }
+            }catch (Exception e){
+                log.error("产品立项失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSpuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }

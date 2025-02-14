@@ -8,6 +8,7 @@ import com.erp.model.plm.entity.ProductInfoEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -254,7 +255,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @param idsTimeDto
      * @return
      */
-    Boolean batchEstablish(ProductInfoDTO.IdsDateDto idsTimeDto);
+    Boolean batchEstablish(List<String> ids, LocalDate localDate);
 
     /**
      * 产品概览
