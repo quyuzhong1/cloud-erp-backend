@@ -177,7 +177,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
-                shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPriceOrigin(), dmpSoDetailEntity.getQty())));
+                shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPriceOrigin(), dmpSoDetailEntity.getQty()));
 
             } else {
                 //线上订单
