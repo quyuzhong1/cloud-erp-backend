@@ -38,9 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -287,9 +285,31 @@ public class SoInfoController extends BaseController {
 //            menuCode = "oms:so:update",
 //            serviceClass = SoInfoService.class,
 //            keyIdName = "ids")
-    public ApiResult updateDetailRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = soInfoService.updateDetailRemark(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> updateDetailRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, SoInfoEntity> entityMap = soInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"订单不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = soInfoService.updateDetailRemark(
+                        Collections.singletonList(id),
+                        dto.getRemark()
+                        );
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(),"更新明细备注成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(),"更新明细备注失败"));
+                }
+            }catch (Exception e){
+                log.error("更新明细备注失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -2621,8 +2621,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     }
 
     @Override
-    public Boolean updateDetailRemark(BaseIdsDTO.RemarkDTO dto) {
-        soDetailService.updateRemarkByIds(dto.getIds(), dto.getRemark());
+    public Boolean updateDetailRemark(List<String> ids, String remark) {
+        soDetailService.updateRemarkByIds(ids, remark);
         return Boolean.TRUE;
     }
 
