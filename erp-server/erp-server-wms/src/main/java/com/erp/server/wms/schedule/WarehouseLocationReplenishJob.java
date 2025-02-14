@@ -1,8 +1,6 @@
 package com.erp.server.wms.schedule;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
@@ -11,7 +9,6 @@ import com.erp.model.wms.entity.WarehouseLocationSafetyInventoryEntity;
 import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
 import com.erp.server.wms.mapper.InventoryMapper;
-import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.WarehouseLocationReplenishService;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
@@ -22,6 +19,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -61,12 +59,11 @@ public class WarehouseLocationReplenishJob {
 
         //即时库存数据
         List<String> warehouseIds = list.stream().map(item -> item.getWarehouseId()).distinct().collect(Collectors.toList());
-        List<String> skuIds = list.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
-//        List<String> warehouseLocations = list.stream().map(item -> item.getWarehouseLocation()).distinct().collect(Collectors.toList());
-//        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
-//        searchParamDTO.setWarehouseIdList(warehouseIds);
-//        searchParamDTO.setSkuIdList(skuIds);
-        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(new InventoryDTO.SearchParamDTO(), null, null);
+        InventoryDTO.SearchParamDTO searchParamDTO = new InventoryDTO.SearchParamDTO();
+        Map<String, String> map = new HashMap<>();
+        map.put("default", "1=1");
+        searchParamDTO.setSqlMap(map);
+        List<InventoryDTO.PagingViewDTO> inventoryList = inventoryMapper.exportByLocation(searchParamDTO, null, null);
 
         Map<String, InventoryDTO.PagingViewDTO> inventoryMap = inventoryList.stream()
                 .collect(Collectors.toMap(item1 -> item1.getWarehouseId() + "#" + item1.getWarehouseLocation() + "#" + item1.getSkuId(), item2 -> item2, (o1, o2) -> o2));

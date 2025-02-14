@@ -228,5 +228,10 @@ public class TmsCfgCostDTO implements Serializable {
          * 是否默认
          */
         private Boolean isDefault;
+        
+        /**
+         * 费用分类
+         */
+        private String dictCostCategory;
     }
 }

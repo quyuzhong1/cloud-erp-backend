@@ -19,11 +19,6 @@ public class ProductInfo implements Serializable {
     @NotNull
     private String productName;
 
-    /**
-     * 添加时必传
-     * 编辑时不传
-     */
-    private String skuIdentifier;
 
     private List<PictureInfo> pictureList;
 
@@ -117,10 +112,9 @@ public class ProductInfo implements Serializable {
 
     private Clearance clearance;
 
-    public ProductInfo(String sku, String productName, String skuIdentifier) {
+    public ProductInfo(String sku, String productName) {
         this.sku = sku;
         this.productName = productName;
-        this.skuIdentifier = skuIdentifier;
     }
 
     @Data

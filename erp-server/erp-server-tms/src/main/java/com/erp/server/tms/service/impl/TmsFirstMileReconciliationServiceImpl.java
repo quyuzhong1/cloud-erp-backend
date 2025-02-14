@@ -16,6 +16,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -53,6 +54,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -566,7 +568,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 .stream()
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getMainId));
 
-
         //币别信息
         List<String> currencyIdList = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
@@ -575,6 +576,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 物流商
         Map<String, LogisticsSupplierEntity> supplierMap = logisticsSupplierService.mapByIds(supplierIds);
 
+        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
+    	Map<String, BigDecimal> rateMap = new HashMap<>();
+    	rateMap.put("CNY", BigDecimal.ONE);
         // 属性赋值
         for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
             //审核状态名称
@@ -608,6 +613,74 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             }
 
             data.setPayStatusName(TmsB2cDeclareReconciliationPayStatusEnum.getName(data.getPayStatus()));
+            
+            BigDecimal actualShippingCost = BigDecimal.ZERO;
+            BigDecimal actualDeclareCost = BigDecimal.ZERO;
+            BigDecimal actualOtherCost = BigDecimal.ZERO;
+            BigDecimal actualOtherTaxCost = BigDecimal.ZERO;
+            List<TmsFirstMileReconciliationDetailEntity> detailList = detailGroupMap.get(data.getId());
+            if(CollUtil.isNotEmpty(detailList)) {
+            	for(TmsFirstMileReconciliationDetailEntity detail : detailList) {
+            		if(detail.getType().equals("actual")) {
+            			BigDecimal cost = detail.getShippingCost();
+            			String currency = detail.getShippingCostCurrency();
+                		BigDecimal rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualShippingCost = actualShippingCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		
+                		cost = detail.getDeclareCost();
+            			currency = detail.getDeclareCostCurrency();
+                		rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualDeclareCost = actualDeclareCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		
+                		cost = detail.getOtherCost();
+            			currency = detail.getOtherCostCurrency();
+                		rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualOtherCost = actualOtherCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		
+                		cost = detail.getOtherTaxCost();
+            			currency = detail.getOtherTaxCurrency();
+                		rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualOtherTaxCost = actualOtherTaxCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+            		}
+            	}
+            }
+            data.setActualShippingCost(actualShippingCost);
+            data.setActualDeclareCost(actualDeclareCost);
+            data.setActualOtherCost(actualOtherCost);
+            data.setActualOtherTaxCost(actualOtherTaxCost);
+            data.setTotalCost(actualShippingCost.add(actualDeclareCost).add(actualOtherCost).add(actualOtherTaxCost));
         }
     }
 
@@ -691,7 +764,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     public TmsFirstMileReconciliationEntity findByCycleAndSupplier(String supplier, String currency, LocalDate startDate, LocalDate endDate) {
         return lambdaQuery()
                 .eq(TmsFirstMileReconciliationEntity::getLogisticsSupplierId, supplier)
-                .eq(TmsFirstMileReconciliationEntity::getCurrency, currency)
+                .eq(TmsFirstMileReconciliationEntity::getApproveStatus, currency)
                 .eq(TmsFirstMileReconciliationEntity::getStartDate, startDate)
                 .eq(TmsFirstMileReconciliationEntity::getEndDate, endDate)
                 .last(" LIMIT 1 ")

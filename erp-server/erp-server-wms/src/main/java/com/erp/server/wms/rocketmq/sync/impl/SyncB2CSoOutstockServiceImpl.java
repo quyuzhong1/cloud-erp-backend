@@ -190,7 +190,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class , timeoutMills = 180000)
     @DistributeLocker(keyName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()

@@ -51,6 +51,7 @@ import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpCfgOutputBlackCompareSignEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -164,7 +165,9 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				String dataId = dmpOutputTaskRecordEntity.getDataId();
 				String redisKey = "dmp:output:task:" + dataId;
 				try {
-					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+					if(!dmpOutputTaskRecordService.getById(dmpOutputTaskRecordEntity.getId()).getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
+						this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+					}
 				} catch (Exception e) {
 					log.error("处理推送数据失败{}" , dmpOutputTaskRecordEntity.getId() , e);
 				}finally {

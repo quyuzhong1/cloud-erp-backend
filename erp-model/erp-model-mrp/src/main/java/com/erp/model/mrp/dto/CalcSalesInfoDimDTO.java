@@ -728,8 +728,8 @@ public class CalcSalesInfoDimDTO implements Serializable {
             dto.setEstimateQty(entity.getQty());
             int realQty = Optional.ofNullable(realSalesQtyMap.get(entity.getDate())).orElse(0);
             dto.setRealSalesQty(realQty);
-            BigDecimal deviationRatio = realQty == 0 ? BigDecimal.ZERO : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP);
-            dto.setDeviationRatio(deviationRatio.multiply(new BigDecimal(100)) + "%");
+            String deviationRatio = realQty == 0 ? "∞" : (entity.getQty().subtract(new BigDecimal(realQty))).divide(new BigDecimal(realQty), 2, RoundingMode.HALF_UP).multiply(new BigDecimal(100)) + "%";
+            dto.setDeviationRatio(deviationRatio);
             dto.setAvgThreeSalesQty(avgSalesQtyMap.get(TimePeriodEnum.THREE.getName()));
             dto.setAvgSevenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.SEVEN.getName()));
             dto.setAvgFourteenSalesQty(avgSalesQtyMap.get(TimePeriodEnum.FOURTEEN.getName()));
@@ -773,6 +773,7 @@ public class CalcSalesInfoDimDTO implements Serializable {
         /**
          * id
          */
+        @NotBlank(message = "试算模板不能为空")
         private String cfgRuleCalcId;
     }
 
@@ -1192,6 +1193,11 @@ public class CalcSalesInfoDimDTO implements Serializable {
         private String name;
 
         /**
+         * 模板编码
+         */
+        private String code;
+
+        /**
          * 相似度
          */
         private BigDecimal similarity = BigDecimal.ZERO;
@@ -1239,6 +1245,10 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算模板名字
          */
         private String name;
+        /**
+         * code
+         */
+        private String code;
         /**
          * 试算开始日期
          */

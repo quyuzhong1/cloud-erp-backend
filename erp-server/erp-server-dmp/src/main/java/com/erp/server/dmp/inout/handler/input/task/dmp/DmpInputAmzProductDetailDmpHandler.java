@@ -3,7 +3,6 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,6 +11,8 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.sdk.oms.amz.spapi.model.catalogitems.*;
+import com.erp.sdk.oms.amz.spapi.model.productpricing.ASINIdentifier;
+import com.erp.sdk.oms.amz.spapi.model.productpricing.IdentifierType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -36,8 +37,13 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
     public static final String REPORT_ID = "reportId";
     public static final String SHOP_ID = "shopId";
     public static final String SPU_ID = "spu_id";
+    public static final String SELLER_SKU = "sellerSKU";
+
+    public static final String SELLER_SKU_OTHER = "sellerSku";
 
     public static final String AMAZON_LISTING_DATA = "amazon_listing_data";
+
+    public static final String AMAZON_LISTING_PRICING_DATA = "amazon_listing_pricing_data";
 
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
@@ -58,6 +64,11 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
         paramDataList.add(new ParamData(NEXT_LEVEL_ID, NEXT_LEVEL_ID, PannoEnum.EQ, shopId));
         List<Map<String, Object>> listingDetailMongoData = mongoService.findMongoData(paramDataList, childMongoStorageName);
 
+        // 当前站点所有价格信息
+//        List<ParamData> paramDataPricingList = new ArrayList<>();
+//        paramDataPricingList.add(new ParamData(SHOP_ID, SHOP_ID, PannoEnum.EQ, shopId));
+//        List<Map<String, Object>> listingPricingMongoData = mongoService.findMongoData(paramDataPricingList, AMAZON_LISTING_PRICING_DATA);
+
         // 按listing报告内容
         List<ParamData> chlidParamDataList = new ArrayList<>();
         chlidParamDataList.add(new ParamData(REPORT_ID, REPORT_ID, PannoEnum.EQ, reportId));
@@ -72,6 +83,15 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
             if (StringUtils.isBlank(listingProductId)) {
                 continue;
             }
+            String sellerSku = listingMongoDataItem.getOrDefault(SELLER_SKU, "").toString();
+            if (StringUtils.isBlank(sellerSku)) {
+                // 兼容来源驼峰
+                sellerSku = listingMongoDataItem.getOrDefault(SELLER_SKU_OTHER, "").toString();
+            }
+            if (StringUtils.isBlank(sellerSku)){
+               ServiceException.runError(" sellerSku 解析为空");
+            }
+
             String productIdType = listingMongoDataItem.getOrDefault("productIdType", "").toString();
             if ("1".equalsIgnoreCase(productIdType)) {
                 // 标准类型asin=productId
@@ -81,7 +101,30 @@ public class DmpInputAmzProductDetailDmpHandler extends DmpInputDoChildDmpHandle
             if (StringUtils.isNotBlank(asin1)) {
                 // 默认asin=asin1
                 listingMongoDataItem.put("asin", asin1);
+            } else {
+                // 匹配明细信息补充ASIN
+                String finalSellerSku = sellerSku;
+                Map<String, Object> detailMap = listingDetailMongoData
+                        .stream()
+                        .filter(e -> e.getOrDefault(SELLER_SKU, "").toString().equalsIgnoreCase(finalSellerSku))
+                        .findFirst()
+                        .orElse(null);
+                if (null != detailMap){
+                    Object productObj = detailMap.get("product");
+                    if (null != productObj){
+                        JSONObject productJsonObj = JSONObject.parseObject(JSONUtil.toJsonStr(productObj));
+                        JSONObject identifiersObj = productJsonObj.getJSONObject("identifiers");
+                        if (null != identifiersObj){
+                            IdentifierType identifiertype = identifiersObj.toJavaObject(IdentifierType.class);
+                            ASINIdentifier marketplaceASIN = identifiertype.getMarketplaceASIN();
+                            if (null != marketplaceASIN){
+                                listingMongoDataItem.put("asin", marketplaceASIN.getASIN());
+                            }
+                        }
+                    }
+                }
             }
+
             // 匹配明细
             Map<String, Object> detailMap = listingDetailMongoData
                     .stream()

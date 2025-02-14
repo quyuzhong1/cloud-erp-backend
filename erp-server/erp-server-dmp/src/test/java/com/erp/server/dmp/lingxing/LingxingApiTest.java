@@ -102,7 +102,6 @@ public class LingxingApiTest {
     public void addOrUpdateProduct(){
         ProductInfo productInfo = new ProductInfo();
         productInfo.setSku("2667");
-//        productInfo.setSkuIdentifier("1619184295035801601");
         productInfo.setProductName("VIJIM P001 手机/平板夹支架 2222");
         Result<Object> objectResult = LingxingApiUtils.checkAddOrUpdateProduct(productInfo);
         System.out.println("商品同步结果");
