@@ -374,7 +374,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             for (FirstMileWeightAllocationEntity entity : boxEntityList) {
                 BigDecimal skuWeightSum = entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty()));
                 if(cfgWeightAllocationType.equals("outstockChargedWeight")){
-                	if(skuWeightSum.equals(BigDecimal.ZERO) || boxWeightSum.equals(BigDecimal.ZERO)) {
+                	if(skuWeightSum.compareTo(BigDecimal.ZERO) == 0 || boxWeightSum.compareTo(BigDecimal.ZERO) == 0) {
                 		entity.setAllocationWeight(BigDecimal.ZERO);
                 	}else {
                 		BigDecimal allocationWeight = skuWeightSum.multiply(weightByAllocationType).divide(boxWeightSum, 2, RoundingMode.DOWN);
