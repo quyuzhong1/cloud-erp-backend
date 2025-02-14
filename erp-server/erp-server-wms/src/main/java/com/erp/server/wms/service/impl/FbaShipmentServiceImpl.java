@@ -1865,14 +1865,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public PagingVO<FbaShipmentDTO.SyncViewDTO> syncPaging(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
         // 指定亚马逊
-        List<AdvanceQueryDTO> advanceQueryDTOList = advanceQueryDTO.getParams().getAdvanceQueryDTOList();
-        AdvanceQueryDTO queryDTO = AdvanceQueryDTO.buildSplicingSQLDTO("si.dict_platform",QueryConditionEnum.EQ, PlatformDictEnum.AMAZON.getCode(),QueryDataTypeEnum.STRING);
-        if (CollectionUtils.isEmpty(advanceQueryDTOList)){
-            advanceQueryDTOList = Collections.singletonList(queryDTO);
-            advanceQueryDTO.getParams().setAdvanceQueryDTOList(advanceQueryDTOList);
-        } else {
-            advanceQueryDTOList.add(queryDTO);
-        }
         PagingVO<ShopDTO.PagingViewDTO> pageData = shopInfoFeign.paging(advanceQueryDTO);
         List<ShopDTO.PagingViewDTO> list = pageData.getList();
         if (CollectionUtils.isEmpty(list)) {
