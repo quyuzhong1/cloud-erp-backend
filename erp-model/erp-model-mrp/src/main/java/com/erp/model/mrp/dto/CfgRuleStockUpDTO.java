@@ -210,17 +210,8 @@ public class CfgRuleStockUpDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 安全天数（天）
-         */
-        @NotNull(message = "安全天数（天）不能为空")
-        @Min(value = 0, message = "安全天数（天）最小值为0")
-        @Max(value = 365, message = "安全天数（天）最大值为365")
-        private Integer safeDays;
-
-        /**
          * 平台安全天数（天）
          */
-        @NotNull(message = "平台仓安全天数（天）不能为空")
         @Min(value = 0, message = "平台仓安全天数（天）最小值为0")
         @Max(value = 365, message = "平台仓安全天数（天）最大值为365")
         private Integer platformSafeDays;
@@ -228,7 +219,6 @@ public class CfgRuleStockUpDTO implements Serializable {
         /**
          * 海外仓安全天数（天）
          */
-        @NotNull(message = "海外仓安全天数（天）不能为空")
         @Min(value = 0, message = "海外仓安全天数（天）最小值为0")
         @Max(value = 365, message = "海外仓安全天数（天）最大值为365")
         private Integer overseasSafeDays;
@@ -248,11 +238,11 @@ public class CfgRuleStockUpDTO implements Serializable {
         private BigDecimal newStockingRatio;
 
         /**
-         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         * 平台类型
          */
         @NotBlank(message = "平台类型不能为空")
         @Size(max = 32, message = "平台类型最大长度不能超过32位")
-        private String platformType;
+        private String platform;
 
         /**
          * 关联id
