@@ -1714,8 +1714,9 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 				for(InventorySkuCostDetailEntity i : inventorySkuCostDetailEntityList) {
 					InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(i.getMainId());
                     String companyId = CharSequenceUtil.isBlank(packageOrgId) ? inventorySkuCostEntity.getCompanyId() : packageOrgId;
+                    String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? i.getWarehouseId() : packageWarehouseId;
 					String skuId = i.getSkuId();
-					unInventorySkuCostMap.put(companyId + "_" + skuId, i);
+					unInventorySkuCostMap.put(companyId + "_" + warehouseId + "_" + skuId, i);
 				}
 			}
 		}
@@ -1730,7 +1731,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			String skuId = soOutstockDetailEntity.getSkuId();
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
             String orgId = CharSequenceUtil.isBlank(packageOrgId) ? wareIdOrgIdMaps.get(soOutstockDetailEntity.getWarehouseId()) : packageOrgId;
-			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+            String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? soOutstockDetailEntity.getWarehouseId() : packageWarehouseId;
+            InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
 			if(inventorySkuCostDetailEntity != null) {
 				totalSkuCost = totalSkuCost.add(inventorySkuCostDetailEntity.getProductCost().multiply(new BigDecimal(actualQty)));
 			}
@@ -1780,8 +1782,8 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 			
 			Integer actualQty = soOutstockDetailEntity.getActualQty();
 			BigDecimal skuCostPre = BigDecimal.ZERO;
-			
-			InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+            String warehouseId = CharSequenceUtil.isBlank(packageWarehouseId) ? soOutstockDetailEntity.getWarehouseId() : packageWarehouseId;
+            InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
 			if(inventorySkuCostDetailEntity != null) {
 				BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
 				if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {

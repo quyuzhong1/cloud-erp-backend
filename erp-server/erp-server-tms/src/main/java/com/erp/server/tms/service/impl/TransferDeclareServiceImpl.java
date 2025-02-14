@@ -1171,7 +1171,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 				Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 				if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
 					idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, j -> j));
-                    List<String> warehouseIds = dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                    List<String> warehouseIds = outstockIdWareHouseIdMap.values().stream().collect(Collectors.toList());
                     List<String> skuIds = dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
                     List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery()
                             .in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
@@ -1182,8 +1182,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						for(InventorySkuCostDetailEntity j : inventorySkuCostDetailEntityList) {
 							InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(j.getMainId());
                             String companyId = CharSequenceUtil.isBlank(transferOrgId) ? inventorySkuCostEntity.getCompanyId() : transferOrgId;
-							String skuId = j.getSkuId();
-							unInventorySkuCostMap.put(companyId + "_" + skuId, j);
+							String warehouseId = CharSequenceUtil.isBlank(transferWarehouseId) ? j.getWarehouseId() : transferWarehouseId;
+                            String skuId = j.getSkuId();
+							unInventorySkuCostMap.put(companyId + "_" + warehouseId + "_" + skuId, j);
 						}
 					}
 				}
@@ -1198,7 +1199,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 						String skuId = soOutstockDetailEntity.getSkuId();
 						Integer actualQty = soOutstockDetailEntity.getActualQty();
                         String orgId = CharSequenceUtil.isBlank(transferOrgId) ? wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId())) : transferOrgId;
-						InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+                        String warehouseId = CharSequenceUtil.isBlank(transferWarehouseId) ? outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()) : transferWarehouseId;
+                        InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
 						if(inventorySkuCostDetailEntity != null) {
 							totalSkuCost = totalSkuCost.add(inventorySkuCostDetailEntity.getProductCost().multiply(new BigDecimal(actualQty)));
 						}
@@ -1228,7 +1230,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					
 					Integer actualQty = soOutstockDetailEntity.getActualQty();
 					BigDecimal skuCostPre = BigDecimal.ZERO;
-					InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+                    String warehouseId = CharSequenceUtil.isBlank(transferWarehouseId) ? outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()) : transferWarehouseId;
+                    InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
 					if(inventorySkuCostDetailEntity != null) {
 						BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
 						if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
