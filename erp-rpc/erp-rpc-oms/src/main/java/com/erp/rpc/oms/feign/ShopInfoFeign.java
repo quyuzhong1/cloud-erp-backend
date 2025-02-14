@@ -158,5 +158,5 @@ public interface ShopInfoFeign {
      * 高级查询分页店铺
      */
     @PostMapping("feign/shop/paging")
-    PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+    PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody PagingDTO<ShopDTO.PagingParamDTO> advanceQueryDTO);
 }

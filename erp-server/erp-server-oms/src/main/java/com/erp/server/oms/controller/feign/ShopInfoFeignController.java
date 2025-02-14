@@ -218,14 +218,7 @@ public class ShopInfoFeignController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = ShopQueryHandler.class)
-    public PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<AdvanceQueryContainer> sourceDto) {
-        PagingDTO<ShopDTO.PagingParamDTO> dto = new PagingDTO<>();
-        dto.setPageSize(sourceDto.getPageSize());
-        dto.setCurrPage(sourceDto.getCurrPage());
-        ShopDTO.PagingParamDTO pagingParamDTO = new ShopDTO.PagingParamDTO();
-        pagingParamDTO.setAdvanceQueryDTOList(sourceDto.getParams().getAdvanceQueryDTOList());
-        pagingParamDTO.setSqlMap(sourceDto.getParams().getSqlMap());
-        dto.setParams(pagingParamDTO);
+    public PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
         return shopInfoService.paging(dto);
     }
 }
