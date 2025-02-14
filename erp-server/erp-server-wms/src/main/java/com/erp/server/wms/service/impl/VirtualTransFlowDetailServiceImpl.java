@@ -334,11 +334,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
      * @param oldFlowDetailList
      */
     private void returnVirtualInventory (List<VirtualTransFlowDetailEntity> oldFlowDetailList, LocalDateTime tradeTime) {
-        //仅退货未反审核的数据
-        oldFlowDetailList = oldFlowDetailList.stream().filter(obj -> Boolean.FALSE.equals(obj.getIsUnapproved())).collect(Collectors.toList());
-        if (CollUtil.isEmpty(oldFlowDetailList)) {
-            return;
-        }
         List<String> virtualInventoryDetailIdList = oldFlowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualInventoryDetailId).distinct().collect(Collectors.toList());
         List<VirtualInventoryDetailEntity> virtualInventoryDetailList = virtualInventoryDetailService.listByIds(virtualInventoryDetailIdList);
         if (CollUtil.isEmpty(virtualInventoryDetailList)) {
