@@ -176,6 +176,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
+                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
+                shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPriceOrigin(), dmpSoDetailEntity.getQty()));
+
             } else {
                 //线上订单
                 shudiyunB2cOrderDTO.setTransaction_type("线上订单");
@@ -184,6 +187,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 } else {
                     shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
                 }
+                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPrice());
+                shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPrice(), dmpSoDetailEntity.getQty()));
+
             }
             shudiyunB2cOrderDTO.setStatus("已创建");
 
@@ -191,7 +197,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额
-            shudiyunB2cOrderDTO.setDiscount_deduction_amount(dmpSoInfoEntity.getTotalDiscount());
+            shudiyunB2cOrderDTO.setDiscount_deduction_amount(totalDiscount);
 
             Integer totalQty = dmpSoDetailEntities.stream().mapToInt(DmpSoDetailEntity::getQty).sum();
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
@@ -376,26 +382,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setUnit("PCS");
 
             shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount());
-            if (dmpSoDetailEntity.getAfterAmount().compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal shareDiscount = BigDecimal.ZERO;
-                //获得售价占比分摊的商品优惠额
-                if (dmpSoInfoEntity.getAllAmount().compareTo(BigDecimal.ZERO) > 0) {
-                    shareDiscount = dmpSoDetailEntity.getAfterAmount().divide(dmpSoInfoEntity.getAllAmount(), 4, RoundingMode.DOWN).multiply(totalDiscount);
-                }
-                //计算为真实售价(原始币别)-商品分摊优惠/订单数量
-                if (dmpSoDetailEntities.size() == i-1) {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
-                    shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract((totalDiscount.subtract(shareTotalDiscount))));
-                } else {
-                    if (dmpSoDetailEntity.getQty() == 0) {
-                        shudiyunB2cOrderDTO.setPrice(BigDecimal.ZERO);
-                    } else {
-                        shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount).divide(MathUtil.valueOf(dmpSoDetailEntity.getQty()), 4, RoundingMode.DOWN));
-                    }
-                    shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount().subtract(shareDiscount));
-                }
-                shareTotalDiscount = shareTotalDiscount.add(shareDiscount);
-            }
             shudiyunB2cOrderDTO.setPost_amount(dmpSoInfoEntity.getShippingAmount());
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getPlatformSku());
             if (CharSequenceUtil.isBlank(dmpSoDetailEntity.getSkuName())) {
@@ -405,8 +391,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
-            shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
-
+            if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getPlatformCode())) {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
+            } else {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
+            }
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
