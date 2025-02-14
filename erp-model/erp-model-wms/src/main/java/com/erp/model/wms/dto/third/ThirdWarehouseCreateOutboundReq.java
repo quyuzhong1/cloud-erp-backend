@@ -190,4 +190,20 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
             this.quantity = quantity;
         }
     }
+
+    /**
+     * 订单附件
+     */
+    private List<Attach> attach;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Attach {
+
+        private String fileType;
+
+        private Integer attachId;
+    }
 }

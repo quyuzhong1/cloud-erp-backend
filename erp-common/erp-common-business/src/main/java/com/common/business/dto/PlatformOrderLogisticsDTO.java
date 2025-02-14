@@ -102,6 +102,8 @@ public class PlatformOrderLogisticsDTO implements Serializable {
      * 物流类型
      */
     private String logisticType;
-
-
+    /**
+     * 发货方式（DOOR_PICKUP 上门揽收，SELF_POST 自寄，SELF_SEND 自送 ）
+     */
+    private String deliveryType;
 }
