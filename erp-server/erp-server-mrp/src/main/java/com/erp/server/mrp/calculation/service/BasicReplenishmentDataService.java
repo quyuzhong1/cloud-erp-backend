@@ -177,7 +177,7 @@ public class BasicReplenishmentDataService {
         //获取备货默认配置
         CfgRuleStockUpEntity defaultStockUp = cfgRuleStockUpService.getDefaultByPlatform(platformType);
         List<CfgRuleStockingRatioEntity> defaultStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
-        List<CfgRuleLogisticsEntity> defaultLogisticsList = cfgRuleLogisticsService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
+        List<CfgRuleLogisticsEntity> defaultLogisticsList = cfgRuleLogisticsService.listByExpireTimeIdList(Collections.singletonList(defaultStockUp.getId()));
         List<String> defaultLogisticsIds = defaultLogisticsList.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
         List<CfgRuleLogisticsDetailEntity> defaultLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(defaultLogisticsIds);
         //获取销量默认配置

@@ -1,19 +1,16 @@
 package com.erp.server.scm.query;
 
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.common.business.constant.SearchType;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.erp.model.scm.enums.ArrivalStatusEnum;
 import com.erp.model.scm.enums.PurchaseTableFlagEnum;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.server.scm.service.CommonService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -33,6 +30,10 @@ public class SubcontractOrderQueryHandler extends AbstractQueryHandler {
                 return getQueryAllSql();
             }
             super.buildDefaultDTO("so.approve_status", value.toString());
+        }
+
+        if ("poCode".equals(field)) {
+            return "EXISTS (select source_id from purchase_order where is_deleted = false and source_id = so.id and code "+ compareCodeSplicingValueSql +" )";
         }
 
         if ("tab".equals(field)) {

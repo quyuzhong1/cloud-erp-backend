@@ -211,6 +211,36 @@ public class TmsB2cDeclareReconciliationDetailDTO implements Serializable {
          * 对账状态名称
          */
         private String statusName;
+        
+        /**
+         * 实际物流运费
+         */
+        private String actualShippingCurrency;
+
+        /**
+         * 实际报关费
+         */
+        private String actualDeclareCurrency;
+
+        /**
+         * 实际其他费
+         */
+        private String actualOtherCurrency;
+        
+        /**
+         * 实际物流运费
+         */
+        private String actualShippingCostStr;
+        
+        /**
+         * 实际报关费
+         */
+        private String actualDeclareCostStr;
+        
+        /**
+         * 实际其他费
+         */
+        private String actualOtherCostStr;
 
     }
 

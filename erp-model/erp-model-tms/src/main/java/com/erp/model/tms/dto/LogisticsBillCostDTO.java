@@ -151,6 +151,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 预估运费币别符号
          */
         private String estimatedShippingCostCurrencySymbol;
+        
+        private String estimatedShippingCostStr;
         /**
          * 预估关税费用
          */
@@ -159,6 +161,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 预估关税费用币别符号
          */
         private String estimatedDeclareCostCurrencySymbol;
+        
+        private String estimatedDeclareCostStr;
 
         /**
          * 预估其他费用
@@ -168,6 +172,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 预估其他费用币别符号
          */
         private String estimatedOtherCostCurrencySymbol;
+        
+        private String estimatedOtherCostStr;
 
 
         /**
@@ -183,6 +189,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际运费币别符号
          */
         private String actualShippingCostCurrencySymbol;
+        
+        private String actualShippingCostStr;
 
         /**
          * 实际报关费
@@ -192,6 +200,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际报关费币别符号
          */
         private String actualDeclareCostCurrencySymbol;
+        
+        private String actualDeclareCostStr;
 
         /**
          * 实际其他费
@@ -201,11 +211,17 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际其他费币别符号
          */
         private String actualOtherCostCurrencySymbol;
+        
+        private String actualOtherCostStr;
 
         /**
          * 运费差异【可排序】
          */
         private BigDecimal diffShippingCost;
+        
+        private String diffShippingCostCurrencySymbol = "¥";
+        
+        private String diffShippingCostStr;
 
         /**
          * 平台【可排序】
@@ -331,6 +347,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 预估可抵扣税金币别
          */
         private String estimatedDeductibleTaxCurrencySymbol;
+        
+        private String estimatedDeductibleTaxStr;
 
         /**
          * 实际可抵扣税金
@@ -340,6 +358,8 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际可抵扣税金币别
          */
         private String actualDeductibleTaxCurrencySymbol;
+        
+        private String actualDeductibleTaxStr;
         
         private String logisticsBillDetailId;
 

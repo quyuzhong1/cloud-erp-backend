@@ -142,11 +142,6 @@ public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
     @TableField("remark")
     private String remark;
 
-    /**
-     * 上一个流水id,反审核时候传
-     */
-    @TableField(exist = false)
-    private String parentVirtualTransFlowId;
 
     public VirtualTransFlowEntity(String id, Integer afterQty) {
         super(id);

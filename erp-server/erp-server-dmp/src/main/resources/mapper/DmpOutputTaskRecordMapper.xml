@@ -289,21 +289,21 @@ delete from dmp_input_mongo_dmp_relation where id in (select id from dmp_input_m
 	
     <delete id="dmpOutputMoveToHistoryTable">
 		insert into dmp_push_msg_his select * from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size}
+select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
 ));
 delete from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size}
+select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
 ));
 
 insert into dmp_output_task_record_his select * from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size}
+select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
 );
 delete from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size}
+select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
 );
 
-insert into dmp_output_task_his select * from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size};
-delete from dmp_output_task where id in (select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status != 'finish' and g.main_id = t.id ) order by t.update_time limit #{size});
+insert into dmp_output_task_his select * from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size};
+delete from dmp_output_task where id in (select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size});
 
 insert into dmp_output_task_his select * from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
 delete from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);

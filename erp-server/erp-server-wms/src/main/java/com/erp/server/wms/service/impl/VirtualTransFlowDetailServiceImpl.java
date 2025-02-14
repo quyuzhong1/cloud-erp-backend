@@ -112,7 +112,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (ObjUtil.isEmpty(entity)) {
             throw new ServiceException("未找到流水数据");
         }
-        entity.setParentVirtualTransFlowId(virtualTransFlowEntity.getParentVirtualTransFlowId());
         WmsVirtualDetailMsgEntity virtualDetailMsgEntity = wmsVirtualDetailMsgService.getById(msgId);
         if (ObjectUtil.isEmpty(virtualDetailMsgEntity) || !CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
             throw new ServiceException("非进行中任务不支持消费");
@@ -181,8 +180,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
     @Override
     public void handleAddTransFlowDetail(List<VirtualTransFlowEntity> value) {
-        List<VirtualTransFlowEntity> list = value.stream().sorted(Comparator.comparing(VirtualTransFlowEntity::getTradeTime)).collect(Collectors.toList());
-        for (VirtualTransFlowEntity entity : list) {
+        for (VirtualTransFlowEntity entity : value) {
             List<VirtualTransFlowDetailEntity> flowDetailList = this.listByVirtualTransFlowId(entity.getId());
             if (CollUtil.isNotEmpty(flowDetailList)) {
                 continue;
@@ -204,7 +202,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                     handleOutstockVirtualTransFlowDetail(entity);
                 }
             } catch (Exception e) {
-                log.error("虚拟仓流水更新失败，msg = {}",e.getMessage());
+                log.error("虚拟仓流水更新失败，id = {}，msg = {}",entity.getId(),e.getMessage());
                 virtualTransFlowService.updateRemark(entity.getId(),"虚拟仓流水更新失败");
             }
         }
@@ -288,7 +286,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         if (entity.getQty() < MathUtil.ZERO) {
             throw new ServiceException("暂未入库反审，不支持消费");
         }
-        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getById(entity.getParentVirtualTransFlowId());
+        //根据当前流水id查询原流水信息
+        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getUnApprovedTxnFlowBySourceDetailId(entity.getSourceType(), entity.getSourceDetailId(),entity.getTradeTime());
         if (ObjUtil.isEmpty(oldTransFlowEntity)) {
             throw new ServiceException("未找到原虚拟仓出库库存流水信息");
         }
@@ -299,7 +298,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
          * 4、重算原出库流水时间后的结余
          */
         //删除原有出库库龄流水信息
-        List<VirtualTransFlowDetailEntity> oldFlowDetailList = this.listByVirtualTransFlowId(entity.getParentVirtualTransFlowId());
+        List<VirtualTransFlowDetailEntity> oldFlowDetailList = this.listByVirtualTransFlowId(oldTransFlowEntity.getId());
         if (CollUtil.isEmpty(oldFlowDetailList)) {
             throw new ServiceException("未找到原虚拟仓出库库龄流水信息");
         }

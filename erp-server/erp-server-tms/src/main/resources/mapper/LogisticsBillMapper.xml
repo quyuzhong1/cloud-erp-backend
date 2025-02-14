@@ -252,7 +252,7 @@
         lbd.sign_time as  signTime,
         lb.ship_time as  shipTime,
         lb.remark,
-        lb.create_time as createTime,
+		lb.create_time as createTime,
         case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
         else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from

@@ -9,6 +9,7 @@ import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -162,6 +163,15 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param remark
      */
     void updateRemark(String id, String remark);
+    /**
+     *
+     * @Auther will
+     * @Date 2025/2/12 09:40
+     * @param sourceType
+     * @param sourceDetailId
+     * @return VirtualTransFlowEntity
+     */
+    VirtualTransFlowEntity getUnApprovedTxnFlowBySourceDetailId(String sourceType, String sourceDetailId, LocalDateTime dateTime);
     /**
      * 查询流水
      * @author will

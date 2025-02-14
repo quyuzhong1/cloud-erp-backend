@@ -281,11 +281,12 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             } else {
                 String shopId = "";
-                if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getNextLevelId())) {
-                    shopId = dmpSoInfoEntity.getNextLevelId();
-                } else {
+                if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getShopId())) {
                     shopId = dmpSoInfoEntity.getShopId();
+                } else {
+                    shopId = dmpSoInfoEntity.getNextLevelId();
                 }
+
                 ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shopId);
                 if (ObjectUtil.isEmpty(shopInfo)) {
                     throw new ServiceException(ApiError.ERROR_SDY_NOT_FOUND_SHOP, shopId);
@@ -404,8 +405,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setSource_system("SDC");
-            shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
-
+            if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getPlatformCode())) {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getPlatformCode());
+            } else {
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
+            }
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }

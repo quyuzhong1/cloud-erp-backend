@@ -104,6 +104,8 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 预计费用总计币别符号
          */
         private String costTotalCurrencySymbol = "¥";
+        
+        private String costTotalStr;
 
         /**
          * 预计物流运费（总）
@@ -119,6 +121,8 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 预计物流运费（总）币别符号
          */
         private String logisticsCostCurrencySymbol = "¥";
+        
+        private String logisticsCostStr;
 
         /**
          * 预计报关费用（总）
@@ -134,6 +138,8 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 预计报关费用（总）币别符号
          */
         private String customsClearanceCostCurrencySymbol = "¥";
+        
+        private String customsClearanceCostStr;
 
         /**
          * 预计其他税费（总）
@@ -149,6 +155,8 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 预计其他税费（总）币别符号
          */
         private String otherTaxCostCurrencySymbol = "¥";
+        
+        private String otherTaxCostStr;
 
         /**
          * 预计其他费用（总）
@@ -164,6 +172,8 @@ public class FirstMileEstimatedBillDTO implements Serializable {
          * 预计其他费用（总）币别符号
          */
         private String otherCostCurrencySymbol = "¥";
+        
+        private String otherCostStr;
 
         /**
          * 预计计费重

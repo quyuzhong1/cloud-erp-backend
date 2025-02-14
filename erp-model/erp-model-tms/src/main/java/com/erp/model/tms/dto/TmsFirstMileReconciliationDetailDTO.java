@@ -182,6 +182,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 对账月份【导出使用】
          */
         private String reconciliationMonthStr;
+        
+        private String shippingCostStr;
+        private String declareCostStr;
+        private String otherTaxCostStr;
+        private String otherCostStr;
 
         public String getActualWeightWithUnit() {
             BigDecimal actualWeight = this.getActualWeight();
