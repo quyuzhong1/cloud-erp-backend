@@ -9,6 +9,7 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqNewConsumerGroup;
 import com.common.message.constant.RocketMqNewTag;
@@ -20,6 +21,7 @@ import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.entity.*;
@@ -240,8 +242,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
+			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else {
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+			soReturnInstockEntity.setCurrencySymbol("¥");
 		}
 		if(Objects.nonNull(soOutstock)){
 			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
@@ -413,8 +418,11 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setCustomerName(customerInfo.getName());
 			soReturnInstockEntity.setSoCode(soB2cEntity.getCode());
 			soReturnInstockEntity.setSoId(soB2cEntity.getId());
+			soReturnInstockEntity.setCurrency(soB2cEntity.getCurrency());
 		} else {
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+			soReturnInstockEntity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+			soReturnInstockEntity.setCurrencySymbol("¥");
 		}
 		if(!CollectionUtils.isEmpty(soOutstockList)){
 			SoOutstockEntity soOutstock = soOutstockList.get(0);
