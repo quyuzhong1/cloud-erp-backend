@@ -21,6 +21,7 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -404,7 +405,7 @@ public class FbaShipmentController extends BaseController {
      * FBA货件同步信息分页
      */
     @PostMapping("/syncPaging")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = FbaShipmentSyncQueryHandler.class)
     public ApiResult<PagingVO<FbaShipmentDTO.SyncViewDTO>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
         return success(fbaShipmentService.syncPaging(advanceQueryDTO));
     }
