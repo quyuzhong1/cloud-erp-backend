@@ -244,9 +244,13 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
 		}
 		if(Objects.nonNull(soOutstock)){
-			SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
-			soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
-			soReturnInstockEntity.setSalesDeptName(department.getName());
+			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
+				SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
+				if( null != department){
+					soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
+					soReturnInstockEntity.setSalesDeptName(department.getName());
+				}
+			}
 			soReturnInstockEntity.setSellerId(soOutstock.getSellerId());
 			soReturnInstockEntity.setSellerName(soOutstock.getSellerName());
 		}
@@ -414,9 +418,13 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		}
 		if(!CollectionUtils.isEmpty(soOutstockList)){
 			SoOutstockEntity soOutstock = soOutstockList.get(0);
-			SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
-			soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
-			soReturnInstockEntity.setSalesDeptName(department.getName());
+			if (StringUtils.isNotBlank(soOutstock.getSalesDeptId())){
+				SysDepartmentDTO department = sysUserFeign.getUserDeptById(soOutstock.getSalesDeptId());
+				if( null != department){
+					soReturnInstockEntity.setSalesDeptId(soOutstock.getSalesDeptId());
+					soReturnInstockEntity.setSalesDeptName(department.getName());
+				}
+			}
 			soReturnInstockEntity.setSellerId(soOutstock.getSellerId());
 			soReturnInstockEntity.setSellerName(soOutstock.getSellerName());
 		}
