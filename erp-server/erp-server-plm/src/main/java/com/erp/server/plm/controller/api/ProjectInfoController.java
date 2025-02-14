@@ -156,8 +156,29 @@ public class ProjectInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-重新启动项目:ids={ids}")
     @PostMapping("/restart")
     public ApiResult<Object> restart(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = projectInfoService.restart(dto.getIds());
-        return flag ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+        for (String id : dto.getIds()) {
+            ProjectInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = projectInfoService.restart(Collections.singletonList(id));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"-重新启动项目成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"-重新启动项目失败"));
+                }
+            }catch (Exception e){
+                log.error("重新启动项目失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
