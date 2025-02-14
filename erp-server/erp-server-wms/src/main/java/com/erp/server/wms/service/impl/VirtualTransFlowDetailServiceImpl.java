@@ -307,18 +307,20 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
         //根据sku、仓库id、虚拟仓id查询被删除的出库流水后的批次流水信息
         List<VirtualTransFlowDetailEntity> flowDetailList = baseMapper.listHisByOldParam(new VirtualTransFlowDetailDTO.ParamDTO(oldTransFlowEntity.getSkuId(), oldTransFlowEntity.getWarehouseId(), oldTransFlowEntity.getVirtualWarehouseId(), oldTransFlowEntity.getTradeTime()));
-        List<String> oldVirtualTransFlowIdList = flowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualTransFlowId).distinct().collect(Collectors.toList());
-        //退回批次流水库龄库存
-        returnVirtualInventory(flowDetailList,oldTransFlowEntity.getTradeTime());
+        if (CollUtil.isNotEmpty(flowDetailList)) {
+            List<String> oldVirtualTransFlowIdList = flowDetailList.stream().map(VirtualTransFlowDetailEntity::getVirtualTransFlowId).distinct().collect(Collectors.toList());
+            //退回批次流水库龄库存
+            returnVirtualInventory(flowDetailList,oldTransFlowEntity.getTradeTime());
 
-        //出库流水，重新先进先出
-        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listApproveByIds(oldVirtualTransFlowIdList);
-        if (CollUtil.isEmpty(virtualTransFlowList)) {
-            return;
-        }
-        //更新库存
-        for (VirtualTransFlowEntity flowEntity :virtualTransFlowList) {
-            updateHandleVirtualTransFlow(flowEntity);
+            //出库流水，重新先进先出
+            List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listApproveByIds(oldVirtualTransFlowIdList);
+            if (CollUtil.isEmpty(virtualTransFlowList)) {
+                return;
+            }
+            //更新库存
+            for (VirtualTransFlowEntity flowEntity :virtualTransFlowList) {
+                updateHandleVirtualTransFlow(flowEntity);
+            }
         }
         //重算原出库流水时间后的结余
         virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity.getBillDate());
