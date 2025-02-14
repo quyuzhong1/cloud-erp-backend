@@ -41,4 +41,12 @@ public interface CfgNoticeDetailService extends SuperService<CfgNoticeDetailEnti
      * @param id
      */
     void addNOrUpdateoticeTimeList(List<CfgNoticeDTO.NoticeTimeDTO> noticeTimeDTOList, String id);
+    /**
+     * 根据主表id集合查询
+     * @Auther will
+     * @Date 2025/2/13 18:18
+     * @param idList
+     * @return List<CfgNoticeDetailEntity>
+     */
+    List<CfgNoticeDetailEntity> listByMainIdList(List<String> idList);
 }

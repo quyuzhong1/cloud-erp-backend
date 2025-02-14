@@ -81,6 +81,10 @@ public class CfgNoticeDTO implements Serializable {
          * 是否禁用
          */
         private Boolean disabled;
+        /**
+         * 通知对象
+         */
+        private List<Map<String,Object>> noticeObjectList;
     }
 
     /**

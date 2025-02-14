@@ -1,21 +1,30 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CfgNoticeDTO;
+import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
+import com.erp.model.wms.enums.CfgVirtualNoticeNodeTypeEnum;
+import com.erp.model.wms.enums.CfgVirtualNoticeRuleTypeEnum;
 import com.erp.server.sys.mapper.CfgNoticeMapper;
 import com.erp.server.sys.service.CfgNoticeDetailService;
 import com.erp.server.sys.service.CfgNoticeService;
+import com.google.gson.Gson;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -23,8 +32,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 通知配置表 服务实现类
@@ -104,8 +114,24 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         if(cfgNoticeEntity == null) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "通知配置单");
         }
+        //明细信息
+        List<CfgNoticeDetailEntity> cfgdetailList = cfgNoticeDetailService.listByMainIdList(Collections.singletonList(id));
+        if (CollUtil.isEmpty(cfgdetailList)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "通知配置单明细");
+        }
         CfgNoticeDTO.ViewDTO viewDTO = BeanMapperUtils.map(CfgNoticeDTO.ViewDTO.class, cfgNoticeEntity);
         // TODO 数据赋值处理
+        List<CfgNoticeDTO.NoticeObjectDTO> noticeObjectDTOList = new ArrayList<>();
+        for (CfgNoticeDetailEntity detailEntity : cfgdetailList) {
+
+            case "noticeObject":
+                CfgNoticeDTO.NoticeObjectDTO noticeObjectDTO = new CfgNoticeDTO.NoticeObjectDTO();
+                BeanMapperUtils.copy(detailEntity, noticeObjectDTO);
+                noticeObjectDTOList.add(noticeObjectDTO);
+                break;
+
+        }
+
         return viewDTO;
     }
 
@@ -137,8 +163,35 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
      * @param records
      */
     private void doOpHandlePaging(List<CfgNoticeDTO.ListDTO> records) {
-        records.forEach(item -> {
-            // TODO 数据赋值处理
-        });
+        if (CollUtil.isEmpty(records)) {
+            return;
+        }
+        List<String> idList = records.stream().map(CfgNoticeDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<CfgNoticeDetailEntity> cfgNoticeDetailList = cfgNoticeDetailService.listByMainIdList(idList);
+
+        List<String> platformList = records.stream().map(CfgNoticeDTO.ListDTO::getNoticePlatform).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
+
+        for (CfgNoticeDTO.ListDTO item : records) {
+            //通知节点
+            item.setNoticeNodeName(CfgVirtualNoticeNodeTypeEnum.getName(item.getNoticeNode()));
+            //通知规则
+            item.setNoticeRuleName(CfgVirtualNoticeRuleTypeEnum.getName(item.getNoticeRule()));
+            //通知平台
+            String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), item.getNoticePlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            item.setNoticePlatformName(platformName);
+
+            //明细信息
+            List<CfgNoticeDetailEntity> detailList = cfgNoticeDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), item.getId())).collect(Collectors.toList());
+            List<Map<String, Object>> noticeObjectList = new ArrayList<>();
+            for (CfgNoticeDetailEntity detailEntity : detailList) {
+                Gson gson = new Gson();
+                // 将 JSON 字符串转为 Map
+                Map map = gson.fromJson(detailEntity.getNoticeValueJson(), Map.class);
+                noticeObjectList.add(map);
+            }
+            item.setNoticeObjectList(noticeObjectList);
+        }
     }
 }

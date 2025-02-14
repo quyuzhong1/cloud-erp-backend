@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.sys.dto.CfgNoticeDTO;
@@ -61,6 +62,14 @@ public class CfgNoticeDetailServiceImpl extends SuperServiceImpl<CfgNoticeDetail
     @Override
     public void addNOrUpdateoticeTimeList(List<CfgNoticeDTO.NoticeTimeDTO> noticeTimeDTOList, String id) {
 
+    }
+
+    @Override
+    public List<CfgNoticeDetailEntity> listByMainIdList(List<String> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(CfgNoticeDetailEntity::getMainId, idList).list();
     }
 
 }

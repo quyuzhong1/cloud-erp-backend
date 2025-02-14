@@ -12,6 +12,7 @@ import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgCardButtonDTO;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.service.CfgSettingService;
@@ -31,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @description: 飞书通知定时任务
@@ -73,6 +75,9 @@ public class CfgNoticeJob {
             XxlJobHelper.log("系统配置为空");
             return ReturnT.SUCCESS;
         }
+        List<String> idList = list.stream().map(CfgNoticeEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgNoticeDetailEntity> detailList = FeignQuery.create(CfgNoticeDetailEntity.class).in(CfgNoticeDetailEntity::getMainId, idList).list();
+
 
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
         noticeMsgInfoDTO.setReceiverUserIds(Arrays.asList("117"));
