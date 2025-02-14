@@ -2,6 +2,7 @@ package com.erp.server.mrp.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
+import com.erp.model.mrp.entity.CfgRuleExpireTimeEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 
 import java.util.List;
@@ -17,43 +18,51 @@ import java.util.List;
 public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEntity> {
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-08-23
-    * @param logisticsList
-    * @return
-    */
-    Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList,String stockUpId,Boolean isCustom);
+     * 修改
+     *
+     * @param logisticsList
+     * @param cfgRuleExpireTime
+     * @return
+     * @author will
+     * @date: 2024-08-23
+     */
+    Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList, CfgRuleExpireTimeEntity cfgRuleExpireTime, Boolean isCustom, boolean isOverseas);
 
     /**
      * 根据备货主表id查询
-     * @author will
-     * @date 2024/8/23 16:36
-     * @param stockUpIdList
+     *
+     * @param expireTimeIdList
      * @return List<CfgRuleLogisticsEntity>
+     * @author will
+     * @date 2024/8/23 16:36
      */
-    List<CfgRuleLogisticsEntity> listByStockUpIdList (List<String> stockUpIdList);
+    List<CfgRuleLogisticsEntity> listByExpireTimeIdList(List<String> expireTimeIdList);
 
     /**
      * 根据备货主表id查询
+     *
+     * @param expireTimeIdList
+     * @return List<CfgRuleLogisticsDTO.ViewDTO>
      * @author will
      * @date 2024/8/23 16:36
-     * @param stockUpIdList
-     * @return List<CfgRuleLogisticsDTO.ViewDTO>
      */
-    List<CfgRuleLogisticsDTO.ViewDTO> listViewByStockUpIdList (List<String> stockUpIdList);
+    List<CfgRuleLogisticsDTO.ViewDTO> listViewByExpireTimeIdList(List<String> expireTimeIdList);
+
     /**
      * 根据备货主表id删除
+     *
+     * @param expireTimeId
      * @author will
      * @date 2024/8/29 16:32
-     * @param stockUpId
      */
-    void deleteByStockUpId(String stockUpId);
+    void deleteByExpireTimeId(String expireTimeId);
+
     /**
      * 下拉物流信息
+     *
+     * @return List<SelectLogisticsDTO>
      * @author will
      * @date 2024/10/29 10:19
-     * @return List<SelectLogisticsDTO>
      */
     List<CfgRuleLogisticsDTO.SelectLogisticsDTO> selectLogistics(CfgRuleLogisticsDTO.SelectLogisticsParamDTO paramDTO);
 }

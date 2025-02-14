@@ -49,7 +49,7 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
         List<CfgRuleLogisticsEntity> ruleLogisticsList = new ArrayList<>();
         if (!ObjectUtils.isEmpty(cfgRuleStockUp)) {
             cfgRuleStockingRatios = cfgRuleStockingRatioService.listByStockUpIdAndType(cfgRuleStockUp.getId(), dto.getSkuType());
-            ruleLogisticsList = cfgRuleLogisticsService.listByStockUpIdList(Collections.singletonList(cfgRuleStockUp.getId()));
+            ruleLogisticsList = cfgRuleLogisticsService.listByExpireTimeIdList(Collections.singletonList(cfgRuleStockUp.getId()));
         }
         CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = ruleLogisticsList.stream()
                 .min(Comparator.comparing(CfgRuleLogisticsEntity::getIndex))

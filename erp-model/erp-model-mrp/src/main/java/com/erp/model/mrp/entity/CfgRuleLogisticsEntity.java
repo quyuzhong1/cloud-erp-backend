@@ -53,6 +53,20 @@ public class CfgRuleLogisticsEntity extends BaseEntity<CfgRuleLogisticsEntity> {
     private String stockUpId;
 
     /**
+    * 时效id
+    */
+    @TableField("expire_time_id")
+    private String expireTimeId;
+
+
+
+    /**
+     * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+     */
+    @TableField("platform_type")
+    private String platformType;
+
+    /**
      * 物流明细信息
      */
     @TableField(exist = false)

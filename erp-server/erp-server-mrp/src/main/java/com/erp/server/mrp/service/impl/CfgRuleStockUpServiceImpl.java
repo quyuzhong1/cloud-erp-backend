@@ -77,7 +77,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             throw new ServiceException("备货（规则设置）保存失败");
         }
         //物流信息
-        cfgRuleLogisticsService.update(updateDTO.getCfgLogisticsList(),cfgRuleStockUpEntity.getId(),updateDTO.getIsCustom());
+//        cfgRuleLogisticsService.update(updateDTO.getCfgLogisticsList(),cfgRuleStockUpEntity.getId(),updateDTO.getIsCustom());
 
         //常规备货系数
         cfgRuleStockingRatioService.update(updateDTO.getStockingRatioList(),cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),updateDTO.getIsCustom());
@@ -100,7 +100,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         BeanMapperUtils.copy(oldEntity,viewDTO);
 
         //物流配置信息
-        List<CfgRuleLogisticsDTO.ViewDTO> logisticsViewList = cfgRuleLogisticsService.listViewByStockUpIdList(Collections.singletonList(oldEntity.getId()));
+        List<CfgRuleLogisticsDTO.ViewDTO> logisticsViewList = cfgRuleLogisticsService.listViewByExpireTimeIdList(Collections.singletonList(oldEntity.getId()));
         if (CollectionUtils.isNotEmpty(logisticsViewList)) {
             viewDTO.setCfgLogisticsList(logisticsViewList);
         }
@@ -130,7 +130,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).removeById(cfgRuleStockUpEntity.getId());
 
         //删除物流信息配置
-        cfgRuleLogisticsService.deleteByStockUpId(cfgRuleStockUpEntity.getId());
+        cfgRuleLogisticsService.deleteByExpireTimeId(cfgRuleStockUpEntity.getId());
 
         //删除备货系数配置
         cfgRuleStockingRatioService.deleteByStockUpId(cfgRuleStockUpEntity.getId());
