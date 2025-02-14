@@ -59,7 +59,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     public Boolean update(CfgRuleStockUpDTO.UpdateDTO updateDTO) {
         CfgRuleStockUpEntity cfgRuleStockUpEntity = BeanMapperUtils.map(CfgRuleStockUpEntity.class, updateDTO);
         //旧数据
-        CfgRuleStockUpEntity old = this.getDefaultByPlatformType(updateDTO.getPlatformType(), updateDTO.getRefId());
+        CfgRuleStockUpEntity old = this.getDefaultByPlatformType(updateDTO.getPlatform(), updateDTO.getRefId());
         if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleStockUpEntity.setId(old.getId());
         }
