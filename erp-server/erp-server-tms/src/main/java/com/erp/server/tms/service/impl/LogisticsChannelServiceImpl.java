@@ -536,11 +536,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled) {
+    public List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled, String type) {
         List<BaseDropDownDTO.DisabledDTO> supplierDTOList = logisticsSupplierService.listAll(false);
         List<BaseDropDownDTO.Tree> result = BeanUtil.copyToList(supplierDTOList,BaseDropDownDTO.Tree.class);
         if(filterDisabled){
             result = result.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
+        if(StringUtils.isNotBlank(type)){
+            result = result.stream().filter(v->type.equals(v.getType())).collect(Collectors.toList());
         }
         if(CollectionUtils.isEmpty(result)){
             return new ArrayList<>();
