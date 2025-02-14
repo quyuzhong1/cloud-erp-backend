@@ -1181,7 +1181,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
 						for(InventorySkuCostDetailEntity j : inventorySkuCostDetailEntityList) {
 							InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(j.getMainId());
-							String companyId = CharSequenceUtil.isBlank(transferOrgId) ? inventorySkuCostEntity.getCompanyId() : transferOrgId;
+                            String companyId = CharSequenceUtil.isBlank(transferOrgId) ? inventorySkuCostEntity.getCompanyId() : transferOrgId;
 							String skuId = j.getSkuId();
 							unInventorySkuCostMap.put(companyId + "_" + skuId, j);
 						}
@@ -1197,7 +1197,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					for(SoOutstockDetailEntity soOutstockDetailEntity : dealSoOutstockDetailEntityList) {
 						String skuId = soOutstockDetailEntity.getSkuId();
 						Integer actualQty = soOutstockDetailEntity.getActualQty();
-						String orgId = CharSequenceUtil.isBlank(transferOrgId) ? wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId())) : transferOrgId;
+                        String orgId = CharSequenceUtil.isBlank(transferOrgId) ? wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId())) : transferOrgId;
 						InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
 						if(inventorySkuCostDetailEntity != null) {
 							totalSkuCost = totalSkuCost.add(inventorySkuCostDetailEntity.getProductCost().multiply(new BigDecimal(actualQty)));
@@ -1222,8 +1222,8 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					String skuNo = soOutstockDetailEntity.getSkuNo();
 					transferDeclareCostAllocationEntity.setSkuNo(skuNo);
 					transferDeclareCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
-					
-					String orgId = CharSequenceUtil.isBlank(transferOrgId) ? wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId())) : transferOrgId;
+
+                    String orgId = CharSequenceUtil.isBlank(transferOrgId) ? wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId())) : transferOrgId;
 					String orgName = orgIdNameMaps.get(orgId);
 					
 					Integer actualQty = soOutstockDetailEntity.getActualQty();
