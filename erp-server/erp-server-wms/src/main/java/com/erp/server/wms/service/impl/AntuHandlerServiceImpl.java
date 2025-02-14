@@ -19,13 +19,11 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
+import com.sdk.wms.antu.dto.request.*;
 import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
+import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.service.AntuService;
-import com.sdk.wms.antu.dto.request.AntuBaseRequest;
-import com.sdk.wms.antu.dto.request.AntuCreateInboundReq;
-import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
 import com.sdk.wms.antu.dto.response.AntuResponse;
 import com.sdk.wms.antu.dto.response.AntuWarehouseResp;
 import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
@@ -112,6 +110,19 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return success(response.getOrderCode());
         }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+    }
+    @Override
+    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
+        AntuUploadFileReq antuUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
+        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuUploadFileReq);
+        AntuUploadFileResp antuCalculateFeeRespList = response.getData();
+        ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.antuResToThirdWarehouseUploadFileResponse(antuCalculateFeeRespList);
+        return isSuccess(response.getAsk()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
+    }
+
+    @Override
+    protected ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadFileReq) {
+        return ApiResult.error("功能未开发");
     }
 
     @Override
