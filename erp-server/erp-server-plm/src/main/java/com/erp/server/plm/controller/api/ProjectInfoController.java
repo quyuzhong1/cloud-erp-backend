@@ -180,7 +180,7 @@ public class ProjectInfoController extends BaseController {
                 continue;
             }
             try {
-                Boolean flag = projectInfoService.suspend(dto.getIds());
+                Boolean flag = projectInfoService.suspend(Collections.singletonList(id));
                 if (flag){
                     resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"暂停项目成功"));
                 } else {
@@ -229,8 +229,29 @@ public class ProjectInfoController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-批量项目归档:ids={ids}")
     @PostMapping("/batchArchive")
     public ApiResult<Object> batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        boolean flag = projectInfoService.batchArchive(dto.getIds());
-        return flag ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+        for (String id : dto.getIds()) {
+            ProjectInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = projectInfoService.batchArchive(Collections.singletonList(id));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"项目归档成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"项目归档失败"));
+                }
+            }catch (Exception e){
+                log.error("项目归档失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
