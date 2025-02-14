@@ -197,7 +197,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额
-            shudiyunB2cOrderDTO.setDiscount_deduction_amount(dmpSoInfoEntity.getTotalDiscount());
+            shudiyunB2cOrderDTO.setDiscount_deduction_amount(totalDiscount);
 
             Integer totalQty = dmpSoDetailEntities.stream().mapToInt(DmpSoDetailEntity::getQty).sum();
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
