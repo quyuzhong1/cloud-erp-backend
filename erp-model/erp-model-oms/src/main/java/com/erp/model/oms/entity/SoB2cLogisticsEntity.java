@@ -139,11 +139,6 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
     @TableField("logistic_type")
     private String logisticType;
     /**
-     * 发货方式（DOOR_PICKUP 上门揽收，SELF_POST 自寄，SELF_SEND 自送 ）
-     */
-    @TableField("delivery_type")
-    private String deliveryType;
-    /**
      * 中转物流商id
      */
     @TableField("transfer_logistics_supplier_id")
