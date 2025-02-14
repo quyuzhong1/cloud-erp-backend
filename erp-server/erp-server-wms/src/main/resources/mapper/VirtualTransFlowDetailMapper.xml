@@ -131,7 +131,7 @@
             <include refid="Base_Column_List" />
         from virtual_trans_flow_detail vtfd
         left join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
-        where vtfd.is_deleted = false and  0 > vtfd.qty and vtf.is_unapproved = false
+        where vtfd.is_deleted = false and  0 > vtfd.qty 
         and vtf.sku_id = #{paramDTO.skuId} and vtf.warehouse_id = #{paramDTO.warehouseId}
         and vtf.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and  vtfd.trade_time >= #{paramDTO.tradeTime}
     </select>
