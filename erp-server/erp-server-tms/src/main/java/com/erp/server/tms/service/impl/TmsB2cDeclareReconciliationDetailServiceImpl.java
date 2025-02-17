@@ -618,7 +618,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             			if(CollUtil.isEmpty(set)) {
             				set = new HashSet<>();
             			}
-            			set.add(AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
+            			set.add(AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有一级费用币种必须一致");
             			costIdTypeListMap.put(costName, set);
             		}
             		updateList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));
@@ -838,7 +838,7 @@ public class TmsB2cDeclareReconciliationDetailServiceImpl extends SuperServiceIm
             		List<UpdateDTO> removeList = updateList.stream().filter(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1])).collect(Collectors.toList());
             		for(UpdateDTO remove : removeList) {
             			String costName = erpFieldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceId(), remove.getCfgCostId())).findFirst().orElse(null).getErpFieldName();
-            			costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有费用币种必须一致");
+            			costIdTypeListMap.put(costName, AllocationFeeTypeEnum.getName(split[0]) + "-" + LogisticsBillCostTypeEnum.getName(split[1]) + "分类下所有一级费用币种必须一致");
             		}
             		updateList.removeIf(u -> u.getDictCostCategory().equals(split[0]) && u.getType().equals(split[1]));
             	}

@@ -1269,7 +1269,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (CollectionUtils.isEmpty(accountingCompanyList)) {
             throw new ServiceException(ApiError.ERROR_9014);
         }
-        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByNames(Collections.singletonList("仓储部"));
+        List<SysDepartmentEntity> sysDepartmentEntity = sysUserFeign.getDeptByIds(Collections.singletonList("1675799739955679233"));
         if (CollectionUtils.isEmpty(sysDepartmentEntity)) {
             throw new ServiceException("获取不到仓储部门信息");
         }

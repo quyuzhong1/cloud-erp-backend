@@ -44,7 +44,6 @@ public class SoB2cDeliveryDTO implements Serializable {
         /**
          * 发货日期
          */
-        @NotNull(message = "发货日期不能为空")
         private LocalDate deliveryDate;
     }
 

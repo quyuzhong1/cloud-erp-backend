@@ -232,7 +232,7 @@ public class SupplierUserServiceImpl implements SupplierUserService {
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         }else if (excelDateList.size() > 5000){
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
         }
         List<SupplierUserImportExcelDTO > errorList = excelListenerUtil.getErrorList();
 

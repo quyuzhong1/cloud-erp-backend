@@ -129,8 +129,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setIsGift(isGift.equals("是"));
 
         //是否关闭
-        String isClose = soDetailImportExcelDTO.getIsClose();
-        addDTO.setIsClose(!StringUtils.isBlank(isClose) && isClose.equals("是"));
+        addDTO.setIsClose(false);
         addDTO.setSkuNo(skuNo);
         addDTO.setSkuId(sku.getSkuId());
         addDTO.setProductName(sku.getSkuName());
@@ -150,7 +149,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         String taxPriceStr = soDetailImportExcelDTO.getTaxPrice();
         if (CharSequenceUtil.isBlank(priceStr) && CharSequenceUtil.isNotBlank(taxPriceStr)){
             //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
+            BigDecimal multiplyTax = MathUtil.add(MathUtil.divide(taxRate, MathUtil.BigDecimal_100), MathUtil.BigDecimal_1);
             BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
             //含税单价
             BigDecimal price = MathUtil.divide(taxPrice, multiplyTax);

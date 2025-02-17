@@ -8,22 +8,11 @@ import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.google.common.collect.Lists;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.aggregations.AggregationBuilders;
-import org.elasticsearch.search.aggregations.Aggregations;
-import org.elasticsearch.search.aggregations.bucket.composite.CompositeAggregationBuilder;
-import org.elasticsearch.search.aggregations.bucket.composite.ParsedComposite;
-import org.elasticsearch.search.aggregations.bucket.composite.TermsValuesSourceBuilder;
-import org.elasticsearch.search.aggregations.bucket.terms.Terms;
-import org.elasticsearch.search.aggregations.metrics.TopHits;
-import org.elasticsearch.search.sort.SortBuilders;
-import org.elasticsearch.search.sort.SortOrder;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
 import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.SearchScrollHits;
-import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
@@ -35,7 +24,10 @@ import org.springframework.util.CollectionUtils;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -77,19 +69,48 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
      * @param endDate          结束日期
      */
     private List<OrderHistorySalesEsEntity> getOrderHistorySales(List<String> shopSkuIds, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
-        List<OrderHistorySalesEsEntity> orderHistorySalesList = new ArrayList<>();
-        Page<OrderHistorySalesEsEntity> orderHistorySalesPage;
-        int page = 0;
-        do {
-            if (CollectionUtils.isEmpty(orderType)) {
-                orderHistorySalesPage = orderHistorySalesEsRepository.findByShopSkuIdInAndDateBetween(shopSkuIds, startDate, endDate, PageRequest.of(page, 10000));
-            } else {
-                orderHistorySalesPage = orderHistorySalesEsRepository.findByShopSkuIdInAndOrderTypeInAndDateBetween(shopSkuIds, orderType, startDate, endDate, PageRequest.of(page, 10000));
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("shopSkuId", shopSkuIds))
+                .must(QueryBuilders.rangeQuery("date").gte(startDate.format(DateTimeFormatter.BASIC_ISO_DATE)).lte(endDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(orderType)) {
+            queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
+        }
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withPageable(PageRequest.of(0, 10000))
+                .build();
+        return getOrderHistorySalesEsEntities(searchQuery);
+    }
+
+    private List<OrderHistorySalesEsEntity> getOrderHistorySalesEsEntities(NativeSearchQuery searchQuery) {
+        List<String> scrollIdList = new ArrayList<>();
+        List<OrderHistorySalesEsEntity> result = new ArrayList<>();
+        SearchScrollHits<OrderHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
+        String scrollId = orderHistorySales.getScrollId();
+        scrollIdList.add(scrollId);
+        if (!CollectionUtils.isEmpty(orderHistorySales.getSearchHits())) {
+            result.addAll(orderHistorySales.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList()));
+        }
+        while (true) {
+            SearchScrollHits<OrderHistorySalesEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
+            // 获取查询结果并收集到列表中
+            List<OrderHistorySalesEsEntity> products = searchScrollHits.getSearchHits().stream()
+                    .map(SearchHit::getContent)
+                    .collect(Collectors.toList());
+
+            if (products.isEmpty()) {
+                // 如果当前批次没有数据，表示所有数据已被检索完毕，退出循环
+                break;
             }
-            orderHistorySalesList.addAll(orderHistorySalesPage.toList());
-            page++;
-        } while (!orderHistorySalesPage.isLast());
-        return orderHistorySalesList;
+            // 将当前批次的结果添加到全部结果列表中
+            result.addAll(products);
+            // 更新 scrollId 为当前批次的 scrollId
+            scrollId = searchScrollHits.getScrollId();
+        }
+        elasticsearchRestTemplate.searchScrollClear(scrollIdList);
+        return result;
     }
 
     @Override
@@ -103,15 +124,14 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
 
     @Override
     public List<OrderHistorySalesEsEntity> findByShopIdInAndSkuIdInAndDateBetween(List<String> shopIds, List<String> skuIds, LocalDate startDate, LocalDate endDate) {
-        List<OrderHistorySalesEsEntity> orderHistorySalesList = new ArrayList<>();
-        Page<OrderHistorySalesEsEntity> orderHistorySalesPage;
-        int page = 0;
-        do {
-            orderHistorySalesPage = orderHistorySalesEsRepository.findByShopIdInAndSkuIdInAndDateBetween(shopIds, skuIds, startDate, endDate, PageRequest.of(page, 10000));
-            orderHistorySalesList.addAll(orderHistorySalesPage.toList());
-            page++;
-        } while (!orderHistorySalesPage.isLast());
-        return orderHistorySalesList;
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(QueryBuilders.boolQuery()
+                        .must(QueryBuilders.termsQuery("skuId", skuIds))
+                        .must(QueryBuilders.termsQuery("shopId", shopIds))
+                        .must(QueryBuilders.rangeQuery("date").gte(startDate.format(DateTimeFormatter.BASIC_ISO_DATE)).lte(endDate.format(DateTimeFormatter.BASIC_ISO_DATE))))
+                .withPageable(PageRequest.of(0, 10000))
+                .build();
+        return getOrderHistorySalesEsEntities(searchQuery);
     }
 
     @Override
@@ -209,33 +229,7 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
                         .must(QueryBuilders.termsQuery("shopId", shopIds)))
                 .withPageable(PageRequest.of(0, 10000))
                 .build();
-        List<String> scrollIdList = new ArrayList<>();
-        List<OrderHistorySalesEsEntity> result = new ArrayList<>();
-        SearchScrollHits<OrderHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
-        String scrollId = orderHistorySales.getScrollId();
-        scrollIdList.add(scrollId);
-        if (!CollectionUtils.isEmpty(orderHistorySales.getSearchHits())) {
-            result.addAll(orderHistorySales.getSearchHits().stream()
-                    .map(SearchHit::getContent)
-                    .collect(Collectors.toList()));
-        }
-        while (true) {
-            SearchScrollHits<OrderHistorySalesEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, OrderHistorySalesEsEntity.class, IndexCoordinates.of("order_history_sales"));
-            // 获取查询结果并收集到列表中
-            List<OrderHistorySalesEsEntity> products = searchScrollHits.getSearchHits().stream()
-                    .map(SearchHit::getContent)
-                    .collect(Collectors.toList());
-
-            if (products.isEmpty()) {
-                // 如果当前批次没有数据，表示所有数据已被检索完毕，退出循环
-                break;
-            }
-            // 将当前批次的结果添加到全部结果列表中
-            result.addAll(products);
-            // 更新 scrollId 为当前批次的 scrollId
-            scrollId = searchScrollHits.getScrollId();
-        }
-        elasticsearchRestTemplate.searchScrollClear(scrollIdList);
+        List<OrderHistorySalesEsEntity> result = getOrderHistorySalesEsEntities(searchQuery);
         return result.stream()
                 .collect(Collectors.groupingBy(OrderHistorySalesEsEntity::getShopId, Collectors.mapping(OrderHistorySalesEsEntity::getSkuId, Collectors.toSet())));
     }

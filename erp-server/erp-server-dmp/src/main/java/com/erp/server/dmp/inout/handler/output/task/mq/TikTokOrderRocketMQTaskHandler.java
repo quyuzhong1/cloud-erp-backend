@@ -375,7 +375,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
-                .code(dmpSoInfoEntity.getLogisticsCode())
+//                .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(name)
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
                 .estimatedShippingCost(cost)

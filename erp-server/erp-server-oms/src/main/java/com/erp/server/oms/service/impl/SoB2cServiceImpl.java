@@ -1736,9 +1736,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 mqProducerService.asyncClassMsg(RocketMqTopic.ASYNC_GET_PLATFORM_LABEL_TOPIC, RocketMqTagEnum.ASYNC_GET_PLATFORM_LABEL_TAG.getName(), waybillDTO, IdUtil.simpleUUID());
             }
 
+            this.lambdaUpdate().eq(SoB2cEntity::getId, id).
+                    set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             if (Boolean.TRUE.equals(isDelivery)) {
-                //提交发货
-                submitDelivery(id, "");
+                try {
+                    //提交发货
+                    submitDelivery(id, "");
+                }catch (Exception e){
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                    addError.setParamJson("");
+                    addError.setReturnJson("");
+                    addError.setMainId(id);
+                    addError.setMessage(e.getMessage());
+                    soB2cErrorService.add(addError);
+                }
             }
 
             this.lambdaUpdate().eq(SoB2cEntity::getId, id).
@@ -5970,7 +5983,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     private void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList) {
         // 校验sku是否存在领星
-        List<String> skuIds = detailEntityList.stream().map(SoB2cDetailEntity::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = detailEntityList.stream().map(SoB2cDetailEntity::getSkuNo).collect(Collectors.toList());
         LingxingApiUtils.checkSkuSyncLx(skuIds);
 
         List<SoB2cDetailEntity> splitDetailList = detailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
@@ -7739,14 +7752,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             .setParamJson(shippingOrderDTO.getSoId());
                     addOrUpdateErrors.add(error);
                 }
-                BatchResultDTO batchResultDTO = BatchResultDTO.fail(shippingOrderDTO.getSoId(), shippingOrderDTO.getCode(), shippingOrderDTO.getMessage());
-                Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(Arrays.asList(error.getId()));
-                Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
-                if(rulePromptWordEntityMap.containsKey(error.getId())){
-                    RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(error.getId());
-                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
-                }
-                resultDTOList.add(batchResultDTO);
+                resultDTOList.add(BatchResultDTO.fail(shippingOrderDTO.getSoId(), shippingOrderDTO.getCode(), shippingOrderDTO.getMessage()));
             }
             updateList.add(soB2cEntity);
             updateInstockForcastList.add(updateForcastStatusDTO);
@@ -7757,6 +7763,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //更新操作同个事务
         soB2cService.orderForecastUpdateSoAndError(updateList, deleteErrorIds, addOrUpdateErrors, updateLogisticList);
+        if(CollectionUtils.isNotEmpty(addOrUpdateErrors)) {
+            List<String> errorIds = addOrUpdateErrors.stream().map(SoB2cErrorEntity::getId).collect(Collectors.toList());
+            Map<String,Map<String, Object>> map = soB2cErrorService.handleMatchJson(errorIds);
+            Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
+            addOrUpdateErrors.forEach(v->{
+                BatchResultDTO batchResultDTO = resultDTOList.stream().filter(t->t.getId().equals(v.getMainId())).findFirst().orElse(null);
+                if(Objects.isNull(batchResultDTO)){
+                    return;
+                }
+                if(rulePromptWordEntityMap.containsKey(v.getId())){
+                    RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(v.getId());
+                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                }
+            });
+        }
 
         return resultDTOList;
     }

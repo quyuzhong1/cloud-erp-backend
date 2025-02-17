@@ -130,10 +130,10 @@
         select
             <include refid="Base_Column_List" />
         from virtual_trans_flow_detail vtfd
-        left join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
-        where vtfd.is_deleted = false and  0 > vtfd.qty
-        and vid.sku_id = #{paramDTO.skuId} and vid.warehouse_id = #{paramDTO.warehouseId}
-        and vid.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and  vtfd.trade_time >= #{paramDTO.tradeTime}
+        left join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
+        where vtfd.is_deleted = false and  0 > vtfd.qty 
+        and vtf.sku_id = #{paramDTO.skuId} and vtf.warehouse_id = #{paramDTO.warehouseId}
+        and vtf.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and  vtfd.trade_time >= #{paramDTO.tradeTime}
     </select>
 
 
