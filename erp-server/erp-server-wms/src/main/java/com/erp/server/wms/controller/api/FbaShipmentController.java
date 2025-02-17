@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -20,16 +21,15 @@ import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.FbaShipmentPackingDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -399,6 +399,15 @@ public class FbaShipmentController extends BaseController {
     @PostMapping("/requisitionFbaQuickPaste")
     public ApiResult<List<FbaShipmentDTO.SearchResultDTO>> requisitionFbaQuickPaste(@RequestBody @Validated FbaShipmentDTO.QuickPasteDTO dto) {
         return success(fbaShipmentService.requisitionFbaQuickPaste(dto));
+    }
+
+    /**
+     * FBA货件同步信息分页
+     */
+    @PostMapping("/syncPaging")
+    @WebAdvanceQuery(handler = FbaShipmentSyncQueryHandler.class)
+    public ApiResult<PagingVO<FbaShipmentDTO.SyncViewDTO>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(fbaShipmentService.syncPaging(advanceQueryDTO));
     }
 
 }
