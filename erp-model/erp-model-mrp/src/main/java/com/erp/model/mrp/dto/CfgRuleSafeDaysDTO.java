@@ -17,6 +17,10 @@ public class CfgRuleSafeDaysDTO {
     @Setter
     public static class ViewDTO {
         /**
+         * id
+         */
+        private String id;
+        /**
          * 店铺id
          */
         private List<String> shopIdList;
