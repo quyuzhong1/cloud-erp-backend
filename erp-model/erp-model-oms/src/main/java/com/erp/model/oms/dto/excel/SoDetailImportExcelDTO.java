@@ -85,20 +85,10 @@ public class SoDetailImportExcelDTO {
     private String isReissue;
 
     /**
-     * 是否补发
-     */
-    @ColumnWidth(10)
-    @ExcelProperty(value = "是否关闭", index = 8)
-    @FieldValid(fieldName = "是否关闭",fieldValues = "是,否")
-    private String isClose;
-
-
-
-    /**
      * 备注
      */
     @ColumnWidth(40)
-    @ExcelProperty(value = "备注", index = 9)
+    @ExcelProperty(value = "备注", index = 8)
     @FieldValid(fieldName = "备注",maxLength=200)
     private String remark;
 
@@ -108,7 +98,7 @@ public class SoDetailImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 10)
+    @ExcelProperty(value = "错误数据", index = 9)
     private String errorMsg;
 
 
