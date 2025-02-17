@@ -3,6 +3,7 @@ package com.erp.model.sys.entity;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -23,7 +24,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("cfg_notice_detail")
+@TableName(value = "cfg_notice_detail",autoResultMap = true)
 public class CfgNoticeDetailEntity extends BaseEntity<CfgNoticeDetailEntity> {
 
     /**
@@ -34,7 +35,7 @@ public class CfgNoticeDetailEntity extends BaseEntity<CfgNoticeDetailEntity> {
     /**
     * 通知json
     */
-    @TableField(value = "notice_value_json", jdbcType = JdbcType.OTHER)
+    @TableField(value = "notice_value_json", typeHandler = JacksonTypeHandler.class, jdbcType = JdbcType.OTHER)
     private JSONObject noticeValueJson;
     /**
     * 主表id

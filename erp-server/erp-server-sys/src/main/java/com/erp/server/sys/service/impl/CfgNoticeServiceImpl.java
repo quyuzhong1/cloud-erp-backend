@@ -133,11 +133,13 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
                 case NOTICE_USER:
                 case NOTICE_GROUP:
                     CfgNoticeDTO.NoticeObjectDTO noticeObjectDTO = BeanUtil.toBean(detailEntity.getNoticeValueJson(), CfgNoticeDTO.NoticeObjectDTO.class);
+                    noticeObjectDTO.setId(detailEntity.getId());
                     noticeObjectDTOList.add(noticeObjectDTO);
                     break;
                 case NOTICE_DAY:
                 case NOTICE_WEEK:
                     CfgNoticeDTO.NoticeTimeDTO noticeTimeDTO = BeanUtil.toBean(detailEntity.getNoticeValueJson(), CfgNoticeDTO.NoticeTimeDTO.class);
+                    noticeTimeDTO.setId(detailEntity.getId());
                     noticeTimeDTOList.add(noticeTimeDTO);
                     break;
             }
@@ -200,7 +202,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
             for (CfgNoticeDetailEntity detailEntity : detailList) {
                 Gson gson = new Gson();
                 // 将 JSON 字符串转为 Map
-                Map map = gson.fromJson(detailEntity.getNoticeValueJson(), Map.class);
+                Map map = gson.fromJson(detailEntity.getNoticeValueJson().toString(), Map.class);
                 noticeObjectList.add(map);
             }
             item.setNoticeObjectList(noticeObjectList);

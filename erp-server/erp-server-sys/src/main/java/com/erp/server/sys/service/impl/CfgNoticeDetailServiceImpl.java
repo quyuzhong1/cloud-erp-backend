@@ -2,39 +2,25 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
-import com.erp.model.wms.enums.CfgVirtualNoticeTargetTypeEnum;
 import com.erp.server.sys.mapper.CfgNoticeDetailMapper;
 import com.erp.server.sys.service.CfgNoticeDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.sys.service.CfgNoticeService;
-import com.erp.server.sys.service.OperateLogService;
-import com.erp.server.sys.service.CommonService;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.CfgNoticeDetailDTO;
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
-
-import static com.erp.rpc.sys.feign.aspect.SysLoggingAspect.handleData;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -51,52 +37,49 @@ public class CfgNoticeDetailServiceImpl extends SuperServiceImpl<CfgNoticeDetail
     @Resource
     private CfgNoticeService cfgNoticeService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
+    @Override
     @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(CfgNoticeDetailDTO.AddDTO addDTO) {
-        CfgNoticeDetailEntity cfgNoticeDetailEntity = new CfgNoticeDetailEntity();
-        BeanMapperUtils.copy(addDTO, cfgNoticeDetailEntity);
-
-        // 数据处理
-        handleData(cfgNoticeDetailEntity);
-
-        log.info("开始新增通知配置明细单");
-        boolean save = super.save(cfgNoticeDetailEntity);
-        if(!save) {
-            throw new ServiceException("通知配置明细单保存失败");
-        }
-        return new BaseResultDTO.AddDTO(cfgNoticeDetailEntity.getId(), cfgNoticeDetailEntity.getId());
-    }
-
-    @Override
     public void addOrUpdateNoticeObjectList(List<CfgNoticeDTO.NoticeObjectDTO> noticeObjectDTOList, String id) {
         List<CfgNoticeDetailEntity> oldList = this.listByMainIdListAndType(Collections.singletonList(id), Arrays.asList(CfgVirtualNoticeObjectTypeEnum.NOTICE_USER.getCode(), CfgVirtualNoticeObjectTypeEnum.NOTICE_GROUP.getCode()));
-        List<String> deleteIds = getDeleteIds(noticeObjectDTOList, oldList);
+        List<String> newIds = noticeObjectDTOList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(CfgNoticeDTO.NoticeObjectDTO::getId).collect(Collectors.toList());
+        List<String> deleteIds = getDeleteIds(newIds, oldList);
         if (CollUtil.isNotEmpty(deleteIds)) {
-            this.removeByIds(deleteIds);
+            ApplicationContextUtils.getBean(CfgNoticeDetailServiceImpl.class).removeByIds(deleteIds);
         }
         List<CfgNoticeDetailEntity> newList = noticeObjectDTOList.stream().map(obj -> {
             CfgNoticeDetailEntity cfgNoticeDetailEntity = new CfgNoticeDetailEntity();
             cfgNoticeDetailEntity.setMainId(id);
             cfgNoticeDetailEntity.setNoticeType(obj.getNoticeType());
-            cfgNoticeDetailEntity.setNoticeValueJson(JSONUtil.)
+            cfgNoticeDetailEntity.setNoticeValueJson(JSONUtil.parseObj(obj));
             return cfgNoticeDetailEntity;
         }).collect(Collectors.toList());
-        this.saveOrUpdateBatch(newList);
+        ApplicationContextUtils.getBean(CfgNoticeDetailServiceImpl.class).saveOrUpdateBatch(newList);
     }
 
     @Override
     public void addNOrUpdateoticeTimeList(List<CfgNoticeDTO.NoticeTimeDTO> noticeTimeDTOList, String id) {
-
+        List<CfgNoticeDetailEntity> oldList = this.listByMainIdListAndType(Collections.singletonList(id), Arrays.asList(CfgVirtualNoticeObjectTypeEnum.NOTICE_DAY.getCode(), CfgVirtualNoticeObjectTypeEnum.NOTICE_WEEK.getCode()));
+        List<String> newIds = noticeTimeDTOList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+                map(CfgNoticeDTO.NoticeTimeDTO::getId).collect(Collectors.toList());
+        List<String> deleteIds = getDeleteIds(newIds, oldList);
+        if (CollUtil.isNotEmpty(deleteIds)) {
+            ApplicationContextUtils.getBean(CfgNoticeDetailServiceImpl.class).removeByIds(deleteIds);
+        }
+        List<CfgNoticeDetailEntity> newList = noticeTimeDTOList.stream().map(obj -> {
+            CfgNoticeDetailEntity cfgNoticeDetailEntity = new CfgNoticeDetailEntity();
+            cfgNoticeDetailEntity.setMainId(id);
+            cfgNoticeDetailEntity.setNoticeType(obj.getNoticeType());
+            cfgNoticeDetailEntity.setNoticeValueJson(JSONUtil.parseObj(obj));
+            return cfgNoticeDetailEntity;
+        }).collect(Collectors.toList());
+        ApplicationContextUtils.getBean(CfgNoticeDetailServiceImpl.class).saveOrUpdateBatch(newList);
     }
 
     /**
      * 查询需要删除的数据
      */
-    private List<String> getDeleteIds(List<CfgNoticeDTO.NoticeObjectDTO> newList, List<CfgNoticeDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(CfgNoticeDTO.NoticeObjectDTO::getId).collect(Collectors.toList());
+    private List<String> getDeleteIds(List<String> newIds, List<CfgNoticeDetailEntity> oldList) {
         List<String> oldIds = oldList.stream().map(CfgNoticeDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }

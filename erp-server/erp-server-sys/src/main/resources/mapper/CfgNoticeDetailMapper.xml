@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="notice_type" property="noticeType" />
-       <result column="notice_value_json" property="noticeValueJson" />
+       <result column="notice_value_json" property="noticeValueJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
        <result column="main_id" property="mainId" />
     </resultMap>
 
