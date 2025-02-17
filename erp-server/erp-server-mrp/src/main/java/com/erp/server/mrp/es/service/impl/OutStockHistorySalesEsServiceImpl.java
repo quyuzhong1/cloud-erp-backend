@@ -6,6 +6,7 @@ import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OutStockHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
 import com.google.common.collect.Lists;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
