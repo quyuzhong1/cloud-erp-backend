@@ -9531,4 +9531,22 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         return "";
     }
+
+    @Override
+    public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
+        if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "仅支持配货中重新获取面单");
+        }
+        if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流渠道不存在，获取失败");
+        }
+        if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getCode())){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流运单号不存在，获取失败");
+        }
+        if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getTrackNo())){
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流跟踪号不存在，获取失败");
+        }
+
+        return null;
+    }
 }

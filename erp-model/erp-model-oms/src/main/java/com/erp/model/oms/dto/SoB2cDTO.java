@@ -1486,7 +1486,16 @@ public class SoB2cDTO implements Serializable {
         private Boolean isDelivery;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class GetLogisticsLabel {
 
+        /**
+         * 主表id集合
+         */
+        @NotEmpty(message = "选择数据不能为空")
+        private List<String> ids;
+    }
     /**
      * 运费估算要的参数
      */

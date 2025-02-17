@@ -4,7 +4,6 @@ import com.common.business.dto.ReceiverDTO;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -42,6 +41,9 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 是否审核 默认1
      */
     private Integer verify;
+
+    //配送商
+    private Integer distributorType;
 
     //收件人信息
     private ReceiverInfo receiverInfo;

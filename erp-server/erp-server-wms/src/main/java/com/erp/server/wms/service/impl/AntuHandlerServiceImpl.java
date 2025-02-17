@@ -114,6 +114,12 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
         AntuUploadFileReq antuUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
+        if (CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
+            antuUploadFileReq.setFileType(uploadFileReq.getFileType());
+        }
+        if (CharSequenceUtil.isNotBlank(uploadFileReq.getModule())){
+            antuUploadFileReq.setModule(uploadFileReq.getModule());
+        }
         AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuUploadFileReq);
         AntuUploadFileResp antuCalculateFeeRespList = response.getData();
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.antuResToThirdWarehouseUploadFileResponse(antuCalculateFeeRespList);

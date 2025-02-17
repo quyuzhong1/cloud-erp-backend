@@ -1047,4 +1047,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void writeBackSoOutstockDate(String soId, String soOutstockDate);
 
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
+
+    /**
+     * 获取物流面单
+     *
+     * @param entity
+     * @param soB2cLogisticsEntity
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
 }
