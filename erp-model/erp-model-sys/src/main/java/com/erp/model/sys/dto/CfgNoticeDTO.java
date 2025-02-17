@@ -131,7 +131,7 @@ public class CfgNoticeDTO implements Serializable {
         /**
          * 通知时间DTO
          */
-        private List<NoticeTimeDTO> noticeRuleDTOList;
+        private List<NoticeTimeDTO> noticeTimeDTOList;
     }
 
     /**
