@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -20,9 +21,7 @@ import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
-import com.erp.model.wms.enums.CfgVirtualNoticeNodeTypeEnum;
-import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
-import com.erp.model.wms.enums.CfgVirtualNoticeRuleTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.server.sys.mapper.CfgNoticeMapper;
 import com.erp.server.sys.service.CfgNoticeDetailService;
 import com.erp.server.sys.service.CfgNoticeService;
@@ -34,6 +33,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -160,6 +164,70 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         if(!update) {
             throw new ServiceException("通知配置单保存失败");
         }
+    }
+
+    @Override
+    public List<LocalDateTime> viewSendTime(ValidList<CfgNoticeDTO.NoticeTimeDTO> paramList) {
+        if (CollUtil.isEmpty(paramList.getList())) {
+            return Collections.emptyList();
+        }
+        List<LocalDateTime> list = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalTime nowTime = LocalTime.now();
+
+        for (CfgNoticeDTO.NoticeTimeDTO noticeTimeDTO : paramList) {
+            LocalTime triggerTime = noticeTimeDTO.getTime();
+            boolean isBeforeNow = nowTime.isBefore(triggerTime);
+
+            // 按天配置：返回接下来5天的同一时间
+            if (CfgVirtualNoticeTimeTypeEnum.NOTICE_DAY.getCode().equals(noticeTimeDTO.getNoticeType())) {
+                LocalDate startDate = today;
+                // 如果当前时间已过配置时间，则从明天开始
+                if (!isBeforeNow) {
+                    startDate = today.plusDays(1);
+                }
+                // 生成最近5天的时间
+                for (int i = 0; i < 5; i++) {
+                    LocalDateTime dateTime = LocalDateTime.of(startDate.plusDays(i), triggerTime);
+                    list.add(dateTime);
+                }
+                continue;
+            }
+            // 按周配置：返回接下来5周的同一周几
+            String weekOption = noticeTimeDTO.getWeekOption();
+            CfgVirtualNoticeWeekOptionEnum weekEnum = CfgVirtualNoticeWeekOptionEnum.getEnum(weekOption);
+            if (weekEnum == null) continue;
+
+            DayOfWeek targetWeekDay = DayOfWeek.valueOf(weekEnum.name());
+            LocalDate nextTriggerDate;
+
+            // 计算首次触发日期
+            if (today.getDayOfWeek() == targetWeekDay) {
+                // 今天是对应的周几，检查时间是否已过
+                nextTriggerDate = isBeforeNow ? today : today.plusWeeks(1);
+            } else {
+                // 否则找下一个目标周几
+                nextTriggerDate = today.with(TemporalAdjusters.next(targetWeekDay));
+            }
+
+            // 生成接下来5周的触发时间
+            for (int i = 0; i < 5; i++) {
+                LocalDateTime dateTime = LocalDateTime.of(nextTriggerDate, triggerTime);
+                list.add(dateTime);
+                // 每次增加一周
+                nextTriggerDate = nextTriggerDate.plusWeeks(1);
+            }
+        }
+        if (CollUtil.isEmpty(list)) {
+            return list;
+        }
+        // 排序并取前五个最早的日期
+        return list.stream()
+                // 根据 LocalDateTime 的自然顺序（升序）排序
+                .sorted()
+                // 获取最早的五条数据
+                .limit(5)
+                .collect(Collectors.toList());
     }
 
 
