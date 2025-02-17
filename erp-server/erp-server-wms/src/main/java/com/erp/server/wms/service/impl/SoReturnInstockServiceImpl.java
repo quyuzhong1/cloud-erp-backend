@@ -456,6 +456,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_99083);
         }
+        // 历史Entity
+        SoReturnInstockEntity byId = new SoReturnInstockEntity();
+        BeanMapper.copy(entity, byId);
+
         //仓管员
         String warehouseKeeperId = dto.getWarehouseKeeperId();
         String warehouseKeeperName = "";
@@ -512,7 +516,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //操作日志
-        SoReturnInstockEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
         boolean flag = this.updateById(entity);
         soReturnInstockDetailService.update(dto);
