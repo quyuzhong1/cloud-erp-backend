@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.CfgNoticeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.CfgNoticeEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="notice_node" property="noticeNode" />
+       <result column="notice_rule" property="noticeRule" />
+       <result column="notice_platform" property="noticePlatform" />
+       <result column="disabled" property="disabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        cn.id,
+        cn.create_time,
+        cn.create_user_id,
+        cn.create_user_name,
+        cn.update_time,
+        cn.update_user_id,
+        cn.update_user_name,
+        cn.version,
+        cn.is_deleted,
+        cn.notice_node, cn.notice_rule, cn.notice_platform, cn.disabled
+    </sql>
+
+    <!-- 通用分页查询 -->
+    <select id="paging" resultType="com.erp.model.sys.dto.CfgNoticeDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from cfg_notice cn
+        where cn.is_deleted = false
+    </select>
+
+
+</mapper>
