@@ -458,8 +458,8 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 return "AFN".equalsIgnoreCase(labelJsonDTO.getFulfillmentChannel());
             }
         }
-        // 速卖通
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform)) {
+        // 速卖通 虾皮
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform) || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
@@ -468,10 +468,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 }
                 return false;
             }
-        }
-        // 虾皮
-        if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
-            return false;
         }
         //沃尔玛
         if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(this.dictPlatform)) {

@@ -60,7 +60,7 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(SoB2cLabelEntity::getMainId, mainIds).list();
+        return lambdaQuery().in(SoB2cLabelEntity::getMainId, mainIds).orderByDesc(SoB2cLabelEntity::getCreateTime).list();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.sdk.wms.antu.dto.request;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -287,5 +288,21 @@ public class AntuCreateOutboundReq {
     //菜鸟lp单号（非必填，不填默认为空）
     @JSONField(name = "lp_code")
     private String lpCode;
+    /**
+     * 订单附件
+     */
+    private List<Attach> attach;
 
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Attach {
+        //pdf,rar,zip
+        @JSONField(name = "file_type")
+        private String fileType;
+        //公共上传接口返回的主键
+        @JSONField(name = "attach_id")
+        private Integer attachId;
+    }
 }

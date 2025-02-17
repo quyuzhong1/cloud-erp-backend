@@ -1,5 +1,6 @@
 package com.erp.server.wms.convert.tool;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
@@ -24,4 +25,11 @@ public class TypeConversionWorker {
         return name;
     }
 
+    @Named("replacePdf")
+    public String replacePdf(String fileData){
+        if (CharSequenceUtil.isBlank(fileData)){
+            return fileData;
+        }
+        return fileData.replace("data:application/pdf;base64,","");
+    }
 }

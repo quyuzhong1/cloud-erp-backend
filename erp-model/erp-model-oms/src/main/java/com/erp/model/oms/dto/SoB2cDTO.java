@@ -702,6 +702,11 @@ public class SoB2cDTO implements Serializable {
          * ioss税号
          */
         private String iossTaxNo;
+
+        /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
     }
 
     @Data
@@ -1493,7 +1498,16 @@ public class SoB2cDTO implements Serializable {
         private Boolean isDelivery;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class GetLogisticsLabel {
 
+        /**
+         * 主表id集合
+         */
+        @NotEmpty(message = "选择数据不能为空")
+        private List<String> ids;
+    }
     /**
      * 运费估算要的参数
      */
@@ -2499,6 +2513,24 @@ public class SoB2cDTO implements Serializable {
         @NotBlank(message = "报关商渠道不能为空")
         private String transferLogisticsChannelId;
 
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubmitDeliveryDTO {
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 海外仓交运渠道
+         */
+        private String channelId;
     }
 
     @Data

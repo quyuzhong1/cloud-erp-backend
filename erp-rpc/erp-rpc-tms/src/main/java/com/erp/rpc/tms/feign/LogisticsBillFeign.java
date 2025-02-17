@@ -212,4 +212,14 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/updateLogisticWeight")
     ApiResult<String> updateLogisticWeight(@RequestBody LogisticsBillDTO.UpdateWeight dto);
+
+    /**
+     * 获取物流面单
+     * @Author zdy
+     * @Date 2025/02/17 14:34
+     * @param dto
+     * @return com.erp.model.oms.dto.SoB2cDTO.WaybillDTO
+     **/
+    @PostMapping("/feign/logisticsBill/getLogisticsLabel")
+    BatchResultDTO getLogisticsLabel(@RequestBody LogisticsBillDTO.PrintLogisticsWaybillDTO dto);
 }

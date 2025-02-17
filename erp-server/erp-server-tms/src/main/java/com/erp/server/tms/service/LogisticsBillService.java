@@ -261,4 +261,11 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum);
 
     List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset);
+
+    /**
+     * 获取物流面单信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(LogisticsBillDTO.PrintLogisticsWaybillDTO dto);
 }

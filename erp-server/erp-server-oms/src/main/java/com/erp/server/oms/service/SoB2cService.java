@@ -9,7 +9,6 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -183,13 +182,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO getLogisticsCode(String id, Boolean isDelivery);
     /**
+     * @param id
+     * @param channelId
+     * @return BatchResultDTO
      * @description: 提交发货
      * @author Will
      * @date: 2023/8/18 16:49
-     * @param id
-     * @return BatchResultDTO
      */
-    BatchResultDTO submitDelivery(String id);
+    BatchResultDTO submitDelivery(String id, String channelId);
     /**
      * @description: 发货拦截
      * @author Will
@@ -1041,4 +1041,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
 
-   }
+    /**
+     * 获取物流面单
+     *
+     * @param entity
+     * @param soB2cLogisticsEntity
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+}

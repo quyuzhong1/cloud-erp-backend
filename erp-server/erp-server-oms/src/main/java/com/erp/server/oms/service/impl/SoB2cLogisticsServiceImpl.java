@@ -220,7 +220,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Transactional(rollbackFor = Exception.class)
     public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight,
                                                    BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight) {
-//        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
         //获取主表下物流记录
@@ -260,19 +259,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         // 暂时使用第一个
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
-
-        List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
-
-
         //获取主表下物流记录
         List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());
-        //转map 比较是否存在记录 不存在则删除 存在则更新
-//        Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
-        SoB2cLogisticsEntity entity = null;
-        if (CollectionUtils.isNotEmpty(listByMainId)) {
-            entity = listByMainId.get(0);//跨店铺拆单需要修改这里
-        }
-//            SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
+        //跨店铺拆单需要修改这里
+        SoB2cLogisticsEntity entity = CollectionUtils.isNotEmpty(listByMainId) ? listByMainId.get(0) : null;
+        //重置物流信息
             if (Objects.isNull(entity)) {
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
                 entity.setMainId(mainEntity.getId());
@@ -287,9 +278,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
-//                if (isShopee) {
-//                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
-//                }
             } else {
                 SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
@@ -319,14 +307,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (StringUtils.isNotBlank(entity.getTrackNo())){
                     entity2.setTrackNo(entity.getTrackNo());
                 }
-
                 //如果美客多平台订单不是平台仓发货，不更新物流单号
                 if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                     if (!mainEntity.hasPlatformWarehouseOrder()) {
                         entity.setCode(oldEntity.getCode());
                     }
                 }
-
                 entity2.setWeight(allNetWeight);
                 entity2.setLength(maxLength);
                 entity2.setWidth(maxWidth);
@@ -337,19 +323,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
                 entity = entity2;
-//                if (isShopee) {
-//                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
-//                }
             }
-        //虾皮物流订单新增 TMS物流单号记录--虾皮为自发货订单，不新增
-//        if (isShopee) {
-//            try {
-//                logisticsBillFeign.logisticsBillBatchSave(addDTOList);
-//            } catch (Exception e) {
-//                log.error("同步物流单异常：{}", addDTOList);
-//            }
-//
-//        }
         return entity;
     }
 

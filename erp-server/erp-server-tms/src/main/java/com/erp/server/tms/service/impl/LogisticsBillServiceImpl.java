@@ -32,6 +32,7 @@ import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -1003,7 +1004,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Override
     public List<SoB2cDTO.WaybillDTO> printLogisticsWaybill(List<LogisticsBillDTO.PrintLogisticsWaybillDTO> list) {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = new ArrayList<>();
-        List<String> soIds = list.stream().map(req -> req.getB2cSoId()).distinct().collect(Collectors.toList());
+        List<String> soIds = list.stream().map(LogisticsBillDTO.PrintLogisticsWaybillDTO::getB2cSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cFeign.listSoB2cLogisticsByMainIdList(soIds);
@@ -1296,5 +1297,25 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Override
     public List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset) {
         return baseMapper.queryToSdy(startTime, endTime, pageSize, offset);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO getLogisticsLabel(LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
+        List<SoB2cDTO.WaybillDTO> waybillDTOList = printLogisticsWaybill(Collections.singletonList(dto));
+        if (CollUtil.isEmpty(waybillDTOList)){
+            return BatchResultDTO.fail(dto.getB2cSoId(),dto.getDeliveryNo(),"获取面单失败");
+        }
+        List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
+        for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
+            for (String labelBase : waybillDTO.getDistributeBase64()) {
+                SoB2cLabelDTO.UpdateDTO updateDTO = new SoB2cLabelDTO.UpdateDTO();
+                updateDTO.setLogisticsLabelBase64(labelBase);
+                updateDTO.setMainId(waybillDTO.getSoB2cId());
+                dtoList.add(updateDTO);
+            }
+        }
+        soB2cFeign.saveSoB2cLabel(dtoList);
+        return BatchResultDTO.success(dto.getB2cSoId(),dto.getDeliveryNo(),"面单获取成功");
     }
 }
