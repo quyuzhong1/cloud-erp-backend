@@ -12,10 +12,8 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.validator.AddGroup;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
-import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -700,7 +698,7 @@ public class SoB2cController extends BaseController {
     @PostMapping("/submitDelivery")
     @Idempotent
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
-    public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated SoB2cDTO.SubmitDeliveryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getIds().size()>100){
             throw new ServiceException("批量提交发货数据条数不能超过100");
@@ -714,7 +712,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cService.submitDelivery(id);
+                result = soB2cService.submitDelivery(id, dto.getChannelId());
             } catch (Exception e) {
                 log.error("B2C销售订单提交发货失败,id:{}",id, e);
                 SoB2cEntity entity = soB2cService.getById(id);

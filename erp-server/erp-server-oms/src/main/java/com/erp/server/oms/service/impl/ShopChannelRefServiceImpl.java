@@ -148,6 +148,24 @@ public class ShopChannelRefServiceImpl extends SuperServiceImpl<ShopChannelRefMa
         return viewDTOS;
     }
 
+    @Override
+    public void checkChannel(String shopId, String newChannelId) {
+        if(StringUtils.isBlank(shopId)){
+            throw new ServiceException("店铺id不能为空");
+        }
+        List<ShopChannelRefEntity> list = this.lambdaQuery().eq(ShopChannelRefEntity::getShopId, shopId).list();
+        if(CollectionUtils.isNotEmpty(list)){
+            if(list.stream().noneMatch(v->v.getLogisticsChannelId().equals(newChannelId))){
+                throw new ServiceException("该渠道不属于该店铺");
+            }
+        }else{
+            List<ShopChannelRefEntity> otherShopRefList = this.lambdaQuery().eq(ShopChannelRefEntity::getLogisticsChannelId, newChannelId).list();
+            if(CollectionUtils.isNotEmpty(otherShopRefList)){
+                throw new ServiceException("该渠道已经被其他店铺使用");
+            }
+        }
+    }
+
 
     /**
     * 新增修改处理数据

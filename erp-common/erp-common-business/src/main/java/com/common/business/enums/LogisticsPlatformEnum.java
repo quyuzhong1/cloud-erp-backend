@@ -100,6 +100,15 @@ public enum LogisticsPlatformEnum implements EnumMessage {
         return null;
     }
 
+    public static String getNameByCode(String code) {
+        LogisticsPlatformEnum[] values = values();
+        for (LogisticsPlatformEnum value : values) {
+            if (value.code.equals(code)) {
+                return value.getName();
+            }
+        }
+        return "";
+    }
     public static String getNameByName(String name) {
         LogisticsPlatformEnum[] values = values();
         for (LogisticsPlatformEnum value : values) {

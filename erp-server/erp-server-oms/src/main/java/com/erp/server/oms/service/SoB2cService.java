@@ -7,7 +7,6 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -21,7 +20,6 @@ import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -180,13 +178,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO getLogisticsCode(String id, Boolean isDelivery);
     /**
+     * @param id
+     * @param channelId
+     * @return BatchResultDTO
      * @description: 提交发货
      * @author Will
      * @date: 2023/8/18 16:49
-     * @param id
-     * @return BatchResultDTO
      */
-    BatchResultDTO submitDelivery(String id);
+    BatchResultDTO submitDelivery(String id, String channelId);
     /**
      * @description: 发货拦截
      * @author Will

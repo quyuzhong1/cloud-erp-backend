@@ -39,4 +39,6 @@ public interface ShopChannelRefService extends SuperService<ShopChannelRefEntity
     void batchUpdate(ShopInfoEntity shop, List<String> channelIdList);
 
     List<ShopChannelRefDTO.ViewDTO> getViewByShopId(String id);
+
+    void checkChannel(String shopId, String newChannelId);
 }
