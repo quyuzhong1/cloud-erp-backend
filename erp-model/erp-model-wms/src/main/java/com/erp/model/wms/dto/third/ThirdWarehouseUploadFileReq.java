@@ -38,5 +38,6 @@ public class ThirdWarehouseUploadFileReq extends ThirdWarehouseAuth{
 
     //文件url， 使用file_url时，file_data可不填写
     private String fileUrl;
+    //文件名称
     private String fileName;
 }

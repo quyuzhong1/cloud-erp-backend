@@ -21,21 +21,16 @@ import java.util.List;
 @NoArgsConstructor
 @SuperBuilder
 public class ThirdWarehouseUploadOrderLabelReq extends ThirdWarehouseAuth{
+    //订单号
+    @NotBlank(message = "订单号不能为空")
     private String orderCode;
+    //物流跟踪号
+    @NotBlank(message = "物流跟踪号不能为空")
+    private String trackNo;
     //文件类型
     private String fileType;
-
-    //文件base64数据  需要去掉 pdf文件流前缀  data:application/pdf;base64,
-    @NotBlank(message = "文件base64数据不能为空")
-    @JSONField(name = "file_data")
-    private String fileData;
-
-    //模块类型 	支持order_attach（订单附件）和order_label （订单标签），other_documents_carton(其它附件箱唛), other_documents_invoice(其它附件发票), 如果是pdf格式的标签，请传order_label
-    private String module;
-
-    //文件说明
-    private String fileNote;
-
-    //文件url， 使用file_url时，file_data可不填写
-    private String fileUrl;
+    //面单URL数组
+    private List<String> fileUrlList;
+    //附件ID列表
+    private List<Integer> fileIdList;
 }

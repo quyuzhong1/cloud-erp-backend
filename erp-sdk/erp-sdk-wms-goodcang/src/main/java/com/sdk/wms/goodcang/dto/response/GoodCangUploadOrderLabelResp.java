@@ -15,5 +15,5 @@ public class GoodCangUploadOrderLabelResp extends CleanBaseDTO implements Serial
 
     //订单信息
     @JSONField(name = "order_code")
-    private Integer orderCode;
+    private String orderCode;
 }

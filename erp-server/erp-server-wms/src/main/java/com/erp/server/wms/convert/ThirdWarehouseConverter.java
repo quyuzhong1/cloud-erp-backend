@@ -105,9 +105,15 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "file", source = "fileData", qualifiedByName = "replacePdf")
     GoodCangUploadFileReq reqToGoodCangUploadFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
 
+    @Mapping(target = "url", ignore = true)
     @Mapping(target = "attachId", source = "attachmentId")
     ThirdWarehouseUploadFileResponse goodCangResToThirdWarehouseUploadFileResponse(GoodCangUploadFileResp goodCangUploadFileResp);
 
+    @Mapping(target = "trackingNumber", source = "trackNo")
+    @Mapping(target = "packageAreaCode", ignore = true)
+    @Mapping(target = "labelInfo.labelImageType", constant = "3")
+    @Mapping(target = "labelInfo.labelIdList", source = "fileIdList")
+    @Mapping(target = "labelInfo.labelUrlList", source = "fileUrlList")
     GoodCangUploadOrderLabelReq reqToGoodCangUploadOrderLabelReq(ThirdWarehouseUploadOrderLabelReq uploadFileReq);
 
     ThirdWarehouseUploadOrderLabelResponse googCangResToThirdWarehouseUploadOrderLabelResponse(GoodCangUploadOrderLabelResp resp);

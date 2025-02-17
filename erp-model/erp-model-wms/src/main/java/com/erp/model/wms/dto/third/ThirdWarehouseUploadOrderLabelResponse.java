@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto.third;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,11 +18,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class ThirdWarehouseUploadOrderLabelResponse {
-
-    //附件主键id
-    private Integer attachId;
-
-    //url
-    private String url;
-
+    //订单信息
+    private String orderCode;
 }

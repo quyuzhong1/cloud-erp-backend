@@ -45,7 +45,7 @@ public class GoodCangUploadOrderLabelReq {
         //面单格式 PDF
         @JSONField(name = "label_image_type")
         @NotBlank(message = "面单格式")
-        private String labelImageType;
+        private Integer labelImageType;
 
         //面单URL数组
         @JSONField(name = "label_url_list")
