@@ -3236,6 +3236,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return resultViews;
     }
 
+    @Override
+    public Boolean existsByCustomerAndSku(String customer, String platformSku) {
+        if(StringUtils.isBlank(customer) || StringUtils.isBlank(platformSku)){
+            return Boolean.FALSE;
+        }
+
+        return this.baseMapper.existsByCustomerAndSku(customer,platformSku);
+    }
+
     /**
      * 处理导入数据
      *

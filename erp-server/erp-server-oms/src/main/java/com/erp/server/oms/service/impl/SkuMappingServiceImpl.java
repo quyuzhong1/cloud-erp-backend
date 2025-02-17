@@ -67,6 +67,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.checkerframework.checker.units.qual.C;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -146,6 +147,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private BomSkuFeign bomSkuFeign;
+    @Resource
+    private SoInfoService soInfoService;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -1212,7 +1215,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         ListingInfoEntity listingInfoEntity = listingInfoService.getById(entity.getListingId());
         // 客户sku
         if (RuleTypeEnum.CUSTOMER == entity.getType()) {
-            this.deleteCustomer(id, listingInfoEntity);
+            this.deleteCustomer(entity, listingInfoEntity);
             return BatchResultDTO.success(entity.getId(), entity.getProductName(), OperationTypeEnum.DELETE);
         }
         // 无平台
@@ -1235,8 +1238,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         throw new ServiceException("API接口新增的平台SKU和库存SKU不允许删除");
     }
 
-    private void deleteCustomer(String id, ListingInfoEntity listingInfoEntity) {
-        if (!this.removeById(id)) {
+    private void deleteCustomer(SkuMappingEntity entity, ListingInfoEntity listingInfoEntity) {
+        if(soInfoService.existsByCustomerAndSku(listingInfoEntity.getAuthId(),listingInfoEntity.getPlatformSkuNo())){
+            throw new ServiceException("客户SKU:{}已被订单引用,不允许删除",listingInfoEntity.getPlatformSkuNo());
+        }
+        //有订单引用不允许删除
+        if (!this.removeById(entity.getId())) {
             throw new ServiceException("删除映射失败,请重试");
         }
         if (!listingInfoService.removeById(listingInfoEntity.getId())) {

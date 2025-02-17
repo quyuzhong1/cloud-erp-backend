@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -490,4 +491,11 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto);
 
     IPage<SoInfoEntity> pagePartitionIsNull(Page query);
+
+
+    /**
+     * 是否存在客户+sku 的订单
+     * @return
+     */
+    Boolean existsByCustomerAndSku(String customer,String platformSku);
 }
