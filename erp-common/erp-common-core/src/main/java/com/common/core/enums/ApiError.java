@@ -115,7 +115,7 @@ public enum ApiError implements Serializable {
     ERROR_NAME_EXIST(1062,"名称【{}】已存在"),
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
-
+    ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     /**
      * 警告信息 从800 开始
      */
