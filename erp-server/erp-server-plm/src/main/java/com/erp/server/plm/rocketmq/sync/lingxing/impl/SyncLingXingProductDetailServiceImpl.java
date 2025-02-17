@@ -49,7 +49,7 @@ public class SyncLingXingProductDetailServiceImpl implements SyncLingXingProduct
     private static PlmPushMsgEntity createPlmPushMsgEntity(ProductDetailEntity entity) {
         ProductInfo productInfo = new ProductInfo();
         productInfo.setSku(LingxingApiUtils.convertLxSku(entity.getSkuNo()));
-        productInfo.setSkuIdentifier(entity.getId());
+//        productInfo.setSkuIdentifier(entity.getId());
         productInfo.setProductName(LingxingApiUtils.convertLxProductName(entity.getName()));
         PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
         plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.LING_XING.getCode());

@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.annotation.DataIdempotent;
@@ -418,6 +419,9 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
                     }
                 }
             }
+            //深拷贝map
+            Map<String,Object> detailMap = new HashMap<>(map);
+            map.put("detailList", Collections.singletonList(detailMap));
             resultMap.put(v.getId(),map);
         });
         return resultMap;

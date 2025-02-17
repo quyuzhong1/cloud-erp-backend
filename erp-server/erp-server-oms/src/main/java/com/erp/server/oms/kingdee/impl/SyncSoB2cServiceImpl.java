@@ -228,18 +228,9 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setGoods_transaction_quantity(soB2cDetailEntity.getQty());
         shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
-
         shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount());
-        if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal shareDiscount = BigDecimal.ZERO;
-            //获得售价占比分摊的商品优惠额
-            if (totalAmount.compareTo(BigDecimal.ZERO) > 0) {
-                shareDiscount = soB2cDetailEntity.getAmount().divide(totalAmount, 4, RoundingMode.DOWN).multiply(totalDiscount);
-            }
-            //计算为真实售价(原始币别)-商品分摊优惠/订单数量
-            shudiyunB2cOrderDTO.setPrice(soB2cDetailEntity.getAmount().subtract((totalDiscount.subtract(shareTotalDiscount))).divide(MathUtil.valueOf(soB2cDetailEntity.getQty()), 4, RoundingMode.DOWN));
-            shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount().subtract((totalDiscount.subtract(shareTotalDiscount))));
-        }
+        shudiyunB2cOrderDTO.setPrice(soB2cDetailEntity.getPrice());
+        shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount());
 
         if (skuVO.getRetailPrice() != null) {
             shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());

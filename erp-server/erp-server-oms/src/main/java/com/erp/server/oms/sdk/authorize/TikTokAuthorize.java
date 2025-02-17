@@ -190,6 +190,7 @@ public class TikTokAuthorize implements IShopAuthorizeService<T> {
         map.put("sellerBaseRegion", tokenDTO.getSellerBaseRegion());
         map.put("shopCipher", tokenDTO.getShopCipher());
         map.put("userType", tokenDTO.getUserType());
+        map.put("code", tokenDTO.getCode());
 
         ShopsBean shopsBean = tokenDTO.getShopsBean();
         if (ObjectUtil.isNotEmpty(shopsBean)) {

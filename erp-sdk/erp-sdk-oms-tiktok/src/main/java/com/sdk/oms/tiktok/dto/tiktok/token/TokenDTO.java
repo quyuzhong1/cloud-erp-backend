@@ -39,6 +39,8 @@ public class TokenDTO {
     private String shopCipher;
     @SerializedName("seller_type")
     private String sellerType;
+    @SerializedName("code")
+    private String code;
 
     private ShopsBean shopsBean;
 

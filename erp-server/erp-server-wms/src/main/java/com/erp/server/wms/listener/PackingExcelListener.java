@@ -189,7 +189,7 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             Integer currentMaxBoxNo = boxMap.get(packingExcelDTO.getCode());
             if(Objects.isNull(currentMaxBoxNo)){
                 if(packingExcelDTO.getBoxNo() != 1){
-                    packingExcelDTO.setErrorMsg("装箱号不连续");
+                    packingExcelDTO.setErrorMsg("装箱号从1开始");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;

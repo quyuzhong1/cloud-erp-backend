@@ -950,12 +950,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CharSequenceUtil.isBlank(taskId) || CharSequenceUtil.isBlank(cartonId)){
             return;
         }
-        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByPackingTaskId(taskId);
+        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByCartonIds(Collections.singletonList(cartonId));
         if (CollectionUtils.isNotEmpty(fbaShipmentPackingEntityList)){
-            FbaShipmentPackingEntity fbaShipmentPackingEntity = fbaShipmentPackingEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(cartonId) && Objects.equals(e.getCartonId(), cartonId)).findFirst().orElse(null);
-            if (Objects.nonNull(fbaShipmentPackingEntity)){
-                throw new ServiceException("已下推的箱号不允许再修改");
-            }
+            throw new ServiceException("已下推的箱号不允许再删除/修改");
         }
     }
 
@@ -2689,10 +2686,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
             throw new ServiceException(ApiError.ERROR_92141);
         }
+        //已绑定FBA货件不能删除
+        checkCartonHasFba(cartonEntity.getPackingTaskId(),dto.getCartonId());
+        //状态校验
         checkSourceOrderStatus(packingTaskEntity);
         wmsCartonSpecService.removeById(cartonEntity.getSpecId());
         wmsCartonService.removeById(dto.getCartonId());
         wmsCartonDetailService.listByMainIds(Collections.singletonList(dto.getCartonId()));
+        //更新装箱状态
+        updatePackingStatus(listGroupSkuById(cartonEntity.getPackingTaskId()),packingTaskEntity);
         return Boolean.TRUE;
     }
 

@@ -329,6 +329,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO manualDelivery(String id, LocalDate deliveryDate) {
+        if(Objects.isNull(deliveryDate)){
+            throw new ServiceException("发货日期不能为空");
+        }
         SoB2cDeliveryEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             return BatchResultDTO.fail(id, entity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.msg);
