@@ -2,20 +2,16 @@ package com.erp.server.mrp.es.service.impl;
 
 import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.entity.OutStockHistorySalesEsEntity;
 import com.erp.server.mrp.es.repository.OutStockHistorySalesEsRepository;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
 import com.google.common.collect.Lists;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.SearchHit;
-import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.SearchScrollHits;
-import org.springframework.data.elasticsearch.core.document.DocumentAdapters;
 import org.springframework.data.elasticsearch.core.mapping.IndexCoordinates;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQuery;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
@@ -26,6 +22,7 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,19 +68,17 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
      * @param endDate          结束日期
      */
     private List<OutStockHistorySalesEsEntity> getOutStockHistorySales(List<String> shopSkuIds, JSONArray orderType, LocalDate startDate, LocalDate endDate) {
-        List<OutStockHistorySalesEsEntity> outStockHistorySalesList = new ArrayList<>();
-        Page<OutStockHistorySalesEsEntity> outStockHistorySalesPage;
-        int page = 0;
-        do {
-            if (CollectionUtils.isEmpty(orderType)) {
-                outStockHistorySalesPage = outStockHistorySalesEsRepository.findByShopSkuIdInAndDateBetween(shopSkuIds, startDate, endDate, PageRequest.of(page, 10000));
-            } else {
-                outStockHistorySalesPage = outStockHistorySalesEsRepository.findByShopSkuIdInAndOrderTypeInAndDateBetween(shopSkuIds, orderType, startDate, endDate, PageRequest.of(page, 10000));
-            }
-            outStockHistorySalesList.addAll(outStockHistorySalesPage.toList());
-            page++;
-        } while (!outStockHistorySalesPage.isLast());
-        return outStockHistorySalesList;
+        BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
+                .must(QueryBuilders.termsQuery("shopSkuId", shopSkuIds))
+                .must(QueryBuilders.rangeQuery("date").gte(startDate.format(DateTimeFormatter.BASIC_ISO_DATE)).lte(endDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+        if (!CollectionUtils.isEmpty(orderType)) {
+            queryBuilder.must(QueryBuilders.termsQuery("orderType", orderType));
+        }
+        NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
+                .withQuery(queryBuilder)
+                .withPageable(PageRequest.of(0, 10000))
+                .build();
+        return getOutStockHistorySalesEsEntities(searchQuery);
     }
 
     @Override
@@ -107,6 +102,12 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
                         .must(QueryBuilders.termsQuery("shopId", shopIds)))
                 .withPageable(PageRequest.of(0, 10000))
                 .build();
+        List<OutStockHistorySalesEsEntity> result = getOutStockHistorySalesEsEntities(searchQuery);
+        return result.stream()
+                .collect(Collectors.groupingBy(OutStockHistorySalesEsEntity::getShopId, Collectors.mapping(OutStockHistorySalesEsEntity::getSkuId, Collectors.toSet())));
+    }
+
+    private List<OutStockHistorySalesEsEntity> getOutStockHistorySalesEsEntities(NativeSearchQuery searchQuery) {
         List<String> scrollIdList = new ArrayList<>();
         List<OutStockHistorySalesEsEntity> result = new ArrayList<>();
         SearchScrollHits<OutStockHistorySalesEsEntity> orderHistorySales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, OutStockHistorySalesEsEntity.class, IndexCoordinates.of("out_stock_history_sales"));
@@ -134,7 +135,6 @@ public class OutStockHistorySalesEsServiceImpl implements OutStockHistorySalesEs
             scrollId = searchScrollHits.getScrollId();
         }
         elasticsearchRestTemplate.searchScrollClear(scrollIdList);
-        return result.stream()
-                .collect(Collectors.groupingBy(OutStockHistorySalesEsEntity::getShopId, Collectors.mapping(OutStockHistorySalesEsEntity::getSkuId, Collectors.toSet())));
+        return result;
     }
 }
