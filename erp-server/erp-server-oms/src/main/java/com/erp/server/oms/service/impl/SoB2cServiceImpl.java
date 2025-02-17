@@ -9533,6 +9533,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())){
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "仅支持配货中重新获取面单");
@@ -9543,10 +9545,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getCode())){
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流运单号不存在，获取失败");
         }
-        if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getTrackNo())){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流跟踪号不存在，获取失败");
-        }
-
-        return null;
+        LogisticsBillDTO.PrintLogisticsWaybillDTO dto = new LogisticsBillDTO.PrintLogisticsWaybillDTO();
+        dto.setB2cSoId(entity.getId());
+        dto.setDeliveryNo(entity.getCode());
+        dto.setShopId(entity.getShopId());
+        dto.setChannelId(soB2cLogisticsEntity.getLogisticsChannelId());
+        dto.setTransportNo(soB2cLogisticsEntity.getCode());
+        dto.setLogisticType(soB2cLogisticsEntity.getLogisticType());
+        return logisticsBillFeign.getLogisticsLabel(dto);
     }
 }
