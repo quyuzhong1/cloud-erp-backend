@@ -8,13 +8,17 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.erp.model.mrp.dto.CfgRuleSafeDaysDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
+import com.erp.model.mrp.entity.CfgRuleSafeDaysEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleStockUpMapper;
+import com.erp.server.mrp.service.CfgRuleSafeDaysService;
 import com.erp.server.mrp.service.CfgRuleStockUpService;
 import com.erp.server.mrp.service.CfgRuleStockingRatioService;
 import com.erp.server.mrp.service.OperateLogService;
@@ -49,6 +53,9 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     @Resource
     private CfgRuleStockingRatioService cfgRuleStockingRatioService;
 
+    @Resource
+    private CfgRuleSafeDaysService cfgRuleSafeDaysService;
+
 
     /**
      * 修改
@@ -74,6 +81,10 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         cfgRuleStockingRatioService.update(updateDTO.getStockingRatioList(), cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), updateDTO.getIsCustom());
         //新品备货系数
         cfgRuleStockingRatioService.update(updateDTO.getNewStockingRatioList(), cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.NEW.getCode(), updateDTO.getIsCustom());
+        //平台安全天数
+        cfgRuleSafeDaysService.update(updateDTO.getPlatformSafeDaysList(),cfgRuleStockUpEntity, CfgRulePlatformTypeEnum.AMAZON.getCode());
+        //海外安全天数
+        cfgRuleSafeDaysService.update(updateDTO.getOverseasSafeDaysList(),cfgRuleStockUpEntity, CfgRulePlatformTypeEnum.OVERSEAS.getCode());
 
         // 记录主单操作日志
         log.info("编辑 开始记录备货（规则设置）日志数据，id：【{}】", cfgRuleStockUpEntity.getId());
@@ -101,6 +112,20 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         if (CollectionUtils.isNotEmpty(newList)) {
             List<CfgRuleStockingRatioDTO.ViewDTO> oldStockingRatioList = BeanMapperUtils.copyList(CfgRuleStockingRatioDTO.ViewDTO.class, newList);
             viewDTO.setNewStockingRatioList(oldStockingRatioList);
+        }
+        //更多天数
+        List<CfgRuleSafeDaysEntity> cfgRuleSafeDaysList = cfgRuleSafeDaysService.listByStockUpIdList(Collections.singletonList(oldEntity.getId()));
+        //亚马逊
+        List<CfgRuleSafeDaysEntity> platformSafeDaysList = cfgRuleSafeDaysList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.AMAZON.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(platformSafeDaysList)) {
+            List<CfgRuleSafeDaysDTO.ViewDTO> platformList = BeanMapperUtils.copyList(CfgRuleSafeDaysDTO.ViewDTO.class, platformSafeDaysList);
+            viewDTO.setPlatformSafeDaysList(platformList);
+        }
+        //海外仓
+        List<CfgRuleSafeDaysEntity> overseasSafeDaysList = cfgRuleSafeDaysList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(overseasSafeDaysList)) {
+            List<CfgRuleSafeDaysDTO.ViewDTO> overseasList = BeanMapperUtils.copyList(CfgRuleSafeDaysDTO.ViewDTO.class, overseasSafeDaysList);
+            viewDTO.setOverseasSafeDaysList(overseasList);
         }
         return viewDTO;
     }
