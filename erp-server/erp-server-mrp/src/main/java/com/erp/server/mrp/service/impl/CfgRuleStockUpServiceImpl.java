@@ -118,13 +118,25 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         //亚马逊
         List<CfgRuleSafeDaysEntity> platformSafeDaysList = cfgRuleSafeDaysList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.AMAZON.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(platformSafeDaysList)) {
-            List<CfgRuleSafeDaysDTO.ViewDTO> platformList = BeanMapperUtils.copyList(CfgRuleSafeDaysDTO.ViewDTO.class, platformSafeDaysList);
+            List<CfgRuleSafeDaysDTO.ViewDTO> platformList = platformSafeDaysList.stream().map(v -> {
+                CfgRuleSafeDaysDTO.ViewDTO dto = new CfgRuleSafeDaysDTO.ViewDTO();
+                dto.setId(v.getId());
+                dto.setSafeDays(v.getSafeDays());
+                dto.setShopIdList(v.getShopIdJson().stream().map(Object::toString).collect(Collectors.toList()));
+                return dto;
+            }).collect(Collectors.toList());
             viewDTO.setPlatformSafeDaysList(platformList);
         }
         //海外仓
         List<CfgRuleSafeDaysEntity> overseasSafeDaysList = cfgRuleSafeDaysList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatformType(), CfgRulePlatformTypeEnum.OVERSEAS.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(overseasSafeDaysList)) {
-            List<CfgRuleSafeDaysDTO.ViewDTO> overseasList = BeanMapperUtils.copyList(CfgRuleSafeDaysDTO.ViewDTO.class, overseasSafeDaysList);
+            List<CfgRuleSafeDaysDTO.ViewDTO> overseasList = overseasSafeDaysList.stream().map(v -> {
+                CfgRuleSafeDaysDTO.ViewDTO dto = new CfgRuleSafeDaysDTO.ViewDTO();
+                dto.setId(v.getId());
+                dto.setSafeDays(v.getSafeDays());
+                dto.setShopIdList(v.getShopIdJson().stream().map(Object::toString).collect(Collectors.toList()));
+                return dto;
+            }).collect(Collectors.toList());
             viewDTO.setOverseasSafeDaysList(overseasList);
         }
         return viewDTO;
