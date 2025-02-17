@@ -695,6 +695,25 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         return detailDTO;
     }
 
+    @Override
+    public void exportSalesInfoTemplateList(CalcSalesInfoDimDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("销量试算模板列表导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC_LIST.getCode(), dto);
+
+    }
+
+    @Override
+    public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Page<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> page = baseMapper.exportMrpSalesCalcTemplateList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), user.getUid());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            for (CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO templateDTO : page.getRecords()) {
+                templateDTO.setSaleTypeName(HistorySalesTypeEnum.getNameByCode(templateDTO.getSaleType()));
+                templateDTO.setStatusName(CalcStatusEnum.getName(templateDTO.getStatus()));
+            }
+        }
+        return new PagingVO<>(page);
+    }
+
     private List<String> getShopIdList(CalcSalesInfoDimDTO.RulesApplyDTO dto) {
 
         List<ShopInfoEntity> list = shopInfoFeign.list().getData();
