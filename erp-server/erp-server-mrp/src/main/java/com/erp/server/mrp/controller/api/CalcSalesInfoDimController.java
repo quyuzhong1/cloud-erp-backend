@@ -112,6 +112,15 @@ public class CalcSalesInfoDimController extends BaseController {
     }
 
     /**
+     * 试算跟踪模板列表导出
+     */
+    @PostMapping("/exportSalesInfoTemplateList")
+    public ApiResult<String> exportSalesInfoTemplateList(@RequestBody CalcSalesInfoDimDTO.ParamDTO dto) {
+        calcSalesInfoDimService.exportSalesInfoTemplateList(dto);
+        return success();
+    }
+
+    /**
      *
      * 试算跟踪明细
      * @param params 参数
