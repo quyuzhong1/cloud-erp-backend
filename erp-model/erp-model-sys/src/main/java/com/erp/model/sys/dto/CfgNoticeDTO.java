@@ -153,7 +153,6 @@ public class CfgNoticeDTO implements Serializable {
         /**
          * 通知对象集合,/sys/dictBasic/list?type=fsGroup(按飞书群)，/api/plm/common/findUserList（按人员）
          */
-        @NotEmpty(message = "通知对象不能为空")
         private List<String> noticeObjectList;
     }
 

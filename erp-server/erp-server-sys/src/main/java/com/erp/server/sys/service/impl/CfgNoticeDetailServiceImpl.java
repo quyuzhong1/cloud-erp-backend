@@ -52,6 +52,7 @@ public class CfgNoticeDetailServiceImpl extends SuperServiceImpl<CfgNoticeDetail
         }
         List<CfgNoticeDetailEntity> newList = noticeObjectDTOList.stream().map(obj -> {
             CfgNoticeDetailEntity cfgNoticeDetailEntity = new CfgNoticeDetailEntity();
+            cfgNoticeDetailEntity.setId(obj.getId());
             cfgNoticeDetailEntity.setMainId(id);
             cfgNoticeDetailEntity.setNoticeType(obj.getNoticeType());
             cfgNoticeDetailEntity.setNoticeValueJson(JSONUtil.parseObj(obj));
@@ -78,6 +79,7 @@ public class CfgNoticeDetailServiceImpl extends SuperServiceImpl<CfgNoticeDetail
                 obj.setWeekOption("");
             }
             CfgNoticeDetailEntity cfgNoticeDetailEntity = new CfgNoticeDetailEntity();
+            cfgNoticeDetailEntity.setId(obj.getId());
             cfgNoticeDetailEntity.setMainId(id);
             cfgNoticeDetailEntity.setNoticeType(obj.getNoticeType());
             cfgNoticeDetailEntity.setNoticeValueJson(JSONUtil.parseObj(obj));
