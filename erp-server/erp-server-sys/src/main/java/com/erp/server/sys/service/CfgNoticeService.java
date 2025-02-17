@@ -1,9 +1,15 @@
 package com.erp.server.sys.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.sys.entity.CfgNoticeEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.validator.ValidList;
+import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.CfgNoticeDTO;
+import com.erp.model.sys.entity.CfgNoticeEntity;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -57,4 +63,12 @@ public interface CfgNoticeService extends SuperService<CfgNoticeEntity> {
      * @param dto
      */
     void updateDisabled(CfgNoticeDTO.UpdateDisabledDTO dto);
+    /**
+     * 查看发送通知时间
+     * @author will
+     * @date 2025/2/17 10:41
+     * @param paramList
+     * @return java.util.List<com.erp.model.sys.dto.CfgNoticeDTO.ViewSendTimeDTO>
+     */
+    List<LocalDateTime> viewSendTime(ValidList<CfgNoticeDTO.NoticeTimeDTO> paramList);
 }

@@ -2,12 +2,15 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
+import com.erp.model.wms.enums.CfgVirtualNoticeTimeTypeEnum;
 import com.erp.server.sys.mapper.CfgNoticeDetailMapper;
 import com.erp.server.sys.service.CfgNoticeDetailService;
 import com.erp.server.sys.service.CfgNoticeService;
@@ -67,6 +70,13 @@ public class CfgNoticeDetailServiceImpl extends SuperServiceImpl<CfgNoticeDetail
             ApplicationContextUtils.getBean(CfgNoticeDetailServiceImpl.class).removeByIds(deleteIds);
         }
         List<CfgNoticeDetailEntity> newList = noticeTimeDTOList.stream().map(obj -> {
+            if (CfgVirtualNoticeTimeTypeEnum.NOTICE_WEEK.getCode().equals(obj.getNoticeType())) {
+                if (CharSequenceUtil.isBlank(obj.getWeekOption())) {
+                    throw new ServiceException("按周发送通知，周选项不能为空");
+                }
+            } else {
+                obj.setWeekOption("");
+            }
             CfgNoticeDetailEntity cfgNoticeDetailEntity = new CfgNoticeDetailEntity();
             cfgNoticeDetailEntity.setMainId(id);
             cfgNoticeDetailEntity.setNoticeType(obj.getNoticeType());

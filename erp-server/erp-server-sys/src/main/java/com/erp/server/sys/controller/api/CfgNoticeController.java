@@ -3,6 +3,7 @@ package com.erp.server.sys.controller.api;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -18,6 +19,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 通知配置表
@@ -100,5 +103,18 @@ public class CfgNoticeController extends BaseController {
     public ApiResult<?> updateDisabled(@RequestBody @Validated CfgNoticeDTO.UpdateDisabledDTO dto) {
         cfgNoticeService.updateDisabled(dto);
         return success();
+    }
+
+    /**
+     * 查看发送通知时间
+     * @Auther will
+     * @Date 2025/2/13 15:13
+     * @param paramList
+     * @return ApiResult<?>
+     */
+    @PostMapping("/viewSendTime")
+    public ApiResult<List<LocalDateTime>> viewSendTime(@RequestBody @Validated ValidList<CfgNoticeDTO.NoticeTimeDTO> paramList) {
+        List<LocalDateTime> list = cfgNoticeService.viewSendTime(paramList);
+        return success(list);
     }
 }

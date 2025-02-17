@@ -145,13 +145,15 @@ public class CfgNoticeDTO implements Serializable {
          */
         private String id;
         /**
-         * 通知类型
+         * 通知类型,/sys/dictBasic/list?type=noticeTargetType
          */
+        @NotBlank(message = "通知对象类型不能为空")
         private String noticeType;
 
         /**
-         * 通知对象集合
+         * 通知对象集合,/sys/dictBasic/list?type=fsGroup(按飞书群)，/api/plm/common/findUserList（按人员）
          */
+        @NotEmpty(message = "通知对象不能为空")
         private List<String> noticeObjectList;
     }
 
@@ -166,18 +168,20 @@ public class CfgNoticeDTO implements Serializable {
          */
         private String id;
         /**
-         * 通知类型
+         * 通知类型,/sys/dictBasic/list?type=noticeTimeType
          */
+        @NotBlank(message = "通知对象类型不能为空")
         private String noticeType;
 
         /**
-         * 周选项
+         * 周选项,/sys/dictBasic/list?type=weekOption
          */
         private String weekOption;
 
         /**
          * 时间
          */
+        @NotEmpty(message = "发送时间不能为空")
         private LocalTime time;
     }
 
@@ -211,14 +215,14 @@ public class CfgNoticeDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 通知节点
+        * 通知节点,/sys/dictBasic/list?type=noticeNodeType
         */
         @NotBlank(message = "通知节点不能为空")
         @Size(max = 32,message = "通知节点最大长度不能超过32位")
         private String noticeNode;
 
         /**
-        * 通知规则
+        * 通知规则,/sys/dictBasic/list?type=noticeRuleType
         */
         @NotBlank(message = "通知规则不能为空")
         @Size(max = 32,message = "通知规则最大长度不能超过32位")
@@ -227,8 +231,6 @@ public class CfgNoticeDTO implements Serializable {
         /**
         * 通知平台
         */
-        @NotBlank(message = "通知平台不能为空")
-        @Size(max = 32,message = "通知平台最大长度不能超过32位")
         private String noticePlatform;
 
         /**
