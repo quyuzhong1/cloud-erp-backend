@@ -181,7 +181,7 @@ public class CfgNoticeDTO implements Serializable {
         /**
          * 时间
          */
-        @NotEmpty(message = "发送时间不能为空")
+        @NotNull(message = "发送时间不能为空")
         private LocalTime time;
     }
 
