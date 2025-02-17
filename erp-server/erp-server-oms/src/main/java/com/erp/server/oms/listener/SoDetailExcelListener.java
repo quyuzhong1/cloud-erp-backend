@@ -129,8 +129,7 @@ public class SoDetailExcelListener extends AnalysisEventListener<SoDetailImportE
         addDTO.setIsGift(isGift.equals("是"));
 
         //是否关闭
-        String isClose = soDetailImportExcelDTO.getIsClose();
-        addDTO.setIsClose(!StringUtils.isBlank(isClose) && isClose.equals("是"));
+        addDTO.setIsClose(false);
         addDTO.setSkuNo(skuNo);
         addDTO.setSkuId(sku.getSkuId());
         addDTO.setProductName(sku.getSkuName());
