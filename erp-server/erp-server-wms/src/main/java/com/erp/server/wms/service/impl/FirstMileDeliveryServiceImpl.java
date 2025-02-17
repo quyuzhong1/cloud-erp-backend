@@ -796,6 +796,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         //存在下游单据（海外入库单），不能删除
         List<OverseasWarehouseInboundEntity> inboundEntityList = overseasWarehouseInboundService.listBySourceIds(Collections.singletonList(entity.getId()));
+        inboundEntityList = inboundEntityList.stream().filter(e -> Objects.nonNull(e) && !Objects.equals(OverseasInstockStatusEnum.CANCELED.getCode(),e.getInstockStatus())).collect(Collectors.toList());
         if (CollUtil.isNotEmpty(inboundEntityList)){
             throw new ServiceException("存在下游海外入库单【{}】，禁止删除", inboundEntityList.stream().map(OverseasWarehouseInboundEntity::getCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(",")));
         }
