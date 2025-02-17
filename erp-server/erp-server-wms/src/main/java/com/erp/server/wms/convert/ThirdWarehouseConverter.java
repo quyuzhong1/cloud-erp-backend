@@ -101,7 +101,7 @@ public interface ThirdWarehouseConverter {
     AntuUploadFileReq reqToAntuUpdateFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
     ThirdWarehouseUploadFileResponse antuResToThirdWarehouseUploadFileResponse(AntuUploadFileResp antuCalculateFeeRespList);
 
-    @Mapping(target = "useFor", constant = "order_label")
+    @Mapping(target = "useFor", constant = "ORDER_LABEL_ATTACHMENT")
     @Mapping(target = "file", source = "fileData", qualifiedByName = "replacePdf")
     GoodCangUploadFileReq reqToGoodCangUploadFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
 

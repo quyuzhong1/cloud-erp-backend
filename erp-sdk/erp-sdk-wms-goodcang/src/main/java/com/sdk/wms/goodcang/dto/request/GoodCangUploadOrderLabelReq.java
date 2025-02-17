@@ -26,7 +26,7 @@ public class GoodCangUploadOrderLabelReq {
     //物流跟踪号 必填
     @JSONField(name = "tracking_number")
     @NotBlank(message = "物流跟踪号不能为空")
-    private Integer trackingNumber;
+    private String trackingNumber;
 
     //分拣码
     @JSONField(name = "package_area_code")

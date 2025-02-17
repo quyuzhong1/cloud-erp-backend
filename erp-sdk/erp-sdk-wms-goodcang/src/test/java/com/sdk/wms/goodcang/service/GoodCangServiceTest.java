@@ -18,6 +18,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -240,6 +244,48 @@ public class GoodCangServiceTest {
                 .weight(1F)
                 .build();
         GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(deliveryFeeReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
+
+    @Test
+    public void uploadFile() {
+        String fileData = "";
+        try {
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("fileBase64.txt");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null){
+                builder.append(line);
+            }
+            fileData = builder.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        GoodCangUploadFileReq uploadFileReq = GoodCangUploadFileReq
+                .builder()
+                .file(fileData)
+                .useFor("ORDER_LABEL_ATTACHMENT")
+                .fileName("33178.pdf")
+                .build();
+        GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(uploadFileReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
+    @Test
+    public void uploadOrderLabel() {
+        GoodCangUploadOrderLabelReq.LabelInfo labelInfo = new GoodCangUploadOrderLabelReq.LabelInfo();
+        labelInfo.setLabelIdList(Collections.singletonList(45234));
+        labelInfo.setLabelImageType(3);
+        GoodCangUploadOrderLabelReq uploadOrderLabelReq = GoodCangUploadOrderLabelReq
+                .builder()
+                .orderCode("LP00667624835862")
+                .trackingNumber("CNG00667624835862")
+                .labelInfo(labelInfo)
+                .build();
+        GoodCangResponse<GoodCangUploadOrderLabelResp> response = goodCangService.uploadOrderLabel(uploadOrderLabelReq);
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }

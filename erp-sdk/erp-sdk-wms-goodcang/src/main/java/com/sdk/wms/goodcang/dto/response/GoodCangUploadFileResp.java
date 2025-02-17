@@ -16,4 +16,7 @@ public class GoodCangUploadFileResp extends CleanBaseDTO implements Serializable
     //附件ID（整型）
     @JSONField(name = "attachment_id")
     private Integer attachmentId;
+    //文件路径
+    @JSONField(name = "path")
+    private String path;
 }
