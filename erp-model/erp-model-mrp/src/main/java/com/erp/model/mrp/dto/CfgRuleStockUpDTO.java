@@ -88,6 +88,16 @@ public class CfgRuleStockUpDTO implements Serializable {
          * 新品备货系数信息
          */
         private List<CfgRuleStockingRatioDTO.ViewDTO> newStockingRatioList;
+
+        /**
+         * 平台安全天数（天）更多
+         */
+        private List<CfgRuleSafeDaysDTO.ViewDTO> platformSafeDaysList;
+        /**
+         * 海外仓安全天数（天）更多
+         */
+        private List<CfgRuleSafeDaysDTO.ViewDTO> overseasSafeDaysList;
+
     }
 
     /**
@@ -202,6 +212,17 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         @Valid
         private List<CfgRuleStockingRatioDTO.UpdateDTO> newStockingRatioList;
+
+        /**
+         * 平台安全天数（天）更多
+         */
+        @Valid
+        private List<CfgRuleSafeDaysDTO.UpdateDTO> platformSafeDaysList;
+        /**
+         * 海外仓安全天数（天）更多
+         */
+        @Valid
+        private List<CfgRuleSafeDaysDTO.UpdateDTO> overseasSafeDaysList;
 
     }
 
