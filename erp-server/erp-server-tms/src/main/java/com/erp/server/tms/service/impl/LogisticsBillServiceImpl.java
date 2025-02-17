@@ -1303,6 +1303,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsLabel(LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
         List<SoB2cDTO.WaybillDTO> waybillDTOList = printLogisticsWaybill(Collections.singletonList(dto));
+        if (CollUtil.isEmpty(waybillDTOList)){
+            return BatchResultDTO.fail(dto.getB2cSoId(),dto.getDeliveryNo(),"获取面单失败");
+        }
         List<SoB2cLabelDTO.UpdateDTO> dtoList = new ArrayList<>();
         for (SoB2cDTO.WaybillDTO waybillDTO : waybillDTOList) {
             for (String labelBase : waybillDTO.getDistributeBase64()) {
