@@ -3,10 +3,10 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.60:30848
-        namespace: test
+        namespace: k8s-test
       config:
         server-addr: 172.16.100.60:30848
-        namespace: test
+        namespace: k8s-test
         shared-configs: common.yml,db-tms.yml,druid-common.yml,erp-third-party.yml
 
 sfs:
