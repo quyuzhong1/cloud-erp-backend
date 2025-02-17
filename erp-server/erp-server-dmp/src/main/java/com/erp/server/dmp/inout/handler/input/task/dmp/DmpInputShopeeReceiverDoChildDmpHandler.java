@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
-import org.python.icu.math.BigDecimal;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +13,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,16 +28,12 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 @Slf4j
-public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHandler{
+public class DmpInputShopeeReceiverDoChildDmpHandler extends DmpInputDoChildDmpHandler{
 	
 	@Override
 	protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList , String childMongoStorageName){
 		List<ParamData> paramDataList = new ArrayList<>();
-		String childId = this.getDmpCfgInputChildId();
-		if(StringUtils.isBlank(childId)) {
-			throw new ServiceException("未查询到DmpInputShopeeOrderDoChildDmpHandler子类id");
-		}
-		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).eq(DmpInputTaskEntity::getCfgInputId, childId).list();
+		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).orderByAsc(DmpInputTaskEntity::getCreateTime).list();
 		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
 		List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
 		return this.afterDoDmpInputMongoChildEntityList(dmpInputMongoChildList);
@@ -51,32 +43,30 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 		List<Map<String, Object>> resultList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
-				Object currencyObj = dmpInputMongoChild.get("currency");
-				dmpInputMongoChild.put("currency_code", currencyObj);
-				Object item_list = dmpInputMongoChild.get("item_list");
-				if(item_list != null) {
-					List<Map<String, Object>> itemList = (List<Map<String, Object>>)item_list;
-					for(Map<String, Object> item : itemList) {
-						Map copyProperties = BeanUtil.copyProperties(dmpInputMongoChild, Map.class);
-						Object image_info = item.get("image_info");
-						if(image_info != null) {
-							Map<String, Object> imageInfo = (Map<String, Object>) image_info;
-							copyProperties.put("skuUrl", imageInfo.get("image_url"));
-						}
-						copyProperties.put("platformSku", item.get("model_sku"));
-						copyProperties.put("platformSpuNo", item.get("model_id"));
-						Object qtyObj = item.get("model_quantity_purchased");
-						copyProperties.put("qty", qtyObj);
-						Object priceObj = item.get("model_original_price");
-						copyProperties.put("sellPrice", priceObj);
-						if(qtyObj != null && priceObj != null) {
-							copyProperties.put("after_amount", new BigDecimal(qtyObj.toString()).multiply(new BigDecimal(priceObj.toString())));
-						}
-						copyProperties.put("thirdDetailId", item.get("model_id"));
-						copyProperties.put("platformDetailId", item.get("item_id"));
-						resultList.add(copyProperties);
+				dmpInputMongoChild.put("buyerId", dmpInputMongoChild.get("buyer_user_id"));
+				dmpInputMongoChild.put("buyerName", dmpInputMongoChild.get("buyer_username"));
+				Object recipient_address = dmpInputMongoChild.get("recipient_address");
+				if(recipient_address != null) {
+					Map<String, Object> recipientAddress = (Map<String, Object>)recipient_address;
+					dmpInputMongoChild.put("receiverName", recipientAddress.get("name"));
+					dmpInputMongoChild.put("receiverTelNumber", recipientAddress.get("phone"));
+					dmpInputMongoChild.put("country", recipientAddress.get("region"));
+					dmpInputMongoChild.put("province", recipientAddress.get("state"));
+					
+					String district = "";
+					Object districtObj = recipientAddress.get("district");
+					if(districtObj != null) {
+						district = districtObj.toString();
 					}
+					Object townObj = recipientAddress.get("town");
+					if(townObj != null) {
+						district = district + townObj.toString();
+					}
+					dmpInputMongoChild.put("district", district);
+					dmpInputMongoChild.put("postCode", recipientAddress.get("zipcode"));
+					dmpInputMongoChild.put("fullAddress", recipientAddress.get("full_address"));
 				}
+				resultList.add(dmpInputMongoChild);
 			}
 		}
 		return resultList;
