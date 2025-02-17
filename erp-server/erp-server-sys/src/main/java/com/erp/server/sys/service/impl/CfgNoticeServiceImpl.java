@@ -149,7 +149,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
             }
         }
         viewDTO.setNoticeObjectDTOList(noticeObjectDTOList);
-        viewDTO.setNoticeRuleDTOList(noticeTimeDTOList);
+        viewDTO.setNoticeTimeDTOList(noticeTimeDTOList);
         return viewDTO;
     }
 
