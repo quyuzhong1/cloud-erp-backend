@@ -190,7 +190,7 @@ public class CfgRuleStockUpDTO implements Serializable {
          * 是否是自定义
          */
         private Boolean isCustom = false;
-
+        private String platformType;
         /**
          * 常规品备货系数信息
          */
