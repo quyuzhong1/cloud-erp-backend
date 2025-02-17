@@ -1342,6 +1342,10 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算配置名称
          */
         private String name;
+        /**
+         * 序号
+         */
+        private String serialNo;
 
         /**
          * 试算开始日期

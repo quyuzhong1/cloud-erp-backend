@@ -233,7 +233,13 @@
         crc.create_time as createTime,
         csic.update_time as updateTime,
         csic.update_user_name,
-        csic.status
+        csic.status,
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
