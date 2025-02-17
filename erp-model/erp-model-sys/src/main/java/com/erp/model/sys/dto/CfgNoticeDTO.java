@@ -10,6 +10,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +75,22 @@ public class CfgNoticeDTO implements Serializable {
          * 通知对象
          */
         private List<Map<String,Object>> noticeObjectList;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 创建人
+         */
+        private String createUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+        /**
+         * 更新人
+         */
+        private String updateUserName;
     }
 
     /**
