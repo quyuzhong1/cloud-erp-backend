@@ -134,20 +134,26 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 
-    	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId())) {
-			for (DmpOutputTaskRecordEntity taskRecordEntity : dmpOutputTaskRecordEntityList) {
-				DmpOutputTaskRecordMergeEntity entity = new DmpOutputTaskRecordMergeEntity();
-				entity.setMainId(taskRecordEntity.getId());
-				entity.setMergeStatus(OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode());
-				dmpOutputTaskRecordMergeService.save(entity);
-			}
-
+    	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId()) ) {
 			List<String> ids = dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
-			dmpOutputTaskRecordService.lambdaUpdate()
-					.in(DmpOutputTaskRecordEntity::getId, ids)
-					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.update();
-			return;
+			List<DmpOutputTaskRecordMergeEntity> list = dmpOutputTaskRecordMergeService.lambdaQuery()
+					.in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
+					.eq(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
+					.list();
+			if (CollUtil.isEmpty(list)) {
+				for (DmpOutputTaskRecordEntity taskRecordEntity : dmpOutputTaskRecordEntityList) {
+					DmpOutputTaskRecordMergeEntity entity = new DmpOutputTaskRecordMergeEntity();
+					entity.setMainId(taskRecordEntity.getId());
+					entity.setMergeStatus(OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode());
+					dmpOutputTaskRecordMergeService.save(entity);
+				}
+
+				dmpOutputTaskRecordService.lambdaUpdate()
+						.in(DmpOutputTaskRecordEntity::getId, ids)
+						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
+				return;
+			}
 		}
 
 		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();

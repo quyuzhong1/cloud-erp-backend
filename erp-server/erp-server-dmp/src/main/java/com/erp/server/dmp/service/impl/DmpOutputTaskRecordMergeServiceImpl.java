@@ -128,5 +128,12 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
         entity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
         entity.setRequestData(dataList.toString());
         dmpOutputTaskRecordService.save(entity);
+
+        String id = entity.getId();
+        this.lambdaUpdate()
+                .set(DmpOutputTaskRecordMergeEntity::getMergeId, id)
+                .set(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
+                .in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
+                .update();
     }
 }
