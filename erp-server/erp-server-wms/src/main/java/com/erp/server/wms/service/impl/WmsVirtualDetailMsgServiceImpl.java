@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,7 +10,6 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -53,23 +53,27 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(WmsVirtualDetailMsgDTO.AddDTO addDTO) {
+        log.warn("新增wms虚拟仓明细同步单，addDTO参数：{}", JSON.toJSONString(addDTO));
+
         WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity = new WmsVirtualDetailMsgEntity();
-        BeanMapperUtils.copy(addDTO, wmsVirtualDetailMsgEntity);
+        BeanUtil.copyProperties(addDTO, wmsVirtualDetailMsgEntity);
         //查询是否已存在任务
         WmsVirtualDetailMsgEntity old = getByBusinessId(wmsVirtualDetailMsgEntity.getBusinessId());
         if (ObjUtil.isNotNull(old)) {
             log.warn("业务id = {}，已生成任务",wmsVirtualDetailMsgEntity.getBusinessId());
             return new BaseResultDTO.AddDTO(old.getId(), old.getId());
         }
+        log.warn("新增wms虚拟仓明细同步单，wmsVirtualDetailMsgEntity参数：{}", JSON.toJSONString(wmsVirtualDetailMsgEntity));
         wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(addDTO.getTransFlowEntity()));
         // 数据处理
         handleData(wmsVirtualDetailMsgEntity);
 
-        log.info("开始新增wms虚拟仓明细同步单");
         boolean save = super.save(wmsVirtualDetailMsgEntity);
         if(!save) {
             throw new ServiceException("wms虚拟仓明细同步单保存失败");
         }
+        log.warn("新增wms虚拟仓明细同步单，参数：{}", JSON.toJSONString(wmsVirtualDetailMsgEntity));
+
         return new BaseResultDTO.AddDTO(wmsVirtualDetailMsgEntity.getId(), wmsVirtualDetailMsgEntity.getId());
     }
 
