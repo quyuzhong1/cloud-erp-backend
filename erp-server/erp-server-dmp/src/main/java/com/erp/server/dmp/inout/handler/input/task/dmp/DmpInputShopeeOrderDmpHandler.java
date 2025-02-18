@@ -174,6 +174,23 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 						dmpDataMap.put("deliveryTime", LocalDateTime.ofInstant(instant, zone));
 					}
 				}
+				
+				Object create_time = dmpDataMap.get("create_time");
+				if(create_time != null) {
+					Long createTime = Long.valueOf(create_time.toString());
+					if(createTime.compareTo(0L) > 0) {
+						Instant instant = Instant.ofEpochSecond(createTime);
+						dmpDataMap.put("platformCreateTime", LocalDateTime.ofInstant(instant, zone));
+					}
+				}
+				Object update_time = dmpDataMap.get("update_time");
+				if(update_time != null) {
+					Long updateTime = Long.valueOf(update_time.toString());
+					if(updateTime.compareTo(0L) > 0) {
+						Instant instant = Instant.ofEpochSecond(updateTime);
+						dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(instant, zone));
+					}
+				}
 			}
 		}
 	}
