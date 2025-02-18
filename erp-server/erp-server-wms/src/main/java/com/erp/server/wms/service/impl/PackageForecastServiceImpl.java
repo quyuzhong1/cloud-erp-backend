@@ -725,7 +725,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                     WmsAttachmentDTO.UpdateDTO updateDTO = updateDTOS.get(0);
                     String url = updateDTO.getAttachUrl();
                     InputStream inputStream = FastDFSClientUtil.getInputStream(url);
-                    return PdfUtil.base64ForPdf(inputStream);
+                    base64 = PdfUtil.base64ForPdf(inputStream);
                 }else{
                     throw new ServiceException("未上传标签");
                 }
