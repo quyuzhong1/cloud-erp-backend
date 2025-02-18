@@ -76,10 +76,39 @@
     <!-- 删除多余b2c订单 -->
     <delete id="deleteB2bOrder">
         DELETE FROM so_b2b_processing sbp
-            USING so_info si
+            USING so_info si, so_detail sd
         WHERE sbp.so_id = si.id
-          AND si.is_deleted = true
-          AND sbp.is_deleted = false;
+          AND sbp.so_detail_id = sd.id
+          AND sbp.is_deleted = false
+          AND (si.is_deleted = true
+           OR si.invalid_status = true
+           OR si.virtual_warehouse_id = ''
+           OR sd.is_deleted = true);
+
+    </delete>
+
+    <!-- 删除b2b订单 -->
+    <delete id="deleteB2bProcessing">
+        DELETE FROM so_b2b_processing sbp
+        where sbp.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and  sbp.id in
+            <foreach collection="params.ids" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.soDetailIdList != null and params.soDetailIdList.size > 0">
+            and  sbp.so_detail_id in
+            <foreach collection="params.soDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.deliveryNoticeDetailIdList != null and params.deliveryNoticeDetailIdList.size > 0">
+            and  sbp.delivery_notice_detail_id in
+            <foreach collection="params.deliveryNoticeDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
     </delete>
 
     <!-- 分页查询 -->

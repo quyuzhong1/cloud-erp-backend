@@ -59,4 +59,16 @@ public class SoB2bProcessingController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 删除B2B跟踪数据
+     * @author will
+     * @date 2024/12/18 12:13
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/deleteB2bProcessing")
+    public ApiResult deleteB2bProcessing(@RequestBody SoB2bProcessingDTO.DeleteDTO dto) {
+        Boolean flag = soB2bProcessingService.deleteB2bProcessing(dto);
+        return flag == true ? success() : failure();
+    }
 }
