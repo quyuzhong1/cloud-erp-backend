@@ -1974,6 +1974,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (Objects.isNull(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
+        //判断订单类型 虾皮/美客多 是否符合线上物流类型
+        checkLogisticsParam(entity,logisticsEntity);
 
         ApproveStatusEnum approveStatusEnum = entity.getApproveStatus();
         if (!ApproveStatusEnum.APPROVE.equals(approveStatusEnum)) {
@@ -2075,6 +2077,39 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = "B2C销售订单【{}】提交发货";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
+    }
+
+    private void checkLogisticsParam(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
+        String labelJson = entity.getLabelJson();
+        SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(labelJson, SoB2cDTO.LabelJsonDTO.class);
+        String dictPlatform = entity.getDictPlatform();
+        String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
+        if (PlatformDictEnum.SHOPEE.getCode().equals(dictPlatform)){
+            List<String> deliveryType = Arrays.asList("dropoff","pickup");
+            if (!deliveryType.contains(labelJsonDTO.getDeliveryType())){
+                throw new ServiceException("【{}】发货类型【{}】不支持提交发货",PlatformDictEnum.getNameByCode(dictPlatform),labelJsonDTO.getDeliveryType());
+            }
+            LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
+            if (Objects.isNull(auth)) {
+                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            }
+            if (dictPlatform.equals(auth.getLogisticsPlatform())){
+                throw new ServiceException("【{}】线上物流提交发货必须使用线上物流渠道下单",PlatformDictEnum.getNameByCode(dictPlatform));
+            }
+
+        }else if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(dictPlatform)){
+            List<String> logisticsType = Arrays.asList(MercadoOrderLogisticTypeEnum.DROP_OFF.getCode(),MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode());
+            if (!logisticsType.contains(labelJsonDTO.getLogisticType())){
+                throw new ServiceException("【{}】物流类型【{}】不支持提交发货",PlatformDictEnum.getNameByCode(dictPlatform),labelJsonDTO.getLogisticType());
+            }
+            LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
+            if (Objects.isNull(auth)) {
+                throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
+            }
+            if (dictPlatform.equals(auth.getLogisticsPlatform())){
+                throw new ServiceException("【{}】线上物流提交发货必须使用线上物流渠道下单",PlatformDictEnum.getNameByCode(dictPlatform));
+            }
+        }
     }
 
     /**
@@ -3798,7 +3833,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             labelDTO.setIsCombination(isCombination);
             data.setLabelDTO(labelDTO);
 
-            //物流类型，目前就美客多平台使用
+            //物流类型，目前就美客多 虾皮 平台使用
             if (StringUtils.isNotBlank(logisticsEntity.getLogisticType())) {
                 data.setLogisticType(logisticsEntity.getLogisticType());
                 data.setLogisticTypeName(OrderLogisticTypeEnum.getName(logisticsEntity.getLogisticType()));
@@ -8519,6 +8554,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             labelOrderStr.append(Objects.nonNull(labelJsonDTO.getIsRefunded()) && labelJsonDTO.getIsRefunded() ? "退款订单," : "");
         }
+        String logisticsTypeName = OrderLogisticTypeEnum.getName(data.getLogisticType());
+        labelOrderStr.append(CharSequenceUtil.isNotBlank(logisticsTypeName) ? logisticsTypeName + "," : "");
         labelOrderStr.append(CollectionUtils.isNotEmpty(childList) ? "组合产品," : "");
         labelOrderStr.append(Objects.nonNull(data.getIsIntercept()) && data.getIsIntercept() ? "拦截订单," : "");
         labelOrderStr.append(Objects.equals(SourceTypeEnum.SELF_ADD.getCode(), data.getSourceType()) ? "手工订单," : "");
@@ -8545,6 +8582,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         labelOrderStr.append(Objects.nonNull(data.getIsChangeSku()) && data.getIsChangeSku() ? "更换发货SKU," : "");
         labelOrderStr.append(Objects.nonNull(data.getIsNotOutbound()) && data.getIsNotOutbound() ? "不出库发货," : "");
         labelOrderStr.append(Objects.nonNull(data.getIsFrozen()) && data.getIsFrozen() && !isAddFrozenTag ? "冻结中," : "");
+        //平台仓标签
+
         String labelOrder = labelOrderStr.toString();
         //移除字符串最后一个字符
         return StrUtil.isNotBlank(labelOrder) ? labelOrder.substring(0, labelOrder.length() - 1) : "";
