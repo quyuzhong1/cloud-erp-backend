@@ -6,17 +6,15 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import cn.hutool.core.annotation.Alias;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.oms.aliexpress.constants.AliexpressConstants;
-import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.sdk.tms.shopee.model.logistics.response.ShipInfo;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -69,7 +67,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				Map<String, Object> detailMaps = orderSnDetailMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
-				if (detailMaps.isEmpty()){
+				if (null == detailMaps){
 					ServiceException.runError("明细信息为空");
 				}
 
@@ -85,43 +83,21 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 					// 平台仓订单
 					isPlatformWarehouseOrder = true;
 					logisticType = "platformWarehouse";
-
 				} else if ("fulfilled_by_cb_seller".equalsIgnoreCase(fulfillmentFlagStr) || ("fulfilled_by_local_seller".equalsIgnoreCase(fulfillmentFlagStr))){
-					// 自发货（跨境卖家） fulfilled_by_cb_seller
-					// 自发货（本地卖家）fulfilled_by_local_seller
-					Map<String, Object> shipmentData = orderSnShipmentMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
-					if (shipmentData.isEmpty()){
-						ServiceException.runError("配送信息为空");
-					}
-					Object infoNeededObj = shipmentData.get("info_needed");
-					if (null == infoNeededObj){
-						ServiceException.runError("配送信息info_needed为空");
-					}
-					ShipInfo infoNeededShipInfo = JSON.parseObject(JSON.toJSONString(infoNeededObj), ShipInfo.class);
-					if (CollectionUtils.isNotEmpty(infoNeededShipInfo.getDropoffList())){
-						logisticType = "transitWarehouse";
-					}
-					if (CollectionUtils.isNotEmpty(infoNeededShipInfo.getPickupList())){
-						logisticType = "transitWarehouse";
-					}
-					if (CollectionUtils.isNotEmpty(infoNeededShipInfo.getNonIntegratedList())){
-						logisticType = "selfShipment";
-					}
+					// 自发货配送
+					// 解析ERP配送类型
+					logisticType = parseLogisticType(dmpDataMap, orderSnShipmentMaps, logisticType, fulfillmentFlagStr);
 				} else {
 					ServiceException.runError("未知配送方式fulfillment_flag=" + fulfillmentFlagStr);
 				}
 				labelMap.put("logisticType", logisticType);
 				labelMap.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
+				// 原始配送
+				labelMap.put("fulfillmentFlag", fulfillmentFlagStr);
+				dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
 
 				// 订单状态
 				Object order_status = dmpDataMap.get("order_status");
-				// 原始状态
-				labelMap.put("sourceOrderStatus", order_status);
-				// 原始配送
-				labelMap.put("fulfillmentFlag", fulfillmentFlagStr);
-
-				dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
-
 				if(order_status != null) {
 					boolean isCancel = Boolean.FALSE;
 					String deliveryStatus = "";
@@ -132,8 +108,15 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 						deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
 						orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
 			        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(platformOriginalStatus)){
-			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
-			        	orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						if (isPlatformWarehouseOrder) {
+							// 平台仓
+							deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+							orderStatus = ApproveStatusEnum.APPROVE.getCode();
+						} else {
+							// 自发货
+							deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+							orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						}
 			        } else if (OrderStatusEnum.PROCESSED.getCode().equals(platformOriginalStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(platformOriginalStatus)) {
 			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
 			            orderStatus = ApproveStatusEnum.APPROVE.getCode();
@@ -148,7 +131,11 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 			        } else if (OrderStatusEnum.CANCELLED.getCode().equals(platformOriginalStatus)) {
 			            // 作废状态（false未作废，true已作废）
 			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
-			        	orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						if (isPlatformWarehouseOrder){
+							orderStatus = ApproveStatusEnum.APPROVE.getCode();
+						} else {
+							orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						}
 			        	invalidStatus = Boolean.TRUE;
 			            isCancel = Boolean.TRUE;
 			        } else if (OrderStatusEnum.INVOICE_PENDING.getCode().equals(platformOriginalStatus)) {
@@ -213,5 +200,50 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				}
 			}
 		}
+	}
+
+	/**
+	 * 解析物流类型
+	 */
+	private static String parseLogisticType(TreeMap<String, Object> dmpDataMap, Map<String, Map<String, Object>> orderSnShipmentMaps, String logisticType, String fulfillmentFlagStr) {
+		// 自发货（跨境卖家） fulfilled_by_cb_seller
+		// 自发货（本地卖家）fulfilled_by_local_seller
+		Map<String, Object> shipmentData = orderSnShipmentMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
+		if (shipmentData.isEmpty()){
+			ServiceException.runError("配送信息为空");
+		}
+		Object infoNeededObj = shipmentData.get("info_needed");
+		if (null == infoNeededObj){
+			ServiceException.runError("配送信息info_needed为空");
+		}
+		String infoNeededJsonString = JSON.toJSONString(infoNeededObj);
+		JSONObject infoNeededjsonObject = JSON.parseObject(infoNeededJsonString);
+		JSONArray dropoffjsonArray = infoNeededjsonObject.getJSONArray("dropoff");
+		JSONArray pickupjsonArray = infoNeededjsonObject.getJSONArray("pickup");
+		JSONArray nonIntegratedjsonArray = infoNeededjsonObject.getJSONArray("non_integrated");
+		// 字段存在判断类型
+		if (null != dropoffjsonArray){
+			logisticType = "transitWarehouse";
+		}
+		if (null != pickupjsonArray){
+			logisticType = "transitWarehouse";
+		}
+		if (null != nonIntegratedjsonArray){
+			logisticType = "selfShipment";
+		}
+		// 数组有值优先
+		if (CollectionUtils.isNotEmpty(dropoffjsonArray)){
+			logisticType = "transitWarehouse";
+		}
+		if (CollectionUtils.isNotEmpty(pickupjsonArray)){
+			logisticType = "transitWarehouse";
+		}
+		if (CollectionUtils.isNotEmpty(nonIntegratedjsonArray)){
+			logisticType = "selfShipment";
+		}
+		if (StringUtils.isBlank(infoNeededJsonString)){
+			ServiceException.runError("未知配送信息infoNeeded=" + fulfillmentFlagStr);
+		}
+		return logisticType;
 	}
 }
