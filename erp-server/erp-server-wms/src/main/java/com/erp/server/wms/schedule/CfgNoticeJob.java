@@ -70,13 +70,18 @@ public class CfgNoticeJob {
     public ReturnT<String> virtualNotice() {
         XxlJobHelper.log("====开始发送飞书通知=====");
         //查询系统配置
-        List<CfgNoticeEntity> list = FeignQuery.list(CfgNoticeEntity.class);
+        List<CfgNoticeEntity> list = FeignQuery.create(CfgNoticeEntity.class).eq(CfgNoticeEntity::getDisabled, Boolean.FALSE).list();
         if (CollUtil.isEmpty(list)) {
             XxlJobHelper.log("系统配置为空");
             return ReturnT.SUCCESS;
         }
         List<String> idList = list.stream().map(CfgNoticeEntity::getId).distinct().collect(Collectors.toList());
         List<CfgNoticeDetailEntity> detailList = FeignQuery.create(CfgNoticeDetailEntity.class).in(CfgNoticeDetailEntity::getMainId, idList).list();
+        if (CollUtil.isEmpty(detailList)) {
+            XxlJobHelper.log("系统配置明细为空");
+            return ReturnT.SUCCESS;
+        }
+
 
 
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
