@@ -76,15 +76,18 @@
     <!-- 删除多余头程订单 -->
     <delete id="deleteFirstMileOrder">
         DELETE FROM first_mile_processing fmp
-            USING requisition_application ra, requisition_application_detail rad
+            USING requisition_application ra
         WHERE fmp.first_mile_delivery_id = ra.id
-          AND fmp.first_mile_delivery_detail_id = rad.id
           AND fmp.is_deleted = false
           AND (ra.is_deleted = true
-           OR ra.invalid_status = 'true'
-           OR rad.is_deleted = true
-           OR rad.from_virtual_warehouse_id = '');
+           OR ra.invalid_status = 'true');
 
+        DELETE FROM first_mile_processing fmp
+            USING  requisition_application_detail rad
+        WHERE  fmp.first_mile_delivery_detail_id = rad.id
+          AND fmp.is_deleted = false
+          AND ( rad.is_deleted = true
+           OR rad.from_virtual_warehouse_id = '');
     </delete>
 
     <!-- 删除头程订单 -->
