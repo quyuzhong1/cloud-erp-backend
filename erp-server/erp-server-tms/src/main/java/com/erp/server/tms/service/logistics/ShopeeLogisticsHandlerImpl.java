@@ -20,10 +20,8 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
-import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
@@ -419,7 +417,10 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return shippingDocumentParameter;
     }
-
+    @Override
+    public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> cancelOrderVOList)  {
+        return ApiResult.success();
+    }
     /**
      * 授权判断
      * @param authMap

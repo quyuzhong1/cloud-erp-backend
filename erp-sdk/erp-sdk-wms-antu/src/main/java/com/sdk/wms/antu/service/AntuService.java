@@ -190,4 +190,13 @@ public class AntuService {
         log.debug("批量运费试算:{}", response);
         return JSON.parseObject(response,new TypeReference<AntuResponse<List<AntuCalculateFeeResp>>>() {}.getType());
     }
+
+    /**
+     * 上传文件
+     */
+    public AntuResponse<AntuUploadFileResp> uploadFile(@Valid AntuUploadFileReq antuUploadFileReq){
+        String response = AntuUtils.callService(AntuConstants.GET_UPLOAD_FILE,antuUploadFileReq);
+        log.debug("上传文件:{}", response);
+        return JSON.parseObject(response,new TypeReference<AntuResponse<AntuUploadFileResp>>() {}.getType());
+    }
 }

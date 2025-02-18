@@ -109,6 +109,15 @@ public enum LogisticsPlatformEnum implements EnumMessage {
         }
         return "";
     }
+    public static String getNameByName(String name) {
+        LogisticsPlatformEnum[] values = values();
+        for (LogisticsPlatformEnum value : values) {
+            if (value.name.equals(name)) {
+                return value.getName();
+            }
+        }
+        return "";
+    }
 
     public static LogisticsPlatformEnum getByName(String name) {
         LogisticsPlatformEnum[] values = values();

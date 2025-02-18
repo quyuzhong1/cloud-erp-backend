@@ -74,7 +74,7 @@
         </if>
     </select>
     <!--获取授权信息根据物流商id-->
-    <select id="getAuthBySupplierId" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
+    <select id="listAuthBySupplierId" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
         SELECT
             la.id,
             la.id AS authId,
@@ -87,7 +87,10 @@
         FROM logistics_auth la
         INNER JOIN logistics_supplier ls
         ON ls.id=la.main_id and  ls.is_deleted=false
-        WHERE ls.id=#{logisticsSupplierId}
+        WHERE ls.id in
+        <foreach collection="logisticsSupplierIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
         AND la.is_deleted=false
     </select>
 

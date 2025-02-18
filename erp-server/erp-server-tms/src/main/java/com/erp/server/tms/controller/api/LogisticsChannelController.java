@@ -13,7 +13,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.server.tms.service.LogisticsChannelService;
 import lombok.extern.slf4j.Slf4j;
@@ -216,8 +215,9 @@ public class LogisticsChannelController extends BaseController {
      * @return
      */
     @GetMapping("tree")
-    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
-        return success(logisticsChannelService.tree(filterDisabled));
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled
+    ,@RequestParam(value = "type",required = false, defaultValue = "") String  type){
+        return success(logisticsChannelService.tree(filterDisabled, type));
     }
 
     /**

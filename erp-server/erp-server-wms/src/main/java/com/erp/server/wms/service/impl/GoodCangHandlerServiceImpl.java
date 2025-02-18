@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -11,14 +12,11 @@ import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.goodcang.dto.request.GoodCangCalculateDeliveryFeeReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
-import com.sdk.wms.goodcang.dto.request.GoodCangGetSkuReq;
-import com.sdk.wms.goodcang.dto.response.GoodCangCalculateDeliveryFeeResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
-import com.sdk.wms.goodcang.dto.response.GoodCangSkuResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangWarehouseResp;
+import com.sdk.wms.antu.dto.request.AntuUploadFileReq;
+import com.sdk.wms.antu.dto.response.AntuResponse;
+import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
+import com.sdk.wms.goodcang.dto.request.*;
+import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -153,6 +151,31 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             return success(orderCode.getData());
         }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+    }
+
+    @Override
+    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq){
+        GoodCangUploadFileReq goodCangUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadFileReq(uploadFileReq);
+        if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
+            goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
+        }
+        if (CharSequenceUtil.isNotBlank(goodCangUploadFileReq.getFileName())){
+            goodCangUploadFileReq.setFileName(uploadFileReq.getOrderCode() + ".pdf");
+        }
+        GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(goodCangUploadFileReq);
+        GoodCangUploadFileResp goodCangUploadFileResp = response.getData();
+        ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);
+        return isSuccess(response.getAsk()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
+
+    }
+    @Override
+    public ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq){
+        GoodCangUploadOrderLabelReq goodCangUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToGoodCangUploadOrderLabelReq(uploadFileReq);
+        GoodCangResponse<GoodCangUploadOrderLabelResp> response = goodCangService.uploadOrderLabel(goodCangUploadFileReq);
+        GoodCangUploadOrderLabelResp resp = response.getData();
+        ThirdWarehouseUploadOrderLabelResponse uploadOrderLabelResponse = ThirdWarehouseConverter.INSTANCE.googCangResToThirdWarehouseUploadOrderLabelResponse(resp);
+        return isSuccess(response.getAsk()) ? success(uploadOrderLabelResponse) : failure(response.getMessage());
+
     }
 
     @Override

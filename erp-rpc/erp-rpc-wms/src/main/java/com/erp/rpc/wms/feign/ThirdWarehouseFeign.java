@@ -2,10 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
+import com.erp.model.wms.dto.third.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,4 +37,20 @@ public interface ThirdWarehouseFeign {
      */
     @PostMapping("feign/thirdWarehouse/getCalculateFeeBatch")
     List<ShippingCalculationDTO.ListDTO> getCalculateFeeBatch(@RequestBody ShippingCalculationDTO.PagingParamDTO params);
+
+    /**
+     * 上传附件
+     * @param uploadFileReq
+     * @return
+     */
+    @PostMapping("feign/thirdWarehouse/uploadFile")
+    ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@RequestBody ThirdWarehouseUploadFileReq uploadFileReq);
+
+    /**
+     * 上传面单
+     * @param uploadOrderLabelReq
+     * @return
+     */
+    @PostMapping("feign/thirdWarehouse/uploadOrderLabel")
+    ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@RequestBody ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq);
 }

@@ -22,7 +22,6 @@ import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import org.apache.poi.ss.formula.functions.T;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -181,13 +180,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO getLogisticsCode(String id, Boolean isDelivery);
     /**
+     * @param id
+     * @param channelId
+     * @return BatchResultDTO
      * @description: 提交发货
      * @author Will
      * @date: 2023/8/18 16:49
-     * @param id
-     * @return BatchResultDTO
      */
-    BatchResultDTO submitDelivery(String id);
+    BatchResultDTO submitDelivery(String id, String channelId);
     /**
      * @description: 发货拦截
      * @author Will
@@ -1038,4 +1038,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 销售统计导出查询
      */
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    /**
+     * 获取物流面单
+     *
+     * @param entity
+     * @param soB2cLogisticsEntity
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
 }

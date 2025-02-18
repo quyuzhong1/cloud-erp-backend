@@ -76,7 +76,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         // 重试逻辑
         switch (soB2cErrorTypeEnum) {
             case SUBMIT_DELIVERY:
-                resultDTOList.add(soB2cService.submitDelivery(id));
+                resultDTOList.add(soB2cService.submitDelivery(id, ""));
                 break;
             case SIGN_DELIVERY:
                 resultDTOList.add(soB2cErrorService.retryFalseDelivery(id));

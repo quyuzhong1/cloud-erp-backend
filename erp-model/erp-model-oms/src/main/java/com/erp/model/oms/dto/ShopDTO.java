@@ -378,6 +378,11 @@ public class ShopDTO implements Serializable {
          */
 //         @NotBlank(message = "店铺退货仓库不能为空")
          private String returnWarehouse;
+
+        /**
+         * 渠道id
+         */
+        private List<String> channelIdList;
     }
 
 
@@ -552,6 +557,11 @@ public class ShopDTO implements Serializable {
          */
          @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , returnFieldName = "name" , tableName = "warehouse")
          private String returnWarehouse;
+
+        /**
+         * 渠道信息
+         */
+        private List<ShopChannelRefDTO.ViewDTO> shopChannelRefDTOList;
     }
 
     @Data
@@ -640,6 +650,10 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "销售组织不能为空")
         private String salesOrgId;
 
+        /**
+         * 渠道id
+         */
+        private List<String> channelIdList;
         /**
          * 仓库id
          */
