@@ -76,15 +76,18 @@
     <!-- 删除多余b2c订单 -->
     <delete id="deleteB2bOrder">
         DELETE FROM so_b2b_processing sbp
-            USING so_info si, so_detail sd
+            USING so_info si
         WHERE sbp.so_id = si.id
-          AND sbp.so_detail_id = sd.id
           AND sbp.is_deleted = false
           AND (si.is_deleted = true
            OR si.invalid_status = true
-           OR si.virtual_warehouse_id = ''
-           OR sd.is_deleted = true);
+           OR si.virtual_warehouse_id = '');
 
+        DELETE FROM so_b2b_processing sbp
+            USING so_detail sd
+        WHERE  sbp.so_detail_id = sd.id
+          AND sbp.is_deleted = false
+          AND sd.is_deleted = true;
     </delete>
 
     <!-- 删除b2b订单 -->
