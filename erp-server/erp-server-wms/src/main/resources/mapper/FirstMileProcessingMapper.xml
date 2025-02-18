@@ -76,10 +76,40 @@
     <!-- 删除多余头程订单 -->
     <delete id="deleteFirstMileOrder">
         DELETE FROM first_mile_processing fmp
-            USING requisition_application ra
-        WHERE fmp.requisition_application_id = ra.id
-          AND ra.is_deleted = true
-          AND fmp.is_deleted = false;
+            USING requisition_application ra, requisition_application_detail rad
+        WHERE fmp.first_mile_delivery_id = ra.id
+          AND fmp.first_mile_delivery_detail_id = rad.id
+          AND fmp.is_deleted = false
+          AND (ra.is_deleted = true
+           OR ra.invalid_status = 'true'
+           OR rad.is_deleted = true
+           OR rad.from_virtual_warehouse_id = '');
+
+    </delete>
+
+    <!-- 删除头程订单 -->
+    <delete id="deleteFirstMileProcessing">
+        DELETE FROM first_mile_processing fmp
+        where is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and  fmp.id in
+            <foreach collection="params.ids" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.requisitionApplicationDetailIdList != null and params.requisitionApplicationDetailIdList.size > 0">
+            and  fmp.requisition_application_detail_id in
+            <foreach collection="params.requisitionApplicationDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.firstMileDeliveryDetailIdList != null and params.firstMileDeliveryDetailIdList.size > 0">
+            and  fmp.first_mile_delivery_detail_id in
+            <foreach collection="params.firstMileDeliveryDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
     </delete>
 
     <!-- 分页查询 -->
@@ -129,7 +159,7 @@
             rad.from_warehouse_id as warehouseId,
             rad.from_virtual_warehouse_id as virtualWarehouseId,
             ra.handle_time as frozenTime,
-            rad.picking_qty as frozenQty,
+            rad.virtual_frozen_qty as frozenQty,
             rad.approve_qty as approveQty,
             '' as outstockOrderId,
             '' as outstockOrderStatus,
