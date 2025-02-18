@@ -1,5 +1,6 @@
 package com.sdk.oms.shopee.dto;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.common.business.dto.CleanBaseDTO;
@@ -74,15 +75,19 @@ public class PlatformShopeeListingDTO extends CleanBaseDTO {
                 imageUrl = urls.get(0).toString();
             }
         }
+        String modelId = String.valueOf(modelInfo.getModelId());
+        String itemId = String.valueOf(itemInfo.getItemId());
+        String modelSku = modelInfo.getModelSku();
+        String itemSku = itemInfo.getItemSku();
         PlatformProductDTO productDTO = new PlatformProductDTO()
                 // 类型 platform 平台  warehouse 仓库
                 .setPlatformType("platform")
                 // 平台spu no
-                .setPlatformProductNo(String.valueOf(modelInfo.getModelId()))
+                .setPlatformProductNo(CharSequenceUtil.isNotBlank(modelId) ? modelId : itemId)
                 // 平台sku no
-                .setPlatformSkuNo(modelInfo.getModelSku())
+                .setPlatformSkuNo(CharSequenceUtil.isNotBlank(modelSku) ? modelSku : itemSku)
                 //平台产品id
-                .setPlatformSkuId(String.valueOf(modelInfo.getModelId()))
+                .setPlatformSkuId(CharSequenceUtil.isNotBlank(modelId) ? modelId : itemId)
                 //平台sku状态
                 .setPlatformStatus(modelInfo.getModelStatus())
                 //sku名称
