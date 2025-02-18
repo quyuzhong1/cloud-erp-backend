@@ -156,8 +156,8 @@
             fmd.id as firstMileDeliveryId,
             fmd.code as firstMileDeliveryCode,
             fmd.approve_status as deliveryApproveStatus,
-            fmdd.id as firstMileDeliveryDetailId,
-            fmdd.delivery_qty as deliveryQty,
+            case when ra.type = 'thirdWarehouse' then  fmdd.id  else fsmdd.id end as firstMileDeliveryDetailId,
+            case when ra.type = 'thirdWarehouse' then  fmdd.delivery_qty else fsmdd.delivery_qty end as deliveryQty,
             rad.sku_id as skuId,
             rad.from_warehouse_id as warehouseId,
             rad.from_virtual_warehouse_id as virtualWarehouseId,
@@ -172,8 +172,10 @@
             '' as outstockOrderType
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
-        left  join first_mile_delivery_detail fmdd on fmdd.source_detail_id = rad.id and fmdd.is_deleted = false
-        left join first_mile_delivery fmd on fmd.id = fmdd.main_id and fmdd.is_deleted = false and fmd.invalid_status = false
+        left join first_mile_delivery fmd on fmd.source_id = ra.id and fmd.is_deleted = false and fmd.invalid_status = false
+        left  join first_mile_delivery_detail fmdd on fmdd.source_detail_id = rad.id and fmdd.is_deleted = false and ra.type = 'thirdWarehouse'
+        left  join first_mile_delivery_detail fsmdd on fmd.id = fsmdd.main_id and fsmdd.is_deleted = false and ra.type = 'fba'
+        left join fba_shipment_detail fsd on fsmdd.source_detail_id = fsd.id and rad.sku_id = fsd.sku_id and rad.platform_fn_sku = fsd.fn_sku and fsd.is_deleted = false  and ra.type = 'fba'
         where ra.is_deleted = false and ra.invalid_status = 'false' and rad.from_virtual_warehouse_id != ''
         <if test="startDate != null">
             and ra.create_time > #{startDate}
