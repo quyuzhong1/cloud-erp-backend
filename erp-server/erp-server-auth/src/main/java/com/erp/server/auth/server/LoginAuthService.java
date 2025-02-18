@@ -102,6 +102,8 @@ public class LoginAuthService {
         sysLoginUserVO.setUserId(info.getUid());
         sysLoginUserVO.setNeedChangePwd(info.getNeedChangePwd());
         sysLoginUserVO.setIsSupper(info.getIsSupper());
+        sysLoginUserVO.setDeptId(info.getDeptId());
+        sysLoginUserVO.setDeptName(info.getDeptName());
 
         redisUtil.del(loginErrorKey);
         return ApiResult.success(sysLoginUserVO);

@@ -95,6 +95,8 @@ public class SysLoginAuthController extends BaseController {
             sysLoginUserVO.setBindingState(info.getBindingState());
             sysLoginUserVO.setUserId(info.getUid());
             sysLoginUserVO.setIsSupper(info.getIsSupper());
+            sysLoginUserVO.setDeptId(info.getDeptId());
+            sysLoginUserVO.setDeptName(info.getDeptName());
             return success(sysLoginUserVO);
         }
     }
