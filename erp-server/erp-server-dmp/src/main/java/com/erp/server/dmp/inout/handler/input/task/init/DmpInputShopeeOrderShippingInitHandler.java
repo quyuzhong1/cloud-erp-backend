@@ -91,7 +91,7 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 		List<JSONObject> resultList = new LinkedList<>();
 
 		for (String orderSn : orderSnList) {
-			ShipDetailResponse data = null;
+			JSONObject data = null;
 			long sleepTime = 1000;
 			int count = 0;
 			while(data == null) {
@@ -118,10 +118,9 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 	/**
 	 * 执行请求
 	 */
-	private ShipDetailResponse execute(BaseRequest orderRequest, String orderSn){
-		ShipDetailResponse response;
+	private JSONObject execute(BaseRequest orderRequest, String orderSn){
 		try {
-			response = shopeeLogisticsService.getShippingParameter(orderRequest, orderSn, "");
+			return shopeeLogisticsService.requestShippingParameter(orderRequest, orderSn, "");
 		} catch (Exception e) {
 			Throwable cause = e.getCause();
 			if(cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
@@ -129,16 +128,15 @@ public class DmpInputShopeeOrderShippingInitHandler extends DmpInputInitHandler{
 			}
 			throw new ServiceException("调用shopee订单配送信息报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
 		}
-		return response;
+
 	}
 
 
 	/**
 	 * 设置订单SN和转换JSON
 	 */
-	private JSONObject setOrderSnAndToJsonObject(ShipDetailResponse shipmentResp, String orderSn, String currentShopId) {
-		JSONObject json = (JSONObject) JSON.toJSON(shipmentResp);
-		json.put("orderSn", orderSn);
+	private JSONObject setOrderSnAndToJsonObject(JSONObject json, String orderSn, String currentShopId) {
+		json.put("order_sn", orderSn);
 		json.put("shopId", currentShopId);
 		return json;
 	}
