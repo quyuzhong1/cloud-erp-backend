@@ -186,16 +186,7 @@ public class ShopeeProductService {
      * @return
      */
     public List<ModelInfo> getModelList(ProductRequest productRequest) {
-        HashMap<String, Object> paramMap = new HashMap<>();
-        String path = "/api/v2/product/get_model_list";
-        paramMap.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
-        paramMap.put("sign", ShopeeApiUtils.getOrderSign(path, productRequest.getToken(), productRequest.getPartnerId(),
-                productRequest.getTmpPartnerKey(), productRequest.getShopId()));
-        paramMap.put("shop_id", productRequest.getShopId());
-        paramMap.put("partner_id", productRequest.getPartnerId());
-        paramMap.put("access_token", productRequest.getToken());
-        paramMap.put("item_id", productRequest.getItemId());
-        ShopeeResponse shopeeResponse = ShopeeApiUtils.sendGet(productRequest.getHost() + path, paramMap);
+        ShopeeResponse shopeeResponse = this.getModelListInfo(productRequest);
         if (Objects.isNull(shopeeResponse) || Objects.isNull(shopeeResponse.getResponse())) {
             return null;
         }
@@ -208,5 +199,18 @@ public class ShopeeProductService {
         //打印列表
         JSONArray modelList = response.getJSONArray("model");
         return JSONUtil.toList(modelList, ModelInfo.class);
+    }
+    
+    public ShopeeResponse getModelListInfo(ProductRequest productRequest) {
+    	HashMap<String, Object> paramMap = new HashMap<>();
+        String path = "/api/v2/product/get_model_list";
+        paramMap.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
+        paramMap.put("sign", ShopeeApiUtils.getOrderSign(path, productRequest.getToken(), productRequest.getPartnerId(),
+                productRequest.getTmpPartnerKey(), productRequest.getShopId()));
+        paramMap.put("shop_id", productRequest.getShopId());
+        paramMap.put("partner_id", productRequest.getPartnerId());
+        paramMap.put("access_token", productRequest.getToken());
+        paramMap.put("item_id", productRequest.getItemId());
+        return ShopeeApiUtils.sendGet(productRequest.getHost() + path, paramMap);
     }
 }

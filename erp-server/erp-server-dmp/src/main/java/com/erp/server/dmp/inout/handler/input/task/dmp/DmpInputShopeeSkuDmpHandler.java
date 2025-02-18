@@ -21,6 +21,7 @@ import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
 import com.sdk.oms.shopee.dto.product.response.Attribute;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 
@@ -35,40 +36,57 @@ public class DmpInputShopeeSkuDmpHandler extends DmpInputDoChildDmpHandler{
 	
 	@Override
 	protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList , String childMongoStorageName){
+		List<Map<String, Object>> result = new ArrayList<>();
 		List<ParamData> paramDataList = new ArrayList<>();
 		List<DmpInputTaskEntity> list = dmpInputTaskService.lambdaQuery().eq(DmpInputTaskEntity::getParentTaskId, inputTaskId).list();
 		paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
 		List<Map<String, Object>> dmpInputMongoChildList = mongoService.findMongoData(paramDataList, childMongoStorageName);
 		if(CollUtil.isNotEmpty(dmpInputMongoChildList)) {
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
-				dmpInputMongoChild.put("create_time", Long.valueOf(dmpInputMongoChild.get("create_time").toString()) * 1000L);
-				dmpInputMongoChild.put("update_time", Long.valueOf(dmpInputMongoChild.get("update_time").toString()) * 1000L);
-				Object dimensionObj = dmpInputMongoChild.get("dimension");
-				if(dimensionObj != null) {
-					Map<String, Object> dimension = (Map<String, Object>) dimensionObj;
-					dmpInputMongoChild.put("packageLength", dimension.get("package_length"));
-					dmpInputMongoChild.put("packageWidth", dimension.get("package_width"));
-					dmpInputMongoChild.put("packageHeight", dimension.get("package_height"));
-				}
-				Object attribute_list_obj = dmpInputMongoChild.get("attribute_list");
-				if(attribute_list_obj != null) {
-					String attribute_list = JSON.toJSONString(attribute_list_obj);
-					List<Attribute> attributeList = JSONUtil.toList(attribute_list , Attribute.class);
-					String categoryName = PlatformShopeeListingDTO.processProductSpec(attributeList);
-					dmpInputMongoChild.put("categoryName", categoryName);
-				}
-				Object imageObj = dmpInputMongoChild.get("image");
-				if(imageObj != null) {
-					Map<String, Object> image = (Map<String, Object>) imageObj;
-					Object image_url_list_obj = image.get("image_url_list");
-					if(image_url_list_obj != null) {
-						List<Object> image_url_list = (List<Object>) image_url_list_obj;
-						dmpInputMongoChild.put("imageUrls", image_url_list.stream().map(Object::toString).collect(Collectors.joining(";")));
+				Object model_list = dmpInputMongoChild.get("dmp_model_list");
+				if(model_list != null) {
+					List<Map<String , Object>> modelList = (List<Map<String , Object>>)model_list;
+					if(CollUtil.isEmpty(modelList)) {
+						continue;
+					}
+					
+					dmpInputMongoChild.put("create_time", Long.valueOf(dmpInputMongoChild.get("create_time").toString()) * 1000L);
+					dmpInputMongoChild.put("update_time", Long.valueOf(dmpInputMongoChild.get("update_time").toString()) * 1000L);
+					Object dimensionObj = dmpInputMongoChild.get("dimension");
+					if(dimensionObj != null) {
+						Map<String, Object> dimension = (Map<String, Object>) dimensionObj;
+						dmpInputMongoChild.put("packageLength", dimension.get("package_length"));
+						dmpInputMongoChild.put("packageWidth", dimension.get("package_width"));
+						dmpInputMongoChild.put("packageHeight", dimension.get("package_height"));
+					}
+					Object attribute_list_obj = dmpInputMongoChild.get("attribute_list");
+					if(attribute_list_obj != null) {
+						String attribute_list = JSON.toJSONString(attribute_list_obj);
+						List<Attribute> attributeList = JSONUtil.toList(attribute_list , Attribute.class);
+						String categoryName = PlatformShopeeListingDTO.processProductSpec(attributeList);
+						dmpInputMongoChild.put("categoryName", categoryName);
+					}
+					Object imageObj = dmpInputMongoChild.get("image");
+					if(imageObj != null) {
+						Map<String, Object> image = (Map<String, Object>) imageObj;
+						Object image_url_list_obj = image.get("image_url_list");
+						if(image_url_list_obj != null) {
+							List<Object> image_url_list = (List<Object>) image_url_list_obj;
+							dmpInputMongoChild.put("imageUrls", image_url_list.stream().map(Object::toString).collect(Collectors.joining(";")));
+						}
+					}
+					
+					for(Map<String , Object> model : modelList) {
+						dmpInputMongoChild.put("skuId", model.get("model_id"));
+						dmpInputMongoChild.put("skuNo", model.get("model_sku"));
+						dmpInputMongoChild.put("name", model.get("model_name"));
+						dmpInputMongoChild.put("status", model.get("model_status"));
+						result.add(BeanUtil.copyProperties(dmpInputMongoChild, Map.class));
 					}
 				}
 			}
 		}
-		return dmpInputMongoChildList;
+		return result;
 	}
 	
 	@Override
