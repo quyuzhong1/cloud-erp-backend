@@ -242,4 +242,11 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return List<ListSelectDTO>
      */
     List<SubcontractOrderDTO.ListSelectDTO> listSubcontractOrder();
+
+    /**
+     * @description: 委外订单下推采购订单后，更新采购申请单（采购订单生成状态）
+     * @author jack
+     * @date: 2025-02-18
+     */
+    void  updateCreatePoTypeBySubcontractOrderIds(List<String> idList);
 }

@@ -26,7 +26,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 委外订单
@@ -199,6 +201,7 @@ public class SubcontractOrderController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = subcontractOrderService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                subcontractOrderService.updateCreatePoTypeBySubcontractOrderIds(Collections.singletonList(id));
             }catch (Exception e){
                 log.error("采购订单审核失败",e);
                 SubcontractOrderEntity entity = subcontractOrderService.getById(id);
@@ -393,7 +396,8 @@ public class SubcontractOrderController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "委外订单下推采购单保存")
     @PostMapping(value = "/generatePo")
     public ApiResult<Void> generatePo(@RequestBody @Validated ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
-         subcontractOrderService.generatePo(list);
+        subcontractOrderService.generatePo(list);
+        subcontractOrderService.updateCreatePoTypeBySubcontractOrderIds(list.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSourceId).collect(Collectors.toList()));
         return success();
     }
 //    /**
