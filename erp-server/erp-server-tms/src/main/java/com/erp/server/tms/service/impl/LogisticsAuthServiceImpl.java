@@ -165,7 +165,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
     @Override
     public LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(String logisticsSupplierId) {
-        return baseMapper.getAuthBySupplierId(logisticsSupplierId);
+        List<LogisticsSupplierDTO.AuthDTO> list = baseMapper.listAuthBySupplierId(Collections.singletonList(logisticsSupplierId));
+        return list.stream().findFirst().orElse(null);
     }
 
     @Override
@@ -261,6 +262,11 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         }
 
         return authMap;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(List<String> logisticsSupplierIds) {
+        return baseMapper.listAuthBySupplierId(logisticsSupplierIds);
     }
 
     @Override

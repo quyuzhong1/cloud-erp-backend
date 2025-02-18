@@ -1,16 +1,16 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +30,50 @@ import java.util.Objects;
 @Data
 @NoArgsConstructor
 public class PackageForecastDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadFileViewDTO{
+
+        private String id;
+
+        /**
+         * 组包号码
+         */
+        private String code;
+        /**
+         * 交接单号
+         */
+        private String handoverNo;
+
+        /**
+         * 大包运单号
+         */
+        private String transportNo;
+
+        /**
+         * 文件
+         */
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadFileDTO{
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        @NotBlank(message = "大包运单号不能为空")
+        private String transportNo;
+
+        /**
+         * 文件
+         */
+        @NotEmpty(message = "文件不能为空")
+        private AttachDTO attachDTO;
+    }
+
 
     @Data
     @NoArgsConstructor

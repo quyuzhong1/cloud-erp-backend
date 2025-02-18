@@ -155,4 +155,8 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * 导出组包预报
      */
     PagingVO<PackageForecastDTO.ExportViewDTO> exportPackageForecast(PagingDTO<PackageForecastDTO.ExportDTO> dto);
+
+    Boolean uploadFileDTO(List<PackageForecastDTO.UploadFileDTO> uploadFileDTO);
+
+    List<PackageForecastDTO.UploadFileViewDTO> uploadLabelView(List<String> ids);
 }

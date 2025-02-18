@@ -264,4 +264,21 @@ public class PackageForecastController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 上传组包标签View
+     * @return
+     */
+    @PostMapping("/uploadLabelView")
+    public ApiResult<List<PackageForecastDTO.UploadFileViewDTO>> uploadLabelView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(packageForecastService.uploadLabelView(dto.getIds()));
+    }
+
+    /**
+     * 上传组包标签
+     * @return
+     */
+    @PostMapping("/uploadLabel")
+    public ApiResult<Boolean> uploadLabel(@RequestBody @Validated List<PackageForecastDTO.UploadFileDTO> uploadFileDTOList) {
+        return success(packageForecastService.uploadFileDTO(uploadFileDTOList));
+    }
 }
