@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -196,12 +197,12 @@ public class FirstMileDeliveryController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "头程发货单审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment(),dto.getDeliveryDate()));
             }catch (Exception e){
                 log.error("发货单审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);

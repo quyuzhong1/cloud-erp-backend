@@ -115,7 +115,7 @@ public enum ApiError implements Serializable {
     ERROR_NAME_EXIST(1062,"名称【{}】已存在"),
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
-
+    ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     /**
      * 警告信息 从800 开始
      */
@@ -993,7 +993,7 @@ public enum ApiError implements Serializable {
     SKU_NOT_MAPPING_PLATFORM_SKU(99126,"sku【{}】无平台sku映射关系，请绑定第三方sku后操作"),
     THIRD_WAREHOUSE_INTERFACE_EXCEPTION(99129,"调用第三方仓接口异常"),
     APPROVE_ING_IS_PACKING(99130,"待审核的数据才可以上传装箱数据"),
-    OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE(99131,"已下推海外仓入库单【{}】，不允许修改装箱数据"),
+    OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE(99131,"已下推海外仓入库单【{}】，不允许修改删除装箱数据"),
     NOT_PACKING_NOT_EXPORT(99132,"只有已装箱状态的发货单可以查看/导出装箱数据"),
     WAIT_HANDLE_HANDLE(99133,"待处理状态的要货单才能处理"),
     HANDLE_ING_FINISH(99134,"单号【{}】处理中状态的要货单才能完成"),

@@ -121,7 +121,12 @@
         csic.mse_score as mseScore,
         csic.rmse_score as rmseScore,
         csic.status,
-        csic.serial_no as serialNo
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
@@ -228,7 +233,13 @@
         crc.create_time as createTime,
         csic.update_time as updateTime,
         csic.update_user_name,
-        csic.status
+        csic.status,
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}
@@ -258,5 +269,33 @@
             </foreach>
         </if>
         crc.create_time desc,serial_no
+    </select>
+    <select id="exportMrpSalesCalcTemplateList"
+            resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportSalesInfoTemplateListDTO">
+        select crc.id as cfgRuleCalcId,
+        crc.create_user_name,
+        crc.create_time createTime,
+        crc.sale_type saleType,
+        crc.name,
+        crc.code,
+        crc.start_calc_date startCalcDate,
+        crc.end_calc_date endCalcDate,
+        crc.status,
+        crc.update_time as updateTime,
+        crc.update_user_name
+        from cfg_rule_calc as crc
+        where ${params.sqlMap.default}
+        and crc.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        crc.update_time desc
     </select>
 </mapper>

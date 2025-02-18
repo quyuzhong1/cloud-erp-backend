@@ -5,6 +5,7 @@ import com.erp.model.workflow.entity.ProcessManagementEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -42,6 +43,10 @@ public class EndProcessDTO {
      * 最近任务审批时间
      */
     private LocalDateTime approveTime;
+    /**
+     *发货日期
+     */
+    private LocalDate deliveryDate;
 
     /**
      * 最近任务审批意见
@@ -57,12 +62,13 @@ public class EndProcessDTO {
         this.comment = dto.getRemark();
     }
 
-    public EndProcessDTO(ProcessManagementEntity entity, String approveTypeCode, LocalDateTime approveTime, String lastApprover, String comment) {
+    public EndProcessDTO(ProcessManagementEntity entity, String approveTypeCode, LocalDateTime approveTime, String lastApprover, String comment, LocalDate deliveryDate) {
         this.businessKey = entity.getBusinessKey();
         this.businessId = entity.getBusinessId();
         this.approveStatus = ApproveTypeEnum.getByCode(approveTypeCode);
         this.approveUserId = lastApprover;
         this.approveTime = approveTime;
         this.comment = comment;
+        this.deliveryDate = deliveryDate;
     }
 }

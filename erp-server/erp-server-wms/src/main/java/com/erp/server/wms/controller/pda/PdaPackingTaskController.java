@@ -237,6 +237,18 @@ public class PdaPackingTaskController extends BaseController {
     public ApiResult<String> cartonSpecSave(@RequestBody @Validated WmsCartonSpecDTO.SpecSaveDTO dto) {
         return packingTaskService.cartonSpecSave(dto);
     }
+    /**
+     * 删除装箱信息
+     * @Author zdy
+     * @Date 2024/7/8 17:44
+     * @param dto
+     * @return com.erp.model.wms.dto.FirstMileDeliveryDTO.FirstMileCartonView
+     **/
+    @PostMapping("/deleteCarton")
+    public ApiResult<String> deleteCarton(@RequestBody @Validated WmsCartonSpecDTO.DeleteCartonDTO dto) {
+        Boolean b = packingTaskService.deleteCarton(dto);
+        return b ? success("删除装箱成功") : failure("删除装箱失败");
+    }
 
     /**
      * 关联单号查询-支持模糊搜索

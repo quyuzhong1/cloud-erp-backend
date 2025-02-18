@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -29,4 +30,8 @@ public class ApproveParamDTO extends PermissionsDTO {
      */
     @Size(max = 255, message = "审核意见最大255个字符")
     private String comment;
+    /**
+     *发货日期
+     */
+    private LocalDate deliveryDate;
 }

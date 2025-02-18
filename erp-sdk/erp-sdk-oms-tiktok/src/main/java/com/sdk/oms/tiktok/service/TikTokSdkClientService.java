@@ -273,6 +273,7 @@ public class TikTokSdkClientService {
             tokenDTO.setShopsBean(shop);
 //            }
         }
+        tokenDTO.setCode(authCode);
         //返回token实体
         return tokenDTO;
     }

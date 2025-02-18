@@ -243,6 +243,10 @@ public class CfgSettingValueDTO implements Serializable {
         private String firstOtherTaxFee;
         //费用分摊-头程-其他费用
         private String firstOtherFee;
+        //费用分摊-头程-组织id
+        private String firstOrgId;
+        //费用分摊-头程-仓库id
+        private String firstWarehouseId;
 
         /**
          * 费用分摊-小包-运费
@@ -257,6 +261,10 @@ public class CfgSettingValueDTO implements Serializable {
         private String packageDeductibleTax;
         //费用分摊-小包-其他费用
         private String packageOtherFee;
+        //费用分摊-小包-组织id
+        private String packageOrgId;
+        //费用分摊-小包-仓库id
+        private String packageWarehouseId;
         
         /**
          * 费用分摊-小包中转-运费
@@ -271,5 +279,13 @@ public class CfgSettingValueDTO implements Serializable {
          * 费用分摊-小包中转-其他费用
          */
         private String transferOtherFee;
+        /**
+         * 费用分摊-小包中转-组织id
+         */
+        private String transferOrgId;
+        /**
+         * 费用分摊-小包中转-仓库id
+         */
+        private String transferWarehouseId;
     }
 }

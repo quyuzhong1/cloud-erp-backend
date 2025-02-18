@@ -19,6 +19,7 @@ import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -75,11 +76,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 手动发货
      *
      * @param id
+     * @param deliveryDate
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2023/12/13 19:26
      **/
-    BatchResultDTO manualDelivery(String id);
+    BatchResultDTO manualDelivery(String id, LocalDate deliveryDate);
 
     /**
      * 手动标发
@@ -190,12 +192,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 发货
      *
      * @param
+     * @param deliveryDate
      * @return
      * @description
      * @author Lambda
      * @create 2023-12-29 10:37
      */
-    BatchResultDTO delivery(String id, String deliveryType);
+    BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate);
 
     /**
      * 生成销售出库单

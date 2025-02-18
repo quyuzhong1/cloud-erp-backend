@@ -289,4 +289,11 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * 处理第三方仓产品条形码字段
      */
     void processThirdBarcode();
+
+    /**
+     * 删除装箱
+     * @param dto
+     * @return
+     */
+    Boolean deleteCarton(WmsCartonSpecDTO.DeleteCartonDTO dto);
 }

@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.oms.mapper.SoInfoMapper">
+    <select id="existsByCustomerAndSku" resultType="java.lang.Boolean">
+        SELECT EXISTS( select 1 from so_info si
+        inner join so_detail sod on si.id = sod.main_id
+        where si.is_deleted = false and sod.is_deleted = false
+        and si.customer_id = #{customer} and sod.platform_sku_no = #{platformSku}
+        limit 1
+        )
+    </select>
 
 
     <select id="paging" resultType="com.erp.model.oms.dto.SoInfoDTO$PagingViewDTO">
