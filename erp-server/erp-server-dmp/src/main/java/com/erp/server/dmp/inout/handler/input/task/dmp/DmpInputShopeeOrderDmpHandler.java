@@ -92,16 +92,12 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				}
 				labelMap.put("logisticType", logisticType);
 				labelMap.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
+				// 原始配送
+				labelMap.put("fulfillmentFlag", fulfillmentFlagStr);
+				dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
 
 				// 订单状态
 				Object order_status = dmpDataMap.get("order_status");
-				// 原始状态
-				labelMap.put("sourceOrderStatus", order_status);
-				// 原始配送
-				labelMap.put("fulfillmentFlag", fulfillmentFlagStr);
-
-				dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
-
 				if(order_status != null) {
 					boolean isCancel = Boolean.FALSE;
 					String deliveryStatus = "";
@@ -112,8 +108,15 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 						deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
 						orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
 			        } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(platformOriginalStatus)){
-			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
-			        	orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						if (isPlatformWarehouseOrder) {
+							// 平台仓
+							deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+							orderStatus = ApproveStatusEnum.APPROVE.getCode();
+						} else {
+							// 自发货
+							deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+							orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						}
 			        } else if (OrderStatusEnum.PROCESSED.getCode().equals(platformOriginalStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(platformOriginalStatus)) {
 			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
 			            orderStatus = ApproveStatusEnum.APPROVE.getCode();
@@ -128,7 +131,11 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 			        } else if (OrderStatusEnum.CANCELLED.getCode().equals(platformOriginalStatus)) {
 			            // 作废状态（false未作废，true已作废）
 			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
-			        	orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						if (isPlatformWarehouseOrder){
+							orderStatus = ApproveStatusEnum.APPROVE.getCode();
+						} else {
+							orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						}
 			        	invalidStatus = Boolean.TRUE;
 			            isCancel = Boolean.TRUE;
 			        } else if (OrderStatusEnum.INVOICE_PENDING.getCode().equals(platformOriginalStatus)) {
