@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -171,6 +172,12 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         ApplicationContextUtils.getBean(FirstMileProcessingServiceImpl.class).addOrupdate(addList);
         log.warn("数据更新成功!");
     }
+
+    @Override
+    public Boolean deleteFirstMileProcessing(FirstMileProcessingDTO.DeleteDTO dto) {
+        return baseMapper.deleteFirstMileProcessing(dto);
+    }
+
     /**
      * 添加bom数据
      * @author will
@@ -255,12 +262,15 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
                 continue;
             }
+            if (addOrUpdateDTO.getRequisitionApplicationCode().equals("YHSQ250217000004")) {
+                log.warn("数据处理！code = {}",addOrUpdateDTO.getRequisitionApplicationCode());
+            }
             FirstMileProcessingEntity entity = FirstMileProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
             //旧数据
             FirstMileProcessingEntity old = oldList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getRequisitionApplicationId(), addOrUpdateDTO.getRequisitionApplicationId())
                     && CharSequenceUtil.equals(obj.getRequisitionApplicationDetailId(), addOrUpdateDTO.getRequisitionApplicationDetailId())
-                    && CharSequenceUtil.equals(obj.getFirstMileDeliveryDetailId(), addOrUpdateDTO.getFirstMileDeliveryDetailId())
+                    && CharSequenceUtil.equals(obj.getFirstMileDeliveryDetailId(), StrUtil.nullToDefault(addOrUpdateDTO.getFirstMileDeliveryDetailId(),""))
                     && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(old)) {
                 //校验数据是否一样

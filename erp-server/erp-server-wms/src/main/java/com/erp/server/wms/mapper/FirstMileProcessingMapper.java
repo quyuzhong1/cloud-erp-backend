@@ -46,4 +46,12 @@ public interface FirstMileProcessingMapper extends BaseMapper<FirstMileProcessin
      * @Date 2025/2/6 16:34
      */
     void deleteFirstMileOrder();
+    /**
+     * 删除
+     * @author will
+     * @date 2025/2/18 09:57
+     * @param params
+     * @return java.lang.Boolean
+     */
+    Boolean deleteFirstMileProcessing(@Param("params") FirstMileProcessingDTO.DeleteDTO params);
 }
