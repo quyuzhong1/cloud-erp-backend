@@ -121,6 +121,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		    	bean.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity , outputData);
 		    }
 		});
+
+
 		dmpOutputTaskService.lambdaUpdate()
 				.eq(DmpOutputTaskEntity::getId, dmpRequest.getOutputTaskId())
 				.set(DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.FINISH.getCode())
@@ -136,7 +138,12 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
     		return;
     	}
-		
+
+    	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId())) {
+			List<String> ids = dmpOutputTaskRecordEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+			dmpOutputTaskRecordService.lambdaUpdate().set(DmpOutputTaskRecordEntity::getMergeStatus, "");
+		}
+
 		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
