@@ -1,8 +1,7 @@
 pipeline {
     agent any
     environment {
-        harborUser = 'admin'
-        harborPassword = 'Root@1234cn'
+        harborCreds = credentials('harbor-credentials')
         harborAddress = '172.16.100.92:5000'
         harborRepo = 'sdc-erp'
     }
@@ -44,30 +43,27 @@ pipeline {
         }
         stage('将自定义镜像推送到harbor') {
             steps {
-                sh "docker login -u ${harborUser} -p ${harborPassword} ${harborAddress}"
+                sh "docker login -u ${harborCreds_USR} -p ${harborCreds_PSW} ${harborAddress}"
                 script {
-                    def erpfiles = ['erp-server-admin', 'erp-server-auth', 'erp-server-bi', 'erp-server-dmp', 'erp-server-file', 'erp-server-mrp', 'erp-server-msg', 'erp-server-oms', 'erp-server-plm', 'erp-server-scm', 'erp-server-srm', 'erp-server-sys', 'erp-server-tms', 'erp-server-wms', 'erp-server-workflow']
+                    def erpfiles = ['erp-gateway', 'erp-server-admin', 'erp-server-auth', 'erp-server-bi', 'erp-server-dmp', 'erp-server-file', 'erp-server-mrp', 'erp-server-msg', 'erp-server-oms', 'erp-server-plm', 'erp-server-scm', 'erp-server-srm', 'erp-server-sys', 'erp-server-tms', 'erp-server-wms', 'erp-server-workflow']
                     for (erpfile in erpfiles) {
                         sh "docker push ${harborAddress}/${harborRepo}/${erpfile}:${TAG}"
                     }
                 }
-                sh "docker push ${harborAddress}/${harborRepo}/erp-gateway:${TAG}"
             }
         }
         stage('远程执行k8s-master的kubectl命令') {
             steps {
+                sh "scp root@172.16.100.60:/k8s-yaml/erp-template/*.yaml root@172.16.100.60:/k8s-yaml/erptest-server"
                 script {
-                    def erpfiles = ['erp-server-admin', 'erp-server-auth', 'erp-server-bi', 'erp-server-dmp', 'erp-server-file', 'erp-server-mrp', 'erp-server-msg', 'erp-server-oms', 'erp-server-plm', 'erp-server-scm', 'erp-server-srm', 'erp-server-sys', 'erp-server-tms', 'erp-server-wms', 'erp-server-workflow']
+                    def erpfiles = ['erp-gateway', 'erp-server-admin', 'erp-server-auth', 'erp-server-bi', 'erp-server-dmp', 'erp-server-file', 'erp-server-mrp', 'erp-server-msg', 'erp-server-oms', 'erp-server-plm', 'erp-server-scm', 'erp-server-srm', 'erp-server-sys', 'erp-server-tms', 'erp-server-wms', 'erp-server-workflow']
                     for (erpfile in erpfiles) {
                         sh """
-                        scp /var/jenkins_home/workspace/${JOB_NAME}/erp-server/${erpfile}/${erpfile}.yaml root@172.16.100.60:/k8s-yaml/erptest-server
                         ssh -tt root@172.16.100.60 "sed -i -e 's|\\\${tag}|${TAG}|g' -e 's|\\\${namespace}|${NAMESPACE}|g' /k8s-yaml/erptest-server/${erpfile}.yaml"
                         """
                     }
                 }
                 sh """
-                scp /var/jenkins_home/workspace/${JOB_NAME}/erp-gateway/erp-gateway.yaml root@172.16.100.60:/k8s-yaml/erptest-server
-                ssh -tt root@172.16.100.60 "sed -i -e 's|\\\${tag}|${TAG}|g' -e 's|\\\${namespace}|${NAMESPACE}|g' /k8s-yaml/erptest-server/erp-gateway.yaml"
                 ssh -tt root@172.16.100.60 "/usr/bin/kubectl delete -f /k8s-yaml/erptest-server/ || true"
                 ssh -tt root@172.16.100.60 "/usr/bin/kubectl apply -f /k8s-yaml/erptest-server/"
                 """
