@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -601,7 +602,11 @@ public class RequisitionApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入Excel")
     @PostMapping("/importFile")
     public ApiResult<RequisitionApplicationDTO.ImportDTO> importFile(@ModelAttribute @Validated RequisitionApplicationDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getFbaBindShipmentViewDTOS(),response);
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS = excelImportDTO.getFbaBindShipmentViewDTOS();
+        if (CharSequenceUtil.isNotBlank(excelImportDTO.getId())){
+            fbaBindShipmentViewDTOS = requisitionApplicationService.fbaBindShipmentView(excelImportDTO.getId());
+        }
+        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),fbaBindShipmentViewDTOS,response);
         return success(dto);
     }
     /**
