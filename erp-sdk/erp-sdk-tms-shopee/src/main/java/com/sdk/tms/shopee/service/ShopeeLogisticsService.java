@@ -1,7 +1,6 @@
 package com.sdk.tms.shopee.service;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -10,7 +9,6 @@ import com.sdk.tms.shopee.constant.PathConstants;
 import com.sdk.tms.shopee.model.base.BaseRequest;
 import com.sdk.tms.shopee.model.base.BaseResponse;
 import com.sdk.tms.shopee.model.logistics.request.ShipOrderRequest;
-import com.sdk.tms.shopee.model.logistics.request.ShippingDocumentRequest;
 import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
 import com.sdk.tms.shopee.model.logistics.request.TrackRequest;
 import com.sdk.tms.shopee.model.logistics.response.ShipDetailResponse;
@@ -22,10 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -230,11 +226,24 @@ public class ShopeeLogisticsService {
     }
 
     /**
+     * 请求配送信息和解析内容
      * 获取标发参数
      * @param baseRequest
      * @return
      */
     public ShipDetailResponse getShippingParameter(BaseRequest baseRequest, String orderSn, String packageNumber) {
+        JSONObject response = requestShippingParameter(baseRequest, orderSn, packageNumber);
+        ShipDetailResponse shipDetailResponse = JSON.parseObject(response.toJSONString(), ShipDetailResponse.class);
+        if (Objects.isNull(shipDetailResponse)){
+            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】获取标发参数接口异常:{}",orderSn,response));
+        }
+        return shipDetailResponse;
+    }
+
+    /**
+     * 请求配送信息
+     */
+    public JSONObject requestShippingParameter(BaseRequest baseRequest, String orderSn, String packageNumber) {
         String path = PathConstants.GET_SHIPPING_PARAMETER;
         baseRequest.setPath(path);
         long timestamp = System.currentTimeMillis() / 1000L;
@@ -248,20 +257,17 @@ public class ShopeeLogisticsService {
         BaseResponse baseResponse = ShopeeApiUtils.sendGet(baseRequest.getHost() + path, paramMap);
         if (Objects.isNull(baseResponse) || Objects.isNull(baseResponse.getResponse())) {
             log.error(ERR_BF, baseResponse);
-            throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET,orderSn,baseResponse));
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET, orderSn,baseResponse));
         }
         JSONObject response = baseResponse.getResponse();
         String error = response.getString(ERR_NAME);
         if (StringUtils.isNotEmpty(error)) {
             log.error(ERR_BF, error);
-            throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET,orderSn,error));
+            throw new ServiceException(CharSequenceUtil.format(ERR_MSG_GET, orderSn,error));
         }
-        ShipDetailResponse shipDetailResponse = JSON.parseObject(response.toJSONString(), ShipDetailResponse.class);
-        if (Objects.isNull(shipDetailResponse)){
-            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】获取标发参数接口异常:{}",orderSn,response));
-        }
-        return shipDetailResponse;
+        return response;
     }
+
     public BaseResponse shippingOrder(BaseRequest baseRequest, ShipOrderRequest shipOrderRequest) {
 
         String path = PathConstants.POST_SHIPPING_ORDER;

@@ -43,12 +43,11 @@ public class DmpInputDoChildDmpHandler extends DmpInputDbConvertDmpHandler{
 	
 	@Autowired
 	private DmpInputMongoDmpRelationService dmpInputMongoDmpRelationService;
-	@Autowired
-	private DmpCfgInputChildService dmpCfgInputChildService;
 	
 	@Override
 	protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(
 			List<Map<String, Object>> dmpInputMongoEntityList) {
+		this.beforeConvertData(dmpInputMongoEntityList);
 		Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
 			String childMongoStorageName = this.getChildMongoStorageName();
