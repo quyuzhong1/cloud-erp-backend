@@ -26,7 +26,7 @@ public interface LogisticsAuthMapper extends BaseMapper<LogisticsAuthEntity> {
 
     List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(@Param("channelIds") List<String> channelIds);
 
-    LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(@Param("logisticsSupplierId") String logisticsSupplierId);
+    List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(@Param("logisticsSupplierIds") List<String>logisticsSupplierId);
 
     /**
      * 查询所有渠道
