@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -9,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,12 +18,14 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -40,10 +44,8 @@ import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
-import com.erp.model.wms.entity.PackageForecastDetailEntity;
-import com.erp.model.wms.entity.PackageForecastEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -81,6 +83,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -144,6 +147,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     private DownloadTaskFeign downloadTaskFeign;
     @Resource(name ="packAsyncExecutor")
     private ThreadPoolTaskExecutor packAsyncExecutor;
+
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -649,9 +655,20 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
                 base64 = aliExpressPrint(logisticsPlatform, entity);
+            }else{
+                List<WmsAttachmentDTO.UpdateDTO> updateDTOS = wmsAttachmentService.getByBusinessIds(Collections.singletonList(id));
+                if (CollectionUtils.isNotEmpty(updateDTOS)) {
+                    WmsAttachmentDTO.UpdateDTO updateDTO = updateDTOS.get(0);
+                    String url = updateDTO.getAttachUrl();
+                    InputStream inputStream = FastDFSClientUtil.getInputStream(url);
+                    return PdfUtil.base64ForPdf(inputStream);
+                }else{
+                    throw new ServiceException("未上传标签");
+                }
             }
         } catch (Exception e) {
             log.error("打印失败>>>>>>>{}", e);
+            throw new ServiceException(e.getMessage());
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
             entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
@@ -1053,5 +1070,64 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         //处理分页数据
         fillExportPaging(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean uploadFileDTO(List<PackageForecastDTO.UploadFileDTO> uploadFileDTOList) {
+        if(CollectionUtils.isEmpty(uploadFileDTOList)){
+            return true;
+        }
+        List<String> ids = uploadFileDTOList.stream().map(PackageForecastDTO.UploadFileDTO::getId).collect(Collectors.toList());
+        List<PackageForecastEntity> packageForecastEntityList = this.listByIds(ids);
+
+        List<String> supplierIds = packageForecastEntityList.stream().map(PackageForecastEntity::getLogisticsSupplierId).collect(Collectors.toList());
+        List<LogisticsSupplierDTO.AuthDTO> authDTOList = logisticsAuthFeign.listAuthBySupplierId(supplierIds);
+        wmsAttachmentService.batchRemoveAttachment(ids);
+        List<WmsAttachmentEntity> wmsAttachmentEntities = new ArrayList<>();
+        List<PackageForecastEntity> updateList = new ArrayList<>();
+        for (PackageForecastDTO.UploadFileDTO fileDTO : uploadFileDTOList) {
+            PackageForecastEntity entity = packageForecastEntityList.stream().filter(v -> v.getId().equals(fileDTO.getId())).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            }
+            //物流商
+            LogisticsSupplierDTO.AuthDTO authDTO = authDTOList.stream().filter(v -> v.getSupplierId().equals(entity.getLogisticsSupplierId())).findFirst().orElse(null);
+            if (Objects.isNull(authDTO)) {
+                throw new ServiceException("物流商不存在");
+            }
+            String logisticsPlatform = authDTO.getLogisticsPlatform();
+            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                throw new ServiceException("速卖通不支持上传文件");
+            }
+            entity.setTransportNo(fileDTO.getTransportNo());
+            updateList.add(entity);
+            WmsAttachmentEntity wmsAttachmentEntity = new WmsAttachmentEntity();
+            wmsAttachmentEntity.setAttachUrl(fileDTO.getAttachDTO().getAttachUrl());
+            wmsAttachmentEntity.setAttachName(fileDTO.getAttachDTO().getAttachName());
+            wmsAttachmentEntity.setBusinessId(entity.getId());
+            wmsAttachmentEntity.setType(PackageForecastEntity.PACKAGE_FORECAST);
+            wmsAttachmentEntities.add(wmsAttachmentEntity);
+
+        }
+        wmsAttachmentService.saveBatch(wmsAttachmentEntities);
+        this.updateBatchById(updateList);
+        return true;
+    }
+
+    @Override
+    public List<PackageForecastDTO.UploadFileViewDTO> uploadLabelView(List<String> ids) {
+        List<PackageForecastEntity> packageForecastEntityList = this.listByIds(ids);
+        List<PackageForecastDTO.UploadFileViewDTO> uploadFileViewDTOList = BeanUtil.copyToList(packageForecastEntityList, PackageForecastDTO.UploadFileViewDTO.class);
+        List<String> businessIds = packageForecastEntityList.stream().map(PackageForecastEntity::getId).collect(Collectors.toList());
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(businessIds);
+        uploadFileViewDTOList.forEach(v->{
+            WmsAttachmentDTO.UpdateDTO updateDTO = attachmentList.stream().filter(t->t.getBusinessId().equals(v.getId())).findFirst().orElse(new WmsAttachmentDTO.UpdateDTO());
+            AttachDTO attachDTO = new AttachDTO();
+            attachDTO.setAttachName(updateDTO.getAttachName());
+            attachDTO.setAttachUrl(updateDTO.getAttachUrl());
+            v.setAttachDTO(attachDTO);
+        });
+        return uploadFileViewDTOList;
     }
 }
