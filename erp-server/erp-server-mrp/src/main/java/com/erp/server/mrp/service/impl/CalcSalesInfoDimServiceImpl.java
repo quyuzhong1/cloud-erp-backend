@@ -159,6 +159,8 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             calculationTimePeriodSalesEstimates(dto.getStartCalcDate(), entity, calcSalesInfoEstimateList, hisSalesMap);
             //计算吻合度
             calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
+            //计算月吻合度
+            calculationMonthSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
             calcSalesInfoDenoisingService.saveBatch(calculationSales);
             calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
             entity.setStatus(CalcStatusEnum.FINISH.getCode());
@@ -168,6 +170,50 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             dto.setStatus(CalcStatusEnum.DOING.getCode());
             log.error("计算失败，原因：{}", e.getMessage(), e);
         }
+    }
+
+    /**
+     * 计算月份吻合度
+     * @param dto                       参数
+     * @param calcSalesInfoEstimateList 参数
+     * @param hisSalesMap               参数
+     * @param entity                    参数
+     */
+    private void calculationMonthSimilarity(CalcSalesInfoDimDTO.CalcResultDTO dto,
+                                            List<CalcSalesInfoEstimateEntity> calcSalesInfoEstimateList,
+                                            Map<LocalDate, Integer> hisSalesMap,
+                                            CalcSalesInfoDimEntity entity) {
+        List<BigDecimal> calcList = calcSalesInfoEstimateList.stream()
+                .collect(Collectors.toMap(CalcSalesInfoEstimateEntity::getMonth, CalcSalesInfoEstimateEntity::getQty, BigDecimal::add))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
+        List<BigDecimal> basicData = new ArrayList<>();
+        List<String> monthList = calcSalesInfoEstimateList.stream()
+                .map(CalcSalesInfoEstimateEntity::getMonth)
+                .distinct()
+                .sorted(Comparator.comparing(v -> v))
+                .collect(Collectors.toList());
+        for (String month : monthList) {
+            Map<String, BigDecimal> monthlySales = hisSalesMap.entrySet().stream()
+                    .collect(Collectors.groupingBy(
+                            entry -> entry.getKey().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                            Collectors.mapping(
+                                    entry -> BigDecimal.valueOf(Optional.ofNullable(entry.getValue()).orElse(0)),
+                                    Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                            )
+                    ));
+            basicData.add(Optional.ofNullable(monthlySales.get(month)).orElse(BigDecimal.ZERO));
+        }
+        DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, dto.getCalcSalesInfoDimId());
+        entity.setMonthMapeScore(metricsResult.getMAPEScore());
+        entity.setMonthMaeScore(metricsResult.getMAEScore());
+        entity.setMonthMseScore(metricsResult.getMSEScore());
+        entity.setMonthRmseScore(metricsResult.getRMSEScore());
+        entity.setMonthR2Score(metricsResult.getR2Score());
     }
 
     /**
@@ -298,6 +344,11 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         salesEstimateDTO.setMaeScore(entity.getMaeScore());
         salesEstimateDTO.setMseScore(entity.getMseScore());
         salesEstimateDTO.setRmseScore(entity.getRmseScore());
+        salesEstimateDTO.setMonthMapeScore(entity.getMonthMapeScore());
+        salesEstimateDTO.setMonthR2Score(entity.getMonthR2Score());
+        salesEstimateDTO.setMonthMaeScore(entity.getMonthMaeScore());
+        salesEstimateDTO.setMonthMseScore(entity.getMonthMseScore());
+        salesEstimateDTO.setMonthRmseScore(entity.getMonthRmseScore());
         return salesEstimateDTO;
     }
 
@@ -653,6 +704,25 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
         detailDTO.setSkuList(skuDTOList);
         detailDTO.setShopList(shopList);
         return detailDTO;
+    }
+
+    @Override
+    public void exportSalesInfoTemplateList(CalcSalesInfoDimDTO.ParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("销量试算模板列表导出", FileTaskEventEnum.EXPORT_MRP_SALES_CALC_TEMPLATE_LIST.getCode(), dto);
+
+    }
+
+    @Override
+    public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Page<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> page = baseMapper.exportMrpSalesCalcTemplateList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), user.getUid());
+        if (!CollectionUtils.isEmpty(page.getRecords())) {
+            for (CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO templateDTO : page.getRecords()) {
+                templateDTO.setSaleTypeName(HistorySalesTypeEnum.getNameByCode(templateDTO.getSaleType()));
+                templateDTO.setStatusName(CalcStatusEnum.getName(templateDTO.getStatus()));
+            }
+        }
+        return new PagingVO<>(page);
     }
 
     private List<String> getShopIdList(CalcSalesInfoDimDTO.RulesApplyDTO dto) {
