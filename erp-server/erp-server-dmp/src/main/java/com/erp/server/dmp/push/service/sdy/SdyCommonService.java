@@ -10,6 +10,9 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Administrator
  *
@@ -29,14 +32,42 @@ public class SdyCommonService {
 	}
 
 	public ApiResult<?> requestSdy(Object ext) {
-		JSONObject parseObject = JSON.parseObject(ext.toString());
-		String url = parseObject.getString(REQUEST_URL);
-		if(!url.startsWith("/")) {
-			url = "/" + url;
+		String url = null;
+		String requestData = null;
+
+		if (ext instanceof String) {
+			JSONObject parseObject = JSON.parseObject(ext.toString());
+			url = parseObject.getString(REQUEST_URL);
+			if(!url.startsWith("/")) {
+				url = "/" + url;
+			}
+			url = sdyUrl + url;
+			requestData = parseObject.getString(REQUEST_DATA);
+		} else if (ext instanceof Object[]) {
+			// 如果 ext 是数组
+			Object[] extArray = (Object[]) ext;
+
+			List<String> list = new ArrayList<>();
+			for (Object o : extArray) {
+				JSONObject parseObject = JSON.parseObject(o.toString());
+				url = parseObject.getString(REQUEST_URL);
+				if(!url.startsWith("/")) {
+					url = "/" + url;
+				}
+				url = sdyUrl + url;
+				String dataStr = parseObject.getString(REQUEST_DATA);
+				list.add(dataStr);
+			}
+
+			JSONObject object = new JSONObject();
+			object.put("count", extArray.length);
+			object.put("list", extArray.length);
+			requestData = object.toJSONString();
+		} else {
+			// 如果 ext 既不是字符串也不是数组，抛出异常或返回错误
+			throw new IllegalArgumentException("Invalid parameter type");
 		}
-		url = sdyUrl + url;
-		
-		String requestData = parseObject.getString(REQUEST_DATA);
+
 		log.info("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
 		String responseData = HttpUtil.post(url, requestData);
 		log.info("请求数帝云响应报文：{}" , responseData);
