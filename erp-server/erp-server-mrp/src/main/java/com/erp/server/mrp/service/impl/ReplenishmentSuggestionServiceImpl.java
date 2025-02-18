@@ -573,6 +573,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    public void batchRestockingReplenishment(List<String> ids, String replenishmentRemark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        update(Wrappers.<ReplenishmentSuggestionEntity>lambdaUpdate()
+                .in(ReplenishmentSuggestionEntity::getId, ids)
+                .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
+                .set(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
+        );
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {
         if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
             throw new ServiceException("备货、销量设置不能全部为空！");
