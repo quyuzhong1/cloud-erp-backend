@@ -1156,7 +1156,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
             }
             //物流商
-            LogisticsSupplierDTO.AuthDTO authDTO = authDTOList.stream().filter(v -> v.getSupplierId().equals(entity.getLogisticsSupplierId())).findFirst().orElse(null);
+            LogisticsSupplierDTO.AuthDTO authDTO = authDTOList.stream().filter(v -> v.getMainId().equals(entity.getLogisticsSupplierId())).findFirst().orElse(null);
             if (Objects.isNull(authDTO)) {
                 throw new ServiceException("物流商不存在");
             }
