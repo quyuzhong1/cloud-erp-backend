@@ -223,6 +223,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         }
         // 排序并取前五个最早的日期
         return list.stream()
+                .distinct()
                 // 根据 LocalDateTime 的自然顺序（升序）排序
                 .sorted()
                 // 获取最早的五条数据
