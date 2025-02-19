@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.*;
+import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -42,17 +45,6 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.entity.DmpSoDetailEntity;
-import com.erp.model.dmp.entity.DmpSoInfoEntity;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackCompareSignEnum;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputResponse;
@@ -80,6 +72,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected DmpHandlerCache dmpHandlerCache;
 	@Autowired
 	protected DmpOutputTaskRecordService dmpOutputTaskRecordService;
+	@Autowired
+	protected DmpOutputTaskRecordMergeService dmpOutputTaskRecordMergeService;
 	@Autowired
 	@Qualifier("dmpOutputExecutorPool")
 	protected ExecutorService dmpOutputExecutorPool;
@@ -122,6 +116,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		    	bean.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity , outputData);
 		    }
 		});
+
+
 		dmpOutputTaskService.lambdaUpdate()
 				.eq(DmpOutputTaskEntity::getId, dmpRequest.getOutputTaskId())
 				.set(DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.FINISH.getCode())
@@ -137,7 +133,29 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
     		return;
     	}
-		
+
+    	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId()) ) {
+			List<String> ids = dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
+			List<DmpOutputTaskRecordMergeEntity> list = dmpOutputTaskRecordMergeService.lambdaQuery()
+					.in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
+					.eq(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
+					.list();
+			if (CollUtil.isEmpty(list)) {
+				for (DmpOutputTaskRecordEntity taskRecordEntity : dmpOutputTaskRecordEntityList) {
+					DmpOutputTaskRecordMergeEntity entity = new DmpOutputTaskRecordMergeEntity();
+					entity.setMainId(taskRecordEntity.getId());
+					entity.setMergeStatus(OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode());
+					dmpOutputTaskRecordMergeService.save(entity);
+				}
+
+				dmpOutputTaskRecordService.lambdaUpdate()
+						.in(DmpOutputTaskRecordEntity::getId, ids)
+						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
+				return;
+			}
+		}
+
 		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
