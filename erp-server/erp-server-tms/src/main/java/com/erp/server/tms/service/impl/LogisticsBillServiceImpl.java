@@ -28,19 +28,18 @@ import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -50,9 +49,7 @@ import com.erp.model.tms.vo.response.InterceptResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CfgRuleFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -76,7 +73,6 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -501,7 +497,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         parceInfo.setTotalPrice(totalPrice);
         //根据销售平台和渠道code 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(logisticsPlatform, logisticsChannel.getCode());
-        if (Objects.isNull(saleChannel)) {
+        if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
         //根据订单处理规则，判断是否需要清空国家、省市数据
@@ -1102,10 +1098,21 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 waybillDTO.setTrackNo(getLabelVO.getTrackNo());
                 waybillDTO.setTransportNo(getLabelVO.getTransportNo());
                 waybillDTOList.add(waybillDTO);
+                //清空面单获取异常
+                SoB2cErrorDTO.DeleteDTO deleteDTO = new SoB2cErrorDTO.DeleteDTO();
+                deleteDTO.setMainId(dto.getB2cSoId());
+                deleteDTO.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+                soB2cFeign.deleteError(deleteDTO);
             }catch (Exception e){
                 String msg = CharSequenceUtil.format("{}获取物流面单异常->{}",dto.getDeliveryNo(),e.getMessage());
                 log.error(msg,e);
                 errorList.add(msg);
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
+                addError.setMainId(dto.getB2cSoId());
+                addError.setMessage(msg);
+                addError.setParamJson(JSONUtil.toJsonStr(dto));
+                soB2cFeign.addSoB2cError(addError);
             }
         }
         if(CollectionUtils.isNotEmpty(errorList)){

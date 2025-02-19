@@ -656,7 +656,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String platform = Objects.nonNull(auth) ? auth.getLogisticsPlatform() : "";
             //根据销售平台和渠道code 获取到原生的渠道
             LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(platform, code);
-            if (Objects.isNull(saleChannel)) {
+            if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(platform)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
