@@ -1038,7 +1038,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     }
                 }else if (logisticsPlatform.equals(LogisticsPlatformEnum.MERCADOLIBRE.getCode())){
                     if (ObjectUtil.isNotEmpty(soB2cEntity)) {
-                        JSONObject jsonObject = JSON.parseObject(soB2cEntity.getExtendData());
+                        JSONObject jsonObject = JSON.parseObject(soB2cEntity.getLabelJson());
                         String shipmentId = String.valueOf(jsonObject.getLong("shipmentId"));
                         getLabelVO.setDeliveryNo(shipmentId);
                     }
