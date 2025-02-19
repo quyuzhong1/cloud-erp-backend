@@ -6,6 +6,8 @@ import cn.hutool.core.util.StrUtil;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
@@ -13,9 +15,11 @@ import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.OutputTaskRecordMergeStatusEnum;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.mapper.DmpOutputTaskRecordMergeMapper;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
@@ -49,6 +53,9 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 
     @Resource
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+    
+    @Resource
+    private CfgSettingService cfgSettingService;
     
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -147,7 +154,15 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 	@Override
 	public boolean mergeDeal(DmpCfgOutputEntity dmpCfgOutputEntity,
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
-		if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId()) ) {
+		if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId())) {
+			List<CfgSettingEntity> cfgList = cfgSettingService.lambdaQuery()
+					.eq(CfgSettingEntity::getType, "sdy_batch_cfg")
+					.eq(CfgSettingEntity::getKey, "sdy_batch_cfg")
+					.eq(CfgSettingEntity::getValue, "1")
+					.list();
+			if(CollUtil.isEmpty(cfgList)) {
+				return true;
+			}
 			String id = dmpOutputTaskRecordEntity.getId();
 			List<DmpOutputTaskRecordMergeEntity> list = lambdaQuery()
 					.eq(DmpOutputTaskRecordMergeEntity::getMergeId, id)
