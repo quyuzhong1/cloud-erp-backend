@@ -674,7 +674,7 @@ public class MercadoSdkClientService {
         ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
         if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}",
+            throw new ServiceException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}",
                     orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
         }
 
