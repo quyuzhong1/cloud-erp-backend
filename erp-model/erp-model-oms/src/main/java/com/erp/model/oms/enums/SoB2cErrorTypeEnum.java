@@ -26,6 +26,7 @@ public enum SoB2cErrorTypeEnum {
     GENERATE_TRANSFER_INFO("generateTransferInfo",  "生成直接调拨单"),
     VIRTUAL_FREEZE_QTY("virtualFreezeQty",  "扣减虚拟冻结库存"),
     ORDER_FETCH("orderFetch",  "订单拉取失败"),
+    GET_LOGISTICS_LABEL("getLogisticsLabel",  "获取物流面单异常"),
     ;
     /**
      * 类型
