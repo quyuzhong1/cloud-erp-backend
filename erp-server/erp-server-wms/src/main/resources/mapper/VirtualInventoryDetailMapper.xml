@@ -39,10 +39,8 @@
     </sql>
 
     <!-- 分页查询 -->
-
-
-
     <select id="paging" resultType="com.erp.model.wms.dto.VirtualInventoryAgeDTO$ListDTO">
+       select * from (
         WITH virtualInventoryDetailHis AS (
             select
                 max(vidh.date) as date,
@@ -122,6 +120,14 @@
             </if>
             vih.sku_id desc
         </where>
+        ) as all_data
+        where 1=1
+        <if test="frozenIsDiff != null and frozenIsDiff == true">
+            and frozenIsDiff = '是'
+        </if>
+        <if test="frozenIsDiff != null and frozenIsDiff == false">
+            and frozenIsDiff = '否'
+        </if>
     </select>
 
     <!-- 历史库龄 -->
