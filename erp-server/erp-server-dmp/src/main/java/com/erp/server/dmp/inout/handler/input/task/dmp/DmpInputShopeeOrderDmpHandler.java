@@ -168,9 +168,8 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				if(package_list != null) {
 					List<Map<String, Object>> packageList = (List<Map<String, Object>>)package_list;
 					List<String> collect = packageList.stream().map(p -> p.get("package_number").toString()).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-		            JSONObject jsonObject = new JSONObject();
-		            jsonObject.put("package_number", String.join(",", collect));
-		            dmpDataMap.put("extendData", jsonObject.toJSONString());
+					labelMap.put("package_number", String.join(",", collect));
+		            dmpDataMap.put("extendData", labelMap);
 				}
 				
 				Object ship_by_date = dmpDataMap.get("ship_by_date");
