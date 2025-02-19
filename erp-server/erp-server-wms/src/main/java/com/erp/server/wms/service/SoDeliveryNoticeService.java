@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -161,10 +162,12 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     /**
      * 下推销售出库单-保存
-     * @param id id
+     *
+     * @param id           id
+     * @param deliveryDate
      * @return void
      **/
-    BatchResultDTO generateSoDeliverySave(String id);
+    BatchResultDTO generateSoDeliverySave(String id, LocalDate deliveryDate);
 
     /**
      * 下推发货通知单-保存

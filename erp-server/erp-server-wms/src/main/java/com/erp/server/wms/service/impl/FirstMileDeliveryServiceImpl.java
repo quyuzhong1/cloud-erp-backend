@@ -50,7 +50,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.SysPostEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
@@ -82,7 +81,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -93,7 +91,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -603,7 +600,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //默认来源类型：头程发货单
         addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         //默认调出日期：当前日期
-        addDTO.setBillDate(LocalDate.now());
+        addDTO.setBillDate(Objects.nonNull(entity.getDeliveryDate()) ? entity.getDeliveryDate() : LocalDate.now());
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
@@ -665,6 +662,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     */
     private void approveProcess(FirstMileDeliveryEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        entity.setDeliveryDate(dto.getDeliveryDate());
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
@@ -796,6 +794,12 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         if(CollectionUtils.isNotEmpty(machineInfoEntityList)){
             throw new ServiceException("存在关联的加工单{}，头程发货单禁止删除",machineInfoEntityList.stream().map(MachineInfoEntity::getCode).collect(Collectors.toList()));
         }
+        //存在下游单据（海外入库单），不能删除
+        List<OverseasWarehouseInboundEntity> inboundEntityList = overseasWarehouseInboundService.listBySourceIds(Collections.singletonList(entity.getId()));
+        inboundEntityList = inboundEntityList.stream().filter(e -> Objects.nonNull(e) && !Objects.equals(OverseasInstockStatusEnum.CANCELED.getCode(),e.getInstockStatus())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(inboundEntityList)){
+            throw new ServiceException("存在下游海外入库单【{}】，禁止删除", inboundEntityList.stream().map(OverseasWarehouseInboundEntity::getCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.joining(",")));
+        }
         //删除装箱信息
         if(Objects.nonNull(packingTask)){
             packingTaskService.delete(packingTask);
@@ -879,7 +883,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
-        updateForApprove(entity.getId(), approveStatus.getStatus());
+        //发货时间 默认取审核时传递日期 无值时 获取当天日期
+        LocalDate deliveryDate = Objects.nonNull(dto.getDeliveryDate()) ? dto.getDeliveryDate() : LocalDate.now();
+        entity.setDeliveryDate(deliveryDate);
+        updateForApprove(entity.getId(), approveStatus.getStatus(),deliveryDate);
 
 
         //审核通过
@@ -1062,8 +1069,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }else {
             addDTO.setSourceType(SourceTypeEnum.FIRST_MILE_DELIVERY_TO_ULANZI.getCode());
         }
-        //默认调出日期：当前日期
-        addDTO.setBillDate(LocalDate.now());
+        //默认调出日期：默认发货日期
+        addDTO.setBillDate(Objects.nonNull(entity.getDeliveryDate()) ? entity.getDeliveryDate() : LocalDate.now());
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
@@ -1322,11 +1329,13 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     }
 
     /**
-    * 审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
-    public void updateForApprove(String id, String approveStatus) {
+     * 审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     * @param deliveryDate
+     */
+    public void updateForApprove(String id, String approveStatus, LocalDate deliveryDate) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(FirstMileDeliveryEntity::getId, id)
@@ -1334,6 +1343,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             .set(FirstMileDeliveryEntity::getApproveUserName, userInfo.getUserName())
             .set(FirstMileDeliveryEntity::getApproveStatus, approveStatus)
             .set(FirstMileDeliveryEntity::getApproveTime, LocalDateTime.now())
+            .set(Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus), FirstMileDeliveryEntity::getDeliveryDate, Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now())
             .set(FirstMileDeliveryEntity::getDeliveryStatus, DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode())
             .update(new FirstMileDeliveryEntity());
      }

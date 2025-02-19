@@ -185,6 +185,6 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("msku", "platformShopCode");
+        return Collections.singletonList("uniqueId");
     }
 }

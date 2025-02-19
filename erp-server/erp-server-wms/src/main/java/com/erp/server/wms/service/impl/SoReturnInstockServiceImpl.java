@@ -43,6 +43,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
@@ -88,6 +89,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_IN_STOCK;
+import static com.common.core.constant.EnumMessage.codeEnumMessageMaps;
 
 /**
  * 退货入库单
@@ -454,6 +456,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (Objects.isNull(entity)) {
             throw new ServiceException(ApiError.ERROR_99083);
         }
+        // 历史Entity
+        SoReturnInstockEntity byId = new SoReturnInstockEntity();
+        BeanMapper.copy(entity, byId);
+
         //仓管员
         String warehouseKeeperId = dto.getWarehouseKeeperId();
         String warehouseKeeperName = "";
@@ -463,6 +469,35 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (CollectionUtils.isNotEmpty(userList)) {
                 warehouseKeeperName = userList.get(0).getUserName();
             }
+        }
+        // 海外仓退货存在未关联订单，允许修改客户
+        if (SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode().equalsIgnoreCase(entity.getSourceType())){
+            CustomerInfoEntity customerInfo = customerFeign.getCustomerById(dto.getCustomerId());
+            if (null == customerInfo){
+                ServiceException.runError(ApiError.ERROR_92011);
+            }
+            entity.setCustomerId(dto.getCustomerId());
+            entity.setCustomerName(customerInfo.getName());
+            entity.setSellerId(customerInfo.getSellerId());
+            entity.setSellerName(customerInfo.getSellerName());
+            if (StringUtils.isNotBlank(customerInfo.getSalesDeptId())){
+                SysDepartmentDTO department = sysUserFeign.getUserDeptById(customerInfo.getSalesDeptId());
+                if( null != department){
+                    entity.setSalesDeptId(customerInfo.getSalesDeptId());
+                    entity.setSalesDeptName(department.getName());
+                }
+            }
+            // 销售组织
+            List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(customerInfo.getUseOrgId()));
+            if (CollectionUtils.isEmpty(orgList)) {
+                ServiceException.runError("销售组织不存在");
+            }
+            String salesOrgName = orgList.stream().filter(o -> customerInfo.getUseOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            entity.setSalesOrgName(salesOrgName);
+            entity.setSalesOrgId(customerInfo.getUseOrgId());
+            // 币种
+            entity.setCurrencySymbol(dto.getCurrencySymbol());
+            entity.setCurrency(dto.getCurrency());
         }
 
         //获取核算公司
@@ -481,7 +516,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         entity.setReturnLogisticCode(dto.getReturnLogisticCode());
         //操作日志
-        SoReturnInstockEntity byId = this.getById(dto.getId());
         operateLogService.addModuleOperateLogByObj(byId, entity, ModuleTypeEnum.SO_RETURN_INSTOCK.getCode(), entity.getId(), "", "");
         boolean flag = this.updateById(entity);
         soReturnInstockDetailService.update(dto);

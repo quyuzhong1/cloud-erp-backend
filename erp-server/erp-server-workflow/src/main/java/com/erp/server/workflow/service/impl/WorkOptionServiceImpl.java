@@ -618,6 +618,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
+        baseApproveParamDTO.setDeliveryDate(dto.getDeliveryDate());
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case QC_INFO:

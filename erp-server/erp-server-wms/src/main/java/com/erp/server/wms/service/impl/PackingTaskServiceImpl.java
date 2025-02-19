@@ -950,12 +950,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CharSequenceUtil.isBlank(taskId) || CharSequenceUtil.isBlank(cartonId)){
             return;
         }
-        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByPackingTaskId(taskId);
+        List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = fbaShipmentPackingService.listByCartonIds(Collections.singletonList(cartonId));
         if (CollectionUtils.isNotEmpty(fbaShipmentPackingEntityList)){
-            FbaShipmentPackingEntity fbaShipmentPackingEntity = fbaShipmentPackingEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(cartonId) && Objects.equals(e.getCartonId(), cartonId)).findFirst().orElse(null);
-            if (Objects.nonNull(fbaShipmentPackingEntity)){
-                throw new ServiceException("已下推的箱号不允许再修改");
-            }
+            throw new ServiceException("已下推的箱号不允许再删除/修改");
         }
     }
 
@@ -1925,7 +1922,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         if(FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus())
                 || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus())){
-            throw new ServiceException("物流单/报关单已生成，不支持修改");
+            throw new ServiceException("物流单/报关单已生成，不支持修改删除");
         }
         //已装箱的数据，如果未下推入库单，或者下推的入库单待提交时，可以再次修改装箱信息，否则提示：已下推海外仓入库单【单号】，不允许修改装箱数据（装箱页面保存时校验）
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(Collections.singletonList(firstMileDeliveryEntity.getId()));
@@ -2036,6 +2033,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             throw new ServiceException(CharSequenceUtil.format("关联要货申请单{}已生成装箱，无需重复生成",firstMileDeliveryEntity.getSourceCode()));
         }
         PackingTaskEntity packingTaskEntity = PackingConverter.INSTANCE.firstMileDeliveryToPackingTask(firstMileDeliveryEntity,sourceType);
+        //要货计划 直接赋值 要货申请 查询关联的要货计划
+        if (SourceTypeEnum.DELIVERY_PLAN.getCode().equals(firstMileDeliveryEntity.getSourceType())){
+            packingTaskEntity.setBusinessId(firstMileDeliveryEntity.getSourceId());
+            packingTaskEntity.setBusinessCode(firstMileDeliveryEntity.getSourceCode());
+        }else if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(firstMileDeliveryEntity.getSourceType())){
+            RequisitionApplicationEntity requisitionApplication = requisitionApplicationService.getById(firstMileDeliveryEntity.getSourceId());
+            if(Objects.nonNull(requisitionApplication)){
+                packingTaskEntity.setBusinessId(requisitionApplication.getSourceId());
+                packingTaskEntity.setBusinessCode(requisitionApplication.getSourceCode());
+            }
+
+        }
         //查询明细
         List<FirstMileDeliveryDetailEntity> detailEntityList = firstMileDeliveryDetailService.listDetailByMainId(firstMileDeliveryEntity.getId());
         packingTaskEntity.setDeliveryQty(detailEntityList.stream().map(FirstMileDeliveryDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO,Integer::sum));
@@ -2173,7 +2182,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }
         PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
         if (ObjectUtils.isEmpty(packingTaskEntity)) {
-            throw new ServiceException(ApiError.ERROR_98001);
+            throw new ServiceException(ApiError.ERROR_92141);
         }
         return buildPrintInfo(cartonEntity,packingTaskEntity);
     }
@@ -2664,6 +2673,29 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //循环处理装箱任务
             processByPackingTask(taskEntityList, detailMap, applicationEntityMap, providerWarehouseEntityMap, providerEntityMap, skuMappingViewDTOS);
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteCarton(WmsCartonSpecDTO.DeleteCartonDTO dto) {
+        WmsCartonEntity cartonEntity = wmsCartonService.getById(dto.getCartonId());
+        if (Objects.isNull(cartonEntity)){
+            throw new ServiceException(ApiError.ERROR_92146);
+        }
+        PackingTaskEntity packingTaskEntity = this.getById(cartonEntity.getPackingTaskId());
+        if (ObjectUtils.isEmpty(packingTaskEntity)) {
+            throw new ServiceException(ApiError.ERROR_92141);
+        }
+        //已绑定FBA货件不能删除
+        checkCartonHasFba(cartonEntity.getPackingTaskId(),dto.getCartonId());
+        //状态校验
+        checkSourceOrderStatus(packingTaskEntity);
+        wmsCartonSpecService.removeById(cartonEntity.getSpecId());
+        wmsCartonService.removeById(dto.getCartonId());
+        wmsCartonDetailService.listByMainIds(Collections.singletonList(dto.getCartonId()));
+        //更新装箱状态
+        updatePackingStatus(listGroupSkuById(cartonEntity.getPackingTaskId()),packingTaskEntity);
+        return Boolean.TRUE;
     }
 
     /**

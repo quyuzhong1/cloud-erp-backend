@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -174,6 +175,11 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         log.warn("数据更新成功!");
     }
 
+    @Override
+    public Boolean deleteB2bProcessing(SoB2bProcessingDTO.DeleteDTO dto) {
+        return baseMapper.deleteB2bProcessing(dto);
+    }
+
     /**
      * 添加bom数据
      * @author will
@@ -286,7 +292,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             //旧数据
             SoB2bProcessingEntity old = oldList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getSoDetailId(), addOrUpdateDTO.getSoDetailId())
-                    && CharSequenceUtil.equals(obj.getDeliveryNoticeDetailId(), addOrUpdateDTO.getDeliveryNoticeDetailId())
+                    && CharSequenceUtil.equals(obj.getDeliveryNoticeDetailId(), StrUtil.nullToDefault(addOrUpdateDTO.getDeliveryNoticeDetailId(),""))
                     && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(old)) {
                 //校验数据是否一样

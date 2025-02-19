@@ -3,6 +3,7 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -17,6 +18,7 @@ import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
@@ -25,6 +27,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -33,6 +36,7 @@ import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -42,6 +46,8 @@ import com.erp.server.tms.mapper.FirstMileCostAllocationMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -125,6 +131,8 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private LogisticsLargeService logisticsLargeService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
     private DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
@@ -271,6 +279,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         //取值发货单对应的目的仓关联组织
         if (CharSequenceUtil.isBlank(firstMileDeliveryEntity.getDestWarehouseId())) {
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "发货单目的仓不能为空");
+        }
+        if (CharSequenceUtil.isBlank(firstMileDeliveryEntity.getDeliveryWarehouseId())) {
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(), firstMileDeliveryEntity.getCode(), "发货单发货仓不能为空");
         }
         List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(firstMileDeliveryEntity.getDestWarehouseId()));
         if (CollectionUtils.isEmpty(updateDTOS)) {
@@ -478,8 +489,11 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             skuIds = Stream.concat(skuIds.stream(), bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getSkuId).filter(StrUtil::isNotEmpty))
                     .collect(Collectors.toList());
         }
+        //当前组织
+        String orgId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstOrgId()) ? allocationSettingDTO.getFirstOrgId() : reportPeriodMonth.getOrgId();
+        String toWarehouseId = CharSequenceUtil.isNotBlank(allocationSettingDTO.getFirstWarehouseId()) ? allocationSettingDTO.getFirstWarehouseId() : entity.getFromWarehouseId();
         //sku成本
-        List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(reportPeriodMonth.getOrgId(), skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth());
+        List<InventorySkuCostDTO.PagingVO> skuCostList = inventorySkuCostService.listDetailByOrgIdAndSkuIds(orgId, skuIds, ApproveStatusEnum.APPROVE.getStatus(), reportPeriodMonth.getMonth(),toWarehouseId);
         //保存分摊主表记录
         service.saveOrUpdate(entity);
         // 操作日志
@@ -1382,11 +1396,27 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstOtherFee());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = reconciliationDetailEntity.getOtherCostCurrency();
+        	BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getOtherCost()) ? MathUtil.multiply(exchangeRate,reconciliationDetailEntity.getOtherCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = firstMileEstimatedBillEntity.getOtherCostCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(firstMileEstimatedBillEntity.getOtherCost()) ? MathUtil.multiply(exchangeRate,firstMileEstimatedBillEntity.getOtherCost()) : BigDecimal.ZERO;
         }
         entity.setAmount(amount.setScale(2,BigDecimal.ROUND_HALF_UP));
@@ -1423,11 +1453,27 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstOtherTaxFee());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = reconciliationDetailEntity.getOtherTaxCurrency();
+        	BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getOtherTaxCost()) ? MathUtil.multiply(exchangeRate,reconciliationDetailEntity.getOtherTaxCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = firstMileEstimatedBillEntity.getOtherTaxCostCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(firstMileEstimatedBillEntity.getOtherTaxCost())? MathUtil.multiply(exchangeRate, firstMileEstimatedBillEntity.getOtherTaxCost()): BigDecimal.ZERO;
         }
         entity.setAmount(amount.setScale(2,BigDecimal.ROUND_HALF_UP));
@@ -1464,11 +1510,27 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstTariffFee());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = reconciliationDetailEntity.getDeclareCostCurrency();
+        	BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getDeclareCost()) ? MathUtil.multiply(exchangeRate, reconciliationDetailEntity.getDeclareCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = firstMileEstimatedBillEntity.getCustomsClearanceCostCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(firstMileEstimatedBillEntity.getCustomsClearanceCost()) ? MathUtil.multiply(exchangeRate, firstMileEstimatedBillEntity.getCustomsClearanceCost()) : BigDecimal.ZERO;
         }
         entity.setAmount(amount.setScale(2, RoundingMode.HALF_UP));
@@ -1510,11 +1572,27 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 .setAllocationType(allocationSettingDTO.getFirstShippingCost());
         BigDecimal amount = BigDecimal.ZERO;
         if (Objects.nonNull(reconciliationDetailEntity)) {
-            BigDecimal exchangeRate = Objects.nonNull(reconciliationDetailEntity.getExchangeRate()) ? reconciliationDetailEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = reconciliationDetailEntity.getShippingCostCurrency();
+        	BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(reconciliationDetailEntity.getShippingCost()) ? MathUtil.multiply(exchangeRate, reconciliationDetailEntity.getShippingCost()) : BigDecimal.ZERO;
         } else if (Objects.nonNull(firstMileEstimatedBillEntity)) {
             //暂估
-            BigDecimal exchangeRate = Objects.nonNull(firstMileEstimatedBillEntity.getExchangeRate()) ? firstMileEstimatedBillEntity.getExchangeRate() : BigDecimal.ONE;
+        	String currency = firstMileEstimatedBillEntity.getLogisticsCostCurrency();
+            BigDecimal exchangeRate = BigDecimal.ONE;
+            if(StringUtils.isNotBlank(currency) && !"CNY".equals(currency)) {
+            	exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+            	if(ObjectUtil.isEmpty(exchangeRate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                    throw new ServiceException("汇率为空，请维护汇率后再提交");
+                }
+            }
             amount = Objects.nonNull(firstMileEstimatedBillEntity.getLogisticsCost()) ? MathUtil.multiply(exchangeRate,firstMileEstimatedBillEntity.getLogisticsCost()) : BigDecimal.ZERO;
         }
         entity.setAmount(amount.setScale(2, RoundingMode.HALF_UP));
@@ -1531,6 +1609,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
+        Map<String, String> currencySymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         //添加分摊明细
         list.forEach(e -> {
             e.setStatusName(ConfirmStatusEnum.getName(e.getStatus()));
@@ -1539,6 +1618,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             e.setAllocationTypeName(CostAllocationEnum.getName(e.getAllocationType()));
             e.setProductCostStr(e.getProductCost());
             e.setProductAllocatedAmountStr(e.getProductAllocatedAmount());
+            e.setCurrencySymbol(currencySymbolMap.get(e.getCurrency()));
         });
     }
 

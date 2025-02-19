@@ -518,4 +518,24 @@ public class SoB2bProcessingDTO implements Serializable {
          */
         private String sourceDetailId;
     }
+
+    /**
+     * 删除dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+        /**
+         * 销售订单id
+         */
+        private List<String> soDetailIdList;
+        /**
+         * 发货通知单明细id
+         */
+        private List<String> deliveryNoticeDetailIdList;
+    }
 }

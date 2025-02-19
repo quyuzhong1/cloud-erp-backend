@@ -161,9 +161,12 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				String dataId = dmpOutputTaskRecordEntity.getDataId();
 				String redisKey = "dmp:output:task:" + dataId;
 				try {
-					if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
-						this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+					if(!dmpOutputTaskRecordService.getById(dmpOutputTaskRecordEntity.getId()).getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
+						if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
+							this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+						}
 					}
+
 				} catch (Exception e) {
 					log.error("处理推送数据失败{}" , dmpOutputTaskRecordEntity.getId() , e);
 				}finally {

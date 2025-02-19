@@ -99,4 +99,15 @@
         </if>
         GROUP BY sb2c.sign_order_error ORDER BY typeCount DESC
     </select>
+    <select id="exportSoB2CAbnormalPools" resultType="com.erp.model.oms.dto.SoB2cAbnormalDTO$PoolsDTO">
+        select sbe.id as errorIds,
+               sbe.type,
+               sbe.message,
+               sbe.code,
+               sb2c.dict_platform as dictPlatform
+        from so_b2c_error sbe
+        inner join so_b2c sb2c on sb2c.is_deleted = false and sb2c.id = sbe.main_id
+        where sbe.id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+        and sbe.type in ('signDelivery','getLogisticsCode','orderForecast','thirdWarehouseOutException')
+    </select>
 </mapper>

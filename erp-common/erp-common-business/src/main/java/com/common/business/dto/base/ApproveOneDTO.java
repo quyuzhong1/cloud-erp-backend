@@ -3,11 +3,13 @@ package com.common.business.dto.base;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
 
 /**
  * @author Will
@@ -15,6 +17,7 @@ import javax.validation.constraints.Size;
 
  * @date 2023/3/15 18:16
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -49,14 +52,22 @@ public class ApproveOneDTO extends PermissionsDTO {
      * 是否是pc端访问
      */
     private Boolean pcShow = false;
-
-
+    /**
+     *发货日期
+     */
+    private LocalDate deliveryDate;
 
     public ApproveOneDTO (String id,String type,String comment) {
         this.id = id;
         this.type = type;
         this.comment = comment;
 
+    }
+    public ApproveOneDTO (String id,String type,String comment,LocalDate deliveryDate) {
+        this.id = id;
+        this.type = type;
+        this.comment = comment;
+        this.deliveryDate = deliveryDate;
     }
 
     public ApproveOneDTO (String id,String type,String comment,Boolean isNeedProcess) {

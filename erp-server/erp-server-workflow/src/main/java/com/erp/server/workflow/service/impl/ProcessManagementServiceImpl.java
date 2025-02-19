@@ -72,6 +72,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -92,6 +93,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     public static final String LAST_APPROVE_TYPE = "lastApproveType";
     public static final String LAST_APPROVE_TIME = "lastApproveTime";
+    public static final String DELIVERY_DATE = "deliveryDate";
     public static final String LAST_COMMENT = "lastComment";
     public static final String LAST_APPROVER = "lastApprover";
     public static final String LAST_TASK_MANAGEMENT_ID = "lastTaskManagementId";
@@ -883,8 +885,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         LocalDateTime lastApproveTime = (LocalDateTime) variables.get(LAST_APPROVE_TIME);
         String lastComment = (String) variables.getOrDefault(LAST_COMMENT, "");
         String lastApprover = (String) variables.getOrDefault(LAST_APPROVER, "");
+        String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
+        LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
         // 流程信息传递给业务系统
-        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment);
+        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate);
         // 获取业务系统feign
         return callFeign(entity.getBusinessKey(), dto);
     }

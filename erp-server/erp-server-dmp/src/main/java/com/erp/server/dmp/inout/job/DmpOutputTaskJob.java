@@ -143,12 +143,14 @@ public class DmpOutputTaskJob {
 			beforeDay = parseObject.getInteger("inputDay");
 			size = parseObject.getInteger("inputSize");
 		}
+		log.warn("归档中台输入任务数据开始");
 		try {
 			dmpOutputTaskRecordService.dmpInputMoveToHistoryTable(DateUtil.formatDateTime(DateUtil.offsetDay(now, beforeDay*-1)), size.toString());
 		} catch (Exception e) {
 			log.error("归档中台输入任务数据失败：" , e);
 			DmpHandlerUtils.sendFeiShuMsg("归档中台输入任务数据失败：" + "【" + e.getMessage() + "】");
 		}
+		log.warn("归档中台输入任务数据结束");
 		
 		beforeDay = 60;
 		size = 50000;
@@ -156,12 +158,14 @@ public class DmpOutputTaskJob {
 			beforeDay = parseObject.getInteger("relationDay");
 			size = parseObject.getInteger("relationSize");
 		}
+		log.warn("归档中台关系表数据开始");
 		try {
 			dmpOutputTaskRecordService.dmpRelationMoveToHistoryTable(DateUtil.formatDateTime(DateUtil.offsetDay(now, beforeDay*-1)), size.toString());
 		} catch (Exception e) {
 			log.error("归档中台关系表数据失败：" , e);
 			DmpHandlerUtils.sendFeiShuMsg("归档中台关系表数据失败：" + "【" + e.getMessage() + "】");
 		}
+		log.warn("归档中台关系表数据结束");
 		
 		beforeDay = 60;
 		size = 10000;
@@ -169,12 +173,14 @@ public class DmpOutputTaskJob {
 			beforeDay = parseObject.getInteger("outputDay");
 			size = parseObject.getInteger("outputSize");
 		}
+		log.warn("归档中台输出任务数据开始");
 		try {
 			dmpOutputTaskRecordService.dmpOutputMoveToHistoryTable(DateUtil.formatDateTime(DateUtil.offsetDay(now, beforeDay*-1)), size.toString());
 		} catch (Exception e) {
 			log.error("归档中台输出任务数据失败：" , e);
 			DmpHandlerUtils.sendFeiShuMsg("归档中台输出任务数据失败：" + "【" + e.getMessage() + "】");
 		}
+		log.warn("归档中台输出任务数据结束");
 		
 		return ReturnT.SUCCESS;
 	}

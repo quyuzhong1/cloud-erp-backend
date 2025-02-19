@@ -109,8 +109,9 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
                 // SCM来源物流商ID
                 String supplierId = logisticsSupplierService.getByIdOpt(logisticSupplierId).orElseThrow(() -> new ServiceException("物流供应商不存在")).getSupplierId();
                 LinkedList<String> headerNameList = cfgReconciliationFieldService.thirdFieldListName(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()), supplierId, true);
+                headerNameList.addFirst("币种");
                 if (!headerNameList.contains("物流运单号")){
-                    headerNameList.addFirst("物流运单号");
+                	headerNameList.addFirst("物流运单号");
                 }
                 // 去重
                 String configExcelName = "templateConfig.xlsx";
