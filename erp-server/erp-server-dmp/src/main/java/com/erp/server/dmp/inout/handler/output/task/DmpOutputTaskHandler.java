@@ -137,7 +137,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId()) ) {
 			List<String> ids = dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
 			List<DmpOutputTaskRecordMergeEntity> list = dmpOutputTaskRecordMergeService.lambdaQuery()
-					.in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
+					.in(DmpOutputTaskRecordMergeEntity::getMergeId, ids)
 					.eq(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
 					.list();
 			if (CollUtil.isEmpty(list)) {
