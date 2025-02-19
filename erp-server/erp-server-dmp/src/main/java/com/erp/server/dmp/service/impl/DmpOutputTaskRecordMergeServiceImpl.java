@@ -3,11 +3,15 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.OutputTaskRecordMergeStatusEnum;
+import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.mapper.DmpOutputTaskRecordMergeMapper;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -45,7 +49,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 
     @Resource
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
-
+    
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -117,6 +121,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
         if (CollUtil.isEmpty(list)) {
             return;
         }
+
         List<String> ids = list.stream().map(DmpOutputTaskRecordMergeEntity::getMainId).collect(Collectors.toList());
         List<DmpOutputTaskRecordEntity> recordEntityList = dmpOutputTaskRecordService.listByIds(ids);
         if (CollUtil.isEmpty(recordEntityList)) {
@@ -125,6 +130,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
         List<String> dataList = recordEntityList.stream().map(DmpOutputTaskRecordEntity::getRequestData).collect(Collectors.toList());
         DmpOutputTaskRecordEntity entity = new DmpOutputTaskRecordEntity();
         entity.setMainId(recordEntityList.get(0).getMainId());
+        entity.setDataId(recordEntityList.get(0).getDataId());
         entity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
         entity.setRequestData(dataList.toString());
         dmpOutputTaskRecordService.save(entity);
@@ -136,4 +142,41 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
                 .in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
                 .update();
     }
+
+    @Transactional(rollbackFor = Exception.class)
+	@Override
+	public boolean mergeDeal(DmpCfgOutputEntity dmpCfgOutputEntity,
+			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+		if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId()) ) {
+			String id = dmpOutputTaskRecordEntity.getId();
+			List<DmpOutputTaskRecordMergeEntity> list = lambdaQuery()
+					.eq(DmpOutputTaskRecordMergeEntity::getMergeId, id)
+					.list();
+			if (CollUtil.isEmpty(list)) {
+				String requestData = dmpOutputTaskRecordEntity.getRequestData();
+				Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+				if (isQuerySync != null && isQuerySync) {
+					List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+					if(CollUtil.isNotEmpty(erpQuerySync)) {
+						requestData = erpQuerySync.get(0).getRequestData();
+						isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+						if (isQuerySync != null && isQuerySync) {
+							return true;
+						}
+					}
+				}
+				DmpOutputTaskRecordMergeEntity entity = new DmpOutputTaskRecordMergeEntity();
+				entity.setMainId(id);
+				entity.setMergeStatus(OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode());
+				save(entity);
+				dmpOutputTaskRecordService.lambdaUpdate()
+					.eq(DmpOutputTaskRecordEntity::getId, id)
+					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.set(DmpOutputTaskRecordEntity::getResponseData, "待合并id=" + entity.getId())
+					.update();
+				return false;
+			}
+		}
+		return true;
+	}
 }

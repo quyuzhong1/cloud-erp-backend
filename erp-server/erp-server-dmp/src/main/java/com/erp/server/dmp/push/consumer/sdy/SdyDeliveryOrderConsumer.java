@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,8 +23,13 @@ public class SdyDeliveryOrderConsumer {
 
 
     public ApiResult handle(Object ext) {
-
-        ShudiyunB2cOrderDTO shudiyunB2cOrderDTOList = JSON.parseObject(ext.toString(), ShudiyunB2cOrderDTO.class);
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+        if (ext.toString().startsWith("[") && ext.toString().endsWith("]")) {
+            shudiyunB2cOrderDTOList = JSON.parseArray(ext.toString(), ShudiyunB2cOrderDTO.class);
+        } else {
+            ShudiyunB2cOrderDTO dto = JSON.parseObject(ext.toString(), ShudiyunB2cOrderDTO.class);
+            shudiyunB2cOrderDTOList.add(dto);
+        }
 
         return sdyPushCommonService.executeConsumer(shudiyunB2cOrderDTOList);
     }
