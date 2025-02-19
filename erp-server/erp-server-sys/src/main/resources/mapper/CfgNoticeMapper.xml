@@ -38,6 +38,7 @@
             <include refid="Base_Column_List" />
         from cfg_notice cn
         where cn.is_deleted = false
+        order by id desc
     </select>
 
 
