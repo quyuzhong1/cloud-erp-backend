@@ -9,15 +9,14 @@ import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
+import com.erp.server.wms.convert.WmsVirtualDetailMsgConverter;
 import com.erp.server.wms.mapper.WmsVirtualDetailMsgMapper;
-import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,31 +43,29 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     @Resource
     private MQProducerService mqProducerService;
 
-    @Resource
-    private VirtualTransFlowService virtualTransFlowService;
-
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(WmsVirtualDetailMsgDTO.AddDTO addDTO) {
-        WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity = new WmsVirtualDetailMsgEntity();
-        BeanMapperUtils.copy(addDTO, wmsVirtualDetailMsgEntity);
+        log.warn("新增wms虚拟仓明细同步单，addDTO参数：{}", JSON.toJSONString(addDTO));
+
+        WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity = WmsVirtualDetailMsgConverter.INSTANCE.wmsVirtualDetailMsgToAdd(addDTO);
         //查询是否已存在任务
         WmsVirtualDetailMsgEntity old = getByBusinessId(wmsVirtualDetailMsgEntity.getBusinessId());
         if (ObjUtil.isNotNull(old)) {
             log.warn("业务id = {}，已生成任务",wmsVirtualDetailMsgEntity.getBusinessId());
             return new BaseResultDTO.AddDTO(old.getId(), old.getId());
         }
-        wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(addDTO.getTransFlowEntity()));
-        // 数据处理
-        handleData(wmsVirtualDetailMsgEntity);
+        log.warn("新增wms虚拟仓明细同步单，wmsVirtualDetailMsgEntity参数：{}", JSON.toJSONString(wmsVirtualDetailMsgEntity));
+        wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(wmsVirtualDetailMsgEntity.getTransFlowEntity()));
 
-        log.info("开始新增wms虚拟仓明细同步单");
         boolean save = super.save(wmsVirtualDetailMsgEntity);
         if(!save) {
             throw new ServiceException("wms虚拟仓明细同步单保存失败");
         }
+        log.warn("新增wms虚拟仓明细同步单，参数：{}", JSON.toJSONString(wmsVirtualDetailMsgEntity));
+
         return new BaseResultDTO.AddDTO(wmsVirtualDetailMsgEntity.getId(), wmsVirtualDetailMsgEntity.getId());
     }
 
@@ -101,32 +97,6 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     }
 
     /**
-     * 查询进行中数据
-     * @author will
-     * @date 2024/12/17 16:16
-     * @return List<WmsVirtualDetailMsgEntity>
-     */
-    private List<WmsVirtualDetailMsgEntity> listVirtualDetailMsgDoing() {
-        return  lambdaQuery()
-                .eq(WmsVirtualDetailMsgEntity::getStatus,VirtualDetailMsgStatusEnum.DOING.getCode())
-                .list();
-    }
-
-    /**
-     * 根据业务id集合查询
-     * @author will
-     * @date 2024/12/27 18:15
-     * @param businessIdList
-     * @return List<WmsVirtualDetailMsgEntity>
-     */
-    private List<WmsVirtualDetailMsgEntity> listByBusinessIdList(List<String> businessIdList) {
-        if(CollUtil.isEmpty(businessIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(WmsVirtualDetailMsgEntity::getBusinessId,businessIdList).list();
-    }
-
-    /**
      * 根据业务id查询
      * @author will
      * @date 2024/12/17 18:05
@@ -135,12 +105,5 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
      */
     private WmsVirtualDetailMsgEntity getByBusinessId(String businessId) {
        return lambdaQuery().eq(WmsVirtualDetailMsgEntity::getBusinessId,businessId).last("limit 1").one();
-    }
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity) {
-
     }
 }
