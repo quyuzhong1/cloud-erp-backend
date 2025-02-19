@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -77,8 +78,16 @@ public class DmpInputShopeeSkuDmpHandler extends DmpInputDoChildDmpHandler{
 					}
 					
 					for(Map<String , Object> model : modelList) {
-						dmpInputMongoChild.put("skuId", model.get("model_id"));
-						dmpInputMongoChild.put("skuNo", model.get("model_sku"));
+						Object skuIdObj = model.get("model_id");
+						if(skuIdObj == null || StringUtils.isBlank(skuIdObj.toString())) {
+							skuIdObj = dmpInputMongoChild.get("item_id");
+						}
+						dmpInputMongoChild.put("skuId", skuIdObj);
+						Object skuNoObj = model.get("model_sku");
+						if(skuNoObj == null || StringUtils.isBlank(skuNoObj.toString())) {
+							skuNoObj = dmpInputMongoChild.get("item_sku");
+						}
+						dmpInputMongoChild.put("skuNo", skuNoObj);
 						dmpInputMongoChild.put("name", model.get("model_name"));
 						dmpInputMongoChild.put("status", model.get("model_status"));
 						result.add(BeanUtil.copyProperties(dmpInputMongoChild, Map.class));
