@@ -150,7 +150,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 
 				dmpOutputTaskRecordService.lambdaUpdate()
 						.in(DmpOutputTaskRecordEntity::getId, ids)
-						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 						.update();
 				return;
 			}
