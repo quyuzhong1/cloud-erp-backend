@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service;
 import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
+import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 
 import java.util.List;
@@ -16,13 +17,15 @@ import java.util.List;
 public interface CfgRuleStockingRatioService extends SuperService<CfgRuleStockingRatioEntity> {
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-08-23
-    * @param stockingRatioList
-    * @return
-    */
-    Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList,String stockUpId,String type,Boolean isCustom);
+     * 修改
+     *
+     * @param stockingRatioList
+     * @param cfgRuleStockUpEntity
+     * @return
+     * @author will
+     * @date: 2024-08-23
+     */
+    Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList, CfgRuleStockUpEntity cfgRuleStockUpEntity, String type, Boolean isCustom);
 
     /**
      * 根据备货主表id查询

@@ -1,17 +1,21 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.server.mrp.service.CfgRuleSalesQtyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * 销量（规则设置）
@@ -45,13 +49,13 @@ public class CfgRuleSalesQtyController extends BaseController {
      * 查看详情
      * @author will
      * @date 2024/8/24 9:19
-     * @param platformType
+     * @param platform
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<CfgRuleSalesQtyDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleSalesQtyService.view(platformType));
+    public ApiResult<CfgRuleSalesQtyDTO.ViewDTO> view(@RequestParam("platform") String platform) {
+        return success(cfgRuleSalesQtyService.view(platform));
     }
 
     /**
@@ -66,5 +70,35 @@ public class CfgRuleSalesQtyController extends BaseController {
     @LogViewService
     public ApiResult<CfgRuleSalesQtyDTO.ViewDetailDTO> view(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
         return success(cfgRuleSalesQtyService.viewDetail(platformType,refId));
+    }
+
+    /**
+     * 导入模板
+     * @param response 参数
+     * @return ApiResult<?>
+     */
+    @GetMapping("/downloadRuleTemplate")
+    public ApiResult<String> downloadRuleTemplate(HttpServletResponse response) {
+        cfgRuleSalesQtyService.downloadRuleTemplate(response);
+        return success();
+    }
+
+
+    /**
+     * 文件列表
+     */
+    @PostMapping("/filePage")
+    public ApiResult<CfgRuleSalesEstimateFileDTO.PagingView> filePage(@RequestBody @Validated PagingDTO<CfgRuleSalesEstimateFileDTO.PagingParamDTO> params) {
+
+        return new ApiResult<>();
+    }
+
+
+    /**
+     * 导入
+     */
+    @PostMapping("/importFile")
+    public ApiResult<String> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        return success();
     }
 }

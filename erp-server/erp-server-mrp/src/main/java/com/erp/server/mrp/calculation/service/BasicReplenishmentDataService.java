@@ -215,8 +215,9 @@ public class BasicReplenishmentDataService {
                         //初始化配置
                         CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
                         //获取销量配置
+                        //todo
                         CfgRuleSalesQtyEntity defaultSalesQty = defaultCfgRuleSalesQty.stream()
-                                .filter(v -> v.getType().equals(detail.getSkuType()))
+//                                .filter(v -> v.getType().equals(detail.getSkuType()))
                                 .findFirst()
                                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
                         List<CfgRuleSalesFormulaEntity> defaultFormula = defaultFormulaList.stream()

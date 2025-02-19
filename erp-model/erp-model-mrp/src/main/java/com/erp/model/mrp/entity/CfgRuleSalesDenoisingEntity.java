@@ -61,7 +61,11 @@ public class CfgRuleSalesDenoisingEntity extends BaseEntity<CfgRuleSalesDenoisin
     */
     @TableField("sales_qty_id")
     private String salesQtyId;
-
+    /**
+     * sku类型 新品/常规品
+     */
+    @TableField("sku_type")
+    private String skuType;
     /**
      * 时间
      */
