@@ -134,28 +134,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 
-    	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId()) ) {
-			List<String> ids = dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
-			List<DmpOutputTaskRecordMergeEntity> list = dmpOutputTaskRecordMergeService.lambdaQuery()
-					.in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
-					.eq(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
-					.list();
-			if (CollUtil.isEmpty(list)) {
-				for (DmpOutputTaskRecordEntity taskRecordEntity : dmpOutputTaskRecordEntityList) {
-					DmpOutputTaskRecordMergeEntity entity = new DmpOutputTaskRecordMergeEntity();
-					entity.setMainId(taskRecordEntity.getId());
-					entity.setMergeStatus(OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode());
-					dmpOutputTaskRecordMergeService.save(entity);
-				}
-
-				dmpOutputTaskRecordService.lambdaUpdate()
-						.in(DmpOutputTaskRecordEntity::getId, ids)
-						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-				return;
-			}
-		}
-
 		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
@@ -183,7 +161,9 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				String dataId = dmpOutputTaskRecordEntity.getDataId();
 				String redisKey = "dmp:output:task:" + dataId;
 				try {
-					this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+					if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
+						this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+					}
 				} catch (Exception e) {
 					log.error("处理推送数据失败{}" , dmpOutputTaskRecordEntity.getId() , e);
 				}finally {
