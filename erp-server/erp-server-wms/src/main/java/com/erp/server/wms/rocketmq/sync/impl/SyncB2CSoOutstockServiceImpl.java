@@ -373,18 +373,6 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //推送数帝云
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
         syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
-
-        if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
-            //更新推送数帝云订单信息
-            SoInfoToSdyDTO soInfoToSdyDTO = new SoInfoToSdyDTO();
-            soInfoToSdyDTO.setSoId(entity.getSoId());
-            soInfoToSdyDTO.setOperateEnum(operate);
-            soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
-            soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
-
-        } else {
-            soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate);
-        }
     }
 
     private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList) {
