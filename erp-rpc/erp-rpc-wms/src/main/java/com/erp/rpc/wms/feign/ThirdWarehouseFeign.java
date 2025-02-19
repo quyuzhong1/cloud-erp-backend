@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.wms.dto.third.*;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -44,7 +45,7 @@ public interface ThirdWarehouseFeign {
      * @return
      */
     @PostMapping("feign/thirdWarehouse/uploadFile")
-    ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@RequestBody ThirdWarehouseUploadFileReq uploadFileReq);
+    ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@RequestBody @Validated ThirdWarehouseUploadFileReq uploadFileReq);
 
     /**
      * 上传面单

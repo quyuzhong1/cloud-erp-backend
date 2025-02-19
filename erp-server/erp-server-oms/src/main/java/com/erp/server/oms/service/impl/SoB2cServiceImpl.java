@@ -2473,9 +2473,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq = cfgRuleOrderHandleService.handleRuleOrderThirdWarehouse(createOutboundReq, map);
         //查询配置是否推送面单
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
+            String logisticsLabelBase64 = soB2cLabelEntity.getLogisticsLabelBase64();
+            if (CharSequenceUtil.isBlank(logisticsLabelBase64)){
+                throw new ServiceException("未找到面单信息");
+            }
             ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
             thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
-            thirdWarehouseUploadFileReq.setFileData(soB2cLabelEntity.getLogisticsLabelBase64());
+            thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
             ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
             if(!uploadFileResponse.isSuccess()){
                 throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());
