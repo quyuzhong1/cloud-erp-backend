@@ -27,10 +27,10 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * 查看详情
      * @author will
      * @date 2024/8/23 17:07
-     * @param platformType
+     * @param platform 平台
      * @return ViewDTO
      */
-    CfgRuleStockUpDTO.ViewDTO view(String platformType,String refId);
+    CfgRuleStockUpDTO.ViewDTO view(String platform,String refId);
     /**
      * 根据来源id删除
      * @author will
@@ -62,15 +62,6 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      */
     List<CfgRuleStockUpEntity> listByRefIdList(List<String> refIdList);
 
-    /**
-     * 获取默认配置
-     * @param platformType 平台类型
-     */
-    CfgRuleStockUpEntity getDefaultCfgRuleStockUp(String platformType);
-    /**
-     * 获取默认配置
-     */
-    List<CfgRuleStockUpEntity> getDefaultCfgRuleStockUp();
 
     /**
      * 根据平台类型获取配置

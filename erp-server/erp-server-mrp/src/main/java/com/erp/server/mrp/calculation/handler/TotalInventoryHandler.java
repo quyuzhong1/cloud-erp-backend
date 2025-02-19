@@ -39,7 +39,7 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         int totalQty = 0;
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey();
         //计算FBA的库存
         totalQty = getFBATotalQty(replenishmentResultDTO, inventoryResult, baseKey, totalQty);
         //计算海外仓的库存

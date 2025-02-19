@@ -4,6 +4,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesFormulaEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 
 import java.util.List;
 
@@ -19,13 +20,16 @@ public interface CfgRuleSalesFormulaService extends SuperService<CfgRuleSalesFor
 
 
     /**
-    * 修改
-    * @author will
-    * @date: 2024-08-23
-    * @param salesFormulaList
-    * @return
-    */
-    Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId,Boolean isCustom);
+     * 修改
+     *
+     * @param salesFormulaList
+     * @param cfgRuleSalesQtyEntity
+     * @param skuType
+     * @return
+     * @author will
+     * @date: 2024-08-23
+     */
+    Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity,String skuType, Boolean isCustom);
 
     /**
      * 获取默认的日销量数据

@@ -177,7 +177,7 @@ public class BasicReplenishmentDataService {
         //获取备货默认配置
         CfgRuleStockUpEntity defaultStockUp = cfgRuleStockUpService.getDefaultByPlatform(platformType);
         List<CfgRuleStockingRatioEntity> defaultStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
-        List<CfgRuleLogisticsEntity> defaultLogisticsList = cfgRuleLogisticsService.listByStockUpIdList(Collections.singletonList(defaultStockUp.getId()));
+        List<CfgRuleLogisticsEntity> defaultLogisticsList = cfgRuleLogisticsService.listByExpireTimeIdList(Collections.singletonList(defaultStockUp.getId()));
         List<String> defaultLogisticsIds = defaultLogisticsList.stream().map(CfgRuleLogisticsEntity::getId).collect(Collectors.toList());
         List<CfgRuleLogisticsDetailEntity> defaultLogisticsDetailList = cfgRuleLogisticsDetailService.listByMainIdList(defaultLogisticsIds);
         //获取销量默认配置
@@ -188,7 +188,7 @@ public class BasicReplenishmentDataService {
         //获取库存配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
-        ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, platformType, calculationDate);
+        ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, calculationDate);
         //获取策略配置
         List<CfgRuleOrderStrategyEntity> list = cfgRuleOrderStrategyService.list();
         CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = CollUtil.isEmpty(list) ? null : CfgRuleOrderStrategyDTO.StrategyResultDTO.buildStrategyResultDTO(list.get(0));
@@ -215,8 +215,9 @@ public class BasicReplenishmentDataService {
                         //初始化配置
                         CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
                         //获取销量配置
+                        //todo
                         CfgRuleSalesQtyEntity defaultSalesQty = defaultCfgRuleSalesQty.stream()
-                                .filter(v -> v.getType().equals(detail.getSkuType()))
+//                                .filter(v -> v.getType().equals(detail.getSkuType()))
                                 .findFirst()
                                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, CfgRulePlatformTypeEnum.getName(entity.getPlatformType())));
                         List<CfgRuleSalesFormulaEntity> defaultFormula = defaultFormulaList.stream()

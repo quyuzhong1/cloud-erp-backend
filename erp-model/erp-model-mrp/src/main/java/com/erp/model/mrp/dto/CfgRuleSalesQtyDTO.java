@@ -37,21 +37,80 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 断货数据是否从历史销量中排除,true是，false否
+         */
+        private Boolean isIgnoreOutOfStock;
+
+        /**
+         * sales_qty_type
+         * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
+         */
+        private String salesQtyType;
+
+        /**
+         * 订单类型，订单类型，亚马逊取FbaOrderTypeEnum，海外取OverseasOrderTypeEnum
+         */
+        private List<String> orderType;
+
+        /**
+         * 平台类型
+         */
+        private String platform;
+
+        /**
+         * 预估销量类型（SYSTEM/AI/CUSTOMER）
+         */
+        private String salesEstimateType;
 
         /**
          * 是否同常规品设置
          */
-        private Boolean isCfgSame;
+        private Boolean isCfgSameDefault;
+        /**
+         * 默认日销量
+         */
+        private CfgRuleSalesFormulaDTO.ViewDTO defaultSalesQtyDTO;
 
         /**
-         * 常规品
+         * 新品默认日销量
          */
-        private ViewDetailDTO conventionalDetail;
+        private CfgRuleSalesFormulaDTO.ViewDTO defaultNewSalesQtyDTO;
 
         /**
-         * 新品
+         * 是否同常规品设置
          */
-        private ViewDetailDTO newDetail;
+        private Boolean isCfgSameDynamic;
+        /**
+         * 动态日销量
+         */
+        private List<CfgRuleSalesFormulaDTO.ViewDTO> dynamicSalesQtyList;
+        /**
+         * 新品动态日销量
+         */
+        private List<CfgRuleSalesFormulaDTO.ViewDTO> dynamicNewSalesQtyList;
+        /**
+         * 固定日销量
+         */
+        private List<CfgRuleSalesFormulaDTO.ViewDTO> fixedSalesQtyList;
+
+        /**
+         * 是否同常规品设置
+         */
+        private Boolean isCfgSameDenoising;
+        /**
+         *销量去噪
+         */
+        private List<CfgRuleSalesDenoisingDTO.ViewDTO> salesDenoisingList;
+        /**
+         *新品销量去噪
+         */
+        private List<CfgRuleSalesDenoisingDTO.ViewDTO> newSalesDenoisingList;
     }
 
 
@@ -68,30 +127,9 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         private String  id;
 
         /**
-        * 是否同常规品配置一致,true是，false否
+        * 平台类型
         */
-        private Boolean isCfgSame;
-
-        /**
-        * 断货数据是否从历史销量中排除,true是，false否
-        */
-        private Boolean isIgnoreOutOfStock;
-
-        /**
-        * sales_qty_type
-        * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
-        */
-        private String salesQtyType;
-
-        /**
-        * 订单类型，all:全部，fba:FBA,fbm:FBM
-        */
-        private List<String> orderType;
-
-        /**
-        * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-        */
-        private String platformType;
+        private String platform;
 
         /**
         * 关联id
@@ -102,11 +140,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         * 关联类型
         */
         private String refType;
-
-        /**
-        * 类型，new 新品、conventional常规品
-        */
-        private String type;
 
         /**
          * 默认日销量
@@ -137,50 +170,80 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     public static class UpdateDTO {
 
         /**
-         * 是否同常规品设置
+         * 断货数据是否从历史销量中排除,true是，false否
          */
-        @NotNull(message = "是否同常规品设置不能为空")
-        private Boolean isCfgSame;
+        @NotNull(message = "断货排除不能为空")
+        private Boolean isIgnoreOutOfStock;
 
         /**
-         * 常规品
+         * sales_qty_type
+         * 销量计算类型，byCreateTime以销售订单订单创建时间计算销量，byOutStockTime以销售出库单出库时间计算销量
          */
-        @Valid
-        @NotNull(message = "常规品设置不能为空")
-        private UpdateDetailDTO conventionalDetail;
+        private String salesQtyType;
 
         /**
-         * 新品
+         * 订单类型，订单类型，亚马逊取FbaOrderTypeEnum，海外取OverseasOrderTypeEnum
          */
-        @Valid
-        @NotNull(message = "新品设置不能为空")
-        private UpdateDetailDTO newDetail;
-    }
+        private List<String> orderType;
 
-    /**
-    * 修改
-    */
-    @Data
-    @NoArgsConstructor
-    @Accessors(chain = true)
-    public static class UpdateDetailDTO extends CommonDTO {
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 32,message = "平台类型最大长度不能超过32位")
+        private String platform;
+
+        /**
+         * 关联id
+         */
+        @Size(max = 19,message = "关联id最大长度不能超过19位")
+        private String refId;
+
+        /**
+         * 关联类型
+         */
+        @Size(max = 32,message = "关联类型最大长度不能超过32位")
+        private String refType;
+
         /**
          * 是否是自定义
          */
         private Boolean isCustom = false;
 
         /**
+         * 是否同常规品设置
+         */
+        @NotNull(message = "是否同常规品设置不能为空")
+        private Boolean isCfgSameDefault;
+        /**
          * 默认日销量
          */
         @Valid
+        @NotNull(message = "常规品默认设置不能为空")
         private CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultSalesQtyDTO;
 
+        /**
+         * 新品默认日销量
+         */
+        @Valid
+        @NotNull(message = "新品默认设置不能为空")
+        private CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultNewSalesQtyDTO;
+
+        /**
+         * 是否同常规品设置
+         */
+        @NotNull(message = "是否同常规品设置不能为空")
+        private Boolean isCfgSameDynamic;
         /**
          * 动态日销量
          */
         @Valid
         private List<CfgRuleSalesFormulaDTO.DynamicUpdateDTO> dynamicSalesQtyList;
-
+        /**
+         * 新品动态日销量
+         */
+        @Valid
+        private List<CfgRuleSalesFormulaDTO.DynamicUpdateDTO> dynamicNewSalesQtyList;
         /**
          * 固定日销量
          */
@@ -188,12 +251,22 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         private List<CfgRuleSalesFormulaDTO.FixedUpdateDTO> fixedSalesQtyList;
 
         /**
+         * 是否同常规品设置
+         */
+        @NotNull(message = "是否同常规品设置不能为空")
+        private Boolean isCfgSameDenoising;
+        /**
          *销量去噪
          */
         @Valid
         private List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList;
-
+        /**
+         *新品销量去噪
+         */
+        @Valid
+        private List<CfgRuleSalesDenoisingDTO.UpdateDTO> newSalesDenoisingList;
     }
+
 
     @Data
     @NoArgsConstructor
@@ -343,13 +416,14 @@ public class CfgRuleSalesQtyDTO implements Serializable {
                                                                List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults,
                                                                List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
             StrategyResultDTO resultDTO = new StrategyResultDTO();
-            resultDTO.setIsCfgSame(cfgRuleSalesQty.getIsCfgSame());
+//            todo
+//            resultDTO.setIsCfgSame(cfgRuleSalesQty.getIsCfgSame());
             resultDTO.setIsIgnoreOutOfStock(cfgRuleSalesQty.getIsIgnoreOutOfStock());
             resultDTO.setSalesQtyType(cfgRuleSalesQty.getSalesQtyType());
             resultDTO.setOrderType(cfgRuleSalesQty.getOrderType());
-            resultDTO.setPlatformType(cfgRuleSalesQty.getPlatformType());
+//            resultDTO.setPlatformType(cfgRuleSalesQty.getPlatformType());
             resultDTO.setRefId(cfgRuleSalesQty.getRefId());
-            resultDTO.setType(cfgRuleSalesQty.getType());
+//            resultDTO.setType(cfgRuleSalesQty.getType());
             resultDTO.setFormulaResults(formulaResults);
             resultDTO.setDenoisingResults(denoisingResults);
             resultDTO.setDefaultFormulaResults(defaultFormulaResults);

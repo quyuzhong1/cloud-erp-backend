@@ -4,7 +4,6 @@ import com.erp.model.mrp.enums.TimePeriodEstimateEnum;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.Valid;
 import java.time.LocalDate;
 
 @Getter
@@ -36,7 +35,7 @@ public class MockSalesAnalysisDTO {
     /**
      * 销量设置
      */
-    @Valid
-    private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+//    @Valid
+//    private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
 
 }

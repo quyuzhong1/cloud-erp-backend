@@ -7,7 +7,6 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -22,7 +21,6 @@ import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSalesFormulaMapper;
 import com.erp.server.mrp.service.CfgRuleSalesFormulaService;
-import com.erp.server.mrp.service.CfgRuleSalesQtyService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -50,22 +48,19 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     @Resource
     private OperateLogService operateLogService;
 
-    @Resource
-    private CfgRuleSalesQtyService cfgRuleSalesQtyService;
-
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList,String salesQtyId,Boolean isCustom) {
+    public Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isCustom) {
         if (CollectionUtils.isEmpty(salesFormulaList)) {
             salesFormulaList = Collections.emptyList();
         }
         List<CfgRuleSalesFormulaEntity> list = BeanMapperUtils.copyList(CfgRuleSalesFormulaEntity.class, salesFormulaList);
 
-        //原物流信息
-        List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Collections.singletonList(salesQtyId));
+        //原信息
+        List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Collections.singletonList(cfgRuleSalesQtyEntity.getId()), skuType);
         //自定义更新无需删除
         if (Boolean.FALSE.equals(isCustom)) {
             //删除明细
@@ -80,35 +75,32 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         if (CollectionUtils.isEmpty(list)) {
             return  Boolean.TRUE;
         }
-        //销量信息
-        CfgRuleSalesQtyEntity salesQtyEntity = cfgRuleSalesQtyService.getById(salesQtyId);
-        if (ObjectUtil.isEmpty(salesQtyEntity)) {
-            throw new ServiceException(ApiError.NOT_EXIST_BILL,"规则设置（销量）");
-        }
         // 数据处理
-        handleData(list,oldList,salesQtyId,isCustom);
-        log.info("编辑 开始修改销量公式（规则设置）数据，id：【{}】", salesQtyId);
+        handleData(list,oldList,cfgRuleSalesQtyEntity.getId(),isCustom, skuType);
+        log.info("编辑 开始修改销量公式（规则设置）数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("销量公式（规则设置）保存失败");
         }
-        addOperateLog(list,salesQtyEntity);
+        addOperateLog(list,cfgRuleSalesQtyEntity, skuType);
         return Boolean.TRUE;
     }
     /**
      * 添加日志
-     * @author will
-     * @date 2024/9/12 10:26
+     *
      * @param list
      * @param salesQtyEntity
+     * @param skuType
+     * @author will
+     * @date 2024/9/12 10:26
      */
-    private void addOperateLog (List<CfgRuleSalesFormulaEntity> list,CfgRuleSalesQtyEntity salesQtyEntity) {
+    private void addOperateLog (List<CfgRuleSalesFormulaEntity> list, CfgRuleSalesQtyEntity salesQtyEntity, String skuType) {
         Map<String, List<CfgRuleSalesFormulaEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getType().concat(CharSequenceUtil.blankToDefault(obj.getDefaultType(),""))));
         //日志
         for (Map.Entry<String, List<CfgRuleSalesFormulaEntity>> entry : map.entrySet()) {
             List<CfgRuleSalesFormulaEntity> value = entry.getValue();
             StringBuilder msg = new StringBuilder();
-            msg.append(CharSequenceUtil.format("{}_{}日销量：<br>",CfgRuleStockingRatioTypeEnum.getName(salesQtyEntity.getType()),CfgRuleSalesFormulaTypeEnum.getName(value.get(0).getType())));
+            msg.append(CharSequenceUtil.format("{}_{}日销量：<br>",CfgRuleStockingRatioTypeEnum.getName(skuType),CfgRuleSalesFormulaTypeEnum.getName(value.get(0).getType())));
             for (CfgRuleSalesFormulaEntity formulaEntity : value) {
                 if (!CharSequenceUtil.equals(formulaEntity.getType(),CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode()) ) {
                     msg.append(CharSequenceUtil.format("•序号【{}】、名称【{}】、时间段【{}】<br>" ,formulaEntity.getIndex(),formulaEntity.getName(),CharSequenceUtil.format("{}~{}",formulaEntity.getStartDate(),formulaEntity.getEndDate())));
@@ -126,10 +118,15 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
 
     @Override
     public List<CfgRuleSalesFormulaEntity> listBySalesQtyIdList(List<String> salesQtyIdList) {
+        return listBySalesQtyIdList(salesQtyIdList, null);
+    }
+
+    private List<CfgRuleSalesFormulaEntity> listBySalesQtyIdList(List<String> salesQtyIdList, String skuType) {
         if (CollectionUtils.isEmpty(salesQtyIdList)) {
             return  Collections.emptyList();
         }
-        List<CfgRuleSalesFormulaEntity> list = lambdaQuery().in(CfgRuleSalesFormulaEntity::getSalesQtyId, salesQtyIdList).list();
+        List<CfgRuleSalesFormulaEntity> list = lambdaQuery().in(CfgRuleSalesFormulaEntity::getSalesQtyId, salesQtyIdList)
+                .eq(StringUtils.isNotBlank(skuType), CfgRuleSalesFormulaEntity::getSkuType, skuType).list();
         if (CollectionUtils.isEmpty(list)) {
             return  Collections.emptyList();
         }
@@ -173,7 +170,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleSalesFormulaEntity> list,List<CfgRuleSalesFormulaEntity> oldList,String salesQtyId,Boolean isCustom) {
+    private void handleData(List<CfgRuleSalesFormulaEntity> list, List<CfgRuleSalesFormulaEntity> oldList, String salesQtyId, Boolean isCustom, String skuType) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
@@ -184,6 +181,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             int maxIndex = (Boolean.TRUE.equals(isCustom)) ? getMaxIndex(oldList, entry) : MathUtil.ZERO;
             validateUniqueNames(value);
             for (CfgRuleSalesFormulaEntity salesFormula : value) {
+                salesFormula.setSkuType(skuType);
                 updateSalesFormulaAttributes(oldList, salesQtyId, isCustom, salesFormula, maxIndex);
                 maxIndex ++;
             }

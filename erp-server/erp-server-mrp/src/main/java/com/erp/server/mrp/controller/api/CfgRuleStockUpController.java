@@ -46,26 +46,26 @@ public class CfgRuleStockUpController extends BaseController {
      * 查看详情
      * @author will
      * @date 2024/8/23 17:06
-     * @param platformType
+     * @param platform 平台
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleStockUpService.view(platformType,""));
+    public ApiResult<CfgRuleStockUpDTO.ViewDTO> view(@RequestParam("platform") String platform) {
+        return success(cfgRuleStockUpService.view(platform,""));
     }
 
-    /**
-     * 根据关联id和平台类型查询
-     * @author will
-     * @date 2024/9/5 17:58
-     * @param platformType
-     * @param refId
-     * @return ApiResult<ViewDTO>
-     */
-    @GetMapping("/viewByRefId")
-    @LogViewService
-    public ApiResult<CfgRuleStockUpDTO.ViewDTO> viewByRefId(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
-        return success(cfgRuleStockUpService.view(platformType,refId));
-    }
+//    /**
+//     * 根据关联id和平台类型查询
+//     * @author will
+//     * @date 2024/9/5 17:58
+//     * @param platformType
+//     * @param refId
+//     * @return ApiResult<ViewDTO>
+//     */
+//    @GetMapping("/viewByRefId")
+//    @LogViewService
+//    public ApiResult<CfgRuleStockUpDTO.ViewDTO> viewByRefId(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
+//        return success(cfgRuleStockUpService.view(platformType,refId));
+//    }
 }
