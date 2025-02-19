@@ -48,8 +48,8 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
         CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = stockUpResult.getLogisticsResult();
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestAmountResult = cfgRuleStrategyDTO.getSuggestAmountResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey();
-        Set<String> deliveryVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getDeliveryVolumeAging());
-        Set<String> deliveryVolumeInventory = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getDeliveryVolumeInventory());
+        Set<String> deliveryVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getDeliveryVolumeAging(replenishmentResultDTO.getReplenishment().getPlatformType()));
+        Set<String> deliveryVolumeInventory = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getDeliveryVolumeInventory(replenishmentResultDTO.getReplenishment().getPlatformType()));
         int agingDays = deliveryVolumeAging.stream()
                 .map(v -> ReplenishmentResultDTO.DetailDTO.getAttributeValue(replenishmentResultDTO.getReplenishmentDetail(), v))
                 .reduce(0, Math::addExact);
