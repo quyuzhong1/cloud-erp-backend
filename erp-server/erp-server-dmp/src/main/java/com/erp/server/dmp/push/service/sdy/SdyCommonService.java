@@ -32,36 +32,27 @@ public class SdyCommonService {
 	}
 
 	public ApiResult<?> requestSdy(Object ext) {
-		String url = null;
-		String requestData = null;
+		JSONObject parseObject = JSON.parseObject(ext.toString());
+		String url = parseObject.getString(REQUEST_URL);
+		if(!url.startsWith("/")) {
+			url = "/" + url;
+		}
+		url = sdyUrl + url;
 
-		if (ext instanceof String) {
-			JSONObject parseObject = JSON.parseObject(ext.toString());
-			url = parseObject.getString(REQUEST_URL);
-			if(!url.startsWith("/")) {
-				url = "/" + url;
-			}
-			url = sdyUrl + url;
-			requestData = parseObject.getString(REQUEST_DATA);
-		} else if (ext instanceof Object[]) {
+		String requestData = "";
+		Object data = parseObject.get(REQUEST_DATA);
+		if (data instanceof String) {
+			requestData = String.valueOf(data);
+		} else if (data instanceof Object[]) {
 			// 如果 ext 是数组
-			Object[] extArray = (Object[]) ext;
-
+			Object[] extArray = (Object[]) data;
 			List<String> list = new ArrayList<>();
 			for (Object o : extArray) {
-				JSONObject parseObject = JSON.parseObject(o.toString());
-				url = parseObject.getString(REQUEST_URL);
-				if(!url.startsWith("/")) {
-					url = "/" + url;
-				}
-				url = sdyUrl + url;
-				String dataStr = parseObject.getString(REQUEST_DATA);
-				list.add(dataStr);
+				list.add(String.valueOf(o));
 			}
-
 			JSONObject object = new JSONObject();
 			object.put("count", extArray.length);
-			object.put("list", extArray.length);
+			object.put("list", list);
 			requestData = object.toJSONString();
 		} else {
 			// 如果 ext 既不是字符串也不是数组，抛出异常或返回错误
