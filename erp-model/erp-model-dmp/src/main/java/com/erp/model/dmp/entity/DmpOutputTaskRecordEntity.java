@@ -73,12 +73,6 @@ public class DmpOutputTaskRecordEntity extends BaseEntity<DmpOutputTaskRecordEnt
     @TableField("is_need_sync")
     private Boolean isNeedSync;
 
-    /**
-     * waitMerge待合并，merge已合并
-     */
-    @TableField("mergeStatus")
-    private String mergeStatus;
-
 
     public static final String INPUT_STATUS = "input_status";
 

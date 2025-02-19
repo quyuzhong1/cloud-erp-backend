@@ -50,9 +50,6 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
     @Resource
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
     
-    @Autowired
-	protected DmpOutputUtils dmpOutputUtils;
-
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -124,6 +121,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
         if (CollUtil.isEmpty(list)) {
             return;
         }
+
         List<String> ids = list.stream().map(DmpOutputTaskRecordMergeEntity::getMainId).collect(Collectors.toList());
         List<DmpOutputTaskRecordEntity> recordEntityList = dmpOutputTaskRecordService.listByIds(ids);
         if (CollUtil.isEmpty(recordEntityList)) {
