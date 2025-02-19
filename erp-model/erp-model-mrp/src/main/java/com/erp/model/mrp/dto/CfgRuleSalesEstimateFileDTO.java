@@ -35,4 +35,10 @@ public class CfgRuleSalesEstimateFileDTO {
     public static class PagingParamDTO {
 
     }
+
+    @Getter
+    @Setter
+    public static class ExcelDTO {
+
+    }
 }
