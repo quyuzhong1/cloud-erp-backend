@@ -20,7 +20,6 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
@@ -2432,91 +2431,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean allExport(ProductSearchDTO.ExportDTO params) {
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-
-        params.setPermissionSql(params.getPermissionSql());
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-        //部门处理
-//        Boolean isFlag = handlePagingDept(params);
-//        if (isFlag) {
-//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-//        }
-        //两个都是
-        if (size == 2) {
-            List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listAllTaskExport(params, categoryIdList);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuilder sb = new StringBuilder();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                return Boolean.FALSE;
-            }
-
-
-        }
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
-                fillPagingDb(list);
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
-
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listAllTaskExport(params, categoryIdList);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-
-            }
-        }
-
-        return Boolean.TRUE;
-
+        params.setExportType("2");
+        return commonExport(params);
     }
 
 
@@ -2530,6 +2446,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean myProjectExport(ProductSearchDTO.ExportDTO params) {
+        params.setExportType("0");
+        return commonExport(params);
+    }
+
+    private Boolean commonExport(ProductSearchDTO.ExportDTO params) {
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
         builder.append("产品开发导出").append(date);
@@ -2549,6 +2470,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
     @Override
     public PagingVO<ProductShowDTO> exportProductShow(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        String exportType = dto.getParams().getExportType();
         //分类id
         String categoryId = dto.getParams().getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
@@ -2557,18 +2479,34 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         //我的项目
         Page<ProductSearchDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ProductShowDTO> pageData = baseMapper.listMyProjectExport(query,dto.getParams(), categoryIdList, userId);
+        if(exportType.equals("0")){
+            pageData = baseMapper.listMyProjectExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("1")){
+            pageData = baseMapper.collectExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("2")){
+            pageData = baseMapper.listAllExport(query,dto.getParams(), categoryIdList);
+        }
+
         fillPagingDb(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
 
     @Override
     public PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProductTaskExcelDTO(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        String exportType = dto.getParams().getExportType();
         //分类id
         String categoryId = dto.getParams().getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = UserContext.getDefaultLoginUser().getUid();
         Page<ProductSearchDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<TaskExportDTO.ProductTaskExcelDTO> pageData = baseMapper.listMyProjectTaskExport(query,dto.getParams(), categoryIdList, userId);
+        IPage<TaskExportDTO.ProductTaskExcelDTO> pageData = null;
+        if(exportType.equals("0")){
+            pageData = baseMapper.listMyProjectTaskExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("1")){
+            pageData = baseMapper.collectTaskExport(query,dto.getParams(),categoryIdList);
+        }else if(exportType.equals("2")){
+            pageData = baseMapper.listAllTaskExport(query,dto.getParams(), categoryIdList);
+        }
         for (TaskExportDTO.ProductTaskExcelDTO item : pageData.getRecords()) {
             Integer status = item.getStatus();
             String statusName = TaskStateEnum.getName(status);
@@ -2587,95 +2525,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean collectExport(ProductSearchDTO.ExportDTO params) {
-
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-        //部门处理
-//        Boolean isFlag = handlePagingDept(params);
-//        if (isFlag) {
-//            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-//        }
-
-        //两个都是
-        if (size == 2) {
-            String userId = UserContext.getDefaultLoginUser().getUid();
-            //收藏的项目
-            List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList, userId);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuilder sb = new StringBuilder();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                return Boolean.FALSE;
-            }
-        }
-
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                String userId = UserContext.getDefaultLoginUser().getUid();
-                //我的项目
-                List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList, userId);
-                fillPagingDb(list);
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
-            //任务导出
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
-        }
-
-
-        return Boolean.TRUE;
-
+        params.setExportType("1");
+        return commonExport(params);
     }
 
     @Override

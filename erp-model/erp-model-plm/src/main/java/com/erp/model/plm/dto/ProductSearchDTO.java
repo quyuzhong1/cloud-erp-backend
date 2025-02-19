@@ -208,6 +208,9 @@ public class ProductSearchDTO extends PermissionsDTO {
         private List<String> categoryIdList;
 
         private String userId;
+
+        // 导出类型 0：我的项目 1：收藏项目 2：所有项目
+        private String exportType;
     }
 
 
