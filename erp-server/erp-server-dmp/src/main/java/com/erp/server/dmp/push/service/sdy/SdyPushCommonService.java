@@ -6,5 +6,5 @@ import com.common.core.controller.vo.ApiResult;
 import java.util.List;
 
 public interface SdyPushCommonService {
-    ApiResult executeConsumer(ShudiyunB2cOrderDTO shudiyunB2cOrderDTOList);
+    ApiResult executeConsumer(List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList);
 }

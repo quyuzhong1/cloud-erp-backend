@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.core.controller.vo.ApiResult;
@@ -16,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,13 +49,18 @@ public class ErpPushSdyService {
 			url = "/" + url;
 		}
 		url = sdyUrl + url;
-		
-		String requestData = parseObject.getString(REQUEST_DATA);
-		ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
 
-		requestData = isDeletedHandler(dto);
-		if (CharSequenceUtil.isBlank(requestData)) {
-			return ApiResult.success("{}");
+		String requestData = "";
+		String data = parseObject.getString(REQUEST_DATA);
+		if (data.startsWith("[") && data.endsWith("]")) {
+			// 如果 ext 是数组
+			JSONArray extArray = JSON.parseArray(data);
+			JSONObject object = new JSONObject();
+			object.put("count", extArray.size());
+			object.put("list", extArray);
+			requestData = object.toJSONString();
+		} else {
+			requestData = data;
 		}
 
 		log.info("请求地址：{}\n数帝云请求报文：{}" , url , requestData);

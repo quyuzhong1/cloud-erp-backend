@@ -45,17 +45,6 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.entity.DmpSoDetailEntity;
-import com.erp.model.dmp.entity.DmpSoInfoEntity;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackCompareSignEnum;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputResponse;
@@ -145,28 +134,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     		return;
     	}
 
-    	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId()) ) {
-			List<String> ids = dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
-			List<DmpOutputTaskRecordMergeEntity> list = dmpOutputTaskRecordMergeService.lambdaQuery()
-					.in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
-					.eq(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
-					.list();
-			if (CollUtil.isEmpty(list)) {
-				for (DmpOutputTaskRecordEntity taskRecordEntity : dmpOutputTaskRecordEntityList) {
-					DmpOutputTaskRecordMergeEntity entity = new DmpOutputTaskRecordMergeEntity();
-					entity.setMainId(taskRecordEntity.getId());
-					entity.setMergeStatus(OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode());
-					dmpOutputTaskRecordMergeService.save(entity);
-				}
-
-				dmpOutputTaskRecordService.lambdaUpdate()
-						.in(DmpOutputTaskRecordEntity::getId, ids)
-						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-				return;
-			}
-		}
-
 		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
@@ -195,8 +162,11 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				String redisKey = "dmp:output:task:" + dataId;
 				try {
 					if(!dmpOutputTaskRecordService.getById(dmpOutputTaskRecordEntity.getId()).getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
-						this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+						if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
+							this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+						}
 					}
+
 				} catch (Exception e) {
 					log.error("处理推送数据失败{}" , dmpOutputTaskRecordEntity.getId() , e);
 				}finally {
