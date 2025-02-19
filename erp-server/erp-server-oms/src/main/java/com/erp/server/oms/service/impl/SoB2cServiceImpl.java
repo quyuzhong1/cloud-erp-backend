@@ -1741,8 +1741,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     set(SoB2cEntity::getAbnormalType, "").update(new SoB2cEntity());
             soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode());
             if (Boolean.TRUE.equals(isDelivery)) {
-                //提交发货
-                submitDelivery(id, "");
+                try {
+                    //提交发货
+                    submitDelivery(id, "");
+                }catch (Exception e){
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                    addError.setParamJson("");
+                    addError.setReturnJson("");
+                    addError.setMainId(id);
+                    addError.setMessage(e.getMessage());
+                    soB2cErrorService.add(addError);
+                }
             }
 
             this.lambdaUpdate().eq(SoB2cEntity::getId, id).
@@ -2509,9 +2519,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq = cfgRuleOrderHandleService.handleRuleOrderThirdWarehouse(createOutboundReq, map);
         //查询配置是否推送面单
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
+            String logisticsLabelBase64 = soB2cLabelEntity.getLogisticsLabelBase64();
+            if (CharSequenceUtil.isBlank(logisticsLabelBase64)){
+                throw new ServiceException("未找到面单信息");
+            }
             ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
             thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
-            thirdWarehouseUploadFileReq.setFileData(soB2cLabelEntity.getLogisticsLabelBase64());
+            thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
             ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
             if(!uploadFileResponse.isSuccess()){
                 throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());

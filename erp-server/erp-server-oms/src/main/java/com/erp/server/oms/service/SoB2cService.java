@@ -22,6 +22,7 @@ import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.io.IOException;
@@ -1031,6 +1032,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
 
     /**
+     * 获取物流面单
+     *
+     * @param entity
+     * @param soB2cLogisticsEntity
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+
+    /**
      * 销售统计
      */
     IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
@@ -1039,13 +1049,4 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 销售统计导出查询
      */
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
-
-    /**
-     * 获取物流面单
-     *
-     * @param entity
-     * @param soB2cLogisticsEntity
-     * @return
-     */
-    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
 }

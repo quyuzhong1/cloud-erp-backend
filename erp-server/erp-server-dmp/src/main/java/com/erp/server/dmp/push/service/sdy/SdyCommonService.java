@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.sdy;
 
+import com.alibaba.fastjson.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -40,23 +41,20 @@ public class SdyCommonService {
 		url = sdyUrl + url;
 
 		String requestData = "";
-		Object data = parseObject.get(REQUEST_DATA);
-		if (data instanceof String) {
-			requestData = String.valueOf(data);
-		} else if (data instanceof Object[]) {
+		String data = parseObject.getString(REQUEST_DATA);
+		if (data.startsWith("[") && data.endsWith("]")) {
 			// 如果 ext 是数组
-			Object[] extArray = (Object[]) data;
+			JSONArray extArray = JSON.parseArray(data);
 			List<String> list = new ArrayList<>();
 			for (Object o : extArray) {
 				list.add(String.valueOf(o));
 			}
 			JSONObject object = new JSONObject();
-			object.put("count", extArray.length);
+			object.put("count", extArray.size());
 			object.put("list", list);
 			requestData = object.toJSONString();
 		} else {
-			// 如果 ext 既不是字符串也不是数组，抛出异常或返回错误
-			throw new IllegalArgumentException("Invalid parameter type");
+			requestData = data;
 		}
 
 		log.info("请求地址：{}\n数帝云请求报文：{}" , url , requestData);

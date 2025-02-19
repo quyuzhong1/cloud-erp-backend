@@ -231,11 +231,11 @@ public class ShopInfoFeignController extends BaseController {
     public ApiResult<ShopAuthEntity> getShopAuthById(@RequestParam(value = "shopId") String shopId) {
         return success(shopAuthService.getByShopId(shopId));
     }
+
     /**
      * 高级查询分页店铺
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery(handler = ShopQueryHandler.class)
 //    @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
         return shopInfoService.paging(dto);

@@ -168,10 +168,10 @@ public interface ShopInfoFeign {
      */
     @GetMapping("/feign/shop/getShopAuthById")
     ApiResult<ShopAuthEntity> getShopAuthById(@RequestParam(value = "shopId") String shopId);
+
     /**
      * 高级查询分页店铺
      */
     @PostMapping("feign/shop/paging")
     PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody PagingDTO<ShopDTO.PagingParamDTO> advanceQueryDTO);
-
 }
