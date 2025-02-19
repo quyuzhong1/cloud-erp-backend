@@ -1,8 +1,10 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqTopic;
@@ -12,8 +14,11 @@ import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgCardButtonDTO;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
+import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
+import com.erp.model.wms.enums.CfgVirtualNoticeWeekOptionEnum;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.service.CfgSettingService;
 import com.erp.server.wms.service.QcEffectivenessService;
@@ -28,10 +33,15 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -69,15 +79,53 @@ public class CfgNoticeJob {
     @XxlJob("virtualNotice")
     public ReturnT<String> virtualNotice() {
         XxlJobHelper.log("====开始发送飞书通知=====");
+        //当前时间
+        LocalDateTime now = LocalDateTime.now();
+        LocalTime localTime = now.toLocalTime();
         //查询系统配置
-        List<CfgNoticeEntity> list = FeignQuery.list(CfgNoticeEntity.class);
+        List<CfgNoticeEntity> list = FeignQuery.create(CfgNoticeEntity.class).eq(CfgNoticeEntity::getDisabled, Boolean.FALSE).list();
         if (CollUtil.isEmpty(list)) {
             XxlJobHelper.log("系统配置为空");
             return ReturnT.SUCCESS;
         }
         List<String> idList = list.stream().map(CfgNoticeEntity::getId).distinct().collect(Collectors.toList());
         List<CfgNoticeDetailEntity> detailList = FeignQuery.create(CfgNoticeDetailEntity.class).in(CfgNoticeDetailEntity::getMainId, idList).list();
-
+        if (CollUtil.isEmpty(detailList)) {
+            XxlJobHelper.log("系统配置明细为空");
+            return ReturnT.SUCCESS;
+        }
+        //是否发送通知
+        AtomicReference<Boolean> isNotice = new AtomicReference<>(Boolean.FALSE);
+        list.parallelStream().forEach(obj -> {
+            List<CfgNoticeDetailEntity> cfgDetailList = detailList.stream().filter(e -> StrUtil.equals(e.getMainId(), obj.getId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(cfgDetailList)) {
+                log.error("系统配置明细为空,配置id:{}", obj.getId());
+                return;
+            }
+            Map<String, List<CfgNoticeDetailEntity>> map = cfgDetailList.stream().collect(Collectors.groupingBy(CfgNoticeDetailEntity::getNoticeType));
+            //按天
+            List<CfgNoticeDetailEntity> cfgNoticeDayDetailList = map.get(CfgVirtualNoticeObjectTypeEnum.NOTICE_DAY.getCode());
+            if (CollUtil.isNotEmpty(cfgNoticeDayDetailList)) {
+                cfgNoticeDayDetailList.stream().filter(e -> BeanUtil.toBean(e.getNoticeValueJson(), CfgNoticeDTO.NoticeTimeDTO.class).getTime().format(DateTimeFormatter.ofPattern("HHmm")).equals(localTime.format(DateTimeFormatter.ofPattern("HHmm")))).forEach(e -> {
+                    isNotice.set(Boolean.TRUE);
+                });
+            }
+            //按周
+            List<CfgNoticeDetailEntity> cfgNoticeWeekDetailList = map.get(CfgVirtualNoticeObjectTypeEnum.NOTICE_WEEK.getCode());
+            if (CollUtil.isNotEmpty(cfgNoticeWeekDetailList)) {
+                cfgNoticeWeekDetailList.stream().forEach(e -> {
+                    CfgNoticeDTO.NoticeTimeDTO noticeTimeDTO = BeanUtil.toBean(e.getNoticeValueJson(), CfgNoticeDTO.NoticeTimeDTO.class);
+                    //周选项是否相同
+                    boolean equalsWeek = Objects.requireNonNull(CfgVirtualNoticeWeekOptionEnum.getEnum(noticeTimeDTO.getWeekOption())).name().equals(now.getDayOfWeek().name());
+                    //时间是否相同
+                    boolean equalsTime = noticeTimeDTO.getTime().format(DateTimeFormatter.ofPattern("HHmm")).equals(localTime.format(DateTimeFormatter.ofPattern("HHmm")));
+                    //周选项和时间相同则发送通知
+                    if (equalsWeek && equalsTime) {
+                        isNotice.set(Boolean.TRUE);
+                    }
+                });
+            }
+        });
 
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
         noticeMsgInfoDTO.setReceiverUserIds(Arrays.asList("117"));
@@ -100,5 +148,11 @@ public class CfgNoticeJob {
             log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
         }
         return ReturnT.SUCCESS;
+    }
+
+    public static void main(String[] args) {
+        LocalDateTime now = LocalDateTime.now();
+        DayOfWeek dayOfWeek = now.getDayOfWeek();
+        System.out.println(dayOfWeek.name().equals(CfgVirtualNoticeWeekOptionEnum.WEDNESDAY.name()));
     }
 }
