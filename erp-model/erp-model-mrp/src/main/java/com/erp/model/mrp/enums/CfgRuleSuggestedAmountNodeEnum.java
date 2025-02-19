@@ -16,7 +16,8 @@ public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
     SUGGESTED_PURCHASE("SUGGESTED_PURCHASE","建议采购"),
     SUGGESTED_TIME("SUGGESTED_TIME","建议时间"),
 
-    SUGGESTED_SHIPPING_QTY("SUGGESTED_SHIPPING_QTY","建议发货量"),
+    FBA_SUGGESTED_SHIPPING_QTY("FBA_SUGGESTED_SHIPPING_QTY","建议发货量(本地直发FBA)"),
+    OVERSEAS_SUGGESTED_SHIPPING_QTY("OVERSEAS_SUGGESTED_SHIPPING_QTY","建议发货量(本地直发海外)"),
     SUGGESTED_PURCHASE_QTY("SUGGESTED_PURCHASE_QTY","建议采购量"),
     TIME_FRAME("TIME_FRAME","建议时间范围"),
 
@@ -58,12 +59,18 @@ public enum CfgRuleSuggestedAmountNodeEnum implements EnumMessage {
         return name;
     }
 
-    public static String getDeliveryVolumeAging() {
-        return String.join(":", SUGGESTED_STOCK_UP.getCode(), SUGGESTED_SHIPPING_QTY.getCode(), AGING.getCode());
+    public static String getDeliveryVolumeAging(String platformType) {
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType)) {
+            return String.join(":", SUGGESTED_STOCK_UP.getCode(), FBA_SUGGESTED_SHIPPING_QTY.getCode(), AGING.getCode());
+        }
+        return String.join(":", SUGGESTED_STOCK_UP.getCode(), OVERSEAS_SUGGESTED_SHIPPING_QTY.getCode(), AGING.getCode());
     }
 
-    public static String getDeliveryVolumeInventory() {
-        return String.join(":", SUGGESTED_STOCK_UP.getCode(), SUGGESTED_SHIPPING_QTY.getCode(), INVENTORY.getCode());
+    public static String getDeliveryVolumeInventory(String platformType) {
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType)) {
+            return String.join(":", SUGGESTED_STOCK_UP.getCode(), FBA_SUGGESTED_SHIPPING_QTY.getCode(), INVENTORY.getCode());
+        }
+        return String.join(":", SUGGESTED_STOCK_UP.getCode(), OVERSEAS_SUGGESTED_SHIPPING_QTY.getCode(), INVENTORY.getCode());
     }
 
     public static String getPurchaseVolumeAging() {
