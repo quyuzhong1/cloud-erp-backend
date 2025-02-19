@@ -130,6 +130,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
         List<String> dataList = recordEntityList.stream().map(DmpOutputTaskRecordEntity::getRequestData).collect(Collectors.toList());
         DmpOutputTaskRecordEntity entity = new DmpOutputTaskRecordEntity();
         entity.setMainId(recordEntityList.get(0).getMainId());
+        entity.setDataId(recordEntityList.get(0).getDataId());
         entity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
         entity.setRequestData(dataList.toString());
         dmpOutputTaskRecordService.save(entity);

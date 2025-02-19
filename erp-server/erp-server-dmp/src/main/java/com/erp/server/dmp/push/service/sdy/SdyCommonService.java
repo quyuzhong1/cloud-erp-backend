@@ -45,13 +45,9 @@ public class SdyCommonService {
 		if (data.startsWith("[") && data.endsWith("]")) {
 			// 如果 ext 是数组
 			JSONArray extArray = JSON.parseArray(data);
-			List<String> list = new ArrayList<>();
-			for (Object o : extArray) {
-				list.add(String.valueOf(o));
-			}
 			JSONObject object = new JSONObject();
 			object.put("count", extArray.size());
-			object.put("list", list);
+			object.put("list", extArray);
 			requestData = object.toJSONString();
 		} else {
 			requestData = data;
