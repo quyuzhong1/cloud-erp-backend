@@ -188,7 +188,7 @@ public class BasicReplenishmentDataService {
         //获取库存配置
         CfgRuleSettingStrategy<CfgRuleCommonDTO.StrategyDTO, List<CfgRuleCommonDTO.StrategyResultDTO>> inventoryStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_INVENTORY.getCode());
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = inventoryStrategy.process(new CfgRuleCommonDTO.StrategyDTO(platformType));
-        ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, platformType, calculationDate);
+        ReplenishmentInventoryDTO inventoryDTO = inventoryService.getAllInventoryQty(inventoryResult, calculationDate);
         //获取策略配置
         List<CfgRuleOrderStrategyEntity> list = cfgRuleOrderStrategyService.list();
         CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = CollUtil.isEmpty(list) ? null : CfgRuleOrderStrategyDTO.StrategyResultDTO.buildStrategyResultDTO(list.get(0));

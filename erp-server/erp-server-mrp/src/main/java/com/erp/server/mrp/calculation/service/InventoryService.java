@@ -134,10 +134,9 @@ public interface InventoryService {
     /**
      * 获取全部库存
      * @param inventoryResult 库存
-     * @param platformType    平台
      * @param calculationDate 计算日
      */
-    ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String platformType, LocalDate calculationDate);
+    ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, LocalDate calculationDate);
 
 
     /**

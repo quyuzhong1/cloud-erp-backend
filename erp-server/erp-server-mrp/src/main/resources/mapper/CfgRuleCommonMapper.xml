@@ -19,7 +19,6 @@
        <result column="remark" property="remark" />
        <result column="disable" property="disable" />
        <result column="type" property="type" />
-       <result column="platform_type" property="platformType" />
        <result column="is_default" property="isDefault" />
     </resultMap>
 
@@ -45,9 +44,6 @@
         from cfg_rule_common crc
         <where>
             crc.is_deleted = false and is_default = false
-            <if test="platformType != null and platformType != ''">
-                and crc.platform_type = #{platformType}
-            </if>
             <if test="type != null and type != ''">
                 and crc.type = #{type}
             </if>
@@ -62,9 +58,6 @@
         from cfg_rule_common crc
         <where>
             crc.is_deleted = false and is_default = true
-            <if test="platformType != null and platformType != ''">
-                and  crc.platform_type = #{platformType}
-            </if>
             <if test="type != null and type != ''">
                 and crc.type = #{type}
             </if>
@@ -78,7 +71,6 @@
         from cfg_rule_common crc
         <where>
             crc.is_deleted = false and is_default = #{isDefault}
-            and crc.platform_type = #{platformType}
             and crc.type = #{type}
         </where>
         order by crc.index asc
