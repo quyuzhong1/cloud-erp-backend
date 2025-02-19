@@ -185,6 +185,11 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());
             }
         }
+        if (CollUtil.isNotEmpty(antuCreateOutboundReq.getAttach())){
+            antuCreateOutboundReq.getAttach().forEach(attach -> {
+                attach.setFileType("pdf");
+            });
+        }
     }
     public boolean isSuccess(String ask){
         return "Success".equals(ask);

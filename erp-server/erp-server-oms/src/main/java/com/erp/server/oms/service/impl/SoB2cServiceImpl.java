@@ -2525,6 +2525,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
             thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
             thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
+            thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
+            thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
             ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
             if(!uploadFileResponse.isSuccess()){
                 throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());
@@ -2551,6 +2553,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 uploadOrderLabelReq.setOrderCode(shippingOrderNo);
                 uploadOrderLabelReq.setTrackNo(soB2cLogisticsEntity.getCode());
                 uploadOrderLabelReq.setFileIdList(Collections.singletonList(createOutboundReq.getAttach().get(0).getAttachId()));
+                uploadOrderLabelReq.setAuthId(overseasProviderWarehouse.getMainId());
+                uploadOrderLabelReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
                 ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabelResponse = thirdWarehouseFeign.uploadOrderLabel(uploadOrderLabelReq);
                 if(!uploadOrderLabelResponse.isSuccess()){
                     throw new ServiceException("推送面单失败{}",uploadOrderLabelResponse.getMsg());
