@@ -736,6 +736,14 @@ public class SoB2cDTO implements Serializable {
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
+        /**
+         * 发货类型
+         */
+        private String deliveryType;
     }
 
     @Data
@@ -2901,6 +2909,10 @@ public class SoB2cDTO implements Serializable {
          * 物流跟踪单
          */
         private String logisticsCode;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
 
         /**
          * 买家自选物流名称

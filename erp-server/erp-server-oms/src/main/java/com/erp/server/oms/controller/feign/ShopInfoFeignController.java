@@ -228,4 +228,26 @@ public class ShopInfoFeignController extends BaseController {
         dto.setParams(pagingParamDTO);
         return shopInfoService.paging(dto);
     }
+
+    /**
+     * 获取店铺列表
+     *
+     * @return
+     */
+    @GetMapping("/getShopListByParam")
+    public ApiResult<List<ShopAuthEntity>> getShopListByParam(@RequestParam(value = "type") String type,
+                                                              @RequestParam(value = "status") String status,
+                                                              @RequestParam(value = "dictPlatform") String dictPlatform) {
+        return success(shopAuthService.getShopListByParam(type,status, dictPlatform));
+    }
+
+    /**
+     * 获取商铺详情
+     *
+     * @return
+     */
+    @GetMapping("/getShopAuthById")
+    public ApiResult<ShopAuthEntity> getShopAuthById(@RequestParam(value = "shopId") String shopId) {
+        return success(shopAuthService.getByShopId(shopId));
+    }
 }

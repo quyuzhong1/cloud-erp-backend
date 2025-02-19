@@ -159,4 +159,20 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/paging")
     PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+
+    /**
+     * 获取店铺列表
+     *
+     * @return
+     */
+    @GetMapping("/feign/shop/getShopListByParam")
+    ApiResult<List<ShopAuthEntity>> getShopListByParam(@RequestParam(value = "type") String type, @RequestParam(value = "status") String status, @RequestParam(value = "dictPlatform") String dictPlatform);
+
+    /**
+     * 获取商铺详情
+     *
+     * @return
+     */
+    @GetMapping("/feign/shop/getShopAuthById")
+    ApiResult<ShopAuthEntity> getShopAuthById(@RequestParam(value = "shopId") String shopId);
 }

@@ -26,7 +26,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -56,11 +56,10 @@ import java.util.stream.Collectors;
 @Component
 @LogisticsPlatformType(LogisticsPlatformEnum.SHOPEE)
 public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
-
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
     @Resource
     private ShopeeLogisticsService shopeeLogisticsService;
-    @Resource
-    private ShopeeFeign shopeeFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -89,7 +88,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("partnerId", cfgAppClient.getClientId());
         map.put("host", cfgAppClient.getUrl());
         if (StringUtils.isNotBlank(shopId)) {
-            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(shopId);
+            ApiResult<ShopAuthEntity> shopAuth = shopInfoFeign.getShopAuthById(shopId);
             if (Objects.nonNull(shopAuth)) {
                 map.put("shopId", shopAuth.getData().getShopeeId());
                 map.put("token", shopAuth.getData().getAccessToken());
