@@ -184,7 +184,7 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
      * @return
      */
     @Override
-    public List<ShopAuthEntity> getShopeeShopList(String type, String stauts, String dictPlatform) {
+    public List<ShopAuthEntity> getShopListByParam(String type, String stauts, String dictPlatform) {
         //获取已授权店铺配置
         return baseMapper.getShopeeShopList(type, stauts,dictPlatform);
     }

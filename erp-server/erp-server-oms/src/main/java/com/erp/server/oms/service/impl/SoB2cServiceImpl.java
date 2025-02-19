@@ -2093,7 +2093,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(auth)) {
                 throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
             }
-            if (dictPlatform.equals(auth.getLogisticsPlatform())){
+            if (!dictPlatform.equals(auth.getLogisticsPlatform())){
                 throw new ServiceException("【{}】线上物流提交发货必须使用线上物流渠道下单",PlatformDictEnum.getNameByCode(dictPlatform));
             }
 
@@ -2106,7 +2106,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (Objects.isNull(auth)) {
                 throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
             }
-            if (dictPlatform.equals(auth.getLogisticsPlatform())){
+            if (!dictPlatform.equals(auth.getLogisticsPlatform())){
                 throw new ServiceException("【{}】线上物流提交发货必须使用线上物流渠道下单",PlatformDictEnum.getNameByCode(dictPlatform));
             }
         }
