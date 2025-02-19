@@ -7,6 +7,7 @@ import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -29,14 +30,14 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
     */
     Boolean batchUpdate(CfgRuleSalesQtyDTO.UpdateDTO dto);
 
-    /**
-     * 修改
-     * @author will
-     * @date 2024/8/27 9:56
-     * @param updateDTO
-     * @return Boolean
-     */
-    String update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO);
+//    /**
+//     * 修改
+//     * @author will
+//     * @date 2024/8/27 9:56
+//     * @param updateDTO
+//     * @return Boolean
+//     */
+//    String update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO);
 
     /**
      * 查看详情
@@ -106,4 +107,10 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param code
      */
     void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList, String code);
+
+    /**
+     * 下载导入模板
+     * @param response 响应
+     */
+    void downloadRuleTemplate(HttpServletResponse response);
 }

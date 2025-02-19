@@ -26,11 +26,6 @@ import java.io.Serializable;
 public class CfgRuleSalesQtyEntity extends BaseEntity<CfgRuleSalesQtyEntity> {
 
     /**
-    * 是否同常规品配置一致,true是，false否
-    */
-    @TableField("is_cfg_same")
-    private Boolean isCfgSame;
-    /**
     * 断货数据是否从历史销量中排除,true是，false否
     */
     @TableField("is_ignore_out_of_stock")
@@ -47,10 +42,10 @@ public class CfgRuleSalesQtyEntity extends BaseEntity<CfgRuleSalesQtyEntity> {
     @TableField("order_type")
     private JSONArray orderType;
     /**
-    * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+    * 平台类型
     */
-    @TableField("platform_type")
-    private String platformType;
+    @TableField("platform")
+    private String platform;
     /**
     * 关联id
     */
@@ -61,11 +56,31 @@ public class CfgRuleSalesQtyEntity extends BaseEntity<CfgRuleSalesQtyEntity> {
     */
     @TableField("ref_type")
     private String refType;
+
     /**
-    * 类型，new 新品、conventional常规品
-    */
-    @TableField("type")
-    private String type;
+     * 是否同常规品配置一致,true是，false否
+     */
+    @TableField("is_cfg_same_default")
+    private Boolean isCfgSameDefault;
+
+    /**
+     * 是否同常规品配置一致,true是，false否
+     */
+    @TableField("is_cfg_same_dynamic")
+    private Boolean isCfgSameDynamic;
+
+    /**
+     * 是否同常规品配置一致,true是，false否
+     */
+    @TableField("is_cfg_same_denoising")
+    private Boolean isCfgSameDenoising;
+
+    /**
+     * 预估销量类型（SYSTEM/AI/CUSTOMER）
+     */
+    @TableField("sales_estimate_type")
+    private String salesEstimateType;
+
 
     @TableField(exist = false)
     private String orderTypeName;
@@ -79,13 +94,12 @@ public class CfgRuleSalesQtyEntity extends BaseEntity<CfgRuleSalesQtyEntity> {
 
     public static final String ORDER_TYPE = "order_type";
 
-    public static final String PLATFORM_TYPE = "platform_type";
+    public static final String PLATFORM = "platform";
 
     public static final String REF_ID = "ref_id";
 
     public static final String REF_TYPE = "ref_type";
 
-    public static final String TYPE = "type";
 
     @Override
     public Serializable pkVal() {
