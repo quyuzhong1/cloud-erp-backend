@@ -161,12 +161,12 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
             ApiResult<T> result = handler.handle();
             TransferLogisticsContext.setMsg(JSONUtil.toJsonStr(result));
             //记录日志
-            pushOperateLog(businessType,result.getCode(),erpBusinessCode);
+            pushOperateLog(businessType,result.getCode(),erpBusinessCode,false);
             return result;
         } catch (Exception e){
             log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
             TransferLogisticsContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
-            pushOperateLog(businessType,2000,erpBusinessCode);
+            pushOperateLog(businessType,2000,erpBusinessCode,true);
             return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local
@@ -179,13 +179,13 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         ApiResult<T> handle();
     }
 
-    private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
+    private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode,boolean isPush) {
         if("dmp_pull_task".equals(businessType.getTableName())){
             DmpPullTaskEntity dmpPullTaskEntity = buildDmpPullTaskEntity(businessType, status, erpBusinessCode);
             try {
                 String id = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
                 //增加异常预警
-                if (!ApiResult.success().getCode().equals(status)) {
+                if (!ApiResult.success().getCode().equals(status) && isPush) {
                     dmpPullTaskEntity.setId(id);
                     sendPullWarnMsg(dmpPullTaskEntity);
                 }
@@ -197,7 +197,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
             try {
                 String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
                 //增加异常预警
-                if (!ApiResult.success().getCode().equals(status)) {
+                if (!ApiResult.success().getCode().equals(status) && isPush) {
                     dmpPushTaskEntity.setId(id);
                     sendPushWarnMsg(dmpPushTaskEntity);
                 }

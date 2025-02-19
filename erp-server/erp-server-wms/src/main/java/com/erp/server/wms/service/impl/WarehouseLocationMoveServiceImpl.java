@@ -173,6 +173,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = pcAddDTO.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("产品信息不能为空");
+        }else {
+            for (WarehouseLocationMoveDetailDTO.AddDTO addDTO : detailList) {
+                Integer qty = addDTO.getQty();
+                if (!StrUtils.isDigit(String.valueOf(qty)) || ObjectUtil.isEmpty(qty)) {
+                    throw new ServiceException("移动数量只能是数字");
+                }else if(qty <= 0){
+                    throw new ServiceException("移动数量不允许为0");
+                }else if(qty > 999999999){
+                    throw new ServiceException("移动数量最大值为999999999");
+                }
+            }
         }
         WarehouseLocationMoveEntity warehouseLocationMoveEntity = new WarehouseLocationMoveEntity();
         BeanMapperUtils.copy(pcAddDTO, warehouseLocationMoveEntity);
@@ -250,6 +261,17 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
         List<WarehouseLocationMoveDetailDTO.UpdateDTO> detailList = pcUpdateDTO.getDetailList();
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("产品信息不能为空");
+        }else {
+            for (WarehouseLocationMoveDetailDTO.UpdateDTO updateDTO : detailList) {
+                Integer qty = updateDTO.getQty();
+                if (!StrUtils.isDigit(String.valueOf(qty)) || ObjectUtil.isEmpty(qty)) {
+                    throw new ServiceException("移动数量只能是数字");
+                }else if(qty <= 0){
+                    throw new ServiceException("移动数量不允许为0");
+                }else if(qty > 999999999){
+                    throw new ServiceException("移动数量最大值为999999999");
+                }
+            }
         }
         WarehouseLocationMoveEntity old = super.getById(pcUpdateDTO.getId());
         if (Objects.isNull(old)){

@@ -254,10 +254,8 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getNum().intValue());
             shudiyunB2cOrderDTO.setUnit("PCS");
 
-            shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getPrice().multiply(MathUtil.valueOf(dmpSoDetailEntity.getNum())).subtract(dmpSoDetailEntity.getShareDiscount()));
-            if (dmpSoDetailEntity.getShareDiscount().compareTo(BigDecimal.ZERO) > 0 && dmpSoDetailEntity.getNum().compareTo(BigDecimal.ZERO) > 0) {
-                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getPrice().subtract(dmpSoDetailEntity.getShareDiscount().divide(dmpSoDetailEntity.getNum(), 4, RoundingMode.DOWN)));
-            }
+            shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getPrice());
+            shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getPrice(), dmpSoDetailEntity.getNum()));
 
             shudiyunB2cOrderDTO.setPost_amount(BigDecimal.ZERO);
             if (CharSequenceUtil.isBlank(dmpSoDetailEntity.getGoodsNo())) {

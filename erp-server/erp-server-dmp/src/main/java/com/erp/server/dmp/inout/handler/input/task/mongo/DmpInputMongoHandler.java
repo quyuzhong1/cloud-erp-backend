@@ -296,7 +296,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 					waitEntity.put(MONGO_BASE_MONGOCREATETIME, findEntity.get(MONGO_BASE_MONGOCREATETIME).toString());
 					updateDmpInputMongoEntityList.add(waitEntity);
 					if(!findEntity.get(MONGO_BASE_DATAENCRYPT).toString().equals(waitEntity.get(MONGO_BASE_DATAENCRYPT).toString())) {
-						updateDmpInputMongoEntityList.add(waitEntity);
+						changeConvertInputMongoEntityList.add(waitEntity);
 					}
 				}else {
 					saveDmpInputMongoEntityList.add(waitEntity);

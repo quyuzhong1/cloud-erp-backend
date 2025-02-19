@@ -29,6 +29,8 @@ public class ExportOmsFeignController {
     @Resource
     private SoB2cService soB2cService;
     @Resource
+    private SoB2cErrorService soB2cErrorService;
+    @Resource
     private SoB2cDeclareProductService soB2cDeclareProductService;
     @Resource
     private SkuMappingService skuMappingService;
@@ -44,6 +46,10 @@ public class ExportOmsFeignController {
 
     @Resource
     private SoB2cReturnService soB2cReturnService;
+    @Resource
+    private ReportManagerService reportManagerService;
+
+
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
@@ -72,6 +78,11 @@ public class ExportOmsFeignController {
     public PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
         return soB2cService.exportSoB2CAbnormal(dto);
     }
+    @PostMapping("/soB2CAbnormalPools")
+    @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
+    public PagingVO<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
+        return soB2cErrorService.exportSoB2CAbnormalPools(dto);
+    }
 
     @PostMapping("/soB2C")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
@@ -86,7 +97,7 @@ public class ExportOmsFeignController {
 
     @PostMapping("/soB2CProductSales")
     public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(@RequestBody PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        return soB2cService.exportSoB2CProductSales(dto);
+        return reportManagerService.exportSoB2CProductSales(dto);
     }
 
     @PostMapping("/platformSku")
@@ -101,6 +112,12 @@ public class ExportOmsFeignController {
         return skuMappingService.exportWarehouseSku(dto);
     }
 
+    @PostMapping("/customerSku")
+    @WebAdvanceQuery
+    public PagingVO<SkuMappingDTO.CustomerPagingViewDTO> exportCustomerSku(@RequestBody PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
+        dto.getParams().setExport(true);
+        return skuMappingService.customerPaging(dto);
+    }
     @PostMapping("/shop")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

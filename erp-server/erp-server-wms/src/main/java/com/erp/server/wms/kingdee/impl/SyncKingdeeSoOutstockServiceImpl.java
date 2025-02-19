@@ -529,16 +529,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("platformType", salesPlatformCode);
         }
 
-        //部门
-        if (CharSequenceUtil.isNotBlank(soInfoById.getSalesDeptId())) {
-            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-            dto.setDeptId(entity.getSalesDeptId());
-            dto.setOrgId(entity.getSalesOrgId());
-            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
-            if (ObjectUtil.isNotEmpty(deptKingdee)) {
-                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
-            }
-        }
+//        //部门
+//        if (CharSequenceUtil.isNotBlank(soInfoById.getSalesDeptId())) {
+//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            dto.setDeptId(entity.getSalesDeptId());
+//            dto.setOrgId(entity.getSalesOrgId());
+//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+//        }
 
         //销售员
         String sellerId = entity.getSellerId();
@@ -556,6 +556,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
         //销售员
@@ -1023,7 +1024,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
         resultMap.put("currencyCode", viewDTO.getKingdeeCode());
         //结算组织
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+        if (CollectionUtils.isNotEmpty(accountingCompanyList) && Objects.isNull(resultMap.get("salesOrgCode"))) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(salesOrgId)).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
@@ -1215,8 +1216,10 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
             shudiyunB2cOrderDTO.setIs_comb(1);
-            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
-            shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
+            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+            BomChildrenSkuDTO finalBomChildrenSkuDTO1 = bomChildrenSkuDTO;
+            String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO1.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setSuite_name(skuName);
         } else {
             bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {

@@ -135,6 +135,14 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     BatchResultDTO restoreReplenishment(String id, String replenishmentRemark);
 
     /**
+     * 批量暂不补货
+     *
+     * @param ids                 建议id
+     * @param replenishmentRemark 备注
+     */
+    void batchRestockingReplenishment(List<String> ids, String replenishmentRemark);
+
+    /**
      * 批量设置规则
      *
      * @param id
@@ -435,4 +443,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(BaseIdDTO dto);
+
+    /**
+     * 通过店铺和sku查询建议id
+     * @param shopIdList 店铺id
+     * @param skuIdList  skuid
+     */
+    List<ReplenishmentSuggestionEntity> listByShopIdAndSkuId(List<String> shopIdList, List<String> skuIdList);
 }

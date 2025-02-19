@@ -8,6 +8,7 @@
         <result column="name" property="name"></result>
         <result column="updateUserName" property="updateUserName"></result>
         <result column="updateTime" property="updateTime"></result>
+        <result column="createTime" property="createTime"></result>
         <collection property="childList" ofType="com.erp.model.plm.dto.BomCombinationDTO$ChildDTO">
             <id column="detailId" property="id"></id>
             <result column="childSkuId" property="childSkuId"></result>
@@ -215,6 +216,7 @@
             COALESCE(pc.target_tax_cost,0) as targetTaxCost,
             pbi.update_user_name as updateUserName,
             pbi.update_time as updateTime,
+            pbi.create_time as createTime,
             pp.main_supplier as mainSupplierId
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
@@ -223,7 +225,7 @@
         left join product_cost pc on cpd.id = pc.sku_id and pc.is_deleted = false
         left join product_purchase pp on cpd.id = pp.sku_id and pp.is_deleted = false
         <where>
-            pbi.is_deleted = false and pbi.source_type = 'productCombination'
+            ${params.sqlMap.default} and pbi.is_deleted = false and pbi.source_type = 'productCombination'
             <if test="params.skuNo != null and params.skuNo != ''">
                 and pbs.parent_sku_no iLIKE concat('%', #{params.skuNo}::text,'%')
             </if>

@@ -71,7 +71,19 @@
 
     <!-- 删除多余b2c订单 -->
     <delete id="deleteB2cOrder">
-        DELETE FROM so_b2c_processing WHERE is_deleted = false and b2c_so_id not in (select id from so_b2c where is_deleted = false )
+        DELETE FROM so_b2c_processing sbp
+            USING so_b2c_delivery sbd
+        WHERE sbp.delivery_id = sbd.id
+          AND sbp.is_deleted = false
+          AND (sbd.is_deleted = true
+           OR sbd.status = 'cancelDelivery');
+
+        DELETE FROM so_b2c_processing sbp
+            USING so_b2c_delivery_detail sbdd
+        WHERE  sbp.delivery_detail_id = sbdd.id
+          AND sbp.is_deleted = false
+          AND (sbdd.is_deleted = true
+           OR sbdd.virtual_warehouse_id = '');
     </delete>
 
     <!-- 分页查询 -->

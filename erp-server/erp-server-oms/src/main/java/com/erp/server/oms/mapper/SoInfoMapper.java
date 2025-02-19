@@ -91,4 +91,6 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
     List<SoInfoEntity> queryToSdy(@Param("startDate")LocalDate startDate, @Param("endDate")LocalDate endDate, @Param("pageSize")Integer pageSize, @Param("offset")int offset);
 
     IPage<SoInfoEntity> pagePartitionIsNull(Page query);
+
+    Boolean existsByCustomerAndSku(@Param("customer")String customer,@Param("platformSku") String platformSku);
 }

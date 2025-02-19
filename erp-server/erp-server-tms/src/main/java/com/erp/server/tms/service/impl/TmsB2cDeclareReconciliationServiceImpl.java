@@ -13,6 +13,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -23,6 +24,7 @@ import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDTO;
 import com.erp.model.tms.dto.TmsB2cDeclareReconciliationDetailDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
@@ -52,10 +54,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_TMS_B2C_DECLARE_RECONCILIATION;
@@ -477,10 +481,27 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         currencyIds.add(data.getCurrency());
         //币别信息
         Map<String, String> currencyIdSymbolMap = sysUserFeign.listByCurrency(currencyIds).stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getId, CurrencyDTO.ViewDTO::getSymbol));
-
+        
+        String date = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        
+        Map<String, BigDecimal> rateMap = new HashMap<>();
+        for(String countryId : currencyIds) {
+        	BigDecimal rate = rateMap.get(countryId);
+        	if(rate == null) {
+        		rate = dmpTaskFeign.getRate(date, countryId);
+        		if(ObjectUtil.isEmpty(rate)){
+                    log.error("币别【{}】,汇率为空，请维护汇率",countryId);
+                    throw new ServiceException("汇率为空，请维护汇率");
+                }
+        	}
+        	rateMap.put(countryId, rate);
+        }
+        
         //物流费用总金额
-        BigDecimal totalCost = detailList.stream().map(obj -> obj.getActualShippingCost().add(obj.getActualDeclareCost()).add(obj.getActualOtherCost())).reduce(BigDecimal.ZERO, BigDecimal::add);
-        data.setTotalCost(totalCost);
+        BigDecimal totalCost = detailList.stream().map(obj -> obj.getActualShippingCost().multiply(rateMap.get(obj.getActualShippingCurrency()))
+        		.add(obj.getActualDeclareCost().multiply(rateMap.get(obj.getActualDeclareCurrency())))
+        		.add(obj.getActualOtherCost().multiply(rateMap.get(obj.getActualOtherCurrency())))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        data.setTotalCost(totalCost.setScale(4, RoundingMode.DOWN));
 
         for (TmsB2cDeclareReconciliationDetailDTO.ViewDTO viewDTO : viewDTOList) {
             //店铺名称
@@ -558,21 +579,88 @@ public class TmsB2cDeclareReconciliationServiceImpl extends SuperServiceImpl<Tms
         }
 
         //币别信息
-        List<String> currencyIdList = list.stream().map(TmsB2cDeclareReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+        Map<String, DictCurrencyEntity> idCurrencyMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, Function.identity()));
 
+        Map<String, List<TmsB2cDeclareReconciliationDetailEntity>> mainIdListMaps = tmsB2cDeclareReconciliationDetailService.lambdaQuery()
+        	.in(TmsB2cDeclareReconciliationDetailEntity::getMainId, list.stream().map(TmsB2cDeclareReconciliationDTO.ListDTO::getId).collect(Collectors.toList()))
+        	.list().stream().collect(Collectors.groupingBy(TmsB2cDeclareReconciliationDetailEntity::getMainId));
+        String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        Map<String, BigDecimal> rateMap = new HashMap<>();
         // 属性赋值
         for(TmsB2cDeclareReconciliationDTO.ListDTO data : list) {
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //对账周期
             data.setCycle(CharSequenceUtil.format("{}-{}",data.getStartDate(),data.getEndDate()));
+            
             //币别符号
-            CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), data.getCurrency())).findFirst().orElse(null);
-            if(ObjectUtil.isNotEmpty(viewDTO)) {
+            DictCurrencyEntity viewDTO = idCurrencyMap.get(data.getCurrency());
+            if(viewDTO != null) {
                 data.setCurrencySymbol(viewDTO.getSymbol());
                 data.setCurrencyName(viewDTO.getName());
             }
+            
+            BigDecimal actualShippingCost = BigDecimal.ZERO;
+            BigDecimal actualDeclareCost = BigDecimal.ZERO;
+            BigDecimal actualOtherCost = BigDecimal.ZERO; 
+            
+            List<TmsB2cDeclareReconciliationDetailEntity> detailEntityList = mainIdListMaps.get(data.getId());
+            if(CollUtil.isNotEmpty(detailEntityList)) {
+            	for(TmsB2cDeclareReconciliationDetailEntity detailEntity : detailEntityList) {
+            		BigDecimal subActualShippingCost = detailEntity.getActualShippingCost();
+            		if(BigDecimal.ZERO.compareTo(subActualShippingCost) != 0) {
+            			String currency = detailEntity.getActualShippingCurrency();
+            			BigDecimal rate = rateMap.get(currency);
+            			if(rate == null) {
+            				rate = dmpTaskFeign.getRate(now, currency);
+            				if(rate == null) {
+            					log.error("币别【{}】,汇率为空，请维护汇率",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率");
+            				}
+            			}
+            			rateMap.put(currency, rate);
+            			actualShippingCost = actualShippingCost.add(subActualShippingCost.multiply(rate));
+            		}
+            		
+            		BigDecimal subActualDeclareCost = detailEntity.getActualDeclareCost();
+            		if(BigDecimal.ZERO.compareTo(subActualDeclareCost) != 0) {
+            			String currency = detailEntity.getActualDeclareCurrency();
+            			BigDecimal rate = rateMap.get(currency);
+            			if(rate == null) {
+            				rate = dmpTaskFeign.getRate(now, currency);
+            				if(rate == null) {
+            					log.error("币别【{}】,汇率为空，请维护汇率",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率");
+            				}
+            			}
+            			rateMap.put(currency, rate);
+            			actualDeclareCost = actualDeclareCost.add(subActualDeclareCost.multiply(rate));
+            		}
+            		
+            		BigDecimal subActualOtherCost = detailEntity.getActualOtherCost();
+            		if(BigDecimal.ZERO.compareTo(subActualOtherCost) != 0) {
+            			String currency = detailEntity.getActualOtherCurrency();
+            			BigDecimal rate = rateMap.get(currency);
+            			if(rate == null) {
+            				rate = dmpTaskFeign.getRate(now, currency);
+            				if(rate == null) {
+            					log.error("币别【{}】,汇率为空，请维护汇率",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率");
+            				}
+            			}
+            			rateMap.put(currency, rate);
+            			actualOtherCost = actualOtherCost.add(subActualOtherCost.multiply(rate));
+            		}
+            	}
+            }
+            actualShippingCost = actualShippingCost.setScale(4, RoundingMode.DOWN);
+            actualDeclareCost = actualDeclareCost.setScale(4, RoundingMode.DOWN);
+            actualOtherCost = actualOtherCost.setScale(4, RoundingMode.DOWN);
+            data.setActualShippingCost(actualShippingCost);
+            data.setActualDeclareCost(actualDeclareCost);
+            data.setActualOtherCost(actualOtherCost);
+            data.setTotalCost(actualShippingCost.add(actualDeclareCost).add(actualOtherCost));
+            
             String payStatus = data.getPayStatus();
             data.setPayStatusName(TmsB2cDeclareReconciliationPayStatusEnum.getName(payStatus));
         }

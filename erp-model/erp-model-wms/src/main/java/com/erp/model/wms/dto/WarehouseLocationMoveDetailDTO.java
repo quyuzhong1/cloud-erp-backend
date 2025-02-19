@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -237,7 +236,6 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
         /**
          * 主表id
          */
-        @NotBlank(message = "主表id不能为空")
         @Size(max = 19, message = "主表id最大长度不能超过19位")
         private String mainId;
 
@@ -282,7 +280,7 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          * 移动数量
          */
         @NotNull(message = "移动数量不能为空")
-        @Min(value = 0, message = "移动数量不能小于0")
+        @Min(value = 1, message = "移动数量不能小于0")
         @Max(value = 999999999, message = "移动数量最大值为999999999")
         private Integer qty;
 

@@ -33,4 +33,7 @@ public interface CfgQueryConditionService extends SuperService<CfgQueryCondition
     CfgQueryConditionEntity getByCodeAndField(String code,String field);
 
     List<CfgQueryConditionEntity> listByCode(String code);
+
+
+    Boolean reIndexAndUpdate(CfgQueryConditionDTO.CommonDTO dto, String id);
 }

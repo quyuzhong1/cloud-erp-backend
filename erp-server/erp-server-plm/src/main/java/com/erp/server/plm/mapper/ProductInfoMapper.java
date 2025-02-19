@@ -57,7 +57,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      */
     IPage<ProductShowDTO> collect(Page<ProductSearchDTO.PagingParamDTO> query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
 
-    List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList, @Param("userId") String userId);
 
 
     List<TaskExportDTO.ProductTaskExcelDTO> collectTaskExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);

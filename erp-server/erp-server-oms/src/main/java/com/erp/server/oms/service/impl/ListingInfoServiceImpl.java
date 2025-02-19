@@ -128,6 +128,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     }
 
     @Override
+    public List<ListingInfoEntity> listByAuth(String type, List<String> platformSkuNoList, List<String> authIdList) {
+        return lambdaQuery().eq(ListingInfoEntity::getType, type).
+                in(ListingInfoEntity::getAuthId, authIdList).
+                in(ListingInfoEntity::getPlatformSkuNo, platformSkuNoList)
+                .list();
+    }
+
+    @Override
     public List<ListingInfoEntity> listByParam(String type, String platform, List<String> skuNoList) {
         return lambdaQuery().eq(ListingInfoEntity::getType, type).
                 eq(platform != null ,ListingInfoEntity::getPlatform, platform).

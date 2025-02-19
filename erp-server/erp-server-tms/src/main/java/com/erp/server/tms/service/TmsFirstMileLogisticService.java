@@ -37,7 +37,7 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(TmsFirstMileLogisticDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addFirstMileLogistics(TmsFirstMileLogisticDTO.AddDTO dto);
 
     /**
     * 修改

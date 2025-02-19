@@ -123,7 +123,7 @@
         LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
         LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
         <where>
-            it.is_deleted = false
+            ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>
@@ -163,14 +163,14 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.hideZeroInventory">
-                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
-            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
         GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state
+        <if test="params.hideZeroInventory">
+            Having SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
+        </if>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -238,14 +238,14 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.hideZeroInventory">
-                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
-            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
         </where>
         GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state,it.warehouse_location
+        <if test="params.hideZeroInventory">
+            Having SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
+        </if>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -288,7 +288,7 @@
             left join product_info pi on pd.product_id = pi.id
             left join product_sale ps on ps.sku_id = pd.id
             WHERE
-            ind.is_deleted = false
+            ${params.sqlMap.default} and ind.is_deleted = false
             AND inv.dict_inventory_status in('usable','frozen')
             AND ind.qty != 0
             <!--
@@ -365,7 +365,7 @@
         left join product_info pi on pd.product_id = pi.id
         left join product_sale ps on ps.sku_id = pd.id
         WHERE
-        ind.is_deleted = false
+        ${params.sqlMap.default} and ind.is_deleted = false
         AND inv.dict_inventory_status in('usable','frozen')
         AND ind.qty != 0
         <!--
@@ -880,41 +880,41 @@
             WHERE s.is_deleted = FALSE AND wa.is_deleted = FALSE
         ) wl ON it.warehouse_location = wl.location_code AND it.warehouse_id = wl.warehouse_id
         <where>
-            it.is_deleted = false
+            ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>
-            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and pd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
                 and it.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+            <if test="params.spuNoList != null and params.spuNoList.size > 0">
                 and pi.spu_no in
                 <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+            <if test="params.saleStatusList != null and params.saleStatusList.size > 0">
                 and ps.sale_state in
                 <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
                 and it.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.orgIdList != null and params.orgIdList.size != ''">
+            <if test="params.orgIdList != null and params.orgIdList.size > 0">
                 and it.org_id in
                 <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                     #{item}
@@ -926,11 +926,11 @@
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-            <if test="params.hideZeroInventory">
-                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
-            </if>
         </where>
         GROUP BY it.warehouse_id,it.org_id,it.sku_id,pd.sku_no,pd.name,pd.images_url,pi.spu_no,ps.sale_state,wl.area_code
+        <if test="params.hideZeroInventory">
+            Having SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
+        </if>
         order by
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -958,41 +958,41 @@
         LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
         LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
         <where>
-            it.is_deleted = false
+            ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>
-            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and pd.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
                 and it.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+            <if test="params.spuNoList != null and params.spuNoList.size > 0">
                 and pi.spu_no in
                 <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+            <if test="params.saleStatusList != null and params.saleStatusList.size > 0">
                 and ps.sale_state in
                 <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
                 and it.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.orgIdList != null and params.orgIdList.size != ''">
+            <if test="params.orgIdList != null and params.orgIdList.size > 0">
                 and it.org_id in
                 <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                     #{item}
@@ -1007,11 +1007,11 @@
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>
-            <if test="params.hideZeroInventory">
-                AND SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
-            </if>
         </where>
         GROUP BY it.warehouse_id, it.org_id, it.sku_id, pd.sku_no, pd.name, pd.images_url, pi.spu_no, ps.sale_state, it.warehouse_location
+        <if test="params.hideZeroInventory">
+            Having SUM(CASE WHEN it.dict_inventory_status IN ('usable', 'frozen') THEN it.qty ELSE 0 END) != 0
+        </if>
         order by
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -1169,11 +1169,11 @@
                     left join product_info pi on pd.product_id = pi.id  AND pi.is_deleted = FALSE
                     left join product_sale ps on ps.sku_id = pd.id AND  ps.is_deleted = FALSE
         <where>
-            it.is_deleted = false
+            ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>
-            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and it.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
@@ -1185,25 +1185,25 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+            <if test="params.spuNoList != null and params.spuNoList.size > 0">
                 and pi.spu_no in
                 <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+            <if test="params.saleStatusList != null and params.saleStatusList.size > 0">
                 and ps.sale_state in
                 <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
                 and it.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.orgIdList != null and params.orgIdList.size != ''">
+            <if test="params.orgIdList != null and params.orgIdList.size > 0">
                 and it.org_id in
                 <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                     #{item}
@@ -1283,41 +1283,41 @@
                                                            on s.parent_id = wa.id and s.is_deleted = false and wa.is_deleted = false) wl
                                        on it.warehouse_location = wl.location_code and it.warehouse_id = wl.warehouse_id
                     <where>
-                        it.is_deleted = false
+                        ${params.sqlMap.default} and it.is_deleted = false
                         <if test="params.productName != null and params.productName != ''">
                             and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
                         </if>
-                        <if test="params.skuNoList != null and params.skuNoList.size != ''">
+                        <if test="params.skuNoList != null and params.skuNoList.size > 0">
                             and it.sku_no in
                             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                                 #{item}
                             </foreach>
                         </if>
-                        <if test="params.skuIdList != null and params.skuIdList.size != ''">
+                        <if test="params.skuIdList != null and params.skuIdList.size > 0">
                             and it.sku_id in
                             <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
                                 #{item}
                             </foreach>
                         </if>
-                        <if test="params.spuNoList != null and params.spuNoList.size != ''">
+                        <if test="params.spuNoList != null and params.spuNoList.size > 0">
                             and pi.spu_no in
                             <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
                                 #{item}
                             </foreach>
                         </if>
-                        <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+                        <if test="params.saleStatusList != null and params.saleStatusList.size > 0">
                             and ps.sale_state in
                             <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                                 #{item}
                             </foreach>
                         </if>
-                        <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+                        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
                             and it.warehouse_id in
                             <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                                 #{item}
                             </foreach>
                         </if>
-                        <if test="params.orgIdList != null and params.orgIdList.size != ''">
+                        <if test="params.orgIdList != null and params.orgIdList.size > 0">
                             and it.org_id in
                             <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                                 #{item}
@@ -1398,41 +1398,41 @@
                                 left join product_info pi on pd.product_id = pi.id AND pi.is_deleted = FALSE
                                 left join product_sale ps on ps.sku_id = pd.id AND ps.is_deleted = FALSE
         <where>
-            it.is_deleted = false
+            ${params.sqlMap.default} and it.is_deleted = false
             <if test="params.productName != null and params.productName != ''">
                 and pd.name  ILIKE concat('%', #{params.productName}::text ,'%')
             </if>
-            <if test="params.skuNoList != null and params.skuNoList.size != ''">
+            <if test="params.skuNoList != null and params.skuNoList.size > 0">
                 and it.sku_no in
                 <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.skuIdList != null and params.skuIdList.size != ''">
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
                 and it.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.spuNoList != null and params.spuNoList.size != ''">
+            <if test="params.spuNoList != null and params.spuNoList.size > 0">
                 and pi.spu_no in
                 <foreach collection="params.spuNoList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.saleStatusList != null and params.saleStatusList.size != ''">
+            <if test="params.saleStatusList != null and params.saleStatusList.size > 0">
                 and ps.sale_state in
                 <foreach collection="params.saleStatusList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.warehouseIdList != null and params.warehouseIdList.size != ''">
+            <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
                 and it.warehouse_id in
                 <foreach collection="params.warehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-            <if test="params.orgIdList != null and params.orgIdList.size != ''">
+            <if test="params.orgIdList != null and params.orgIdList.size > 0">
                 and it.org_id in
                 <foreach collection="params.orgIdList" item="item" open="(" close=")" separator=",">
                     #{item}

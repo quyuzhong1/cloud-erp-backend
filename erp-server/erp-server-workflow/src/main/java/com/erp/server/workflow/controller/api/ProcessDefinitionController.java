@@ -1,6 +1,7 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -19,7 +20,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 /**
@@ -57,6 +57,7 @@ public class ProcessDefinitionController extends BaseController {
      * @return ApiResult<Boolean>
      */
     @PostMapping("/page")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProcessDefinitionDTO.ListDTO>> page(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryDTO> dto) {
         PagingVO<ProcessDefinitionDTO.ListDTO> pagingVO = processDefinitionService.paging(dto);
         return success(pagingVO);
@@ -108,6 +109,7 @@ public class ProcessDefinitionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "流程定义导出excel")
     @PostMapping("/exportExcel")
+    @WebAdvanceQuery
     public ApiResult<Boolean> exportExcel(@RequestBody @Validated ProcessDefinitionDTO.QueryExportDTO dto){
         // 导出excel
         Boolean result = processDefinitionService.exportExcel(dto);

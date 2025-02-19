@@ -4,7 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.entity.OperateLogEntity;
-import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.oms.dto.OperateLogDTO;
 import org.apache.commons.math3.util.Pair;
 
 import java.util.List;
@@ -97,7 +97,14 @@ public interface OperateLogService extends SuperService<OperateLogEntity> {
     void removeByBusinessIds(List<String> businessIds);
 
     List<String> getContentByObj(Object oldObj, Object newObj,String msg);
-
+    /**
+     * 批量添加日志
+     * @author yl
+     * @date 2023-08-21 18:26
+     * @param operateLogList
+     * @return void
+     */
+    void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList);
     /**
      * 根据销售订单明细查询最新记录
      * @param soIds

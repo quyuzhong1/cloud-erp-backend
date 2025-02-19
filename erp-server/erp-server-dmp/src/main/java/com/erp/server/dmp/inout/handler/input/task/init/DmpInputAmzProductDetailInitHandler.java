@@ -96,7 +96,7 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
         // 缓存优先
         checkAndGetRedisList(canQueryList, resultList, waitQueryList);
         if (CollectionUtils.isEmpty(waitQueryList)){
-            return convertDmpInputTaskInitDTOS(resultList);
+            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(resultList)));
         }
 
         // 待查询按商品类型分组
@@ -162,13 +162,13 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
                         initDmpResponse.setDoNextStatus(false);
                         return Collections.emptyList();
                     }
-                    throw new ServiceException("[Amazon SP-APi] 查询FBA货件item失败" + e);
+                    throw new ServiceException("[Amazon SP-APi] 查询亚马逊listing详情失败" + e);
                 }
             }
             log.warn("查询亚马逊listing详情成功, platformShopCode={}", shopInfoDTO.getPlatformShopCode());
         }
 
-        return convertDmpInputTaskInitDTOS(resultList);
+        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(resultList)));
     }
 
     /**
@@ -180,16 +180,6 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
         return jsonObject;
     }
 
-    /**
-     * 转换中台响应DTO
-     */
-    private static List<DmpInputTaskInitDTO> convertDmpInputTaskInitDTOS(List<JSONObject> resultList) {
-        List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new LinkedList<>();
-        for (JSONObject jsonObject : resultList) {
-            dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
-        }
-        return dmpInputTaskInitDTOList;
-    }
 
     /**
      * 检查和设置到redis
@@ -219,7 +209,10 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
     public AmazonIdentifiersTypeEnum convertIdentifiersType(String productIdType) {
         if ("3".equals(productIdType)) {
             return AmazonIdentifiersTypeEnum.UPC;
+        } else if ("4".equals(productIdType)) {
+            return AmazonIdentifiersTypeEnum.EAN;
         } else {
+            // productIdType=1或空
             return AmazonIdentifiersTypeEnum.ASIN;
         }
     }
@@ -231,13 +224,9 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
         String productIdType = mongoItem.getOrDefault("productIdType", "").toString();
         String status = mongoItem.getOrDefault("status", "").toString();
         if ("1".equalsIgnoreCase(productIdType) && AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(status)) {
-            //ProductIdType=ASIN,停售无法更新明细");
+//        if (AmazonListingStatusEnum.INACTIVE.getCode().equalsIgnoreCase(status)) {
+            //停售无法更新明细"
             return false;
-        }
-        // 日本异常数据
-        if (AmazonMarketplaceEnum.JP.equals(marketPlaceEnum)) {
-            // 日本站点ProductIdType=4无法更新明细";
-            return !"4".equals(productIdType);
         }
         return true;
     }
@@ -250,7 +239,7 @@ public class DmpInputAmzProductDetailInitHandler extends DmpInputAmzCommonInitHa
         String productIdType = mongoMap.getOrDefault("productIdType", "").toString();
         String productId = mongoMap.getOrDefault("productId", "").toString();
         String asin1 = mongoMap.getOrDefault("asin1", "").toString();
-        if (("4".equals(productIdType) || "2".equals(productIdType)) && StringUtils.isNotBlank(asin1)) {
+        if ("2".equals(productIdType) && StringUtils.isNotBlank(asin1)) {
             return asin1;
         }
         return productId;

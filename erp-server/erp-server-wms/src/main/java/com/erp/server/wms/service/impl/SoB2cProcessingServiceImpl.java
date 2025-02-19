@@ -241,13 +241,21 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             return;
         }
         //销售出库单
-        SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj ->
+        List<SoB2bProcessingDTO.ResponseDTO> soOutstockResponseDTOList = soOutstockList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryId())
                                 && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
-                .findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
-            handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(soOutstockResponseDTOList)) {
+            SoB2bProcessingDTO.ResponseDTO responseDTO = soOutstockResponseDTOList.get(0);
+            Integer totalQty = soOutstockResponseDTOList.stream().map(SoB2bProcessingDTO.ResponseDTO::getQty).reduce(MathUtil.ZERO, MathUtil::add);
+            entity.setOutstockOrderId(responseDTO.getId());
+            entity.setOutstockOrderStatus(responseDTO.getApproveStatus());
+            entity.setOutstockQty(totalQty);
+            entity.setOutstockOrderCode(responseDTO.getCode());
+            entity.setOutstockOrderTime(responseDTO.getApproveTime());
+            entity.setOutstockOrderType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+            entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(totalQty));
         }
     }
 

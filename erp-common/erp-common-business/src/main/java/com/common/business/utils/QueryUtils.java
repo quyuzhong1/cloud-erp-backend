@@ -1,5 +1,7 @@
 package com.common.business.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
@@ -17,7 +19,9 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -72,6 +76,9 @@ public class QueryUtils {
      */
     public static String splicingCompareValueSQL(QueryConditionEnum condEnum, AdvanceQueryDTO dto){
         StringBuilder sql = new StringBuilder();
+        if(QueryDataTypeEnum.NUMBER.getCode().equals(dto.getDataType()) && !StringUtils.isNumeric(dto.getValue().toString())){
+            throw new ServiceException("数字类型的值必须为数字");
+        }
         //starts_with 和 ends_with 处理成like，为空和不为空和between不处理
         if(QueryConditionEnum.STARTS_WITH.equals(condEnum) || QueryConditionEnum.ENDS_WITH.equals(condEnum)){
             sql.append(QueryConditionEnum.CONTAINS.getCode()).append(" ");
@@ -193,5 +200,38 @@ public class QueryUtils {
             }
         }
         return null;
+    }
+
+    public static String listToStringValue(List<?> list, QueryDataTypeEnum dataTypeEnum){
+        if (CollectionUtils.isEmpty(list)){
+            return "";
+        }
+        StringBuilder warehouseNameListVal = new StringBuilder("(");
+        for (Object obj : list) {
+            warehouseNameListVal.append(QueryUtils.handleVal(obj, dataTypeEnum.getCode(), QueryConditionEnum.IN_LIST)).append(",");
+        }
+        //去掉最后一个,
+        warehouseNameListVal = new StringBuilder(warehouseNameListVal.substring(0, warehouseNameListVal.length() - 1));
+        warehouseNameListVal.append(")");
+        return warehouseNameListVal.toString();
+    }
+
+
+    public static List<String> parseValueToStrList(Object value, QueryConditionEnum queryConditionEnum) {
+        if (QueryConditionEnum.EQ.equals(queryConditionEnum) || QueryConditionEnum.NE.equals(queryConditionEnum)){
+            if(null != value){
+                return Collections.singletonList(value.toString());
+            }
+        }
+        if (QueryConditionEnum.IN_LIST.equals(queryConditionEnum) || QueryConditionEnum.NOT_IN_LIST.equals(queryConditionEnum)){
+            if(null != value) {
+                return JSONArray.parseArray(JSON.toJSONString(value))
+                        .stream()
+                        .map(Object::toString)
+                        .distinct()
+                        .collect(Collectors.toList());
+            }
+        }
+        return Collections.emptyList();
     }
 }

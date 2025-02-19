@@ -11,9 +11,6 @@ import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.scm.dto.OperateLogDTO;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -306,6 +303,14 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return
      */
     List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO);
+
+    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
+
+    String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
+
+    String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
+
+    Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
     /**
      * 根据参数获取数据列表
      * @param params

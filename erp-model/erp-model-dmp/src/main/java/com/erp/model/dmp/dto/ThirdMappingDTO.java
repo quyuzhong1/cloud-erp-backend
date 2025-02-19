@@ -67,6 +67,10 @@ public class ThirdMappingDTO implements Serializable {
          * 第三方id
          */
         private String thirdId;
+        /**
+         * 第三方名称
+         */
+        private String thirdName;
 
         /**
          * 编号

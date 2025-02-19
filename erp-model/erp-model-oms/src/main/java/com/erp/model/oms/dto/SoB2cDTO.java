@@ -346,6 +346,18 @@ public class SoB2cDTO implements Serializable {
          * 作废状态（false未作废，true已作废）
          */
         private Boolean invalidStatus;
+        /**
+         * 作废备注
+         */
+        private String invalidRemark;
+        /**
+         * 作废类型
+         */
+        private String invalidType;
+        /**
+         * 作废类型名称
+         */
+        private String invalidTypeName;
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包
@@ -1649,6 +1661,16 @@ public class SoB2cDTO implements Serializable {
          */
         private List<String> countryIdList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -1733,6 +1755,11 @@ public class SoB2cDTO implements Serializable {
          * 主表信息
          */
         private List<MergeMainDTO> mainList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data
@@ -2597,6 +2624,18 @@ public class SoB2cDTO implements Serializable {
          * 作废状态
          */
         private Boolean invalidStatus;
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
+        /**
+         * 作废类型
+         */
+        private String invalidType;
+        /**
+         * 作废类型名称
+         */
+        private String invalidTypeName;
         /**
          * 是否冻结
          */

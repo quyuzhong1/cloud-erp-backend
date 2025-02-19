@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.StateEnumValue;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -8,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 以人为 维度 搜素条件
@@ -92,5 +94,13 @@ public class TaskSearchParamDTO  extends SortDTO {
      */
     private List<String> processInstanceIds;
 
+    /**
+     * 页面高级查询
+     */
+    private List<AdvanceQueryDTO> advanceQueryDTOList;
 
+    /**
+     * sqlMap 默认key default
+     */
+    private Map<String, String> sqlMap;
 }

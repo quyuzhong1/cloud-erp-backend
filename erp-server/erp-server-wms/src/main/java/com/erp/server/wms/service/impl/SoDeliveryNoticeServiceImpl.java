@@ -768,16 +768,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     /**
      * 下推销售出库单
      *
-     * @param id id
+     * @param id           id
+     * @param deliveryDate
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateSoDeliverySave(String id) {
+    public BatchResultDTO generateSoDeliverySave(String id, LocalDate deliveryDate) {
         SoDeliveryNoticeEntity entity = getById(id);
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+        //更新发货通知单实际发货日期
+        updateDeliveryDate(id, deliveryDate);
+        entity.setActualDeliveryDate(Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now());
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(soInfoEntity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_99105);
@@ -789,21 +793,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listNoInventoryOrPicking(id, noInventorySkuIds);
-        entityList = entityList.stream().filter(v -> Boolean.FALSE.equals(v.getIsClose())).collect(Collectors.toList());
-//        long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
-//        if (closeCount > 0) {
-//            throw new ServiceException(ApiError.ERROR_98068);
-//        }
         boolean allNoInventorySku = Boolean.FALSE;
         if(CollectionUtils.isNotEmpty(entityList)){
             allNoInventorySku = entityList.stream().allMatch(v -> noInventorySkuIds.contains(v.getSkuId()));
-        }else {
-            throw new ServiceException(ApiError.ERROR_98068);
+
+            long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
+            if (closeCount > 0) {
+                throw new ServiceException(ApiError.ERROR_98068);
+            }
         }
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
         if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {
             throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
         }
+
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
         //包含组合产品的发货通知单，必须有关联的下推的加工组装单且加工单审核通过
         List<String> skuIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
@@ -896,6 +899,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return BatchResultDTO.success(outId, "", "下推成功");
     }
 
+    private void updateDeliveryDate(String id, LocalDate deliveryDate) {
+        if (CharSequenceUtil.isBlank(id)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoDeliveryNoticeEntity::getId, id)
+                .set(SoDeliveryNoticeEntity::getActualDeliveryDate, Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now())
+                .update();
+    }
+
     /**
      * 生成调拨单
      *
@@ -954,7 +966,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
         transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
-        transferDto.setBillDate(LocalDate.now());
+        transferDto.setBillDate(Objects.nonNull(entity.getActualDeliveryDate()) ? entity.getActualDeliveryDate() : LocalDate.now());
         transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         transferDto.setInOrgId(toWarehouse.getOrgId());
         transferDto.setOutOrgId(fromWarehouse.getOrgId());

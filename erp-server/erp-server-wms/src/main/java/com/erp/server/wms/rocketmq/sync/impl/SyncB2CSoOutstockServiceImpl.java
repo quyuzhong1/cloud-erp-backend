@@ -22,6 +22,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
+import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -38,10 +39,13 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -49,6 +53,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -102,6 +107,13 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
@@ -189,6 +201,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class , timeoutMills = 180000)
     @DistributeLocker(keyName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
@@ -247,6 +260,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSellerId(customerInfo.getSellerId());
             soOutstock.setSellerName(customerInfo.getSellerName());
             soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
+            soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
+            soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -329,6 +344,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
         //根据销售出库单创建物流单和自发货费用
+        soOutstock.setId(id);
         soOutstockService.saveLogisticsBill(soOutstock);
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
@@ -345,8 +361,30 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
             inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
+
+
         //推送金蝶
         sendPushTask(soOutstock);
+
+        //推送数帝云
+        this.syncToSdy(soOutstock, SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+    private void syncToSdy(SoOutstockEntity entity, String operate) {
+        //推送数帝云
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
+
+        if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            //更新推送数帝云订单信息
+            SoInfoToSdyDTO soInfoToSdyDTO = new SoInfoToSdyDTO();
+            soInfoToSdyDTO.setSoId(entity.getSoId());
+            soInfoToSdyDTO.setOperateEnum(operate);
+            soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
+            soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
+
+        } else {
+            soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate);
+        }
     }
 
     private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList) {
@@ -441,7 +479,13 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         result.setFlagId(flagId);
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         if (CollUtil.isNotEmpty(customerInfoEntityList)) {
-            soOutstock.setCustomerId(customerInfoEntityList.get(0).getId());
+            CustomerInfoEntity customerInfo = customerInfoEntityList.get(0);
+            soOutstock.setCustomerId(customerInfo.getId());
+            soOutstock.setSellerId(customerInfo.getSellerId());
+            soOutstock.setSellerName(customerInfo.getSellerName());
+            soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
+            soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
+            soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
         }
         soOutstock.setCustomerName(customerName);
         //单据编号

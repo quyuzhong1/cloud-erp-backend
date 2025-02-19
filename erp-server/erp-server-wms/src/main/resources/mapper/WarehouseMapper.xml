@@ -123,7 +123,7 @@
          open_time openTime,
          close_time closeTime
 
-        FROM warehouse WHERE is_deleted=false
+        FROM warehouse WHERE ${params.sqlMap.default} and is_deleted=false
       <choose>
           <when test="params.ids!=null and params.ids.size>0">
               AND id IN

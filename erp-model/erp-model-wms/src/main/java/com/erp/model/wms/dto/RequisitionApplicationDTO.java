@@ -1488,8 +1488,11 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 明细
          */
-        @Valid
         private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
+        /**
+         * 要货申请id
+         */
+        private String id;
     }
     @Data
     @NoArgsConstructor

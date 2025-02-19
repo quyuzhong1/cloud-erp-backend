@@ -265,6 +265,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
             super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
         }
         //待审核
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {
@@ -272,6 +273,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
             super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
         }
         //配货中
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {

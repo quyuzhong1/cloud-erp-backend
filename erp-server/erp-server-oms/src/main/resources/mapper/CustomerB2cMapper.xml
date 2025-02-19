@@ -10,9 +10,11 @@
         approve_user_name,
         name,short_name,disabled,
         use_org_name,group_id,group_name,
-        create_user_name,create_time
+        create_user_name,
+        create_time as createTime,
+        update_time as updateTime
         FROM customer_b2c ci
-        WHERE ci.is_deleted=FALSE
+        WHERE ${params.sqlMap.default} and ci.is_deleted=FALSE
         <if test="params.code !=null and params.code!=''">
             AND ci.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
@@ -79,7 +81,7 @@
         use_org_name,group_id,group_name,
         create_user_name,create_time
         FROM customer_b2c ci
-        WHERE ci.is_deleted=FALSE
+        WHERE ${params.sqlMap.default} and ci.is_deleted=FALSE
         <choose>
             <when test="params.ids!=null and params.ids.size>0 ">
                 AND id IN

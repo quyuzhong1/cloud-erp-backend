@@ -19,4 +19,9 @@ public class DmpInputWdtPreStockNextDmpHandler extends DmpInputWdtNextDmpHandler
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
 		return (List<Map<String, Object>>) dmpInputMongoEntity.get("detail_list");
 	}
+	
+	@Override
+	protected boolean isDeleteInsert() {
+		return true;
+	}
 }

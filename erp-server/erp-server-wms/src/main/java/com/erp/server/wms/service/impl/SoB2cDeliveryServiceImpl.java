@@ -328,7 +328,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO manualDelivery(String id) {
+    public BatchResultDTO manualDelivery(String id, LocalDate deliveryDate) {
+        if(Objects.isNull(deliveryDate)){
+            throw new ServiceException("发货日期不能为空");
+        }
         SoB2cDeliveryEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             return BatchResultDTO.fail(id, entity.getCode(), ApiError.B2C_SO_DELIVERY_NOT_EXISTS.msg);
@@ -355,21 +358,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
 
         }
-
-        //如果是手动标发不用再次调用第三方SDK标记发货，因为手动标发已经调用过了
-//        if (ShipmentMarkTypeEnum.MANUAL.getCode().equals(entity.getShipmentMark())) {
-//            if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
-//                //调用第三方平台SDK发货
-//                PlatformShipOrderDTO platformShipOrderDTO = new PlatformShipOrderDTO();
-//                platformShipOrderDTO.setSoB2cId(entity.getSourceId());
-//                platformShipOrderDTO.setDictPlatform(entity.getDictPlatform());
-//                try {
-//                    PlatformSaveHandler.shipOrder(platformShipOrderDTO);
-//                } catch (Exception e) {
-//                    log.error("【发货单手动发货】销售单【{}】 标记发货失败 >>>错误信息{}", entity.getCode(), ExceptionUtil.stacktraceToString(e));
-//                    throw new ServiceException(ApiError.PLATFORM_SHIP_ORDER_ERROR, entity.getDictPlatform(), e.getMessage());
-//                }
-//            }
             if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
                 // 调用第三方平台SDK标记发货(独立事务)
                 String businessDesc = "发货单手动发货";
@@ -385,7 +373,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 //        }
 
         //获取一个当前时间当作发货时间
-        LocalDateTime deliveryTime = LocalDateTime.now();
+        LocalDateTime deliveryTime = Objects.nonNull(deliveryDate) ? deliveryDate.atStartOfDay() : LocalDateTime.now();
         entity.setDeliveryTime(deliveryTime);
         //修改发货状态
         lambdaUpdate()
@@ -1283,15 +1271,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      *
      * @param id
      * @param deliveryType
+     * @param deliveryDate
      * @return
      */
     @Override
     @DataIdempotent(keyIdName = "id")
-    public BatchResultDTO delivery(String id, String deliveryType) {
+    public BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate) {
         //手工发货
         String manual = DeliverTypeEnum.MANUAL.getCode();
         if (manual.equals(deliveryType)) {
-            return soB2cDeliveryService.manualDelivery(id);
+            return soB2cDeliveryService.manualDelivery(id,deliveryDate);
         } else {
             return soB2cDeliveryService.falseDelivery(id);
         }
@@ -2120,7 +2109,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //跨组织调拨
         addDTO.setType(TransferTypeEnum.CROSS_ORG.getCode());
-        addDTO.setBillDate(LocalDate.now());
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调出仓库
         WarehouseEntity outWarehouseEntity = warehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), fromWarehouseId)).findFirst().orElse(null);

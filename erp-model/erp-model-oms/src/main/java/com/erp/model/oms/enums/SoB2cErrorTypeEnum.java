@@ -57,6 +57,16 @@ public enum SoB2cErrorTypeEnum {
         return "";
     }
 
+    public static boolean needPrompt(String code) {
+        for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
+            if (typeEnum.getCode().equals(code) && (typeEnum.equals(SIGN_DELIVERY) || typeEnum.equals(GET_LOGISTICS_CODE) || typeEnum.equals(ORDER_FORECAST)
+                    || typeEnum.equals(THIRD_WAREHOUSE_OUT_EXCEPTION)
+                    || typeEnum.equals(SUBMIT_DELIVERY))) {
+                return true;
+            }
+        }
+        return false;
+    }
     public static SoB2cErrorTypeEnum getEnum(String code) {
         for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
             if (typeEnum.getCode().equals(code)) {
