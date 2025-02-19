@@ -23,18 +23,16 @@ public interface CfgRuleCommonMapper extends BaseMapper<CfgRuleCommonEntity> {
      * 查询树结构数据
      * @author will
      * @date 2024/8/26 9:46
-     * @param platformType
      * @return List<ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> listRuleCommon(@Param("platformType") String platformType,@Param("type") String type);
+    List<CfgRuleCommonDTO.ViewDTO> listRuleCommon(@Param("type") String type);
     /**
      * 
      * @author will
      * @date 2024/8/26 14:38
-     * @param platformType
      * @return List<ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("platformType")String platformType,@Param("type") String type);
+    List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommon(@Param("type") String type);
 
-    List<CfgRuleCommonDTO.StrategyResultDTO> listByPlatformTypeAndType(@Param("platformType") String platformType,@Param("type") String type, @Param("isDefault") Boolean isDefault);
+    List<CfgRuleCommonDTO.StrategyResultDTO> listByPlatformTypeAndType(@Param("type") String type, @Param("isDefault") Boolean isDefault);
 }

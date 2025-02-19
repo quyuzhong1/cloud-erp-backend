@@ -33,7 +33,7 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey();
         Set<String> codes = cfgRuleCommonService.findByKey(baseKey, replenishmentResultDTO.getCfgRuleStrategy().getInventoryResult(), baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaInTransit());
         if (!CollectionUtils.isEmpty(codes)) {
             replenishmentResultDTO.getReplenishmentDetail().setCfgFbaInTransit(new ArrayList<>(codes).get(0));

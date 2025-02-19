@@ -206,13 +206,12 @@ public class InventoryServiceImpl implements InventoryService {
      * 获取全部库存
      *
      * @param inventoryResult 库存
-     * @param platformType    平台
      * @param calculationDate 计算日
      */
     @Override
-    public ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String platformType, LocalDate calculationDate) {
+    public ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, LocalDate calculationDate) {
         ReplenishmentInventoryDTO dto = new ReplenishmentInventoryDTO();
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(platformType);
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey();
         String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
         getFbaUsable(inventoryResult, baseKey, dto, calcDate);
         getFbaInTransit(inventoryResult, baseKey, dto, calcDate);
@@ -1019,7 +1018,7 @@ public class InventoryServiceImpl implements InventoryService {
 
     private List<LocalInventoryDTO> getOverseasPlanDeliveryInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleStrategyDTO cfgRuleStrategyDTO) {
 
-        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey(replenishmentResultDTO.getReplenishment().getPlatformType());
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey();
         List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = new ArrayList<>();
         //获取需要计算库存的FBA预计发货配置
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
