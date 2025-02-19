@@ -1,5 +1,6 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.wms.dto.third.*;
@@ -13,7 +14,7 @@ import java.util.List;
 /**
  * @author lrp
  */
-@FeignClient(name = "erp-wms",contextId = "thirdWarehouse")
+@FeignClient(name = "erp-wms",contextId = "thirdWarehouse",configuration = {FeignErrorDecoder.class})
 public interface ThirdWarehouseFeign {
 
     /**
