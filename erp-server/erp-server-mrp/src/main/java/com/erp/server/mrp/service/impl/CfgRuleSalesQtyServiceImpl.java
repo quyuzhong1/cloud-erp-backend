@@ -268,13 +268,6 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
     }
 
     @Override
-    public void downloadRuleTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/cfgSalesEstimateTemplate.xlsx";
-        String excelName = "template.xlsx";
-        ExcelUtil.downloadTemplate(path,excelName,response);
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteByRefId(String refId) {
         //销量数据
