@@ -280,6 +280,8 @@ public class ListingInfoDTO implements Serializable {
          * 类型 platform 平台  warehouse 仓库
          */
         private String type;
+
+        private String authId;
     }
 
     @Data

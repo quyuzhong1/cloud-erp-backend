@@ -64,7 +64,7 @@ public class DmpInputLxApiInitHandler extends DmpInputInitHandler {
         // 首次请求
         Result<Object> result = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
 
-        Map<String, Object> dataResultMap = (Map<String, Object>) result.getData();
+        JSONObject dataResultMap = JSON.parseObject(JSON.toJSONString(result));
         // 兼容不同接口返回不同个数
         Object totalObj = dataResultMap.get("total");
         Object countObj = dataResultMap.get("count");

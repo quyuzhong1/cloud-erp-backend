@@ -469,5 +469,23 @@ public class FirstMileProcessingDTO implements Serializable {
 
     }
 
-
+    /**
+     * 删除dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+        /**
+         * 要货申请明细id
+         */
+        private List<String> requisitionApplicationDetailIdList;
+        /**
+         * 头程发货单明细id
+         */
+        private List<String> firstMileDeliveryDetailIdList;
+    }
 }

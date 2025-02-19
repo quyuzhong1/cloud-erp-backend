@@ -437,6 +437,26 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * R2
          */
         private BigDecimal r2Score;
+        /**
+         * MAE
+         */
+        private BigDecimal monthMaeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal monthMseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal monthRmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal monthMapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal monthR2Score;
 
     }
 
@@ -1037,6 +1057,27 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 序号
          */
         private String serialNo;
+
+        /**
+         * MAE
+         */
+        private BigDecimal monthMaeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal monthMseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal monthRmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal monthMapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal monthR2Score;
     }
 
     @Getter
@@ -1311,6 +1352,10 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 试算配置名称
          */
         private String name;
+        /**
+         * 序号
+         */
+        private String serialNo;
 
         /**
          * 试算开始日期
@@ -1418,7 +1463,92 @@ public class CalcSalesInfoDimDTO implements Serializable {
          * 状态名
          */
         private String statusName;
+        /**
+         * MAE
+         */
+        private BigDecimal monthMaeScore;
+        /**
+         * MSE
+         */
+        private BigDecimal monthMseScore;
+        /**
+         * RMSE
+         */
+        private BigDecimal monthRmseScore;
+        /**
+         * MAPE
+         */
+        private BigDecimal monthMapeScore;
+        /**
+         * R2
+         */
+        private BigDecimal monthR2Score;
     }
+
+    /**
+     * 列表导出
+     */
+    @Getter
+    @Setter
+    public static class ExportSalesInfoTemplateListDTO {
+        /**
+         * 试算配置编号
+         */
+        private String code;
+        /**
+         * 试算配置名称
+         */
+        private String name;
+
+        /**
+         * 试算开始日期
+         */
+        private LocalDate startCalcDate;
+
+        /**
+         * 试算结束日期
+         */
+        private LocalDate endCalcDate;
+
+        /**
+         * 历史销量类型
+         */
+        private String saleType;
+
+        /**
+         * 历史销量类型
+         */
+        private String saleTypeName;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 状态名
+         */
+        private String statusName;
+    }
+
 
     @Getter
     @Setter

@@ -29,8 +29,30 @@
         update_time,
         version,
         is_deleted,
-        data_json, remark, trade_time, status
+        data_json, remark, trade_time, status,business_id
     </sql>
+
+
+    <select id="listFirstVirtualDetailMsg" resultType="com.erp.model.wms.entity.WmsVirtualDetailMsgEntity">
+        WITH first_records AS (
+            SELECT
+                m.*,
+                v.sku_id,
+                v.warehouse_id,
+                v.virtual_warehouse_id,
+                ROW_NUMBER() OVER (
+      PARTITION BY v.sku_id, v.warehouse_id, v.virtual_warehouse_id
+      ORDER BY v.trade_time asc
+    ) AS rn
+            FROM wms_virtual_detail_msg m
+                     JOIN virtual_trans_flow v ON m.business_id = v.id and v.is_deleted = false
+            WHERE m.is_deleted = false and  m.status IN ('waitHandle', 'fail', 'doing')
+        )
+        SELECT
+            <include refid="Base_Column_List" />
+        FROM first_records
+        WHERE rn = 1;
+    </select>
 
 
 </mapper>

@@ -11,8 +11,13 @@ import org.apache.commons.lang3.StringUtils;
  * @date 2023/8/22 12:27
  */
 public enum SoB2cInvalidTypeEnum {
-
-    ENUM_MANUAL("manual",  "手动作废"),
+    //订单作废：人工操作
+    ENUM_MANUAL("manual",  "手工作废"),
+    //合并[订单合并]
+    ENUM_MERGE("merge",  "合并作废"),
+    //拆分[订单拆分，按仓库拆分，捆绑拆分]
+    ENUM_SPLIT("split",  "拆分作废"),
+    //系统自动作废
     ENUM_AUTOMATIC("automatic",  "自动作废"),
 
     ;

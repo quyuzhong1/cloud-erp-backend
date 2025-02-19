@@ -236,7 +236,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         //校验记录是否已被使用 费用分摊是否已使用
         List<FirstMileSkuCostRefEntity> firstMileSkuCostRefEntityList = firstMileSkuCostRefService.listBySkuCostDetailIds(detailIds);
         if (!CollectionUtils.isEmpty(firstMileSkuCostRefEntityList)){
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能删除");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "SKU成本已使用不能反审核");
         }
         log.info("SKU成本记录反审核，code=【{}】", entity.getCode());
         //更新单据为待提交
@@ -335,7 +335,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         if (CollectionUtils.isEmpty(excelDateList)) {
             throw new ServiceException(ApiError.ERROR_95123);
         } else if (excelDateList.size() > 5000) {
-            throw new ServiceException(ApiError.ERROR_95123);
+            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
         }
         List<InventorySkuCostDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
 
@@ -377,11 +377,11 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
     }
 
     @Override
-    public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month) {
-        if (CharSequenceUtil.isBlank(orgId) && CharSequenceUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds) && Objects.isNull(month)){
+    public List<InventorySkuCostDTO.PagingVO> listDetailByOrgIdAndSkuIds(String orgId, List<String> skuIds, String status, LocalDate month, String warehouseId) {
+        if (CharSequenceUtil.isBlank(orgId) && CharSequenceUtil.isBlank(status) && CollectionUtils.isEmpty(skuIds) && Objects.isNull(month) && CharSequenceUtil.isBlank(warehouseId)){
             return Collections.emptyList();
         }
-        return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status,month);
+        return baseMapper.listDetailByOrgIdAndSkuIds(orgId,skuIds,status,month,warehouseId);
     }
 
     @Override

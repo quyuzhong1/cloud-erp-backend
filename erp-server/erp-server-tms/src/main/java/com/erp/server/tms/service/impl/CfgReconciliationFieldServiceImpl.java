@@ -308,7 +308,11 @@ public class CfgReconciliationFieldServiceImpl extends SuperServiceImpl<CfgRecon
         List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByIds(sourceIdList);
 
         //配置字典信息
-        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType()));
+        String type = DictBasicEnum.CFG_B2C_DECLARE_ERP_FIELD.getType();
+        if(CfgReconciliationTypeEnum.FIRST_MILE.getCode().equals(reconciliationType)) {
+        	type = DictBasicEnum.CFG_FIRST_MILE_ERP_FIELD.getType();
+        }
+		List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Arrays.asList(type));
 
         List<CfgReconciliationFieldDTO.ErpFieldViewDTO> resultList = new ArrayList<>();
         for (CfgReconciliationFieldEntity fieldEntity : list) {

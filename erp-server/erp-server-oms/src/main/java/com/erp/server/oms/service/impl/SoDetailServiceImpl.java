@@ -14,6 +14,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.ApiError;
@@ -22,10 +23,8 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.dmp.dto.KingdeeDTO;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.oms.dto.SoDetailDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.SoDetailImportExcelDTO;
-import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
@@ -97,7 +96,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDetailEntity> implements SoDetailService {
 
-
+    @Resource
+    private CommonService commonService;
     @Resource
     private SoInfoService soInfoService;
 
@@ -141,6 +141,8 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private SkuMappingService skuMappingService;
     /**
      * 根据退货单详情表id查询退货单
      *
@@ -186,11 +188,16 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         result.add(waitSubmit);
 
         //待审核
-        String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         SoInfoDTO.TabListDTO waitApprove = new SoInfoDTO.TabListDTO();
         waitApprove.setSearchType(OmsConstant.WAIT_APPROVE);
-        int waitApproveCount = countList.stream().filter(a -> a.getType().equals(approveIngStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        //需要审核的业务ids
+        List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SO_INFO.getCode());
+        int waitApproveCount = 0;
+        if(CollectionUtils.isNotEmpty(businessIds)){
+            List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(businessIds);
+            soInfoEntityList = soInfoEntityList.stream().filter(v->v.getApproveStatus().equals(BillApproveStatusEnum.APPROVE_ING)).collect(Collectors.toList());
+            waitApproveCount = soInfoEntityList.size();
+        }
         waitApprove.setCount(waitApproveCount);
         result.add(waitApprove);
 
@@ -637,7 +644,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      */
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/soSku.xlsx";
+        String path = "excel/soSku.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -670,9 +677,13 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
      * @date 2023-05-17 19:43
      */
     @Override
-    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId,Boolean isTax) {
+    public SoDetailDTO.ImportDTO importSku(MultipartFile excelFile, HttpServletResponse response, String warehouseId,Boolean isTax,String customerId) {
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList);
+        ListingInfoDTO.QueryDTO queryDTO = new ListingInfoDTO.QueryDTO();
+        queryDTO.setAuthId(customerId);
+        List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS = skuMappingService.listSkuMappingByParams(queryDTO);
+        SoDetailExcelListener excelListenerUtil = new SoDetailExcelListener(skuList,skuMappingViewDTOS,isTax);
+
         try {
             EasyExcel.read(excelFile.getInputStream(), SoDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
@@ -770,7 +781,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "销售订单错误信息.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, SoDetailImportExcelDTO.class);
-            if (file != null && !file.isDirectory()) {
+            if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
