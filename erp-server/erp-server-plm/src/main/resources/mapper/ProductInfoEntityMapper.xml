@@ -540,6 +540,7 @@
         FROM product_info p
         INNER JOIN project_task pt
         ON p.id = pt.product_id AND pt.is_deleted = FALSE
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
         LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
         (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
@@ -641,8 +642,8 @@
         date_part('day',pt.reality_end_time - pt.reality_start_time) + 1 AS realityDay,
         pt.work_period
         FROM product_info p
-        INNER JOIN project_task pt
-        ON p.id = pt.product_id AND pt.is_deleted = FALSE
+        INNER JOIN project_task pt ON p.id = pt.product_id AND pt.is_deleted = FALSE
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
         LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
         (0,1,2,3,7,9,10) AND pp.is_deleted = FALSE
@@ -745,6 +746,7 @@
         FROM product_info p
         INNER JOIN project_task pt
         ON p.id = pt.product_id AND pt.is_deleted = FALSE
+        LEFT JOIN project_info pi ON p.id = pi.product_id AND pi.is_deleted = FALSE
         LEFT JOIN
         (select pt.product_id, COALESCE(min(pp.seq),max(ppe.seq)) as seq from project_task pt
         LEFT JOIN project_phase pp on pt.phase_id = pp.id and pt.product_id = pp.product_id and pt.status in
