@@ -1,11 +1,7 @@
 package com.erp.server.oms.controller.feign;
 
 
-import com.common.business.annotation.DataPermission;
-import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -15,7 +11,6 @@ import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -214,11 +209,24 @@ public class ShopInfoFeignController extends BaseController {
     }
 
     /**
-     * 高级查询分页店铺
+     * 获取店铺列表
+     *
+     * @return
      */
-    @PostMapping("/paging")
-//    @WebAdvanceQuery(handler = ShopQueryHandler.class)
-    public PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
-        return shopInfoService.paging(dto);
+    @GetMapping("/getShopListByParam")
+    public ApiResult<List<ShopAuthEntity>> getShopListByParam(@RequestParam(value = "type") String type,
+                                                              @RequestParam(value = "status") String status,
+                                                              @RequestParam(value = "dictPlatform") String dictPlatform) {
+        return success(shopAuthService.getShopListByParam(type,status, dictPlatform));
+    }
+
+    /**
+     * 获取商铺详情
+     *
+     * @return
+     */
+    @GetMapping("/getShopAuthById")
+    public ApiResult<ShopAuthEntity> getShopAuthById(@RequestParam(value = "shopId") String shopId) {
+        return success(shopAuthService.getByShopId(shopId));
     }
 }

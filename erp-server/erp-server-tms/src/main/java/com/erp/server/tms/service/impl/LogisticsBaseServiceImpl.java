@@ -12,7 +12,6 @@ import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.dto.DmpLogisticsTrackRegisterDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
@@ -30,9 +29,7 @@ import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsAddressConverter;
-import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.*;
 import com.erp.tms.aliexpress.api.IopResponse;
@@ -67,8 +64,6 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogisticsBaseServiceImpl implements LogisticsBaseService {
-    @Resource
-    private ShopeeFeign shopeeFeign;
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
@@ -441,7 +436,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         log.info("{}渠道同步开始", platform);
         ApiResult<List<ShopAuthEntity>> result = null;
         try {
-            result = shopeeFeign.getShopeeShopList(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode(),"");
+            result = shopInfoFeign.getShopListByParam(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode(),"");
         } catch (Exception e) {
             log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
         }
