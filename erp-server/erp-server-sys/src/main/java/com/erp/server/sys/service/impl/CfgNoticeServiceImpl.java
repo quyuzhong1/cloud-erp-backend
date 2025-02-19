@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,12 +20,16 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CfgNoticeDTO;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
+import com.erp.model.sys.enums.DictBasicEnum;
 import com.erp.model.wms.enums.*;
 import com.erp.server.sys.mapper.CfgNoticeMapper;
 import com.erp.server.sys.service.CfgNoticeDetailService;
 import com.erp.server.sys.service.CfgNoticeService;
+import com.erp.server.sys.service.DictBasicService;
+import com.erp.server.sys.service.SysUserInfoService;
 import com.google.gson.Gson;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +59,10 @@ import java.util.stream.Collectors;
 public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgNoticeEntity> implements CfgNoticeService {
     @Resource
     private CfgNoticeDetailService cfgNoticeDetailService;
+    @Resource
+    private SysUserInfoService sysUserInfoService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -255,6 +264,11 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
         List<String> platformList = records.stream().map(CfgNoticeDTO.ListDTO::getNoticePlatform).distinct().collect(Collectors.toList());
         List<DictBasicEntity> dictBasicList = CollectionUtils.isEmpty(platformList) ? Collections.EMPTY_LIST : FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
 
+        //人员
+        List<FindUserDTO> allUserList = sysUserInfoService.getAllUserList();
+
+        //飞书群
+        List<DictBasicDTO.ViewDTO> dictList = dictBasicService.listByType(DictBasicEnum.FS_GROUP.getKey());
 
         for (CfgNoticeDTO.ListDTO item : records) {
             //通知节点
@@ -272,6 +286,21 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
                 Gson gson = new Gson();
                 // 将 JSON 字符串转为 Map
                 Map map = gson.fromJson(detailEntity.getNoticeValueJson().toString(), Map.class);
+                map.put("noticeTypeName", CfgVirtualNoticeObjectTypeEnum.getName(detailEntity.getNoticeType()));
+
+                if (CfgVirtualNoticeObjectTypeEnum.NOTICE_WEEK.getCode().equals(detailEntity.getNoticeType())) {
+                    map.put("weekOptionName", CfgVirtualNoticeWeekOptionEnum.getName((String) map.get("weekOption")));
+                }
+                if (CfgVirtualNoticeObjectTypeEnum.NOTICE_USER.getCode().equals(detailEntity.getNoticeType())) {
+                    List<String> noticeObject = (List<String>) map.get("noticeObjectList");
+                    List<String> userNameList = allUserList.stream().filter(obj -> noticeObject.contains(obj.getUserId())).map(FindUserDTO::getUserName).collect(Collectors.toList());
+                    map.put("noticeObjectName", userNameList);
+                }
+                if (CfgVirtualNoticeObjectTypeEnum.NOTICE_GROUP.getCode().equals(detailEntity.getNoticeType())) {
+                    List<String> noticeObject = (List<String>) map.get("noticeObjectList");
+                    List<String> groupNameList = dictList.stream().filter(obj -> noticeObject.contains(obj.getValue())).map(DictBasicDTO.ViewDTO::getName).collect(Collectors.toList());
+                    map.put("noticeObjectName", groupNameList);
+                }
                 noticeObjectList.add(map);
             }
             item.setNoticeObjectList(noticeObjectList);

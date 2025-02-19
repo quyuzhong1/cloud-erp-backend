@@ -18,6 +18,7 @@ import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
 import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
+import com.erp.model.wms.enums.CfgVirtualNoticeWeekOptionEnum;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.service.CfgSettingService;
 import com.erp.server.wms.service.QcEffectivenessService;
@@ -32,12 +33,14 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -107,9 +110,21 @@ public class CfgNoticeJob {
                     isNotice.set(Boolean.TRUE);
                 });
             }
-
             //按周
             List<CfgNoticeDetailEntity> cfgNoticeWeekDetailList = map.get(CfgVirtualNoticeObjectTypeEnum.NOTICE_WEEK.getCode());
+            if (CollUtil.isNotEmpty(cfgNoticeWeekDetailList)) {
+                cfgNoticeWeekDetailList.stream().forEach(e -> {
+                    CfgNoticeDTO.NoticeTimeDTO noticeTimeDTO = BeanUtil.toBean(e.getNoticeValueJson(), CfgNoticeDTO.NoticeTimeDTO.class);
+                    //周选项是否相同
+                    boolean equalsWeek = Objects.requireNonNull(CfgVirtualNoticeWeekOptionEnum.getEnum(noticeTimeDTO.getWeekOption())).name().equals(now.getDayOfWeek().name());
+                    //时间是否相同
+                    boolean equalsTime = noticeTimeDTO.getTime().format(DateTimeFormatter.ofPattern("HHmm")).equals(localTime.format(DateTimeFormatter.ofPattern("HHmm")));
+                    //周选项和时间相同则发送通知
+                    if (equalsWeek && equalsTime) {
+                        isNotice.set(Boolean.TRUE);
+                    }
+                });
+            }
         });
 
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
@@ -133,5 +148,11 @@ public class CfgNoticeJob {
             log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
         }
         return ReturnT.SUCCESS;
+    }
+
+    public static void main(String[] args) {
+        LocalDateTime now = LocalDateTime.now();
+        DayOfWeek dayOfWeek = now.getDayOfWeek();
+        System.out.println(dayOfWeek.name().equals(CfgVirtualNoticeWeekOptionEnum.WEDNESDAY.name()));
     }
 }
