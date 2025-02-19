@@ -2,12 +2,14 @@ package com.erp.server.mrp.controller.api;
 
 
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
+import com.erp.server.mrp.service.CfgRuleSalesEstimateFileService;
 import com.erp.server.mrp.service.CfgRuleSalesQtyService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -29,6 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 @RequestMapping("/cfgRuleSalesQty")
 public class CfgRuleSalesQtyController extends BaseController {
 
+    @Resource
+    private CfgRuleSalesEstimateFileService cfgRuleSalesEstimateFileService;
     @Resource
     private CfgRuleSalesQtyService cfgRuleSalesQtyService;
 
@@ -88,9 +92,9 @@ public class CfgRuleSalesQtyController extends BaseController {
      * 文件列表
      */
     @PostMapping("/filePage")
-    public ApiResult<CfgRuleSalesEstimateFileDTO.PagingView> filePage(@RequestBody @Validated PagingDTO<CfgRuleSalesEstimateFileDTO.PagingParamDTO> params) {
-
-        return new ApiResult<>();
+    public ApiResult<PagingVO<CfgRuleSalesEstimateFileDTO.PagingView>> filePage(@RequestBody @Validated PagingDTO<CfgRuleSalesEstimateFileDTO.PagingParamDTO> params) {
+        PagingVO<CfgRuleSalesEstimateFileDTO.PagingView> pagingVO = cfgRuleSalesEstimateFileService.filePage(params);
+        return success(pagingVO);
     }
 
 
@@ -99,6 +103,7 @@ public class CfgRuleSalesQtyController extends BaseController {
      */
     @PostMapping("/importFile")
     public ApiResult<String> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        return success();
+        cfgRuleSalesEstimateFileService.importFile(excelFile, response);
+        return success("上传成功");
     }
 }
