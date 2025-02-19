@@ -54,6 +54,12 @@ public class WmsVirtualDetailMsgEntity extends BaseEntity<WmsVirtualDetailMsgEnt
     @TableField("business_id")
     private String businessId;
 
+    /**
+     * 流水数据
+     */
+    @TableField(exist = false)
+    private VirtualTransFlowEntity transFlowEntity;
+
 
     public static final String DATA_JSON = "data_json";
 

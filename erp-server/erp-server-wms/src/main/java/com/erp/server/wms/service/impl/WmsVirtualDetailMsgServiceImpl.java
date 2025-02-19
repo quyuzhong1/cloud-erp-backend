@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
@@ -16,8 +15,8 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
+import com.erp.server.wms.convert.WmsVirtualDetailMsgConverter;
 import com.erp.server.wms.mapper.WmsVirtualDetailMsgMapper;
-import com.erp.server.wms.service.VirtualTransFlowService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +26,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,9 +43,6 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     @Resource
     private MQProducerService mqProducerService;
 
-    @Resource
-    private VirtualTransFlowService virtualTransFlowService;
-
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -55,8 +50,7 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     public BaseResultDTO.AddDTO add(WmsVirtualDetailMsgDTO.AddDTO addDTO) {
         log.warn("新增wms虚拟仓明细同步单，addDTO参数：{}", JSON.toJSONString(addDTO));
 
-        WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity = new WmsVirtualDetailMsgEntity();
-        BeanUtil.copyProperties(addDTO, wmsVirtualDetailMsgEntity);
+        WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity = WmsVirtualDetailMsgConverter.INSTANCE.wmsVirtualDetailMsgToAdd(addDTO);
         //查询是否已存在任务
         WmsVirtualDetailMsgEntity old = getByBusinessId(wmsVirtualDetailMsgEntity.getBusinessId());
         if (ObjUtil.isNotNull(old)) {
@@ -64,9 +58,7 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
             return new BaseResultDTO.AddDTO(old.getId(), old.getId());
         }
         log.warn("新增wms虚拟仓明细同步单，wmsVirtualDetailMsgEntity参数：{}", JSON.toJSONString(wmsVirtualDetailMsgEntity));
-        wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(addDTO.getTransFlowEntity()));
-        // 数据处理
-        handleData(wmsVirtualDetailMsgEntity);
+        wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(wmsVirtualDetailMsgEntity.getTransFlowEntity()));
 
         boolean save = super.save(wmsVirtualDetailMsgEntity);
         if(!save) {
@@ -105,32 +97,6 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     }
 
     /**
-     * 查询进行中数据
-     * @author will
-     * @date 2024/12/17 16:16
-     * @return List<WmsVirtualDetailMsgEntity>
-     */
-    private List<WmsVirtualDetailMsgEntity> listVirtualDetailMsgDoing() {
-        return  lambdaQuery()
-                .eq(WmsVirtualDetailMsgEntity::getStatus,VirtualDetailMsgStatusEnum.DOING.getCode())
-                .list();
-    }
-
-    /**
-     * 根据业务id集合查询
-     * @author will
-     * @date 2024/12/27 18:15
-     * @param businessIdList
-     * @return List<WmsVirtualDetailMsgEntity>
-     */
-    private List<WmsVirtualDetailMsgEntity> listByBusinessIdList(List<String> businessIdList) {
-        if(CollUtil.isEmpty(businessIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(WmsVirtualDetailMsgEntity::getBusinessId,businessIdList).list();
-    }
-
-    /**
      * 根据业务id查询
      * @author will
      * @date 2024/12/17 18:05
@@ -139,12 +105,5 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
      */
     private WmsVirtualDetailMsgEntity getByBusinessId(String businessId) {
        return lambdaQuery().eq(WmsVirtualDetailMsgEntity::getBusinessId,businessId).last("limit 1").one();
-    }
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(WmsVirtualDetailMsgEntity wmsVirtualDetailMsgEntity) {
-
     }
 }
