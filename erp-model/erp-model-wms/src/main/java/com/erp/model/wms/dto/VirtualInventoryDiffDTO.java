@@ -427,4 +427,64 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private Integer qty;
     }
+
+    /**
+     * 飞书通知DTO(按sku+仓库)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SendNoticeSkuDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         *  分配数量
+         */
+        private Integer distributionQty;
+        /**
+         * 未分配数量
+         */
+        private Integer unDistributionQty;
+    }
+
+    /**
+     * 飞书通知DTO(汇总)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SendNoticeTotalDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         *  差异数量
+         */
+        private Integer diffQty;
+    }
 }
