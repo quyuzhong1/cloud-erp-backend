@@ -9545,8 +9545,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("文件格式不正确，请上传PDF格式的文件");
         }
         String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
-
-        soB2cLabelService.ManualUploadLabel(base64,dto.getId());
+        String prefix = "data:application/pdf;base64,";
+        soB2cLabelService.ManualUploadLabel(prefix + base64,dto.getId());
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
 
         operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");
