@@ -196,10 +196,7 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 产品ids
          */
         private List<String> ids;
-        /**
-         * 产品ids
-         */
-        private List<String> productIds;
+
         /**
          * 导出数据 类型
          * 0，产品列表
