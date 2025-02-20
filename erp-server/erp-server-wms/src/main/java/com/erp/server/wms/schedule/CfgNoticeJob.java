@@ -358,8 +358,8 @@ public class CfgNoticeJob {
         StringBuffer str = new StringBuffer();
         str.append(StrUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("\n**SKU({}) 虚拟仓({}) 库龄({}) 正推库龄({})",
-                    e.getSkuNo(), e.getVirtualWarehouseName(), e.getAvgInventoryAge(), e.getBackAvgInventoryAge()));
+            str.append(StrUtil.format("\nSKU({}) 虚拟仓({}) 库龄({}) 正推库龄({})",
+                    e.getSkuNo(), e.getVirtualWarehouseName(), e.getBackAvgInventoryAge(), e.getAvgInventoryAge()));
         });
         return Collections.singletonList(str.toString());
     }
