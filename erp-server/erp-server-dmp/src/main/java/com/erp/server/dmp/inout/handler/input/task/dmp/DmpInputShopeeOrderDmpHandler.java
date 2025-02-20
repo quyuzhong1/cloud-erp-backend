@@ -72,7 +72,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				}
 
 				// 标签json
-				Map<String, Object> labelMap = new HashMap<>();
+				JSONObject labelJsonObject = new JSONObject();
 				// 配送方式
 				String fulfillmentFlagStr = detailMaps.getOrDefault("fulfillment_flag", "").toString();
 				// 是否平台仓
@@ -90,11 +90,11 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				} else {
 					ServiceException.runError("未知配送方式fulfillment_flag=" + fulfillmentFlagStr);
 				}
-				labelMap.put("logisticType", logisticType);
-				labelMap.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
+				labelJsonObject.put("logisticType", logisticType);
+				labelJsonObject.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
 				// 原始配送
-				labelMap.put("fulfillmentFlag", fulfillmentFlagStr);
-				dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
+				labelJsonObject.put("fulfillmentFlag", fulfillmentFlagStr);
+				dmpDataMap.put("extendData", labelJsonObject.toJSONString());
 
 				// 订单状态
 				Object order_status = dmpDataMap.get("order_status");
@@ -168,8 +168,8 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				if(package_list != null) {
 					List<Map<String, Object>> packageList = (List<Map<String, Object>>)package_list;
 					List<String> collect = packageList.stream().map(p -> p.get("package_number").toString()).filter(StrUtil::isNotBlank).distinct().collect(Collectors.toList());
-					labelMap.put("package_number", String.join(",", collect));
-		            dmpDataMap.put("extendData", labelMap);
+					labelJsonObject.put("package_number", String.join(",", collect));
+		            dmpDataMap.put("extendData", labelJsonObject.toJSONString());
 				}
 				
 				Object ship_by_date = dmpDataMap.get("ship_by_date");

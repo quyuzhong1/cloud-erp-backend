@@ -73,7 +73,7 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 							copyProperties.put("afterAmount", new BigDecimal(qtyObj.toString()).multiply(new BigDecimal(priceObj.toString())));
 						}
 						copyProperties.put("thirdDetailId", item.get("model_id"));
-						copyProperties.put("platformDetailId", item.get("item_id"));
+						copyProperties.put("platformDetailId", item.get("order_item_id"));
 						resultList.add(copyProperties);
 					}
 				}
