@@ -127,7 +127,25 @@ public class MsgConvertUtil {
         fieldElementsDTO.setFields(fields);
         elements.add(fieldElementsDTO);
 
-        // 暂不填充按钮等
+        // 添加"详情"按钮
+        if (ObjUtil.isNotEmpty(warnMsgContentDTO.getNoticeMsgCardButtonDTO())) {
+
+            FeiShuSendBaseParam.CardDTO.ElementsDTO actionElementsDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO();
+            actionElementsDTO.setTag("action");
+            List<FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO> actions = new ArrayList<>();
+
+            FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO buttonActionDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO();
+            buttonActionDTO.setTag("button");
+            buttonActionDTO.setText(new FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO.TextDTO(warnMsgContentDTO.getNoticeMsgCardButtonDTO().getName(),"plain_text"));
+            buttonActionDTO.setType("default");
+            // 这里是按钮点击后的跳转链接
+            buttonActionDTO.setUrl(warnMsgContentDTO.getNoticeMsgCardButtonDTO().getUrl());
+
+            actions.add(buttonActionDTO);
+            actionElementsDTO.setActions(actions);
+            elements.add(actionElementsDTO);
+
+        }
 
         contentDTO.setElements(elements);
         return contentDTO;

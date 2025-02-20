@@ -245,6 +245,16 @@ public class VirtualInventoryDiffServiceImpl extends SuperServiceImpl<VirtualInv
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<VirtualInventoryDiffDTO.SendNoticeSkuDTO> listDiffSkuSendNotice() {
+        return baseMapper.listDiffSkuSendNotice();
+    }
+
+    @Override
+    public List<VirtualInventoryDiffDTO.SendNoticeTotalDTO> listDiffTotalSendNotice() {
+        return baseMapper.listDiffTotalSendNotice();
+    }
+
     /**
      * 虚拟库存分页查询数据处理
      * @author will

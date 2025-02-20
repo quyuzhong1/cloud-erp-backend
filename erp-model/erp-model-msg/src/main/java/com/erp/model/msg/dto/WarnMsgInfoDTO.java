@@ -80,4 +80,14 @@ public class WarnMsgInfoDTO implements Serializable {
      * 0未发送 1发送中 2已发送 -1发送异常 3无需发送
      */
     private Integer isSend;
+
+    /**
+     * 飞书群机器人绑定的随机数
+     */
+    private String warnRandomNumber;
+
+    /**
+     * 按钮信息
+     */
+    private NoticeMsgCardButtonDTO noticeMsgCardButtonDTO;
 }
