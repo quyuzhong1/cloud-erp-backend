@@ -9,9 +9,11 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.EnumCacheUtils;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.plm.dto.DictControllerDTO;
 import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.server.oms.query.SoB2cReturnQueryHandler;
 import com.erp.server.oms.service.SoB2cReturnService;
@@ -24,6 +26,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * b2c退货订单
@@ -57,7 +60,7 @@ public class SoB2cReturnController extends BaseController {
      *
      * @return
      */
-    @PostMapping("/export")
+    @PostMapping("/)
     @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
     public ApiResult export(@RequestBody @Validated SoB2cReturnDTO.PagingParamDTO dto) {
         soB2cReturnService.exportExcel(dto);
