@@ -310,6 +310,8 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         if(StringUtils.isNotBlank(extendData)) {
         	JSONObject parseObject = JSON.parseObject(extendData);
         	String package_number = parseObject.getString("package_number");
+			String logisticType = parseObject.getString("logisticType");
+
         	if(StringUtils.isNotBlank(package_number)) {
         		String[] split = package_number.split(",");
         		for(String s : split) {
@@ -323,6 +325,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
                           .accessoriesCostCurrency(dmpSoInfoEntity.getCurrencyCode())
                           .actualShippingCurrency(dmpSoInfoEntity.getCurrencyCode())
                           .estimatedShippingCurrency(dmpSoInfoEntity.getCurrencyCode())
+							.logisticType(logisticType)
                           .build();
                   logisticsDTOS.add(dto);
         		}
