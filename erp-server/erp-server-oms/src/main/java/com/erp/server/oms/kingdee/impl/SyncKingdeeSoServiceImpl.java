@@ -600,7 +600,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
 
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
-        shudiyunB2cOrderDTO.setBiz_uni_key(soInfoEntity + soDetailEntity.getId());
+        shudiyunB2cOrderDTO.setBiz_uni_key(soInfoEntity.getId() + soDetailEntity.getId());
         shudiyunB2cOrderDTO.setBiz_no(soInfoEntity.getCode());
         shudiyunB2cOrderDTO.setBiz_time(localDate.format(soInfoEntity.getBillDate()));
         //默认线下订单
@@ -720,8 +720,10 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
             shudiyunB2cOrderDTO.setIs_comb(1);
-            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
-            shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
+            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+            BomChildrenSkuDTO finalBomChildrenSkuDTO1 = bomChildrenSkuDTO;
+            String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO1.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setSuite_name(skuName);
         } else {
             bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soDetailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -738,8 +740,12 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         shudiyunB2cOrderDTO.setRemark(soDetailEntity.getRemark());
         shudiyunB2cOrderDTO.setGoods_transaction_quantity(soDetailEntity.getQty());
         shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
-        if (soDetailEntity.getTaxPrice() != null && soDetailEntity.getDiscountAmount() != null && soDetailEntity.getQty() > 0) {
-            shudiyunB2cOrderDTO.setPrice(soDetailEntity.getTaxPrice().subtract(soDetailEntity.getDiscountAmount().divide(MathUtil.valueOf(soDetailEntity.getQty()), 4, RoundingMode.DOWN)));
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        if (soDetailEntity.getDiscountAmount() != null) {
+            discountAmount = soDetailEntity.getDiscountAmount();
+        }
+        if (soDetailEntity.getPrice() != null && soDetailEntity.getQty() > 0) {
+            shudiyunB2cOrderDTO.setPrice(soDetailEntity.getPrice().subtract(discountAmount.divide(MathUtil.valueOf(soDetailEntity.getQty()), 4, RoundingMode.DOWN)));
         }
         shudiyunB2cOrderDTO.setGoods_transaction_amount(soDetailEntity.getTaxAmountBefore().subtract(soDetailEntity.getDiscountAmount()));
         shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());

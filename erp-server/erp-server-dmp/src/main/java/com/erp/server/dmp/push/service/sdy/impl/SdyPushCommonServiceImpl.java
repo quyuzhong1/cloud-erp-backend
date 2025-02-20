@@ -29,18 +29,26 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
     private SdyCommonService sdyCommonService;
 
     @Override
-    public ApiResult executeConsumer(ShudiyunB2cOrderDTO shudiyunB2cOrderDTO) {
+    public ApiResult executeConsumer(List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTO) {
 
         String path = sdyCommonService.getSdyUrl() + "/openapi/information/save";
-
+        String s = JSONUtil.toJsonStr(shudiyunB2cOrderDTO);
+        String dataStr = "";
         //入参
-        HashMap<String, Object> orderParams = new HashMap<>(1);
+        HashMap<String, Object> orderParams = new HashMap<>(2);
+        if (shudiyunB2cOrderDTO.size() > 1) {
+            orderParams.put("count", shudiyunB2cOrderDTO.size());
+            orderParams.put("list", shudiyunB2cOrderDTO);
+            dataStr = JSONUtil.toJsonStr(orderParams);
+        } else {
+            dataStr = JSONUtil.toJsonStr(shudiyunB2cOrderDTO.get(0));
+        }
 
         //设置请求头
         Map<String, String> orderHeaderMap = new HashMap<>(1);
 
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(path, JSONUtil.toJsonStr(shudiyunB2cOrderDTO), null, orderHeaderMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(path, dataStr, null, orderHeaderMap, RequestMethod.POST);
 
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
 

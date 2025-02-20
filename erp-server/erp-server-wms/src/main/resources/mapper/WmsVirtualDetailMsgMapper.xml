@@ -12,7 +12,6 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="data_json" property="dataJson"  typeHandler="com.erp.server.wms.handler.ObjectJsonHandler"  />
        <result column="remark" property="remark" />
        <result column="trade_time" property="tradeTime" />
        <result column="status" property="status" />
@@ -29,7 +28,7 @@
         update_time,
         version,
         is_deleted,
-        data_json, remark, trade_time, status,business_id
+        remark, trade_time, status,business_id
     </sql>
 
 

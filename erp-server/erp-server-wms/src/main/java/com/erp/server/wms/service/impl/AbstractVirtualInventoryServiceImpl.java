@@ -286,7 +286,6 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
     private void addWmsVirtualDetailMsg (VirtualTransFlowEntity transFlowEntity) {
         //入库添加本地任务表数据
         WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
-        addDTO.setTransFlowEntity(transFlowEntity);
         addDTO.setRemark("虚拟仓库存出入库");
         addDTO.setTradeTime(transFlowEntity.getTradeTime());
         addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());

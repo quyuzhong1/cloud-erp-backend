@@ -1,4 +1,5 @@
 package com.erp.server.dmp.service;
+import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
 import com.common.business.service.SuperService;
@@ -38,4 +39,6 @@ public interface DmpOutputTaskRecordMergeService extends SuperService<DmpOutputT
 
 
     void sdyMergePush();
+    
+    boolean mergeDeal(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
 }
