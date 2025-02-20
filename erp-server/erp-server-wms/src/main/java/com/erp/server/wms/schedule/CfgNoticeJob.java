@@ -143,7 +143,7 @@ public class CfgNoticeJob {
                 });
             }
             //按飞书群
-            List<CfgNoticeDetailEntity> fsGroupDetailList = map.get(CfgVirtualNoticeObjectTypeEnum.NOTICE_USER.getCode());
+            List<CfgNoticeDetailEntity> fsGroupDetailList = map.get(CfgVirtualNoticeObjectTypeEnum.NOTICE_GROUP.getCode());
             if (CollUtil.isNotEmpty(fsGroupDetailList)) {
                 fsGroupDetailList.forEach(e -> {
                     fsGroupList.addAll(BeanUtil.toBean(e.getNoticeValueJson(), CfgNoticeDTO.NoticeObjectDTO.class).getNoticeObjectList());
@@ -282,6 +282,12 @@ public class CfgNoticeJob {
         warnMsgInfo.setKeyInfo(content);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.CUSTOM_GROUP);
         warnMsgInfo.setWarnRandomNumber(fsGroup);
+
+        //按钮
+        NoticeMsgCardButtonDTO noticeMsgCardButtonDTO = new NoticeMsgCardButtonDTO();
+        noticeMsgCardButtonDTO.setName("查看详情");
+        noticeMsgCardButtonDTO.setUrl("https://erp.ulanzi.cn:8060/");
+        warnMsgInfo.setNoticeMsgCardButtonDTO(noticeMsgCardButtonDTO);
         return warnMsgInfo;
     }
 
@@ -297,7 +303,7 @@ public class CfgNoticeJob {
                 return "";
             }
             sendNoticeSkuList.forEach(e -> {
-                str.append(StrUtil.format("**SKU：{}\n**实体仓：{}\n**实体仓实际：{}\n**已分配虚拟仓：{}\n**实体仓未分配：{}",
+                str.append(StrUtil.format("\n**SKU：{}\n**实体仓：{}\n**实体仓实际：{}\n**已分配虚拟仓：{}\n**实体仓未分配：{}",
                         e.getSkuNo(), e.getWarehouseName(), e.getRealQty(), e.getDistributionQty(), e.getUnDistributionQty()));
             });
             return str.toString();
@@ -309,7 +315,7 @@ public class CfgNoticeJob {
         }
         str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("**SKU（{}）**实体仓（{}）**差异数量（{}）", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
+            str.append(StrUtil.format("\n**SKU（{}）**实体仓（{}）**差异数量（{}）", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
         });
         return str.toString();
     }
@@ -326,7 +332,7 @@ public class CfgNoticeJob {
                 return "";
             }
             sendNoticeSkuList.forEach(e -> {
-                str.append(StrUtil.format("**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**平均库龄：{}\n**平均库龄（正推）：{}",
+                str.append(StrUtil.format("\n**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**平均库龄：{}\n**平均库龄（正推）：{}",
                         e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getBackAvgInventoryAge(), e.getAvgInventoryAge()));
             });
             return str.toString();
@@ -338,7 +344,7 @@ public class CfgNoticeJob {
         }
         str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("**SKU（{}）**虚拟仓（{}）**库龄（{}）**正推库龄（{}）",
+            str.append(StrUtil.format("\n**SKU（{}）**虚拟仓（{}）**库龄（{}）**正推库龄（{}）",
                     e.getSkuNo(), e.getVirtualWarehouseName(), e.getAvgInventoryAge(), e.getBackAvgInventoryAge()));
         });
         return str.toString();
@@ -357,8 +363,8 @@ public class CfgNoticeJob {
                 return "";
             }
             sendNoticeSkuList.forEach(e -> {
-                str.append(StrUtil.format("**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**冻结库存：{}\n**单据冻结数：{}",
-                        e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getFrozenQty(), e.getBillFrozenQty()));
+                str.append(StrUtil.format("\n**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**冻结库存：{}\n**单据冻结数：{}",
+                        e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getVirtualFrozenQty(), e.getBillFrozenQty()));
             });
             return str.toString();
         }
@@ -369,8 +375,8 @@ public class CfgNoticeJob {
         }
         str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("**SKU（{}）**虚拟仓（{}）**冻结库存（{}）**单据冻结库存（{}）",
-                    e.getSkuNo(), e.getVirtualWarehouseName(), e.getFrozenQty(), e.getBillFrozenQty()));
+            str.append(StrUtil.format("\n**SKU（{}）**虚拟仓（{}）**冻结库存（{}）**单据冻结库存（{}）",
+                    e.getSkuNo(), e.getVirtualWarehouseName(), e.getVirtualFrozenQty(), e.getBillFrozenQty()));
         });
         return str.toString();
     }

@@ -347,7 +347,7 @@ public class VirtualTransFlowDetailDTO implements Serializable {
         /**
          * 冻结库存
          */
-        private Integer frozenQty;
+        private Integer virtualFrozenQty;
         /**
          * 单据冻结数
          */
@@ -381,7 +381,7 @@ public class VirtualTransFlowDetailDTO implements Serializable {
         /**
          * 冻结库存
          */
-        private Integer frozenQty;
+        private Integer virtualFrozenQty;
         /**
          * 单据冻结数
          */

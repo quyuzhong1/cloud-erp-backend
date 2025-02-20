@@ -129,6 +129,11 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
 
     @Override
     public void doSendWarnMsg(WarnMsgInfoDTO msgInfo) {
+        //自定义飞书群样式不取预警样式
+        if (WarnMsgTypeEnum.CUSTOM_GROUP.equals(msgInfo.getWarnMsgTypeEnum())) {
+             sendCustomWebhookMessage(msgInfo);
+             return;
+        }
         this.sendWebhookMessage(msgInfo);
     }
 
@@ -384,6 +389,46 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
                     StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableName()), StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableId()),
                     StrUtils.null2EmptyWithTrim(warnMsgInfo.getKeyInfo()), LocalDateTimeUtil.format(warnMsgInfo.getHappenTime(), "yyyy-MM-dd HH:mm:ss"));
             warnMsgContentDTO.setContent(msgContent);
+            warnMsgContentDTO.setNoticeMsgCardButtonDTO(warnMsgInfo.getNoticeMsgCardButtonDTO());
+            //飞书机器人连接
+            String requestUrl = CharSequenceUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
+            FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgContentDTO);
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put(MSG_TYPE, INTERACTIVE.getCode());
+            bodyMap.put("card", param);
+            log.info("开始发送飞书预警消息，请求内容体参数=【{}】", JSONUtil.toJsonStr(bodyMap));
+            String resultStr = OkHttpUtils.doPostJson(requestUrl, bodyMap, null);
+            log.info("结束批量发送飞书预警消息，请求内容体参数=【{}】，响应内容=【{}】", JSONUtil.toJsonStr(bodyMap), resultStr);
+        } catch (Exception e) {
+            log.info("飞书发送预警信息异常", e);
+        }
+    }
+
+    /**
+     * 发送自定义飞书群消息
+     * @author will
+     * @date 2025/2/20 15:31
+     * @param warnMsgInfo
+     */
+    public void sendCustomWebhookMessage(WarnMsgInfoDTO warnMsgInfo) {
+        log.info("接收到系统异常预警消息：【{}】",JSON.toJSONString(warnMsgInfo));
+        Boolean warnSend = fsProperties.getWarnSend();
+        if(Objects.isNull(warnSend) || !warnSend) {
+            log.error("nacos配置飞书预警关闭，不发送预警通知");
+            return;
+        }
+        try {
+            //飞书token
+            String fsToken = getFsToken(warnMsgInfo);
+            if (StrUtil.isBlank(fsToken)) {
+                return;
+            }
+            WarnMsgContentDTO warnMsgContentDTO = new WarnMsgContentDTO();
+            // title
+            warnMsgContentDTO.setTitle( warnMsgInfo.getTitle());
+            // 预警内容
+            warnMsgContentDTO.setContent(warnMsgInfo.getKeyInfo());
+            warnMsgContentDTO.setNoticeMsgCardButtonDTO(warnMsgInfo.getNoticeMsgCardButtonDTO());
             //飞书机器人连接
             String requestUrl = CharSequenceUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
             FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgContentDTO);

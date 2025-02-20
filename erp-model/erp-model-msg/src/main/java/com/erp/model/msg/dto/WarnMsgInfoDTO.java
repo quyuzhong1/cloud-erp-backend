@@ -85,4 +85,9 @@ public class WarnMsgInfoDTO implements Serializable {
      * 飞书群机器人绑定的随机数
      */
     private String warnRandomNumber;
+
+    /**
+     * 按钮信息
+     */
+    private NoticeMsgCardButtonDTO noticeMsgCardButtonDTO;
 }
