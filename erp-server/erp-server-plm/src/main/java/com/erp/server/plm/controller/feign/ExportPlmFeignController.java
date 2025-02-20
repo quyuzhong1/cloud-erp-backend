@@ -121,16 +121,19 @@ public class ExportPlmFeignController {
     }
 
     @PostMapping("/productShow")
+    @WebAdvanceQuery
     public PagingVO<ProductShowDTO> exportProductShow(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto) {
         return productInfoService.exportProductShow(dto);
     }
 
     @PostMapping("/projectTask")
+    @WebAdvanceQuery
     public PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProjectTask(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto) {
         return productInfoService.exportProductTaskExcelDTO(dto);
     }
 
     @PostMapping("/exportProductDetail")
+    @WebAdvanceQuery
     public PagingVO<ProductDetailExcelExportDTO> exportProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto) {
         return productDetailService.exportProductDetail(dto);
     }

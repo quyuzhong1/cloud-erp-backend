@@ -40,6 +40,8 @@ public class ExportPlmProductInfoHandler extends AbstractPageFileEventHandler<T,
     @Resource
     private ExportPlmFeign exportPlmFeign;
 
+
+
     private List<ProductShowDTO> getProductShow(ProductSearchDTO.ExportDTO p) {
         PagingDTO<ProductSearchDTO.ExportDTO> dto = new PagingDTO<>();
         dto.setPageSize(getPageSize());
