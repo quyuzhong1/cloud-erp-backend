@@ -759,7 +759,7 @@
         WHERE
         p.is_finished_product_dev = 1 AND p.is_deleted = FALSE
         AND P.id NOT IN (SELECT product_id FROM product_archive WHERE is_deleted=FALSE)
-        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE)
+        AND p.id IN (SELECT product_id FROM user_add_product WHERE is_deleted=FALSE AND user_id=#{userId})
         <choose>
             <when test="params.ids!=null and params.ids.size>0">
                 AND p.id IN
