@@ -68,7 +68,7 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 							targetSku = item.getOrDefault("item_sku", "").toString();
 						}
 						String targetId = item.getOrDefault("model_id", "").toString();
-						if (StringUtils.isBlank(targetId)){
+						if (StringUtils.isBlank(targetId) || "0".equalsIgnoreCase(targetId)){
 							targetId = item.getOrDefault("item_id", "").toString();
 						}
 						copyProperties.put("platformSku", targetSku);
