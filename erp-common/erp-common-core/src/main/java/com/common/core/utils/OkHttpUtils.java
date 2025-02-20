@@ -90,6 +90,13 @@ public class OkHttpUtils {
     }
     /**
      * 获取post 请求 以json
+     */
+    public static String doGetJsonBase64(String url, Map<String, Object> paramsJson, Map<String, String> headers) {
+        Call call = createGetCall(url, paramsJson, headers);
+        return executeBase64(call);
+    }
+    /**
+     * 获取post 请求 以json
      *
      * @param
      * @return java.lang.String

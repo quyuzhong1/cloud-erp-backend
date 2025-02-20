@@ -2114,4 +2114,18 @@ public class LogisticsBillCostServiceImpl extends SuperServiceImpl<LogisticsBill
 
 		return BatchResultDTO.success(entity.getId(), entity.getTrackNo(), "下推成功");
 	}
+
+    @Override
+    public void deleteLogisticsBillCostNoBill() {
+        List<LogisticsBillCostDTO.BillCostNoBillDTO> dtos = baseMapper.selectLogisticsBillCostNoBill();
+        if (CollUtil.isEmpty(dtos)){
+            return;
+        }
+        List<List<LogisticsBillCostDTO.BillCostNoBillDTO>> partition = ListUtil.partition(dtos, 100);
+        partition.forEach(list -> {
+            List<String> ids = list.stream().map(LogisticsBillCostDTO.BillCostNoBillDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            tmsCostDetailService.deleteByMainIdList(ids);
+            this.removeByIds(ids);
+        });
+    }
 }

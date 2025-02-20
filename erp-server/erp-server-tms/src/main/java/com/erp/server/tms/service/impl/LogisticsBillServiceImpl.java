@@ -75,6 +75,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1324,5 +1325,42 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         }
         soB2cFeign.saveSoB2cLabel(dtoList);
         return BatchResultDTO.success(dto.getB2cSoId(),dto.getDeliveryNo(),"面单获取成功");
+    }
+
+    @Override
+    public void deleteLogisticsBillNoOutstock(String orderType) {
+        if (CharSequenceUtil.isEmpty(orderType)){
+            return;
+        }
+        List<LogisticsBillDTO.NoOutstockDTO> dtos = baseMapper.selectLogisticsBillNoOutstock(orderType);
+        //存在物流单 但是没有 销售出库单/发货单
+        if (CollUtil.isEmpty(dtos)){
+            return;
+        }
+        List<List<LogisticsBillDTO.NoOutstockDTO>> partition = ListUtil.partition(dtos, 50);
+        partition.forEach(list ->{
+            List<String> ids = list.stream().map(LogisticsBillDTO.NoOutstockDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            logisticsBillDetailService.removeByMainIds(ids,Boolean.TRUE);
+            this.removeByIds(ids);
+        });
+    }
+
+    @Override
+    public void addNoLogisticsBillDetailByBill() {
+        //查询是否存在有物流单 没有物流明细数据
+        List<LogisticsBillEntity> entityList = baseMapper.selectNoLogisticsBillDetailByBill();
+        if (CollUtil.isEmpty(entityList)){
+            return;
+        }
+        List<List<LogisticsBillEntity>> partition = ListUtil.partition(entityList, 100);
+        partition.forEach(list -> {
+            //补充物流明细
+            List<LogisticsBillDetailEntity> detailEntityList = LogisticsBillConverter.INSTANCE.convertLogisticsDetail(list);
+            this.logisticsBillDetailService.saveBatch(detailEntityList);
+            Map<String, List<LogisticsBillDetailEntity>> billMap = detailEntityList.stream().collect(Collectors.groupingBy(LogisticsBillDetailEntity::getMainId));
+            list.forEach(entity -> {
+                this.addLogisticsBillCost(entity, billMap.get(entity.getId()));
+            });
+        });
     }
 }

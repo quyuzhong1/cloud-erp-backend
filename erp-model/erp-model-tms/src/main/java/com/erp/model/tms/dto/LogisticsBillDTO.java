@@ -1118,4 +1118,17 @@ public class LogisticsBillDTO implements Serializable {
          */
         private  String id;
     }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NoOutstockDTO {
+        //物流单id
+        private String id;
+        //销售出库单id
+        private String outstockId;
+        //销售出库单编码
+        private String outstockCode;
+    }
 }
