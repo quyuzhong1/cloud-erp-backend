@@ -8,6 +8,7 @@ import com.erp.model.wms.dto.third.*;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -64,7 +65,7 @@ public class ThirdWarehouseFeignController extends BaseController {
      * @return
      */
     @PostMapping("/uploadFile")
-    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@RequestBody ThirdWarehouseUploadFileReq uploadFileReq) {
+    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@RequestBody @Validated ThirdWarehouseUploadFileReq uploadFileReq) {
         try {
             ThirdWarehouseService service = thirdWarehouseRegistry.getHandler(uploadFileReq.getThirdWarehouseProvideCode());
             return service.uploadFile(uploadFileReq, uploadFileReq.getAuthId());

@@ -39,10 +39,7 @@ import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.*;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
-import com.erp.model.dmp.enums.DmpPushMonitorTabEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
@@ -698,5 +695,11 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 	public void dmpOutputMoveToHistoryTable(String beforeUpdateTime, String size) {
 		this.getBaseMapper().dmpOutputMoveToHistoryTable(beforeUpdateTime, size);
 		redisUtil.del(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpOutputNoRecordMoveToHistoryTable() {
+		this.getBaseMapper().dmpOutputNoRecordMoveToHistoryTable();
 	}
 }

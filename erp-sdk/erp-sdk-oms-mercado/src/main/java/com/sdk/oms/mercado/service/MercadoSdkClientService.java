@@ -658,29 +658,16 @@ public class MercadoSdkClientService {
      * @return
      */
     public String printShippingLabel(Map<String, String> authMap, Long shippingId) {
-
         String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shippingId+"/labels";
         String token = authMap.get("token");
-
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);
-
         //设置请求头
         Map<String, String> orderHeaderMap = new HashMap<>(1);
         orderHeaderMap.put("Authorization", "Bearer " + token);
         orderHeaderMap.put("x-format-new", "true");
-
         //拉取数据
-        ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-        if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
-            log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}",
-                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
-        }
-
-        //解析数据
-        return String.valueOf(shipmentResult.getData());
-
+        return OkHttpUtils.doGetJsonBase64(orderUrl, orderParams, orderHeaderMap);
     }
 
     /**

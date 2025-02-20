@@ -95,13 +95,13 @@ public class TikTokPackageService {
 
     public static void main(String[] args) {
         String url = TikTokConstant.URL;
-        String path = "/fulfillment/" + TikTokConstant.VERSION + "/packages/" + "1159856476975565342" ;
+//        String path = "/fulfillment/" + TikTokConstant.VERSION + "/packages/" + "1159856476975565342" ;
+        String path = "/fulfillment/" + TikTokConstant.VERSION + "/packages/" + "1160432935985842924" +"/shipping_documents";
         String clientSecret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
         String clientId = "6buinkjt3hmld";
 
         String shopCipher = "ROW_7UdPPQAAAAAGSBiq11mBcg8dYgNF1C5x";
-        String token = "ROW_fQ6IcAAAAACj-JAAAriAWjVtF2MrUIFdHRZvljXhCfG7h6gK9L_d7XUiGvUrvVcL5dTSfrmArwcZToZCJ724bMWtyrfq1KcdT5ve4dG2uiO_z2pUxpVdbKBBBL5je8rsqPSnJNVwI_5cWqbLpqCtj3V880HaU6ysbs5PcoGykcgHFKR0hv38yEJJUGGCHGF9qrb1Lz6cPDNm6DJPDQpwsBLTb5jydbVR";
-
+        String token = "ROW_TW8lnAAAAACj-JAAAriAWjVtF2MrUIFdHRZvljXhCfG7h6gK9L_d7XUiGvUrvVcL5dTSfrmArwcZToZCJ724bMWtyrfq1KcdT5ve4dG2uiO_z2pUxpVdbGBEDIIIO1gX70t45vVDtyOe2QHddMFcsE_CavkKUoYq6xSY7FmN_DntMDBoOzmFilyVE6CvmRiYtqYcYDPdr6k0qfjZ-9SN1XwXHNbyogHz";
         // 定义查询参数
         Map<String, Object> params = new HashMap<>();
         params.put("access_token", token);

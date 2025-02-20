@@ -2820,7 +2820,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             throw new ServiceException(ApiError.ERROR_1016);
         }
         List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> excelDateList = excelListenerUtil.getSuccessList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
+        if (CollectionUtils.isEmpty(excelListenerUtil.getSuccessList()) && CollUtil.isEmpty(excelListenerUtil.getErrorList())) {
             throw new ServiceException(ApiError.ERROR_95123);
         } else if (excelDateList.size() > 5000) {
             throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);

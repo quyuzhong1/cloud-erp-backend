@@ -1864,8 +1864,16 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public PagingVO<FbaShipmentDTO.SyncViewDTO> syncPaging(PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        PagingDTO<ShopDTO.PagingParamDTO> dto = new PagingDTO<>();
+        dto.setPageSize(advanceQueryDTO.getPageSize());
+        dto.setCurrPage(advanceQueryDTO.getCurrPage());
+        ShopDTO.PagingParamDTO pagingParamDTO = new ShopDTO.PagingParamDTO();
+        pagingParamDTO.setAdvanceQueryDTOList(advanceQueryDTO.getParams().getAdvanceQueryDTOList());
+        pagingParamDTO.setSqlMap(advanceQueryDTO.getParams().getSqlMap());
+        pagingParamDTO.setDictPlatform(PlatformDictEnum.AMAZON.getCode());
+        dto.setParams(pagingParamDTO);
         // 指定亚马逊
-        PagingVO<ShopDTO.PagingViewDTO> pageData = shopInfoFeign.paging(advanceQueryDTO);
+        PagingVO<ShopDTO.PagingViewDTO> pageData = shopInfoFeign.paging(dto);
         List<ShopDTO.PagingViewDTO> list = pageData.getList();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>();
@@ -1874,10 +1882,10 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         List<ShopInfoEntity> shopList = shopInfoFeign.listByParams(new ShopInfoDTO.ListParamDTO(AuthStatusEnum.ALREADY.getCode(), PlatformDictEnum.AMAZON.getCode(), null));
         // 同步记录
         List<DmpInoutDTO.LastOneDTO> lastOneDTOS = new LinkedList<>();
-        if (CollectionUtils.isNotEmpty(list)){
+        if (CollectionUtils.isNotEmpty(shopList)){
             // 查询最近同步任务
             List<DmpInoutDTO.CommonDTO> commonDTOList = new ArrayList<>();
-            list.forEach(v->{
+            shopList.forEach(v->{
                 DmpInoutDTO.CommonDTO commonDTO = new DmpInoutDTO.CommonDTO();
                 commonDTO.setSystemCode(PlatformDictEnum.AMAZON.getCode());
                 commonDTO.setBillType(BusinessTypeEnum.FBA_SHIPMENT.getCode());
@@ -1901,6 +1909,6 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             return syncViewDTO;
         }).collect(Collectors.toList());
 
-        return new PagingVO<>(resultList, pageData.getTotalPage(), advanceQueryDTO.getPageSize(), advanceQueryDTO.getCurrPage());
+        return new PagingVO<>(resultList, pageData.getTotalCount(), advanceQueryDTO.getPageSize(), advanceQueryDTO.getCurrPage());
     }
 }

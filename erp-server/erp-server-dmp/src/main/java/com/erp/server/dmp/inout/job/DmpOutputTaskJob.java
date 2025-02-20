@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -41,6 +42,8 @@ import lombok.extern.slf4j.Slf4j;
 public class DmpOutputTaskJob {
 	@Autowired
 	private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+	@Autowired
+	private DmpOutputTaskRecordMergeService dmpOutputTaskRecordMergeService;
 	@Autowired
 	private DmpOutputTaskService dmpOutputTaskService;
 	@Autowired
@@ -179,6 +182,28 @@ public class DmpOutputTaskJob {
 		}
 		log.warn("归档中台输出任务数据结束");
 		
+		dmpDoOutputErrorTask.execute(() -> {
+			log.warn("归档中台输出任务无记录数据开始");
+			try {
+				dmpOutputTaskRecordService.dmpOutputNoRecordMoveToHistoryTable();
+			} catch (Exception e) {
+				log.error("归档中台输出任务无记录数据失败：" , e);
+				DmpHandlerUtils.sendFeiShuMsg("归档中台输出任务无记录数据失败：" + "【" + e.getMessage() + "】");
+			}
+			log.warn("归档中台输出任务无记录数据结束");
+		});
+		
+		return ReturnT.SUCCESS;
+	}
+
+	@XxlJob("sdyMergePush")
+	public ReturnT sdyMergePush(){
+		try {
+			dmpOutputTaskRecordMergeService.sdyMergePush();
+		} catch (Exception e) {
+			log.error("组合数据推送数帝云失败：" , e);
+			DmpHandlerUtils.sendFeiShuMsg("组合数据推送数帝云失败：" + "【" + e.getMessage() + "】");
+		}
 		return ReturnT.SUCCESS;
 	}
 }

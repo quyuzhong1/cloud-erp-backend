@@ -1,9 +1,11 @@
 package com.erp.rpc.wms.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.wms.dto.third.*;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -12,7 +14,7 @@ import java.util.List;
 /**
  * @author lrp
  */
-@FeignClient(name = "erp-wms",contextId = "thirdWarehouse")
+@FeignClient(name = "erp-wms",contextId = "thirdWarehouse",configuration = {FeignErrorDecoder.class})
 public interface ThirdWarehouseFeign {
 
     /**
@@ -44,7 +46,7 @@ public interface ThirdWarehouseFeign {
      * @return
      */
     @PostMapping("feign/thirdWarehouse/uploadFile")
-    ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@RequestBody ThirdWarehouseUploadFileReq uploadFileReq);
+    ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@RequestBody @Validated ThirdWarehouseUploadFileReq uploadFileReq);
 
     /**
      * 上传面单

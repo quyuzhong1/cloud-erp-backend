@@ -268,4 +268,14 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return
      */
     BatchResultDTO getLogisticsLabel(LogisticsBillDTO.PrintLogisticsWaybillDTO dto);
+
+    /**
+     * 初始化物流单 无销售出库单 b2b/
+     */
+    void deleteLogisticsBillNoOutstock(String orderType);
+
+    /**
+     * 添加物流单明细并补充物流费用
+     */
+    void addNoLogisticsBillDetailByBill();
 }

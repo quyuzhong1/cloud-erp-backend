@@ -9,6 +9,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
@@ -112,7 +113,8 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     public PagingVO<VirtualInventoryAgeDTO.ListDTO> paging(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         dto.getParams().setDate(LocalDate.now().minusDays(1L));
-        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        AdvanceQueryDTO frozenIsDiffDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "frozenIsDiff")).findFirst().orElse(new AdvanceQueryDTO());
+        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams(),(Boolean)frozenIsDiffDTO.getValue());
         // 填充名称
         fillPageData(pageData.getRecords());
         return new PagingVO<>(pageData);
@@ -253,7 +255,8 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         dto.getParams().setDate(LocalDate.now().minusDays(1L));
-        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        AdvanceQueryDTO frozenIsDiffDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "frozenIsDiff")).findFirst().orElse(new AdvanceQueryDTO());
+        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams(),(Boolean) frozenIsDiffDTO.getValue());
         fillPageData(pageData.getRecords());
         // 标题及值赋值
         List<LinkedHashMap> resultList = fillVirtualInventoryAgePageData(pageData.getRecords());

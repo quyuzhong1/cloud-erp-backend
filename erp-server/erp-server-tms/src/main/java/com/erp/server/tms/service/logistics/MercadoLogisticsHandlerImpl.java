@@ -36,6 +36,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.*;
 
 /**
@@ -136,17 +137,21 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         assert logisticsGetLabelVO != null;
         Map<String, String> authMap = logisticsGetLabelVO.getAuthMap();
         List<LogisticsPrintLabelResponse> responseList = new ArrayList<>();
+        List<String> errorList = new ArrayList<>();
         for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
             try {
                 String labelUrl = mercadoSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
-                String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
+                String prefix = "data:application/pdf;base64,";
+                String base64 = prefix + labelUrl;
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
                         .base64(base64).build();
                 logisticsOperateService.pullOperateLog(vo.getOrderId(), vo.getDeliveryNo(), BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(vo), JSONUtil.toJsonStr(labelUrl));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(vo), JSONUtil.toJsonStr(base64));
                 responseList.add(response);
             }catch (Exception e){
+                String message = e.getMessage();
+                errorList.add(message);
                 logisticsOperateService.pullOperateLog(vo.getOrderId(), vo.getDeliveryNo(), BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(vo), e.getMessage());
             }
@@ -154,7 +159,7 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         if (CollUtil.isNotEmpty(responseList)){
             return success(responseList);
         }else {
-            return failure("美客多获取面单异常");
+            return failure(String.join(";",errorList));
         }
     }
     @Override

@@ -159,10 +159,7 @@ public class ShopChannelRefServiceImpl extends SuperServiceImpl<ShopChannelRefMa
                 throw new ServiceException("该渠道不属于该店铺");
             }
         }else{
-            List<ShopChannelRefEntity> otherShopRefList = this.lambdaQuery().eq(ShopChannelRefEntity::getLogisticsChannelId, newChannelId).list();
-            if(CollectionUtils.isNotEmpty(otherShopRefList)){
-                throw new ServiceException("该渠道已经被其他店铺使用");
-            }
+            throw new ServiceException("该店铺未绑定任何渠道");
         }
     }
 

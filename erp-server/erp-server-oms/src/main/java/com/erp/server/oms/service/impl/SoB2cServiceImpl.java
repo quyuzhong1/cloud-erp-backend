@@ -1503,6 +1503,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cLogisticsEntity.setTrackNo("");
                 //清空面单信息
                 soB2cLabelService.deleteByMainIds(Arrays.asList(id));
+                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
             }
         }
         //重置物流渠道信息
@@ -1664,6 +1665,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getMainId(), "", "", "");
             //清空面单信息
             soB2cLabelService.deleteByMainIds(Arrays.asList(id));
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
         }
         //校验是否存在申报信息，不存在则生成
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
@@ -2518,9 +2520,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq = cfgRuleOrderHandleService.handleRuleOrderThirdWarehouse(createOutboundReq, map);
         //查询配置是否推送面单
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
+            String logisticsLabelBase64 = soB2cLabelEntity.getLogisticsLabelBase64();
+            if (CharSequenceUtil.isBlank(logisticsLabelBase64)){
+                throw new ServiceException("未找到面单信息");
+            }
             ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
             thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
-            thirdWarehouseUploadFileReq.setFileData(soB2cLabelEntity.getLogisticsLabelBase64());
+            thirdWarehouseUploadFileReq.setFileData(logisticsLabelBase64);
+            thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
+            thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
             ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
             if(!uploadFileResponse.isSuccess()){
                 throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());
@@ -2541,12 +2549,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         } else {
             String shippingOrderNo = apiResult.getData();
             //上传面单
-            if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
+            if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel() && PlatformDictEnum.GOOD_CANG.getCode().equals(overseasProviderWarehouse.getProviderCode())){
                 SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
                 ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq = new ThirdWarehouseUploadOrderLabelReq();
                 uploadOrderLabelReq.setOrderCode(shippingOrderNo);
                 uploadOrderLabelReq.setTrackNo(soB2cLogisticsEntity.getCode());
                 uploadOrderLabelReq.setFileIdList(Collections.singletonList(createOutboundReq.getAttach().get(0).getAttachId()));
+                uploadOrderLabelReq.setAuthId(overseasProviderWarehouse.getMainId());
+                uploadOrderLabelReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
                 ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabelResponse = thirdWarehouseFeign.uploadOrderLabel(uploadOrderLabelReq);
                 if(!uploadOrderLabelResponse.isSuccess()){
                     throw new ServiceException("推送面单失败{}",uploadOrderLabelResponse.getMsg());
@@ -6368,6 +6378,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         entity.setIsMatchLogisticsRule(Boolean.TRUE);
         this.updateById(entity);
         logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
+        soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
         //物流信息更新
         return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
 
@@ -9547,8 +9558,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException("文件格式不正确，请上传PDF格式的文件");
         }
         String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
-
-        soB2cLabelService.ManualUploadLabel(base64,dto.getId());
+        String prefix = "data:application/pdf;base64,";
+        soB2cLabelService.ManualUploadLabel(prefix + base64,dto.getId());
         String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
 
         operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO_B2C.getCode(), dto.getId(), "上传面单");

@@ -424,6 +424,8 @@ public class TikTokSdkClientService {
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setAccessToken(shopAuthEntity.getAccessToken());
                 redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
+            }else{
+                throw new ServiceException("店铺未授权");
             }
             return result;
         }

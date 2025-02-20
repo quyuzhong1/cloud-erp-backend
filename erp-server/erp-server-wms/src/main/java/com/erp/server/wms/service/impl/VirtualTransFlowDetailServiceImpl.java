@@ -107,13 +107,21 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     @Override
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = RedisKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 60)
-    public Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity,String msgId) {
-        VirtualTransFlowEntity entity = virtualTransFlowService.getById(virtualTransFlowEntity.getId());
+    public Boolean consumeMessage(String businessId,String msgId) {
+        VirtualTransFlowEntity entity = virtualTransFlowService.getById(businessId);
         if (ObjUtil.isEmpty(entity)) {
             throw new ServiceException("未找到流水数据");
         }
         WmsVirtualDetailMsgEntity virtualDetailMsgEntity = wmsVirtualDetailMsgService.getById(msgId);
-        if (ObjectUtil.isEmpty(virtualDetailMsgEntity) || !CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
+        if (ObjectUtil.isEmpty(virtualDetailMsgEntity)) {
+            log.error("未找到虚拟仓库存流水明细消息，msgId = {}",msgId);
+            return Boolean.TRUE;
+        }
+        if (CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.SUCCESS.getCode())) {
+            log.warn("虚拟仓库存流水明细消息已处理，msgId = {}",msgId);
+            return Boolean.TRUE;
+        }
+        if (!CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
             throw new ServiceException("非进行中任务不支持消费");
         }
         //反审
@@ -126,6 +134,12 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                 return Boolean.TRUE;
             }
             updateHandleVirtualTransFlow(entity);
+        }
+
+        //再次查询状态查询任务表状态是否是已完成
+        WmsVirtualDetailMsgEntity virtualDetailMsgEntityAgain = wmsVirtualDetailMsgService.getById(msgId);
+        if (ObjectUtil.isEmpty(virtualDetailMsgEntityAgain) || CharSequenceUtil.equals(virtualDetailMsgEntityAgain.getStatus(), VirtualDetailMsgStatusEnum.SUCCESS.getCode())) {
+            throw new ServiceException("任务不存在或已完成不支持消费");
         }
         return Boolean.TRUE;
     }
@@ -164,7 +178,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
         for (VirtualTransFlowEntity entity : virtualTransFlowList) {
             WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
-            addDTO.setTransFlowEntity(entity);
             addDTO.setRemark("虚拟仓库存出入库");
             addDTO.setTradeTime(entity.getTradeTime());
             addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
