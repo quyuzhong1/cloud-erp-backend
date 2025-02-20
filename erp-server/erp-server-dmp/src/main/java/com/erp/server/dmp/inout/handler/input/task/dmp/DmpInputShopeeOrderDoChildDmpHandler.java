@@ -63,8 +63,16 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 							Map<String, Object> imageInfo = (Map<String, Object>) image_info;
 							copyProperties.put("skuUrl", imageInfo.get("image_url"));
 						}
-						copyProperties.put("platformSku", item.get("model_sku"));
-						copyProperties.put("platformSpuNo", item.get("model_id"));
+						String targetSku = item.getOrDefault("model_sku", "").toString();
+						if (StringUtils.isBlank(targetSku)){
+							targetSku = item.getOrDefault("item_sku", "").toString();
+						}
+						String targetId = item.getOrDefault("model_id", "").toString();
+						if (StringUtils.isBlank(targetId)){
+							targetId = item.getOrDefault("item_id", "").toString();
+						}
+						copyProperties.put("platformSku", targetSku);
+						copyProperties.put("platformSpuNo", targetId);
 						Object qtyObj = item.get("model_quantity_purchased");
 						copyProperties.put("qty", qtyObj);
 						Object priceObj = item.get("model_original_price");
