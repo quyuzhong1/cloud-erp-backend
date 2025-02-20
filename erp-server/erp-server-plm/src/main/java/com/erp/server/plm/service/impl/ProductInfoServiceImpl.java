@@ -2505,7 +2505,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if(exportType.equals("0")){
             pageData = baseMapper.listMyProjectTaskExport(query,dto.getParams(), categoryIdList, userId);
         }else if(exportType.equals("1")){
-            pageData = baseMapper.collectTaskExport(query,dto.getParams(),categoryIdList,userId);
+            pageData = baseMapper.collectTaskExport(query,dto.getParams(),categoryIdList);
         }else if(exportType.equals("2")){
             pageData = baseMapper.listAllTaskExport(query,dto.getParams(), categoryIdList);
         }

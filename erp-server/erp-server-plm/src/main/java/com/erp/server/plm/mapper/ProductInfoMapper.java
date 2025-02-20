@@ -60,7 +60,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
     IPage<ProductShowDTO> collectExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList, @Param("userId") String userId);
 
 
-    IPage<TaskExportDTO.ProductTaskExcelDTO> collectTaskExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList, @Param("userId") String userId);
+    IPage<TaskExportDTO.ProductTaskExcelDTO> collectTaskExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
     List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 
