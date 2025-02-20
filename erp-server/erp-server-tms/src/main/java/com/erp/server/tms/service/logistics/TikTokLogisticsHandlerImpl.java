@@ -167,6 +167,9 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 throw new ServiceException("包裹id不能为空");
             }
             PackageDocumentDTO packageDocumentDTO = tikTokSdkClientService.getPackageDocument(tikTokShopInfoDTO,vo.getPackageId(),"SHIPPING_LABEL");
+            if(packageDocumentDTO.getCode()!=0){
+                return failure("获取标签失败,"+ packageDocumentDTO.getMessage());
+            }
             if(StringUtils.isBlank(packageDocumentDTO.getData().getDocUrl())){
                 throw new ServiceException("获取标签失败");
             }else{
