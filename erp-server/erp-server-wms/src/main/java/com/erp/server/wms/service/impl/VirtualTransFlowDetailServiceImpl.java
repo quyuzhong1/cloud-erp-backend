@@ -107,8 +107,8 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
     @Override
     @Transactional(rollbackFor = Exception.class)
     @DistributeLocker(businessType = RedisKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 60)
-    public Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity,String msgId) {
-        VirtualTransFlowEntity entity = virtualTransFlowService.getById(virtualTransFlowEntity.getId());
+    public Boolean consumeMessage(String businessId,String msgId) {
+        VirtualTransFlowEntity entity = virtualTransFlowService.getById(businessId);
         if (ObjUtil.isEmpty(entity)) {
             throw new ServiceException("未找到流水数据");
         }
@@ -122,7 +122,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             return Boolean.TRUE;
         }
         if (!CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
-
             throw new ServiceException("非进行中任务不支持消费");
         }
         //反审
@@ -179,7 +178,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         }
         for (VirtualTransFlowEntity entity : virtualTransFlowList) {
             WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
-            addDTO.setTransFlowEntity(entity);
             addDTO.setRemark("虚拟仓库存出入库");
             addDTO.setTradeTime(entity.getTradeTime());
             addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());
