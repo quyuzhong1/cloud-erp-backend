@@ -2,18 +2,14 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
-import com.baomidou.mybatisplus.extension.toolkit.SqlHelper;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpBomEntity;
-import com.erp.model.dmp.mabang.ComboSkuInfoEntity;
 import com.erp.model.msg.dto.NoticeMsgCardButtonDTO;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
@@ -22,11 +18,14 @@ import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.sys.dto.CfgNoticeDTO;
 import com.erp.model.sys.entity.CfgNoticeDetailEntity;
 import com.erp.model.sys.entity.CfgNoticeEntity;
+import com.erp.model.sys.entity.DictBasicEntity;
+import com.erp.model.sys.enums.DictBasicEnum;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDiffDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDetailDTO;
 import com.erp.model.wms.enums.CfgVirtualNoticeNodeTypeEnum;
 import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
+import com.erp.model.wms.enums.CfgVirtualNoticeRuleTypeEnum;
 import com.erp.model.wms.enums.CfgVirtualNoticeWeekOptionEnum;
 import com.erp.server.wms.service.VirtualInventoryDetailService;
 import com.erp.server.wms.service.VirtualInventoryDiffService;
@@ -186,7 +185,26 @@ public class CfgNoticeJob {
             default:
                 break;
         }
-
+        if (StrUtil.isBlank(content)) {
+            return;
+        }
+        //按人员发送飞书通知
+        sendNoticeByUser(userIdList, title, content);
+        //按飞书群发送通知
+        sendNoticeByFsGroup(fsGroupList, title, content);
+    }
+    /**
+     * 根据人员发送通知
+     * @author will
+     * @date 2025/2/20 10:23
+     * @param userIdList
+     * @param title
+     * @param content
+     */
+    private void sendNoticeByUser (List<String> userIdList,String title,String content) {
+        if (CollUtil.isEmpty(userIdList)) {
+            return;
+        }
         //按人员发送
         NoticeMsgInfoDTO noticeMsgInfoDTO = getNoticeMsgInfoDTO(userIdList, title, content);
         String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
@@ -195,13 +213,34 @@ public class CfgNoticeJob {
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
             log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
         }
-
-        //按群发送
-        mqProducerService.sendWarnMsg(warnMsgInfo);
     }
 
     /**
-     * 数据组装
+     * 根据飞书群发送通知
+     * @author will
+     * @date 2025/2/20 10:23
+     * @param fsGroupList
+     * @param title
+     * @param content
+     */
+    private void sendNoticeByFsGroup (List<String> fsGroupList,String title,String content) {
+        if (CollUtil.isEmpty(fsGroupList)) {
+            return;
+        }
+        //按群发送
+        List<DictBasicEntity> list = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicEnum.FS_GROUP.getKey()).in(DictBasicEntity::getValue, fsGroupList).list();
+        if (CollUtil.isEmpty(list)) {
+            log.error("字典中未找到配置的飞书群");
+            return;
+        }
+        for (String fsGroup : fsGroupList) {
+            WarnMsgInfoDTO warnMsgInfoDTO = getWarnMsgInfoDTO(fsGroup,title, content);
+            mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+        }
+    }
+
+    /**
+     * 数据组装（按人员发送）
      * @author will
      * @date 2025/2/19 19:44
      * @param userIdList
@@ -225,15 +264,24 @@ public class CfgNoticeJob {
         return noticeMsgInfoDTO;
     }
 
-    private static WarnMsgInfoDTO getWarnMsgInfoDTO(String title,String content) {
+    /**
+     * 数据组装（按群发送）
+     * @author will
+     * @date 2025/2/20 10:14
+     * @param title
+     * @param content
+     * @return com.erp.model.msg.dto.WarnMsgInfoDTO
+     */
+    private static WarnMsgInfoDTO getWarnMsgInfoDTO(String fsGroup,String title,String content) {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-        warnMsgInfo.setTitle(StrUtil.format("加工SKU变更:sku:【{}】", ext.getComboSku()));
-        warnMsgInfo.setBizName(StrUtil.format("加工SKU{}:sku:【{}】", CollectionUtil.isNotEmpty(bomList)? "更新" : "新增", ext.getComboSku()));
-        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
-        warnMsgInfo.setTableName(SqlHelper.table(DmpBomEntity.class).getTableName());
+        warnMsgInfo.setTitle(title);
+        warnMsgInfo.setBizName(title);
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
+        warnMsgInfo.setTableName("");
         warnMsgInfo.setTableId("");
-        warnMsgInfo.setKeyInfo(StrUtil.format("【{}】平台加工SKU【{}】发生变更，请及时更新plm BOM信息系统", ext.getPlatformSign(), ext.getComboSku()));
-        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.MACHINING_SKU_NOTICE);
+        warnMsgInfo.setKeyInfo(content);
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.CUSTOM_GROUP);
+        warnMsgInfo.setWarnRandomNumber(fsGroup);
         return warnMsgInfo;
     }
 
@@ -241,22 +289,59 @@ public class CfgNoticeJob {
      *获取通知内容(库存分配差异)
      */
     private String getNoticeContentByDistribution(String noticeRule) {
-        //库存分配差异通知（按sku+仓库）
-        List<VirtualInventoryDiffDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualInventoryDiffService.listDiffSkuSendNotice();
+        StringBuffer str = new StringBuffer();
+        if (CfgVirtualNoticeRuleTypeEnum.SKU_WAREHOUSE.getCode().equals(noticeRule)) {
+            //库存分配差异通知（按sku+仓库）
+            List<VirtualInventoryDiffDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualInventoryDiffService.listDiffSkuSendNotice();
+            if (CollUtil.isEmpty(sendNoticeSkuList)) {
+                return "";
+            }
+            sendNoticeSkuList.forEach(e -> {
+                str.append(StrUtil.format("**SKU：{}\n**实体仓：{}\n**实体仓实际：{}\n**已分配虚拟仓：{}\n**实体仓未分配：{}",
+                        e.getSkuNo(), e.getWarehouseName(), e.getRealQty(), e.getDistributionQty(), e.getUnDistributionQty()));
+            });
+            return str.toString();
+        }
         //库存分配差异通知（按汇总）
         List<VirtualInventoryDiffDTO.SendNoticeTotalDTO> sendNoticeTotalList = virtualInventoryDiffService.listDiffTotalSendNotice();
-        return "";
+        if (CollUtil.isEmpty(sendNoticeTotalList)) {
+            return "";
+        }
+        str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
+        sendNoticeTotalList.forEach(e -> {
+            str.append(StrUtil.format("**SKU（{}）**实体仓（{}）**差异数量（{}）", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
+        });
+        return str.toString();
     }
 
     /**
      * 获取通知内容(库龄差异)
      */
     private String getNoticeContentByInventoryAge(String noticeRule) {
-        //库龄差异通知（按sku+仓库）
-        List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualInventoryDetailService.listDiffSkuSendNotice();
+        StringBuffer str = new StringBuffer();
+        if (CfgVirtualNoticeRuleTypeEnum.SKU_WAREHOUSE.getCode().equals(noticeRule)) {
+            //库龄差异通知（按sku+仓库）
+            List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualInventoryDetailService.listDiffSkuSendNotice();
+            if (CollUtil.isEmpty(sendNoticeSkuList)) {
+                return "";
+            }
+            sendNoticeSkuList.forEach(e -> {
+                str.append(StrUtil.format("**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**平均库龄：{}\n**平均库龄（正推）：{}",
+                        e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getBackAvgInventoryAge(), e.getAvgInventoryAge()));
+            });
+            return str.toString();
+        }
         //库龄差异通知（按汇总）
         List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> sendNoticeTotalList = virtualInventoryDetailService.listDiffTotalSendNotice();
-        return "";
+        if (CollUtil.isEmpty(sendNoticeTotalList)) {
+            return "";
+        }
+        str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
+        sendNoticeTotalList.forEach(e -> {
+            str.append(StrUtil.format("**SKU（{}）**虚拟仓（{}）**库龄（{}）**正推库龄（{}）",
+                    e.getSkuNo(), e.getVirtualWarehouseName(), e.getAvgInventoryAge(), e.getBackAvgInventoryAge()));
+        });
+        return str.toString();
     }
 
     /**
@@ -264,10 +349,29 @@ public class CfgNoticeJob {
      * @return
      */
     private String getNoticeContentByBill(String noticeRule) {
-        //冻结库存差异通知（按sku+仓库）
-        List<VirtualTransFlowDetailDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualTransFlowDetailService.listDiffSkuSendNotice();
+        StringBuffer str = new StringBuffer();
+        if (CfgVirtualNoticeRuleTypeEnum.SKU_WAREHOUSE.getCode().equals(noticeRule)) {
+            //冻结库存差异通知（按sku+仓库）
+            List<VirtualTransFlowDetailDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualTransFlowDetailService.listDiffSkuSendNotice();
+            if (CollUtil.isEmpty(sendNoticeSkuList)) {
+                return "";
+            }
+            sendNoticeSkuList.forEach(e -> {
+                str.append(StrUtil.format("**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**冻结库存：{}\n**单据冻结数：{}",
+                        e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getFrozenQty(), e.getBillFrozenQty()));
+            });
+            return str.toString();
+        }
         //冻结库存差异通知（按汇总）
         List<VirtualTransFlowDetailDTO.SendNoticeTotalDTO> sendNoticeTotalList = virtualTransFlowDetailService.listDiffTotalSendNotice();
-        return "";
+        if (CollUtil.isEmpty(sendNoticeTotalList)) {
+            return "";
+        }
+        str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
+        sendNoticeTotalList.forEach(e -> {
+            str.append(StrUtil.format("**SKU（{}）**虚拟仓（{}）**冻结库存（{}）**单据冻结库存（{}）",
+                    e.getSkuNo(), e.getVirtualWarehouseName(), e.getFrozenQty(), e.getBillFrozenQty()));
+        });
+        return str.toString();
     }
 }

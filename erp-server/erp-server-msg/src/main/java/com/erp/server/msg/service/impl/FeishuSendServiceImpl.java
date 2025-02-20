@@ -1,7 +1,6 @@
 package com.erp.server.msg.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
@@ -32,13 +31,15 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.erp.server.msg.enums.FeishuMessageTypeEnum.INTERACTIVE;
@@ -367,12 +368,12 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             return;
         }
         try {
-            WarnMsgTypeEnum warnMsgTypeEnum = warnMsgInfo.getWarnMsgTypeEnum();
-            Map<String, String> warns = fsProperties.getWarns();
-            if(!warns.containsKey(warnMsgTypeEnum.getCode())) {
-                log.error("nacos未配置飞书预警配置【{}】，不发送预警通知", warnMsgTypeEnum.getName());
+            //飞书token
+            String fsToken = getFsToken(warnMsgInfo);
+            if (StrUtil.isBlank(fsToken)) {
                 return;
             }
+            WarnMsgTypeEnum warnMsgTypeEnum = warnMsgInfo.getWarnMsgTypeEnum();
             WarnMsgContentDTO warnMsgContentDTO = new WarnMsgContentDTO();
             // 由于采用关键字（系统预警）
             String activeProfile = SpringUtil.getActiveProfile();
@@ -383,8 +384,7 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
                     StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableName()), StrUtils.null2EmptyWithTrim(warnMsgInfo.getTableId()),
                     StrUtils.null2EmptyWithTrim(warnMsgInfo.getKeyInfo()), LocalDateTimeUtil.format(warnMsgInfo.getHappenTime(), "yyyy-MM-dd HH:mm:ss"));
             warnMsgContentDTO.setContent(msgContent);
-
-            String fsToken = warns.get(warnMsgTypeEnum.getCode());
+            //飞书机器人连接
             String requestUrl = CharSequenceUtil.format(FeishuConstant.FS_WARN_HOOK_URL, fsToken);
             FeiShuSendBaseParam.ContentDTO param = MsgConvertUtil.wrapTypicalCard(warnMsgContentDTO);
             Map<String, Object> bodyMap = new HashMap<>();
@@ -398,4 +398,25 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
         }
     }
 
+    /**
+     * 获取飞书token
+     * @author will
+     * @date 2025/2/20 10:44
+     * @param warnMsgInfo
+     * @return java.lang.String
+     */
+    private String getFsToken (WarnMsgInfoDTO warnMsgInfo) {
+        WarnMsgTypeEnum warnMsgTypeEnum = warnMsgInfo.getWarnMsgTypeEnum();
+        //自定义飞书群取预警随机数
+        if (WarnMsgTypeEnum.CUSTOM_GROUP.equals(warnMsgTypeEnum)) {
+            return warnMsgInfo.getWarnRandomNumber();
+        }
+        //非自定义飞书群取nacos
+        Map<String, String> warns = fsProperties.getWarns();
+        if(!warns.containsKey(warnMsgTypeEnum.getCode())) {
+            log.error("nacos未配置飞书预警配置【{}】，不发送预警通知", warnMsgTypeEnum.getName());
+            return "";
+        }
+        return warns.get(warnMsgTypeEnum.getCode());
+    }
 }

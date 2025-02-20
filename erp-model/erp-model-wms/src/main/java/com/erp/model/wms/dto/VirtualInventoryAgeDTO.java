@@ -535,15 +535,6 @@ public class VirtualInventoryAgeDTO implements Serializable {
          */
         private String skuNo;
         /**
-         * 仓库Id
-         */
-        private String warehouseId;
-        /**
-         * 仓库名称
-         */
-        private String warehouseName;
-
-        /**
          * 虚拟仓库Id
          */
         private String virtualWarehouseId;

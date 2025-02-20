@@ -136,5 +136,17 @@
         and vid.virtual_warehouse_id = #{paramDTO.virtualWarehouseId} and  vtfd.trade_time >= #{paramDTO.tradeTime}
     </select>
 
+    <!-- 按sku显示冻结库存差异 -->
+    <select id="listDiffSkuSendNotice"
+            resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$SendNoticeSkuDTO">
+
+    </select>
+
+    <!-- 按汇总显示冻结库存差异 -->
+    <select id="listDiffTotalSendNotice"
+            resultType="com.erp.model.wms.dto.VirtualTransFlowDetailDTO$SendNoticeTotalDTO">
+
+    </select>
+
 
 </mapper>

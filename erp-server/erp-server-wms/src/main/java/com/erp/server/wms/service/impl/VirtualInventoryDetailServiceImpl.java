@@ -265,6 +265,16 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         return new PagingVO<>(Collections.singletonList(excelDTO), (int) pageData.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
+    @Override
+    public List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> listDiffSkuSendNotice() {
+        return baseMapper.listDiffSkuSendNotice();
+    }
+
+    @Override
+    public List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> listDiffTotalSendNotice() {
+        return baseMapper.listDiffTotalSendNotice();
+    }
+
     /**
      * 导出数据处理
      * @author will
