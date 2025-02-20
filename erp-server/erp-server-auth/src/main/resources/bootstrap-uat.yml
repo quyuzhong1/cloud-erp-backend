@@ -3,8 +3,8 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.60:30848
-        namespace: uat
+        namespace: k8s-uat
       config:
         server-addr: 172.16.100.60:30848
-        namespace: uat
+        namespace: k8s-uat
         shared-configs: common.yml,erp-auth.yml

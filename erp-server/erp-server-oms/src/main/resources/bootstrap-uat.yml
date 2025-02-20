@@ -3,10 +3,10 @@ spring:
     nacos:
       discovery:
         server-addr: 172.16.100.60:30848
-        namespace: uat
+        namespace: k8s-uat
       config:
         server-addr: 172.16.100.60:30848
-        namespace: uat
+        namespace: k8s-uat
         file-extension: yml
         shared-configs: common.yml,db-oms.yml,druid-common.yml
 sfs:
