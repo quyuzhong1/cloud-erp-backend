@@ -2462,7 +2462,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
         String userId = UserContext.getDefaultLoginUser().getUid();
         params.setUserId(userId);
-
+        if(CollUtil.isNotEmpty(params.getProductIds())){
+            params.setIds(params.getProductIds());
+        }
         downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_PLM_PRODUCT.getCode(), params);
         return Boolean.TRUE;
     }
