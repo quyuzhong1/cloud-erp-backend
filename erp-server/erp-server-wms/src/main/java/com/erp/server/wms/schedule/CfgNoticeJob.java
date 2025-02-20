@@ -42,10 +42,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -167,31 +164,31 @@ public class CfgNoticeJob {
     private void sendNotice (CfgNoticeEntity entity,List<String> userIdList,List<String> fsGroupList) {
         String noticeNode = entity.getNoticeNode();
         String title = "";
-        String content = "";
+        List<String> contentList = new ArrayList<>();
 
         switch (Objects.requireNonNull(CfgVirtualNoticeNodeTypeEnum.getEnum(noticeNode))) {
             case INVENTORY_DIFF:
-                content = getNoticeContentByDistribution(entity.getNoticeRule());
+                contentList = getNoticeContentByDistribution(entity.getNoticeRule());
                 title = "库存分配差异通知";
                 break;
             case INVENTORY_DETAIL_DIFF:
-                content = getNoticeContentByInventoryAge(entity.getNoticeRule());
+                contentList = getNoticeContentByInventoryAge(entity.getNoticeRule());
                 title = "库龄差异通知";
                 break;
             case FROZEN_INVENTORY_DIFF:
-                content = getNoticeContentByBill(entity.getNoticeRule());
+                contentList = getNoticeContentByBill(entity.getNoticeRule());
                 title = "冻结库存差异通知";
                 break;
             default:
                 break;
         }
-        if (StrUtil.isBlank(content)) {
+        if (CollUtil.isEmpty(contentList)) {
             return;
         }
         //按人员发送飞书通知
-        sendNoticeByUser(userIdList, title, content);
+        sendNoticeByUser(userIdList, title, contentList);
         //按飞书群发送通知
-        sendNoticeByFsGroup(fsGroupList, title, content);
+        sendNoticeByFsGroup(fsGroupList, title, contentList);
     }
     /**
      * 根据人员发送通知
@@ -199,19 +196,26 @@ public class CfgNoticeJob {
      * @date 2025/2/20 10:23
      * @param userIdList
      * @param title
-     * @param content
+     * @param contentList
      */
-    private void sendNoticeByUser (List<String> userIdList,String title,String content) {
+    private void sendNoticeByUser (List<String> userIdList,String title,List<String> contentList) {
         if (CollUtil.isEmpty(userIdList)) {
+            XxlJobHelper.log("未找到通知人员");
             return;
         }
-        //按人员发送
-        NoticeMsgInfoDTO noticeMsgInfoDTO = getNoticeMsgInfoDTO(userIdList, title, content);
-        String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
-                noticeMsgInfoDTO, IdUtil.simpleUUID());
-        if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-            log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+        if (CollUtil.isEmpty(contentList)) {
+            XxlJobHelper.log("无通知内容");
+            return;
+        }
+        for (String content : contentList) {
+            //按人员发送
+            NoticeMsgInfoDTO noticeMsgInfoDTO = getNoticeMsgInfoDTO(userIdList, title, content);
+            String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                    noticeMsgInfoDTO, IdUtil.simpleUUID());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+            }
         }
     }
 
@@ -221,26 +225,33 @@ public class CfgNoticeJob {
      * @date 2025/2/20 10:23
      * @param fsGroupList
      * @param title
-     * @param content
+     * @param contentList
      */
-    private void sendNoticeByFsGroup (List<String> fsGroupList,String title,String content) {
+    private void sendNoticeByFsGroup (List<String> fsGroupList,String title,List<String> contentList) {
         if (CollUtil.isEmpty(fsGroupList)) {
+            XxlJobHelper.log("未找到通知人员");
+            return;
+        }
+        if (CollUtil.isEmpty(contentList)) {
+            XxlJobHelper.log("无通知内容");
             return;
         }
         //按群发送
         List<DictBasicEntity> list = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicEnum.FS_GROUP.getKey()).in(DictBasicEntity::getValue, fsGroupList).list();
         if (CollUtil.isEmpty(list)) {
-            log.error("字典中未找到配置的飞书群");
+            XxlJobHelper.log("字典中未找到配置的飞书群");
             return;
         }
         for (String fsGroup : fsGroupList) {
-            WarnMsgInfoDTO warnMsgInfoDTO = getWarnMsgInfoDTO(fsGroup,title, content);
-            mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+            for (String content : contentList) {
+                WarnMsgInfoDTO warnMsgInfoDTO = getWarnMsgInfoDTO(fsGroup,title, content);
+                mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+            }
         }
     }
 
     /**
-     * 数据组装（按人员发送）
+     * 数据组装(按人员发送)
      * @author will
      * @date 2025/2/19 19:44
      * @param userIdList
@@ -265,7 +276,7 @@ public class CfgNoticeJob {
     }
 
     /**
-     * 数据组装（按群发送）
+     * 数据组装(按群发送)
      * @author will
      * @date 2025/2/20 10:14
      * @param title
@@ -294,90 +305,94 @@ public class CfgNoticeJob {
     /**
      *获取通知内容(库存分配差异)
      */
-    private String getNoticeContentByDistribution(String noticeRule) {
-        StringBuffer str = new StringBuffer();
+    private List<String> getNoticeContentByDistribution(String noticeRule) {
         if (CfgVirtualNoticeRuleTypeEnum.SKU_WAREHOUSE.getCode().equals(noticeRule)) {
-            //库存分配差异通知（按sku+仓库）
+            //库存分配差异通知(按sku+仓库)
             List<VirtualInventoryDiffDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualInventoryDiffService.listDiffSkuSendNotice();
             if (CollUtil.isEmpty(sendNoticeSkuList)) {
-                return "";
+                return Collections.emptyList();
             }
+            List<String> list = new ArrayList<>();
             sendNoticeSkuList.forEach(e -> {
-                str.append(StrUtil.format("\n**SKU：{}\n**实体仓：{}\n**实体仓实际：{}\n**已分配虚拟仓：{}\n**实体仓未分配：{}",
+                list.add(StrUtil.format("\nSKU：{}\n实体仓：{}\n实体仓实际：{}\n已分配虚拟仓：{}\n实体仓未分配：{}\n",
                         e.getSkuNo(), e.getWarehouseName(), e.getRealQty(), e.getDistributionQty(), e.getUnDistributionQty()));
             });
-            return str.toString();
+            return list;
         }
-        //库存分配差异通知（按汇总）
+        //库存分配差异通知(按汇总)
         List<VirtualInventoryDiffDTO.SendNoticeTotalDTO> sendNoticeTotalList = virtualInventoryDiffService.listDiffTotalSendNotice();
         if (CollUtil.isEmpty(sendNoticeTotalList)) {
-            return "";
+            return Collections.emptyList();
         }
-        str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
+        StringBuffer str = new StringBuffer();
+        str.append(StrUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("\n**SKU（{}）**实体仓（{}）**差异数量（{}）", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
+            str.append(StrUtil.format("\nSKU({}) 实体仓({}) 差异数量({})", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
         });
-        return str.toString();
+        return Collections.singletonList(str.toString());
     }
 
     /**
      * 获取通知内容(库龄差异)
      */
-    private String getNoticeContentByInventoryAge(String noticeRule) {
-        StringBuffer str = new StringBuffer();
+    private List<String> getNoticeContentByInventoryAge(String noticeRule) {
+
         if (CfgVirtualNoticeRuleTypeEnum.SKU_WAREHOUSE.getCode().equals(noticeRule)) {
-            //库龄差异通知（按sku+仓库）
+            //库龄差异通知(按sku+仓库)
             List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualInventoryDetailService.listDiffSkuSendNotice();
             if (CollUtil.isEmpty(sendNoticeSkuList)) {
-                return "";
+                return Collections.emptyList();
             }
+            List<String> list = new ArrayList<>();
             sendNoticeSkuList.forEach(e -> {
-                str.append(StrUtil.format("\n**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**平均库龄：{}\n**平均库龄（正推）：{}",
+                list.add(StrUtil.format("\nSKU：{}\n虚拟仓：{}\n实体仓：{}\n平均库龄：{}\n平均库龄(正推)：{}\n",
                         e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getBackAvgInventoryAge(), e.getAvgInventoryAge()));
             });
-            return str.toString();
+            return list;
         }
-        //库龄差异通知（按汇总）
+        //库龄差异通知(按汇总)
         List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> sendNoticeTotalList = virtualInventoryDetailService.listDiffTotalSendNotice();
         if (CollUtil.isEmpty(sendNoticeTotalList)) {
-            return "";
+            return Collections.emptyList();
         }
-        str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
+        StringBuffer str = new StringBuffer();
+        str.append(StrUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("\n**SKU（{}）**虚拟仓（{}）**库龄（{}）**正推库龄（{}）",
+            str.append(StrUtil.format("\n**SKU({}) 虚拟仓({}) 库龄({}) 正推库龄({})",
                     e.getSkuNo(), e.getVirtualWarehouseName(), e.getAvgInventoryAge(), e.getBackAvgInventoryAge()));
         });
-        return str.toString();
+        return Collections.singletonList(str.toString());
     }
 
     /**
      * 获取通知内容(冻结库存差异)
      * @return
      */
-    private String getNoticeContentByBill(String noticeRule) {
-        StringBuffer str = new StringBuffer();
+    private List<String> getNoticeContentByBill(String noticeRule) {
         if (CfgVirtualNoticeRuleTypeEnum.SKU_WAREHOUSE.getCode().equals(noticeRule)) {
-            //冻结库存差异通知（按sku+仓库）
+            //冻结库存差异通知(按sku+仓库)
             List<VirtualTransFlowDetailDTO.SendNoticeSkuDTO> sendNoticeSkuList = virtualTransFlowDetailService.listDiffSkuSendNotice();
             if (CollUtil.isEmpty(sendNoticeSkuList)) {
-                return "";
+                return Collections.emptyList();
             }
+            List<String> list = new ArrayList<>();
             sendNoticeSkuList.forEach(e -> {
-                str.append(StrUtil.format("\n**SKU：{}\n**虚拟仓：{}\n**实体仓：{}\n**冻结库存：{}\n**单据冻结数：{}",
+                list.add(StrUtil.format("\nSKU：{}\n虚拟仓：{}\n实体仓：{}\n冻结库存：{}\n单据冻结数：{}\n",
                         e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getVirtualFrozenQty(), e.getBillFrozenQty()));
             });
-            return str.toString();
+            return list;
         }
-        //冻结库存差异通知（按汇总）
+        //冻结库存差异通知(按汇总)
         List<VirtualTransFlowDetailDTO.SendNoticeTotalDTO> sendNoticeTotalList = virtualTransFlowDetailService.listDiffTotalSendNotice();
         if (CollUtil.isEmpty(sendNoticeTotalList)) {
-            return "";
+            return Collections.emptyList();
         }
-        str.append(StrUtil.format("差异：{}条",sendNoticeTotalList.size()));
+        StringBuffer str = new StringBuffer();
+        str.append(StrUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("\n**SKU（{}）**虚拟仓（{}）**冻结库存（{}）**单据冻结库存（{}）",
+            str.append(StrUtil.format("\nSKU({}) 虚拟仓({}) 冻结库存({}) 单据冻结库存({})",
                     e.getSkuNo(), e.getVirtualWarehouseName(), e.getVirtualFrozenQty(), e.getBillFrozenQty()));
         });
-        return str.toString();
+        return Collections.singletonList(str.toString());
     }
 }
