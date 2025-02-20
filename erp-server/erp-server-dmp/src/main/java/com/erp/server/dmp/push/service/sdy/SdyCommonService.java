@@ -45,21 +45,17 @@ public class SdyCommonService {
 		if (data.startsWith("[") && data.endsWith("]")) {
 			// 如果 ext 是数组
 			JSONArray extArray = JSON.parseArray(data);
-			List<String> list = new ArrayList<>();
-			for (Object o : extArray) {
-				list.add(String.valueOf(o));
-			}
 			JSONObject object = new JSONObject();
 			object.put("count", extArray.size());
-			object.put("list", list);
+			object.put("list", extArray);
 			requestData = object.toJSONString();
 		} else {
 			requestData = data;
 		}
 
-		log.info("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
+		log.warn("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
 		String responseData = HttpUtil.post(url, requestData);
-		log.info("请求数帝云响应报文：{}" , responseData);
+		log.warn("请求数帝云响应报文：{}" , responseData);
 		JSONObject responseObject = null;
 		try {
 			responseObject = JSON.parseObject(responseData);

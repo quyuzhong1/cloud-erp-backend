@@ -49,10 +49,10 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * 消费
      * @author will
      * @date 2024/12/10 12:28
-     * @param virtualTransFlowEntity
+     * @param businessId
      * @return Boolean
      */
-    Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity,String msgId);
+    Boolean consumeMessage(String businessId,String msgId);
     /**
      * 查询虚拟仓库存明细id集合
      * @author will

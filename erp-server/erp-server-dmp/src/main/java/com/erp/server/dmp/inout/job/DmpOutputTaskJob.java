@@ -182,6 +182,17 @@ public class DmpOutputTaskJob {
 		}
 		log.warn("归档中台输出任务数据结束");
 		
+		dmpDoOutputErrorTask.execute(() -> {
+			log.warn("归档中台输出任务无记录数据开始");
+			try {
+				dmpOutputTaskRecordService.dmpOutputNoRecordMoveToHistoryTable();
+			} catch (Exception e) {
+				log.error("归档中台输出任务无记录数据失败：" , e);
+				DmpHandlerUtils.sendFeiShuMsg("归档中台输出任务无记录数据失败：" + "【" + e.getMessage() + "】");
+			}
+			log.warn("归档中台输出任务无记录数据结束");
+		});
+		
 		return ReturnT.SUCCESS;
 	}
 

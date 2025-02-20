@@ -72,4 +72,10 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
      * @param userName
      */
     void updateShopChargeId(@Param("shopId") String shopId, @Param("userId") String userId, @Param("userName") String userName);
+
+    /**
+     * 查询物流单费用没有物流单的数据
+     * @return
+     */
+    List<LogisticsBillCostDTO.BillCostNoBillDTO> selectLogisticsBillCostNoBill();
 }

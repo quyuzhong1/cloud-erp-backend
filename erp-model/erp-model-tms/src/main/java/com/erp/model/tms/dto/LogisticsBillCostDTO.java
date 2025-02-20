@@ -919,4 +919,13 @@ public class LogisticsBillCostDTO implements Serializable {
         private BigDecimal exchangeRate;
         private LocalDateTime createTime;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BillCostNoBillDTO {
+        private String id;
+        private String logisticsBillId;
+        private String logisticsBillDetailId;
+    }
 }
