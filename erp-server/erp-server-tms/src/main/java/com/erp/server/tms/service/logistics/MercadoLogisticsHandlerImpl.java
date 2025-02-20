@@ -36,6 +36,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.*;
 
 /**
@@ -140,12 +141,13 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
             try {
                 String labelUrl = mercadoSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
-                String base64 = FileUtil.convertPdfUrlToBase64(labelUrl);
+                String prefix = "data:application/pdf;base64,";
+                String base64 = prefix + labelUrl;
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
                         .base64(base64).build();
                 logisticsOperateService.pullOperateLog(vo.getOrderId(), vo.getDeliveryNo(), BusinessTypeEnum.DOWNLOAD_SHIPPING_DOCUMENT.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
-                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(vo), JSONUtil.toJsonStr(labelUrl));
+                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(vo), JSONUtil.toJsonStr(base64));
                 responseList.add(response);
             }catch (Exception e){
                 String message = e.getMessage();
