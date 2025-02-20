@@ -58,7 +58,6 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
             return new BaseResultDTO.AddDTO(old.getId(), old.getId());
         }
         log.warn("新增wms虚拟仓明细同步单，wmsVirtualDetailMsgEntity参数：{}", JSON.toJSONString(wmsVirtualDetailMsgEntity));
-        wmsVirtualDetailMsgEntity.setDataJson(JSONUtil.parseObj(wmsVirtualDetailMsgEntity.getTransFlowEntity()));
 
         boolean save = super.save(wmsVirtualDetailMsgEntity);
         if(!save) {
@@ -77,15 +76,15 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
         }
         for (WmsVirtualDetailMsgEntity entity : wmsVirtualDetailMsgList) {
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.WMS_VIRTUAL_DETAIL_MSG_TOPIC, RocketMqTagEnum.WMS_VIRTUAL_DETAIL_MSG_TAG.getName(),
-                    entity, StrUtil.format("{}_{}", entity.getDataJson(), entity.getStatus()));
+                    entity, StrUtil.format("{}_{}", entity.getBusinessId(), entity.getStatus()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                 throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
+            log.warn("发送MQ数据成功，result = {},businessId = {}", JSONUtil.toJsonStr(result), entity.getBusinessId());
             //更新状态进行中
             entity.setStatus(VirtualDetailMsgStatusEnum.DOING.getCode());
+            this.updateById(entity);
         }
-        this.updateBatchById(wmsVirtualDetailMsgList);
-        log.debug("gyyRefund发送数据为：{}" , JSON.toJSONString(wmsVirtualDetailMsgList));
     }
 
     @Override
