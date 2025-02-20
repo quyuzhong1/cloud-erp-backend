@@ -204,10 +204,6 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         @NotNull(message = "导出类型不能为空")
         private List<Integer> exportDataList;
-
-        private List<String> categoryIdList;
-
-        private String userId;
     }
 
 

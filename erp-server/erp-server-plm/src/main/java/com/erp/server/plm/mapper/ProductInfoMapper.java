@@ -43,9 +43,9 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param userId
      * @return
      */
-    IPage<ProductShowDTO> listMyProjectExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList, @Param("userId")String userId);
+    List<ProductShowDTO> listMyProjectExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList, @Param("userId")String userId);
 
-    IPage<TaskExportDTO.ProductTaskExcelDTO> listMyProjectTaskExport(Page<ProductSearchDTO.ExportDTO> query ,@Param("params")ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
+    List<TaskExportDTO.ProductTaskExcelDTO> listMyProjectTaskExport(@Param("params")ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
 
 
     /**
