@@ -24,6 +24,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cLogisticSourceSystemEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -84,6 +85,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Resource
     private SoB2cLabelService soB2cLabelService;
 
+    @Resource
+    private SoB2cErrorService soB2cErrorService;
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
@@ -463,6 +466,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             this.updateById(soB2cLogisticsEntity);
             //清空面单信息
             soB2cLabelService.deleteByMainIds(Arrays.asList(id));
+            //清空获取面单异常
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 

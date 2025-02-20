@@ -1503,6 +1503,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cLogisticsEntity.setTrackNo("");
                 //清空面单信息
                 soB2cLabelService.deleteByMainIds(Arrays.asList(id));
+                soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
             }
         }
         //重置物流渠道信息
@@ -1664,6 +1665,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cLogisticsService.updateLogisticsCode(soB2cLogisticsEntity.getMainId(), "", "", "");
             //清空面单信息
             soB2cLabelService.deleteByMainIds(Arrays.asList(id));
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
         }
         //校验是否存在申报信息，不存在则生成
         List<SoB2cDeclareProductEntity> declareList = soB2cDeclareProductService.listBySoId(id);
@@ -6377,6 +6379,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         entity.setIsMatchLogisticsRule(Boolean.TRUE);
         this.updateById(entity);
         logisticsBillFeign.removeLogisticsBillBySourceId(Arrays.asList(id));
+        soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
         //物流信息更新
         return soB2cLogisticsService.updateById(soB2cLogisticsEntity);
 
