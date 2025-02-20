@@ -1,7 +1,6 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.json.JSONObject;
-import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -89,11 +88,6 @@ public class WmsVirtualDetailMsgDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
-        /**
-        * 流水数据
-        */
-        private VirtualTransFlowEntity transFlowEntity;
 
         /**
         * 备注
