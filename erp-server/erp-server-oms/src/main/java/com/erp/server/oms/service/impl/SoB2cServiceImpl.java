@@ -2131,7 +2131,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cDTO.LabelJsonDTO labelJsonDTO = JSONUtil.toBean(labelJson, SoB2cDTO.LabelJsonDTO.class);
         String dictPlatform = entity.getDictPlatform();
         String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
-        if (PlatformDictEnum.SHOPEE.getCode().equals(dictPlatform)){
+        if (CharSequenceUtil.isNotBlank(labelJsonDTO.getDeliveryType()) && !"non_integrated".equals(labelJsonDTO.getDeliveryType()) && PlatformDictEnum.SHOPEE.getCode().equals(dictPlatform)){
             List<String> deliveryType = Arrays.asList("dropoff","pickup");
             if (!deliveryType.contains(labelJsonDTO.getDeliveryType())){
                 throw new ServiceException("【{}】发货类型【{}】不支持提交发货",PlatformDictEnum.getNameByCode(dictPlatform),labelJsonDTO.getDeliveryType());
@@ -2144,7 +2144,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException("【{}】线上物流提交发货必须使用线上物流渠道下单",PlatformDictEnum.getNameByCode(dictPlatform));
             }
 
-        }else if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(dictPlatform)){
+        }else if (CharSequenceUtil.isNotBlank(labelJsonDTO.getDeliveryType()) && !"default".equals(labelJsonDTO.getDeliveryType()) && PlatformDictEnum.MERCADOLIBRE.getCode().equals(dictPlatform)){
             List<String> logisticsType = Arrays.asList(MercadoOrderLogisticTypeEnum.DROP_OFF.getCode(),MercadoOrderLogisticTypeEnum.CROSS_DOCKING.getCode());
             if (!logisticsType.contains(labelJsonDTO.getLogisticType())){
                 throw new ServiceException("【{}】物流类型【{}】不支持提交发货",PlatformDictEnum.getNameByCode(dictPlatform),labelJsonDTO.getLogisticType());
