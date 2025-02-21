@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -903,6 +902,10 @@ public class SoB2cDTO implements Serializable {
         @Dict(enumClass = OrderSubTypeEnum.class)
         private String transactionSubType;
         /**
+         * 标签json
+         */
+        private String labelJson;
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.ViewDTO logisticsDTO;
@@ -1144,6 +1147,7 @@ public class SoB2cDTO implements Serializable {
          * 扩展字段
          */
         private String extendData;
+        private String labelJson;
 
         /**
          * 物流信息
