@@ -76,26 +76,20 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     * 修改
     */
     @Override
-    public Boolean addOrUpdate(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
+    public Boolean addOrUpdate(List<SoB2cProcessingDTO.AddOrUpdateDTO> list,LocalDate startDate) {
         //删除多余b2c订单
-        baseMapper.deleteB2cOrder();
+        baseMapper.deleteB2cOrder(startDate);
 
         if (CollUtil.isEmpty(list)) {
             return Boolean.TRUE;
         }
         // 数据处理
         List<SoB2cProcessingEntity> soB2cProcessingList =  handleData(list);
-        List<SoB2cProcessingEntity> addList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
-        List<SoB2cProcessingEntity> updateList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId()) && !obj.getIsDiff()).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(addList)) {
-            log.warn("新增数据！size= {}",addList.size());
-            super.saveBatch(addList);
+        if (CollUtil.isEmpty(soB2cProcessingList)) {
+            log.warn("B2C虚拟仓订单数据处理为空！");
+            return Boolean.TRUE;
         }
-        if (CollUtil.isNotEmpty(updateList)) {
-            log.warn("更新数据！size= {}",updateList.size());
-            super.updateBatchById(updateList);
-        }
-        return Boolean.TRUE;
+        return super.saveBatch(soB2cProcessingList);
     }
 
     @Override
@@ -173,7 +167,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
-        ApplicationContextUtils.getBean(SoB2cProcessingServiceImpl.class).addOrUpdate(addList);
+        ApplicationContextUtils.getBean(SoB2cProcessingServiceImpl.class).addOrUpdate(addList,startDate);
         log.warn("数据更新成功!");
     }
     /**
@@ -276,43 +270,16 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     * 新增修改处理数据
     */
     private List<SoB2cProcessingEntity> handleData(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
-        //查询已存在的数据，判断哪些需要删除和更新
-        List<SoB2cProcessingEntity> oldList = this.list();
-
         List<SoB2cProcessingEntity> newList = new ArrayList<>();
         for (SoB2cProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
                 continue;
             }
             SoB2cProcessingEntity entity = SoB2cProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
-            //旧数据
-            SoB2cProcessingEntity old = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryDetailId(), addOrUpdateDTO.getDeliveryDetailId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjUtil.isNotNull(old)) {
-                //校验数据是否一样
-                boolean isDiff = CharSequenceUtil.equals(entity.toString(), old.toString());
-                entity.setIsDiff(isDiff);
-                entity.setId(old.getId());
-            }
             newList.add(entity);
         }
         return newList;
     }
-
-    /**
-     * 根据发货单明细id查询
-     * @author will
-     * @date 2024/12/20 10:17
-     * @param deliveryDetailIdList
-     * @return List<SoB2bProcessingEntity>
-     */
-    private List<SoB2cProcessingEntity> listByDeliveryDetailIdList (List<String> deliveryDetailIdList) {
-        if (CollUtil.isEmpty(deliveryDetailIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(SoB2cProcessingEntity::getDeliveryDetailId,deliveryDetailIdList).list();
-    }
-
 
     /**
      * 分页查询

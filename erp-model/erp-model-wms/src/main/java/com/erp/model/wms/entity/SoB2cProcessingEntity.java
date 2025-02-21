@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -126,6 +127,12 @@ public class SoB2cProcessingEntity extends BaseEntity<SoB2cProcessingEntity> {
     */
     @TableField("bom_version")
     private String bomVersion;
+
+    /**
+     * 单据时间
+     */
+    @TableField("bill_date")
+    private LocalDate billDate;
 
     /**
      * 拣货明细id
