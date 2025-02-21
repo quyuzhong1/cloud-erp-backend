@@ -25,11 +25,16 @@ import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordMergeDTO;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -56,6 +61,10 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
     
     @Resource
     private CfgSettingService cfgSettingService;
+    
+    @Autowired
+	@Qualifier("dmpSdyOutputExecutorPool")
+	private ExecutorService dmpSdyOutputExecutorPool;
     
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -119,6 +128,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 
 
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void sdyMergePush() {
         List<DmpOutputTaskRecordMergeEntity> list = this.lambdaQuery()
@@ -148,6 +158,15 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
                 .set(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
                 .in(DmpOutputTaskRecordMergeEntity::getMainId, ids)
                 .update();
+        
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+		    @Override
+		    public void afterCommit() {
+		    	List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
+		    	dmpOutputTaskRecordEntityList.add(entity);
+		    	dmpSdyOutputExecutorPool.execute(() -> dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordEntityList));
+		    }
+		});
     }
 
     @Transactional(rollbackFor = Exception.class)
