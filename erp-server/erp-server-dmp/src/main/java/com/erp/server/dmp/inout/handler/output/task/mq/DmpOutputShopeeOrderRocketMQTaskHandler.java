@@ -199,8 +199,10 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
         orderDTO.setDetails(parseDetailDto(dmpSoDetailEntityList));
-        
-        if(dmpSoReceiverEntity != null) {
+		// 订单状态
+		orderDTO.setIsCancel(dmpSoInfoEntity.getIsCancel());
+
+		if(dmpSoReceiverEntity != null) {
         	PlatformOrderReceiverDTO receiver = PlatformOrderReceiverDTO.builder()
 	            .loginId(dmpSoReceiverEntity.getBuyerId())
 	            .customerId(dmpSoReceiverEntity.getBuyerId())
