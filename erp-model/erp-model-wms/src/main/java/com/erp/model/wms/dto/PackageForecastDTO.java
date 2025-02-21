@@ -161,7 +161,6 @@ public class PackageForecastDTO implements Serializable {
         /**
          * 揽收地址id 来源 http://172.16.100.11:3002/project/128/interface/api/25783  type=collect
          */
-        @NotBlank(message = "揽收地址不能为空")
         private String collectAddressId;
     }
 
