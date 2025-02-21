@@ -230,4 +230,9 @@ public interface LogisticsBillCostService extends SuperService<LogisticsBillCost
     void generateLogisticsBill(SoReturnInstockEntity entity);
     
     BatchResultDTO pushAllocation(String id , String reportDate);
+
+    /**
+     * 删除没有物流单的物流费用
+     */
+    void deleteLogisticsBillCostNoBill();
 }

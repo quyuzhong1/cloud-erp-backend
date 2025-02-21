@@ -178,4 +178,24 @@ public class LogisticsBillController extends BaseController {
         logisticsBillService.initLogisticsBillBusinessCode();
         return success();
     }
+
+    /**
+     * 删除没有销售出库单/发货单的物流单
+     * @return
+     */
+    @GetMapping("/deleteLogisticsBillNoOutstock")
+    public ApiResult<Object> deleteLogisticsBillNoOutstock(@RequestParam(value = "orderType") String orderType){
+        logisticsBillService.deleteLogisticsBillNoOutstock(orderType);
+        return success();
+    }
+    /**
+     * 添加物流单明细并补充物流费用
+     * @return
+     */
+    @GetMapping("/addNoLogisticsBillDetailByBill")
+    public ApiResult<Object> addNoLogisticsBillDetailByBill(){
+        logisticsBillService.addNoLogisticsBillDetailByBill();
+        return success();
+    }
+
 }

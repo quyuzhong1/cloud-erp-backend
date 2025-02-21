@@ -237,6 +237,15 @@
             AND lb.order_type = 'firstMile'
           AND lbc.exchange_rate = 0
     </select>
+    <select id="selectLogisticsBillCostNoBill"
+            resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$BillCostNoBillDTO">
+        SELECT
+            lbc.id,lbc.logistics_bill_id,lbc.logistics_bill_detail_id
+        FROM logistics_bill_cost lbc
+        LEFT JOIN logistics_bill lb on lb.id = lbc.logistics_bill_id and lb.is_deleted = false
+        where lbc.is_deleted = false and lb.id is null
+        ORDER BY lbc.create_time desc
+    </select>
 
 
 </mapper>

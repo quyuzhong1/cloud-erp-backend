@@ -387,4 +387,14 @@ public class LogisticsBillCostController extends BaseController {
      	}
      	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
      }
+
+    /**
+     * 删除没有物流单的物流费用
+     * @return
+     */
+    @GetMapping("/deleteLogisticsBillCostNoBill")
+    public ApiResult<Object> deleteLogisticsBillCostNoBill(){
+        logisticsBillCostService.deleteLogisticsBillCostNoBill();
+        return success();
+    }
 }
