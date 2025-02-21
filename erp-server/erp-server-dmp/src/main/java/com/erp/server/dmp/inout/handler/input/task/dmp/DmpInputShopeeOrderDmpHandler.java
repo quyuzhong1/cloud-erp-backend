@@ -79,6 +79,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				boolean isPlatformWarehouseOrder = false;
 				// ERP配送类型
 				String logisticType = "";
+				String deliveryType = "";
 				if ("fulfilled_by_shopee".equalsIgnoreCase(fulfillmentFlagStr)) {
 					// 平台仓订单
 					isPlatformWarehouseOrder = true;
@@ -86,14 +87,18 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				} else if ("fulfilled_by_cb_seller".equalsIgnoreCase(fulfillmentFlagStr) || ("fulfilled_by_local_seller".equalsIgnoreCase(fulfillmentFlagStr))){
 					// 自发货配送
 					// 解析ERP配送类型
-					logisticType = parseLogisticType(dmpDataMap, orderSnShipmentMaps, logisticType, fulfillmentFlagStr);
+					// 虾皮 fulfillment_flag =fulfilled_by_cb_seller/fulfilled _by_local_seller时  v2.logistics.get_shipping_partameter 接口 返回  dropoff / pickup 时为中转仓标识transitWarehouse
+					//虾皮 fulfillment_flag =fulfilled_by_cb_seller/fulfilled _by_local_seller时  v2.logistics.get_shipping_partameter 接口 返回 non_intergrated  时为 自发货标识 selfShipment
+					deliveryType = parseDeliveryTypeType(dmpDataMap, orderSnShipmentMaps);
+					logisticType = "non_integrated".equalsIgnoreCase(deliveryType) ? "selfShipment" : "transitWarehouse";
 				} else {
 					ServiceException.runError("未知配送方式fulfillment_flag=" + fulfillmentFlagStr);
 				}
 				labelJsonObject.put("logisticType", logisticType);
+				labelJsonObject.put("deliveryType", deliveryType);
 				labelJsonObject.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
 				// 原始配送
-				labelJsonObject.put("fulfillmentFlag", fulfillmentFlagStr);
+				labelJsonObject.put("logisticsWarehouseType", fulfillmentFlagStr);
 				dmpDataMap.put("extendData", labelJsonObject.toJSONString());
 
 				// 订单状态
@@ -202,9 +207,9 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 	}
 
 	/**
-	 * 解析物流类型
+	 * 解析发货类型
 	 */
-	private static String parseLogisticType(TreeMap<String, Object> dmpDataMap, Map<String, Map<String, Object>> orderSnShipmentMaps, String logisticType, String fulfillmentFlagStr) {
+	private static String parseDeliveryTypeType(TreeMap<String, Object> dmpDataMap, Map<String, Map<String, Object>> orderSnShipmentMaps) {
 		// 自发货（跨境卖家） fulfilled_by_cb_seller
 		// 自发货（本地卖家）fulfilled_by_local_seller
 		Map<String, Object> shipmentData = orderSnShipmentMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
@@ -215,34 +220,38 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 		if (null == infoNeededObj){
 			ServiceException.runError("配送信息info_needed为空");
 		}
+		String deliveryType = "";
 		String infoNeededJsonString = JSON.toJSONString(infoNeededObj);
 		JSONObject infoNeededjsonObject = JSON.parseObject(infoNeededJsonString);
+		if (StringUtils.isBlank(infoNeededJsonString)){
+			ServiceException.runError("未知配送信息infoNeeded=" + infoNeededJsonString);
+		}
 		JSONArray dropoffjsonArray = infoNeededjsonObject.getJSONArray("dropoff");
 		JSONArray pickupjsonArray = infoNeededjsonObject.getJSONArray("pickup");
 		JSONArray nonIntegratedjsonArray = infoNeededjsonObject.getJSONArray("non_integrated");
 		// 字段存在判断类型
 		if (null != dropoffjsonArray){
-			logisticType = "transitWarehouse";
+			deliveryType = "dropoff";
 		}
 		if (null != pickupjsonArray){
-			logisticType = "transitWarehouse";
+			deliveryType = "pickup";
 		}
 		if (null != nonIntegratedjsonArray){
-			logisticType = "selfShipment";
+			deliveryType = "non_integrated";
 		}
 		// 数组有值优先
 		if (CollectionUtils.isNotEmpty(dropoffjsonArray)){
-			logisticType = "transitWarehouse";
+			deliveryType = "dropoff";
 		}
 		if (CollectionUtils.isNotEmpty(pickupjsonArray)){
-			logisticType = "transitWarehouse";
+			deliveryType = "pickup";
 		}
 		if (CollectionUtils.isNotEmpty(nonIntegratedjsonArray)){
-			logisticType = "selfShipment";
+			deliveryType = "non_integrated";
 		}
-		if (StringUtils.isBlank(infoNeededJsonString)){
-			ServiceException.runError("未知配送信息infoNeeded=" + fulfillmentFlagStr);
+		if (StringUtils.isBlank(deliveryType)){
+			ServiceException.runError("解析到未知的配送信息deliveryType=" + infoNeededJsonString);
 		}
-		return logisticType;
+		return deliveryType;
 	}
 }
