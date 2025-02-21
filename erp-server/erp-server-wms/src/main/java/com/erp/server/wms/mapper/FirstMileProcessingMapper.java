@@ -45,7 +45,7 @@ public interface FirstMileProcessingMapper extends BaseMapper<FirstMileProcessin
      * @Auther will
      * @Date 2025/2/6 16:34
      */
-    void deleteFirstMileOrder();
+    void deleteFirstMileOrder(@Param("startDate") LocalDate startDate);
     /**
      * 删除
      * @author will

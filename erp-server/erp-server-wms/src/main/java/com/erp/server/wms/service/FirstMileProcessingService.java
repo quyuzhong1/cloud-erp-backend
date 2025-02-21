@@ -26,7 +26,7 @@ public interface FirstMileProcessingService extends SuperService<FirstMileProces
     * @param list
     * @return
     */
-    Boolean addOrupdate(List<FirstMileProcessingDTO.AddOrUpdateDTO> list);
+    Boolean addOrupdate(List<FirstMileProcessingDTO.AddOrUpdateDTO> list,LocalDate startDate);
 
     /**
      * 分页查询

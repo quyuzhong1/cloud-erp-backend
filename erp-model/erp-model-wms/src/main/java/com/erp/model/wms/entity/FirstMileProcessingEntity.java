@@ -9,6 +9,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 
@@ -144,10 +145,10 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     private Integer approveQty;
 
     /**
-     * 是否存在差异
+     * 单据时间
      */
-    @TableField(exist = false)
-    private Boolean isDiff;
+    @TableField("bill_date")
+    private LocalDate billDate;
 
     public static final String REQUISITION_APPLICATION_ID = "requisition_application_id";
 
