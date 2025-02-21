@@ -64,7 +64,6 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -128,7 +127,6 @@ import static cn.hutool.core.text.CharSequenceUtil.*;
 import static com.alibaba.excel.EasyExcelFactory.read;
 import static com.alibaba.fastjson.JSON.parseObject;
 import static com.alibaba.fastjson.JSON.toJSONString;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_SKU;
 
 /**
  * @Description: 产品明细信息服务类
@@ -280,9 +278,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private ApplicationCategoryService applicationCategoryService;
-
-    @Resource
-    private DownloadTaskFeign downloadTaskFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -2120,14 +2115,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     public void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("产品管理导出", EXPORT_PLM_SKU.getCode(), productSkuExcelDTO);
-    }
-
-    @Override
-    public PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO> dto ) {
-        Page<ProductSkuExcelDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<ProductDetailExcelExportDTO> pageData = productDetailMapper.getExportSkuExcel(query,dto.getParams());
-        List<ProductDetailExcelExportDTO> list = pageData.getRecords();
+        List<ProductDetailExcelExportDTO> list = productDetailMapper.getExportSkuExcel(productSkuExcelDTO);
         if(CollUtil.isNotEmpty(list)) {
             Map<String, String> userIdNameMaps = new HashMap<>();
             List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -2263,7 +2251,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             });
         }
-        return new PagingVO<>(pageData);
+        ExcelUtil.export("产品sku明细表", "产品sku明细表", list, ProductDetailExcelExportDTO.class, response,productSkuExcelDTO.getExportFields());
     }
 
     private void getParentBasicCategory(String pid , Map<String, BasicCategoryEntity> idBasicCategoryMaps , List<BasicCategoryEntity> resultList){
