@@ -1345,7 +1345,12 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             this.logisticsBillDetailService.saveBatch(detailEntityList);
             Map<String, List<LogisticsBillDetailEntity>> billMap = detailEntityList.stream().collect(Collectors.groupingBy(LogisticsBillDetailEntity::getMainId));
             list.forEach(entity -> {
-                this.addLogisticsBillCost(entity, billMap.get(entity.getId()));
+                try {
+                    this.addLogisticsBillCost(entity, billMap.get(entity.getId()));
+                }catch (Exception e){
+                    log.error(e.getMessage());
+//                    throw new ServiceException(e.getMessage());
+                }
             });
         });
     }
