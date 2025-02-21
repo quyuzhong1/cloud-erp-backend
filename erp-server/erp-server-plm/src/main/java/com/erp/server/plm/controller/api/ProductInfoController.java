@@ -165,8 +165,8 @@ public class ProductInfoController extends BaseController {
     @PostMapping("/myProjectExport")
     @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<Object> myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
-        productInfoService.myProjectExport(dto);
-        return success();
+        Boolean result= productInfoService.myProjectExport(dto);
+        return result ? success() : failure();
     }
 
 
