@@ -157,7 +157,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 		if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId())) {
 			List<CfgSettingEntity> cfgList = cfgSettingService.lambdaQuery()
 					.eq(CfgSettingEntity::getType, "sdy_batch_cfg")
-					.eq(CfgSettingEntity::getKey, "sdy_batch_cfg")
+					.eq(CfgSettingEntity::getKey, dmpCfgOutputEntity.getId())
 					.eq(CfgSettingEntity::getValue, "1")
 					.list();
 			if(CollUtil.isEmpty(cfgList)) {
