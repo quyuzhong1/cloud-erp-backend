@@ -6,7 +6,9 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.entity.ShopChannelRefEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.mapper.ShopChannelRefMapper;
 import com.erp.server.oms.service.ShopChannelRefService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -14,6 +16,7 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import com.erp.server.oms.service.ShopInfoService;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,9 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 店铺渠道关联表 服务实现类
@@ -40,6 +46,12 @@ import com.common.core.enums.ApiError;
 public class ShopChannelRefServiceImpl extends SuperServiceImpl<ShopChannelRefMapper, ShopChannelRefEntity> implements ShopChannelRefService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Resource
+    private ShopInfoService shopInfoService;
+
+    @Resource
+    private LogisticsFeign logisticsFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -156,7 +168,16 @@ public class ShopChannelRefServiceImpl extends SuperServiceImpl<ShopChannelRefMa
         List<ShopChannelRefEntity> list = this.lambdaQuery().eq(ShopChannelRefEntity::getShopId, shopId).list();
         if(CollectionUtils.isNotEmpty(list)){
             if(list.stream().noneMatch(v->v.getLogisticsChannelId().equals(newChannelId))){
-                throw new ServiceException("该渠道不属于该店铺");
+                ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
+                List<String> channelIds = list.stream().map(ShopChannelRefEntity::getLogisticsChannelId).collect(Collectors.toList());
+                //截取前三个
+                if(channelIds.size()>3){
+                    channelIds = channelIds.subList(0,3);
+                }
+                List<LogisticsChannelDTO.BaseDTO>  baseDTOS = logisticsFeign.listChannelInfoById(channelIds);
+                //封装成物流商名称+渠道名称
+                String channelNames = baseDTOS.stream().map(v->v.getLogisticsSupplierName()+"-"+v.getName()).collect(Collectors.joining(","));
+                throw new ServiceException("{}可用渠道为{}，详情请查看店铺管理-海外仓交运渠道配置",shopInfoEntity.getName(),channelNames);
             }
         }else{
             throw new ServiceException("该店铺未绑定任何渠道");
