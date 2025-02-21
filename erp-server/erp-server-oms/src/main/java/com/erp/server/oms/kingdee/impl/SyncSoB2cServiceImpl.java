@@ -115,7 +115,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         Integer totalQty = soB2cDetailEntityList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
         shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
-        shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
 
         //取消金额、数量
         if (soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
@@ -260,6 +259,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
+        shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
         if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
             shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());

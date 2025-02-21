@@ -201,7 +201,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             Integer totalQty = dmpSoDetailEntities.stream().mapToInt(DmpSoDetailEntity::getQty).sum();
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
-            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
+
 
             shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPayAmount());
             shudiyunB2cOrderDTO.setTotal_freight(dmpSoInfoEntity.getShippingAmount());
@@ -330,8 +330,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
                 shudiyunB2cOrderDTO.setSku_code("");
                 shudiyunB2cOrderDTO.setSku_name("");
-                shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
-                shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
+                shudiyunB2cOrderDTO.setSpec_no("");
+                shudiyunB2cOrderDTO.setSpec_name("");
 
                 shudiyunB2cOrderDTO.setGoods_status("未发货");
                 // 商品状态
@@ -396,6 +396,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             } else {
                 shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
             }
+            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
+
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
