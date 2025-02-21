@@ -190,6 +190,11 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
         }
+        if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+            shudiyunB2cOrderDTO.setIs_gift(1);
+        } else {
+            shudiyunB2cOrderDTO.setIs_gift(0);
+        }
 
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
