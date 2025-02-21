@@ -102,7 +102,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
         } else {
             shudiyunB2cOrderDTO.setTransaction_type("配货单");
-            shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
+            shudiyunB2cOrderDTO.setTransaction_sub_type("线上订单");
         }
         if (CharSequenceUtil.isBlank(soB2cEntity.getBillStatus())) {
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -116,7 +116,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         Integer totalQty = soB2cDetailEntityList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
         shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
-        shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
 
         //取消金额、数量
         if (soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
@@ -147,7 +146,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
             shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
             shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
-            shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
             customerId = shopInfo.getCustomerId();
         }
 
@@ -192,6 +190,11 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         } else {
             shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
+        }
+        if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+            shudiyunB2cOrderDTO.setIs_gift(1);
+        } else {
+            shudiyunB2cOrderDTO.setIs_gift(0);
         }
 
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
@@ -262,6 +265,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
+        shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
         if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
             shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());

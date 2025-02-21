@@ -157,7 +157,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             BigDecimal totalQty = dmpSoDetailEntityList.stream().map(DmpSoOriginalDetailEntity::getNum).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty.intValue());
-            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty.intValue());
 
             //取消金额、数量
             shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getRefundAmount());
@@ -168,6 +167,8 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             } else {
                 shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(0);
             }
+            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty.intValue() - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
+
             shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPaid());
 
             shudiyunB2cOrderDTO.setTotal_freight(BigDecimal.ZERO);
@@ -233,13 +234,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             }
             shudiyunB2cOrderDTO.setPlatform_name(sourcePlatformName);
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getPlatformCode());
-
-            if (dmpSoInfoEntity.getPayTime() != null) {
-                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
-            } else {
-            	return result;
-            }
-
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
             if (dmpSoDetailEntity.getPrice().compareTo(BigDecimal.ZERO) == 0) {
                 shudiyunB2cOrderDTO.setIs_gift(1);

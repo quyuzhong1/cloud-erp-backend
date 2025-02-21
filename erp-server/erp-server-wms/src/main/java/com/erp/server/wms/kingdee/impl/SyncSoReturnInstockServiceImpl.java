@@ -121,7 +121,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
         }
 
-        if (detailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (detailEntity.getTaxReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
             shudiyunB2cOrderDTO.setIs_gift(1);
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
