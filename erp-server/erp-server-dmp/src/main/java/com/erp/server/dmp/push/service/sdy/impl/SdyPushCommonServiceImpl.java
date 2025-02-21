@@ -32,17 +32,12 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
     public ApiResult executeConsumer(List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTO) {
 
         String path = sdyCommonService.getSdyUrl() + "/openapi/information/save";
-        String s = JSONUtil.toJsonStr(shudiyunB2cOrderDTO);
         String dataStr = "";
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(2);
-        if (shudiyunB2cOrderDTO.size() > 1) {
-            orderParams.put("count", shudiyunB2cOrderDTO.size());
-            orderParams.put("list", shudiyunB2cOrderDTO);
-            dataStr = JSONUtil.toJsonStr(orderParams);
-        } else {
-            dataStr = JSONUtil.toJsonStr(shudiyunB2cOrderDTO.get(0));
-        }
+        orderParams.put("count", shudiyunB2cOrderDTO.size());
+        orderParams.put("list", shudiyunB2cOrderDTO);
+        dataStr = JSONUtil.toJsonStr(orderParams);
 
         //设置请求头
         Map<String, String> orderHeaderMap = new HashMap<>(1);
@@ -52,14 +47,14 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
 
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
 
-            log.error("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}", path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
+            log.error("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}", path, dataStr, JSONUtil.toJsonStr(apiResult));
             return ApiResult.error("", JSONUtil.toJsonStr(apiResult.getData()));
         }
 
         SdySaveResultDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), SdySaveResultDTO.class);
         if (orderDTO.getErrno() != 0) {
             log.error(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
-                    path, orderParams.toString(), JSONUtil.toJsonStr(orderDTO)));
+                    path, dataStr, JSONUtil.toJsonStr(orderDTO)));
             return ApiResult.error("", JSONUtil.toJsonStr(orderDTO));
         }
 
