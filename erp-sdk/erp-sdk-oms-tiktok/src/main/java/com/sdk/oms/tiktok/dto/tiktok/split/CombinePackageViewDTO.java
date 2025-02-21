@@ -29,6 +29,12 @@ public class CombinePackageViewDTO {
     @Builder
     public static class CombinePackageBean {
 
+        @SerializedName("code")
+        private String code;
+
+        @SerializedName("message")
+        private String message;
+
         @SerializedName("packages")
         private List<Packages> packages;
 

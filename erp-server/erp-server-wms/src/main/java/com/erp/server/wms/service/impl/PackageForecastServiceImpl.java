@@ -695,6 +695,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         combinePackageGroupsBeanList.add(combinePackageGroupsBean);
         combinePackagePramDTO.setCombinablePackages(combinePackageGroupsBeanList);
         CombinePackageViewDTO combinePackageViewDTO = tikTokPackageService.combinePackage(shopIds.get(0),combinePackagePramDTO);
+        if(combinePackageViewDTO.getCode()!=0){
+            throw new ServiceException("TIKTOK组包失败，{}",combinePackageViewDTO.getMessage());
+        }
         return combinePackageViewDTO.getData().getPackages().get(0).getId();
     }
     @Override
