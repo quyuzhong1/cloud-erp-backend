@@ -14,20 +14,19 @@ import java.util.List;
  */
 public class ExcelFillCellMergeStrategy extends AbstractMergeStrategy {
     @Override
-    protected void merge(Sheet sheet, Cell cell, Head head, Integer relativeRowIndex) {
+    protected void merge(Sheet s, Cell cell, Head head, Integer relativeRowIndex) {
         if(relativeRowIndex==null ||relativeRowIndex==0){
             return;
         }
         int rowIndex = cell.getRowIndex();
         int colIndex = cell.getColumnIndex();
-        sheet=cell.getSheet();
+        Sheet sheet=cell.getSheet();
         Row preRow = sheet.getRow(rowIndex - 1);
         Cell preCell = preRow.getCell(colIndex);//获取上一行的该格
         List<CellRangeAddress> list = sheet.getMergedRegions();
         CellStyle cs = cell.getCellStyle();
         cell.setCellStyle(cs);
-        for (int i = 0; i < list.size(); i++) {
-            CellRangeAddress cellRangeAddress = list.get(i);
+        for (CellRangeAddress cellRangeAddress : list) {
             if (cellRangeAddress.containsRow(preCell.getRowIndex()) && cellRangeAddress.containsColumn(preCell.getColumnIndex())) {
                 int lastColIndex = cellRangeAddress.getLastColumn();
                 int firstColIndex = cellRangeAddress.getFirstColumn();

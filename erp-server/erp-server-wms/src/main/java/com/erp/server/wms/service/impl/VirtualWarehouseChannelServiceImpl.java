@@ -72,7 +72,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
     public BaseResultDTO.AddDTO batchUpdate(VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO) {
         String virtualWarehouseId = batchUpdateDTO.getVirtualWarehouseId();
         VirtualWarehouseEntity warehouseEntity = virtualWarehouseService.getById(virtualWarehouseId);
-        Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓"));
+        warehouseEntity = Optional.ofNullable(warehouseEntity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "虚拟仓"));
         //渠道配置
         List<VirtualWarehouseChannelDTO.ChannelAddDTO> internalChannelList = CollUtil.isNotEmpty(batchUpdateDTO.getInternalChannelList())? batchUpdateDTO.getInternalChannelList() :Collections.emptyList();
         List<VirtualWarehouseChannelDTO.ChannelAddDTO> overseasChannelList = CollUtil.isNotEmpty(batchUpdateDTO.getOverseasChannelList())? batchUpdateDTO.getOverseasChannelList() :Collections.emptyList();
@@ -98,7 +98,7 @@ public class VirtualWarehouseChannelServiceImpl extends SuperServiceImpl<Virtual
         if (CollectionUtils.isNotEmpty(allChannelList)) {
             List<VirtualWarehouseChannelEntity> batchSaveDTOList = handleData(batchUpdateDTO, allChannelList);
             //检查已启用虚拟仓是否存在重合配置 多虚拟仓校验
-            if (Objects.nonNull(warehouseEntity.getDisabled()) && !warehouseEntity.getDisabled()){
+            if (Objects.nonNull(warehouseEntity.getDisabled()) && Boolean.FALSE.equals(warehouseEntity.getDisabled())){
                 checkBoundChannel(batchSaveDTOList, Boolean.TRUE);
             }
             if (CollectionUtils.isNotEmpty(batchSaveDTOList)) {

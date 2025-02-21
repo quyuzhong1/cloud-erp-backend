@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.annotation.DataIdempotent;
@@ -21,11 +20,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.entity.CfgConditionEntity;
 import com.erp.model.dmp.entity.RuleConditionEntity;
 import com.erp.model.dmp.entity.RulePromptWordEntity;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
-import com.erp.model.dmp.entity.CfgConditionEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -52,7 +51,6 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_ABNORMAL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_ABNORMAL_POOLS;
 
 /**
@@ -199,14 +197,15 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
         SoB2cErrorEntity entity = this.getByMainIdAndType(dto.getId(),dto.getType());
         if(Objects.nonNull(entity)){
              BeanMapperUtils.copy(entity,viewDTO);
-        }
-        if(SoB2cErrorTypeEnum.needPrompt(entity.getType())){
-            Map<String,Map<String, Object>> map = this.handleMatchJson(Collections.singletonList(entity.getId()));
-            Map<String,RulePromptWordEntity> rulePromptWordEntityMap = this.getRulePromptWord(map);
-            if(Objects.nonNull(rulePromptWordEntityMap.get(entity.getId()))){
-                RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(entity.getId());
-                viewDTO.setFailureReason(rulePromptWordEntity.getTips());
-                viewDTO.setSolution(rulePromptWordEntity.getSolution());
+
+            if(SoB2cErrorTypeEnum.needPrompt(entity.getType())){
+                Map<String,Map<String, Object>> map = this.handleMatchJson(Collections.singletonList(entity.getId()));
+                Map<String,RulePromptWordEntity> rulePromptWordEntityMap = this.getRulePromptWord(map);
+                if(Objects.nonNull(rulePromptWordEntityMap.get(entity.getId()))){
+                    RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(entity.getId());
+                    viewDTO.setFailureReason(rulePromptWordEntity.getTips());
+                    viewDTO.setSolution(rulePromptWordEntity.getSolution());
+                }
             }
         }
         return viewDTO;

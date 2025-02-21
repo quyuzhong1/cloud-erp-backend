@@ -133,11 +133,11 @@ public class CommonServiceImpl implements CommonService {
         if (ObjectUtil.isNull(multipartFileList)) {
             throw new ServiceException(ApiError.ERROR_95185);
         }
-        Integer size = MathUtil.ZERO;
+        Long size = 0L;
         //获取压缩图片大小的配置
         CfgSettingEntity cfgSettingEntity = getCfgSettingEntity(SettingEnum.IMG_UPLOAD_SIZE_KEY);
         if (ObjectUtil.isNotEmpty(cfgSettingEntity) && ObjectUtil.isNotNull(cfgSettingEntity.getValue())) {
-            size = Integer.valueOf(cfgSettingEntity.getValue());
+            size = Long.valueOf(cfgSettingEntity.getValue());
         }
         List<String> list = new ArrayList<>();
         for (MultipartFile multipartFile : multipartFileList) {
@@ -158,7 +158,7 @@ public class CommonServiceImpl implements CommonService {
      * @param size
      * @return MultipartFile
      */
-    private MultipartFile compressImage (MultipartFile multipartFile,Integer size) {
+    private MultipartFile compressImage (MultipartFile multipartFile,Long size) {
         //压缩大小=0，则不压缩
         if (MathUtil.compareTo(size,MathUtil.ZERO) == MathUtil.ZERO) {
             return multipartFile;
