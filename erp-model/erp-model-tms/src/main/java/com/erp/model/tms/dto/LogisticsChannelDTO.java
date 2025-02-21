@@ -975,7 +975,7 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 是否平台发货  true代表物流下单后后续无需平台标发
          */
-        @NotBlank(message = "是否平台发货不能为空")
+        @NotNull(message = "是否平台发货不能为空")
         private Boolean isPlatformShip;
     }
 
