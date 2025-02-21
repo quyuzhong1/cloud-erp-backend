@@ -432,7 +432,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),"物流渠道为空");
         }
-        if (StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
+        if (checkBillStatus & StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),"未获取跟踪号，无法取消");
         }
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus()) && checkBillStatus) {
