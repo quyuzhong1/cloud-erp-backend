@@ -44,5 +44,5 @@ public interface SoB2cProcessingMapper extends BaseMapper<SoB2cProcessingEntity>
      * @Auther will
      * @Date 2025/2/6 16:12
      */
-    void deleteB2cOrder();
+    void deleteB2cOrder(@Param("startDate") LocalDate startDate);
 }
