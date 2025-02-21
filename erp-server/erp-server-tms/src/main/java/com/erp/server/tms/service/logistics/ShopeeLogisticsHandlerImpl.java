@@ -142,7 +142,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     orderSn, BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】标记发货异常请求异常:{}",orderSn,e.getMessage()));
+            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】获取跟踪号异常请求异常:{}",orderSn,e.getMessage()));
         }
     }
 
