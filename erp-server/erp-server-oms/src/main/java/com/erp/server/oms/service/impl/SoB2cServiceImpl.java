@@ -5779,7 +5779,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setBillStatus(oldEntity.getBillStatus());
             }
             // SHOPEE作废保留以前状态
-            if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            if (!oldEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                 if ("PROCESSED".equalsIgnoreCase(dto.getPlatformOrderStatus())
                         || ("RETRY_SHIP".equalsIgnoreCase(dto.getPlatformOrderStatus()))
                         || ("SHIPPED".equalsIgnoreCase(dto.getPlatformOrderStatus()))
