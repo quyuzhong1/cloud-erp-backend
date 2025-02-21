@@ -27,7 +27,7 @@ public interface SoB2bProcessingService extends SuperService<SoB2bProcessingEnti
     * @param list
     * @return
     */
-    Boolean addOrUpdate(List<SoB2bProcessingDTO.AddOrUpdateDTO> list);
+    Boolean addOrUpdate(List<SoB2bProcessingDTO.AddOrUpdateDTO> list,LocalDate startDate);
 
     /**
      * 分页查询

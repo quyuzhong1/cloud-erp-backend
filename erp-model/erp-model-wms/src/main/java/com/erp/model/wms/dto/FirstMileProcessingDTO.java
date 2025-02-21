@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -466,7 +467,10 @@ public class FirstMileProcessingDTO implements Serializable {
         @NotNull(message = "批准数量不能为空")
         private Integer approveQty;
 
-
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
     }
 
     /**
