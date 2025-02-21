@@ -1,11 +1,8 @@
 package com.erp.server.oms.controller.feign;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -211,22 +208,6 @@ public class ShopInfoFeignController extends BaseController {
     @GetMapping("/listShopInfoByPlatform")
     public List<String> listShopInfoByPlatform(@RequestParam String platform){
         return shopInfoService.listShopInfoByPlatform(platform);
-    }
-
-    /**
-     * 高级查询分页店铺
-     */
-    @PostMapping("/paging")
-    @WebAdvanceQuery(handler = ShopQueryHandler.class)
-    public PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<AdvanceQueryContainer> sourceDto) {
-        PagingDTO<ShopDTO.PagingParamDTO> dto = new PagingDTO<>();
-        dto.setPageSize(sourceDto.getPageSize());
-        dto.setCurrPage(sourceDto.getCurrPage());
-        ShopDTO.PagingParamDTO pagingParamDTO = new ShopDTO.PagingParamDTO();
-        pagingParamDTO.setAdvanceQueryDTOList(sourceDto.getParams().getAdvanceQueryDTOList());
-        pagingParamDTO.setSqlMap(sourceDto.getParams().getSqlMap());
-        dto.setParams(pagingParamDTO);
-        return shopInfoService.paging(dto);
     }
 
     /**
