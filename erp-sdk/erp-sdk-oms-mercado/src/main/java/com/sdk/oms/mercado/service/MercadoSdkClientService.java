@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 
 /**
  * 美客多平台SDK
+ *
  * @Author Luo_WG
  * @Date 2024/2/27 18:04
  **/
@@ -59,33 +60,58 @@ import java.util.stream.Collectors;
 @Component
 public class MercadoSdkClientService {
     public static void main(String[] args) {
+        ShopDTO.RefreshTokenDTO dto = new ShopDTO.RefreshTokenDTO();
+        dto.setBaseUrl("https://api.mercadolibre.com");
+        dto.setClientId("1734784828261273604");
+        dto.setClientSecret("QucvI4VWHO0w3AZftOElz5liVOurfjQG");
+        dto.setRefreshToken("TG-67b6ff5b24b72e000161c5af-1509269799");
+        //TG-65e12c65326e580001c3a0ba-1509269799
+        //组装刷新token请求的url
+        //https://api.mercadolibre.com
+        String path = "/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s";
+        String baseUrl = String.format(dto.getBaseUrl() + path, dto.getClientId(), dto.getClientSecret(), dto.getRefreshToken());
 
-        String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
+        //入参（无）
+        Map<String, Object> param = new HashMap<>();
 
+        //请求头（无）
+        Map<String, String> headerMap = new HashMap<>();
+/*
+        //发起POST请求
+        String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
 
-        //组装授权url
-        String clientId = "3457166802805723";
-        String clientSecret = "QucvI4VWHO0w3AZftOElz5liVOurfjQG";
-        String url = "https://api.mercadolibre.com/marketplace/orders/2000010507016480";
-
-
-        //入参
-        HashMap<String, Object> orderParams = new HashMap<>(1);
-
-        //设置请求头
-        Map<String, String> orderHeaderMap = new HashMap<>(1);
-        orderHeaderMap.put("Authorization", "Bearer " + "APP_USR-3457166802805723-012018-7d948085801db7d1625f3859c50f9d20-2201503196");
-//			https://api.mercadolibre.com/marketplace/orders/2000007633674134
-        //拉取数据
-        ApiResult apiResult = new ApiResult();
-        Object data = null;
+        //解析数据
+        PlatformMercadoRefreshTokenDTO refreshTokenDTO = null;
+        try {
+            refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
+//            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
+        } catch (Exception e) {
+            log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
+                    bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
+        }
+        if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
+        }*/
+        String token = "";
         long sleepTime = 1000;
         int count = 0;
-        while(ObjectUtil.isEmpty(data)) {
-            apiResult = HttpCommonUtil.sendOkHttpApiResult(url, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-            if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+        while(StringUtil.isBlank(token)) {
+            String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
+            //解析数据
+            PlatformMercadoRefreshTokenDTO refreshTokenDTO = null;
+            try {
+                refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
+//            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
+            } catch (Exception e) {
+                log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
+                        bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
+            }
+
+            if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
                 if(count == 10) {
-                    throw new ServiceException("调用美客多" + url + "接口重试" + count + "失败");
+                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+
                 }
                 try {
                     Thread.sleep(sleepTime);
@@ -95,24 +121,9 @@ public class MercadoSdkClientService {
                 sleepTime = sleepTime + 1000;
                 count = count + 1;
             }
-            data = apiResult.getData();
+            token = refreshTokenDTO.getAccessToken();
         }
 
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            System.out.println("errrrrrrrrrrrr");
-        }
-
-        //解析数据
-        com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO orderViewDTO = null;
-        ObjectMapper objectMapperBase = new ObjectMapper();
-        try {
-            orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);
-        } catch (JsonProcessingException e) {
-            log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData()));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                    url, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData())));
-        }
-        System.out.println(orderViewDTO);
     }
 
 
@@ -133,10 +144,11 @@ public class MercadoSdkClientService {
 
     /**
      * 发送请求到美客多获取token
-     * @Author Luo_WG
-     * @Date 2024/2/27 18:05
+     *
      * @param paramMap
      * @return com.sdk.oms.mercado.dto.mercado.MercadoTokenDTO
+     * @Author Luo_WG
+     * @Date 2024/2/27 18:05
      **/
     public PlatformMercadoTokenDTO sendMercadoPostToken(Map<String, String> paramMap) {
 
@@ -182,6 +194,7 @@ public class MercadoSdkClientService {
 
     /**
      * 美客多刷新token方法
+     *
      * @param dto
      * @return
      */
@@ -199,23 +212,39 @@ public class MercadoSdkClientService {
         //请求头（无）
         Map<String, String> headerMap = new HashMap<>();
 
-        //发起POST请求
-        String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
-
+        String token = "";
+        long sleepTime = 1000;
+        int count = 0;
         //解析数据
         PlatformMercadoRefreshTokenDTO refreshTokenDTO = null;
-        try {
-            refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
+        while(StringUtil.isBlank(token)) {
+            String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
+            try {
+                refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
 //            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
-        } catch (Exception e) {
-            log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
-                    bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
-        }
-        if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
-        }
+            } catch (Exception e) {
+                log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
+                        bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
+            }
 
+            if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
+                if(count == 10) {
+                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                sleepTime = sleepTime + 1000;
+                count = count + 1;
+            } else {
+                token = refreshTokenDTO.getAccessToken();
+            }
+
+        }
         //返回token实体
         return refreshTokenDTO;
     }
@@ -225,6 +254,7 @@ public class MercadoSdkClientService {
 
     /**
      * 发送请求获取指定店铺的sku信息
+     *
      * @param shopInfoDTO
      * @return
      */
@@ -240,7 +270,7 @@ public class MercadoSdkClientService {
         Integer pageCount = 1;
 
         Boolean nexflag = true;
-        String baseUrl = "https://api.mercadolibre.com/users/"+shopInfoDTO.getUserId()+"/items/search";
+        String baseUrl = "https://api.mercadolibre.com/users/" + shopInfoDTO.getUserId() + "/items/search";
         while (nexflag) {
             int offset = pageSize * pageNo;
 
@@ -251,7 +281,7 @@ public class MercadoSdkClientService {
 
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
-            headerMap.put("Authorization", "Bearer "+ shopInfoDTO.getAccessToken());
+            headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
 
             //拉取数据
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
@@ -298,6 +328,7 @@ public class MercadoSdkClientService {
 
     /**
      * 根据产品id查询产品详情信息
+     *
      * @param results
      * @param accessToken
      * @return
@@ -311,11 +342,11 @@ public class MercadoSdkClientService {
 
             //入参
             HashMap<String, Object> params = new HashMap<>(1);
-            params.put("ids", StringUtils.join(list,","));
+            params.put("ids", StringUtils.join(list, ","));
 
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
-            headerMap.put("Authorization", "Bearer "+ accessToken);
+            headerMap.put("Authorization", "Bearer " + accessToken);
 
             //拉取数据
             ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(baseUrl, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
@@ -329,14 +360,15 @@ public class MercadoSdkClientService {
             ObjectMapper objectMapper = new ObjectMapper();
             List<ListingViewDTO> dataList = null;
             try {
-                dataList = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), new TypeReference<List<ListingViewDTO>>() {});
+                dataList = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), new TypeReference<List<ListingViewDTO>>() {
+                });
             } catch (JsonProcessingException e) {
                 e.printStackTrace();
                 log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
-            if(CollectionUtil.isEmpty(dataList)){
+            if (CollectionUtil.isEmpty(dataList)) {
                 break;
             }
             resultList.addAll(dataList);
@@ -347,6 +379,7 @@ public class MercadoSdkClientService {
 
     /**
      * 发送请求获取指定店铺的订单
+     *
      * @param shopInfoDTO
      * @return
      */
@@ -434,10 +467,10 @@ public class MercadoSdkClientService {
                     Object data = null;
                     long sleepTime = 1000;
                     int count = 0;
-                    while(ObjectUtil.isEmpty(data)) {
+                    while (ObjectUtil.isEmpty(data)) {
                         orderDetailApiResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-                        if(orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out")) {
-                            if(count == 10) {
+                        if (orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                            if (count == 10) {
                                 throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
                             }
                             try {
@@ -489,6 +522,7 @@ public class MercadoSdkClientService {
 
     /**
      * 根据发货id查询发货详情
+     *
      * @param shopInfoDTO
      * @param shippingId
      * @return
@@ -509,10 +543,10 @@ public class MercadoSdkClientService {
         Object data = null;
         long sleepTime = 1000;
         int count = 0;
-        while(ObjectUtil.isEmpty(data)) {
+        while (ObjectUtil.isEmpty(data)) {
             shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-            if(shipmentResult.getMsg().equalsIgnoreCase("Read timed out")) {
-                if(count == 10) {
+            if (shipmentResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                if (count == 10) {
                     throw new ServiceException("调用美客多" + orderUrl + "接口重试" + count + "失败");
                 }
                 try {
@@ -548,6 +582,7 @@ public class MercadoSdkClientService {
 
     /**
      * 根据发货id查询费用信息
+     *
      * @param shopInfoDTO
      * @param shippingId
      * @return
@@ -568,10 +603,10 @@ public class MercadoSdkClientService {
         Object data = null;
         long sleepTime = 1000;
         int count = 0;
-        while(ObjectUtil.isEmpty(data)) {
+        while (ObjectUtil.isEmpty(data)) {
             shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-            if(shipmentResult.getMsg().equalsIgnoreCase("Read timed out")) {
-                if(count == 10) {
+            if (shipmentResult.getMsg().equalsIgnoreCase("Read timed out")) {
+                if (count == 10) {
                     throw new ServiceException("调用美客多" + orderUrl + "接口重试" + count + "失败");
                 }
                 try {
@@ -607,6 +642,7 @@ public class MercadoSdkClientService {
 
     /**
      * 查询店铺信息
+     *
      * @param shopId
      * @return
      */
@@ -635,7 +671,7 @@ public class MercadoSdkClientService {
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
             Map<String, Object> extendData = shopInfoEntity.getExtendData();
-            result.setUserId(Long.valueOf(extendData.get("userId")+""));
+            result.setUserId(Long.valueOf(extendData.get("userId") + ""));
 
             result.setId(shopId);
             if (Objects.nonNull(shopAuthEntity)) {
@@ -650,16 +686,16 @@ public class MercadoSdkClientService {
     }
 
 
-
     /**
      * 根据发货id查询发货详情
+     *
      * @param authMap
      * @param shippingId
      * @return
      */
     public String printShippingLabel(Map<String, String> authMap, Long shippingId) {
 
-        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shippingId+"/labels";
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "/labels";
         String token = authMap.get("token");
 
         //入参
@@ -690,7 +726,7 @@ public class MercadoSdkClientService {
         //  根据店铺ID获取授权
         MercadoShopInfoDTO shopInfoByShopId = this.getShopInfoByShopId(shipOrderDTO.getShopId());
 
-        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shipOrderDTO.getShipmentId()+"/tracking ";
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shipOrderDTO.getShipmentId() + "/tracking ";
         String token = shopInfoByShopId.getAccessToken();
 
         //入参

@@ -101,7 +101,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
         } else {
             shudiyunB2cOrderDTO.setTransaction_type("配货单");
-            shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
+            shudiyunB2cOrderDTO.setTransaction_sub_type("线上订单");
         }
         if (CharSequenceUtil.isBlank(soB2cEntity.getBillStatus())) {
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -146,7 +146,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
             shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
             shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
-            shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
             customerId = shopInfo.getCustomerId();
         }
 

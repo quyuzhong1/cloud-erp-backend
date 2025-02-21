@@ -363,6 +363,7 @@ public class TikTokSdkClientService {
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok刷新token失败，返回值 responseMap={}",
                     baseUrl, params.toString(), JSONUtil.toJsonStr(apiResult)));
         }
+
         //解析数据
         PlatformTikTokTokenDTO tikTokTokenDTO = null;
         try {
