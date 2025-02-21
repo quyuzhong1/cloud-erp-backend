@@ -649,12 +649,12 @@
             parameterType="java.lang.String">
         SELECT lb.id,lb.outstock_id,lb.outstock_code
         FROM logistics_bill lb
-        <if test="orderType = 'B2B' or orderType = 'B2C'">
+        <if test="orderType == 'B2B' or orderType == 'B2C'">
             LEFT JOIN foreign_so_outstock so on lb.outstock_id = so.id and so.is_deleted = false
             where lb.is_deleted = false and lb.order_type in ('B2B','B2C')
             and so.id is null
         </if>
-        <if test="orderType = 'firstMile'">
+        <if test="orderType == 'firstMile'">
             LEFT JOIN wms_first_mile_delivery wfmd on lb.outstock_id = wfmd.id and wfmd.is_deleted = FALSE
             where lb.is_deleted = false and lb.order_type in ('firstMile')
             and wfmd.id is null
