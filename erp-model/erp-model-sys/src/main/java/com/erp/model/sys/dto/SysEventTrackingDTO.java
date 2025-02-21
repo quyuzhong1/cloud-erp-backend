@@ -144,15 +144,15 @@ public class SysEventTrackingDTO implements Serializable {
         /**
         * 系统环境
         */
-        @NotBlank(message = "系统环境不能为空")
+//        @NotBlank(message = "系统环境不能为空")
         @Size(max = 64,message = "系统环境最大长度不能超过64位")
         private String env;
 
         /**
         * 页面标题
         */
-        @NotBlank(message = "页面标题不能为空")
-        @Size(max = 64,message = "页面标题最大长度不能超过64位")
+//        @NotBlank(message = "页面标题不能为空")
+//        @Size(max = 64,message = "页面标题最大长度不能超过64位")
         private String title;
 
         /**
@@ -190,13 +190,13 @@ public class SysEventTrackingDTO implements Serializable {
         /**
         * 触发埋点的时间
         */
-        @NotNull(message = "触发埋点的时间不能为空")
+//        @NotNull(message = "触发埋点的时间不能为空")
         private Long eventTime;
 
         /**
         * 客户端的设备信息
         */
-        @NotBlank(message = "客户端的设备信息不能为空")
+//        @NotBlank(message = "客户端的设备信息不能为空")
         @Size(max = 255,message = "客户端的设备信息最大长度不能超过255位")
         private String ua;
 
@@ -210,7 +210,7 @@ public class SysEventTrackingDTO implements Serializable {
         /**
         * 数据类型，根据触发的不同埋点有不同的类型
         */
-        @NotBlank(message = "数据类型，根据触发的不同埋点有不同的类型不能为空")
+//        @NotBlank(message = "数据类型，根据触发的不同埋点有不同的类型不能为空")
         @Size(max = 64,message = "数据类型，根据触发的不同埋点有不同的类型最大长度不能超过64位")
         private String type;
 
@@ -222,7 +222,7 @@ public class SysEventTrackingDTO implements Serializable {
         /**
         * sdk相关信息
         */
-        @NotBlank(message = "sdk相关信息不能为空")
+//        @NotBlank(message = "sdk相关信息不能为空")
         @Size(max = 64,message = "sdk相关信息最大长度不能超过64位")
         private String sdk;
 
