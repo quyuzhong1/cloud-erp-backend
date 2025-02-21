@@ -1,6 +1,8 @@
 package com.erp.model.sys.dto;
 
 import java.time.LocalDateTime;
+
+import com.alibaba.fastjson.JSONObject;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -189,7 +191,7 @@ public class SysEventTrackingDTO implements Serializable {
         * 触发埋点的时间
         */
         @NotNull(message = "触发埋点的时间不能为空")
-        private LocalDateTime eventTime;
+        private Long eventTime;
 
         /**
         * 客户端的设备信息
@@ -215,8 +217,7 @@ public class SysEventTrackingDTO implements Serializable {
         /**
         * 事件数据json
         */
-        @NotBlank(message = "事件数据json不能为空")
-        private String eventData;
+        private JSONObject eventData;
 
         /**
         * sdk相关信息

@@ -1,7 +1,6 @@
 package com.erp.server.sys.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
@@ -14,14 +13,11 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.SysEventTrackingDTO;
-import java.util.*;
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -52,7 +48,7 @@ public class SysEventTrackingServiceImpl extends SuperServiceImpl<SysEventTracki
         BeanMapperUtils.copy(addDTO, sysEventTrackingEntity);
 
         // 数据处理
-        handleData(sysEventTrackingEntity);
+        handleData(sysEventTrackingEntity, addDTO);
 
         log.info("开始新增前端埋点事件记录");
         boolean save = super.save(sysEventTrackingEntity);
@@ -68,13 +64,17 @@ public class SysEventTrackingServiceImpl extends SuperServiceImpl<SysEventTracki
     /**
     * 新增修改处理数据
     */
-    private void handleData(SysEventTrackingEntity entity) {
+    private void handleData(SysEventTrackingEntity entity, SysEventTrackingDTO.AddDTO addDTO) {
         //  验证数据 & 数据赋值
         LoginUser loginUser = UserContext.getLoginUser();
         if (null != loginUser){
             entity.setUserId(loginUser.getUid());
             entity.setUserName(loginUser.getUserName());
         }
+        if (null != addDTO.getEventData()){
+            entity.setEventData(addDTO.getEventData().toJSONString());
+        }
+
         // 部门信息
         if (StringUtils.isNotBlank(entity.getUserId())) {
             //获取部门信息

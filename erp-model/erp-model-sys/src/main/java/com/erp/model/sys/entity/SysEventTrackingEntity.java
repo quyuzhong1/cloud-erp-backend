@@ -1,5 +1,6 @@
 package com.erp.model.sys.entity;
 
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
@@ -61,10 +62,10 @@ public class SysEventTrackingEntity extends BaseEntity<SysEventTrackingEntity> {
     @TableField("dept_id")
     private String deptId;
     /**
-    * 触发埋点的时间
-    */
+     * 触发埋点的时间戳
+     */
     @TableField("event_time")
-    private LocalDateTime eventTime;
+    private Long eventTime;
     /**
     * 客户端的设备信息
     */
