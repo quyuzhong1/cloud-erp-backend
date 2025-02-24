@@ -59,25 +59,23 @@ public class CfgRuleWarehouseController extends BaseController {
      * 查看详情
      * @author will
      * @date 2024/8/24 15:47
-     * @param platformType
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<CfgRuleWarehouseDTO.ViewDTO> view(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleWarehouseService.view(platformType));
+    public ApiResult<CfgRuleWarehouseDTO.ViewDTO> view() {
+        return success(cfgRuleWarehouseService.view());
     }
 
     /**
      * 更新虚拟仓数据
      * @author will
      * @date 2024/9/3 17:26
-     * @param dto
      * @return ApiResult<ViewDTO>
      */
     @PostMapping("/refreshVirtual")
-    public ApiResult<String> refreshVirtual(@RequestBody @Validated CfgRuleWarehouseDTO.ParamDTO dto) {
-        cfgRuleWarehouseService.refreshVirtual(dto.getPlatformType());
+    public ApiResult<String> refreshVirtual() {
+        cfgRuleWarehouseService.refreshVirtual();
         return success();
     }
 
@@ -98,8 +96,8 @@ public class CfgRuleWarehouseController extends BaseController {
      * 查询是否启用虚拟仓
      */
     @GetMapping("/getIsEnableVirtual")
-    public ApiResult<Boolean> getIsEnableVirtual(@RequestParam("platformType") String platformType) {
-        Boolean isEnableOverseas = cfgRuleWarehouseService.getIsEnableVirtual(platformType);
+    public ApiResult<Boolean> getIsEnableVirtual() {
+        Boolean isEnableOverseas = cfgRuleWarehouseService.getIsEnableVirtual();
         return success(isEnableOverseas);
     }
 
@@ -107,11 +105,10 @@ public class CfgRuleWarehouseController extends BaseController {
      * 查询海外仓配置
      * @author will
      * @date 2024/10/29 11:26
-     * @param platformType
      * @return ApiResult<OverseasWarehouseDTO>
      */
     @GetMapping("/listOverseasWarehouse")
-    public ApiResult<List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO>> listOverseasWarehouse(@RequestParam("platformType") String platformType) {
-        return success(cfgRuleWarehouseService.listOverseasWarehouse(platformType));
+    public ApiResult<List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO>> listOverseasWarehouse() {
+        return success(cfgRuleWarehouseService.listOverseasWarehouse());
     }
 }

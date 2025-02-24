@@ -90,7 +90,7 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                     List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType.getCode());
                     //计算数据是否需要进行补货
                     log.warn("开始清洗{}是否需要进行补货数据,时间{}", platformType.getName(), System.currentTimeMillis());
-                    replenishmentDataService.isReplenishment(suggestions,platformType.getCode(), calculationDate);
+                    replenishmentDataService.isReplenishment(suggestions, calculationDate);
                     log.warn("完成清洗{}是否需要进行补货数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     //计算明细数据
                     replenishmentDataService.calculationDetail(platformType.getCode(), calculationDate);

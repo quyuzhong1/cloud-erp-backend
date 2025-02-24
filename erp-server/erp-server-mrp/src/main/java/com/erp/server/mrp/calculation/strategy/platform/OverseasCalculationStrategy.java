@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.strategy.platform;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -68,7 +69,7 @@ public class OverseasCalculationStrategy extends AbstractCalculationStrategy {
         }
         Map<String, List<String>> shopIdByPlatform = allShopResult.getData().stream()
                 .collect(Collectors.groupingBy(ShopInfoEntity::getDictPlatform, Collectors.mapping(ShopInfoEntity::getId, Collectors.toList())));
-        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getOne(Wrappers.emptyWrapper());
 
         List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listByMainIdList(Collections.singletonList(cfgRuleWarehouse.getId()));
         // 分组后的建议映射

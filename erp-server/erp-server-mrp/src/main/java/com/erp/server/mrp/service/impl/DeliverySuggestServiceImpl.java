@@ -251,7 +251,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         if (count > MathUtil.ZERO) {
             return Collections.EMPTY_LIST;
         }
-        CfgRuleWarehouseEntity  ruleWarehouseEntity = cfgRuleWarehouseService.getByPlatformType(CfgRulePlatformTypeEnum.OVERSEAS.getCode());
+        CfgRuleWarehouseEntity  ruleWarehouseEntity = cfgRuleWarehouseService.getOne(Wrappers.emptyWrapper());
         if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
             return Collections.EMPTY_LIST;
         }

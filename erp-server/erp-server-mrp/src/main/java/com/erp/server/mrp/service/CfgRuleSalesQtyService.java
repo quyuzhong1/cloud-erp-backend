@@ -7,7 +7,6 @@ import com.erp.model.mrp.entity.CfgRuleSalesFormulaCalcEntity;
 import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -81,9 +80,9 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
 
     /**
      * 获取默认销量配置
-     * @param platformType 平台类型
+     * @param platform 平台类型
      */
-    CfgRuleSalesQtyEntity getDefaultCfgRuleSalesQty(String platformType);
+    CfgRuleSalesQtyEntity getDefaultCfgRuleSalesQty(String platform);
 
     /**
      * 获取默认销量配置
@@ -108,9 +107,4 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      */
     void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList, String code);
 
-    /**
-     * 下载导入模板
-     * @param response 响应
-     */
-    void downloadRuleTemplate(HttpServletResponse response);
 }
