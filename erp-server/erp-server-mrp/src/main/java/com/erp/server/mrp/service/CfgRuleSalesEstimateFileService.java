@@ -26,9 +26,17 @@ public interface CfgRuleSalesEstimateFileService extends SuperService<CfgRuleSal
     PagingVO<CfgRuleSalesEstimateFileDTO.PagingView> filePage(PagingDTO<CfgRuleSalesEstimateFileDTO.PagingParamDTO> params);
 
     /**
-     * 导入文件
-     * @param excelFile 文件
+     * 下载导入模板
      * @param response 响应
      */
-    void importFile(MultipartFile excelFile, HttpServletResponse response);
+    void downloadRuleTemplate(HttpServletResponse response);
+
+    /**
+     * 导入文件
+     *
+     * @param excelFile 文件
+     * @param platform  平台
+     * @param response  响应
+     */
+    void importFile(MultipartFile excelFile, String platform, HttpServletResponse response);
 }

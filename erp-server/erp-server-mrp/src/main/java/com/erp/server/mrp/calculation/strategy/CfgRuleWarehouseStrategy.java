@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.strategy;
 
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
@@ -33,7 +34,7 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
     @Cacheable(cacheNames = "cache:mrp:getWarehouse",keyGenerator = "myKeyGenerator")
     public CfgRuleWarehouseDTO.StrategyResultDTO process(CfgRuleWarehouseDTO.StrategyDTO strategyDTO) {
         CfgRuleWarehouseDTO.StrategyResultDTO strategyResultDTO = new CfgRuleWarehouseDTO.StrategyResultDTO();
-        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getByPlatformType(strategyDTO.getPlatformType());
+        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getOne(Wrappers.emptyWrapper());
         strategyResultDTO.setIsEnableOverseas(cfgRuleWarehouse.getIsEnableOverseas());
         strategyResultDTO.setIsEnableVirtual(cfgRuleWarehouse.getIsEnableVirtual());
         List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listByMainIdList(Collections.singletonList(cfgRuleWarehouse.getId()));

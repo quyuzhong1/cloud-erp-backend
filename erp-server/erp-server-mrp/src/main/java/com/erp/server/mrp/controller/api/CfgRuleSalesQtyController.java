@@ -83,7 +83,7 @@ public class CfgRuleSalesQtyController extends BaseController {
      */
     @GetMapping("/downloadRuleTemplate")
     public ApiResult<String> downloadRuleTemplate(HttpServletResponse response) {
-        cfgRuleSalesQtyService.downloadRuleTemplate(response);
+        cfgRuleSalesEstimateFileService.downloadRuleTemplate(response);
         return success();
     }
 
@@ -102,8 +102,8 @@ public class CfgRuleSalesQtyController extends BaseController {
      * 导入
      */
     @PostMapping("/importFile")
-    public ApiResult<String> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        cfgRuleSalesEstimateFileService.importFile(excelFile, response);
+    public ApiResult<String> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "platform") String platform, HttpServletResponse response) {
+        cfgRuleSalesEstimateFileService.importFile(excelFile, platform, response);
         return success("上传成功");
     }
 }

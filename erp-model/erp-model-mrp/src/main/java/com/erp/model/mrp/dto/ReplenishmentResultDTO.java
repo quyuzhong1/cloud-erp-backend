@@ -1667,11 +1667,6 @@ public class ReplenishmentResultDTO {
         private JSONArray channelIdJson;
 
         /**
-         * 库存分配类型
-         */
-        private String inventoryAllocateType;
-
-        /**
          * 总数量
          */
         private Integer totalQty;
@@ -1701,7 +1696,6 @@ public class ReplenishmentResultDTO {
             entity.setWarehouseType(dto.getWarehouseType());
             entity.setChannelType(dto.getChannelType());
             entity.setChannelIdJson(dto.getChannelIdJson());
-            entity.setInventoryAllocateType(dto.getInventoryAllocateType());
             entity.setTotalQty(dto.getTotalQty());
             entity.setPlatformQty(dto.getPlatformQty());
             entity.setCalcVersion(calcVersion);
@@ -1719,7 +1713,6 @@ public class ReplenishmentResultDTO {
             dto.setWarehouseType(result.getWarehouseType());
             dto.setChannelType(result.getChannelType());
             dto.setChannelIdJson(result.getChannelIdJson());
-            dto.setInventoryAllocateType(result.getInventoryAllocateType());
             dto.setTotalQty(inventoryDTO.getQty());
             dto.setSourceType(inventoryDTO.getSourceType());
             dto.setPlatformQty(platformQty);
