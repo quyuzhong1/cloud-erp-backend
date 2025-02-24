@@ -385,7 +385,7 @@ public class ProjectTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
         Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
                 .stream()
-                .collect(Collectors.toMap(ProjectTaskEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
         for (String id : dto.getTaskIdList()) {
             ProjectTaskEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
@@ -428,7 +428,7 @@ public class ProjectTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
         Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
                 .stream()
-                .collect(Collectors.toMap(ProjectTaskEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
         for (String id : dto.getTaskIdList()) {
             ProjectTaskEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
@@ -471,7 +471,7 @@ public class ProjectTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
         Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
                 .stream()
-                .collect(Collectors.toMap(ProjectTaskEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
         for (String id : dto.getTaskIdList()) {
             ProjectTaskEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
@@ -565,7 +565,7 @@ public class ProjectTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
         Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
                 .stream()
-                .collect(Collectors.toMap(ProjectTaskEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
         for (String id : dto.getTaskIdList()) {
             ProjectTaskEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
