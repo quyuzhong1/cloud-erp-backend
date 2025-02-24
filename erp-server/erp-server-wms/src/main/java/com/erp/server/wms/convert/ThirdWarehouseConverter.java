@@ -103,6 +103,7 @@ public interface ThirdWarehouseConverter {
 
     @Mapping(target = "useFor", constant = "ORDER_LABEL_ATTACHMENT")
     @Mapping(target = "file", source = "fileData", qualifiedByName = "replacePdf")
+    @Mapping(target = "fileName", source = "orderCode", qualifiedByName = "getPdfFileName")
     GoodCangUploadFileReq reqToGoodCangUploadFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
 
     @Mapping(target = "url", ignore = true)
