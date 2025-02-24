@@ -159,9 +159,6 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if(CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
             goodCangUploadFileReq.setUseFor(uploadFileReq.getFileType());
         }
-        if (CharSequenceUtil.isNotBlank(goodCangUploadFileReq.getFileName())){
-            goodCangUploadFileReq.setFileName(uploadFileReq.getOrderCode() + ".pdf");
-        }
         GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(goodCangUploadFileReq);
         GoodCangUploadFileResp goodCangUploadFileResp = response.getData();
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);

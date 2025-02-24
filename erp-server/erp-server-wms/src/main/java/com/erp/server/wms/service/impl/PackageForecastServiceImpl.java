@@ -617,11 +617,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (!uploadStatusList.contains(uploadStatus)) {
             throw new ServiceException("仅待上传/上传失败/已取消可操作");
         }
-        //物流地址
-        LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
-        if (Objects.isNull(addressEntity)) {
-            throw new ServiceException("揽收地址不存在");
-        }
         //物流商
         String supplierId = entity.getLogisticsSupplierId();
         LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
@@ -629,14 +624,22 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("物流商不存在");
         }
         try {
-            String addressName = addressEntity.getName();
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             entity.setCollectMode(collectMode);
             entity.setCollectAddressId(collectAddressId);
-            entity.setCollectAddress(addressName);
             String logisticsPlatform = authDTO.getLogisticsPlatform();
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                if(StringUtils.isBlank(collectAddressId)){
+                    throw new ServiceException("揽收地址不能为空");
+                }
+                //物流地址
+                LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
+                if (Objects.isNull(addressEntity)) {
+                    throw new ServiceException("揽收地址不存在");
+                }
+                String addressName = addressEntity.getName();
+                entity.setCollectAddress(addressName);
                 addBigPackage(logisticsPlatform, entity, addressEntity);
                 //针对待揽收状态  异步拉取速卖通的数据
                 CompletableFuture.runAsync(() -> {
@@ -692,6 +695,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         combinePackageGroupsBeanList.add(combinePackageGroupsBean);
         combinePackagePramDTO.setCombinablePackages(combinePackageGroupsBeanList);
         CombinePackageViewDTO combinePackageViewDTO = tikTokPackageService.combinePackage(shopIds.get(0),combinePackagePramDTO);
+        if(combinePackageViewDTO.getCode()!=0){
+            throw new ServiceException("TIKTOK组包失败，{}",combinePackageViewDTO.getMessage());
+        }
         return combinePackageViewDTO.getData().getPackages().get(0).getId();
     }
     @Override
