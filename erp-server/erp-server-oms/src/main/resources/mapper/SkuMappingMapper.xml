@@ -596,6 +596,7 @@
         sm.warehouse_name as warehouseName,
         sm.is_expire as isExpire,
         li.id as listingId,
+        li.auth_id as customerId,
         li.platform_sku_no as platformSkuNo,
         li.platform_sku_name as platformSkuName,
         li.third_barcode as thirdBarcode,

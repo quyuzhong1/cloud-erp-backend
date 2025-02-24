@@ -45,6 +45,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -3292,19 +3293,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> customerIdList = customerList.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
         List<CustomerAddressEntity> customerAddressList = customerAddressService.listByMainIdList(customerIdList);
         //sku
-        List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
-
-        // 供应商id集合
-//        List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//        List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//        if (CollUtil.isNotEmpty(supplierIds)) {
-//            purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//        }
-
+        List<String> skuNoList = successList.stream().map(B2BSoImportExcelDTO::getSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SkuVO> skuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(skuNoList)){
+            skuList = plmTaskFeign.listBySkuNoList(skuNoList);
+        }
+        //客户SKU
+        List<String> customerSkuList = successList.stream().map(B2BSoImportExcelDTO::getCustomerSku).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        ListingInfoDTO.QueryDTO queryDTO = new ListingInfoDTO.QueryDTO();
+        queryDTO.setPlatformSkuNoList(customerSkuList);
+        queryDTO.setType(RuleTypeEnum.CUSTOMER.getCode());
+        List<SkuMappingDTO.SkuMappingViewDTO> skuMappingViewDTOS = skuMappingService.listSkuMappingByParams(queryDTO);
         //收款条件
         List<KingdeeReceiptConditionEntity> receiptConditionList = kingdeeReceiptConditionService.list();
-
         //以序号分组
         Map<String, List<B2BSoImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(B2BSoImportExcelDTO::getNo));
 
@@ -3556,12 +3557,33 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 addDetail.setRemark(item.getDetailRemark());
                 //sku no
                 String skuNo = item.getSkuNo();
-                String skuId = "";
-                SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
-                if (Objects.isNull(skuVO)) {
-                    errorMsgList.add("sku不存在");
-                } else {
-                    skuId = skuVO.getSkuId();
+                String customerSku = item.getCustomerSku();
+                if (CharSequenceUtil.isAllBlank(skuNo, customerSku)){
+                    errorMsgList.add("SKU和客户SKU不能同时为空");
+                }else if (CharSequenceUtil.isAllNotBlank(skuNo, customerSku)){
+                    SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
+                    if (Objects.isNull(skuMappingViewDTO)){
+                        errorMsgList.add("SKU和客户SKU不匹配");
+                    }else {
+                        addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
+                        addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
+                    }
+                }else if (CharSequenceUtil.isNotBlank(skuNo)){
+                    SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+                    if (Objects.isNull(skuVO)) {
+                        errorMsgList.add("sku不存在");
+                    } else {
+                        addDetail.setSkuId(skuVO.getSkuId());
+                        addDetail.setSkuNo(skuVO.getSkuNo());
+                    }
+                }else if (CharSequenceUtil.isNotBlank(customerSku)){
+                    SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
+                    if (Objects.isNull(skuMappingViewDTO)){
+                        errorMsgList.add("客户SKU映射不存在");
+                    }else {
+                        addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
+                        addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
+                    }
                 }
                 if (CollectionUtils.isNotEmpty(errorMsgList)) {
                     isAdd = Boolean.FALSE;
@@ -3569,8 +3591,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                     errorList.add(item);
                 }
-                addDetail.setSkuId(skuId);
-                addDetail.setSkuNo(skuNo);
                 //币种
                 addDetail.setCurrency(currency);
                 //数量
