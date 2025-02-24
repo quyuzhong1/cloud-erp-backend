@@ -129,7 +129,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
             }
         }
-        Integer totalQty = soB2cDetailEntityList.stream().filter().mapToInt(SoB2cDetailEntity::getQty).sum();
         if ((Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null )
                 || (Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) && soB2cEntity.getInvalidStatus() != null)) {
             // 取消商品数量（合计）
