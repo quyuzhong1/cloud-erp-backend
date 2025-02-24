@@ -139,7 +139,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
 			String redisKey = "dmp:output:task:" + dataId;
-			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 21600, TimeUnit.SECONDS)) {
+			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 10800, TimeUnit.SECONDS)) {
 				pushDmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
 			}else {
 				log.error(redisKey + "任务正在执行中");
