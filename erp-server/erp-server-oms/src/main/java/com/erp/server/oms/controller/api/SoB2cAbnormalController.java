@@ -79,7 +79,7 @@ public class SoB2cAbnormalController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量重试")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量重试", keyIdName = "ids")
     @PostMapping(value = "/batchRetry")
     public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
