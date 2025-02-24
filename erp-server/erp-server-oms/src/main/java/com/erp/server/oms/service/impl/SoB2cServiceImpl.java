@@ -1681,7 +1681,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //货取物流单号
                 resultDTO = logisticsBillFeign.generateBill(generateBillDTO);
             } catch (Exception e) {
-                String type = SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
                 message = e.getMessage();
                 //如果异常符合以下条件则取拉取最新的oaid信息
                 if (message.contains("decryptPrivacy parameter failed")) {
@@ -1700,20 +1699,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //货取物流单号
                     resultDTO = logisticsBillFeign.generateBill(generateBillDTO);
                 } else {
-                    //检测是否是API 对接的仓库
-                    List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(warehouseId));
-                    Boolean isApiWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
-                    if (isApiWarehouse) {
-                        soB2cErrorService.removeErrorOrder(id, type);
-                    } else {
-                        String code = "";
-                        if (e instanceof ServiceException) {
-                            // 如果是ServiceException，则获取其错误代码
-                            code = ((ServiceException) e).getCode().toString();
-                        }
-                        //添加异常信息
-                        returnId = soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
-                    }
+                    String code = e instanceof ServiceException ? ((ServiceException) e).getCode().toString() : "";
+                    //添加异常信息
+                    returnId = soB2cErrorService.generateErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode(), message, paramJson, returnJson,code);
                     log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
                     return BatchResultDTO.fail(returnId, entity.getCode(), message);
                 }
@@ -1767,26 +1755,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             return BatchResultDTO.success(entity.getId(), transportNo, "获取物流单号");
         } catch (Exception e) {
-            String type = SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode();
             message = e.getMessage();
-
-            //检测是否是API 对接的仓库
-            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(warehouseId));
-            Boolean isApiWarehouse = CollectionUtils.isNotEmpty(overseasWarehouseList);
-            if (isApiWarehouse) {
-                soB2cErrorService.removeErrorOrder(id, type);
-            } else {
-                String code = "";
-                if (e instanceof ServiceException) {
-                    // 如果是ServiceException，则获取其错误代码
-                    code = ((ServiceException) e).getCode().toString();
-                }
-                //添加异常信息
-                returnId = soB2cErrorService.generateErrorOrder(id, type, message, paramJson, returnJson,code);
-            }
-            //获取物流单号失败销售订单自动反审核
-            //1.26.2 去掉该功能
-//            this.disApprove(id);
+            String code = e instanceof ServiceException ? ((ServiceException) e).getCode().toString() : "";
+            //添加异常信息
+            returnId = soB2cErrorService.generateErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode(), message, paramJson, returnJson,code);
             log.error("销售订单【{}】 获取物流单失败，异常信息{}", entity.getCode(), message);
         }
         return BatchResultDTO.fail(returnId, entity.getCode(), message);
