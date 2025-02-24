@@ -84,6 +84,8 @@ public class CfgRuleOverseasInstockDaysServiceImpl extends SuperServiceImpl<CfgR
         Map<String, String> warehouseMap = warehouseList.stream()
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (o1, o2) -> o1));
         StringBuilder sb = new StringBuilder();
+        sb.append("海外仓入库时间明细：")
+                .append("<br>");
         for (CfgRuleOverseasInstockDaysEntity entity : list) {
             CfgRuleOverseasInstockDaysEntity old = oldList.stream().filter(v -> v.getId().equals(entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {

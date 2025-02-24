@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -8,14 +9,18 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.CfgRuleSafeDaysDTO;
 import com.erp.model.mrp.entity.CfgRuleSafeDaysEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleSafeDaysMapper;
 import com.erp.server.mrp.service.CfgRuleSafeDaysService;
+import com.erp.server.mrp.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +36,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class CfgRuleSafeDaysServiceImpl extends SuperServiceImpl<CfgRuleSafeDaysMapper, CfgRuleSafeDaysEntity> implements CfgRuleSafeDaysService {
+
+    @Resource
+    private OperateLogService operateLogService;
 
     @Override
     public List<CfgRuleSafeDaysEntity> listByStockUpIdList(List<String> stockUpIdList) {
@@ -57,22 +65,27 @@ public class CfgRuleSafeDaysServiceImpl extends SuperServiceImpl<CfgRuleSafeDays
         }
         List<CfgRuleSafeDaysEntity> cfgRuleSafeDaysList = handleData(safeDaysList, cfgRuleStockUpEntity.getId(), code);
         boolean save = super.saveOrUpdateBatch(cfgRuleSafeDaysList);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("更多天数（规则设置）保存失败");
         }
         //日志
-        addOperateLog(cfgRuleSafeDaysList,cfgRuleStockUpEntity,code);
+        addOperateLog(cfgRuleSafeDaysList, cfgRuleStockUpEntity, code);
     }
 
-    private void addOperateLog(List<CfgRuleSafeDaysEntity> cfgRuleSafeDaysList, CfgRuleStockUpEntity cfgRuleStockUpEntity, String code) {
+    private void addOperateLog(List<CfgRuleSafeDaysEntity> cfgRuleSafeDaysList, CfgRuleStockUpEntity stockUpEntity, String code) {
         List<ShopInfoEntity> list = FeignQuery.list(ShopInfoEntity.class);
         StringBuilder sb = new StringBuilder();
-        sb.append("安全天数规则设置<br>新增：");
-        for (CfgRuleSafeDaysEntity entity : cfgRuleSafeDaysList) {
-
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(code)) {
+            sb.append("FBA安全天数：<br>");
+        } else {
+            sb.append("海外仓安全天数：<br>");
         }
-
-
+        for (CfgRuleSafeDaysEntity entity : cfgRuleSafeDaysList) {
+            String shopName = list.stream().filter(v -> entity.getShopIdJson().contains(v.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+            String childMsg = CharSequenceUtil.format("•店铺【{}】、安全天数【{}】<br>", shopName, entity.getSafeDays());
+            sb.append(childMsg);
+        }
+        operateLogService.addModuleOperateLog(sb.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(stockUpEntity.getRefId(),stockUpEntity.getId()), "备货");
     }
 
     private List<CfgRuleSafeDaysEntity> handleData(List<CfgRuleSafeDaysDTO.UpdateDTO> safeDaysList, String id, String code) {
