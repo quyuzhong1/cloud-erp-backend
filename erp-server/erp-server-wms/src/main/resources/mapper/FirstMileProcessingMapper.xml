@@ -177,43 +177,42 @@
         UNION ALL
         -- fba类型
         SELECT
-            ra.create_time as billDate,
-            ra.id as requisitionApplicationId,
-            ra.code as requisitionApplicationCode,
-            ra.status as requisitionApplicationStatus,
-            rad.id as requisitionApplicationDetailId,
-            fmd.id as firstMileDeliveryId,
-            fmd.code as firstMileDeliveryCode,
-            fmd.approve_status as deliveryApproveStatus,
-            fmdd.id as firstMileDeliveryDetailId,
-            fmdd.delivery_qty as deliveryQty,
-            rad.sku_id as skuId,
-            rad.from_warehouse_id as warehouseId,
-            rad.from_virtual_warehouse_id as virtualWarehouseId,
-            ra.handle_time as frozenTime,
-            rad.virtual_frozen_qty as frozenQty,
-            rad.approve_qty as approveQty,
-            '' as outstockOrderId,
-            '' as outstockOrderStatus,
-            0 as outstockQty,
-            '' as outstockOrderCode,
-            null as outstockOrderTime,
-            '' as outstockOrderType
+        ra.create_time as billDate,
+        ra.id as requisitionApplicationId,
+        ra.code as requisitionApplicationCode,
+        ra.status as requisitionApplicationStatus,
+        rad.id as requisitionApplicationDetailId,
+        fmd.id as firstMileDeliveryId,
+        fmd.code as firstMileDeliveryCode,
+        fmd.approve_status as deliveryApproveStatus,
+        fmdd.id as firstMileDeliveryDetailId,
+        fmdd.delivery_qty as deliveryQty,
+        rad.sku_id as skuId,
+        rad.from_warehouse_id as warehouseId,
+        rad.from_virtual_warehouse_id as virtualWarehouseId,
+        ra.handle_time as frozenTime,
+        rad.virtual_frozen_qty as frozenQty,
+        rad.approve_qty as approveQty,
+        '' as outstockOrderId,
+        '' as outstockOrderStatus,
+        0 as outstockQty,
+        '' as outstockOrderCode,
+        null as outstockOrderTime,
+        '' as outstockOrderType
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad
         ON ra.id = rad.main_id AND rad.is_deleted = false
         LEFT JOIN first_mile_delivery fmd
         ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.invalid_status = false
-        LEFT JOIN first_mile_delivery_detail fmdd
-        ON fmdd.main_id = fmd.id AND fmdd.is_deleted = false
         LEFT JOIN fba_shipment_detail fsd
-        ON fmdd.source_detail_id = fsd.id
+        ON rad.sku_id = fsd.sku_id and rad.platform_fn_sku = fsd.fn_sku
         AND fsd.is_deleted = false
+        LEFT JOIN first_mile_delivery_detail fmdd
+        ON fmdd.source_detail_id = fsd.id AND fmdd.is_deleted = false
         WHERE ra.type = 'fba'
         AND ra.is_deleted = false
         AND ra.invalid_status = 'false'
         AND rad.from_virtual_warehouse_id != ''
-        AND rad.sku_id = fsd.sku_id and rad.platform_fn_sku = fsd.fn_sku
         <if test="startDate != null">
             and ra.create_time >= #{startDate}
         </if>
