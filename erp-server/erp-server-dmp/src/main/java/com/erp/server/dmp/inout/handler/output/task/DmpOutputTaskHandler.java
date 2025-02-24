@@ -135,14 +135,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     	}
 
 		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
+		List<String> lockIds = new ArrayList<>();
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
 			String redisKey = "dmp:output:task:" + dataId;
-			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 1800, TimeUnit.SECONDS)) {
+			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 21600, TimeUnit.SECONDS)) {
 				pushDmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
 			}else {
 				log.error(redisKey + "任务正在执行中");
+				lockIds.add(dmpOutputTaskRecordEntity.getId());
 			}
+		}
+		if(CollUtil.isNotEmpty(lockIds)) {
+			dmpOutputTaskRecordService.lambdaUpdate()
+				.in(DmpOutputTaskRecordEntity::getId, lockIds)
+				.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+				.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+				.update();
 		}
 		
 		if(CollUtil.isEmpty(pushDmpOutputTaskRecordEntityList)) {
