@@ -514,6 +514,11 @@ public class SysLoggingAspect {
             String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, descName, dto.getSystemModule(), id, "操作成功");
             // 设置当前描述
             dto.setDescription(lastResult);
+            // 新增或单响应记录单据编号
+            if (StringUtils.isBlank(dto.getRecordCode())){
+                 String newRecordCode = parseRecordCodeFormResponse(data);
+                 dto.setRecordCode(newRecordCode);
+            }
             return;
         }
         List<BatchResultDTO> list = JSONUtil.toList(data, BatchResultDTO.class);
@@ -561,7 +566,7 @@ public class SysLoggingAspect {
         if (null != bo) {
             dto.setStatus(StringUtils.isBlank(bo.getErrorMsg()) ? LogStatusEnum.SUCCESS.getName() : LogStatusEnum.ERROR.getName());
             // 空单据记录按响应重新解析
-            String newRecordCode = parseRecordCodeFormResponse(bo.getResponseParams(), dto.getRecordId(), dto.getRecordCode());
+            String newRecordCode = parseRecordCodeFormBatchResponse(bo.getResponseParams(), dto.getRecordId(), dto.getRecordCode());
             if (StringUtils.isNotBlank(newRecordCode)){
                 dto.setRecordCode(newRecordCode);
             }
@@ -981,13 +986,13 @@ public class SysLoggingAspect {
 
 
     /**
-     * 空单据记录按响应重新解析
+     * 空单据记录按批量响应重新解析
      * @param responseParams 响应json
      * @param recordId 记录ID
      * @param recordCode 来源记录号
      * @return 响应体解析的单号
      */
-    private static String parseRecordCodeFormResponse(String responseParams, String recordId, String recordCode) {
+    private static String parseRecordCodeFormBatchResponse(String responseParams, String recordId, String recordCode) {
         if (StringUtils.isBlank(recordId) || !recordId.equalsIgnoreCase(recordCode) || StringUtils.isBlank(responseParams)) {
             // 来源为空/单号不等于ID/响应为空
             return "";
@@ -1013,6 +1018,17 @@ public class SysLoggingAspect {
             log.warn("响应解析单号失败：responseParams={},error={}", responseParams, e.getMessage());
             return "";
         }
+    }
+
+
+    /**
+     * 空单据记录按响应重新解析
+     * @param data 响应json
+     * @return 响应体解析的单号
+     */
+    private static String parseRecordCodeFormResponse(String data) {
+        JSONObject jsonObject = JSONUtil.parseObj(data);
+        return jsonObject.getStr("code");
     }
 
 
