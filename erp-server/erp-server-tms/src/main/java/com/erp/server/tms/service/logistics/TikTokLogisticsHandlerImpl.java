@@ -20,6 +20,7 @@ import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDetailDTO;
 import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
+import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOther;
 import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.tms.shopee.model.logistics.request.ShippingOrderRequest;
@@ -115,7 +116,10 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
             paramDTO.setHandoverMethod("DROP_OFF");
         }
         try {
-            tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO,packageId,paramDTO);
+            ShipOrderOther shipOrderOther = tikTokSdkClientService.sendTikTokShipOrderOther(tikTokShopInfoDTO,packageId,paramDTO);
+            if(shipOrderOther.getCode()!=0){
+                return failure("向TIKTOK平台下物流单异常："+shipOrderOther.getMessage());
+            }
         }catch (Exception e){
             return failure("向平台下物流单异常："+e.getMessage());
         }

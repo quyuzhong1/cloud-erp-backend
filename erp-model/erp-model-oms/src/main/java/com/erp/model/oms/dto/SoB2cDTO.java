@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -827,6 +826,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
         /**
          * 销售单号
          */
