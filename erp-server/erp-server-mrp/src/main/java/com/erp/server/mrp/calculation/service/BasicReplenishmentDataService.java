@@ -271,19 +271,18 @@ public class BasicReplenishmentDataService {
                         CfgRuleStrategyDTO cfgRuleStrategy = new CfgRuleStrategyDTO();
                         cfgRuleStrategy.setSettings(settings);
                         //获取时效配置
+                        CfgRuleSettingStrategy<CfgRuleExpireTimeDTO.StrategyDTO, CfgRuleExpireTimeDTO.StrategyResultDTO> expireStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_EXPIRE_TIME.getCode());
+                        CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult = expireStrategy.process(CfgRuleExpireTimeDTO.StrategyDTO.buildStrategyDTO(dto, cfgRuleExpireTimeList, cfgRuleLogisticsList,
+                                cfgRuleLogisticsDetailList, cfgRuleOverseasInStockDaysList));
+                        cfgRuleStrategy.setExpireTimeResult(expireTimeResult);
+                        //获取备货配置
+//                        CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> stockUpStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_STOCK_UP.getCode());
+//                        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = stockUpStrategy.process(CfgRuleStockUpDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), cfgRuleSalesQtyList, cfgRuleSalesDenoisingList, cfgRuleSalesFormulaList));
+//                        cfgRuleStrategy.setStockUpResult(stockUpResult);
+                        //获取销量配置
                         CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
                         CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), cfgRuleSalesQtyList, cfgRuleSalesDenoisingList, cfgRuleSalesFormulaList));
                         cfgRuleStrategy.setSalesQtyResult(salesResult);
-                        //获取备货配置
-//                        CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
-//                        CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), cfgRuleSalesQtyList, cfgRuleSalesDenoisingList, cfgRuleSalesFormulaList));
-//                        cfgRuleStrategy.setSalesQtyResult(salesResult);
-//                        //获取销量配置
-//                        CfgRuleSettingStrategy<CfgRuleSalesQtyDTO.StrategyDTO, CfgRuleSalesQtyDTO.StrategyResultDTO> salesStrategy = cfgSettingFactory.getCfgRuleSettingHandler(CfgRuleSettingEnum.GET_SALES_QTY.getCode());
-//                        CfgRuleSalesQtyDTO.StrategyResultDTO salesResult = salesStrategy.process(CfgRuleSalesQtyDTO.StrategyDTO.buildStrategyDTO(entity, detail.getSkuType(), cfgRuleSalesQtyList, cfgRuleSalesDenoisingList, cfgRuleSalesFormulaList));
-//                        cfgRuleStrategy.setSalesQtyResult(salesResult);
-
-
 //
 //                        //获取仓库配置
 //                        getCfgRuleCommon(entity, cfgRuleStrategy, dto);

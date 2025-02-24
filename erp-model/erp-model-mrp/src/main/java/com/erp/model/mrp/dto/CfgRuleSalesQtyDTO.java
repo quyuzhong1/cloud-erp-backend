@@ -415,7 +415,8 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         private List<StrategyFormulaResultDTO> defaultFormulaResults;
 
         public static StrategyResultDTO buildStrategyResultDTO(CfgRuleSalesQtyEntity cfgRuleSalesQty, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults,
-                                                               List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults, List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults,
+                                                               List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> denoisingResults,
+                                                               List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults,
                                                                List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
             StrategyResultDTO resultDTO = new StrategyResultDTO();
 //            todo
