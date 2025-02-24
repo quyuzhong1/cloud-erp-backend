@@ -827,6 +827,10 @@ public class SoB2cDTO implements Serializable {
         private String id;
 
         /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
+        /**
          * 销售单号
          */
         private String code;
