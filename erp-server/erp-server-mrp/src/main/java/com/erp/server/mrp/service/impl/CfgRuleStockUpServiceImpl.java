@@ -25,7 +25,6 @@ import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -179,12 +178,6 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             return Collections.emptyList();
         }
         return lambdaQuery().in(CfgRuleStockUpEntity::getRefId, refIdList).list();
-    }
-
-    @Override
-    @Cacheable(cacheNames = "cache:mrp:getDefaultByPlatform", keyGenerator = "myKeyGenerator")
-    public CfgRuleStockUpEntity getDefaultByPlatform(String platformType) {
-        return getDefaultByPlatformType(platformType, "");
     }
 
     /**

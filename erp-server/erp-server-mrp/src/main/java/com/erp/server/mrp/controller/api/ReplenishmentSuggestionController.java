@@ -695,7 +695,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     @GetMapping("/isReplenishment")
     public ApiResult<String> isReplenishment(String platformType) {
         List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType);
-        basicReplenishmentDataService.isReplenishment(suggestions,platformType,LocalDate.now());
+        basicReplenishmentDataService.isReplenishment(suggestions, LocalDate.now());
         return success();
     }
 

@@ -52,11 +52,13 @@ public class CfgRuleWarehouseDetailEntity extends BaseEntity<CfgRuleWarehouseDet
     */
     @TableField(value = "channel_id_json", jdbcType = JdbcType.OTHER)
     private JSONArray channelIdJson;
+
     /**
-    * 库存分配类型
-    */
-    @TableField("inventory_allocate_type")
-    private String inventoryAllocateType;
+     * 分区id集合的json
+     */
+    @TableField(value = "partition_id_json", jdbcType = JdbcType.OTHER)
+    private JSONArray partitionIdJson;
+
     /**
     * 主表id
     */

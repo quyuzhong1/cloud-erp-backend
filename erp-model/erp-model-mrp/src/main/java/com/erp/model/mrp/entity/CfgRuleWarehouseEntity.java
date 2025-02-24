@@ -34,18 +34,10 @@ public class CfgRuleWarehouseEntity extends BaseEntity<CfgRuleWarehouseEntity> {
     */
     @TableField("is_enable_overseas")
     private Boolean isEnableOverseas;
-    /**
-    * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-    */
-    @TableField("platform_type")
-    private String platformType;
-
 
     public static final String IS_DISABLE_VIRTUAL = "is_disable_virtual";
 
     public static final String IS_DISABLE_OVERSEAS = "is_disable_overseas";
-
-    public static final String PLATFORM_TYPE = "platform_type";
 
     @Override
     public Serializable pkVal() {

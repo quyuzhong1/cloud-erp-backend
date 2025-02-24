@@ -5,9 +5,7 @@ import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import lombok.*;
 
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,15 +48,10 @@ public class CfgRuleWarehouseDTO implements Serializable {
         private Boolean isEnableOverseas;
 
         /**
-        * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-        */
-        private String platformType;
-
-        /**
          * 本地仓设置（实体仓数据）
          */
         @Valid
-        private List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgLocalWarehouseList;
+        private List<CfgRuleWarehouseDetailDTO.WarehouseViewDTO> cfgLocalWarehouseList;
 
         /**
          * 本地仓设置（虚拟仓数据）
@@ -70,7 +63,7 @@ public class CfgRuleWarehouseDTO implements Serializable {
          * 海外仓设置
          */
         @Valid
-        private List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgOverseasWarehouseList;
+        private List<CfgRuleWarehouseDetailDTO.WarehouseViewDTO> cfgOverseasWarehouseList;
     }
 
 
@@ -85,7 +78,7 @@ public class CfgRuleWarehouseDTO implements Serializable {
          * 本地仓设置（实体仓设置）
          */
         @Valid
-        private List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgLocalWarehouseList;
+        private List<CfgRuleWarehouseDetailDTO.WarehouseUpdateDTO> cfgLocalWarehouseList;
 
         /**
          * 本地仓设置（虚拟仓数据）
@@ -97,7 +90,7 @@ public class CfgRuleWarehouseDTO implements Serializable {
          * 海外仓设置
          */
         @Valid
-        private List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgOverseasWarehouseList;
+        private List<CfgRuleWarehouseDetailDTO.WarehouseUpdateDTO> cfgOverseasWarehouseList;
     }
 
     @Data
@@ -115,14 +108,6 @@ public class CfgRuleWarehouseDTO implements Serializable {
         */
         @NotNull(message = "是否启禁用海外仓，false启用，true禁用不能为空")
         private Boolean isEnableOverseas;
-
-        /**
-        * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-        */
-        @NotBlank(message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)不能为空")
-        @Size(max = 32,message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
-        private String platformType;
-
 
     }
 
@@ -207,10 +192,6 @@ public class CfgRuleWarehouseDTO implements Serializable {
          */
         private JSONArray channelIdJson;
         /**
-         * 库存分配类型
-         */
-        private String inventoryAllocateType;
-        /**
          * 主表id
          */
         private String mainId;
@@ -227,7 +208,6 @@ public class CfgRuleWarehouseDTO implements Serializable {
             detailResultDTO.setWarehouseType(entity.getWarehouseType());
             detailResultDTO.setChannelType(entity.getChannelType());
             detailResultDTO.setChannelIdJson(entity.getChannelIdJson());
-            detailResultDTO.setInventoryAllocateType(entity.getInventoryAllocateType());
             detailResultDTO.setMainId(entity.getMainId());
             detailResultDTO.setDictPlatform(entity.getDictPlatform());
             return detailResultDTO;

@@ -1,8 +1,6 @@
 package com.erp.model.mrp.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -92,9 +90,14 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String channelIdJsonName;
 
         /**
-        * 库存分配类型
-        */
-        private String inventoryAllocateType;
+         * 分区id
+         */
+        private List<String> partitionIdList;
+
+        /**
+         * 分区的名称
+         */
+        private String partitionName;
 
         /**
         * 主表id
@@ -102,6 +105,62 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String mainId;
 
 
+    }
+
+    @Getter
+    @Setter
+    public static class WarehouseViewDTO {
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 实体仓名称
+         */
+        private String warehouseName;
+
+        /**
+         * 仓库平台
+         */
+        private List<WarehousePlatformDTO> warehousePlatform;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode
+    public static class WarehouseGroupDTO {
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 实体仓名称
+         */
+        private String warehouseName;
+    }
+
+    @Getter
+    @Setter
+    public static class WarehousePlatformDTO {
+        /**
+         * 平台
+         */
+        private List<String> platformList;
+
+        /**
+         * 关联渠道类型，platform按平台，shop按店铺
+         */
+        private String channelType;
+
+        /**
+         * 仓库平台
+         */
+        List<String> shopIdList;
     }
 
     /**
@@ -161,13 +220,6 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         private String dictPlatform;
 
         /**
-        * 库存分配类型
-        */
-        @NotBlank(message = "库存分配类型不能为空")
-        @Size(max = 32,message = "库存分配类型最大长度不能超过32位")
-        private String inventoryAllocateType;
-
-        /**
          * 虚拟仓id
          */
         @Size(max = 19,message = "虚拟实体仓id最大长度不能超过19位")
@@ -186,5 +238,20 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+    }
+
+    @Getter
+    @Setter
+    public static class WarehouseUpdateDTO {
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库平台
+         */
+        private List<WarehousePlatformDTO> warehousePlatform;
     }
 }

@@ -1,19 +1,41 @@
 package com.erp.server.mrp.service.impl;
 
+import com.alibaba.excel.EasyExcelFactory;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesEstimateFileEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.mrp.es.service.CustomerSalesEstimateEsService;
+import com.erp.server.mrp.listener.SalesEstimateExcelFileListener;
 import com.erp.server.mrp.mapper.CfgRuleSalesEstimateFileMapper;
 import com.erp.server.mrp.service.CfgRuleSalesEstimateFileService;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -26,61 +48,70 @@ import java.util.List;
 @Service
 public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRuleSalesEstimateFileMapper, CfgRuleSalesEstimateFileEntity> implements CfgRuleSalesEstimateFileService {
 
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private CustomerSalesEstimateEsService customerSalesEstimateEsService;
+
     @Override
     public PagingVO<CfgRuleSalesEstimateFileDTO.PagingView> filePage(PagingDTO<CfgRuleSalesEstimateFileDTO.PagingParamDTO> params) {
-        Page<CfgRuleSalesEstimateFileEntity> page = page(new Page<>(params.getCurrPage(), params.getPageSize()));
+        Page<CfgRuleSalesEstimateFileEntity> page = page(new Page<>(params.getCurrPage(), params.getPageSize()),
+                Wrappers.<CfgRuleSalesEstimateFileEntity>lambdaQuery().eq(CfgRuleSalesEstimateFileEntity::getSalesQtyId, params.getParams().getCfgRuleSalesQtyId()));
         List<CfgRuleSalesEstimateFileDTO.PagingView> pagingViews = BeanMapperUtils.copyList(CfgRuleSalesEstimateFileDTO.PagingView.class, page.getRecords());
         return new PagingVO<>(pagingViews, (int) page.getTotal(), params.getPageSize(), params.getCurrPage());
     }
 
     @Override
-    public void importFile(MultipartFile excelFile, HttpServletResponse response) {
-//        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(addDTO.getSkuIds());
-//        Map<String, String> skuMap = skuVOS.stream()
-//                .collect(Collectors.toMap(SkuVO::getSkuId, SkuVO::getSkuNo, (o1, o2) -> o1));
-//        List<ShopInfoEntity> shopInfoList = shopInfoFeign.listShopInfoByIds(addDTO.getShopIds());
-//        Map<String, ShopInfoEntity> shopMap = shopInfoList.stream()
-//                .collect(Collectors.toMap(ShopInfoEntity::getId, v -> v, (o1, o2) -> o1));
-//        List<com.erp.model.oms.entity.DictBasicEntity> salesPlatformList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
-//                .eq(com.erp.model.oms.entity.DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
-//                .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
-//                .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
-//                .list();
-//        Map<String, String> platformMap = salesPlatformList.stream()
-//                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, DictBasicEntity::getValue, (o1, o2) -> o1));
-//        SalesEstimateExcelFileListener excelListenerUtil = new SalesEstimateExcelFileListener(skuVOS, shopInfoList, platformMap);
-//        try {
-//            EasyExcelFactory.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
-//        } catch (IOException e) {
-//            log.error(ApiError.ERROR_95124.msg, e);
-//            throw new ServiceException(ApiError.ERROR_95124);
-//        } catch (ExcelCommonException e) {
-//            log.error(ApiError.ERROR_1016.msg, e);
-//            throw new ServiceException(ApiError.ERROR_1016);
-//        }
-//        //验证导入数据是否为空
-//        List<JSONObject> excelDateList = excelListenerUtil.getAllList();
-//        if (CollectionUtils.isEmpty(excelDateList)) {
-//            throw new ServiceException(ApiError.ERROR_95123);
-//        }
-//        //导入数据处理
-//        List<JSONObject> successList = excelListenerUtil.getSuccessList();
-//        //导出错误数据
-//        List<JSONObject> errorList = excelListenerUtil.getErrorList();
-//        //表头
-//        List<String> headList = excelListenerUtil.getHeadList();
-//
-//        //处理校验导入成功数据
-//        handleImportSalesEstimate(successList, errorList,headList,platformType);
-//        //导入文件名称
-//        String originalFilename = excelFile.getOriginalFilename();
-//        //上传正确数据
-//        upLoadSuccessExcel(originalFilename,successList,headList,platformType);
-//
-//        if (CollectionUtils.isEmpty(errorList)) {
-//            return;
-//        }
-//        String fileName = "运营月销预估";
-//        ExcelUtil.customExportUtil(headList,errorList,fileName, response);
+    public void downloadRuleTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/cfgSalesEstimateTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ExcelUtil.downloadTemplate(path,excelName,response);
+    }
+
+    @Override
+    public void importFile(MultipartFile excelFile, String platform, HttpServletResponse response) {
+
+        List<SkuVO> skuVOS = plmTaskFeign.listApproveSku();
+        Map<String, String> skuMap = skuVOS.stream()
+                .collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuId, (o1, o2) -> o1));
+        List<ShopInfoEntity> shopInfoList = shopInfoFeign.list().getData();
+        List<com.erp.model.oms.entity.DictBasicEntity> salesPlatformList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
+                .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
+                .list();
+        Map<String, String> platformMap = salesPlatformList.stream()
+                .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, com.erp.model.oms.entity.DictBasicEntity::getValue, (o1, o2) -> o1));
+        SalesEstimateExcelFileListener excelListenerUtil = new SalesEstimateExcelFileListener(skuMap, shopInfoList, platformMap, platform);
+        try {
+            EasyExcelFactory.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error(ApiError.ERROR_95124.msg, e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error(ApiError.ERROR_1016.msg, e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        customerSalesEstimateEsService.removeByPlatform(platform);
+        // 保存数据
+        customerSalesEstimateEsService.saveAll(excelListenerUtil.getSuccessList());
+        List<CfgRuleSalesEstimateFileDTO.ExcelDTO> errorList = excelListenerUtil.getErrorList();
+        if (!CollectionUtils.isEmpty(errorList)) {
+            StringBuilder sb = new StringBuilder();
+            String excelPath = "excel/cfgSalesEstimateError.xlsx";
+            String name = "预估日销量导入失败";
+            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+            sb.append(date);
+            sb.append(name);
+            try {
+                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+            } catch (IOException e) {
+                throw new ServiceException(ApiError.ERROR_95125);
+            }
+        }
     }
 }
