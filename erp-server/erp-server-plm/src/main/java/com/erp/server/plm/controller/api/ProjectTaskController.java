@@ -385,7 +385,7 @@ public class ProjectTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
         Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
                 .stream()
-                .collect(Collectors.toMap(ProjectTaskEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
         for (String id : dto.getTaskIdList()) {
             ProjectTaskEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
@@ -428,7 +428,7 @@ public class ProjectTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
         Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
                 .stream()
-                .collect(Collectors.toMap(ProjectTaskEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
         for (String id : dto.getTaskIdList()) {
             ProjectTaskEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
@@ -471,7 +471,7 @@ public class ProjectTaskController extends BaseController {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
         Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
                 .stream()
-                .collect(Collectors.toMap(ProjectTaskEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
         for (String id : dto.getTaskIdList()) {
             ProjectTaskEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
@@ -562,8 +562,33 @@ public class ProjectTaskController extends BaseController {
             keyIdName = "taskIdList"
     )
     public ApiResult<Object> restartTask(@RequestBody @Validated OperateBaseTaskDTO dto) {
-        Boolean result = projectTaskService.restartTask(dto);
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProjectTaskEntity> entityMap = projectTaskService.getByTaskIds(dto.getTaskIdList())
+                .stream()
+                .collect(Collectors.toMap(ProjectTaskEntity::getId, e -> e));
+        for (String id : dto.getTaskIdList()) {
+            ProjectTaskEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"项目任务不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = projectTaskService.restartTask(new OperateBaseTaskDTO(
+                        Collections.singletonList(id),
+                        dto.getProductId(),
+                        dto.getIsConfirmFinish()
+                ));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"项目任务重新开始成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"项目任务重新开始失败"));
+                }
+            }catch (Exception e){
+                log.error("项目任务重新开始失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

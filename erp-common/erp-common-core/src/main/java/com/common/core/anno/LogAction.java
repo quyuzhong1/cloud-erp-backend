@@ -33,10 +33,9 @@ public @interface LogAction {
      */
     String keyIdName() default "";
 
-
     /**
-     * 操作请求的主键字段名
-     * 默认: 单操作默认=id, 批量操作=ids
+     * 是否是批量操作
+     * true/false
      */
     String isBatchOperationStr() default "";
 }

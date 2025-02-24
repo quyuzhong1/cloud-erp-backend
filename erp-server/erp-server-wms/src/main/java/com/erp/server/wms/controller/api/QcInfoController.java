@@ -166,7 +166,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量完成质检:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "完成质检", keyIdName = "ids")
     @PostMapping("/batchFinish")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -200,7 +200,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量免检:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量免检", keyIdName = "ids")
     @PostMapping("/batchExemption")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -233,7 +233,7 @@ public class QcInfoController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量取消质检:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "取消质检", keyIdName = "ids")
     @PostMapping("/batchCancel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -316,7 +316,7 @@ public class QcInfoController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(qcInfoService.delete(entity));
+                resultDTOS.add(qcInfoService.cancelProcess(entity));
             } catch (Exception e) {
                 log.error("质检单删除失败", e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

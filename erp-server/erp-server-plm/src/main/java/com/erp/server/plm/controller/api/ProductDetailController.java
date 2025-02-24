@@ -654,11 +654,23 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "产品信息-单位管理-新增|修改：单位名称={name}")
     @PostMapping("/saveOrUpdateProductUnit")
     //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
-    public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
-        Boolean flag = productUnitService.saveOrUpdateBatch(productUnitList);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<?> saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        for (ProductUnitDTO dto : productUnitList) {
+            try {
+                Boolean flag = productUnitService.saveOrUpdateBatch(Collections.singletonList(dto));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(), dto.getName(),"单位管理-新增|修改成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getName(),"单位管理-新增|修改失败"));
+                }
+            }catch (Exception e){
+                log.error("单位管理-新增|修改失败",e);
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), dto.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
     /**
      * 产品信息-单位管理-查询
      *
