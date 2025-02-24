@@ -12,9 +12,6 @@ import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.antu.dto.request.AntuUploadFileReq;
-import com.sdk.wms.antu.dto.response.AntuResponse;
-import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.service.GoodCangService;
@@ -56,7 +53,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         while (true) {
             goodCangGetSkuReq.setPage(page);
             GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
-            if (!isSuccess(goodCangResponse.getAsk())) {
+            if (!isSuccess(goodCangResponse.getAsk(), "")) {
                 log.error("谷仓查询产品信息异常" + goodCangResponse);
                 return failure(goodCangResponse.getMessage());
             }
@@ -77,7 +74,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         // 创建入库单
         GoodCangResponse<String> goodCangResponse = goodCangService.createInboundBill(goodCangCreateInboundReq);
 
-        return isSuccess(goodCangResponse.getAsk()) ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
+        return isSuccess(goodCangResponse.getAsk(), "") ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
     }
 
     @Override
@@ -86,13 +83,13 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         // 编辑入库单
         GoodCangResponse<String> goodCangResponse = goodCangService.editInboundBill(goodCangCreateInboundReq);
 
-        return isSuccess(goodCangResponse.getAsk()) ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
+        return isSuccess(goodCangResponse.getAsk(), "") ? success(goodCangResponse.getData()) : failure(goodCangResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
         GoodCangResponse<String> response = goodCangService.cancelInboundBill(cancelInboundReq.getReceivingCode());
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
     }
     @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
@@ -101,7 +98,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList = response.getData();
         String currency = response.getCurrency();
         List<ThirdWarehouseCalculateFeeResponse> dataList = convertCalculateDeliveryFeeResp(currency, goodCangCalculateDeliveryFeeRespList);
-        return isSuccess(response.getAsk()) ? success(dataList) : failure(response.getMessage());
+        return isSuccess(response.getAsk(), "") ? success(dataList) : failure(response.getMessage());
     }
 
     private List<ThirdWarehouseCalculateFeeResponse> convertCalculateDeliveryFeeResp(String currency, List<GoodCangCalculateDeliveryFeeResp> goodCangCalculateDeliveryFeeRespList) {
@@ -150,7 +147,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             GoodCangResponse<String> orderCode = goodCangService.getOutboundCode(createOutboundReq.getReferenceNo());
             return success(orderCode.getData());
         }
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+        return isSuccess(response.getAsk(), "") ? success(response.getData()) : failure(response.getMessage());
     }
 
     @Override
@@ -162,7 +159,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(goodCangUploadFileReq);
         GoodCangUploadFileResp goodCangUploadFileResp = response.getData();
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.goodCangResToThirdWarehouseUploadFileResponse(goodCangUploadFileResp);
-        return isSuccess(response.getAsk()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
+        return isSuccess(response.getAsk(), response.getMessage()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
 
     }
     @Override
@@ -171,7 +168,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         GoodCangResponse<GoodCangUploadOrderLabelResp> response = goodCangService.uploadOrderLabel(goodCangUploadFileReq);
         GoodCangUploadOrderLabelResp resp = response.getData();
         ThirdWarehouseUploadOrderLabelResponse uploadOrderLabelResponse = ThirdWarehouseConverter.INSTANCE.googCangResToThirdWarehouseUploadOrderLabelResponse(resp);
-        return isSuccess(response.getAsk()) ? success(uploadOrderLabelResponse) : failure(response.getMessage());
+        return isSuccess(response.getAsk(), response.getMessage()) ? success(uploadOrderLabelResponse) : failure(response.getMessage());
 
     }
 
@@ -190,10 +187,10 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected Boolean hasWarehouse() {
         GoodCangResponse<List<GoodCangWarehouseResp>> response = goodCangService.getWarehouse();
-        if(!isSuccess(response.getAsk())){
+        if(!isSuccess(response.getAsk(), "")){
             throw new ServiceException("授权失败,"+response.getMessage());
         }
-        return isSuccess(response.getAsk());
+        return isSuccess(response.getAsk(), "");
     }
 
     private GoodCangCreateInboundReq buildInboundDto(ThirdWarehouseCreateInboundReq createInboundReq){
@@ -236,7 +233,7 @@ public class GoodCangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         goodCangCreateInboundReq.setItems(itemList);
         return goodCangCreateInboundReq;
     }
-    public boolean isSuccess(String ask){
-        return "Success".equals(ask);
+    public boolean isSuccess(String ask, String message){
+        return "Success".equals(ask) ||"success".equals(message);
     }
 }
