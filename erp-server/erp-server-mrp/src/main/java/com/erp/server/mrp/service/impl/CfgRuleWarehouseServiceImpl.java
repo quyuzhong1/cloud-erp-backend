@@ -168,9 +168,9 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                             CfgRuleWarehouseDetailDTO.WarehousePlatformDTO platformDTO = new CfgRuleWarehouseDetailDTO.WarehousePlatformDTO();
                             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(dto.getChannelType())) {
                                 platformDTO.setChannelType(VitualWarehouseChannelTypeEnum.PLATFORM.getCode());
-                                platformDTO.setPlatformList(dto.getPartitionIdList());
+                                platformDTO.setPlatformList(dto.getChannelIdList());
                             } else {
-                                platformDTO.setShopIdList(dto.getPartitionIdList());
+                                platformDTO.setShopIdList(dto.getChannelIdList());
                                 platformDTO.setPlatformList(Collections.singletonList(dto.getDictPlatform()));
                                 platformDTO.setChannelType(VitualWarehouseChannelTypeEnum.SHOP.getCode());
                             }
