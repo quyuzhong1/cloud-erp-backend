@@ -54,7 +54,6 @@ public class ValidatorUtil {
 	/**
 	 * 正则表达式：验证URL
 	 */
-//	public static final String REGEX_URL = "http(s)?://([\\w-]+\\.)+[\\w-]+(/[\\w- ./?%&=]*)?";
 	public static final String REGEX_URL = "http(s)?://([\\w-]+\\.){1,10}[\\w-]+(/[\\w- ./?%&=]*)?";
 
 	/**
