@@ -339,10 +339,6 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         for (CfgRuleWarehouseDetailEntity warehouseDetailEntity : list) {
             //数据验证
             checkData(list,warehouseDetailEntity,warehouseEntityList);
-            //按平台
-            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(warehouseDetailEntity.getChannelType())) {
-                warehouseDetailEntity.setChannelIdList(Collections.singletonList(warehouseDetailEntity.getDictPlatform()));
-            }
             //主表id
             warehouseDetailEntity.setMainId(mainId);
             //仓库类型
