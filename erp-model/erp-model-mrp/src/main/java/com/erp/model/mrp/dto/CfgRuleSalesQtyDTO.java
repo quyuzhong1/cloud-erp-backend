@@ -332,32 +332,34 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 平台类型
          */
-        private String platformType;
+        private String platform;
         /**
          * sku类型
          */
         private String skuType;
         /**
-         * 默认销量配置
+         * 销量配置
          */
-        private CfgRuleSalesQtyEntity defaultSalesQty;
+        private List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList;
         /**
-         * 默认日销量配置
+         * 去噪配置
          */
-        private List<CfgRuleSalesFormulaEntity> defaultFormula;
+        private List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList;
         /**
-         * 默认去噪配置
+         * 销量配置
          */
-        private List<CfgRuleSalesDenoisingEntity> defaultDenoising;
+        private List<CfgRuleSalesFormulaEntity> cfgRuleSalesFormulaList;
 
-        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO.BasicDTO entity, String skuType, CfgRuleSalesQtyEntity defaultSalesQty, List<CfgRuleSalesFormulaEntity> defaultFormula, List<CfgRuleSalesDenoisingEntity> defaultDenoising) {
+        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO.BasicDTO entity, String skuType, List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList,
+                                                   List<CfgRuleSalesDenoisingEntity> cfgRuleSalesDenoisingList,
+                                                   List<CfgRuleSalesFormulaEntity> cfgRuleSalesFormulaList) {
             StrategyDTO resultDTO = new StrategyDTO();
             resultDTO.setRefId(entity.getId());
-            resultDTO.setPlatformType(entity.getPlatformType());
+            resultDTO.setPlatform(entity.getPlatform());
             resultDTO.setSkuType(skuType);
-            resultDTO.setDefaultSalesQty(defaultSalesQty);
-            resultDTO.setDefaultFormula(defaultFormula);
-            resultDTO.setDefaultDenoising(defaultDenoising);
+            resultDTO.setCfgRuleSalesQtyList(cfgRuleSalesQtyList);
+            resultDTO.setCfgRuleSalesDenoisingList(cfgRuleSalesDenoisingList);
+            resultDTO.setCfgRuleSalesFormulaList(cfgRuleSalesFormulaList);
             return resultDTO;
         }
     }

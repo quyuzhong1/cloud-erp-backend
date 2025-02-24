@@ -35,4 +35,9 @@ public class CustomerSalesEstimateEsServiceImpl implements CustomerSalesEstimate
                 .map(estimateList -> CompletableFuture.runAsync(() -> customerSalesEstimateEsRepository.saveAll(estimateList), threadPoolTaskExecutor))
                 .toArray(CompletableFuture[]::new)).join();
     }
+
+    @Override
+    public void removeByPlatform(String platform) {
+        customerSalesEstimateEsRepository.deleteByPlatform(platform);
+    }
 }

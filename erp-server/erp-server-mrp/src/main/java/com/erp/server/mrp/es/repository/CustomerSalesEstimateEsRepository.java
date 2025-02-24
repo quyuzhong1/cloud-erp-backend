@@ -6,4 +6,10 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CustomerSalesEstimateEsRepository extends ElasticsearchRepository<CustomerSalesEstimateEsEntity, String> {
+
+    /**
+     * 删除数据
+     * @param platform 平台
+     */
+    void deleteByPlatform(String platform);
 }

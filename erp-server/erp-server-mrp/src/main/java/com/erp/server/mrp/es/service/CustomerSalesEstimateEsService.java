@@ -12,4 +12,10 @@ public interface CustomerSalesEstimateEsService {
      * @param customerSalesEstimateList 用户预估日销量
      */
     void saveAll(List<CustomerSalesEstimateEsEntity> customerSalesEstimateList);
+
+    /**
+     * 移除数据
+     * @param platform 平台
+     */
+    void removeByPlatform(String platform);
 }

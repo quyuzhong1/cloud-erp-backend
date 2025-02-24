@@ -96,6 +96,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
             log.error(ApiError.ERROR_1016.msg, e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
+        customerSalesEstimateEsService.removeByPlatform(platform);
         // 保存数据
         customerSalesEstimateEsService.saveAll(excelListenerUtil.getSuccessList());
         List<CfgRuleSalesEstimateFileDTO.ExcelDTO> errorList = excelListenerUtil.getErrorList();

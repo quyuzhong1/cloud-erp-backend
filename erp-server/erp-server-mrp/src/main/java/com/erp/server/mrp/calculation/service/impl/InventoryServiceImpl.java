@@ -151,13 +151,7 @@ public class InventoryServiceImpl implements InventoryService {
                     BigDecimal warehouseQty = getWarehouseQty(dto, warehouseCount, warehouseDemandQty, totalSum, k == resultList.size() - 1);
                     List<ReplenishmentResultDTO.ShopInventoryDetailDTO> detailDTOS = new ArrayList<>();
                     //分摊店铺数量
-                    if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(resultDTO.getInventoryAllocateType())) {
-                        if (resultDTO.getDictPlatform().equals(replenishmentResultDTO.getReplenishment().getPlatform())) {
-                            qty += warehouseQty.intValue();
-                        }
-                    } else {
-                        qty += calculateInventoryQty(replenishmentResultDTO.getReplenishment().getShopId(), warehouseQty, warehouseDemandQty, shopQtyMap, detailDTOS);
-                    }
+                    qty += calculateInventoryQty(replenishmentResultDTO.getReplenishment().getShopId(), warehouseQty, warehouseDemandQty, shopQtyMap, detailDTOS);
                     inventoryDetail.add(ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO.buildReplenishmentInventoryDetailDTO(
                             inventoryType.getCode(), resultDTO, dto, warehouseQty.intValue(), detailDTOS));
                     k++;
