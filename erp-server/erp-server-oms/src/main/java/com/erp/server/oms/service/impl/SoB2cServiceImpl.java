@@ -3395,7 +3395,23 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isNotEmpty(skuList)) {
             skuVOMap = skuList.stream().collect(Collectors.toMap(SkuVO::getSkuId, Function.identity()));
         }
-
+        LogisticsSupplierDTO.AuthChannelViewDTO authChannelViewDTO = null;
+        if(StringUtils.isNotBlank(data.getLogisticsDTO().getLogisticsChannelId())){
+            List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOList = logisticsAuthFeign.listAuthChannelView(Arrays.asList(data.getLogisticsDTO().getLogisticsChannelId()));
+            if(CollectionUtils.isNotEmpty(authChannelViewDTOList)){
+                authChannelViewDTO = authChannelViewDTOList.get(0);
+            }
+        }
+        if(Objects.nonNull(authChannelViewDTO) && CollectionUtils.isNotEmpty(data.getDetailList())){
+            //仓库id
+            List<String> warehouseIdList = data.getDetailList().stream().map(SoB2cDetailDTO.ViewDTO::getWarehouseId).distinct().collect(Collectors.toList());
+            //获取第三方仓海外信息
+            List<OverseasProviderWarehouseDTO.ViewDTO> overseasProviderWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIdList);
+            OverseasProviderWarehouseDTO.ViewDTO viewDTO = overseasProviderWarehouseList.stream().filter(obj -> obj.getWarehouseId().equals(data.getDetailList().get(0).getWarehouseId())).findFirst().orElse(null);
+            if(Objects.nonNull(viewDTO)){
+                data.setIsSelectChannel(!viewDTO.getProviderCode().equals(authChannelViewDTO.getLogisticsPlatform()));
+            }
+        }
         for (SoB2cDetailDTO.ViewDTO viewDTO : data.getDetailList()) {
             SkuVO skuVO = skuVOMap.get(viewDTO.getSkuId());
 //            SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())).findFirst().orElse(null);
