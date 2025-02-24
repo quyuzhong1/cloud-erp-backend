@@ -105,7 +105,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
 
         //日志
         StringBuilder msg = getMsg(list, shopInfoList, isOverseas, warehouseList);
-        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleExpireTime.getRefId(),cfgRuleExpireTime.getId()) , "备货");
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleExpireTime.getRefId(),cfgRuleExpireTime.getId()) , "时效");
         return Boolean.TRUE;
     }
 

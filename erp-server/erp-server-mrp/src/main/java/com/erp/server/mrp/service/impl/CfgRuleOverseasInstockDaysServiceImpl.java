@@ -77,7 +77,7 @@ public class CfgRuleOverseasInstockDaysServiceImpl extends SuperServiceImpl<CfgR
         List<WarehouseEntity> warehouseList = FeignQuery.list(WarehouseEntity.class);
         //日志
         StringBuilder msg = getMsg(list, warehouseList, oldList);
-        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleExpireTime.getRefId(), cfgRuleExpireTime.getId()), "备货");
+        operateLogService.addModuleOperateLog(msg.toString(), ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleExpireTime.getRefId(), cfgRuleExpireTime.getId()), "时效");
     }
 
     private StringBuilder getMsg(List<CfgRuleOverseasInstockDaysEntity> list, List<WarehouseEntity> warehouseList, List<CfgRuleOverseasInstockDaysEntity> oldList) {
@@ -89,7 +89,7 @@ public class CfgRuleOverseasInstockDaysServiceImpl extends SuperServiceImpl<CfgR
         for (CfgRuleOverseasInstockDaysEntity entity : list) {
             CfgRuleOverseasInstockDaysEntity old = oldList.stream().filter(v -> v.getId().equals(entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
-                sb.append("新增了:").append(warehouseMap.get(entity.getWarehouseId())).append(entity.getInstockDays()).append("天<br>");
+                sb.append(warehouseMap.get(entity.getWarehouseId())).append(entity.getInstockDays()).append("天<br>");
             } else {
                 sb.append(warehouseMap.get(old.getWarehouseId())).append(old.getInstockDays()).append("天").append("更新为")
                         .append(warehouseMap.get(entity.getWarehouseId())).append(entity.getInstockDays()).append("天<br>");
