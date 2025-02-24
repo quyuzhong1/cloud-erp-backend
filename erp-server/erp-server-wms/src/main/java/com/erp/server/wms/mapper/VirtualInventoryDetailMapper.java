@@ -29,7 +29,7 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<VirtualInventoryAgeDTO.ListDTO> paging(Page<VirtualInventoryAgeDTO.SearchParamDTO> page,@Param("params") VirtualInventoryAgeDTO.SearchParamDTO params);
+    IPage<VirtualInventoryAgeDTO.ListDTO> paging(Page<VirtualInventoryAgeDTO.SearchParamDTO> page,@Param("params") VirtualInventoryAgeDTO.SearchParamDTO params,@Param("frozenIsDiff") Boolean frozenIsDiff);
     /**
      * 历史库龄
      * @author will

@@ -132,4 +132,17 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList(@Param("ids") List<String> ids);
 
     List<LogisticsBillEntity> queryToSdy(@Param("startTime") LocalDateTime startTime, @Param("endTime")LocalDateTime endTime, @Param("pageSize")Integer pageSize, @Param("offset")int offset);
+
+    /**
+     * 根据订单类型 获取物流单id
+     * @param orderType
+     * @return
+     */
+    List<LogisticsBillDTO.NoOutstockDTO> selectLogisticsBillNoOutstock(@Param("orderType") String orderType);
+
+    /**
+     * 查询是否存在有物流单 没有物流明细数据
+     * @return
+     */
+    List<LogisticsBillEntity> selectNoLogisticsBillDetailByBill();
 }

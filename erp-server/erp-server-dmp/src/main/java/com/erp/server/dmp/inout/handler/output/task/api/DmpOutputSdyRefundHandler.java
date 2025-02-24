@@ -144,7 +144,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 sdyDTO.setOrder_seller_payed(amountTotal);
             }
 
-            if (dmpSoRefundDetailEntity.getAmount() != null && dmpSoRefundDetailEntity.getQty() != null) {
+            if (dmpSoRefundDetailEntity.getAmount() != null && dmpSoRefundDetailEntity.getQty() != null && dmpSoRefundDetailEntity.getQty() != 0) {
                 sdyDTO.setPrice(dmpSoRefundDetailEntity.getAmount().divide(MathUtil.valueOf(dmpSoRefundDetailEntity.getQty()), 2, RoundingMode.DOWN));
             } else {
                 sdyDTO.setPrice(dmpSoRefundDetailEntity.getAmount());

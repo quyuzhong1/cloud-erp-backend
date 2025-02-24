@@ -113,19 +113,29 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
 
         //创建旺店通原始订单任务
-        ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
-        if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(shudiyunB2cOrderDTO.getPlatform_id())) {
-            DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
-            request.setCfgOutputId("1861317267527064372");
-            List<QueryParam> queryParams = new ArrayList<>();
-            QueryParam queryParam = new QueryParam();
-            queryParam.setType(QueryTypeEnum.EQ);
-            queryParam.setName("third_code");
-            queryParam.setValue(shudiyunB2cOrderDTO.getBiz_no());
-            queryParams.add(queryParam);
-            request.setQueryParams(queryParams);
-            dmpOutputCreateFactory.doHotfixOutputTask(request);
+        List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
+        
+        if(requestData.trim().startsWith("{")) {
+        	ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
+        	shudiyunB2cOrderDTOList.add(dto);
+        }else {
+        	shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
         }
+        
+        shudiyunB2cOrderDTOList.forEach(shudiyunB2cOrderDTO -> {
+        	if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(shudiyunB2cOrderDTO.getPlatform_id())) {
+                DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
+                request.setCfgOutputId("1861317267527064372");
+                List<QueryParam> queryParams = new ArrayList<>();
+                QueryParam queryParam = new QueryParam();
+                queryParam.setType(QueryTypeEnum.EQ);
+                queryParam.setName("third_code");
+                queryParam.setValue(shudiyunB2cOrderDTO.getBiz_no());
+                queryParams.add(queryParam);
+                request.setQueryParams(queryParams);
+                dmpOutputCreateFactory.doHotfixOutputTask(request);
+            }
+        });
     }
 
 

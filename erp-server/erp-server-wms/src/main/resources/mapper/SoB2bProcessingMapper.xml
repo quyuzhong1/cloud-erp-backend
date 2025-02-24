@@ -75,19 +75,7 @@
 
     <!-- 删除多余b2c订单 -->
     <delete id="deleteB2bOrder">
-        DELETE FROM so_b2b_processing sbp
-            USING so_info si
-        WHERE sbp.so_id = si.id
-          AND sbp.is_deleted = false
-          AND (si.is_deleted = true
-           OR si.invalid_status = true
-           OR si.virtual_warehouse_id = '');
-
-        DELETE FROM so_b2b_processing sbp
-            USING so_detail sd
-        WHERE  sbp.so_detail_id = sd.id
-          AND sbp.is_deleted = false
-          AND sd.is_deleted = true;
+        DELETE FROM so_b2b_processing where is_deleted = false and bill_date >= #{startDate}
     </delete>
 
     <!-- 删除b2b订单 -->
@@ -148,6 +136,7 @@
     <!-- b2b销售订单 -->
     <select id="listSoB2bProcessing" resultType="com.erp.model.wms.entity.SoB2bProcessingEntity">
         select
+            si.create_time as billDate,
             si.id as soId,
             si.code as soCode,
             si.approve_status as soApproveStatus,
@@ -175,7 +164,7 @@
         left join so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.invalid_status = false
         where si.is_deleted = false and si.invalid_status = false and si.virtual_warehouse_id != ''
         <if test="startDate != null">
-            and si.create_time > #{startDate}
+            and si.create_time >= #{startDate}
         </if>
         union all
         (WITH deliveryNoticeDetail as (
@@ -187,6 +176,7 @@
         where sdn.invalid_status = false  group by sdnd.source_detail_id
         )
         select
+            si.create_time as billDate,
             si.id as soId,
             si.code as soCode,
             si.approve_status as soApproveStatus,
@@ -213,7 +203,7 @@
         inner join deliveryNoticeDetail dnd on sd.id = dnd.source_detail_id
         where si.is_deleted = false and si.invalid_status = false and sd.qty  > dnd.totalDeliveryQty and si.virtual_warehouse_id != ''
         <if test="startDate != null">
-            and si.create_time > #{startDate}
+            and si.create_time >= #{startDate}
         </if>
         )
     </select>
