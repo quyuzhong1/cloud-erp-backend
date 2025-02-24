@@ -1,6 +1,5 @@
 package com.erp.server.dmp.controller.api;
 
-import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.erp.model.dmp.enums.WebhookServiceEnum;
@@ -12,13 +11,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
 import javax.servlet.http.HttpServletRequest;
-import java.nio.charset.StandardCharsets;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 
@@ -87,25 +80,5 @@ public class WebhookController extends BaseController {
         }
         String platform = headers.get("X-Platform");  // 假设平台信息通过头部传递
         return "";
-    }
-    private boolean verifySignature(String data, String signature) {
-        try {
-            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(SECRET_KEY.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
-            sha256Hmac.init(secretKeySpec);
-
-            byte[] bytes = sha256Hmac.doFinal(data.getBytes(StandardCharsets.UTF_8));
-            String generatedSignature = Base64.getEncoder().encodeToString(bytes);
-
-            // 注意：这里假设传入的签名是"sha256="前缀后的实际Base64编码值
-            if (signature.startsWith("sha256=")) {
-                signature = signature.substring(7);
-            }
-
-            return generatedSignature.equals(signature);
-        } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            e.printStackTrace();
-            return false;
-        }
     }
 }

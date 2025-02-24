@@ -1,23 +1,23 @@
 package com.erp.server.auth.utils;
 
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.security.Security;
-import java.util.Arrays;
-import java.util.UUID;
-
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-
+import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.common.core.exception.ServiceException;
-
-import lombok.extern.slf4j.Slf4j;
+import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.util.Arrays;
 
 /**
  * AES 加解密
@@ -29,6 +29,26 @@ public class AESUtil {
 
     // 算法名称
     private static final String KEY_ALGORITHM = "AES";
+    private static final String CIPHER_ALGORITHM = "AES/GCM/NoPadding";
+    private static final int GCM_TAG_LENGTH = 16; // GCM标签长度（16字节）
+    private static final int GCM_IV_LENGTH = 12; // GCM初始向量长度（12字节）
+
+    /**
+     * 生成密钥
+     *
+     * @return
+     * @throws Exception
+     */
+    public static SecretKey generateKey() {
+        try {
+            KeyGenerator keyGenerator = KeyGenerator.getInstance(KEY_ALGORITHM);
+            keyGenerator.init(128);
+            return keyGenerator.generateKey();
+        } catch (Exception e) {
+            logger.error("生成密钥失败", e);
+            throw new ServiceException("生成密钥失败");
+        }
+    }
 
     /**
      * 加密
@@ -52,14 +72,22 @@ public class AESUtil {
             // 转化成JAVA的密钥格式
             Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
             // 初始化cipher
-            Cipher cipher = Cipher.getInstance(KEY_ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            encryptedText = cipher.doFinal(contentStr.getBytes(charset));
+            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            byte[] iv = new byte[GCM_IV_LENGTH];
+            SecureRandom random = new SecureRandom();
+            random.nextBytes(iv);
+            GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
+            cipher.init(Cipher.ENCRYPT_MODE, key, parameterSpec);
+            byte[] encrypted = cipher.doFinal(contentStr.getBytes(charset));
+            byte[] encryptedWithIV = new byte[iv.length + encrypted.length];
+            System.arraycopy(iv, 0, encryptedWithIV, 0, iv.length);
+            System.arraycopy(encrypted, 0, encryptedWithIV, iv.length, encrypted.length);
+            encryptedText = encryptedWithIV;
         } catch (Exception e) {
             logger.error("加密失败", e);
             throw new ServiceException("加密失败");
         }
-        return Base64.encodeBase64String(encryptedText);
+        return org.apache.commons.codec.binary.Base64.encodeBase64String(encryptedText);
     }
 
     /**
@@ -83,32 +111,57 @@ public class AESUtil {
             // 转化成JAVA的密钥格式
             Key key = new SecretKeySpec(keyBytes, KEY_ALGORITHM);
             // 初始化cipher
-            Cipher cipher = Cipher.getInstance(KEY_ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            encryptedText = cipher.doFinal(Base64.decodeBase64(encryptedDataStr));
+            Cipher cipher = Cipher.getInstance(CIPHER_ALGORITHM);
+            byte[] encryptedWithIV = org.apache.commons.codec.binary.Base64.decodeBase64(encryptedDataStr);
+            byte[] iv = Arrays.copyOfRange(encryptedWithIV, 0, GCM_IV_LENGTH);
+            byte[] encrypted = Arrays.copyOfRange(encryptedWithIV, GCM_IV_LENGTH, encryptedWithIV.length);
+            GCMParameterSpec parameterSpec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
+            cipher.init(Cipher.DECRYPT_MODE, key, parameterSpec);
+            encryptedText = cipher.doFinal(encrypted);
             return new String(encryptedText, charset);
         } catch (Exception e) {
             logger.error("解密失败", e);
             throw new ServiceException("解密失败");
         }
     }
-
     public static void main(String[] args) {
-        String key = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        log.info(key);
-        String sign = encrypt("test", key);
-        log.info(sign);
-        String str = decrypt(sign, key);
-        log.info(str);
+        try {
+            // 生成密钥
+            SecretKey secretKey = generateKey();
+            String keyStr = Base64.encodeBase64String(secretKey.getEncoded());
+            log.info("生成的密钥: {}", keyStr);
+
+            // 要加密的字符串
+            String originalString = "test";
+            log.info("原始字符串: {}", originalString);
+
+            // 加密
+            String encryptedString = encrypt(originalString, keyStr);
+            log.info("加密后的字符串: {}", encryptedString);
+
+            // 解密
+            String decryptedString = decrypt(encryptedString, keyStr);
+            log.info("解密后的字符串: {}", decryptedString);
+
+            // 验证加密和解密是否成功
+            if (originalString.equals(decryptedString)) {
+                log.info("加密和解密成功！");
+            } else {
+                log.error("加密和解密失败！");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
     }
 
     private static byte[] queryKeyByte(String keyBytesStr, String charset) {
         byte[] keyBytes = null;
-		try {
-			keyBytes = keyBytesStr.getBytes(charset);
-		} catch (UnsupportedEncodingException e) {
-			throw new ServiceException("加密不支持此字符");
-		}
+        try {
+            keyBytes = keyBytesStr.getBytes(charset);
+        } catch (UnsupportedEncodingException e) {
+            throw new ServiceException("加密不支持此字符");
+        }
         // 如果密钥不足16位，那么就补足.  这个if 中的内容很重要
         int base = 16;
         if (keyBytes.length % base != 0) {

@@ -97,7 +97,7 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void shopifyOrdersByIds() {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "luna-shop-test.myshopify.com";
         List<String> orderIds = Arrays.asList("5604730831040","5604730962112");
         ShopifyPage<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getOrderByIds(orderIds);
