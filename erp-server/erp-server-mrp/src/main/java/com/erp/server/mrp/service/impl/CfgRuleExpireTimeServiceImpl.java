@@ -10,7 +10,6 @@ import com.erp.model.mrp.dto.CfgRuleExpireTimeDTO;
 import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.dto.CfgRuleOverseasInstockDaysDTO;
 import com.erp.model.mrp.entity.CfgRuleExpireTimeEntity;
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleExpireTimeMapper;
@@ -59,7 +58,7 @@ public class CfgRuleExpireTimeServiceImpl extends SuperServiceImpl<CfgRuleExpire
 
         boolean save = super.saveOrUpdate(cfgRuleExpireTime);
         if (!save) {
-            throw new ServiceException("备货（规则设置）保存失败");
+            throw new ServiceException("时效（规则设置）保存失败");
         }
 
         //物流信息
@@ -69,8 +68,8 @@ public class CfgRuleExpireTimeServiceImpl extends SuperServiceImpl<CfgRuleExpire
         cfgRuleOverseasInstockDaysService.update(dto.getOverseasInstockDaysList(), cfgRuleExpireTime);
 
         // 记录主单操作日志
-        log.info("编辑 开始记录备货（规则设置）日志数据，id：【{}】", cfgRuleExpireTime.getId());
-        operateLogService.addModuleOperateLogByObj(ObjectUtil.isEmpty(old) ? new CfgRuleStockUpEntity() : old, cfgRuleExpireTime, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleExpireTime.getRefId(), cfgRuleExpireTime.getId()), "");
+        log.info("编辑 开始记录时效（规则设置）日志数据，id：【{}】", cfgRuleExpireTime.getId());
+        operateLogService.addModuleOperateLogByObj(ObjectUtil.isEmpty(old) ? new CfgRuleExpireTimeEntity() : old, cfgRuleExpireTime, ModuleTypeEnum.REPLENISHMENT_SUGGESTION.getCode(), CharSequenceUtil.blankToDefault(cfgRuleExpireTime.getRefId(), cfgRuleExpireTime.getId()), "");
     }
 
     /**

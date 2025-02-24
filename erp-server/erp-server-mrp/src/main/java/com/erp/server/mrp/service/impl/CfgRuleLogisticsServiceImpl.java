@@ -143,10 +143,6 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
                     String childMsg = CharSequenceUtil.format("•海外仓【{}】、时效【{}】<br>",warehouseName, updateDTO.getLogisticsDays());
                     msg.append(childMsg);
                 }
-
-                String shopNames = CollectionUtils.isEmpty(shopInfoList) ? "" : shopInfoList.stream().filter(obj -> updateDTO.getShopIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
-                String childMsg = CharSequenceUtil.format("•区域【{}】、店铺【{}】、时效【{}】<br>", updateDTO.getArea(), CharSequenceUtil.equals(ShopAuthTypeEnum.ENUM_ALL.getCode(),updateDTO.getType()) ? "全部店铺": shopNames, updateDTO.getLogisticsDays());
-                msg.append(childMsg);
             }
         }
         return msg;
