@@ -194,7 +194,6 @@ public class DmpOutputTaskRecordController extends BaseController {
         dmpOutputTaskRecordService.lambdaUpdate()
                 .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
                 .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
-                .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
                 .in(DmpOutputTaskRecordEntity::getId, dto.getIds())
                 .update();
 
