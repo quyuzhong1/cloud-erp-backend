@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum CfgVirtualNoticeRuleTypeEnum implements EnumMessage {
 
     TOTAL("total","汇总"),
-    SKU_WAREHOUSE("skuWarehouse","按“SKU+实体仓”"),
+    SKU_WAREHOUSE("skuWarehouse","按“SKU+仓库”"),
     ;
 
     /**
