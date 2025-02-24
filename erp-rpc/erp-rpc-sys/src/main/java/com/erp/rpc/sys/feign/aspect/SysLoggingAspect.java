@@ -9,7 +9,6 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.Idempotent;
 import com.common.business.config.GlobalExceptionHandler;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -57,7 +56,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -412,7 +410,7 @@ public class SysLoggingAspect {
             dtoList = constructBatchByParams(logAction, request, actionPath, requestParams, currentSysName, joinPoint);
         } else {
             // 其他单条处理创建
-            dtoList = Collections.singletonList(initDto(logAction, request, actionPath, requestParams, currentSysName, description));
+            dtoList = Collections.singletonList(initDto(logAction, request, actionPath, requestParams, currentSysName, description, ""));
         }
         return dtoList;
     }
@@ -435,7 +433,7 @@ public class SysLoggingAspect {
         // 组合
         ids.forEach(id -> {
             // 初始化
-            SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, description);
+            SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, description, id);
             // 处理数据
             handleData(id, logAction, dto);
             dtoList.add(dto);
@@ -462,7 +460,7 @@ public class SysLoggingAspect {
                         // 将请求参数填充  {paramName1} {paramName2}
                         String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
                         // 初始化
-                        SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                        SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc, "");
                         // 设置记录ID
                         Object idObj = paramsMap.get(logAction.keyIdName());
                         dto.setRecordId(null != idObj ? idObj.toString() : "");
@@ -477,7 +475,7 @@ public class SysLoggingAspect {
                         // 将请求参数填充  {paramName1} {paramName2}
                         String currentDesc = logAction.desc().replace("{name}", Objects.requireNonNull(e.getOriginalFilename()));
                         // 初始化
-                        return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                        return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc, "");
                     })
                     .collect(Collectors.toList());
         } else {
@@ -494,9 +492,17 @@ public class SysLoggingAspect {
     private static void handleData(String id, LogAction logAction, SysLogRecordDTO.AddDTO dto) {
         // 设置记录ID
         dto.setRecordId(id);
+        String descName = logAction.value().getName();
+        // 自定义批量更新替换
+        if (LogActionEnum.CUSTOM_BATCH_UPDATE.equals(logAction.value())){
+            if (!logAction.desc().contains("{") && !logAction.desc().contains("}")){
+                descName = logAction.desc();
+            }
+        }
+
         if (StringUtils.isBlank(dto.getResponseParams()) || StringUtils.isNotBlank(dto.getErrorMsg())) {
             // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "异常");
+            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, descName, dto.getSystemModule(), id, "异常");
             // 设置当前描述
             dto.setDescription(lastResult);
             return;
@@ -505,7 +511,7 @@ public class SysLoggingAspect {
         if (null == data || !(JSONUtil.isTypeJSONArray(data))) {
             // 设置当前描述
             // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "操作成功");
+            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, descName, dto.getSystemModule(), id, "操作成功");
             // 设置当前描述
             dto.setDescription(lastResult);
             return;
@@ -516,7 +522,7 @@ public class SysLoggingAspect {
             return;
         }
         // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-        String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, currentResult.getMsg());
+        String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, descName, dto.getSystemModule(), id, currentResult.getMsg());
         // 设置当前描述
         dto.setDescription(lastResult);
         // 设置记录Code
@@ -531,7 +537,9 @@ public class SysLoggingAspect {
                                                   String actionPath,
                                                   String requestParams,
                                                   String currentSysName,
-                                                  String description) {
+                                                  String description,
+                                                  String id
+    ) {
         SysLogRecordDTO.AddDTO dto = new SysLogRecordDTO.AddDTO();
         dto.setSystemModule(currentSysName);
         dto.setAction(logAction.value().getCode());
@@ -547,8 +555,16 @@ public class SysLoggingAspect {
         // 缓存获取其他信息
         UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();
         BeanUtil.copyProperties(bo, dto);
+        if (StringUtils.isBlank(id)){
+            dto.setRecordId(id);
+        }
         if (null != bo) {
             dto.setStatus(StringUtils.isBlank(bo.getErrorMsg()) ? LogStatusEnum.SUCCESS.getName() : LogStatusEnum.ERROR.getName());
+            // 空单据记录按响应重新解析
+            String newRecordCode = parseRecordCodeFormResponse(bo.getResponseParams(), dto.getRecordId(), dto.getRecordCode());
+            if (StringUtils.isNotBlank(newRecordCode)){
+                dto.setRecordCode(newRecordCode);
+            }
         }
         return dto;
     }
@@ -961,6 +977,42 @@ public class SysLoggingAspect {
         result.setCode(ApiError.GLOBAL_EXCEPTION_UN_KNOW.code);
         result.setMsg(StrUtil.format(ApiError.GLOBAL_EXCEPTION_UN_KNOW.msg, JSONUtil.toJsonStr(obj)));
         return result;
+    }
+
+
+    /**
+     * 空单据记录按响应重新解析
+     * @param responseParams 响应json
+     * @param recordId 记录ID
+     * @param recordCode 来源记录号
+     * @return 响应体解析的单号
+     */
+    private static String parseRecordCodeFormResponse(String responseParams, String recordId, String recordCode) {
+        if (StringUtils.isBlank(recordId) || !recordId.equalsIgnoreCase(recordCode) || StringUtils.isBlank(responseParams)) {
+            // 来源为空/单号不等于ID/响应为空
+            return "";
+        }
+        try {
+            JSONObject jsonObject = JSONUtil.parseObj(responseParams);
+            Object dataObj = jsonObject.get("data");
+            if (null == dataObj){
+                return "";
+            }
+            if (dataObj instanceof Collection){
+                JSONArray jsonArray = JSONUtil.parseArray(dataObj);
+                JSONObject curObj = jsonArray.stream()
+                        .map(JSONUtil::parseObj)
+                        .filter(e -> recordId.equalsIgnoreCase(e.getStr("id")))
+                        .findFirst()
+                        .orElse(new JSONObject());
+                return curObj.getStr("code");
+            } else {
+                return JSONUtil.parseObj(dataObj).getStr("code");
+            }
+        } catch (Exception e) {
+            log.warn("响应解析单号失败：responseParams={},error={}", responseParams, e.getMessage());
+            return "";
+        }
     }
 
 
