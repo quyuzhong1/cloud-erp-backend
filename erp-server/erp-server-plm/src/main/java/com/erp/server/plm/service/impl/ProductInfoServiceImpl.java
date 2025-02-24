@@ -2092,9 +2092,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchEstablish(ProductInfoDTO.IdsDateDto dto) {
-        List<String> productIdList = dto.getIds();
-        LocalDate projectInitDate = dto.getLocalDate();
+    public Boolean batchEstablish(List<String> productIdList, LocalDate projectInitDate) {
         List<ProductInfoEntity> productInfoList = this.listByIds(productIdList);
         Integer suspendCode = ApprovalStatusEnum.SUSPEND.getCode();
         Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();

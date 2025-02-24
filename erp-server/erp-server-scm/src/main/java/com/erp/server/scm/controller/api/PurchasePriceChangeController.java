@@ -15,6 +15,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
@@ -28,9 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 采购价目变更管理
@@ -304,9 +303,28 @@ public class PurchasePriceChangeController extends BaseController {
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "ids"
     )
-    public ApiResult updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = purchasePriceChangeService.updateDetailRemark(dto.getIds(),dto.getRemark());
-        return result ? success() : failure();
+    public ApiResult<?> updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceChangeEntity> entityMap = purchasePriceChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceChangeEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目变更明细不存在"));
+                continue;
+            }
+            try {
+                Boolean disabled = purchasePriceChangeService.updateDetailRemark(Collections.singletonList(id), dto.getRemark());
+                if (disabled){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "更新采购价目变更明细备注"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "更新采购价目变更明细备注"));
+                }
+            }catch (Exception e){
+                log.error("更新采购价目变更明细备注失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

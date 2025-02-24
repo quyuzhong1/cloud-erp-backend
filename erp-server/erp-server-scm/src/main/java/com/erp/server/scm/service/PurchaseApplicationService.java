@@ -12,6 +12,7 @@ import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -58,7 +59,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param dto
      * @return String
      */
-    String add(PurchaseApplicationDTO.AddDTO dto);
+    PurchaseApplicationEntity add(PurchaseApplicationDTO.AddDTO dto);
 
     /**
      * @description: 修改
@@ -130,7 +131,8 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param ids
      * @return Boolean
      */
-    Boolean delete(List<String> ids);
+    BatchResultDTO delete(PurchaseApplicationEntity entity);
+
     /**
      * @description: 提交
      * @author Will
@@ -138,7 +140,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param ids
      * @return Boolean
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(String id);
     /**
      * @description: 新增并提交
      * @author Will
@@ -146,7 +148,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseApplicationDTO.AddDTO dto);
+    BatchResultDTO addAndSubmit(PurchaseApplicationDTO.AddDTO dto);
     /**
      * @description: 查看详情
      * @author Will
@@ -162,7 +164,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(PurchaseApplicationEntity entity);
     /**
      * @description: 修改并提交
      * @author Will
@@ -200,4 +202,10 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
     ApiResult<PurchaseApplicationDTO.SubcontractPurchasePriceDTO> batchGetSubcontractPurchasePrice(ValidList<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> list);
 
     List<PurchaseApplicationDTO.ListDTO> listStockInQty(List<PurchaseApplicationDTO.ListDTO> purchaseList);
+
+
+    /**
+     * 单提交
+     */
+    BatchResultDTO submitEntity(PurchaseApplicationEntity entity);
 }

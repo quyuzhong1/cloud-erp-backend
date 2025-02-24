@@ -43,6 +43,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -131,8 +132,8 @@ public class PurchaseApplicationController extends BaseController {
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
     public ApiResult<Object> add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
-        purchaseApplicationService.add(dto);
-        return success();
+        PurchaseApplicationEntity entity = purchaseApplicationService.add(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -169,8 +170,8 @@ public class PurchaseApplicationController extends BaseController {
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "id")
     public ApiResult<Object> addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
-        Boolean flag = purchaseApplicationService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+        BatchResultDTO resultDTO = purchaseApplicationService.addAndSubmit(dto);
+        return resultDTO.getSuccess() ? success() : failure();
     }
 
     /**
@@ -226,8 +227,22 @@ public class PurchaseApplicationController extends BaseController {
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
     public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseApplicationService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseApplicationEntity> entityMap = purchaseApplicationService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseApplicationEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购申请单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseApplicationService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("采购申请单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -330,9 +345,24 @@ public class PurchaseApplicationController extends BaseController {
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
     public ApiResult<Object> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseApplicationService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseApplicationEntity> entityMap = purchaseApplicationService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseApplicationEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购申请单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseApplicationService.delete(entity));
+            }catch (Exception e){
+                log.error("采购申请单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
     /**
      * 批量关闭（传明细ID）
      * @author Will
@@ -398,8 +428,22 @@ public class PurchaseApplicationController extends BaseController {
             serviceClass = PurchaseApplicationService.class,
             keyIdName = "ids")
     public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchaseApplicationService.cancelProcess(dto.getIds());
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseApplicationEntity> entityMap = purchaseApplicationService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseApplicationEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购申请单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseApplicationService.cancelProcess(entity));
+            }catch (Exception e){
+                log.error("采购申请单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

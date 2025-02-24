@@ -106,4 +106,10 @@ public interface VirtualTransFlowMapper extends BaseMapper<VirtualTransFlowEntit
      * @return List<VirtualTransFlowEntity>
      */
     List<VirtualTransFlowEntity> listApproveFlowDetail(@Param("dto")VirtualTransFlowDetailDTO.HandleDTO dto);
+    /**
+     * 清空数据
+     * @author will
+     * @date 2025/2/23 22:00
+     */
+    void cleanALlData();
 }

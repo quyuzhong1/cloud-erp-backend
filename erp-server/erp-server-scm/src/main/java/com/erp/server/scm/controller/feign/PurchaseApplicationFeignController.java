@@ -41,8 +41,7 @@ public class PurchaseApplicationFeignController {
      */
     @PostMapping("/add")
     BatchResultDTO add(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto){
-        String id = purchaseApplicationService.add(dto);
-        PurchaseApplicationEntity entity = purchaseApplicationService.getById(id);
+        PurchaseApplicationEntity entity = purchaseApplicationService.add(dto);
         return BatchResultDTO.success(entity.getId(), entity.getCode());
     }
 
@@ -63,10 +62,7 @@ public class PurchaseApplicationFeignController {
      */
     @PostMapping("/addAndSubmit")
     BatchResultDTO addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto){
-        String id = purchaseApplicationService.add(dto);
-        purchaseApplicationService.submit(Collections.singletonList(id));
-        PurchaseApplicationEntity entity = purchaseApplicationService.getById(id);
-        return BatchResultDTO.success(entity.getId(), entity.getCode());
+        return purchaseApplicationService.addAndSubmit(dto);
     }
 
     /**

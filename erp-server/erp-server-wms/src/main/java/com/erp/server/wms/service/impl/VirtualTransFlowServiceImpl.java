@@ -246,6 +246,8 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         if (CollUtil.isEmpty(virtualTransFlowList)) {
             return;
         }
+        //清空数据
+        baseMapper.cleanALlData();
         virtualTransFlowDetailService.handleAddTransFlowDetail(virtualTransFlowList);
     }
 

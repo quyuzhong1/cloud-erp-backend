@@ -17,6 +17,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
+import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
@@ -46,6 +47,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * 采购订单管理
@@ -149,9 +152,9 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:add",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
-        purchaseOrderService.add(dto);
-        return  success();
+    public ApiResult<?> add(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
+        PurchaseOrderEntity entity = purchaseOrderService.add(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -168,7 +171,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:update",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
         Boolean flag = purchaseOrderService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -187,9 +190,9 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:add",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
-        Boolean flag = purchaseOrderService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
+        BatchResultDTO resultDTO = purchaseOrderService.addAndSubmit(dto);
+        return resultDTO.getSuccess() ? success() : failure();
     }
 
     /**
@@ -206,7 +209,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:update",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
+    public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchaseOrderDTO.UpdateDTO dto) {
         Boolean flag = purchaseOrderService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -225,7 +228,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:update",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean flag = purchaseOrderService.updateRemark(dto);
         return flag == true ? success() : failure();
     }
@@ -264,9 +267,23 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:delete",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseOrderService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseOrderService.delete(entity));
+            }catch (Exception e){
+                log.error("采购订单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -283,9 +300,23 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:submit",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseOrderService.submit(dto.getIds(),Boolean.TRUE);
-        return flag == true ? success() : failure();
+    public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseOrderService.submitEntity(entity, Boolean.TRUE));
+            }catch (Exception e){
+                log.error("采购订单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -302,9 +333,23 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:invalid",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = purchaseOrderService.invalid(dto.getIds(),dto.getRemark());
-        return flag == true ? success() : failure();
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseOrderService.invalid(entity, dto.getRemark()));
+            }catch (Exception e){
+                log.error("采购订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -357,7 +402,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:disApprove",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<?> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO disApproveResult;
@@ -393,10 +438,25 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:cancelProcess",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchaseOrderService.cancelProcess(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseOrderEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseOrderService.cancelProcess(entity));
+            }catch (Exception e){
+                log.error("采购订单撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 采购变更数据显示
@@ -452,7 +512,7 @@ public class PurchaseOrderController extends BaseController {
             menuCode = "scm:purchaseOrder:finishDelivery",
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
-    public ApiResult finishDelivery(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+    public ApiResult<?> finishDelivery(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         Boolean result = purchaseOrderDetailService.finishDelivery(dto.getIds(), dto.getRemark(),Boolean.TRUE);
         return result == true ? success() : failure();
     }
@@ -519,7 +579,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载采购订单模板")
     @GetMapping("/exportExcelTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<?> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/purchaseOrderTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -550,7 +610,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购订单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto) {
+    public ApiResult<?> exportExcel(@RequestBody PurchaseOrderDTO.SearchParamDTO dto) {
         Boolean flag = purchaseOrderService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
@@ -634,7 +694,7 @@ public class PurchaseOrderController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "网采合同导出")
     @GetMapping("/exportPurchaseContract")
-    public ApiResult exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
+    public ApiResult<?> exportPurchaseContract(@RequestParam("id") String id, HttpServletResponse response) {
         Boolean flag = purchaseOrderService.exportPurchaseContract(id, response);
         return flag == true ? success() : failure();
     }
@@ -678,7 +738,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载结束交货模板")
     @GetMapping("/exportEndRecveiveTemplate")
-    public ApiResult exportEndRecveiveTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<?> exportEndRecveiveTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/purchaseEndReceiveTemplate.xlsx";
         String excelName = "purchaseEndReceiveTemplate.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -710,7 +770,7 @@ public class PurchaseOrderController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入结束交货采购订单")
     @PostMapping("/importEndReceiveFile")
-    public ApiResult importEndReceiveFile(@RequestParam("excelFile") MultipartFile multipartFile, HttpServletResponse response) {
+    public ApiResult<?> importEndReceiveFile(@RequestParam("excelFile") MultipartFile multipartFile, HttpServletResponse response) {
         purchaseOrderService.importEndReceiveFile(multipartFile, response);
         return success();
     }
@@ -726,7 +786,7 @@ public class PurchaseOrderController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出SRM采购订单")
     @PostMapping(value = "/exportSrmExcel")
     @WebAdvanceQuery(handler = OrderConfirmQueryHandler.class)
-    public ApiResult exportSrmExcel(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response) {
+    public ApiResult<?> exportSrmExcel(@RequestBody @Validated PurchaseOrderDTO.SrmSearchParamDTO dto, HttpServletResponse response) {
         SupplierUserInfoVO info = purchaseOrderService.getSrmSupplierUserInfo();
         dto.setSupplierId(info.getSupplierId());
         Boolean flag = purchaseOrderService.exportSrmExcel(dto, response);

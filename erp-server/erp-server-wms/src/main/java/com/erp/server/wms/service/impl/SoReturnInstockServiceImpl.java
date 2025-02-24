@@ -1396,8 +1396,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetailList(addDetailList);
-            String id = machineInfoService.add(addDTO);
-            ids.add(id);
+            MachineInfoEntity entity = machineInfoService.add(addDTO);
+            ids.add(entity.getId());
         }
 
         //自动提交
