@@ -8,6 +8,7 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum CfgRuleSettingEnum implements EnumMessage {
 
+    GET_EXPIRE_TIME("GET_EXPIRE_TIME", "获取时效规则"),
     GET_STOCK_UP("GET_STOCK_UP", "获取备货规则"),
     GET_SALES_QTY("GET_SALES_QTY", "获取销量"),
     GET_INVENTORY("GET_INVENTORY", "获取库存"),
