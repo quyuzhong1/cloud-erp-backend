@@ -43,6 +43,10 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
@@ -207,16 +211,25 @@ public class CfgNoticeJob {
             XxlJobHelper.log("无通知内容");
             return;
         }
-        for (String content : contentList) {
-            //按人员发送
-            NoticeMsgInfoDTO noticeMsgInfoDTO = getNoticeMsgInfoDTO(userIdList, title, content);
-            String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
-                    noticeMsgInfoDTO, IdUtil.simpleUUID());
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
-            }
+        // 使用 ScheduledExecutorService 控制发送节奏
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        AtomicInteger counter = new AtomicInteger(0);
+
+        for (int i = 0; i < contentList.size(); i++) {
+            // 每200毫秒发送1条（5条/秒 = 1条/200ms）
+            executor.schedule(() -> {
+                String content = contentList.get(counter.getAndIncrement());
+                //按人员发送
+                NoticeMsgInfoDTO noticeMsgInfoDTO = getNoticeMsgInfoDTO(userIdList, title, content);
+                String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
+                SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
+                        noticeMsgInfoDTO, IdUtil.simpleUUID());
+                if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                    log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+                }
+            }, i * 200, TimeUnit.MILLISECONDS);
         }
+        executor.shutdown();
     }
 
     /**
@@ -242,12 +255,20 @@ public class CfgNoticeJob {
             XxlJobHelper.log("字典中未找到配置的飞书群");
             return;
         }
+        // 使用 ScheduledExecutorService 控制发送节奏
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(1);
+        AtomicInteger counter = new AtomicInteger(0);
         for (String fsGroup : fsGroupList) {
-            for (String content : contentList) {
-                WarnMsgInfoDTO warnMsgInfoDTO = getWarnMsgInfoDTO(fsGroup,title, content);
-                mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+            for (int i = 0; i < contentList.size(); i++) {
+                // 每200毫秒发送1条（5条/秒 = 1条/200ms）
+                executor.schedule(() -> {
+                    String content = contentList.get(counter.getAndIncrement());
+                    WarnMsgInfoDTO warnMsgInfoDTO = getWarnMsgInfoDTO(fsGroup,title, content);
+                    mqProducerService.sendWarnMsg(warnMsgInfoDTO);
+                }, i * 200, TimeUnit.MILLISECONDS);
             }
         }
+        executor.shutdown();
     }
 
     /**
