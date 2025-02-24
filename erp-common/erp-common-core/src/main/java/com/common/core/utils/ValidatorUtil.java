@@ -39,7 +39,7 @@ public class ValidatorUtil {
 	/**
 	 * 正则表达式：验证邮箱
 	 */
-	public static final String REGEX_EMAIL = "^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?$";
+	public static final String REGEX_EMAIL = "^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+){0,10}@(?:[\\w](?:[\\w-]*[\\w])?\\.){1,10}[\\w](?:[\\w-]*[\\w])?$";
 
 	/**
 	 * 正则表达式：验证汉字
@@ -54,7 +54,8 @@ public class ValidatorUtil {
 	/**
 	 * 正则表达式：验证URL
 	 */
-	public static final String REGEX_URL = "http(s)?://([\\w-]+\\.)+[\\w-]+(/[\\w- ./?%&=]*)?";
+//	public static final String REGEX_URL = "http(s)?://([\\w-]+\\.)+[\\w-]+(/[\\w- ./?%&=]*)?";
+	public static final String REGEX_URL = "http(s)?://([\\w-]+\\.){1,10}[\\w-]+(/[\\w- ./?%&=]*)?";
 
 	/**
 	 * 正则表达式：验证IP地址
