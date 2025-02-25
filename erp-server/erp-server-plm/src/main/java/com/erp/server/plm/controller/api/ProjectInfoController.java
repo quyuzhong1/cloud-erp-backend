@@ -157,7 +157,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-重新启动项目:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-重新启动项目", keyIdName = "ids")
     @PostMapping("/restart")
     public ApiResult<Object> restart(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
@@ -191,7 +191,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-暂停项目:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-暂停项目", keyIdName = "ids")
     @PostMapping("/suspend")
     public ApiResult<Object> suspend(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
@@ -224,7 +224,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-终止项目:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-终止项目", keyIdName = "ids")
     @PostMapping("/stop")
     public ApiResult<Object> terminate(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
@@ -257,7 +257,7 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-项目结项:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-项目结项", keyIdName = "ids")
     @PostMapping("/finish")
     public ApiResult<Object> finish(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
@@ -296,7 +296,7 @@ public class ProjectInfoController extends BaseController {
      * @author yl
      * @date 2022-10-09 14:38
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-批量项目归档:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-批量项目归档", keyIdName = "ids")
     @PostMapping("/batchArchive")
     public ApiResult<Object> batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
