@@ -6,9 +6,7 @@ import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
@@ -901,5 +899,27 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/writeBackSoOutstockDate")
     public void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate) {
         soB2cService.writeBackSoOutstockDate(soId, soOutstockDate);
+    }
+
+    /**
+     * 销售订单审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/approve")
+    public List<BatchResultDTO> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            try {
+                resultDTOS.add(soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), null, ""));
+            }catch (Exception e){
+                log.error("B2B销售订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
     }
 }

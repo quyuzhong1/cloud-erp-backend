@@ -4,6 +4,7 @@ import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -691,4 +692,14 @@ public interface SoB2cFeign {
      */
     @GetMapping("feign/soB2c/writeBackSoOutstockDate")
     void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate);
+    /**
+     * 销售订单审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     **/
+    @PostMapping("feign/soB2c/approve")
+    List<BatchResultDTO> approve(@RequestBody BaseApproveParamDTO dto);
 }
