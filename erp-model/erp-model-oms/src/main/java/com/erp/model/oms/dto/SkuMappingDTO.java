@@ -1434,6 +1434,7 @@ public class SkuMappingDTO implements Serializable {
         private String mappingId;
         private String dictPlatform;
         private String productSkuId;
+        //产品SKU
         private String productSkuNo;
         private String productName;
         private String type;
@@ -1441,9 +1442,13 @@ public class SkuMappingDTO implements Serializable {
         private String warehouseName;
         private String isExpire;
         private String listingId;
+        //客户id
+        private String customerId;
+        //平台SKU
         private String platformSkuNo;
         private String platformSkuName;
         private String platformName;
+        //条码
         private String thirdBarcode;
         private String platformSpuNo;
         private String platformSpuName;

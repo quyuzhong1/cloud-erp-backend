@@ -262,18 +262,24 @@ public class B2BSoImportExcelDTO {
     private String remark;
 
     /**
-     * 备注
+     * SKU
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "SKU", index = 28)
-    @FieldValid(fieldName = "SKU", isNotBlank = true)
+    @FieldValid(fieldName = "SKU")
     private String skuNo;
-
+    /**
+     * 客户SKU
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "客户SKU", index = 29)
+    @FieldValid(fieldName = "客户SKU")
+    private String customerSku;
     /**
      * 销售数量
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "销售数量", index = 29)
+    @ExcelProperty(value = "销售数量", index = 30)
     @FieldValid(fieldName = "销售数量", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.INTEGER)
     private String qty;
 
@@ -282,7 +288,7 @@ public class B2BSoImportExcelDTO {
      * 销售单价
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "销售单价", index = 30)
+    @ExcelProperty(value = "销售单价", index = 31)
     @FieldValid(fieldName = "销售单价", isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String  price;
 
@@ -291,7 +297,7 @@ public class B2BSoImportExcelDTO {
      * 税率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率", index = 31)
+    @ExcelProperty(value = "税率", index = 32)
     @FieldValid(fieldName = "税率",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String taxRate;
 
@@ -300,7 +306,7 @@ public class B2BSoImportExcelDTO {
      * 是否赠品
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "是否赠品", index = 32)
+    @ExcelProperty(value = "是否赠品", index = 33)
     @FieldValid(fieldName = "是否赠品",isNotBlank = true,fieldValues = "是,否")
     private String isGift;
 
@@ -308,7 +314,7 @@ public class B2BSoImportExcelDTO {
      * 是否补发
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "是否补发", index = 33)
+    @ExcelProperty(value = "是否补发", index = 34)
     @FieldValid(fieldName = "是否补发",isNotBlank = true,fieldValues = "是,否")
     private String isReissue;
 
@@ -317,7 +323,7 @@ public class B2BSoImportExcelDTO {
      * 是否关闭
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "是否关闭", index = 34)
+    @ExcelProperty(value = "是否关闭", index = 35)
     @FieldValid(fieldName = "是否关闭",isNotBlank = true,fieldValues = "是,否")
     private String isClose;
 
@@ -326,7 +332,7 @@ public class B2BSoImportExcelDTO {
      * 备注
      */
     @ColumnWidth(40)
-    @ExcelProperty(value = "备注", index = 35)
+    @ExcelProperty(value = "备注", index = 36)
     @FieldValid(fieldName = "备注",maxLength=200)
     private String detailRemark;
 
@@ -336,7 +342,7 @@ public class B2BSoImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 36)
+    @ExcelProperty(value = "错误数据", index = 37)
     private String errorMsg;
 
 

@@ -592,6 +592,10 @@ public class SoInfoDTO implements Serializable {
          * 是否报关
          */
         private Boolean isDeclare;
+        /**
+         * 物流单上传
+         */
+        private Boolean isUploadLabel;
 
         /**
          * 运单号
