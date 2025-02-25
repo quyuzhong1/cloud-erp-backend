@@ -128,10 +128,14 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 BigDecimal totalCancelGoodsAmount = soB2cDetailEntityList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(totalCancelGoodsAmount);
 
-                // 取消商品数量（合计）
-                shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
             }
         }
+        if ((Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null )
+                || (Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) && soB2cEntity.getInvalidStatus() != null)) {
+            // 取消商品数量（合计）
+            shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+        }
+
 
         shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getPayAmount());
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());

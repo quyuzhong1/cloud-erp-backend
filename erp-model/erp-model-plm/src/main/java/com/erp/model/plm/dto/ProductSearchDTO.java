@@ -196,7 +196,10 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 产品ids
          */
         private List<String> ids;
-
+        /**
+         * 产品ids
+         */
+        private List<String> productIds;
         /**
          * 导出数据 类型
          * 0，产品列表
@@ -204,6 +207,13 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         @NotNull(message = "导出类型不能为空")
         private List<Integer> exportDataList;
+
+        private List<String> categoryIdList;
+
+        private String userId;
+
+        // 导出类型 0：我的项目 1：收藏项目 2：所有项目
+        private String exportType;
     }
 
 

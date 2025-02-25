@@ -160,8 +160,6 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                     .findFirst().orElse(null);
             if (null == platformEnum){
                 errorMsgList.add("服务商不存在");
-            }else{
-                errorMsgList.add("有API对接的服务商不允许导入");
             }
         } else {
             platformEnum = null;
