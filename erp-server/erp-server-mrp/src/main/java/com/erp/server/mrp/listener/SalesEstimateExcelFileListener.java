@@ -7,7 +7,6 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.mrp.es.entity.CustomerSalesEstimateEsEntity;
-import lombok.Getter;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
@@ -18,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@Getter
 public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRuleSalesEstimateFileDTO.ExcelDTO> {
 
 
@@ -77,7 +75,7 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
             msgList.add("sku未审核或不存在");
         }
         LocalDate date = LocalDateUtil.parseStrToLocalDate(data.getDate());
-        if (LocalDate.now().isAfter(date)) {
+        if (!ObjectUtils.isEmpty(date) && LocalDate.now().isAfter(date)) {
             msgList.add("日期，仅限导入未来日期的预估销量，必须晚于今日");
         }
         if (data.getSalesQty().matches(REGEX)) {
@@ -118,5 +116,13 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
     @Override
     public void doAfterAllAnalysed(AnalysisContext context) {
 
+    }
+
+    public List<CfgRuleSalesEstimateFileDTO.ExcelDTO> getErrorList() {
+        return errorList;
+    }
+
+    public List<CustomerSalesEstimateEsEntity> getSuccessList() {
+        return successList;
     }
 }

@@ -1,9 +1,8 @@
 package com.erp.server.mrp.calculation.strategy;
 
-import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
-import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
+import com.erp.model.mrp.dto.CfgRuleExpireTimeDTO;
+import com.erp.model.mrp.entity.CfgRuleExpireTimeEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.enums.CfgRuleSettingEnum;
 import com.erp.server.mrp.service.CfgRuleLogisticsService;
 import com.erp.server.mrp.service.CfgRuleStockUpService;
@@ -13,7 +12,6 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,7 +21,7 @@ import static com.erp.model.mrp.enums.CfgRuleSettingEnum.GET_STOCK_UP;
  * 获取备货相关设置
  */
 @Component
-public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleStockUpDTO.StrategyDTO, CfgRuleStockUpDTO.StrategyResultDTO> {
+public class CfgRuleExpireTimeStrategy implements CfgRuleSettingStrategy<CfgRuleExpireTimeDTO.StrategyDTO, CfgRuleExpireTimeDTO.StrategyResultDTO> {
 
     @Resource
     private CfgRuleStockUpService cfgRuleStockUpService;
@@ -35,13 +33,17 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
     private CfgRuleLogisticsService cfgRuleLogisticsService;
 
     @Override
-    public CfgRuleStockUpDTO.StrategyResultDTO process(CfgRuleStockUpDTO.StrategyDTO dto) {
-        CfgRuleStockUpEntity cfgRuleStockUp = cfgRuleStockUpService.getByRefId(dto.getRefId());
-        List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> cfgRuleStockingRatios = new ArrayList<>();
+    public CfgRuleExpireTimeDTO.StrategyResultDTO process(CfgRuleExpireTimeDTO.StrategyDTO dto) {
+        CfgRuleExpireTimeEntity cfgRuleExpireTime = dto.getCfgRuleExpireTimeList().stream()
+                .filter(v -> v.getRefId().equals(dto.getRefId()))
+                .findFirst()
+                .orElse(null);
+
         List<CfgRuleLogisticsEntity> ruleLogisticsList = new ArrayList<>();
-        if (!ObjectUtils.isEmpty(cfgRuleStockUp)) {
-//            cfgRuleStockingRatios = cfgRuleStockingRatioService.listByStockUpIdAndType(cfgRuleStockUp.getId(), dto.getSkuType());
-            ruleLogisticsList = cfgRuleLogisticsService.listByExpireTimeIdList(Collections.singletonList(cfgRuleStockUp.getId()));
+        if (!ObjectUtils.isEmpty(cfgRuleExpireTime)) {
+            ruleLogisticsList = dto.getCfgRuleLogisticsList().stream()
+                    .filter(v -> v.getExpireTimeId().equals(cfgRuleExpireTime.getId()))
+                    .collect(Collectors.toList());
         }
 //        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = ruleLogisticsList.stream()
 //                .min(Comparator.comparing(CfgRuleLogisticsEntity::getIndex))
@@ -52,22 +54,22 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
 //        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult = ruleLogisticsList.stream()
 //                .max(Comparator.comparing(v -> v.getLogisticsDays() + v.getLogisticsCycleDays()))
 //                .map(CfgRuleLogisticsDTO.LogisticsResultDTO::buildLogisticsResult).orElse(getMaxLogistics(dto));
-        CfgRuleStockUpDTO.StrategyResultDTO result = new CfgRuleStockUpDTO.StrategyResultDTO();
-        List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> defaultRatio = dto.getDefaultStockingRatio().stream()
-                .map(CfgRuleStockingRatioDTO.StockingRatioResultDTO::buildStockingRatioResult)
-                .collect(Collectors.toList());
+        CfgRuleExpireTimeDTO.StrategyResultDTO result = new CfgRuleExpireTimeDTO.StrategyResultDTO();
+//        List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> defaultRatio = dto.getDefaultStockingRatio().stream()
+//                .map(CfgRuleStockingRatioDTO.StockingRatioResultDTO::buildStockingRatioResult)
+//                .collect(Collectors.toList());
 //        result.buildStrategyResultDTO(cfgRuleStockUp, dto.getDefaultStockUp(), cfgRuleStockingRatios, logisticsResult, logisticsMaxResult, logisticsMinResult, defaultRatio);
         return result;
     }
 
-//    private CfgRuleLogisticsDTO.LogisticsResultDTO getMaxLogistics(CfgRuleStockUpDTO.StrategyDTO dto) {
+//    private CfgRuleLogisticsDTO.LogisticsResultDTO getMaxLogistics(CfgRuleExpireTimeDTO.StrategyDTO dto) {
 //        List<CfgRuleLogisticsDTO.LogisticsResultDTO> allLogistics = getAllLogistics(dto);
 //        return allLogistics.stream()
 //                .max(Comparator.comparing(v -> v.getLogisticsCycleDays() + v.getLogisticsDays()))
 //                .orElseThrow(() -> new ServiceException(ApiError.ERROR_LOGISTICS_NOT_EXIST));
 //    }
-
-//    private static List<CfgRuleLogisticsDTO.LogisticsResultDTO> getAllLogistics(CfgRuleStockUpDTO.StrategyDTO dto) {
+//
+//    private static List<CfgRuleLogisticsDTO.LogisticsResultDTO> getAllLogistics(CfgRuleExpireTimeDTO.StrategyDTO dto) {
 //        List<CfgRuleLogisticsDTO.LogisticsResultDTO> dtos = new ArrayList<>();
 //        for (CfgRuleLogisticsEntity logistic : dto.getDefaultLogistics()) {
 //            dtos.add(CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(logistic));
@@ -82,14 +84,14 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
 //        return dtos;
 //    }
 //
-//    private CfgRuleLogisticsDTO.LogisticsResultDTO getMinLogistics(CfgRuleStockUpDTO.StrategyDTO dto) {
+//    private CfgRuleLogisticsDTO.LogisticsResultDTO getMinLogistics(CfgRuleExpireTimeDTO.StrategyDTO dto) {
 //        List<CfgRuleLogisticsDTO.LogisticsResultDTO> allLogistics = getAllLogistics(dto);
 //        return allLogistics.stream()
 //                .min(Comparator.comparing(v -> v.getLogisticsCycleDays() + v.getLogisticsDays()))
 //                .orElseThrow(() -> new ServiceException(ApiError.ERROR_LOGISTICS_NOT_EXIST));
 //    }
-
-//    private CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(CfgRuleStockUpDTO.StrategyDTO dto) {
+//
+//    private CfgRuleLogisticsDTO.LogisticsResultDTO getLogisticsMaxPriority(CfgRuleExpireTimeDTO.StrategyDTO dto) {
 //        // 获取外层最高优先级数据
 //        CfgRuleLogisticsEntity entity = dto.getDefaultLogistics().stream()
 //                .min(Comparator.comparing(CfgRuleLogisticsEntity::getIndex))
@@ -127,7 +129,7 @@ public class CfgRuleStockUpStrategy implements CfgRuleSettingStrategy<CfgRuleSto
 //     * @param logisticId              物流id
 //     * @param cfgRuleLogisticsDetails 配置
 //     */
-//    private static List<CfgRuleLogisticsDetailEntity> getCfgRuleLogisticsDetails(CfgRuleStockUpDTO.StrategyDTO dto, String logisticId, List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails) {
+//    private static List<CfgRuleLogisticsDetailEntity> getCfgRuleLogisticsDetails(CfgRuleExpireTimeDTO.StrategyDTO dto, String logisticId, List<CfgRuleLogisticsDetailEntity> cfgRuleLogisticsDetails) {
 //        List<CfgRuleLogisticsDetailEntity> ruleLogisticsDetails = new ArrayList<>();
 //        //amazon 取值店铺
 //        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {

@@ -339,10 +339,6 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         for (CfgRuleWarehouseDetailEntity warehouseDetailEntity : list) {
             //数据验证
             checkData(list,warehouseDetailEntity,warehouseEntityList);
-            //按平台
-            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(warehouseDetailEntity.getChannelType())) {
-                warehouseDetailEntity.setChannelIdList(Collections.singletonList(warehouseDetailEntity.getDictPlatform()));
-            }
             //主表id
             warehouseDetailEntity.setMainId(mainId);
             //仓库类型
@@ -365,15 +361,6 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         ).collect(Collectors.toList());
         //仓库名称
         String warehouseName = warehouseEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getWarehouseId())).map(WarehouseEntity::getName).findFirst().orElse("");
-        //既有按平台也有按店铺
-        long count = detailList.stream().map(CfgRuleWarehouseDetailEntity::getChannelType).distinct().count();
-        if (count > 1) {
-            throw new ServiceException(CharSequenceUtil.format("实体仓【{}】不能既按平台又按店铺分配",warehouseName));
-        }
-        long platformCount = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getChannelType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode())).map(CfgRuleWarehouseDetailEntity::getDictPlatform).count();
-        if (platformCount > 1) {
-            throw new ServiceException(CharSequenceUtil.format("实体仓【{}】不能按多个平台分配",warehouseName));
-        }
         //店铺集合
         List<String> channelIdList = entity.getChannelIdList();
         if (CollectionUtils.isNotEmpty(channelIdList)) {

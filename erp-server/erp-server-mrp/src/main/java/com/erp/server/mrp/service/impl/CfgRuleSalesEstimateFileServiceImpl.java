@@ -88,7 +88,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
                 .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, com.erp.model.oms.entity.DictBasicEntity::getValue, (o1, o2) -> o1));
         SalesEstimateExcelFileListener excelListenerUtil = new SalesEstimateExcelFileListener(skuMap, shopInfoList, platformMap, platform);
         try {
-            EasyExcelFactory.read(excelFile.getInputStream(), excelListenerUtil).sheet(0).doRead();
+            EasyExcelFactory.read(excelFile.getInputStream(), CfgRuleSalesEstimateFileDTO.ExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
             log.error(ApiError.ERROR_95124.msg, e);
             throw new ServiceException(ApiError.ERROR_95124);

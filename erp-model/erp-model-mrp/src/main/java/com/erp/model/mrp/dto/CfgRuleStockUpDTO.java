@@ -4,8 +4,6 @@ import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
-import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -295,21 +293,26 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private String refId;
         /**
-         * 平台类型
+         * 平台
          *
-         * @see CfgRulePlatformTypeEnum
          */
-        private String platformType;
+        private String platform;
         /**
-         * sku类型
-         *
-         * @see CfgRuleStockingRatioTypeEnum
+         * 常规品备货系数
          */
-        private String skuType;
+        private BigDecimal stockingRatio;
         /**
-         * 区域
+         * 新品备货系数
          */
-        private String area;
+        private BigDecimal newStockingRatio;
+        /**
+         * 平台安全天数（天）
+         */
+        private Integer platformSafeDays;
+        /**
+         * 海外仓安全天数（天）
+         */
+        private Integer overseasSafeDays;
         /**
          * 店铺id
          */
@@ -340,9 +343,9 @@ public class CfgRuleStockUpDTO implements Serializable {
             ReplenishmentResultDTO.BasicDTO entity = resultDTO.getReplenishment();
             StrategyDTO dto = new StrategyDTO();
             dto.setRefId(entity.getId());
-            dto.setPlatformType(entity.getPlatformType());
-            dto.setSkuType(resultDTO.getReplenishmentDetail().getSkuType());
-            dto.setArea(entity.getArea());
+//            dto.setPlatformType(entity.getPlatformType());
+//            dto.setSkuType(resultDTO.getReplenishmentDetail().getSkuType());
+//            dto.setArea(entity.getArea());
             dto.setShopId(entity.getShopId());
             dto.setDefaultStockUp(defaultStockUp);
             dto.setDefaultStockingRatio(defaultStockingRatio);
