@@ -345,6 +345,16 @@ public class MercadoSdkClientService {
         return resultList;
     }
 
+//    public static void main(String[] args) {
+//        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
+//        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
+//        JobTaskDTO task = new JobTaskDTO();
+//        shopInfoDTO.setAccessToken("APP_USR-3457166802805723-022400-6fb4be44aa7ddefdd0329f70180caf11-2119968271");
+//        task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//        task.setNextTime(LocalDateTime.parse("2025-02-24 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//        sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
+//    }
+
     /**
      * 发送请求获取指定店铺的订单
      * @param shopInfoDTO
@@ -649,6 +659,14 @@ public class MercadoSdkClientService {
 
     }
 
+    public static void main(String[] args) {
+        Map<String, String> authMap = new HashMap<>();
+        authMap.put("token", "APP_USR-3457166802805723-022502-5d2a95e663faac516a366b8d1da7aee0-2201503196");
+        Long shippingId = Long.valueOf("44525228893");
+        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
+        String result = sdkClientService.printShippingLabel(authMap, shippingId);
+        System.out.println(result);
+    }
 
 
     /**
