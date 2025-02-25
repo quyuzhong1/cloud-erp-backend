@@ -1,21 +1,26 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
+import com.erp.model.wms.dto.FirstMileProcessingDetailDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
@@ -35,6 +40,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FIRST_MILE_PROCESSING;
 
@@ -67,6 +73,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
+    @Resource
+    private FirstMileProcessingDetailService firstMileProcessingDetailService;
 
     /**
     * 修改
@@ -85,7 +93,19 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         if (CollUtil.isEmpty(firstMileProcessingList)) {
             return Boolean.TRUE;
         }
-        return super.saveBatch(firstMileProcessingList);
+        boolean save = super.saveBatch(firstMileProcessingList);
+        if (!save) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        // 使用stream和flatMap将所有detailList合并成一个List
+        List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> allDetailList = list.stream()
+                .filter(item -> item.getDetailList() != null)
+                .flatMap(item -> item.getDetailList().stream())
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(allDetailList)) {
+            return Boolean.TRUE;
+        }
+        firstMileProcessingDetailService.addFirstMileOrderDetail(allDetailList);
     }
 
     @Override
@@ -147,22 +167,89 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         List<FirstMileProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        List<List<FirstMileProcessingDTO.AddOrUpdateDTO>> result = list.parallelStream().map(entity -> {
-            //根据类型更新出库数据
-            handleOutstockByType(machineList,transferList,soOutstockList,entity);
-            log.warn("根据类型处理成功！code = {}",entity.getRequisitionApplicationCode());
-            // 新增数据
-            List<FirstMileProcessingDTO.AddOrUpdateDTO> localList = new ArrayList<>();
-            addBomList(localList,entity,bomMap.get(CharSequenceUtil.format("{}_{}",entity.getSkuId(),BomTypeEnum.COMBINATION.getType())));
-            log.warn("按bom处理数据成功！code = {}",entity.getRequisitionApplicationCode());
-            return localList;
-        }).collect(Collectors.toList());
-        // 合并所有局部列表
-        result.forEach(addList::addAll);
+
+        /**
+         * 1、第三方仓要货单的要货申请单只需要生成主表数据，数量计算在主表中
+         * 2、fba的要货申请单会出现一对多个头程发货单的情景，所以发货出库数据存于明细表中
+         */
+        //根据要货申请生成主表数据
+        Map<String, List<FirstMileProcessingEntity>> map = list.stream().collect(Collectors.groupingBy(FirstMileProcessingEntity::getRequisitionApplicationDetailId));
+        for (Map.Entry<String, List<FirstMileProcessingEntity>> entry : map.entrySet()) {
+            List<FirstMileProcessingEntity> value = entry.getValue();
+            //主表数据处理
+            List<List<FirstMileProcessingDTO.AddOrUpdateDTO>> mainList = generateAddOrUpdateData(bomMap,value, machineList, transferList, soOutstockList);
+            // 合并所有局部列表
+            mainList.forEach(addList::addAll);
+        }
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
         ApplicationContextUtils.getBean(FirstMileProcessingServiceImpl.class).addOrupdate(addList,startDate);
         log.warn("数据更新成功!");
+    }
+
+    /**
+     * 生成新增修改数据
+     * @author will
+     * @date 2025/2/25 16:13
+     * @param bomMap
+     * @param list
+     * @param machineList
+     * @param transferList
+     * @param soOutstockList
+     * @return java.util.List<java.util.List<com.erp.model.wms.dto.FirstMileProcessingDTO.AddOrUpdateDTO>>
+     */
+    private List<List<FirstMileProcessingDTO.AddOrUpdateDTO>> generateAddOrUpdateData (Map<String, List<BomChildrenSkuDTO>> bomMap,List<FirstMileProcessingEntity> list, List<SoB2bProcessingDTO.ResponseDTO> machineList,
+                                          List<SoB2bProcessingDTO.ResponseDTO> transferList,List<SoB2bProcessingDTO.ResponseDTO> soOutstockList) {
+        //所有发货明细id集合
+        List<String> deliveryDetailIdList = list.stream().map(FirstMileProcessingEntity::getFirstMileDeliveryDetailId).distinct().collect(Collectors.toList());
+        //查询发货信息
+        FirstMileProcessingEntity firstMileProcessingEntity = list.get(0);
+        List<FirstMileProcessingDTO.AddOrUpdateDTO> mainList = handleBomData(null,deliveryDetailIdList, bomMap, firstMileProcessingEntity, machineList, transferList, soOutstockList);
+        //fba的需要新增明细数据
+        if (!CharSequenceUtil.equals("fba",firstMileProcessingEntity.getType())) {
+            return Collections.singletonList(mainList);
+        }
+        return list.parallelStream().map(entity -> handleBomData(mainList,deliveryDetailIdList,bomMap,entity,machineList,transferList,soOutstockList)).collect(Collectors.toList());
+    }
+
+    /**
+     * 添加bom数据
+     * @author will
+     * @date 2025/2/25 18:55
+     * @param mainList
+     * @param deliveryDetailIdList
+     * @param bomMap
+     * @param entity
+     * @param machineList
+     * @param transferList
+     * @param soOutstockList
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileProcessingDTO.AddOrUpdateDTO>
+     */
+    private List<FirstMileProcessingDTO.AddOrUpdateDTO> handleBomData ( List<FirstMileProcessingDTO.AddOrUpdateDTO> mainList,List<String> deliveryDetailIdList,Map<String, List<BomChildrenSkuDTO>> bomMap,FirstMileProcessingEntity entity,List<SoB2bProcessingDTO.ResponseDTO> machineList,
+                                                                       List<SoB2bProcessingDTO.ResponseDTO> transferList,List<SoB2bProcessingDTO.ResponseDTO> soOutstockList) {
+
+        //根据类型更新出库数据
+        handleOutstockByType(deliveryDetailIdList,machineList,transferList,soOutstockList,entity);
+        log.warn("根据类型处理成功！code = {}",entity.getRequisitionApplicationCode());
+        // 新增数据
+        List<FirstMileProcessingDTO.AddOrUpdateDTO> localList = new ArrayList<>();
+        addBomList(localList,entity,bomMap.get(CharSequenceUtil.format("{}_{}",entity.getSkuId(),BomTypeEnum.COMBINATION.getType())));
+        log.warn("按bom处理数据成功！code = {}",entity.getRequisitionApplicationCode());
+        //未传主表数据则返回
+        if (CollUtil.isEmpty(mainList)) {
+            return localList;
+        }
+        //给主表添加明细数据
+        mainList.forEach(obj -> {
+            List<FirstMileProcessingDTO.AddOrUpdateDTO> detailList = localList.stream().filter(o -> CharSequenceUtil.equals(obj.getSkuId(), o.getSkuId())).collect(Collectors.toList());
+            List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> oldDetailList = obj.getDetailList();
+            //转明细对象
+            List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> processingDetailList = BeanUtil.copyToList(detailList, FirstMileProcessingDetailDTO.AddOrUpdateDTO.class);
+            processingDetailList.forEach(o -> o.setMainId(obj.getId()));
+            oldDetailList.addAll(processingDetailList);
+            obj.setDetailList(oldDetailList);
+        });
+        return mainList;
     }
 
     @Override
@@ -181,6 +268,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     private void addBomList (List<FirstMileProcessingDTO.AddOrUpdateDTO> addList, FirstMileProcessingEntity entity, List<BomChildrenSkuDTO> bomChildrenSkuList) {
         if (CollUtil.isEmpty(bomChildrenSkuList)) {
             FirstMileProcessingDTO.AddOrUpdateDTO addDTO = FirstMileProcessingConverter.INSTANCE.entityToAdd(entity);
+            addDTO.setId(IdWorker.getIdStr());
             addDTO.setParentSkuId("");
             addDTO.setBomVersion("");
             addList.add(addDTO);
@@ -188,6 +276,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         }
         for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuList) {
             FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO = FirstMileProcessingConverter.INSTANCE.entityToAdd(entity);
+            addOrUpdateDTO.setId(IdWorker.getIdStr());
             addOrUpdateDTO.setSkuId(childrenSkuDTO.getSkuId());
             addOrUpdateDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
             addOrUpdateDTO.setOutstockQty(ObjectUtil.isEmpty(addOrUpdateDTO.getOutstockQty()) ? MathUtil.ZERO : addOrUpdateDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
@@ -208,7 +297,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
          * @param soOutstockList
          * @param entity
          */
-    private void handleOutstockByType (List<SoB2bProcessingDTO.ResponseDTO> machineList, List<SoB2bProcessingDTO.ResponseDTO> transferList,
+    private void handleOutstockByType (List<String> deliveryDetailIdList,List<SoB2bProcessingDTO.ResponseDTO> machineList, List<SoB2bProcessingDTO.ResponseDTO> transferList,
                                        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList, FirstMileProcessingEntity entity) {
         //加工单
         SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj ->
@@ -217,7 +306,14 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                         &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
-            handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode());
+            //出库数量
+            Integer totalQty = machineList.stream().filter(obj ->
+                            CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
+                            && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                            && deliveryDetailIdList.contains(entity.getFirstMileDeliveryDetailId()))
+                            .map(SoB2bProcessingDTO.ResponseDTO::getQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
+            handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode(),totalQty);
             return;
         }
         //直接调拨单
@@ -228,7 +324,15 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(transferResponseDTO)) {
-            handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
+            //出库数量
+            Integer totalQty = transferList.stream().filter(obj ->
+                            CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
+                            && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                            && CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                    .map(SoB2bProcessingDTO.ResponseDTO::getQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode(),totalQty);
             return;
         }
         //销售出库单
@@ -238,7 +342,14 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
-            handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
+            //出库数量
+            Integer totalQty =  soOutstockList.stream().filter(obj ->
+                            CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
+                            && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                            &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                    .map(SoB2bProcessingDTO.ResponseDTO::getQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode(),totalQty);
         }
     }
 
@@ -266,14 +377,14 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * @param responseDTO
      * @param sourceType
      */
-    private void handleOutstock (FirstMileProcessingEntity entity, SoB2bProcessingDTO.ResponseDTO responseDTO,String sourceType) {
+    private void handleOutstock (FirstMileProcessingEntity entity, SoB2bProcessingDTO.ResponseDTO responseDTO,String sourceType,Integer totalQty) {
         entity.setOutstockOrderId(responseDTO.getId());
         entity.setOutstockOrderStatus(responseDTO.getApproveStatus());
         entity.setOutstockQty(responseDTO.getQty());
         entity.setOutstockOrderCode(responseDTO.getCode());
         entity.setOutstockOrderTime(responseDTO.getApproveTime());
         entity.setOutstockOrderType(sourceType);
-        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
+        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - totalQty);
     }
 
     /**

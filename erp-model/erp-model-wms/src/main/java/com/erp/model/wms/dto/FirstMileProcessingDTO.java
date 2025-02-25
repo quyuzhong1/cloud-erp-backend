@@ -471,6 +471,11 @@ public class FirstMileProcessingDTO implements Serializable {
          * 单据日期
          */
         private LocalDate billDate;
+
+        /**
+         * 明细数据
+         */
+        private List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> detailList;
     }
 
     /**
