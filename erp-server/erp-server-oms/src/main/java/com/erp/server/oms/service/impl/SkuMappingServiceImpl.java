@@ -166,7 +166,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         String path = "classpath:excel/skuMappingTemplate.xlsx";
         if (warehouse.equals(type)) {
-            path = "classpath:excel/skuMappingWarehouseTemplate.xlsx";
+            path = "excel/skuMappingWarehouseTemplate.xlsx";
         }
         if (customer.equals(type)) {
             path = "excel/skuMappingCustomerTemplate.xlsx";

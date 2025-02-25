@@ -267,7 +267,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                         if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                             shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
                         }
-                        shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                        shudiyunB2cOrderDTO.setTransaction_currency_code("CNY");
                         shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                         shudiyunB2cOrderDTO.setPlatform_id(shopInfo.getDictPlatform());
                         shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(shopInfo.getDictPlatform()));
@@ -329,11 +329,24 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
 
-                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
-                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+
+                if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getCurrencyCode())) {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(dmpSoInfoEntity.getCurrencyCode());
+                    DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, dmpSoInfoEntity.getCurrencyCode());
+                    if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                    } else {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dmpSoInfoEntity.getCurrencyCode());
+                    }
+                } else {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                    DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
+                    if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                    } else {
+                        shudiyunB2cOrderDTO.setTransaction_currency(shopInfo.getTradeCurrency());
+                    }
                 }
-                shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                 shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
                 shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 
 import javax.servlet.http.HttpServletRequest;
@@ -323,4 +324,8 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * 部门信息校验和查询
      */
     List<String> handleDept(List<String> deptIdList);
+
+    PagingVO<ProductShowDTO> exportProductShow(PagingDTO<ProductSearchDTO.ExportDTO> dto);
+
+    PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProductTaskExcelDTO(PagingDTO<ProductSearchDTO.ExportDTO> dto);
 }

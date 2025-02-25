@@ -47,6 +47,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,7 +61,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class MercadoSdkClientService {
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         ShopDTO.RefreshTokenDTO dto = new ShopDTO.RefreshTokenDTO();
         dto.setBaseUrl("https://api.mercadolibre.com");
         dto.setClientId("1734784828261273604");
@@ -76,7 +78,7 @@ public class MercadoSdkClientService {
 
         //请求头（无）
         Map<String, String> headerMap = new HashMap<>();
-/*
+*//*
         //发起POST请求
         String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
 
@@ -91,7 +93,7 @@ public class MercadoSdkClientService {
                     bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
         }
         if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
-        }*/
+        }*//*
         String token = "";
         long sleepTime = 1000;
         int count = 0;
@@ -124,7 +126,7 @@ public class MercadoSdkClientService {
             token = refreshTokenDTO.getAccessToken();
         }
 
-    }
+    }*/
 
 
     private static RedisUtil redisUtil;
@@ -375,6 +377,16 @@ public class MercadoSdkClientService {
         }
 
         return resultList;
+    }
+
+    public static void main(String[] args) {
+        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
+        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
+        JobTaskDTO task = new JobTaskDTO();
+        shopInfoDTO.setAccessToken("APP_USR-3457166802805723-022400-6fb4be44aa7ddefdd0329f70180caf11-2119968271");
+        task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        task.setNextTime(LocalDateTime.parse("2025-02-24 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
     }
 
     /**
