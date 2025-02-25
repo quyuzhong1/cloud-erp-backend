@@ -202,7 +202,7 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
 
     List<LogisticsChannelEntity> listByName(List<String> channelNameList);
 
-    List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled);
+    List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled, String type);
 
     LogisticsChannelDTO.SignShipDTO getScaleChannelByChannelById(String logisticsChannelId, String dictPlatform);
     /**
@@ -254,4 +254,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode);
 
     PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto);
+
+    void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto);
 }

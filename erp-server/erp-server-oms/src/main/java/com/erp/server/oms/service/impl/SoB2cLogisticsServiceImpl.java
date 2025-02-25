@@ -24,6 +24,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.SoB2cLogisticSourceSystemEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -84,6 +85,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Resource
     private SoB2cLabelService soB2cLabelService;
 
+    @Resource
+    private SoB2cErrorService soB2cErrorService;
     @Override
     public Boolean add(SoB2cLogisticsDTO.AddDTO logisticsDTO, String mainId) {
         SoB2cLogisticsEntity entity = new SoB2cLogisticsEntity();
@@ -220,7 +223,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
     @Transactional(rollbackFor = Exception.class)
     public SoB2cLogisticsEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, BigDecimal allNetWeight,
                                                    BigDecimal maxLength, BigDecimal maxWidth, BigDecimal totalHeight) {
-//        if (Objects.isNull(mainEntity) || StrUtil.isBlank(mainEntity.getId())) return;
         boolean isShopee = LogisticsPlatformEnum.SHOPEE.getCode().equals(dto.getDictPlatform());
         List<PlatformOrderLogisticsDTO> logisticsList = dto.getLogisticsList();
         //获取主表下物流记录
@@ -260,19 +262,11 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         // 暂时使用第一个
         PlatformOrderLogisticsDTO platformOrderLogisticsDTO = logisticsList.get(0);
-
-        List<LogisticsBillDTO.AddDTO> addDTOList = new ArrayList<>();
-
-
         //获取主表下物流记录
         List<SoB2cLogisticsEntity> listByMainId = getListByMainId(mainEntity.getId());
-        //转map 比较是否存在记录 不存在则删除 存在则更新
-//        Map<String, SoB2cLogisticsEntity> map = listByMainId.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getCode, Function.identity()));
-        SoB2cLogisticsEntity entity = null;
-        if (CollectionUtils.isNotEmpty(listByMainId)) {
-            entity = listByMainId.get(0);//跨店铺拆单需要修改这里
-        }
-//            SoB2cLogisticsEntity entity = map.get(platformOrderLogisticsDTO.getCode());
+        //跨店铺拆单需要修改这里
+        SoB2cLogisticsEntity entity = CollectionUtils.isNotEmpty(listByMainId) ? listByMainId.get(0) : null;
+        //重置物流信息
             if (Objects.isNull(entity)) {
                 entity = B2cOrderConsumerConverter.INSTANCE.convertNewLogistics(platformOrderLogisticsDTO, mainEntity.getId(), allNetWeight,maxLength,maxWidth,totalHeight);
                 entity.setMainId(mainEntity.getId());
@@ -287,9 +281,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (!this.save(entity)) {
                     throw new ServiceException("[SoB2cLogisticsEntity] 保存失败");
                 }
-//                if (isShopee) {
-//                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
-//                }
             } else {
                 SoB2cLogisticsEntity entity2 = new SoB2cLogisticsEntity();
                 BeanMapperUtils.copy(platformOrderLogisticsDTO, entity2);
@@ -319,14 +310,12 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                 if (StringUtils.isNotBlank(entity.getTrackNo())){
                     entity2.setTrackNo(entity.getTrackNo());
                 }
-
                 //如果美客多平台订单不是平台仓发货，不更新物流单号
                 if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                     if (!mainEntity.hasPlatformWarehouseOrder()) {
                         entity.setCode(oldEntity.getCode());
                     }
                 }
-
                 entity2.setWeight(allNetWeight);
                 entity2.setLength(maxLength);
                 entity2.setWidth(maxWidth);
@@ -337,19 +326,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     throw new ServiceException("[SoB2cLogisticsEntity] 更新失败");
                 }
                 entity = entity2;
-//                if (isShopee) {
-//                    addDTOList.add(buildLogisticsBill(entity, mainEntity));
-//                }
             }
-        //虾皮物流订单新增 TMS物流单号记录--虾皮为自发货订单，不新增
-//        if (isShopee) {
-//            try {
-//                logisticsBillFeign.logisticsBillBatchSave(addDTOList);
-//            } catch (Exception e) {
-//                log.error("同步物流单异常：{}", addDTOList);
-//            }
-//
-//        }
         return entity;
     }
 
@@ -455,7 +432,7 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         if (StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),"物流渠道为空");
         }
-        if (StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
+        if (checkBillStatus && StringUtils.isBlank(soB2cLogisticsEntity.getCode())) {
             return BatchResultDTO.fail(id,soB2cEntity.getCode(),"未获取跟踪号，无法取消");
         }
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(soB2cEntity.getBillStatus()) && checkBillStatus) {
@@ -463,9 +440,6 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
         }
         if(TransferStatusEnum.SUCCESS.getCode().equals(soB2cEntity.getTransferStatus()) && checkBillStatus){
             throw new ServiceException( CharSequenceUtil.format("订单信息已预报，请取消订单预报后支持重新获取跟踪号"));
-        }
-        if (PlatformDictEnum.SHOPEE.getCode().equals(soB2cEntity.getDictPlatform())){
-            throw new ServiceException(ApiError.ERROR_SHOP_SHOPEE_CANCEL_LOGISTICS);
         }
         //取消物流单
         LogisticsBillDTO.CancelBillDTO cancelBillDTO = LogisticsBillDTO.CancelBillDTO.builder().
@@ -492,6 +466,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
             this.updateById(soB2cLogisticsEntity);
             //清空面单信息
             soB2cLabelService.deleteByMainIds(Arrays.asList(id));
+            //清空获取面单异常
+            soB2cErrorService.removeErrorOrder(id, SoB2cErrorTypeEnum.GET_LOGISTICS_LABEL.getCode());
             return BatchResultDTO.success(id,soB2cEntity.getCode(),"取消成功");
         }
 

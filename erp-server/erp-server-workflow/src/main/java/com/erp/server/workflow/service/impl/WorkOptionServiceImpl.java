@@ -36,10 +36,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
-import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
-import com.erp.rpc.oms.feign.SoChangeFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
@@ -95,7 +92,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private SoInfoFeign soInfoFeign;
-
+    @Resource
+    private SoB2cFeign soB2cFeign;
     @Resource
     private SoChangeFeign soChangeFeign;
 
@@ -672,6 +670,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case SO_INFO:
                 resultDTOList = soInfoFeign.approve(baseApproveParamDTO);
+                break;
+            case SO_B2C:
+                resultDTOList = soB2cFeign.approve(baseApproveParamDTO);
                 break;
             case SO_CHANGE:
                 ApiResult<List<BatchResultDTO>> approve = soChangeFeign.approve(baseApproveParamDTO);

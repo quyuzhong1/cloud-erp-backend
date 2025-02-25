@@ -30,4 +30,6 @@ public class AntuConstants {
 
     public static final String GET_SPECIAL_ORDERS_LIST = "getSpecialOrdersList";
     public static final String GET_CALCULATE_FEE_BATCH = "getCalculateFeeBatch";
+    //上传文件
+    public static final String GET_UPLOAD_FILE = "uploadFile";
 }

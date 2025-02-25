@@ -9,7 +9,8 @@ package com.sdk.oms.shopee.constants;
  */
 public interface ShopeeConstants {
      //     String host = "https://partner.test-stable.shopeemobile.com";
-     String host = "https://partner.shopeemobile.com";
+//     String host = "https://partner.shopeemobile.com";
+     String host = "https://openplatform.shopee.cn";
      //     long partner_id = 1070627;
 //     long partner_id = 1207995;
      long partner_id = 2006582;
@@ -27,7 +28,7 @@ public interface ShopeeConstants {
      String access_token = "5a577a4f466d686f4a53736c61796e47";
      String refresh_token = "4e776c4e494949424e464d664379436c";
      String shop_refresh_token = "58666c4b58496358486265526e6f434a";
-     String shop_access_token = "696a4176624d724878505046756a6c4b";
+     String shop_access_token = "7775465875546c416f506a6b4a436372";
      String merchant_access_token = "6b6c50425770684a56474c6257697963";
      String merchant_refresh_token = "58424b515850524b7562476965644f44";
 
