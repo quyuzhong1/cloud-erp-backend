@@ -85,7 +85,7 @@ public class PurchasePriceDetailController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量禁用采购价目状态:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量禁用采购价目状态", keyIdName = "ids")
     @PostMapping("/disabled")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -104,7 +104,7 @@ public class PurchasePriceDetailController extends BaseController {
     * @param dto
     * @return ApiResult
     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量启用采购价目状态:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量启用采购价目状态", keyIdName = "ids")
     @PostMapping("/enable")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",

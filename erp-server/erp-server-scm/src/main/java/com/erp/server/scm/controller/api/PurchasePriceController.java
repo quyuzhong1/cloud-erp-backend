@@ -196,7 +196,7 @@ public class PurchasePriceController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(purchasePriceService.submitEntity(entity));
+                resultDTOS.add(purchasePriceService.deleteEntity(entity));
             }catch (Exception e){
                 log.error("采购价目删除失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
