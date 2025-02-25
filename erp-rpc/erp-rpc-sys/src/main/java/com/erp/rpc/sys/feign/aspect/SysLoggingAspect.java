@@ -1008,10 +1008,6 @@ public class SysLoggingAspect {
      * @return 响应体解析的单号
      */
     private static String parseRecordCodeFormBatchResponse(String responseParams, String recordId, String recordCode) {
-        if (StringUtils.isBlank(recordId) || !recordId.equalsIgnoreCase(recordCode) || StringUtils.isBlank(responseParams)) {
-            // 来源为空/单号不等于ID/响应为空
-            return "";
-        }
         try {
             JSONObject jsonObject = JSONUtil.parseObj(responseParams);
             Object dataObj = jsonObject.get("data");
@@ -1019,6 +1015,10 @@ public class SysLoggingAspect {
                 return "";
             }
             if (dataObj instanceof Collection){
+                if (StringUtils.isBlank(recordId) || !recordId.equalsIgnoreCase(recordCode) || StringUtils.isBlank(responseParams)) {
+                    // 来源为空/单号不等于ID/响应为空
+                    return "";
+                }
                 JSONArray jsonArray = JSONUtil.parseArray(dataObj);
                 JSONObject curObj = jsonArray.stream()
                         .map(JSONUtil::parseObj)

@@ -716,6 +716,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         if (CharSequenceUtil.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        entity = this.getById(entity.getId());
         this.submitEntity(entity);
         return entity;
     }

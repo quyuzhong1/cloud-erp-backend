@@ -370,6 +370,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         if (StringUtils.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        entity = this.getById(entity.getId());
         //提交
         return this.submitEntity(entity);
     }

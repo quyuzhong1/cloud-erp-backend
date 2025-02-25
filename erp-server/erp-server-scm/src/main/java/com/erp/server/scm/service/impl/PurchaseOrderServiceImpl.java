@@ -879,6 +879,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        purchaseOrderEntity = this.getById(purchaseOrderEntity.getId());
         //提交
         return this.submitEntity(purchaseOrderEntity, Boolean.TRUE);
     }
