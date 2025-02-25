@@ -1,10 +1,11 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -25,7 +26,6 @@ import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -106,6 +106,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private SyncSoB2cService syncSoB2cService;
 
+    @Resource
+    private SoB2cSplitService soB2cSplitService;
 
 
     @Override
@@ -389,6 +391,99 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
 
         return resultDTO;
+    }
+
+    @Override
+    public Boolean tiktokSplit(PlatformOrderDTO dto) {
+        List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCodeList(Arrays.asList(dto.getPlatformCode()),dto.getDictPlatform(),dto.getShopId(),"");
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            return true;
+        }
+        soB2cEntityList = soB2cEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
+        List<String> ids = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(ids);
+        List<String> dtoPackageIds = dto.getDetails().stream().map(PlatformOrderDetailDTO::getPlatformPackageId).distinct().collect(Collectors.toList());
+        List<String> soPackageIds = detailList.stream().map(SoB2cDetailEntity::getPlatformPackageId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(dtoPackageIds) || CollectionUtils.isEmpty(soPackageIds)){
+            return true;
+        }
+        if (dtoPackageIds.size() != soPackageIds.size() || !new HashSet<>(dtoPackageIds).containsAll(soPackageIds)){
+            if(soB2cEntityList.size() == 1 && dtoPackageIds.size() > 1){
+                SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
+                if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
+                    soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP更新拆单信息失败","","","");
+                    return false;
+                }
+                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soB2cEntity.getId());
+                if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
+                    try {
+                        BatchResultDTO batchResultDTO = soB2cLogisticsService.cancelLogistic(soB2cEntity.getId(),Arrays.asList(soB2cEntity),Arrays.asList(soB2cLogisticsEntity),true);
+                        if(!batchResultDTO.getSuccess()){
+                            soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP取消物流单失败，无法更新拆单信息:"+batchResultDTO.getMsg(),"","","");
+                            return false;
+                        }
+                    }catch (Exception e){
+                        soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP取消物流单失败，无法更新拆单信息:"+e.getMessage(),"","","");
+                        return false;
+                    }
+                }
+                //做拆分，根据package拆分
+                SoB2cDTO.SplitSaveDTO splitSaveDTO = new SoB2cDTO.SplitSaveDTO();
+                splitSaveDTO.setId(soB2cEntity.getId());
+                splitSaveDTO.setIsSyncPlatform(false);
+                Map<String,List<PlatformOrderDetailDTO>> packageIdMap = dto.getDetails().stream().collect(Collectors.groupingBy(PlatformOrderDetailDTO::getPlatformPackageId));
+                List<SoB2cDTO.GroupSplitSaveDTO> groupList = new ArrayList<>();
+                packageIdMap.forEach((k,v) -> {
+                    SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = new SoB2cDTO.GroupSplitSaveDTO();
+                    List<SoB2cDTO.SplitDetailSaveDTO> splitDetailList = new ArrayList<>();
+                    v.forEach(e -> {
+                        SoB2cDTO.SplitDetailSaveDTO splitDetailSaveDTO = new SoB2cDTO.SplitDetailSaveDTO();
+                        SoB2cDetailEntity soB2cDetailEntity = detailList.stream().filter(d -> d.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
+                        if(Objects.isNull(soB2cDetailEntity)){
+                            return;
+                        }
+                        splitDetailSaveDTO.setQty(e.getQty());
+                        splitDetailSaveDTO.setId(soB2cDetailEntity.getId());
+                        splitDetailList.add(splitDetailSaveDTO);
+                    });
+                    groupSplitSaveDTO.setDetailList(splitDetailList);
+                    groupList.add(groupSplitSaveDTO);
+                });
+                splitSaveDTO.setGroupList(groupList);
+                SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = soB2cSplitService.splitSave(splitSaveDTO);
+                //更新拆分后的packageId
+                List<String> splitSoIds = splitSaveResultDTO.getSoB2cIds();
+                if(CollectionUtils.isNotEmpty(splitSoIds)){
+                    List<SoB2cDetailEntity> splitDetailList = soB2cDetailService.listByMainIds(splitSoIds);
+                    //key platformLineNumber val: platformPackageId
+                    Map<String,String> linePackageMap = dto.getDetails().stream().collect(Collectors.toMap(PlatformOrderDetailDTO::getPlatformLineNumber,PlatformOrderDetailDTO::getPlatformPackageId,(v1,v2)->v1));
+                    splitDetailList.forEach(v->{
+                        v.setPlatformPackageId(linePackageMap.get(v.getPlatformLineNumber()));
+                    });
+                    soB2cDetailService.updateBatchById(splitDetailList);
+                }
+                return false;
+            }
+            if(soB2cEntityList.size() > 1 && dtoPackageIds.size()  == 1){
+                //做取消拆分
+                BatchResultDTO batchResultDTO = soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
+                //更新拆分后的packageId
+                String cancelSplitSoIds = batchResultDTO.getId();
+                if(StringUtils.isNotBlank(cancelSplitSoIds)){
+                    List<SoB2cDetailEntity> cancelSplitDetailList = soB2cDetailService.listByMainId(cancelSplitSoIds);
+                    //key platformLineNumber val: platformPackageId
+                    Map<String,String> linePackageMap = dto.getDetails().stream().collect(Collectors.toMap(PlatformOrderDetailDTO::getPlatformLineNumber,PlatformOrderDetailDTO::getPlatformPackageId,(v1,v2)->v1));
+                    cancelSplitDetailList.forEach(v->{
+                        v.setPlatformPackageId(linePackageMap.get(v.getPlatformLineNumber()));
+                    });
+
+                    soB2cDetailService.updateBatchById(cancelSplitDetailList);
+                }
+                return false;
+            }
+        }
+        //如果是已经做了拆单，不允许更新订单
+        return soB2cEntityList.size() <= 1;
     }
 
     private List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList) {

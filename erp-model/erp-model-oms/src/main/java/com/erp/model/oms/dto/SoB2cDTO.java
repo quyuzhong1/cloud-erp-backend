@@ -2124,6 +2124,10 @@ public class SoB2cDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
         /**
+         * 是否同步平台
+         */
+        private Boolean isSyncPlatform = true;
+        /**
          * 明细信息
          */
         @NotEmpty(message = "拆分后订单数据不能为空")
