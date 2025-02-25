@@ -9,7 +9,10 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -116,7 +119,38 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
         
     	JSONObject result = data.getResponse();
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.getJSONArray("item_list").toJSONString(0));
+		JSONArray jsonArray = result.getJSONArray("item_list");
+		List<JSONObject> resultList = new ArrayList<>();
+		if(CollUtil.isNotEmpty(jsonArray)) {
+			for(Object object : jsonArray) {
+				JSONObject json = (JSONObject)object;
+				Long itemId = json.getLong("item_id");
+				productRequest.setItemId(itemId);
+				data = null;
+				sleepTime = 1000;
+		    	count = 0;
+		    	while(data == null) {
+		    		data = this.executeModel(productRequest);
+		    		if(data == null) {
+		    			if(count == 10) {
+		    				throw new ServiceException("调用shopee产品明细接口重试" + count + "失败");
+		    			}
+		    			try {
+							Thread.sleep(sleepTime);
+						} catch (InterruptedException e) {
+							Thread.currentThread().interrupt();
+						}
+		    			sleepTime = sleepTime + 1000;
+		    			count = count + 1;
+		    		}
+		    	}
+		    	JSONObject modelResult = data.getResponse();
+		    	JSONArray modelList = modelResult.getJSONArray("model");
+		    	json.set("dmp_model_list", modelList);
+		    	resultList.add(json);
+			}
+		}
+		dmpInputTaskInitDTO.setMsg(JSONUtil.toJsonStr(resultList));
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
     
 		return dmpInputTaskInitDTOList;
@@ -138,6 +172,28 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 			String error = response.getError();
 			if(StringUtils.isNotBlank(error)) {
 				throw new ServiceException("调用shopee产品明细接口报错，错误原因：" + response.getMessage());
+			}
+		}
+		
+		return response;
+	}
+	
+	private ShopeeResponse executeModel(ProductRequest productRequest){
+		ShopeeResponse response = null;
+		try {
+			response = shopeeProductService.getModelListInfo(productRequest);
+		} catch (Exception e) {
+			Throwable cause = e.getCause();
+			if(cause instanceof SSLHandshakeException || cause instanceof SocketTimeoutException) {
+				return null;
+			}
+			throw new ServiceException("调用shopee产品模型接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
+		}
+		
+		if(response != null) {
+			String error = response.getError();
+			if(StringUtils.isNotBlank(error)) {
+				throw new ServiceException("调用shopee产品模型接口报错，错误原因：" + response.getMessage());
 			}
 		}
 		

@@ -102,6 +102,4 @@ public class PlatformOrderLogisticsDTO implements Serializable {
      * 物流类型
      */
     private String logisticType;
-
-
 }

@@ -33,6 +33,10 @@ public class LogisticsQueryBaseVO implements Serializable {
      */
     String orderId;
     /**
+     * 包裹id
+     */
+    String packageId;
+    /**
      * 运单号
      */
     String transportNo;

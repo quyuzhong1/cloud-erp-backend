@@ -39,7 +39,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> req.getId().equals(entity.getChannelId())).findFirst().orElse(null);
         String supplierName = "";
         if (Objects.nonNull(channelEntity)) {
-            LogisticsSupplierEntity supplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(channelEntity.getId())).findFirst().orElse(null);
+            LogisticsSupplierEntity supplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(channelEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(supplierEntity)) {
                 supplierName = supplierEntity.getSupplierName();
             }

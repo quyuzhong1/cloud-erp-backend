@@ -986,13 +986,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         platformDTO.setWarehouseIdList(warehouseIdList);
         platformDTO.setPartitionId(receiverEntity.getPartitionId());
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
-
-      /*  //SKU对照表信息
-        List<SkuMappingDTO.ListSkuParamDTO> listParamList = list.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(skuList.stream().filter(e -> e.getSkuId().equals(obj.getSkuId())).findFirst().flatMap(e -> Optional.ofNullable(e.getSkuNo())).orElse(""), obj.getWarehouseId(),soB2cEntity.getDictPlatform())).collect(Collectors.toList());
-        ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
-        listSkuParamList.setList(listParamList);
-        List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);*/
-
         for (SoB2cDetailEntity detailEntity :list) {
 
             //产品信息
@@ -1029,6 +1022,7 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream()
                     .filter(obj -> obj.getId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(updateDTO)) {
+                detailEntity.setIsMatchWarehouseRule(Boolean.TRUE);
                 detailEntity.setWarehouseName(updateDTO.getName());
                 //库存组织
                 BaseIdDTO.CodeDTO companyDTO = accountingCompanyList.stream()
@@ -1038,20 +1032,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     detailEntity.setWarehouseOrgName(companyDTO.getName());
                 }
             }
-
-            //平台SKU
-//            SkuMappingDTO.ListSkuDTO platformListSkuDTO = SkuMappingList.stream().filter(obj -> obj.getProductSkuId().equals(detailEntity.getSkuId()) && obj.getDictPlatform().equals(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
-//            if (ObjectUtils.isNotEmpty(platformListSkuDTO)) {
-//                // 非平台下载的订单
-//                if (!SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
-//                detailEntity.setPlatformSkuNo(platformListSkuDTO.getPlatformSkuNo());
-//                detailEntity.setPlatformSpuNo(platformListSkuDTO.getPlatformSpuNo());
-//                }
-//            } else {
-//                detailEntity.setPlatformSkuNo("");
-//                detailEntity.setPlatformSpuNo("");
-//            }
-
             //操作日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {
                 SoB2cDetailEntity old = this.getById(detailEntity.getId());

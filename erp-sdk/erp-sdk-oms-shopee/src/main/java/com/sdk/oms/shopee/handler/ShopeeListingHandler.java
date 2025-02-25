@@ -15,16 +15,11 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeListingDTO;
-import com.sdk.oms.shopee.dto.global.request.GlobalProductRequest;
-import com.sdk.oms.shopee.dto.global.response.GlobalItemInfo;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
-import com.sdk.oms.shopee.dto.product.response.ItemInfo;
 import com.sdk.oms.shopee.dto.product.response.ShopeeProductInfo;
-import com.sdk.oms.shopee.service.ShopeeGlobalProductService;
 import com.sdk.oms.shopee.service.ShopeeProductService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +47,7 @@ import java.util.stream.Collectors;
 @BusinessType(BusinessTypeEnum.PRODUCT)
 public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeListingDTO, PlatformProductDTO> {
     @Resource
-    private ShopeeFeign shopeeFiegn;
+    private ShopInfoFeign shopInfoFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -88,7 +83,7 @@ public class ShopeeListingHandler extends AbstractProductHandler<PlatformShopeeL
         }
         List<ShopeeProductInfo> itemInfos = new ArrayList<>();
 
-        ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
+        ApiResult<ShopAuthEntity> shopeeShopById = shopInfoFeign.getShopAuthById(data.getShopId());
         if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && Objects.nonNull(shopeeShopById.getData().getType())
                && "shopee_shop".equalsIgnoreCase(shopeeShopById.getData().getType())) {
             ProductRequest productRequest = ProductRequest.builder()

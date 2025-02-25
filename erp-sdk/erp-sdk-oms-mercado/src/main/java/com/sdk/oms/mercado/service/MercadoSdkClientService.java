@@ -47,6 +47,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -59,7 +61,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class MercadoSdkClientService {
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         ShopDTO.RefreshTokenDTO dto = new ShopDTO.RefreshTokenDTO();
         dto.setBaseUrl("https://api.mercadolibre.com");
         dto.setClientId("1734784828261273604");
@@ -76,7 +78,7 @@ public class MercadoSdkClientService {
 
         //请求头（无）
         Map<String, String> headerMap = new HashMap<>();
-/*
+*//*
         //发起POST请求
         String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
 
@@ -91,7 +93,7 @@ public class MercadoSdkClientService {
                     bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
         }
         if (StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
-        }*/
+        }*//*
         String token = "";
         long sleepTime = 1000;
         int count = 0;
@@ -124,7 +126,7 @@ public class MercadoSdkClientService {
             token = refreshTokenDTO.getAccessToken();
         }
 
-    }
+    }*/
 
 
     private static RedisUtil redisUtil;
@@ -377,6 +379,16 @@ public class MercadoSdkClientService {
         return resultList;
     }
 
+    public static void main(String[] args) {
+        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
+        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
+        JobTaskDTO task = new JobTaskDTO();
+        shopInfoDTO.setAccessToken("APP_USR-3457166802805723-022400-6fb4be44aa7ddefdd0329f70180caf11-2119968271");
+        task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        task.setNextTime(LocalDateTime.parse("2025-02-24 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
+    }
+
     /**
      * 发送请求获取指定店铺的订单
      *
@@ -527,7 +539,7 @@ public class MercadoSdkClientService {
      * @param shippingId
      * @return
      */
-    private ShipmentViewDTO getShippingRecords(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
+    public ShipmentViewDTO getShippingRecords(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
         String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "";
 
         //入参
@@ -694,29 +706,16 @@ public class MercadoSdkClientService {
      * @return
      */
     public String printShippingLabel(Map<String, String> authMap, Long shippingId) {
-
-        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "/labels";
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shippingId+"/labels";
         String token = authMap.get("token");
-
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);
-
         //设置请求头
         Map<String, String> orderHeaderMap = new HashMap<>(1);
         orderHeaderMap.put("Authorization", "Bearer " + token);
         orderHeaderMap.put("x-format-new", "true");
-
         //拉取数据
-        ApiResult shipmentResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-        if (!Objects.equals(shipmentResult.getCode(), 200) && !Objects.equals(shipmentResult.getCode(), 201)) {
-            log.error("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多marketplace/shipments数据失败，返回值 responseMap={}",
-                    orderUrl, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));
-        }
-
-        //解析数据
-        return String.valueOf(shipmentResult.getData());
-
+        return OkHttpUtils.doGetJsonBase64(orderUrl, orderParams, orderHeaderMap);
     }
 
     /**

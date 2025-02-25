@@ -688,6 +688,46 @@ public class SoB2cController extends BaseController {
     }
 
     /**
+     * 重新获取面单
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025/2/17 10:47
+     */
+    @PostMapping("/getLogisticsLabel")
+    @LogAction(value = LogActionEnum.GET_LOGISTICS_LABEL, desc = "重新获取面单")
+    public ApiResult<List<BatchResultDTO>> getLogisticsLabel(@RequestBody @Validated SoB2cDTO.GetLogisticsLabel dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoB2cEntity> entityList = soB2cService.listByIds(ids);
+        List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.listByMainIds(ids);
+        for (String id : ids) {
+            BatchResultDTO result;
+            SoB2cEntity entity = entityList.stream().filter(e ->Objects.equals(id, e.getId())).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流面单失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
+            if (Objects.isNull(soB2cLogisticsEntity)) {
+                result = BatchResultDTO.fail(id, entity.getCode(), "B2C销售订单物流信息不存在, 获取物流面单失败");
+                resultDTOS.add(result);
+                continue;
+            }
+            try {
+                result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity);
+            } catch (Exception e) {
+                log.error("B2C销售订单获取物流单号失败", e);
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
      * 提交发货
      *
      * @param dto
@@ -698,7 +738,7 @@ public class SoB2cController extends BaseController {
     @PostMapping("/submitDelivery")
     @Idempotent
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
-    public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<List<BatchResultDTO>> submitDelivery(@RequestBody @Validated SoB2cDTO.SubmitDeliveryDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getIds().size()>100){
             throw new ServiceException("批量提交发货数据条数不能超过100");
@@ -712,7 +752,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cService.submitDelivery(id);
+                result = soB2cService.submitDelivery(id, dto.getChannelId());
             } catch (Exception e) {
                 log.error("B2C销售订单提交发货失败,id:{}",id, e);
                 SoB2cEntity entity = soB2cService.getById(id);

@@ -311,4 +311,80 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          */
         private LocalDateTime tradeTime;
     }
+
+
+    /**
+     * 飞书通知DTO(按sku+仓库)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SendNoticeSkuDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 虚拟仓库Id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓库名称
+         */
+        private String virtualWarehouseName;
+        /**
+         * 冻结库存
+         */
+        private Integer virtualFrozenQty;
+        /**
+         * 单据冻结数
+         */
+        private Integer billFrozenQty;
+    }
+
+
+    /**
+     * 飞书通知DTO(汇总)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SendNoticeTotalDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+
+        /**
+         * 虚拟仓库Id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓库名称
+         */
+        private String virtualWarehouseName;
+        /**
+         * 冻结库存
+         */
+        private Integer virtualFrozenQty;
+        /**
+         * 单据冻结数
+         */
+        private Integer billFrozenQty;
+    }
 }

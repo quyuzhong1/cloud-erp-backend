@@ -394,4 +394,7 @@ public class GoodCangCreateOutboundReq {
     //当前填写的物流产品为支持客户选择是否打板时，此字段传是或否才会生效。若物流产品不支持客户选择是否打板，此字段传是或否均不生效，谷仓会忽略此字段传值。
     @JSONField(name = "is_optional_board")
     private Integer isOptionalBoard;
+    //配送商
+    @JSONField(name = "distributor_type")
+    private Integer distributorType;
 }

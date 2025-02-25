@@ -263,6 +263,13 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
     List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset);
 
     /**
+     * 获取物流面单信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(LogisticsBillDTO.PrintLogisticsWaybillDTO dto);
+
+    /**
      * 初始化物流单 无销售出库单 b2b/
      */
     void deleteLogisticsBillNoOutstock(String orderType);

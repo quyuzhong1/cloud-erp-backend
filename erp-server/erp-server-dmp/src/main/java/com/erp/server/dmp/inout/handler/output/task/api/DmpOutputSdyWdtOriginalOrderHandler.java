@@ -157,7 +157,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             BigDecimal totalQty = dmpSoDetailEntityList.stream().map(DmpSoOriginalDetailEntity::getNum).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty.intValue());
-            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty.intValue());
 
             //取消金额、数量
             shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getRefundAmount());
@@ -168,6 +167,8 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             } else {
                 shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(0);
             }
+            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty.intValue() - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
+
             shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPaid());
 
             shudiyunB2cOrderDTO.setTotal_freight(BigDecimal.ZERO);
