@@ -338,6 +338,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (null == entity) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        entity = this.getById(entity.getId());
         this.submitEntity(entity);
         return entity;
     }

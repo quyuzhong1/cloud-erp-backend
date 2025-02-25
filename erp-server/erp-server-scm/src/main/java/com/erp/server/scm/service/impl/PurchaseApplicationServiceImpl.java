@@ -638,6 +638,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (StringUtils.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        entity = this.getById(entity.getId());
         //提交
         return this.submitEntity(entity);
     }
