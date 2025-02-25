@@ -1,6 +1,5 @@
 package com.erp.server.mrp.calculation.strategy;
 
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
@@ -10,13 +9,10 @@ import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.server.mrp.service.CfgRuleWarehouseDetailService;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,13 +27,12 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
     private CfgRuleWarehouseDetailService cfgRuleWarehouseDetailService;
 
     @Override
-    @Cacheable(cacheNames = "cache:mrp:getWarehouse",keyGenerator = "myKeyGenerator")
     public CfgRuleWarehouseDTO.StrategyResultDTO process(CfgRuleWarehouseDTO.StrategyDTO strategyDTO) {
         CfgRuleWarehouseDTO.StrategyResultDTO strategyResultDTO = new CfgRuleWarehouseDTO.StrategyResultDTO();
-        CfgRuleWarehouseEntity cfgRuleWarehouse = cfgRuleWarehouseService.getOne(Wrappers.emptyWrapper());
+        CfgRuleWarehouseEntity cfgRuleWarehouse = strategyDTO.getCfgRuleWarehouse();
         strategyResultDTO.setIsEnableOverseas(cfgRuleWarehouse.getIsEnableOverseas());
         strategyResultDTO.setIsEnableVirtual(cfgRuleWarehouse.getIsEnableVirtual());
-        List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listByMainIdList(Collections.singletonList(cfgRuleWarehouse.getId()));
+        List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList = strategyDTO.getCfgRuleWarehouseDetailList();
         //开启了虚拟仓
         if (Boolean.TRUE.equals(cfgRuleWarehouse.getIsEnableVirtual())) {
             List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> localWarehouse = cfgRuleWarehouseDetailList.stream()
@@ -69,7 +64,7 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
             strategyResultDTO.setLocalWarehouseList(localWarehouse);
         }
         //开启了海外仓
-        if (Boolean.TRUE.equals(cfgRuleWarehouse.getIsEnableOverseas()) || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(strategyDTO.getPlatform())) {
+        if (Boolean.TRUE.equals(cfgRuleWarehouse.getIsEnableOverseas()) || CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(strategyDTO.getPlatformType())) {
             List<CfgRuleWarehouseDTO.StrategyDetailResultDTO> overseasWarehouse = cfgRuleWarehouseDetailList.stream()
                     .filter(v -> CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(v.getWarehouseType()))
                     .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::buildStrategyDetailResultDTO)

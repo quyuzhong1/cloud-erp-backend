@@ -45,7 +45,8 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         List<ReplenishmentResultDTO.RptOutOfStockDTO> rptOutOfStocks = replenishmentResultDTO.getRptOutOfStocks();
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
-        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = stockUpResult.getLogisticsResult();
+        CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult = cfgRuleStrategyDTO.getExpireTimeResult();
+        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = expireTimeResult.getLogisticsResult();
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestAmountResult = cfgRuleStrategyDTO.getSuggestAmountResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey();
         Set<String> deliveryVolumeAging = cfgRuleCommonService.findByKey(baseKey, suggestAmountResult, baseKey + ":" + CfgRuleSuggestedAmountNodeEnum.getDeliveryVolumeAging(replenishmentResultDTO.getReplenishment().getPlatformType()));
@@ -60,7 +61,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                 .map(Integer::parseInt)
                 .findFirst().orElse(180);
         // 根据新品/常规品获取默认补货系数
-        BigDecimal stockingRatio = CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode().equals(replenishmentResultDTO.getReplenishmentDetail().getSkuType()) ? stockUpResult.getStockingRatio() : stockUpResult.getNewStockingRatio();
+        BigDecimal stockingRatio = Optional.ofNullable(stockUpResult.getRefStockingRatio()).orElse(stockUpResult.getStockingRatio());
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = replenishmentResultDTO.getSalesEstimates();
         List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults = stockUpResult.getStockingRatioResults();
         LocalDate now = LocalDate.parse(replenishmentResultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
@@ -75,14 +76,14 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         //建议发货日期（本地发FBA）= 断货日期 -（本地发FBA时效 + FBA入库时间 + 本地仓发货频率 + FBA安全天数）；若建议发货日期＜当前日期，取当前日期
                         //建议发货日期（本地发海外）= 断货日期 -（本地发海外时效 + 海外仓入库时间 + 本地仓发货频率 + 海外仓安全天数）；若建议发货日期＜当前日期，取当前日期
                         LocalDate suggestDeliveryDate = localDate.minusDays(logisticsResult.getLogisticsDays())
-                                .minusDays(stockUpResult.getInstockDays())
+                                .minusDays(expireTimeResult.getInstockDays())
                                 .minusDays(logisticsResult.getLogisticsCycleDays())
                                 .minusDays(stockUpResult.getSafeDays());
                         suggestDeliveryDate = suggestDeliveryDate.isBefore(now) ? now : suggestDeliveryDate;
                         suggestDTO.setSuggestDeliveryDate(suggestDeliveryDate);
                         //预计可售日期（本地发FBA）= 建议发货日 + 本地发FBA时效 + FBA入库时间
                         //预计可售日期（本地发海外）= 建议发货日 + 本地发海外时效 + 海外仓入库时间
-                        LocalDate estimateSalesDate = suggestDeliveryDate.plusDays(logisticsResult.getLogisticsDays()).plusDays(stockUpResult.getInstockDays());
+                        LocalDate estimateSalesDate = suggestDeliveryDate.plusDays(logisticsResult.getLogisticsDays()).plusDays(expireTimeResult.getInstockDays());
                         suggestDTO.setEstimateSalesDate(estimateSalesDate);
                         //建议发货量
                         LocalDate calcDate = suggestDeliveryDate.plusDays(Math.min(agingDays, days));
@@ -102,7 +103,7 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
                         suggestDTO.setSuggestDeliveryQty(Math.max(0, getSuggestDeliveryQty(calcDate, salesEstimates, stockingRatioResults, stockingRatio, now) - inventory));
                     }
                     //建议采购日期
-                    LocalDate purchaseSuggestDate = handlePurchaseSuggestDate(suggestDTO, stockUpResult, logisticsResult);
+                    LocalDate purchaseSuggestDate = handlePurchaseSuggestDate(suggestDTO, expireTimeResult,stockUpResult, logisticsResult);
                     suggestDTO.setSuggestPurchaseDate(purchaseSuggestDate);
                     return suggestDTO;
                 }).filter(v -> v.getSuggestDeliveryQty() > 0).collect(Collectors.toList());
@@ -125,15 +126,15 @@ public class DeliverySuggestHandler extends AbstractSkuCalculationHandler {
      * @return LocalDate
      */
     private LocalDate handlePurchaseSuggestDate (ReplenishmentResultDTO.DeliverySuggestDTO suggestDTO
-            ,CfgRuleStockUpDTO.StrategyResultDTO stockUpResult,CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult) {
+            , CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult) {
         //建议采购日期 = 建议发货日期 -（审批时长 + 采购交期 + 供应商发货时效 + 质检天数 + 采购频率 + 本地发FBA时效 + FBA入库时间 + 本地仓发货频率 + FBA安全天数）
-        LocalDate suggestDeliveryDate = suggestDTO.getSuggestDeliveryDate().minusDays(stockUpResult.getPurchaseApproveDays())
-                .minusDays(stockUpResult.getProductionDays())
-                .minusDays(stockUpResult.getSupplierDeliveryDays())
-                .minusDays(stockUpResult.getQcDays())
-                .minusDays(stockUpResult.getPurchaseCycleDays())
+        LocalDate suggestDeliveryDate = suggestDTO.getSuggestDeliveryDate().minusDays(expireTimeResult.getPurchaseApproveDays())
+                .minusDays(expireTimeResult.getProductionDays())
+                .minusDays(expireTimeResult.getSupplierDeliveryDays())
+                .minusDays(expireTimeResult.getQcDays())
+                .minusDays(expireTimeResult.getPurchaseCycleDays())
                 .minusDays(logisticsResult.getLogisticsDays())
-                .minusDays(stockUpResult.getInstockDays())
+                .minusDays(expireTimeResult.getInstockDays())
                 .minusDays(logisticsResult.getLogisticsCycleDays())
                 .minusDays(stockUpResult.getSafeDays());
         LocalDate now = LocalDate.now();

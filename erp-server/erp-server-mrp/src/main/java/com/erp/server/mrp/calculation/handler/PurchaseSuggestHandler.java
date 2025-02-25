@@ -57,8 +57,8 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         }
 
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
-        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
-        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = stockUpResult.getLogisticsResult();
+        CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult = cfgRuleStrategyDTO.getExpireTimeResult();
+        CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult = expireTimeResult.getLogisticsResult();
         List<CfgRuleCommonDTO.StrategyResultDTO> suggestAmountResult = cfgRuleStrategyDTO.getSuggestAmountResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseSuggestRedisKey();
         List<String> purchaseVolumeAging = CfgRuleSuggestedAmountNodeEnum.getPurchaseVolumeAgingList();
@@ -98,14 +98,14 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                             suggestDTO.setSuggestPurchaseDate(entry.getKey());
                             //预计可售日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发FBA时效 + FBA入库时间）
                             //预计可售日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 +质检天数）+（本地发海外时效 + 海外仓入库时间）
-                            LocalDate estimateSalesDate = suggestDTO.getSuggestPurchaseDate().plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
-                                    .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays())
-                                    .plusDays(logisticsResult.getLogisticsDays()).plusDays(stockUpResult.getInstockDays());
+                            LocalDate estimateSalesDate = suggestDTO.getSuggestPurchaseDate().plusDays(expireTimeResult.getPurchaseApproveDays()).plusDays(expireTimeResult.getProductionDays())
+                                    .plusDays(expireTimeResult.getSupplierDeliveryDays()).plusDays(expireTimeResult.getQcDays())
+                                    .plusDays(logisticsResult.getLogisticsDays()).plusDays(expireTimeResult.getInstockDays());
                             suggestDTO.setEstimateSalesDate(estimateSalesDate);
                             //预计入库日期 （本地发FBA）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数+ 采购频率）
                             //预计入库日期 （本地发海外）= 建议采购日 +（审批时长 + 采购交期 + 供应商发货时效 + 质检天数+ 采购频率）
-                            LocalDate estimateInstockDate = suggestDTO.getSuggestPurchaseDate().plusDays(stockUpResult.getPurchaseApproveDays()).plusDays(stockUpResult.getProductionDays())
-                                    .plusDays(stockUpResult.getSupplierDeliveryDays()).plusDays(stockUpResult.getQcDays()).plusDays(stockUpResult.getPurchaseCycleDays());
+                            LocalDate estimateInstockDate = suggestDTO.getSuggestPurchaseDate().plusDays(expireTimeResult.getPurchaseApproveDays()).plusDays(expireTimeResult.getProductionDays())
+                                    .plusDays(expireTimeResult.getSupplierDeliveryDays()).plusDays(expireTimeResult.getQcDays()).plusDays(expireTimeResult.getPurchaseCycleDays());
                             suggestDTO.setEstimateInstockDate(estimateInstockDate);
                             //建议采购量
                             LocalDate calcDate = suggestDTO.getSuggestPurchaseDate().plusDays(Math.min(agingDays, days));

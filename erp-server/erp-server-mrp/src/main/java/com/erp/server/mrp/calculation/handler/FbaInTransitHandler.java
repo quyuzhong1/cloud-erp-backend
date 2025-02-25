@@ -1,6 +1,6 @@
 package com.erp.server.mrp.calculation.handler;
 
-import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
+import com.erp.model.mrp.dto.CfgRuleExpireTimeDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
@@ -39,11 +39,11 @@ public class FbaInTransitHandler extends AbstractSkuCalculationHandler {
             replenishmentResultDTO.getReplenishmentDetail().setCfgFbaInTransit(new ArrayList<>(codes).get(0));
         }
         ReplenishmentResultDTO.BasicDTO replenishment = replenishmentResultDTO.getReplenishment();
-        CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = replenishmentResultDTO.getCfgRuleStrategy().getStockUpResult();
+        CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult = replenishmentResultDTO.getCfgRuleStrategy().getExpireTimeResult();
         List<ReplenishmentResultDTO.FbaInTransitDetailDTO> inTransitDetails =  replenishmentResultDTO.getInventoryDTO().getFbaInTransitList()
                         .stream().filter(v -> v.getShopId().equals(replenishment.getShopId()))
                         .filter(v -> v.getSkuId().equals(replenishment.getSkuId()))
-                                .map(v -> ReplenishmentResultDTO.FbaInTransitDetailDTO.buildFbaInTransitDetailDTO(v, stockUpResult,replenishmentResultDTO.getReplenishmentDetail().getCalcVersion()))
+                                .map(v -> ReplenishmentResultDTO.FbaInTransitDetailDTO.buildFbaInTransitDetailDTO(v, expireTimeResult,replenishmentResultDTO.getReplenishmentDetail().getCalcVersion()))
                                         .collect(Collectors.toList());
         Integer qty = inTransitDetails.stream().map(ReplenishmentResultDTO.FbaInTransitDetailDTO::getInTransitQty)
                 .reduce(0, Math::addExact);
