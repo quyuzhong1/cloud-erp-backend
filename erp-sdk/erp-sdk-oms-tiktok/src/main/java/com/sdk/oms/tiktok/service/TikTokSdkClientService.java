@@ -96,21 +96,21 @@ public class TikTokSdkClientService {
         TikTokSdkClientService.redisUtil = redisUtil;
     }
     public static void main(String[] args) {
-//
-//        //标记发货
-//        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
-//        TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
-//        tikTokShopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
-//        tikTokShopInfoDTO.setClientId("6buinkjt3hmld");
-//        tikTokShopInfoDTO.setAccessToken("ROW_78TplgAAAACj-JAAAriAWjVtF2MrUIFdiwpvtmvHXedAYA9cevCkZepCOiMyd4q0eyFfSnzeQNSPiYsbBmXgfkz3-MVFEcyD6QqmkIhMBjdTRnBo-Bw7DBh-IQ3fvUL_tZGR6DNSekM6IpAJl62sJ5g-cybpZ0kx7WxSxGZu6gHpcqOOBRmzGg");
-//        tikTokShopInfoDTO.setShopCipher("TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d");
-//
-//        ShipOrderUSParam param = new ShipOrderUSParam();
-//        param.setTrackingNumber("9214490357610601379030");
-//        param.setShippingProviderId("7117858858072016686");
-//        param.setOrderLineItemIds(Arrays.asList("576778267501892253"));
-//        sdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, "576649523604197419", param);
-//
+
+        //标记发货
+        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
+        TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
+        tikTokShopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
+        tikTokShopInfoDTO.setClientId("6buinkjt3hmld");
+        tikTokShopInfoDTO.setAccessToken("ROW_78TplgAAAACj-JAAAriAWjVtF2MrUIFdiwpvtmvHXedAYA9cevCkZepCOiMyd4q0eyFfSnzeQNSPiYsbBmXgfkz3-MVFEcyD6QqmkIhMBjdTRnBo-Bw7DBh-IQ3fvUL_tZGR6DNSekM6IpAJl62sJ5g-cybpZ0kx7WxSxGZu6gHpcqOOBRmzGg");
+        tikTokShopInfoDTO.setShopCipher("TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d");
+
+        ShipOrderUSParam param = new ShipOrderUSParam();
+        param.setTrackingNumber("9214490357610601379030");
+        param.setShippingProviderId("7117858858072016686");
+        param.setOrderLineItemIds(Arrays.asList("576778267501892253"));
+        sdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, "576649523604197419", param);
+
         //产品信息查询
         TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
         ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();
