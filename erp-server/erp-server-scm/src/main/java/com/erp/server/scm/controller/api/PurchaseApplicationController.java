@@ -171,7 +171,7 @@ public class PurchaseApplicationController extends BaseController {
             keyIdName = "id")
     public ApiResult<Object> addAndSubmit(@RequestBody @Validated PurchaseApplicationDTO.AddDTO dto) {
         BatchResultDTO resultDTO = purchaseApplicationService.addAndSubmit(dto);
-        return resultDTO.getSuccess() ? success() : failure();
+        return resultDTO.getSuccess() ? success(resultDTO) : failure(resultDTO);
     }
 
     /**
