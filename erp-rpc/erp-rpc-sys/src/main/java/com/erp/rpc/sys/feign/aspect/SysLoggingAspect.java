@@ -51,7 +51,6 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
-import rx.internal.util.ExceptionsUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -584,8 +583,14 @@ public class SysLoggingAspect {
         // 兼容直接List<String>数组提交
         if (JSONUtil.isTypeJSONArray(requestParams)){
             JSONArray jsonArray = new JSONArray(requestParams);
-            if (!jsonArray.isEmpty() && (jsonArray.get(0) instanceof String)){
+            if (jsonArray.isEmpty()){
+                throw new ServiceException("未找到批量请求参数内容:" + requestParams);
+            }
+            if ((jsonArray.get(0) instanceof String)){
                 return jsonArray.toList(String.class);
+            } else {
+                // 兼容List<Object> 提交
+                return parseIdsFormList(jsonArray, logAction, requestParams);
             }
         }
 
@@ -1033,5 +1038,26 @@ public class SysLoggingAspect {
         return jsonObject.getStr("code");
     }
 
+
+    /**
+     * 解析List<Object>请求参数的ids
+     */
+    private static List<String> parseIdsFormList(JSONArray jsonArray, LogAction logAction, String requestParams) {
+        // 兼容List<Object> 提交
+        String idKey = logAction.keyIdName();
+        if (StringUtils.isBlank(idKey)){
+            idKey = "id";
+        }
+        List<String> ids = new LinkedList<>();
+        for (Object item : jsonArray) {
+            JSONObject jsonObject = JSONUtil.parseObj(item);
+            String id = jsonObject.getStr(idKey);
+            if(StringUtils.isBlank(id)){
+               ServiceException.runError("解析请求参数IDS异常:没有id或的keyIdName对应字段："+ requestParams);
+            }
+            ids.add(id);
+        }
+        return ids;
+    }
 
 }
