@@ -436,7 +436,7 @@ public class SysLoggingAspect {
             // 初始化
             SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, description, id);
             // 处理数据
-            handleData(id, logAction, dto);
+            handleData(id, logAction, dto, description);
             dtoList.add(dto);
         });
         return dtoList;
@@ -490,13 +490,17 @@ public class SysLoggingAspect {
     /**
      * 批量操作数据处理
      */
-    private static void handleData(String id, LogAction logAction, SysLogRecordDTO.AddDTO dto) {
+    private static void handleData(String id, LogAction logAction, SysLogRecordDTO.AddDTO dto, String description) {
         // 设置记录ID
         dto.setRecordId(id);
         String descName = logAction.value().getName();
         // 自定义批量更新替换
         if (LogActionEnum.CUSTOM_BATCH_UPDATE.equals(logAction.value())){
-            if (!logAction.desc().contains("{") && !logAction.desc().contains("}")){
+            if (logAction.desc().contains("{") && logAction.desc().contains("}") && StringUtils.isNotBlank(description)){
+                // 解析后描述内容
+                descName = description;
+            } else {
+                // 按当前注解静态描述
                 descName = logAction.desc();
             }
         }
