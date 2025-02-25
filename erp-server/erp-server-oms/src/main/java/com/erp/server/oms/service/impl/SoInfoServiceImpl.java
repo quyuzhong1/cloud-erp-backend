@@ -93,6 +93,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -174,7 +175,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
-
+    @Resource
+    private SoLabelService soLabelService;
 
     @Resource
     private KingdeeFeign kingdeeFeign;
@@ -3243,6 +3245,82 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
 
         return this.baseMapper.existsByCustomerAndSku(customer,platformSku);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> batchUploadLogisticLabel(List<MultipartFile> files) {
+        if (CollUtil.isEmpty(files)){
+            return Collections.emptyList();
+        }
+        List<BatchResultDTO> batchResultDTOS = new ArrayList<>(files.size());
+        files.forEach(file -> batchResultDTOS.add(uploadLogisticsLabel(file)));
+        return batchResultDTOS;
+    }
+
+    @Override
+    public BatchResultDTO singleUploadLogisticLabel(MultipartFile multipartFile, String id) {
+        if (Objects.isNull(multipartFile) || multipartFile.isEmpty()) {
+            return BatchResultDTO.fail("","","文件不能为空");
+        }
+        String originalFilename = multipartFile.getOriginalFilename();
+        // 获取文件的内容类型并检查是否为PDF
+        if(!"application/pdf".equals(multipartFile.getContentType())){
+            return BatchResultDTO.fail("","","文件格式不正确，请上传PDF格式的文件");
+        }
+        SoInfoEntity entity = getById(id);
+        if (Objects.isNull(entity)){
+            return BatchResultDTO.fail(id, "", CharSequenceUtil.format("【{}】上传失败，匹配不到订单", originalFilename));
+        }
+        return uploadOrderLabel(multipartFile, entity);
+    }
+
+    @NotNull
+    private BatchResultDTO uploadOrderLabel(MultipartFile multipartFile, SoInfoEntity entity) {
+        SoLabelEntity labelEntity = soLabelService.getByMainId(entity.getId());
+        if (Objects.isNull(labelEntity)){
+            labelEntity = new SoLabelEntity();
+        }
+        try {
+            if (Objects.nonNull(entity.getIsUploadLabel()) || !entity.getIsUploadLabel()){
+                this.lambdaUpdate().set(SoInfoEntity::getIsUploadLabel, Boolean.TRUE).eq(SoInfoEntity::getId, entity.getId()).update();
+            }
+            String base64 = FileUtil.convertToBase64AndCheckIfPdf(multipartFile);
+            String prefix = "data:application/pdf;base64,";
+            labelEntity.setLogisticsLabelBase64(prefix + base64);
+            labelEntity.setMainId(entity.getId());
+            labelEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
+            soLabelService.saveOrUpdate(labelEntity);
+            String msg = CharSequenceUtil.format("用户【{}】上传文件名为【{}】的物流面单 ", UserContext.getDefaultLoginUser().getUserName(), multipartFile.getOriginalFilename());
+            operateLogService.addModuleOperateLog(msg ,ModuleTypeEnum.SO.getCode(), entity.getId(), "上传面单");
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传面单成功");
+        } catch (IOException e) {
+            log.error("物流文件转换异常:{}", e.getMessage());
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "物流文件转换异常");
+        }
+    }
+
+    private BatchResultDTO uploadLogisticsLabel(MultipartFile multipartFile) {
+        if (Objects.isNull(multipartFile) || multipartFile.isEmpty()) {
+            return BatchResultDTO.fail("","","文件不能为空");
+        }
+        String originalFilename = multipartFile.getOriginalFilename();
+        if (CharSequenceUtil.isBlank(originalFilename)){
+            return BatchResultDTO.fail("","","文件名称不能为空");
+        }
+        String soCode = originalFilename.replace(".pdf", "");
+        if (CharSequenceUtil.isBlank(soCode)){
+            return BatchResultDTO.fail("","","销售订单编号不能为空");
+        }
+        // 获取文件的内容类型并检查是否为PDF
+        if(!"application/pdf".equals(multipartFile.getContentType())){
+            return BatchResultDTO.fail("","","文件格式不正确，请上传PDF格式的文件");
+        }
+        SoInfoEntity entity = this.lambdaQuery().eq(SoInfoEntity::getCode, soCode).last("limit 1 ").one();
+        if (Objects.isNull(entity)){
+            return BatchResultDTO.fail("", soCode, CharSequenceUtil.format("【{}】上传失败，匹配不到订单", originalFilename));
+        }
+        return uploadOrderLabel(multipartFile, entity);
     }
 
     /**
