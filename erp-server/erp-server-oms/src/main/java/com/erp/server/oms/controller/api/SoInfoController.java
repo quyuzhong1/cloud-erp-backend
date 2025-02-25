@@ -827,7 +827,8 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/batchUploadLogisticLabel")
     public ApiResult<List<BatchResultDTO>> batchUploadLogisticLabel(@ModelAttribute @Validated List<MultipartFile> files) {
-        return success(soInfoService.batchUploadLogisticLabel(files));
+        List<BatchResultDTO> resultDTOS = soInfoService.batchUploadLogisticLabel(files);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -838,6 +839,7 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/singleUploadLogisticLabel")
     public ApiResult<BatchResultDTO> singleUploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) {
-        return success(soInfoService.singleUploadLogisticLabel(dto.getFile(), dto.getId()));
+        BatchResultDTO result = soInfoService.singleUploadLogisticLabel(dto.getFile(), dto.getId());
+        return result.getSuccess() ? success(result) : failure(result);
     }
 }
