@@ -98,7 +98,7 @@ public class SoB2cDeclareProductController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchUpdate")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2C销售订单申报产品信息表批量修改")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "B2C销售订单申报产品信息表批量修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "oms:soB2cDeclareProduct:batchUpdate",
@@ -109,12 +109,7 @@ public class SoB2cDeclareProductController extends BaseController {
         for (SoB2cDeclareProductDTO.UpdateDTO dto : dtoList) {
             BatchResultDTO submit = null;
             try {
-                Boolean result = soB2cDeclareProductService.update(dto);
-                if (result){
-                    submit = new BatchResultDTO();
-                    submit.setSuccess(Boolean.TRUE);
-                    submit.setMsg("操作成功");
-                }
+                submit = soB2cDeclareProductService.update(dto);
             } catch (Exception e) {
                 log.error("B2C销售订单 批量更新报关异常", e);
 
