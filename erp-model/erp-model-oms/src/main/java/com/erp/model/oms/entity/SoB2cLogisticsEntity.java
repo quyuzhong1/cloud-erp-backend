@@ -138,7 +138,6 @@ public class SoB2cLogisticsEntity extends BaseEntity<SoB2cLogisticsEntity> {
      */
     @TableField("logistic_type")
     private String logisticType;
-
     /**
      * 中转物流商id
      */

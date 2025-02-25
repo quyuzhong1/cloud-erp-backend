@@ -619,4 +619,122 @@
         ORDER BY diff.invId
     </select>
 
+    <!-- 按SKU显示库存分配差异 -->
+    <select id="listDiffSkuSendNotice"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$SendNoticeSkuDTO">
+        select
+            id,
+            skuId,
+            skuNo,
+            warehouseId,
+            warehouseName,
+            realQty,
+            distributionQty,
+            unDistributionQty
+        from
+        (WITH VirtualInventory AS (
+        SELECT
+            sku_id,
+            warehouse_id,
+            SUM(qty) AS virtualQty
+            FROM
+            virtual_inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id
+        ),
+        Inventory AS (
+        SELECT
+            min(id) as id,
+            sku_id,
+            warehouse_id,
+            SUM(CASE WHEN dict_inventory_status in ('usable','frozen') THEN qty ELSE 0 END) AS realQty
+        FROM
+        inventory
+        WHERE
+        is_deleted = false
+        GROUP BY
+        sku_id, warehouse_id
+        )
+        SELECT
+        i.id,
+        i.sku_id AS skuId,
+        pd.sku_no AS skuNo,
+        pd.name AS productName,
+        i.warehouse_id AS warehouseId,
+        wh.name AS warehouseName,
+        COALESCE(i.realQty, 0) as realQty,
+        COALESCE(vi.virtualQty, 0) as distributionQty,
+        COALESCE(i.realQty, 0) - COALESCE(vi.virtualQty, 0) as unDistributionQty
+        FROM
+        Inventory i
+        LEFT JOIN
+        VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
+        LEFT JOIN
+        product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
+        LEFT JOIN
+        warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
+        where vi.sku_id is not null
+        ) diff
+        where  diff.distributionQty > diff.realQty
+    </select>
+
+    <!-- 按汇总显示库存分配差异 -->
+    <select id="listDiffTotalSendNotice"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$SendNoticeTotalDTO">
+        select
+            id,
+            skuId,
+            skuNo,
+            warehouseId,
+            warehouseName,
+            diffQty
+        from
+            (WITH VirtualInventory AS (
+                SELECT
+                    sku_id,
+                    warehouse_id,
+                    SUM(qty) AS virtualQty
+                FROM
+                    virtual_inventory
+                WHERE
+                    is_deleted = false
+                GROUP BY
+                    sku_id, warehouse_id
+            ),
+                  Inventory AS (
+                      SELECT
+                          min(id) as id,
+                          sku_id,
+                          warehouse_id,
+                          SUM(CASE WHEN dict_inventory_status in ('usable','frozen') THEN qty ELSE 0 END) AS realQty
+                      FROM
+                          inventory
+                      WHERE
+                          is_deleted = false
+                      GROUP BY
+                          sku_id, warehouse_id
+                  )
+             SELECT
+                 i.id,
+                 i.sku_id AS skuId,
+                 pd.sku_no AS skuNo,
+                 pd.name AS productName,
+                 i.warehouse_id AS warehouseId,
+                 wh.name AS warehouseName,
+                 COALESCE(vi.virtualQty, 0) - COALESCE(i.realQty, 0) as diffQty
+             FROM
+                 Inventory i
+                     LEFT JOIN
+                 VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
+                     LEFT JOIN
+                 product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
+                     LEFT JOIN
+                 warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
+             where vi.sku_id is not null
+            ) diff
+        where  diff.diffQty > 0
+    </select>
+
 </mapper>

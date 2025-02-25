@@ -536,11 +536,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled) {
+    public List<BaseDropDownDTO.Tree> tree(Boolean filterDisabled, String type) {
         List<BaseDropDownDTO.DisabledDTO> supplierDTOList = logisticsSupplierService.listAll(false);
         List<BaseDropDownDTO.Tree> result = BeanUtil.copyToList(supplierDTOList,BaseDropDownDTO.Tree.class);
         if(filterDisabled){
             result = result.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
+        if(StringUtils.isNotBlank(type)){
+            result = result.stream().filter(v->type.equals(v.getType())).collect(Collectors.toList());
         }
         if(CollectionUtils.isEmpty(result)){
             return new ArrayList<>();
@@ -653,7 +656,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             String platform = Objects.nonNull(auth) ? auth.getLogisticsPlatform() : "";
             //根据销售平台和渠道code 获取到原生的渠道
             LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(platform, code);
-            if (Objects.isNull(saleChannel)) {
+            if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(platform)) {
                 throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannelEntity.getName());
             }
         }
@@ -794,5 +797,21 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             pagingViewDTO.setTypeName(pagingViewDTO.getType().getName());
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto) {
+        LogisticsChannelEntity old = this.getById(dto.getId());
+        if (null == old){
+            throw new ServiceException(ApiError.NOT_EXIST, "物流渠道");
+        }
+        //更新配置
+        this.lambdaUpdate().eq(LogisticsChannelEntity::getId, dto.getId())
+                .set(LogisticsChannelEntity::getIsPlatformShip, dto.getIsPlatformShip()).update();
+        String msgFormat = "由【%s】改为【%s】";
+        // 操作日志
+        String msg = CharSequenceUtil.format("用户【{}】修改渠道【{}】平台标发【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
+                String.format(msgFormat,old.getIsPlatformShip()?"是":"否", dto.getIsPlatformShip()?"是":"否"));
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "平台标发");
     }
 }

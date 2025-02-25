@@ -630,8 +630,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
         }
         // 删除本地流程任务数据
-        removeByProcessInstanceId(processInstance.getProcessInstanceId());
-
+//        removeByProcessInstanceId(processInstance.getProcessInstanceId());
+        //删除流程实例
+        this.removeByProcessInstanceId(processInstance.getProcessInstanceId());
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
 

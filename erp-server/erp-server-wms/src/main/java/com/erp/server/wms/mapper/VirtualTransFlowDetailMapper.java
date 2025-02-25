@@ -59,4 +59,18 @@ public interface VirtualTransFlowDetailMapper extends BaseMapper<VirtualTransFlo
      * @return List<VirtualTransFlowDetailDTO.ParamDTO>
      */
     List<VirtualTransFlowDetailEntity> listHisByOldParam(@Param("paramDTO")VirtualTransFlowDetailDTO.ParamDTO paramDTO);
+    /**
+     * 按sku显示冻结库存差异
+     * @author will
+     * @date 2025/2/20 12:13
+     * @return java.util.List<com.erp.model.wms.dto.VirtualTransFlowDetailDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualTransFlowDetailDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+    /**
+     * 按汇总显示冻结库存差异
+     * @author will
+     * @date 2025/2/20 12:14
+     * @return java.util.List<com.erp.model.wms.dto.VirtualTransFlowDetailDTO.SendNoticeTotalDTO>
+     */
+    List<VirtualTransFlowDetailDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

@@ -17,7 +17,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     SHOPIFY("Shopify", "Shopify", "Shopify", "004","Y","N"),
     WALMART("Walmart", "Walmart", "沃尔玛", "018","Y","N"),
     MERCADOLIBRE("mercadolibre", "美客多", "美客多", "","Y","N"),
-    TIK_TOK("TikTok", "TikTok", "TikTok", "","N","N"),
+    TIK_TOK("TikTok", "TikTok", "TikTok", "","Y","N"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "","Y","Y"),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "","Y","N"),
@@ -104,6 +104,15 @@ public enum LogisticsPlatformEnum implements EnumMessage {
         LogisticsPlatformEnum[] values = values();
         for (LogisticsPlatformEnum value : values) {
             if (value.code.equals(code)) {
+                return value.getName();
+            }
+        }
+        return "";
+    }
+    public static String getNameByName(String name) {
+        LogisticsPlatformEnum[] values = values();
+        for (LogisticsPlatformEnum value : values) {
+            if (value.name.equals(name)) {
                 return value.getName();
             }
         }

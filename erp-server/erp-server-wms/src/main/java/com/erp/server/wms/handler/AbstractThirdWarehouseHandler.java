@@ -27,8 +27,10 @@ import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
 import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
+import com.sdk.wms.antu.dto.request.AntuUploadFileReq;
 import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
 import com.sdk.wms.antu.dto.response.AntuResponse;
+import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -127,6 +129,16 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return handleAndRemoveContext(() -> getCalculateFeeBatch(calculateFeeReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CALCULATE_FEE,calculateFeeReq.getCountryCode());
     }
 
+    @Override
+    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(ThirdWarehouseUploadFileReq uploadFileReq, String authId) {
+        return handleAndRemoveContext(() -> uploadFile(uploadFileReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_UPLOAD_FILE,uploadFileReq.getOrderCode());
+    }
+
+    @Override
+    public ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq, String authId) {
+        return handleAndRemoveContext(() -> uploadOrderLabel(uploadOrderLabelReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL,uploadOrderLabelReq.getOrderCode());
+    }
+
     protected abstract ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq);
 
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
@@ -135,7 +147,8 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     protected abstract ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq);
     protected abstract ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq);
-
+    protected abstract ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq);
+    protected abstract ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq);
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
 
     protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);

@@ -22,6 +22,8 @@ public class GoodCangConstants {
     public static final String METHOD_GET_OUT_BOUND_CODE = "/public_open/order/get_order_by_ref_code";
     public static final String METHOD_GET_RETURN_INSTOCK = "/public_open/return_order/list";
     public static final String METHOD_POST_CALCULATE_DELIVERY_FEE = "/public_open/inventory/get_calculate_delivery_fee";
+    public static final String METHOD_POST_UPLOAD_ATTACHMENT = "/public_open/base_data/upload_attachment";
+    public static final String METHOD_POST_UPLOAD_ORDER_LABEL = "/public_open/order/upload_order_label";
 
     public static final String INVENTORY_AGE_LIST = "/public_open/inventory/inventory_age_list";
 }

@@ -176,6 +176,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
          */
         private String undeliverableDecision;
+        /**
+         * 是否平台发货
+         */
+        private Boolean isPlatformShip;
+
     }
 
 
@@ -402,7 +407,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 纸张大小
          */
         private String paperSize;
-
+        /**
+         * 是否推送海外仓面单
+         */
+        private Boolean isPushLabel;
         /**
          * 分拣码
          */
@@ -707,6 +715,11 @@ public class LogisticsChannelDTO implements Serializable {
         @Size(max = 30, message = "分拣码最大长度不能超过10位")
         private String sortingCode;
 
+        /**
+         * 是否推送海外仓面单
+         */
+        private Boolean isPushLabel;
+
 
         /**
          * 运费模板id
@@ -947,6 +960,22 @@ public class LogisticsChannelDTO implements Serializable {
          * 是否展示物流商
          */
         private Boolean showSupplier=false;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformSignSettingDTO{
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "渠道id不能为空")
+        private String id;
+
+        /**
+         * 是否平台发货  true代表物流下单后后续无需平台标发
+         */
+        @NotNull(message = "是否平台发货不能为空")
+        private Boolean isPlatformShip;
     }
 
     @Data

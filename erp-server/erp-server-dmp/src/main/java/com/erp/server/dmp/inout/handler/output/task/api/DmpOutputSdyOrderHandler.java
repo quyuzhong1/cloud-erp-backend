@@ -371,10 +371,12 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                         || dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.SHOPEE.getCode())
                 ) {
                     shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
+                    if (dmpSoInfoEntity.getIsCancel()) {
+                        shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+                    }
                 } else {
                     if (dmpSoInfoEntity.getIsCancel()) {
                         shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getAllAmount());
-
                         // 取消商品数量（合计）
                         shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
                     }

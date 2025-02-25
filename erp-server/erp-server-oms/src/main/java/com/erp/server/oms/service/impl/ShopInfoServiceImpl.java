@@ -148,6 +148,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+    @Resource
+    private ShopChannelRefService shopChannelRefService;
     /**
      * 添加店铺
      *
@@ -212,6 +215,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shop.setWarehouseId(dto.getWarehouseId());
         }
         Boolean result = this.save(shop);
+        shopChannelRefService.batchUpdate(shop,dto.getChannelIdList());
         return Collections.singletonList(shop);
 
     }
@@ -578,6 +582,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (!CharSequenceUtil.equals(oldChargeId, dto.getChargeId())) {
             logisticsBillCostFeign.updateShopCharge(new LogisticsBillCostDTO.UpdateShopChargeDTO(shopInfo.getId(), dto.getChargeId()));
         }
+
+        shopChannelRefService.batchUpdate(shopInfo,dto.getChannelIdList());
         return shopInfo;
     }
     /**
@@ -849,6 +855,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
             view.setCustomerName(customerInfoEntity.getName());
         }
+        List<ShopChannelRefDTO.ViewDTO> shopChannelRefList = shopChannelRefService.getViewByShopId(shop.getId());
+        view.setShopChannelRefDTOList(shopChannelRefList);
         return view;
     }
 

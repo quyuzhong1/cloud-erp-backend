@@ -2739,8 +2739,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
         if(Objects.nonNull(soOutstock)
-        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform())
-        || PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform()))){
+        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform()) || PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform()) || PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform()))){
             return true;
         }
         String id = soOutstockService.addB2cSoOutstock(dto);

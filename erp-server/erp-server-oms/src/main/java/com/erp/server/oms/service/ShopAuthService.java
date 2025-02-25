@@ -66,7 +66,7 @@ public interface ShopAuthService extends SuperService<ShopAuthEntity> {
      */
     String getShopeeCodeUrl(ShopAuthorizeUrlDTO dto);
 
-    List<ShopAuthEntity> getShopeeShopList(String type, String stauts);
+    List<ShopAuthEntity> getShopListByParam(String type, String stauts, String dictPlatform);
 
     /**
      * 根据店铺类型获取授权列表

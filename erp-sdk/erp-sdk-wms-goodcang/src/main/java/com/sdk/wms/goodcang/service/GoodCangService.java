@@ -237,4 +237,31 @@ public class GoodCangService {
         }
         return respDto;
     }
+    /**
+     * 上传附件
+     */
+    public GoodCangResponse<GoodCangUploadFileResp> uploadFile(@Valid GoodCangUploadFileReq goodCangUploadFileReq){
+        String json = JSON.toJSONString(goodCangUploadFileReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_POST_UPLOAD_ATTACHMENT,json);
+        //{"ask":"Success","message":"Success","data":{"attachment_id":45234,"path":"/oms/order_label/2025/02/17/02/26214c11eb494c74a3ac5a51b40d27c2.pdf"}}
+        GoodCangResponse<GoodCangUploadFileResp> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangUploadFileResp>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+        }
+        return respDto;
+    }
+
+    /**
+     * 上传面单
+     */
+    public GoodCangResponse<GoodCangUploadOrderLabelResp> uploadOrderLabel(@Valid GoodCangUploadOrderLabelReq goodCangUploadOrderLabelReq){
+        String json = JSON.toJSONString(goodCangUploadOrderLabelReq);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_POST_UPLOAD_ORDER_LABEL,json);
+        GoodCangResponse<GoodCangUploadOrderLabelResp> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<GoodCangUploadOrderLabelResp>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+        }
+        return respDto;
+    }
+
 }

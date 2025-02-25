@@ -1,25 +1,15 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformShipOrderAnno;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.utils.RedisUtil;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.dto.CfgAppClientDTO;
-import com.erp.model.dmp.entity.CfgAppClientEntity;
-import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.*;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.tms.feign.LogisticsFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;

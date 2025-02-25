@@ -171,6 +171,7 @@
         sb2cl.width,
         sb2cl.height,
         sb2cl.ioss_tax_no,
+        sb2cl.logistic_type,
         sb2cr.login_id as loginId,
         sb2cr.name as buyerName,
         sb2cr.email,
