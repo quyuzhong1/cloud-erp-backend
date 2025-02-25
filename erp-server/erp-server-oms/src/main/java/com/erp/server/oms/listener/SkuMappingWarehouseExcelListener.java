@@ -224,6 +224,16 @@ public class SkuMappingWarehouseExcelListener extends AnalysisEventListener<SkuM
                 addListingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
                 addListingInfoEntity.setPlatformSkuNo(dto.getWarehouseSkuNo());
                 addListingInfoEntity.setPlatformSkuName(dto.getWarehouseProductName());
+                // 服务商校验
+                OmsPlatformEnum platformEnum;
+                if (StringUtils.isNotBlank(dto.getPlatformName())){
+                    platformEnum = Arrays.stream(OmsPlatformEnum.values())
+                            .filter(e -> e.getCode().equalsIgnoreCase(dto.getPlatformName()) || e.getName().equalsIgnoreCase(dto.getPlatformName()))
+                            .findFirst().orElse(null);
+                    if (null != platformEnum){
+                        addListingInfoEntity.setPlatform(platformEnum.getCode());
+                    }
+                }
                 addListingInfoEntity.setPlatform("");
                 addListingInfoEntity.setThirdBarcode(dto.getThirdBarcode());
                 addListingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
