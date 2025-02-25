@@ -162,6 +162,8 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                     if (isAllPlatform) {
                         CfgRuleWarehouseDetailDTO.WarehousePlatformDTO platformDTO = new CfgRuleWarehouseDetailDTO.WarehousePlatformDTO();
                         platformDTO.setChannelType(VitualWarehouseChannelTypeEnum.PLATFORM.getCode());
+                        platformDTO.setShopIdList(Collections.singletonList(""));
+                        platformDTO.setPlatformList(Collections.singletonList(""));
                         platformList.add(platformDTO);
                     } else {
                         for (CfgRuleWarehouseDetailDTO.ViewDTO dto : entry.getValue()) {
@@ -169,6 +171,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                             if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(dto.getChannelType())) {
                                 platformDTO.setChannelType(VitualWarehouseChannelTypeEnum.PLATFORM.getCode());
                                 platformDTO.setPlatformList(dto.getChannelIdList());
+                                platformDTO.setShopIdList(Collections.singletonList(""));
                             } else {
                                 platformDTO.setShopIdList(dto.getChannelIdList());
                                 platformDTO.setPlatformList(Collections.singletonList(dto.getDictPlatform()));
