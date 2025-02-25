@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign.aspect;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -50,6 +51,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
+import rx.internal.util.ExceptionsUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -232,7 +234,7 @@ public class SysLoggingAspect {
             log.debug("Sys Logging doAround.after:");
             return checkAndResolveException(obj, null);
         } catch (Throwable e) {
-            log.error("[系统日志]添加系统日志-doAround-异常：{}", e.getMessage());
+            log.error("[系统日志]添加系统日志-doAround-异常：{}", ExceptionUtil.stacktraceToString(e));
             return checkAndResolveException(obj, e);
         } finally {
             UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();
