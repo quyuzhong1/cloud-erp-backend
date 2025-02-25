@@ -287,9 +287,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             logisticsBillDetailService.saveOrUpdateBatch(detailEntityList);
             //新增物流费用单
             addLogisticsBillCost(saveEntity,detailEntityList);
-
-            //同步速递云运单
-            pushSdyFieldHandler(saveEntity, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
