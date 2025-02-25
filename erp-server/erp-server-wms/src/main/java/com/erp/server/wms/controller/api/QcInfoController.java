@@ -26,10 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 质检单
@@ -358,7 +355,7 @@ public class QcInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新处理措施:处理措施={handleModeDict},ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新处理措施:处理措施={handleModeDict}", keyIdName = "ids")
     @PostMapping("/updateHandleMode")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "qc_user_id",
@@ -366,8 +363,27 @@ public class QcInfoController extends BaseController {
             serviceClass = QcInfoService.class,
             keyIdName = "ids")
     public ApiResult<?> updateHandleMode(@RequestBody @Valid QcResultDTO.UpdateHandleModeDTO dto) {
-        Boolean result = qcInfoService.updateHandleMode(dto);
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, QcInfoEntity> entityMap = qcInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            QcInfoEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "质检单不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = qcInfoService.updateHandleMode(new QcResultDTO.UpdateHandleModeDTO(dto.getHandleModeDict(), Collections.singletonList(id)));
+                if (flag) {
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "更新处理措施成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "更新处理措施失败"));
+                }
+            } catch (Exception e) {
+                log.error("质检单处理措施删除失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

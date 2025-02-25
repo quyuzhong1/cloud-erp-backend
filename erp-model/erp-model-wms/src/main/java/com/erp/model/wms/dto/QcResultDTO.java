@@ -7,6 +7,7 @@ import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -369,6 +370,7 @@ public class QcResultDTO {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UpdateHandleModeDTO {
 
         /**
