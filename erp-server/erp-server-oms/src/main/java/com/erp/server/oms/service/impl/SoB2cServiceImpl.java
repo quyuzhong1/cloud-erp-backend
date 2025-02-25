@@ -7045,7 +7045,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .in(SoB2cEntity::getPlatformCode, platformCodeList)
                 .eq(StringUtils.isNotBlank(shopId), SoB2cEntity::getShopId, shopId)
                 .eq(SoB2cEntity::getDictPlatform, dictPlatform)
-                .eq(SoB2cEntity::getSourceType, sourceType)
+                .eq(StringUtils.isNotBlank(sourceType),SoB2cEntity::getSourceType, sourceType)
                 .list();
     }
 

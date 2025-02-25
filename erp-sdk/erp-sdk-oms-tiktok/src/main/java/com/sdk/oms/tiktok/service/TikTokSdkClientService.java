@@ -94,19 +94,60 @@ public class TikTokSdkClientService {
     }
     public static void main(String[] args) {
 
-        //标记发货
-        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
-        TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
-        tikTokShopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
-        tikTokShopInfoDTO.setClientId("6buinkjt3hmld");
-        tikTokShopInfoDTO.setAccessToken("ROW_78TplgAAAACj-JAAAriAWjVtF2MrUIFdiwpvtmvHXedAYA9cevCkZepCOiMyd4q0eyFfSnzeQNSPiYsbBmXgfkz3-MVFEcyD6QqmkIhMBjdTRnBo-Bw7DBh-IQ3fvUL_tZGR6DNSekM6IpAJl62sJ5g-cybpZ0kx7WxSxGZu6gHpcqOOBRmzGg");
-        tikTokShopInfoDTO.setShopCipher("TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d");
+        String url = TikTokConstant.URL;
+        String path = "/fulfillment/" + TikTokConstant.VERSION + "/orders/split_attributes";
+        String clientSecret = "8ff628de24faf70c24855de4d967fb6a17a47e3f";
+        String clientId = "6buinkjt3hmld";
 
-        ShipOrderUSParam param = new ShipOrderUSParam();
-        param.setTrackingNumber("9214490357610601379030");
-        param.setShippingProviderId("7117858858072016686");
-        param.setOrderLineItemIds(Arrays.asList("576778267501892253"));
-        sdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, "576649523604197419", param);
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("access_token", "GCP_EwHCkQAAAACj-JAAAriAWjVtF2MrUIFdGRE7jwXvqwCAJxQttD-D0u4CgerlZKSv1TOLdjQVrj8e0cxT0-sA_EBt5-zEE-BB5XgaM1WlNszbR9WAZCvs00VYIuwronEKgrb8-pOPCREi0IF1myvCOfnCI7LZX_9wm2DdLXb_dWn6s5o5fu4H3g");
+        params.put("app_key", clientId);
+        params.put("order_ids", "576728409772101400");
+        params.put("shop_cipher", "GCP_APc1OgAAAACotu-CHizKQDMHvHIiBmIh");
+        Long timestamp = System.currentTimeMillis() / 1000;
+        params.put("timestamp", timestamp);
+        params.put("version", TikTokConstant.VERSION);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("x-tts-access-token", "GCP_EwHCkQAAAACj-JAAAriAWjVtF2MrUIFdGRE7jwXvqwCAJxQttD-D0u4CgerlZKSv1TOLdjQVrj8e0cxT0-sA_EBt5-zEE-BB5XgaM1WlNszbR9WAZCvs00VYIuwronEKgrb8-pOPCREi0IF1myvCOfnCI7LZX_9wm2DdLXb_dWn6s5o5fu4H3g");
+        headerMap.put("content-type", "multipart/form-data");
+
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, clientSecret, "");
+        // 追加请求路径
+        String sign = EncryptionUtils.generateSHA256(input, clientSecret);
+        //加入sign入参
+        params.put("sign", sign);
+
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url + path, JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, TikTok查询订单是否允许拆分失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单是否允许拆分失败，返回值 responseMap={}",
+                    url + path, headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        //解析数据
+        SplitAttributesDTO splitAttributesDTO = null;
+        try {
+            splitAttributesDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), SplitAttributesDTO.class);
+        } catch (Exception e) {
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单是否允许拆分失败返回值 responseMap={}，转换成实体错误", apiResult.getData()));
+        }
+
+        //标记发货
+//        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
+//        TikTokShopInfoDTO tikTokShopInfoDTO = new TikTokShopInfoDTO();
+//        tikTokShopInfoDTO.setClientSecret("8ff628de24faf70c24855de4d967fb6a17a47e3f");
+//        tikTokShopInfoDTO.setClientId("6buinkjt3hmld");
+//        tikTokShopInfoDTO.setAccessToken("ROW_78TplgAAAACj-JAAAriAWjVtF2MrUIFdiwpvtmvHXedAYA9cevCkZepCOiMyd4q0eyFfSnzeQNSPiYsbBmXgfkz3-MVFEcyD6QqmkIhMBjdTRnBo-Bw7DBh-IQ3fvUL_tZGR6DNSekM6IpAJl62sJ5g-cybpZ0kx7WxSxGZu6gHpcqOOBRmzGg");
+//        tikTokShopInfoDTO.setShopCipher("TTP_pEhpJwAAAADvOkDJ2jIoaS9Uak191t0d");
+//
+//        ShipOrderUSParam param = new ShipOrderUSParam();
+//        param.setTrackingNumber("9214490357610601379030");
+//        param.setShippingProviderId("7117858858072016686");
+//        param.setOrderLineItemIds(Arrays.asList("576778267501892253"));
+//        sdkClientService.sendTikTokShipOrderUS(tikTokShopInfoDTO, "576649523604197419", param);
 
         //产品信息查询
 /*        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
