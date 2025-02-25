@@ -14,6 +14,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -279,7 +280,7 @@ public class SoInfoController extends BaseController {
      * @author Will
      * @date: 2023/7/19 14:58
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单明细备注:ids={ids},备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新销售订单明细备注:备注={remark}", keyIdName = "ids")
     @PostMapping("/updateDetailRemark")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id,seller_id",
@@ -288,9 +289,17 @@ public class SoInfoController extends BaseController {
 //            keyIdName = "ids")
     public ApiResult<?> updateDetailRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
-        Map<String, SoInfoEntity> entityMap = soInfoService.mapByIds(dto.getIds());
+        List<SoDetailEntity> detailList = soDetailService.listByIds(dto.getIds());
+        Map<String, SoDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        Map<String, SoInfoEntity> entityMap = soInfoService.mapByIds(mainIds);
         for (String id : dto.getIds()) {
-            SoInfoEntity entity = entityMap.get(id);
+            SoDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"订单不存在"));
+                continue;
+            }
+            SoInfoEntity entity = entityMap.get(detailEntity.getMainId());
             if(Objects.isNull(entity)){
                 resultDTOS.add(BatchResultDTO.fail(id,id,"订单不存在"));
                 continue;
@@ -321,7 +330,7 @@ public class SoInfoController extends BaseController {
      * @author Will
      * @date: 2023/7/19 14:58
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单备注:ids={ids},备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新销售订单备注:备注={remark}", keyIdName = "ids")
     @PostMapping("/updateRemark")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id,seller_id",
