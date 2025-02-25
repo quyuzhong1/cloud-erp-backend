@@ -263,6 +263,9 @@ public class SpElServerImpl implements SpElServer {
                         case STARTS_WITH:
                             content = convertToStartsWithObjExpression(field,value);
                             break;
+                        case LIKE:
+                            content = convertToContainsObjExpression(field,value);
+                            break;
                     }
                 }
                 expression.append(content).append(" ");
@@ -518,6 +521,9 @@ public class SpElServerImpl implements SpElServer {
                         case STARTS_WITH:
                             content = convertToStartsWithObjExpression(field,value);
                             break;
+                        case LIKE:
+                            content = convertToContainsObjExpression(field,value);
+                            break;
                     }
                 }
                 expression.append(content).append(" ");
@@ -637,6 +643,16 @@ public class SpElServerImpl implements SpElServer {
         expression.append("(").append(value).append(")");
         return expression.toString();
     }
+    /**
+     *对象表达式 包含
+     */
+    private String convertToContainsObjExpression(String field,String value) {
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(".contains");
+        expression.append("(").append("'").append(value).append("'").append(")");
+        return expression.toString();
+    }
 
     /**
      * 获取到 传值为map 的 表达式
@@ -699,6 +715,9 @@ public class SpElServerImpl implements SpElServer {
                             break;
                         case STARTS_WITH:
                             content = convertToStartsWithObjExpression(field,value);
+                            break;
+                        case LIKE:
+                            content = convertToContainsObjExpression(field,value);
                             break;
                     }
                 }
