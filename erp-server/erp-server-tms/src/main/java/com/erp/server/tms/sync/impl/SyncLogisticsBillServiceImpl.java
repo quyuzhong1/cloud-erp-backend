@@ -74,6 +74,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         } else {
             shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(LocalDateTime.now()));
         }
+
         shudiyunB2cOrderDTO.setDelivery_number(entity.getOutstockCode());
 
         if (CharSequenceUtil.isBlank(supplierName)) {
@@ -109,7 +110,6 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             if (CharSequenceUtil.isBlank(sourceCode)) {
                 continue;
             }
-
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
@@ -132,7 +132,6 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             if (CharSequenceUtil.isBlank(sourceCode)) {
                 continue;
             }
-
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
