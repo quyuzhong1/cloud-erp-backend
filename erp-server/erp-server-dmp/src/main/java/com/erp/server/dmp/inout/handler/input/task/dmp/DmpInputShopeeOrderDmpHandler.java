@@ -123,8 +123,13 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 							orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
 						}
 			        } else if (OrderStatusEnum.PROCESSED.getCode().equals(platformOriginalStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(platformOriginalStatus)) {
-			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
-			            orderStatus = ApproveStatusEnum.APPROVE.getCode();
+			        	if (isPlatformWarehouseOrder) {
+							deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
+							orderStatus = ApproveStatusEnum.APPROVE.getCode();
+						} else {
+							deliveryStatus = SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode();
+							orderStatus = ApproveStatusEnum.WAIT_SUBMIT.getCode();
+						}
 			        } else if (OrderStatusEnum.SHIPPED.getCode().equals(platformOriginalStatus) || OrderStatusEnum.TO_CONFIRM_RECEIVE.getCode().equals(platformOriginalStatus)) {
 			            //已完成之前 全为待发货
 			        	deliveryStatus = SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
