@@ -386,6 +386,16 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         outstockVirtualTransFlowDetail(entity);
     }
 
+    @Override
+    public List<VirtualTransFlowDetailDTO.SendNoticeSkuDTO> listDiffSkuSendNotice() {
+        return baseMapper.listDiffSkuSendNotice();
+    }
+
+    @Override
+    public List<VirtualTransFlowDetailDTO.SendNoticeTotalDTO> listDiffTotalSendNotice() {
+        return baseMapper.listDiffTotalSendNotice();
+    }
+
     /**
      * 添加出库流水
      * @author will
