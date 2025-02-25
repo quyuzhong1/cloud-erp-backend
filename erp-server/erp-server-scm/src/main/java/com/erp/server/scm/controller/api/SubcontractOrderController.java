@@ -345,7 +345,7 @@ public class SubcontractOrderController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(subcontractOrderService.submitEntity(entity));
+                resultDTOS.add(subcontractOrderService.cancelProcess(entity));
             }catch (Exception e){
                 log.error("委外订单撤销失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

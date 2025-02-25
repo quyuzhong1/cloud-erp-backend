@@ -364,6 +364,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     public SubcontractOrderEntity addAndSubmit(SubcontractOrderDTO.AddDTO dto) {
         // 新增
         SubcontractOrderEntity entity = this.add(dto);
+        entity = this.getById(entity.getId());
         // 提交
         this.submitEntity(entity);
         return entity;
