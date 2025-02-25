@@ -14,6 +14,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.entity.ProjectInfoEntity;
 import com.erp.model.plm.enums.ProjectStateEnum;
+import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.index.qual.SameLen;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,6 +44,8 @@ public class ProjectInfoController extends BaseController {
 
     @Autowired
     private ProjectInfoService projectInfoService;
+    @Resource
+    private ProductInfoService productInfoService;
 
     /**
      * 项目列表-启动项目
@@ -153,29 +157,29 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-重新启动项目:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-重新启动项目", keyIdName = "ids")
     @PostMapping("/restart")
     public ApiResult<Object> restart(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
-        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getIds())
                 .stream()
-                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
         for (String id : dto.getIds()) {
-            ProjectInfoEntity entity = entityMap.get(id);
+            ProductInfoEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
                 continue;
             }
             try {
                 Boolean flag = projectInfoService.restart(Collections.singletonList(id));
                 if (flag){
-                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"-重新启动项目成功"));
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getSpuNo(),"-重新启动项目成功"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"-重新启动项目失败"));
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getSpuNo(),"-重新启动项目失败"));
                 }
             }catch (Exception e){
                 log.error("重新启动项目失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSpuNo(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -187,29 +191,29 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-暂停项目:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-暂停项目", keyIdName = "ids")
     @PostMapping("/suspend")
     public ApiResult<Object> suspend(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
-        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getIds())
                 .stream()
-                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
         for (String id : dto.getIds()) {
-            ProjectInfoEntity entity = entityMap.get(id);
+            ProductInfoEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
                 continue;
             }
             try {
                 Boolean flag = projectInfoService.suspend(Collections.singletonList(id));
                 if (flag){
-                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"暂停项目成功"));
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getSpuNo(),"暂停项目成功"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"暂停项目失败"));
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getSpuNo(),"暂停项目失败"));
                 }
             }catch (Exception e){
                 log.error("暂停项目失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSpuNo(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -220,29 +224,29 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-终止项目:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-终止项目", keyIdName = "ids")
     @PostMapping("/stop")
     public ApiResult<Object> terminate(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
-        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getIds())
                 .stream()
-                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
         for (String id : dto.getIds()) {
-            ProjectInfoEntity entity = entityMap.get(id);
+            ProductInfoEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
                 continue;
             }
             try {
                 Boolean flag = projectInfoService.terminate(Collections.singletonList(id));
                 if (flag){
-                    resultDTOS.add(BatchResultDTO.success(id, entity.getName(),"项目终止成功"));
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getSpuNo(),"项目终止成功"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"项目终止失败"));
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getSpuNo(),"项目终止失败"));
                 }
             }catch (Exception e){
                 log.error("项目终止失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSpuNo(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -253,17 +257,17 @@ public class ProjectInfoController extends BaseController {
      *
      * @return
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-项目结项:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-项目结项", keyIdName = "ids")
     @PostMapping("/finish")
     public ApiResult<Object> finish(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
-        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getIds())
                 .stream()
-                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
         for (String id : dto.getIds()) {
-            ProjectInfoEntity entity = entityMap.get(id);
+            ProductInfoEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
                 continue;
             }
             try {
@@ -272,13 +276,13 @@ public class ProjectInfoController extends BaseController {
                         dto.getLocalDate()
                 ));
                 if (flag){
-                    resultDTOS.add(BatchResultDTO.success(id, entity.getName(),"项目结项成功"));
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getSpuNo(),"项目结项成功"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"项目结项失败"));
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getSpuNo(),"项目结项失败"));
                 }
             }catch (Exception e){
                 log.error("项目结项失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSpuNo(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -292,29 +296,29 @@ public class ProjectInfoController extends BaseController {
      * @author yl
      * @date 2022-10-09 14:38
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "项目列表-批量项目归档:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "项目列表-批量项目归档", keyIdName = "ids")
     @PostMapping("/batchArchive")
     public ApiResult<Object> batchArchive(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new LinkedList<>();
-        Map<String, ProjectInfoEntity> entityMap = projectInfoService.getByProductIdList(dto.getIds())
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getIds())
                 .stream()
-                .collect(Collectors.toMap(ProjectInfoEntity::getProductId, e -> e));
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
         for (String id : dto.getIds()) {
-            ProjectInfoEntity entity = entityMap.get(id);
+            ProductInfoEntity entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"项目不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
                 continue;
             }
             try {
                 Boolean flag = projectInfoService.batchArchive(Collections.singletonList(id));
                 if (flag){
-                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"项目归档成功"));
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getSpuNo(),"项目归档成功"));
                 } else {
-                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"项目归档失败"));
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getSpuNo(),"项目归档失败"));
                 }
             }catch (Exception e){
                 log.error("项目归档失败",e);
-                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSpuNo(), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

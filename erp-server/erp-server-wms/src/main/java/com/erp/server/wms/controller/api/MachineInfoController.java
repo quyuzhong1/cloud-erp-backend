@@ -264,9 +264,28 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:delete",
             serviceClass = MachineInfoService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = machineInfoService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, MachineInfoEntity> entityMap = machineInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            MachineInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = machineInfoService.delete(Collections.singletonList(id));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败"));
+                }
+            }catch (Exception e){
+                log.error("加工单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
