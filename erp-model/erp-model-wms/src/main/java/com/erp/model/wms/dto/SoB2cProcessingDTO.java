@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -436,7 +437,10 @@ public class SoB2cProcessingDTO implements Serializable {
         @Size(max = 32,message = "bom版本最大长度不能超过32位")
         private String bomVersion;
 
-
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
     }
 
 

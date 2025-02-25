@@ -233,13 +233,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
             }
             shudiyunB2cOrderDTO.setPlatform_name(sourcePlatformName);
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getPlatformCode());
-
-            if (dmpSoInfoEntity.getPayTime() != null) {
-                shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
-            } else {
-            	return result;
-            }
-
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
             if (dmpSoDetailEntity.getPrice().compareTo(BigDecimal.ZERO) == 0) {
                 shudiyunB2cOrderDTO.setIs_gift(1);

@@ -15,13 +15,13 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoDetailService;
@@ -820,6 +820,24 @@ public class SoInfoController extends BaseController {
         return result ? success():failure();
     }
 
+    /**
+     * 批量上传物流面单
+     * @param files
+     * @return
+     */
+    @PostMapping("/batchUploadLogisticLabel")
+    public ApiResult<List<BatchResultDTO>> batchUploadLogisticLabel(@ModelAttribute @Validated List<MultipartFile> files) {
+        return success(soInfoService.batchUploadLogisticLabel(files));
+    }
 
-
+    /**
+     * 单个上传物流面单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/singleUploadLogisticLabel")
+    public ApiResult<BatchResultDTO> singleUploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) {
+        return success(soInfoService.singleUploadLogisticLabel(dto.getFile(), dto.getId()));
+    }
 }

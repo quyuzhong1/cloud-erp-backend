@@ -75,19 +75,7 @@
 
     <!-- 删除多余头程订单 -->
     <delete id="deleteFirstMileOrder">
-        DELETE FROM first_mile_processing fmp
-            USING requisition_application ra
-        WHERE fmp.first_mile_delivery_id = ra.id
-          AND fmp.is_deleted = false
-          AND (ra.is_deleted = true
-           OR ra.invalid_status = 'true');
-
-        DELETE FROM first_mile_processing fmp
-            USING  requisition_application_detail rad
-        WHERE  fmp.first_mile_delivery_detail_id = rad.id
-          AND fmp.is_deleted = false
-          AND ( rad.is_deleted = true
-           OR rad.from_virtual_warehouse_id = '');
+        DELETE FROM first_mile_processing  where is_deleted = false and bill_date >= #{startDate}
     </delete>
 
     <!-- 删除头程订单 -->
@@ -150,6 +138,7 @@
     <select id="listFirstMileProcessing" resultType="com.erp.model.wms.entity.FirstMileProcessingEntity">
         -- thirdWarehouse类型
         SELECT
+            ra.create_time as billDate,
             ra.id as requisitionApplicationId,
             ra.code as requisitionApplicationCode,
             ra.status as requisitionApplicationStatus,
@@ -183,11 +172,12 @@
         AND ra.invalid_status = 'false'
         AND rad.from_virtual_warehouse_id != ''
         <if test="startDate != null">
-            and ra.create_time > #{startDate}
+            and ra.create_time >= #{startDate}
         </if>
         UNION ALL
         -- fba类型
         SELECT
+            ra.create_time as billDate,
             ra.id as requisitionApplicationId,
             ra.code as requisitionApplicationCode,
             ra.status as requisitionApplicationStatus,
@@ -225,7 +215,7 @@
         AND rad.from_virtual_warehouse_id != ''
         AND rad.sku_id = fsd.sku_id and rad.platform_fn_sku = fsd.fn_sku
         <if test="startDate != null">
-            and ra.create_time > #{startDate}
+            and ra.create_time >= #{startDate}
         </if>
     </select>
 
