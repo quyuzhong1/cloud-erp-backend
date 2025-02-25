@@ -96,7 +96,7 @@ public class ImageUtil {
      * @param size
      * @return MultipartFile
      */
-    public static MultipartFile compressImageMultipartFile(MultipartFile multipartFile, Integer size) throws IOException {
+    public static MultipartFile compressImageMultipartFile(MultipartFile multipartFile, long size) throws IOException {
         //类型转换
         File inputFile = FileUtil.multiToFile(multipartFile);
 
