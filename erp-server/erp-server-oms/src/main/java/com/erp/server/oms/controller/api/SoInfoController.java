@@ -15,6 +15,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
@@ -827,6 +828,9 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/batchUploadLogisticLabel")
     public ApiResult<List<BatchResultDTO>> batchUploadLogisticLabel(@ModelAttribute @Validated List<MultipartFile> files) {
+        if (files.size() > 20){
+            throw new ServiceException("单次上传不要超过10个文件");
+        }
         List<BatchResultDTO> resultDTOS = soInfoService.batchUploadLogisticLabel(files);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
