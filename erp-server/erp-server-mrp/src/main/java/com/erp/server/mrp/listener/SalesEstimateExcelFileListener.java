@@ -36,15 +36,15 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
 
     private final Map<String, String> platformMap;
 
-    private final String platform;
+    private final String platformName;
 
     private static final String REGEX = "^([1-9]\\d{0,8}|0)(\\.\\d{1,2})?$";
 
-    public SalesEstimateExcelFileListener(Map<String, String> skuMap, List<ShopInfoEntity> shopInfoList, Map<String, String> platformMap, String platform) {
+    public SalesEstimateExcelFileListener(Map<String, String> skuMap, List<ShopInfoEntity> shopInfoList, Map<String, String> platformMap, String platformName) {
         this.skuMap = skuMap;
         this.shopInfoList = shopInfoList;
         this.platformMap = platformMap;
-        this.platform = platform;
+        this.platformName = platformName;
     }
 
 
@@ -81,8 +81,8 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
         if (!ObjectUtils.isEmpty(data.getSalesQty()) && !data.getSalesQty().matches(REGEX)) {
             msgList.add("预估日销量：0≤X≤999999999，最多保留2位小数");
         }
-        if (!platform.equals(platformMap.get(data.getPlatformName()))) {
-            msgList.add("只能导入" + platformMap.get(platform) + "平台的数据");
+        if (!platformName.equals(data.getPlatformName())) {
+            msgList.add("只能导入" + platformName + "平台的数据");
         }
         CustomerSalesEstimateEsEntity dto = successList.stream()
                 .filter(v -> v.getPlatformName().equals(data.getPlatformName()))
