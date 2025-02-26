@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +36,17 @@ public class SptServerTest {
 
     @Test
     public void getWarehouseTest() {
-        AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
+        AntuGetProductReq antuProductReq = AntuGetProductReq.builder().page(1)
+                .pageSize(100)
+                .build();
+        AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(antuProductReq, OmsPlatformEnum.OMS_SPT);
+        System.out.println(response);
+    }
+
+    @Test
+    public void getTransferWarehouseTest() {
+        AntuGetProductReq antuProductReq = AntuGetProductReq.builder().page(1)
+                .pageSize(100)
                 .build();
         AntuResponse<List<AntuWarehouseResp>> response = antuService.getTransferWarehouse(antuProductReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
@@ -48,8 +57,8 @@ public class SptServerTest {
         AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
                 .page(1)
                 .pageSize(100)
-                .updateStartTime("2024-06-25 15:47:18")
-                .updateEndTime("2024-06-25 15:47:18")
+//                .updateStartTime("2024-06-25 15:47:18")
+//                .updateEndTime("2024-06-25 15:47:18")
                 .build();
         AntuResponse<List<AntuProductResp>> response = antuService.getSkuList(antuProductReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(JSONUtil.toJsonStr(response));
@@ -75,7 +84,8 @@ public class SptServerTest {
         AntuGetReceiptReq req = AntuGetReceiptReq.builder()
                 .page(1)
                 .pageSize(100)
-                .receivingCodeArr(Arrays.asList("RVA091-240702-0001"))
+                .receivingCode("RVVIJIM-250226-0005")
+//                .receivingCodeArr(Arrays.asList("RVVIJIM-250226-0005"))
                 .build();
         AntuResponse<List<AntuReceiptResp>> response = antuService.getReceiptBatch(req, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
@@ -86,8 +96,8 @@ public class SptServerTest {
         AntuGetOutboundReq req = AntuGetOutboundReq.builder()
                 .page(1)
                 .pageSize(100)
-                .modifyDateFrom(LocalDateTime.parse("2024-08-26T18:30:11"))
-                .modifyDateTo(LocalDateTime.parse("2024-08-28T18:40:11"))
+//                .modifyDateFrom(LocalDateTime.parse("2024-08-26T18:30:11"))
+//                .modifyDateTo(LocalDateTime.parse("2024-08-28T18:40:11"))
                 .build();
         AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
@@ -106,7 +116,7 @@ public class SptServerTest {
                 .swOrderNumber("14465312644131564841")
                 .shippingMethod("PAC")
                 .verify(1)
-                .warehouseCode("BR01")
+                .warehouseCode("CNLG")
                 .countryCode("BR")
                 .province("PR")
                 .city("Curitiba")
@@ -123,7 +133,7 @@ public class SptServerTest {
                 .email("")
                 .items(Arrays.asList(
                         AntuCreateOutboundReq.Item.builder()
-                                .productSku("3PL-1C-TEST")
+                                .productSku("D014")
                                 .quantity(1)
                                 .build()
                 ))
@@ -143,16 +153,16 @@ public class SptServerTest {
         AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
                 .referenceNo("wjtest20231206")
                 .incomeType(0)
-                .transitWarehouseCode("SZW")
-                .receivingType("T")
+//                .transitWarehouseCode("CNLG")
+                .receivingType("D")
                 .smCode("PAC")
                 .contacter("张三")
                 .contactPhone("123456789")
-                .warehouseCode("BR01")
+                .warehouseCode("CNLG")
                 .customerType("Y")
                 .verify(0)
                 .items(Arrays.asList(AntuCreateInboundReq.Item.builder()
-                        .productSku("3PL-1C-TEST")
+                        .productSku("D014")
                         .boxNo(1)
                         .quantity(1)
                         .build()))
@@ -165,10 +175,12 @@ public class SptServerTest {
     @Test
     public void editInboundBillTest() {
         AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
-                .receivingCode("RVA001-240826-0003")
+                .referenceNo("wjtest20231206")
+                .receivingCode("RVVIJIM-250226-0005")
+                .warehouseCode("CNLG")
                 .verify(1)
                 .items(Arrays.asList(AntuCreateInboundReq.Item.builder()
-                        .productSku("3PL-1C-TEST")
+                        .productSku("D014")
                         .boxNo(1)
                         .quantity(14)
                         .build()))
