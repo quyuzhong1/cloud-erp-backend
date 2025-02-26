@@ -78,7 +78,7 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
         if (!ObjectUtils.isEmpty(date) && LocalDate.now().isAfter(date)) {
             msgList.add("日期，仅限导入未来日期的预估销量，必须晚于今日");
         }
-        if (data.getSalesQty().matches(REGEX)) {
+        if (!ObjectUtils.isEmpty(data.getSalesQty()) && !data.getSalesQty().matches(REGEX)) {
             msgList.add("预估日销量：0≤X≤999999999，最多保留2位小数");
         }
         if (!platform.equals(platformMap.get(data.getPlatformName()))) {
