@@ -186,7 +186,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
-                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
                 shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPriceOrigin(), dmpSoDetailEntity.getQty()));
 
             } else {
@@ -197,10 +196,10 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 } else {
                     shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
                 }
-                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPrice());
                 shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPrice(), dmpSoDetailEntity.getQty()));
-
             }
+            shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
+
             shudiyunB2cOrderDTO.setStatus("已创建");
 
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
