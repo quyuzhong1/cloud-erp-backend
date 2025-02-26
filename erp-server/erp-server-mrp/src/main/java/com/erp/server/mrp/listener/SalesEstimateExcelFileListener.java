@@ -51,9 +51,10 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
     @Override
     public void invoke(CfgRuleSalesEstimateFileDTO.ExcelDTO data, AnalysisContext context) {
         //注解验证信息
-        List<String> msgList = FieldValidUtil.fieldValid(data);
-        if (!CollectionUtils.isEmpty(msgList)) {
-            msgList.add(String.join(",", msgList));
+        List<String> msgList = new ArrayList<>();
+        List<String> errorMsgList = FieldValidUtil.fieldValid(data);
+        if (!CollectionUtils.isEmpty(errorMsgList)) {
+            msgList.add(errorMsgList.stream().distinct().collect(Collectors.joining(",")));
         }
         if (!platformMap.containsKey(data.getPlatformName())) {
             msgList.add("平台不存在");
