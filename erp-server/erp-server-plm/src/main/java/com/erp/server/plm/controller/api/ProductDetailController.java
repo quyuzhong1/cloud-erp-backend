@@ -513,7 +513,6 @@ public class ProductDetailController extends BaseController {
     @PostMapping("/saveOrUpdatePurchaseRemarkBatch")
     //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemarkBatch")
     public ApiResult<?> saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
-        Boolean flag = productPurchaseRemarkService.saveOrUpdateBatch(dto);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.size());
         List<String> ids = dto.stream().map(ProductPurchaseRemarkDTO::getId).collect(Collectors.toList());
         Map<String, ProductPurchaseRemarkEntity> entityMap = productPurchaseRemarkService.listByIds(ids)
