@@ -3621,6 +3621,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             Boolean isAdd = Boolean.TRUE;
             List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {
+                List<String> msgList = new ArrayList<>();
                 SoDetailEntity addDetail = new SoDetailEntity();
                 addDetail.setMainId(mainId);
                 //是否赠品
@@ -3637,11 +3638,11 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String skuNo = item.getSkuNo();
                 String customerSku = item.getCustomerSku();
                 if (CharSequenceUtil.isAllBlank(skuNo, customerSku)){
-                    errorMsgList.add("SKU和客户SKU不能同时为空");
+                    msgList.add("SKU和客户SKU不能同时为空");
                 }else if (CharSequenceUtil.isAllNotBlank(skuNo, customerSku)){
                     SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
                     if (Objects.isNull(skuMappingViewDTO)){
-                        errorMsgList.add("SKU和客户SKU不匹配");
+                        msgList.add("客户SKU映射不存在");
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
@@ -3649,7 +3650,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }else if (CharSequenceUtil.isNotBlank(skuNo)){
                     SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
                     if (Objects.isNull(skuVO)) {
-                        errorMsgList.add("sku不存在");
+                        msgList.add(CharSequenceUtil.format("sku【{}】不存在",skuNo));
                     } else {
                         addDetail.setSkuId(skuVO.getSkuId());
                         addDetail.setSkuNo(skuVO.getSkuNo());
@@ -3657,16 +3658,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }else if (CharSequenceUtil.isNotBlank(customerSku)){
                     SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
                     if (Objects.isNull(skuMappingViewDTO)){
-                        errorMsgList.add("客户SKU映射不存在");
+                        msgList.add("客户SKU映射不存在");
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
                     }
                 }
-                if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
                     isAdd = Boolean.FALSE;
-                    errorMsgList = errorMsgList.stream().distinct().collect(Collectors.toList());
-                    item.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
+                    item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
                     errorList.add(item);
                 }
                 //币种
