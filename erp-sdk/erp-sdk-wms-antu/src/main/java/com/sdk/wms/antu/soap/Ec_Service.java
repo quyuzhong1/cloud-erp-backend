@@ -1,14 +1,10 @@
 
 package com.sdk.wms.antu.soap;
 
+import javax.xml.namespace.QName;
+import javax.xml.ws.*;
 import java.net.MalformedURLException;
 import java.net.URL;
-import javax.xml.namespace.QName;
-import javax.xml.ws.Service;
-import javax.xml.ws.WebEndpoint;
-import javax.xml.ws.WebServiceClient;
-import javax.xml.ws.WebServiceException;
-import javax.xml.ws.WebServiceFeature;
 
 
 /**
@@ -19,19 +15,23 @@ import javax.xml.ws.WebServiceFeature;
 @WebServiceClient(name = "Ec", targetNamespace = "http://www.example.org/Ec/", wsdlLocation = "http://br.yunwms.com/default/svc/wsdl")
 public class Ec_Service extends Service {
     private final static String URL = "http://www.example.org/Ec/";
-    private final static URL EC_WSDL_LOCATION;
+    private final static URL ANTU_WSDL_LOCATION;
+    private final static URL SPT_WSDL_LOCATION;
     private final static WebServiceException EC_EXCEPTION;
     private final static QName EC_QNAME = new QName(URL, "Ec");
 
     static {
-        URL url = null;
+        URL antuUrl = null;
+        URL sptUrl = null;
         WebServiceException e = null;
         try {
-            url = new URL("http://br.yunwms.com/default/svc/wsdl");
+            antuUrl = new URL("http://br.yunwms.com/default/svc/wsdl");
+            sptUrl = new URL("http://47.56.106.253//default/svc/wsdl");
         } catch (MalformedURLException ex) {
             e = new WebServiceException(ex);
         }
-        EC_WSDL_LOCATION = url;
+        ANTU_WSDL_LOCATION = antuUrl;
+        SPT_WSDL_LOCATION = sptUrl;
         EC_EXCEPTION = e;
     }
 
@@ -59,6 +59,14 @@ public class Ec_Service extends Service {
         super(wsdlLocation, serviceName, features);
     }
 
+    public static URL getAntuWsdlLocation() {
+        return ANTU_WSDL_LOCATION;
+    }
+
+    public static URL getSptWsdlLocation() {
+        return SPT_WSDL_LOCATION;
+    }
+
     /**
      * @return returns Ec
      */
@@ -80,7 +88,7 @@ public class Ec_Service extends Service {
         if (EC_EXCEPTION != null) {
             throw EC_EXCEPTION;
         }
-        return EC_WSDL_LOCATION;
+        return ANTU_WSDL_LOCATION;
     }
 
 }
