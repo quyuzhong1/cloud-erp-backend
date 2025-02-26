@@ -1,12 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -28,6 +29,11 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
     */
     @TableField("main_id")
     private String mainId;
+    /**
+     * 仓库类型 0标准 1中转 2虚拟
+     */
+    @TableField("platform_warehouse_type")
+    private String platformWarehouseType;
     /**
     * 仓库编码
     */
@@ -71,6 +77,8 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
 
 
     public static final String MAIN_ID = "main_id";
+
+    public static final String PLATFORM_WAREHOUSE_TYPE = "platform_warehouse_type";
 
     public static final String PLATFORM_WAREHOUSE_CODE = "platform_warehouse_code";
 
