@@ -732,6 +732,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                     String url = updateDTO.getAttachUrl();
                     InputStream inputStream = FastDFSClientUtil.getInputStream(url);
                     base64 = PdfUtil.base64ForPdf(inputStream);
+                    String prefix = "data:application/pdf;base64,";
+                    base64 = prefix + base64;
                 }else{
                     throw new ServiceException("未上传标签");
                 }
@@ -741,8 +743,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException(e.getMessage());
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
-            String prefix = "data:application/pdf;base64,";
-            base64 = prefix + base64;
             entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
             this.updateById(entity);
         } else {

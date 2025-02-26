@@ -1,6 +1,7 @@
 package com.common.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -326,6 +328,13 @@ public class OkHttpUtils {
         try {
             ResponseBody body = call.execute().body();
             if (body != null) {
+                body.contentType();
+                MediaType mediaType = body.contentType();
+                String subtype = Objects.nonNull(mediaType) ? mediaType.subtype() : "";
+                if ("json".equals(subtype)){
+                    respStr = body.string();
+                    throw new ServiceException("面单获取文件格式错误:{}",respStr);
+                }
                 byte[] bytes = body.bytes();
                 respStr = Base64.getEncoder().encodeToString(bytes);
             }
