@@ -13,15 +13,13 @@ import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.antu.dto.request.AntuBaseRequest;
-import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
-import com.sdk.wms.antu.dto.request.AntuCreateInboundReq;
-import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
+import com.sdk.wms.antu.dto.request.*;
 import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
-import com.sdk.wms.antu.dto.response.AntuResponse;
-import com.sdk.wms.antu.dto.response.AntuWarehouseResp;
+import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import com.sdk.wms.antu.enums.AntuEnums;
 import com.sdk.wms.antu.service.AntuService;
+import com.sdk.wms.antu.dto.response.AntuResponse;
+import com.sdk.wms.antu.dto.response.AntuWarehouseResp;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -62,7 +60,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             CharSequenceUtil.isBlank(antuCreateInboundReq.getSmCode())){
             antuCreateInboundReq.setSmCode("TCHY");
         }
-        log.warn(getPlatForm().getName()+"创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
+        log.warn("安兔创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
         AntuResponse<String> antuResponse = antuService.createInboundBill(antuCreateInboundReq,getPlatForm());
         return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
     }
@@ -70,7 +68,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);
-        log.warn(getPlatForm().getName()+"编辑入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
+        log.warn("安兔编辑入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
         //中转代发并且自发头程，默认物流产品
         if(AntuEnums.TransitTypeEnum.TRANSFER.getCode().equals(antuCreateInboundReq.getReceivingType()) &&
                 AntuEnums.IncomeTypeEnum.SELF_DELIVERY.getCode().equals(antuCreateInboundReq.getIncomeType()) &&
@@ -99,12 +97,31 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AntuCreateOutboundReq antuCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToAntu(createOutboundReq);
         this.handleData(antuCreateOutboundReq);
-        log.warn(getPlatForm().getName()+"创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
+        log.warn("安兔创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
         AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
         if(response.getMessage().contains("参考编号已存在")){
             return success(response.getOrderCode());
         }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
+    }
+    @Override
+    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
+        AntuUploadFileReq antuUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
+        if (CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
+            antuUploadFileReq.setFileType(uploadFileReq.getFileType());
+        }
+        if (CharSequenceUtil.isNotBlank(uploadFileReq.getModule())){
+            antuUploadFileReq.setModule(uploadFileReq.getModule());
+        }
+        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuUploadFileReq);
+        AntuUploadFileResp antuCalculateFeeRespList = response.getData();
+        ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.antuResToThirdWarehouseUploadFileResponse(antuCalculateFeeRespList);
+        return isSuccess(response.getAsk()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
+    }
+
+    @Override
+    protected ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadFileReq) {
+        return ApiResult.error("功能未开发");
     }
 
     @Override
@@ -156,10 +173,15 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .last(CharSequenceUtil.format("and (code_en = '{}'  or code_pt = '{}')",antuCreateOutboundReq.getProvince(),antuCreateOutboundReq.getProvince()))
                         .list();
                 if(CollUtil.isEmpty(dictCityEntityList)){
-                    throw new ServiceException(getPlatForm().getName()+"不支持该省份下单");
+                    throw new ServiceException("安兔不支持该省份下单");
                 }
                 antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());
             }
+        }
+        if (CollUtil.isNotEmpty(antuCreateOutboundReq.getAttach())){
+            antuCreateOutboundReq.getAttach().forEach(attach -> {
+                attach.setFileType("pdf");
+            });
         }
     }
     public boolean isSuccess(String ask){
