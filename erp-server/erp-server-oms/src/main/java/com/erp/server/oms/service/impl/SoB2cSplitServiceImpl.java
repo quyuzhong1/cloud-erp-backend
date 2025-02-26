@@ -52,6 +52,7 @@ import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -702,10 +703,24 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Override
     @DataIdempotent(keyIdName = "dto.id")
-    @Transactional(rollbackFor = Exception.class)
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
+        SoB2cDTO.SplitSaveResultDTO resultDTO = service.handleSplit(dto);
+        service.splitRule(resultDTO);
+        return resultDTO;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public SoB2cDTO.SplitSaveResultDTO handleSplit(SoB2cDTO.SplitSaveDTO dto) {
         //订单拆分字段处理
         SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSaveHandle(dto);
+        //如果是TikTok平台拆分订单，需要同步到平台
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform()) && dto.getIsSyncPlatform()) {
+            service.tikTokSplit(resultDTO);
+        }
+        return resultDTO;
+    }
+
+    public void splitRule(SoB2cDTO.SplitSaveResultDTO resultDTO) {
         List<SoB2cEntity> entityList = resultDTO.getNeedRuleIds();
         if(CollectionUtils.isNotEmpty(entityList)){
             for (SoB2cEntity entity : entityList) {
@@ -740,11 +755,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
             }
         }
-        //如果是TikTok平台拆分订单，需要同步到平台
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform()) && dto.getIsSyncPlatform()) {
-            service.tikTokSplit(resultDTO);
-        }
-        return resultDTO;
     }
 
     @Transactional(rollbackFor = Exception.class)
