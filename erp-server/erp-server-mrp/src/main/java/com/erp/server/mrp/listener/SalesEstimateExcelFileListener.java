@@ -53,7 +53,7 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
         //注解验证信息
         List<String> msgList = FieldValidUtil.fieldValid(data);
         if (!CollectionUtils.isEmpty(msgList)) {
-            msgList.add(String.join(",", msgList));
+            msgList.add(msgList.stream().distinct().collect(Collectors.joining(",")));
         }
         if (!platformMap.containsKey(data.getPlatformName())) {
             msgList.add("平台不存在");
