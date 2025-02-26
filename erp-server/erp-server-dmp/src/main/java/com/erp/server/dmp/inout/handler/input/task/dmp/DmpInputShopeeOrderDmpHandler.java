@@ -39,6 +39,8 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 	public static final String SHOPEE_ORDER_SHIPPING_DATA = "Shopee_orderShipping_data";
 
 	public static final String SHOPEE_ORDER_DETAIL_DATA = "Shopee_orderDetail_data";
+	
+	public static final String SHOPEE_ESCROW_DATA = "Shopee_escrow_data";
 
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -46,6 +48,8 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 		List<Map<String, Object>> detailMongoData = new ArrayList<>();
 		// 获取配送信息
 		List<Map<String, Object>> shipmentMongoData = new ArrayList<>();
+		
+		List<Map<String, Object>> paymentMongoData = new ArrayList<>();
 		List<ParamData> paramDataList = new ArrayList<>();
 		Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
 		if(CollUtil.isNotEmpty(keySet)) {
@@ -57,20 +61,29 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			shipmentMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ORDER_SHIPPING_DATA);
 			detailMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ORDER_DETAIL_DATA);
+			paymentMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ESCROW_DATA);
 		}
-		Map<String, Map<String, Object>> orderSnShipmentMaps = shipmentMongoData.stream().collect(Collectors.toMap(f -> f.get("order_sn").toString(), f -> f));
-		Map<String, Map<String, Object>> orderSnDetailMaps = detailMongoData.stream().collect(Collectors.toMap(f -> f.get("order_sn").toString(), f -> f));
+		Map<String, List<Map<String, Object>>> orderSnShipmentMaps = shipmentMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
+		Map<String, List<Map<String, Object>>> orderSnDetailMaps = detailMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
+		Map<String, List<Map<String, Object>>> orderSnEscrowMaps = paymentMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
 
 
 		ZoneId zone = ZoneId.systemDefault();
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-				Map<String, Object> detailMaps = orderSnDetailMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
-				if (null == detailMaps){
+				List<Map<String, Object>> detailMapsList = orderSnDetailMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
+				if (CollectionUtils.isEmpty(detailMapsList)){
 					ServiceException.runError("明细信息为空");
 				}
-
+				// 获取 mongoUpdateTime 最大时间的 Map
+				Map<String, Object> detailMaps = detailMapsList.stream()
+						.max(Comparator.comparing(map -> (String) map.get(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME)))
+						.orElse(null);
+				if (null == detailMaps){
+					ServiceException.runError("最新明细信息为空");
+				}
+				
 				// 标签json
 				JSONObject labelJsonObject = new JSONObject();
 				// 配送方式
@@ -207,6 +220,21 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 						dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(instant, zone));
 					}
 				}
+				
+				List<Map<String, Object>> escrowMapsList = orderSnEscrowMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
+				if(CollUtil.isNotEmpty(escrowMapsList)) {
+					Map<String, Object> escrowMaps = escrowMapsList.stream()
+							.max(Comparator.comparing(map -> (String) map.get(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME)))
+							.orElse(null);
+					if(escrowMaps != null) {
+						Object order_income = escrowMaps.get("order_income");
+						if(order_income != null) {
+							Map<String, Object> orderIncome = (Map<String, Object>) order_income;
+							dmpDataMap.put("totalDiscount", orderIncome.get("payment_promotion"));
+						}
+					}
+				}
+				
 			}
 		}
 	}
@@ -214,13 +242,21 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 	/**
 	 * 解析发货类型
 	 */
-	private static String parseDeliveryTypeType(TreeMap<String, Object> dmpDataMap, Map<String, Map<String, Object>> orderSnShipmentMaps) {
+	private static String parseDeliveryTypeType(TreeMap<String, Object> dmpDataMap, Map<String, List<Map<String, Object>>> orderSnShipmentMapsList) {
 		// 自发货（跨境卖家） fulfilled_by_cb_seller
 		// 自发货（本地卖家）fulfilled_by_local_seller
-		Map<String, Object> shipmentData = orderSnShipmentMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
-		if (shipmentData.isEmpty()){
+		List<Map<String, Object>> shipmentDataList = orderSnShipmentMapsList.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
+		if (CollectionUtils.isEmpty(shipmentDataList)){
 			ServiceException.runError("配送信息为空");
 		}
+		// 获取 mongoUpdateTime 最大时间的 Map
+		Map<String, Object> shipmentData = shipmentDataList.stream()
+				.max(Comparator.comparing(map -> (String) map.get(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME)))
+				.orElse(null);
+		if (null == shipmentData){
+			ServiceException.runError("最新配送信息为空为空");
+		}
+
 		Object infoNeededObj = shipmentData.get("info_needed");
 		if (null == infoNeededObj){
 			ServiceException.runError("配送信息info_needed为空");

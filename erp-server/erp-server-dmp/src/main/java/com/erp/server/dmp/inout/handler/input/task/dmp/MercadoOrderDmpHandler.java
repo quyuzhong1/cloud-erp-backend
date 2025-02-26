@@ -210,6 +210,7 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             BigDecimal taxesAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("taxesAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             lableMap.put("taxesAmount", taxesAmount);
 
+                            dmpDataMap.put("totalTaxFee", taxesAmount);
                         }
                     }
 
