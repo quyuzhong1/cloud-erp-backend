@@ -144,7 +144,7 @@ public class PurchaseChangeController extends BaseController {
             keyIdName = "id")
     public ApiResult<Object> addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
         BatchResultDTO resultDTO = purchaseChangeService.addAndSubmit(dto);
-        return resultDTO.getSuccess() ? success() : failure();
+        return resultDTO.getSuccess() ? success(resultDTO) : failure();
     }
 
     /**
