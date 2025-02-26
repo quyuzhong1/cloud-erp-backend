@@ -58,17 +58,24 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 			shipmentMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ORDER_SHIPPING_DATA);
 			detailMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ORDER_DETAIL_DATA);
 		}
-		Map<String, Map<String, Object>> orderSnShipmentMaps = shipmentMongoData.stream().collect(Collectors.toMap(f -> f.get("order_sn").toString(), f -> f));
-		Map<String, Map<String, Object>> orderSnDetailMaps = detailMongoData.stream().collect(Collectors.toMap(f -> f.get("order_sn").toString(), f -> f));
+		Map<String, List<Map<String, Object>>> orderSnShipmentMaps = shipmentMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
+		Map<String, List<Map<String, Object>>> orderSnDetailMaps = detailMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
 
 
 		ZoneId zone = ZoneId.systemDefault();
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-				Map<String, Object> detailMaps = orderSnDetailMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
-				if (null == detailMaps){
+				List<Map<String, Object>> detailMapsList = orderSnDetailMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
+				if (CollectionUtils.isEmpty(detailMapsList)){
 					ServiceException.runError("明细信息为空");
+				}
+				// 获取 mongoUpdateTime 最大时间的 Map
+				Map<String, Object> detailMaps = detailMapsList.stream()
+						.max(Comparator.comparing(map -> (String) map.get(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME)))
+						.orElse(null);
+				if (null == detailMaps){
+					ServiceException.runError("最新明细信息为空");
 				}
 
 				// 标签json
@@ -214,13 +221,21 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 	/**
 	 * 解析发货类型
 	 */
-	private static String parseDeliveryTypeType(TreeMap<String, Object> dmpDataMap, Map<String, Map<String, Object>> orderSnShipmentMaps) {
+	private static String parseDeliveryTypeType(TreeMap<String, Object> dmpDataMap, Map<String, List<Map<String, Object>>> orderSnShipmentMapsList) {
 		// 自发货（跨境卖家） fulfilled_by_cb_seller
 		// 自发货（本地卖家）fulfilled_by_local_seller
-		Map<String, Object> shipmentData = orderSnShipmentMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
-		if (shipmentData.isEmpty()){
+		List<Map<String, Object>> shipmentDataList = orderSnShipmentMapsList.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
+		if (CollectionUtils.isEmpty(shipmentDataList)){
 			ServiceException.runError("配送信息为空");
 		}
+		// 获取 mongoUpdateTime 最大时间的 Map
+		Map<String, Object> shipmentData = shipmentDataList.stream()
+				.max(Comparator.comparing(map -> (String) map.get(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME)))
+				.orElse(null);
+		if (null == shipmentData){
+			ServiceException.runError("最新配送信息为空为空");
+		}
+
 		Object infoNeededObj = shipmentData.get("info_needed");
 		if (null == infoNeededObj){
 			ServiceException.runError("配送信息info_needed为空");
