@@ -975,16 +975,6 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(result);
         }
 
-        //原有逻辑
-        if (CollectionUtils.isNotEmpty(allSoIdList)) {
-            for (String soId : allSoIdList) {
-                try {
-                    soB2cService.checkProductRegistrationAndUpdate(soId, "");
-                } catch (Exception e) {
-                    log.error("拆分保存后检查商品备案失败，soId:{}，异常信息{}", soId, e);
-                }
-            }
-        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
