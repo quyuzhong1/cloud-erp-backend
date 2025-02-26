@@ -135,6 +135,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(CollUtil.isNotEmpty(warehouseList)){
             warehouseList.forEach(v->{
                 v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.getName(v.getPlatformWarehouseType()));
+                v.setPlatformWarehouseStatusName(SptWarehouseTypeEnum.getName(v.getPlatformWarehouseStatus()));
             });
         }
         viewDTO.setDetailList(warehouseList);
