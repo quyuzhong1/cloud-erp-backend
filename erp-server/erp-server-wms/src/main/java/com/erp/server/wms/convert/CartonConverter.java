@@ -118,4 +118,16 @@ public interface CartonConverter {
     @Mapping(target = "detailId", source = "id")
     WmsCartonDetailDTO.BoxDetailDTO convertCartonDetailToBoxDTO(WmsCartonDetailEntity detailEntity);
     List<WmsCartonDetailDTO.BoxDetailDTO> convertCartonDetailToBoxDTO(List<WmsCartonDetailEntity> detailEntityList);
+
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "updateUserName", ignore = true)
+    @Mapping(target = "updateUserId", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "taskId", ignore = true)
+    @Mapping(target = "mainId", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "createUserName", ignore = true)
+    @Mapping(target = "createUserId", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    WmsCartonDetailEntity AddDetailToCartonDetail(WmsCartonDetailDTO.AddDTO addDTO);
 }
