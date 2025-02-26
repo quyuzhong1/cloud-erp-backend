@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -46,10 +47,19 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      */
     Boolean exportExcel(VirtualTransFlowDetailDTO.SearchParamDTO dto);
     /**
+     * 定时任务处理虚拟仓数据
+     * @author will
+     * @date 2024/12/10 12:28
+     * @param list
+     * @return Boolean
+     */
+    void consumeMsgJob(List<WmsVirtualDetailMsgDTO.ListDTO> list);
+    /**
      * 消费
      * @author will
      * @date 2024/12/10 12:28
      * @param businessId
+     * @param msgId
      * @return Boolean
      */
     Boolean consumeMessage(String businessId,String msgId);
