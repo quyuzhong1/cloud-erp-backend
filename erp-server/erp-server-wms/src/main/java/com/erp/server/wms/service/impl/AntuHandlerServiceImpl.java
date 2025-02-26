@@ -60,7 +60,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             CharSequenceUtil.isBlank(antuCreateInboundReq.getSmCode())){
             antuCreateInboundReq.setSmCode("TCHY");
         }
-        log.warn("安兔创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
+        log.warn(getPlatForm().getName()+"创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
         AntuResponse<String> antuResponse = antuService.createInboundBill(antuCreateInboundReq,getPlatForm());
         return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
     }
@@ -68,7 +68,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     @Override
     protected ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq) {
         AntuCreateInboundReq antuCreateInboundReq = OverseasWarehouseInboundConverter.INSTANCE.inboundDtoToAntu(createInboundReq);
-        log.warn("安兔编辑入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
+        log.warn(getPlatForm().getName()+"编辑入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
         //中转代发并且自发头程，默认物流产品
         if(AntuEnums.TransitTypeEnum.TRANSFER.getCode().equals(antuCreateInboundReq.getReceivingType()) &&
                 AntuEnums.IncomeTypeEnum.SELF_DELIVERY.getCode().equals(antuCreateInboundReq.getIncomeType()) &&
@@ -97,7 +97,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
         AntuCreateOutboundReq antuCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToAntu(createOutboundReq);
         this.handleData(antuCreateOutboundReq);
-        log.warn("安兔创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
+        log.warn(getPlatForm().getName()+"创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
         AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
         if(response.getMessage().contains("参考编号已存在")){
             return success(response.getOrderCode());
@@ -173,7 +173,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                         .last(CharSequenceUtil.format("and (code_en = '{}'  or code_pt = '{}')",antuCreateOutboundReq.getProvince(),antuCreateOutboundReq.getProvince()))
                         .list();
                 if(CollUtil.isEmpty(dictCityEntityList)){
-                    throw new ServiceException("安兔不支持该省份下单");
+                    throw new ServiceException(getPlatForm().getName()+"不支持该省份下单");
                 }
                 antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());
             }
