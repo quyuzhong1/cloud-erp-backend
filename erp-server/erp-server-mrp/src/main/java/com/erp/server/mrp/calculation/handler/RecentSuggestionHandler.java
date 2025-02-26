@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.handler;
 
+import com.erp.model.mrp.dto.CfgRuleExpireTimeDTO;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
@@ -35,6 +36,7 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
         CfgRuleStrategyDTO cfgRuleStrategyDTO = resultDTO.getCfgRuleStrategy();
         LocalDate now = LocalDate.parse(resultDTO.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         List<ReplenishmentResultDTO.RecentSuggestionDTO> recentSuggestions = new ArrayList<>();
+        CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult = cfgRuleStrategyDTO.getExpireTimeResult();
         CfgRuleStockUpDTO.StrategyResultDTO stockUpResult = cfgRuleStrategyDTO.getStockUpResult();
         //获取最近断货日
         LocalDate startDate = resultDTO.getRptOutOfStocks()
@@ -61,7 +63,7 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
                 //最长发货时长 = 本地发FBA时效 + FBA入库天数 + 发货频率 + FBA安全天数
                 //最短发货时长 = 本地发海外时效 + 海外仓入库天数
                 //最长发货时长 = 本地发海外时效 + 海外仓入库天数 + 发货频率 + 海外仓安全天数
-                String markType = getDeliveryMarkType(outOfStockDays, dayAtomic, stockUpResult);
+                String markType = getDeliveryMarkType(outOfStockDays, dayAtomic, expireTimeResult, stockUpResult);
                 ReplenishmentResultDTO.RecentSuggestionDTO dto = ReplenishmentResultDTO.RecentSuggestionDTO.buildRecentSuggestion(RecentSuggestionEnum.RECENT_DELIVERY.getCode(), dayAtomic.get(), markType, deliverySuggestDTO.getSuggestDeliveryQty(), deliverySuggestDTO.getSuggestDeliveryDate());
                 recentSuggestions.add(dto);
             }
@@ -82,7 +84,7 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
             //最长采购时长 = 采购审批时长 + 生产周期 + 供应商发货时长 + 质检入库时长 + 采购频率
             int days = (int) ChronoUnit.DAYS.between(now, purchaseSuggestDTO.getSuggestPurchaseDate());
             AtomicInteger dayAtomic = new AtomicInteger(days);
-            String markType = getPurchaseMarkType(outOfStockDays, dayAtomic, stockUpResult);
+            String markType = getPurchaseMarkType(outOfStockDays, dayAtomic, expireTimeResult);
             ReplenishmentResultDTO.RecentSuggestionDTO dto = ReplenishmentResultDTO.RecentSuggestionDTO.buildRecentSuggestion(RecentSuggestionEnum.RECENT_PURCHASE.getCode(), dayAtomic.get(), markType, purchaseSuggestDTO.getSuggestPurchaseQty(), purchaseSuggestDTO.getSuggestPurchaseDate());
             recentSuggestions.add(dto);
         }
@@ -136,16 +138,18 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
      *
      * @param outOfStockDays 断货天数
      * @param dayAtomic      计算日
-     * @param stockUpResult  备货配置
+     * @param expireTimeResult 时效配置
      */
-    private String getDeliveryMarkType(int outOfStockDays, AtomicInteger dayAtomic, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+    private String getDeliveryMarkType(int outOfStockDays, AtomicInteger dayAtomic, CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult,
+                                       CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
         String markType;
         if (outOfStockDays < 0) {
             dayAtomic.set(Math.abs(outOfStockDays));
             markType = SuggestedMarkTypeEnum.OUT_OF_STOCK_PURCHASE.getCode();
-        } else if (dayAtomic.get() > 0 && dayAtomic.get() <= (stockUpResult.getLogisticsResult().getLogisticsDays() + stockUpResult.getInstockDays())) {
+        } else if (dayAtomic.get() > 0 && dayAtomic.get() <= (expireTimeResult.getLogisticsResult().getLogisticsDays() + expireTimeResult.getInstockDays())) {
             markType = SuggestedMarkTypeEnum.WILL_OUT_OF_STOCK_DELIVERY.getCode();
-        } else if (dayAtomic.get() <= (stockUpResult.getLogisticsResult().getLogisticsDays() + stockUpResult.getInstockDays() + stockUpResult.getLogisticsResult().getLogisticsCycleDays() + stockUpResult.getSafeDays())) {
+        } else if (dayAtomic.get() <= (expireTimeResult.getLogisticsResult().getLogisticsDays() + expireTimeResult.getInstockDays() +
+                expireTimeResult.getLogisticsResult().getLogisticsCycleDays() + stockUpResult.getSafeDays())) {
             markType = SuggestedMarkTypeEnum.RISKS_DELIVERY.getCode();
         } else {
             markType = SuggestedMarkTypeEnum.NORMAL_DELIVERY.getCode();
@@ -159,16 +163,17 @@ public class RecentSuggestionHandler extends AbstractSkuCalculationHandler {
      *
      * @param outOfStockDays 断货天数
      * @param dayAtomic      计算日
-     * @param stockUpResult  备货配置
+     * @param expireTimeResult  时效配置
      */
-    private String getPurchaseMarkType(int outOfStockDays, AtomicInteger dayAtomic, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult) {
+    private String getPurchaseMarkType(int outOfStockDays, AtomicInteger dayAtomic, CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult) {
         String markType;
         if (outOfStockDays < 0) {
             dayAtomic.set(Math.abs(outOfStockDays));
             markType = SuggestedMarkTypeEnum.OUT_OF_STOCK_PURCHASE.getCode();
-        } else if (dayAtomic.get() > 0 && dayAtomic.get() <= (stockUpResult.getSupplierDeliveryDays() + stockUpResult.getQcDays())) {
+        } else if (dayAtomic.get() > 0 && dayAtomic.get() <= (expireTimeResult.getSupplierDeliveryDays() + expireTimeResult.getQcDays())) {
             markType = SuggestedMarkTypeEnum.WILL_OUT_OF_STOCK_PURCHASE.getCode();
-        } else if (dayAtomic.get() <= (stockUpResult.getPurchaseApproveDays() + stockUpResult.getProductionDays() + stockUpResult.getSupplierDeliveryDays() + stockUpResult.getQcDays() + stockUpResult.getPurchaseCycleDays())) {
+        } else if (dayAtomic.get() <= (expireTimeResult.getPurchaseApproveDays() + expireTimeResult.getProductionDays() + expireTimeResult.getSupplierDeliveryDays() +
+                expireTimeResult.getQcDays() + expireTimeResult.getPurchaseCycleDays())) {
             markType = SuggestedMarkTypeEnum.RISKS_PURCHASE.getCode();
         } else {
             markType = SuggestedMarkTypeEnum.NORMAL_PURCHASE.getCode();

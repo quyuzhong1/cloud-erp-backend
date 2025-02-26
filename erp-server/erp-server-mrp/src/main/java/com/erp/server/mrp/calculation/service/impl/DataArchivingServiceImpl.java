@@ -12,6 +12,7 @@ import com.erp.server.mrp.calculation.service.DataArchivingService;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.service.CfgDataArchivingService;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
+import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -41,6 +42,8 @@ public class DataArchivingServiceImpl implements DataArchivingService {
     @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
     @Resource
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
+    @Resource
     private InventoryService inventoryService;
 
     @Override
@@ -59,6 +62,8 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                 }
                 //归档建议
                 cfgDataArchivingService.dataArchivingSuggestion(null);
+                //更新虚拟仓配置
+                cfgRuleWarehouseService.refreshVirtual();
                 List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
                 log.warn("完成处理归档数据,时间{}", System.currentTimeMillis());
                 String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);

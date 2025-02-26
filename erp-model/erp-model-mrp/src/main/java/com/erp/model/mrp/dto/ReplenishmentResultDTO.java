@@ -747,14 +747,14 @@ public class ReplenishmentResultDTO {
             return entity;
         }
 
-        public static FbaInTransitDetailDTO buildFbaInTransitDetailDTO(ReplenishmentInventoryDTO.FbaInTransitDTO fbaInTransitDTO, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, String calcVersion) {
+        public static FbaInTransitDetailDTO buildFbaInTransitDetailDTO(ReplenishmentInventoryDTO.FbaInTransitDTO fbaInTransitDTO, CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult, String calcVersion) {
             FbaInTransitDetailDTO dto = new FbaInTransitDetailDTO();
             dto.setSourceId(fbaInTransitDTO.getSourceId());
             dto.setSourceCode(fbaInTransitDTO.getSourceCode());
             dto.setSourceType(fbaInTransitDTO.getSourceType());
             dto.setStatus(fbaInTransitDTO.getStatus());
             dto.setDeliveryDate(fbaInTransitDTO.getDeliveryDate());
-            dto.setEstimateSalesDate(fbaInTransitDTO.getEstimateSalesDate().plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getInstockDays()));
+            dto.setEstimateSalesDate(fbaInTransitDTO.getEstimateSalesDate().plusDays(expireTimeResult.getLogisticsResult().getLogisticsDays()).plusDays(expireTimeResult.getInstockDays()));
             dto.setDeclareQty(fbaInTransitDTO.getDeclareQty());
             dto.setDeliveryQty(fbaInTransitDTO.getDeliveryQty());
             dto.setReceiveQty(fbaInTransitDTO.getReceiveQty());

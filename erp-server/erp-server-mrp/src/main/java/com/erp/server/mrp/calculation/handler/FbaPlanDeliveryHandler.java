@@ -48,7 +48,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
         //补货计划
         Set<String> replenishmentPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaReplenishmentPlan());
         if (!CollectionUtils.isEmpty(replenishmentPlan)) {
-            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getReplenishmentPlan(replenishmentResultDTO, replenishmentPlan, cfgRuleStrategyDTO.getStockUpResult(),
+            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getReplenishmentPlan(replenishmentResultDTO, replenishmentPlan, cfgRuleStrategyDTO.getExpireTimeResult(),
                     ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY);
             if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
                 estimatedDeliveryDetails.addAll(fbaPlanDelivery);
@@ -57,7 +57,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
         //发货计划_补货计划下推
         Set<String> replenishmentDeliveryPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaDeliveryPlanByReplenishment());
         if (!CollectionUtils.isEmpty(replenishmentDeliveryPlan)) {
-            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, replenishmentDeliveryPlan, cfgRuleStrategyDTO.getStockUpResult(),
+            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, replenishmentDeliveryPlan, cfgRuleStrategyDTO.getExpireTimeResult(),
                     CfgRuleInventoryNodeEnum.FBA_DELIVERY_PLAN_BY_REPLENISHMENT.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
             if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
                 estimatedDeliveryDetails.addAll(fbaPlanDelivery);
@@ -67,7 +67,7 @@ public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
         Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaDeliveryPlanByManual());
         if (!CollectionUtils.isEmpty(codes)) {
             List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, codes,
-                    cfgRuleStrategyDTO.getStockUpResult(), CfgRuleInventoryNodeEnum.FBA_DELIVERY_PLAN_BY_MANUAL.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
+                    cfgRuleStrategyDTO.getExpireTimeResult(), CfgRuleInventoryNodeEnum.FBA_DELIVERY_PLAN_BY_MANUAL.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
             if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
                 estimatedDeliveryDetails.addAll(fbaPlanDelivery);
             }
