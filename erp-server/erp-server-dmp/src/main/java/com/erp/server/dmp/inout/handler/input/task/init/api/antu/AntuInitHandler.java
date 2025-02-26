@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.exception.ServiceException;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -69,7 +70,7 @@ public class AntuInitHandler extends DmpInputInitHandler {
 			ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
 			while(true) {
 				antuGetProductReq.setPage(page);
-				String response = AntuUtils.callService(apiType, antuGetProductReq);
+				String response = AntuUtils.callService(getPlatForm(),apiType, antuGetProductReq);
 				AntuResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<Object>>>() {}.getType());
 				List<?> data = result.getData();
 				int size = data.size();
@@ -102,6 +103,9 @@ public class AntuInitHandler extends DmpInputInitHandler {
 		return resultList;
 	}
 
+	private static OmsPlatformEnum getPlatForm() {
+		return OmsPlatformEnum.OMS_ANTU;
+	}
 
 
 

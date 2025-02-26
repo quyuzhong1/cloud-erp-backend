@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
@@ -71,7 +72,7 @@ public class AntuWarehouseInitHandler extends DmpInputInitHandler {
 			ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
 			while(true) {
 				antuGetProductReq.setPage(page);
-				String apiResponse = AntuUtils.callService(apiType, antuGetProductReq);
+				String apiResponse = AntuUtils.callService(getPlatForm(),apiType, antuGetProductReq);
 				AntuResponse<List<AntuWarehouseResp>> response = JSONObject.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
 
 				List<AntuWarehouseResp> data = response.getData();
@@ -110,7 +111,9 @@ public class AntuWarehouseInitHandler extends DmpInputInitHandler {
 		return resultList;
 	}
 
-
+	private static OmsPlatformEnum getPlatForm() {
+		return OmsPlatformEnum.OMS_ANTU;
+	}
 
 
 }
