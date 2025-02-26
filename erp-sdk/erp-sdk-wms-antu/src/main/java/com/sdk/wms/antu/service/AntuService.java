@@ -10,7 +10,6 @@ import com.sdk.wms.antu.utils.AntuUtils;
 import io.seata.common.util.StringUtils;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -19,7 +18,6 @@ import javax.validation.constraints.NotEmpty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -56,9 +54,9 @@ public class AntuService {
     public AntuResponse<List<AntuWarehouseResp>> getTransferWarehouse(AntuBaseRequest antuBaseRequest,OmsPlatformEnum platformEnum){
         String apiResponse = AntuUtils.callService(platformEnum,AntuConstants.METHOD_GET_WAREHOUSE,antuBaseRequest);
         AntuResponse<List<AntuWarehouseResp>> response = JSON.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
-        if(CollectionUtils.isNotEmpty(response.getData())){
-            response.setData(response.getData().stream().filter(v->"1".equals(v.getWarehouseType())).collect(Collectors.toList()));
-        }
+//        if(CollectionUtils.isNotEmpty(response.getData())){
+//            response.setData(response.getData().stream().filter(v->"1".equals(v.getWarehouseType())).collect(Collectors.toList()));
+//        }
         return response;
     }
 
