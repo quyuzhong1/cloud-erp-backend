@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.exception.ServiceException;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -79,7 +80,7 @@ public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
         while(true) {
             returnReq.setPage(page);
             log.debug("安兔退货信息请求:{}", returnReq);
-            String response = AntuUtils.callService(apiType,returnReq);
+            String response = AntuUtils.callService(getPlatForm() ,apiType,returnReq);
             log.debug("安兔退货信息响应:{}", response);
             AntuResponse<List<JSONObject>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<JSONObject>>>() {}.getType());
             List<JSONObject> data = result.getData();
@@ -104,5 +105,8 @@ public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
         return Collections.singletonList(dmpInputTaskInitDTO);
     }
 
+    private static OmsPlatformEnum getPlatForm() {
+        return OmsPlatformEnum.OMS_ANTU;
+    }
 
 }
