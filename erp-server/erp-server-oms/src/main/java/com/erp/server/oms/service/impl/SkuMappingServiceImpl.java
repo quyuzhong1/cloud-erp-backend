@@ -642,6 +642,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 throw new ServiceException("仓库不存在");
             }
         }
+        if(StringUtils.isBlank(skuMapping.getDictPlatform()) && StringUtils.isNotBlank(warehouseId)){
+            // 查询当前仓库的平台类型
+            List<WarehouseDTO.ListDTO> checkWarehouseList = wmsWarehouseFeign.listByIds(Collections.singletonList(dto.getWarehouseId()));
+            if (CollectionUtils.isEmpty(checkWarehouseList)) {
+                throw new ServiceException("仓库不存在");
+            }
+            WarehouseDTO.ListDTO currenWareHouse = checkWarehouseList.stream().findFirst().orElse(null);
+            OmsPlatformEnum platformEnum = OmsPlatformEnum.getByCode(currenWareHouse.getDictPlatform());
+            OmsPlatformEnum oldEnum = OmsPlatformEnum.getByCode(skuMapping.getDictPlatform());
+            if (null != platformEnum) {
+                if(null == oldEnum || !oldEnum.equals(platformEnum)){
+                    throw new ServiceException(platformEnum.getName() + "服务商仓库不允许更新");
+                }
+            }
+        }
 
         ListingInfoEntity listingInfo = listingInfoService.getById(skuMapping.getListingId());
         String listingId = "";
