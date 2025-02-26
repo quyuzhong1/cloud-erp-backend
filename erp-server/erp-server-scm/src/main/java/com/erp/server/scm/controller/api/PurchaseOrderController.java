@@ -13,13 +13,12 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.*;
-import com.erp.model.scm.entity.PurchaseChangeEntity;
-import com.erp.model.scm.entity.PurchaseOrderEntity;
-import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.server.scm.query.OrderConfirmQueryHandler;
@@ -45,10 +44,8 @@ import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 采购订单管理
@@ -192,7 +189,7 @@ public class PurchaseOrderController extends BaseController {
             keyIdName = "id")
     public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchaseOrderDTO.AddDTO dto) {
         BatchResultDTO resultDTO = purchaseOrderService.addAndSubmit(dto);
-        return resultDTO.getSuccess() ? success() : failure();
+        return resultDTO.getSuccess() ? success(resultDTO) : failure();
     }
 
     /**
@@ -221,7 +218,7 @@ public class PurchaseOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修更新备注采购订单:ids={ids},明细备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "修更新备注采购订单:明细备注={remark}")
     @PostMapping("/updateRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
@@ -229,9 +226,40 @@ public class PurchaseOrderController extends BaseController {
             serviceClass = PurchaseOrderService.class,
             keyIdName = "ids")
     public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = purchaseOrderService.updateRemark(dto);
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByIds(dto.getIds());
+        Map<String, PurchaseOrderDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(PurchaseOrderDetailEntity::getPurchaseOrderId).distinct().collect(Collectors.toList());
+        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(mainIds);
+        for (String id : dto.getIds()) {
+            PurchaseOrderDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购订单明细不存在"));
+                continue;
+            }
+            PurchaseOrderEntity entity = entityMap.get(detailEntity.getPurchaseOrderId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购订单不存在"));
+                continue;
+            }
+            try {
+                BaseIdsDTO.RemarkDTO remarkDTO = new BaseIdsDTO.RemarkDTO();
+                remarkDTO.setRemark(dto.getRemark());
+                remarkDTO.setIds(Collections.singletonList(id));
+                Boolean flag = purchaseOrderService.updateRemark(remarkDTO);
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "修更新备注采购订单成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "修更新备注采购订单失败"));
+                }
+            }catch (Exception e){
+                log.error("采购订单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 查询详情
