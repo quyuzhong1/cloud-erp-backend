@@ -279,9 +279,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     }
                 }
 
-
-
-
+                shudiyunB2cOrderDTO.setTaxation(dmpSoInfoEntity.getTotalTaxFee());
                 shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
 
                 //取消金额、数量
