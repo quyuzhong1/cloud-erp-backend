@@ -453,9 +453,11 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 数量
         detailDTO.setQty(soDetailEntity.getQty());
         // 金额
-        detailDTO.setAmount(soDetailEntity.getAfterAmount());
+        // 商品明细折扣前总价
+        detailDTO.setAmount(soDetailEntity.getSellPriceOrigin().multiply(BigDecimal.valueOf(soDetailEntity.getQty())));
         // 单价
-        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPrice()));
+        // 折扣前单价
+        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPriceOrigin()));
         // 币别（原币）
         detailDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率

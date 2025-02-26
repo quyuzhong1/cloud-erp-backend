@@ -77,7 +77,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         List<String> channelIds = entityList.stream().map(req -> req.getChannelId()).distinct().collect(Collectors.toList());
         List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
-        if (CollUtil.isNotEmpty(logisticsChannelEntities)) {
+        if (CollUtil.isNotEmpty(channelIds)) {
             logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
         }
 

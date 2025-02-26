@@ -33,19 +33,28 @@ public class ShopifyOrderNextDmpHandler extends ShopifyOrderGetDetailDmpHandler 
 				BigDecimal price = BigDecimal.ZERO;
 				BigDecimal totalDiscount = BigDecimal.ZERO;
 				BigDecimal quantity = BigDecimal.ZERO;
-				if (priceObj != null) {
-					price = MathUtil.valueOf(priceObj);
-					//折扣后订单总金额
-					dmpDataMap.put("afterAmount", price.multiply(quantity));
-				}
 				if (totalDiscountObj != null) {
 					totalDiscount = MathUtil.valueOf(totalDiscountObj);
 				}
 				if (quantityObj != null) {
-					//商品售价(折扣后单价)
 					quantity = MathUtil.valueOf(quantityObj);
-					dmpDataMap.put("sellPrice", price.subtract(totalDiscount.divide(quantity, 4, BigDecimal.ROUND_HALF_UP)));
 				}
+
+				if (quantity.compareTo(BigDecimal.ZERO) > 0) {
+					price = price.subtract(totalDiscount.divide(quantity, 4, BigDecimal.ROUND_HALF_UP));
+				} else {
+					price = price.subtract(totalDiscount);
+				}
+
+				if (quantityObj != null) {
+					//商品售价(折扣后单价)
+					dmpDataMap.put("sellPrice", price);
+				}
+				if (priceObj != null) {
+					//折扣后订单总金额
+					dmpDataMap.put("afterAmount", price.multiply(quantity));
+				}
+
 			}
 		}
 	}

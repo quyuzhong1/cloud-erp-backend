@@ -8,25 +8,24 @@ import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CartonDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
-import com.erp.model.wms.entity.WmsCartonEntity;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
+import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
+import com.erp.server.wms.convert.CartonConverter;
 import com.erp.server.wms.mapper.WmsCartonDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.erp.server.wms.service.WmsCartonService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,7 +90,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
             }
         }
 
-        List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), WmsCartonDetailEntity.class);
+        List<WmsCartonDetailEntity> detailEntityList = buildCartonDetail(addDTO.getDetailList());
         // 数据处理
         handleData(detailEntityList, wmsCartonEntity.getId());
         if(CollectionUtils.isNotEmpty(detailEntityList)){
@@ -104,6 +103,26 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
             List<Pair<String, String>> addPairList = detailEntityList.stream().map(obj -> new Pair<>(wmsCartonEntity.getPackingTaskId(), obj.getSkuNo() + "*"+ obj.getPackQty())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.CARTON_DETAIL.getCode(), addPairList, addDTO.getOperation());
         }
+    }
+
+    /**
+     * 合并相同 sku+fuSku的明细行
+     * @param detailList
+     * @return
+     */
+    private List<WmsCartonDetailEntity> buildCartonDetail(List<WmsCartonDetailDTO.AddDTO> detailList) {
+        Map<String, List<WmsCartonDetailDTO.AddDTO>> map = detailList.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku()));
+        List<WmsCartonDetailEntity> detailEntityList = new ArrayList<>(map.keySet().size());
+        map.keySet().forEach(key ->{
+            List<WmsCartonDetailDTO.AddDTO> addDTOS = map.get(key);
+            WmsCartonDetailEntity detailEntity = CartonConverter.INSTANCE.AddDetailToCartonDetail(addDTOS.get(0));
+            int packQty = addDTOS.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
+            BigDecimal grossWeight = addDTOS.stream().map(WmsCartonDetailDTO.AddDTO::getGrossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+            detailEntity.setPackQty(packQty);
+            detailEntity.setGrossWeight(grossWeight);
+            detailEntityList.add(detailEntity);
+        });
+        return detailEntityList;
     }
 
     @Override
