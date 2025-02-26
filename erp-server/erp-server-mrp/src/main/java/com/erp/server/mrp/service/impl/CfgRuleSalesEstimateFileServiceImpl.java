@@ -16,6 +16,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesEstimateFileEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -84,9 +85,14 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
                 .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
                 .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
                 .list();
+        String platformName = salesPlatformList.stream()
+                .filter(v -> v.getValue().equals(platform))
+                .map(DictBasicEntity::getName)
+                .findFirst()
+                .orElse("");
         Map<String, String> platformMap = salesPlatformList.stream()
                 .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, com.erp.model.oms.entity.DictBasicEntity::getValue, (o1, o2) -> o1));
-        SalesEstimateExcelFileListener excelListenerUtil = new SalesEstimateExcelFileListener(skuMap, shopInfoList, platformMap, platform);
+        SalesEstimateExcelFileListener excelListenerUtil = new SalesEstimateExcelFileListener(skuMap, shopInfoList, platformMap, platformName);
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), CfgRuleSalesEstimateFileDTO.ExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
