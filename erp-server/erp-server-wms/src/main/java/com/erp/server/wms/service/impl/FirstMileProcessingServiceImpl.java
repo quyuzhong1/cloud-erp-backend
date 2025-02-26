@@ -1,28 +1,35 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
+import com.erp.model.wms.dto.FirstMileProcessingDetailDTO;
 import com.erp.model.wms.dto.SoB2bProcessingDTO;
+import com.erp.model.wms.entity.FirstMileProcessingDetailEntity;
 import com.erp.model.wms.entity.FirstMileProcessingEntity;
 import com.erp.model.wms.enums.OrderProcessingLableEnum;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.FirstMileProcessingConverter;
+import com.erp.server.wms.convert.FirstMileProcessingDetailConverter;
 import com.erp.server.wms.mapper.FirstMileProcessingMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
@@ -67,6 +74,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
+    @Resource
+    private FirstMileProcessingDetailService firstMileProcessingDetailService;
 
     /**
     * 修改
@@ -85,7 +94,19 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         if (CollUtil.isEmpty(firstMileProcessingList)) {
             return Boolean.TRUE;
         }
-        return super.saveBatch(firstMileProcessingList);
+        boolean save = super.saveBatch(firstMileProcessingList);
+        if (!save) {
+            throw new ServiceException(ApiError.ERROR_1019);
+        }
+        // 使用stream和flatMap将所有detailList合并成一个List
+        List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> allDetailList = list.stream()
+                .filter(item -> item.getDetailList() != null)
+                .flatMap(item -> item.getDetailList().stream())
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(allDetailList)) {
+            return Boolean.TRUE;
+        }
+        return firstMileProcessingDetailService.addFirstMileOrderDetail(allDetailList);
     }
 
     @Override
@@ -147,23 +168,119 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         List<FirstMileProcessingDTO.AddOrUpdateDTO> addList = new ArrayList<>();
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        List<List<FirstMileProcessingDTO.AddOrUpdateDTO>> result = list.parallelStream().map(entity -> {
-            //根据类型更新出库数据
-            handleOutstockByType(machineList,transferList,soOutstockList,entity);
-            log.warn("根据类型处理成功！code = {}",entity.getRequisitionApplicationCode());
-            // 新增数据
-            List<FirstMileProcessingDTO.AddOrUpdateDTO> localList = new ArrayList<>();
-            addBomList(localList,entity,bomMap.get(CharSequenceUtil.format("{}_{}",entity.getSkuId(),BomTypeEnum.COMBINATION.getType())));
-            log.warn("按bom处理数据成功！code = {}",entity.getRequisitionApplicationCode());
-            return localList;
-        }).collect(Collectors.toList());
-        // 合并所有局部列表
-        result.forEach(addList::addAll);
+
+        /**
+         * 1、第三方仓要货单的要货申请单只需要生成主表数据，数量计算在主表中
+         * 2、fba的要货申请单会出现一对多个头程发货单的情景，所以发货出库数据存于明细表中
+         */
+        //根据要货申请生成主表数据
+        Map<String, List<FirstMileProcessingEntity>> map = list.stream().collect(Collectors.groupingBy(FirstMileProcessingEntity::getRequisitionApplicationDetailId));
+        for (Map.Entry<String, List<FirstMileProcessingEntity>> entry : map.entrySet()) {
+            List<FirstMileProcessingEntity> value = entry.getValue();
+            if (entry.getKey().equals("1893917832506314754")) {
+                log.error("wer");
+            }
+            //主表数据处理
+            List<FirstMileProcessingDTO.AddOrUpdateDTO> mainList = generateAddOrUpdateData(bomMap,value, machineList, transferList, soOutstockList);
+            // 合并所有局部列表
+            addList.addAll(mainList);
+        }
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
         ApplicationContextUtils.getBean(FirstMileProcessingServiceImpl.class).addOrupdate(addList,startDate);
         log.warn("数据更新成功!");
     }
+
+    /**
+     * 生成新增修改数据
+     * @author will
+     * @date 2025/2/25 16:13
+     * @param bomMap
+     * @param list
+     * @param machineList
+     * @param transferList
+     * @param soOutstockList
+     * @return java.util.List<java.util.List<com.erp.model.wms.dto.FirstMileProcessingDTO.AddOrUpdateDTO>>
+     */
+    private List<FirstMileProcessingDTO.AddOrUpdateDTO> generateAddOrUpdateData (Map<String, List<BomChildrenSkuDTO>> bomMap,List<FirstMileProcessingEntity> list, List<SoB2bProcessingDTO.ResponseDTO> machineList,
+                                          List<SoB2bProcessingDTO.ResponseDTO> transferList,List<SoB2bProcessingDTO.ResponseDTO> soOutstockList) {
+        //所有发货明细id集合
+        List<String> deliveryDetailIdList = list.stream().map(FirstMileProcessingEntity::getFirstMileDeliveryDetailId).distinct().collect(Collectors.toList());
+        //查询发货信息
+        FirstMileProcessingEntity firstMileProcessingEntity = list.get(0);
+        List<FirstMileProcessingDTO.AddOrUpdateDTO> mainList = handleBomData(null,deliveryDetailIdList, bomMap, Collections.singletonList(firstMileProcessingEntity) , machineList, transferList, soOutstockList);
+        //fba的需要新增明细数据
+        if (!CharSequenceUtil.equals("fba",firstMileProcessingEntity.getType())) {
+            return mainList;
+        }
+        return handleBomData(mainList,deliveryDetailIdList,bomMap,list,machineList,transferList,soOutstockList);
+    }
+
+    /**
+     * 添加bom数据
+     * @author will
+     * @date 2025/2/25 18:55
+     * @param mainList
+     * @param deliveryDetailIdList
+     * @param bomMap
+     * @param handleList
+     * @param machineList
+     * @param transferList
+     * @param soOutstockList
+     * @return java.util.List<com.erp.model.wms.dto.FirstMileProcessingDTO.AddOrUpdateDTO>
+     */
+    private List<FirstMileProcessingDTO.AddOrUpdateDTO> handleBomData ( List<FirstMileProcessingDTO.AddOrUpdateDTO> mainList,List<String> deliveryDetailIdList,Map<String, List<BomChildrenSkuDTO>> bomMap,List<FirstMileProcessingEntity> handleList,List<SoB2bProcessingDTO.ResponseDTO> machineList,
+                                                                       List<SoB2bProcessingDTO.ResponseDTO> transferList,List<SoB2bProcessingDTO.ResponseDTO> soOutstockList) {
+        List<FirstMileProcessingDTO.AddOrUpdateDTO> resultList = new ArrayList<>();
+        for (FirstMileProcessingEntity entity : handleList) {
+            //根据类型更新出库数据
+            handleOutstockByType(deliveryDetailIdList,machineList,transferList,soOutstockList,entity);
+            log.warn("根据类型处理成功！code = {}",entity.getRequisitionApplicationCode());
+            // 新增数据
+            List<FirstMileProcessingDTO.AddOrUpdateDTO> localList = new ArrayList<>();
+            addBomList(localList,entity,bomMap.get(CharSequenceUtil.format("{}_{}",entity.getSkuId(),BomTypeEnum.COMBINATION.getType())));
+            log.warn("按bom处理数据成功！code = {}",entity.getRequisitionApplicationCode());
+            resultList.addAll(localList);
+
+        }
+        //未传主表数据则返回
+        if (CollUtil.isEmpty(mainList)) {
+            return resultList;
+        }
+        //给主表添加明细数据
+        mainList.forEach(obj -> {
+            List<FirstMileProcessingDTO.AddOrUpdateDTO> detailList = resultList.stream().filter(o -> CharSequenceUtil.isNotBlank(obj.getFirstMileDeliveryDetailId()) && CharSequenceUtil.equals(obj.getSkuId(), o.getSkuId())).collect(Collectors.toList());
+            List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> oldDetailList = CollUtil.isEmpty(obj.getDetailList()) ? new ArrayList<>() : obj.getDetailList() ;
+            //转明细对象
+            List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> processingDetailList = BeanUtil.copyToList(detailList, FirstMileProcessingDetailDTO.AddOrUpdateDTO.class);
+            processingDetailList.forEach(o -> o.setMainId(obj.getId()));
+            oldDetailList.addAll(processingDetailList);
+            obj.setDetailList(oldDetailList);
+            cleanFbaData(obj);
+        });
+        return mainList;
+    }
+
+    /**
+     * fba头程发货清楚数据，记录到明细
+     * @author will
+     * @date 2025/2/26 11:41
+     * @param addOrUpdateDTO
+     */
+    private void cleanFbaData (FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO) {
+        addOrUpdateDTO.setFirstMileDeliveryId("");
+        addOrUpdateDTO.setFirstMileDeliveryCode("");
+        addOrUpdateDTO.setFirstMileDeliveryDetailId("");
+        addOrUpdateDTO.setDeliveryQty(null);
+        addOrUpdateDTO.setDeliveryApproveStatus("");
+        addOrUpdateDTO.setOutstockOrderId("");
+        addOrUpdateDTO.setOutstockOrderStatus("");
+        addOrUpdateDTO.setOutstockOrderCode("");
+        addOrUpdateDTO.setOutstockOrderTime(null);
+        addOrUpdateDTO.setOutstockOrderType("");
+        addOrUpdateDTO.setOutstockQty(null);
+    }
+
 
     @Override
     public Boolean deleteFirstMileProcessing(FirstMileProcessingDTO.DeleteDTO dto) {
@@ -181,6 +298,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     private void addBomList (List<FirstMileProcessingDTO.AddOrUpdateDTO> addList, FirstMileProcessingEntity entity, List<BomChildrenSkuDTO> bomChildrenSkuList) {
         if (CollUtil.isEmpty(bomChildrenSkuList)) {
             FirstMileProcessingDTO.AddOrUpdateDTO addDTO = FirstMileProcessingConverter.INSTANCE.entityToAdd(entity);
+            addDTO.setId(IdWorker.getIdStr());
             addDTO.setParentSkuId("");
             addDTO.setBomVersion("");
             addList.add(addDTO);
@@ -188,6 +306,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         }
         for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuList) {
             FirstMileProcessingDTO.AddOrUpdateDTO addOrUpdateDTO = FirstMileProcessingConverter.INSTANCE.entityToAdd(entity);
+            addOrUpdateDTO.setId(IdWorker.getIdStr());
             addOrUpdateDTO.setSkuId(childrenSkuDTO.getSkuId());
             addOrUpdateDTO.setParentSkuId(childrenSkuDTO.getParentSkuId());
             addOrUpdateDTO.setOutstockQty(ObjectUtil.isEmpty(addOrUpdateDTO.getOutstockQty()) ? MathUtil.ZERO : addOrUpdateDTO.getOutstockQty() * childrenSkuDTO.getQuantity());
@@ -208,16 +327,25 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
          * @param soOutstockList
          * @param entity
          */
-    private void handleOutstockByType (List<SoB2bProcessingDTO.ResponseDTO> machineList, List<SoB2bProcessingDTO.ResponseDTO> transferList,
+    private void handleOutstockByType (List<String> deliveryDetailIdList,List<SoB2bProcessingDTO.ResponseDTO> machineList, List<SoB2bProcessingDTO.ResponseDTO> transferList,
                                        List<SoB2bProcessingDTO.ResponseDTO> soOutstockList, FirstMileProcessingEntity entity) {
         //加工单
         SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
                         && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                        && CharSequenceUtil.isNotBlank( entity.getFirstMileDeliveryDetailId())
                         &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
-            handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode());
+            //出库数量
+            Integer totalQty = machineList.stream().filter(obj ->
+                            CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
+                            && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                            && CharSequenceUtil.isNotBlank( entity.getFirstMileDeliveryDetailId())
+                            && deliveryDetailIdList.contains(entity.getFirstMileDeliveryDetailId()))
+                            .map(SoB2bProcessingDTO.ResponseDTO::getQty)
+                            .reduce(MathUtil.ZERO, Integer::sum);
+            handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode(),totalQty);
             return;
         }
         //直接调拨单
@@ -225,20 +353,39 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                         CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
                                 && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
                                 && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                                && CharSequenceUtil.isNotBlank( entity.getFirstMileDeliveryDetailId())
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(transferResponseDTO)) {
-            handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
+            //出库数量
+            Integer totalQty = transferList.stream().filter(obj ->
+                            CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
+                            && CharSequenceUtil.equals(obj.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
+                            && CharSequenceUtil.isNotBlank( entity.getFirstMileDeliveryDetailId())
+                            && CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                    .map(SoB2bProcessingDTO.ResponseDTO::getQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode(),totalQty);
             return;
         }
         //销售出库单
         SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
                                 && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                                && CharSequenceUtil.isNotBlank( entity.getFirstMileDeliveryDetailId())
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
-            handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
+            //出库数量
+            Integer totalQty =  soOutstockList.stream().filter(obj ->
+                            CharSequenceUtil.equals(obj.getSourceId(), entity.getFirstMileDeliveryId())
+                            && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
+                            && CharSequenceUtil.isNotBlank( entity.getFirstMileDeliveryDetailId())
+                            &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getFirstMileDeliveryDetailId()))
+                    .map(SoB2bProcessingDTO.ResponseDTO::getQty)
+                    .reduce(MathUtil.ZERO, Integer::sum);
+            handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode(),totalQty);
         }
     }
 
@@ -266,14 +413,14 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * @param responseDTO
      * @param sourceType
      */
-    private void handleOutstock (FirstMileProcessingEntity entity, SoB2bProcessingDTO.ResponseDTO responseDTO,String sourceType) {
+    private void handleOutstock (FirstMileProcessingEntity entity, SoB2bProcessingDTO.ResponseDTO responseDTO,String sourceType,Integer totalQty) {
         entity.setOutstockOrderId(responseDTO.getId());
         entity.setOutstockOrderStatus(responseDTO.getApproveStatus());
         entity.setOutstockQty(responseDTO.getQty());
         entity.setOutstockOrderCode(responseDTO.getCode());
         entity.setOutstockOrderTime(responseDTO.getApproveTime());
         entity.setOutstockOrderType(sourceType);
-        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
+        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - totalQty);
     }
 
     /**
@@ -300,15 +447,85 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        //明细信息
+        //查询加工单数据
+        List<String> idList = list.stream().map(FirstMileProcessingDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<List<String>> idListPartition = Lists.partition(idList, 50000);
+
+        //分页查询数据
+        List<FirstMileProcessingDetailEntity> detailList = new ArrayList<>();
+        for (List<String> mainIdList : idListPartition) {
+            List<FirstMileProcessingDetailEntity> firstMileProcessingDetailList = firstMileProcessingDetailService.listByMainIdList(mainIdList);
+            detailList.addAll(firstMileProcessingDetailList);
+        }
+
         for (FirstMileProcessingDTO.ListDTO listDTO : list) {
-            //发货单审核状态名称
-            listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
+            listDTO.setIndexId(listDTO.getId());
             //要货申请状态名称
             listDTO.setRequisitionApplicationStatusName(RequisitionApplicationStatusEnum.getName(listDTO.getRequisitionApplicationStatus()));
             listDTO.setOutstockOrderTypeName(SourceTypeEnum.getName(listDTO.getOutstockOrderType()));
             //冻结时长
             listDTO.setFrozenDays(ObjectUtil.isEmpty(listDTO.getFrozenTime()) ? null : (Math.toIntExact(LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1));
 
+            List<FirstMileProcessingDetailEntity> processingDetailEntityList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), listDTO.getId())).collect(Collectors.toList());
+            if (CollUtil.isEmpty(processingDetailEntityList)) {
+                handleMainPaging(listDTO);
+                continue;
+            }
+            handleDetailPaging(processingDetailEntityList,listDTO);
+        }
+    }
+
+    private void handleMainPaging (FirstMileProcessingDTO.ListDTO listDTO) {
+        //发货单审核状态名称
+        listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
+        //标签
+        List<String> labelList = new ArrayList<>();
+        //已出
+        if (CharSequenceUtil.isNotBlank(listDTO.getOutstockOrderId())) {
+            labelList.add(OrderProcessingLableEnum.OUTSTOCK.getCode());
+            LocalDate localDate = ObjUtil.isEmpty(listDTO.getOutstockOrderTime()) ? LocalDate.now() : listDTO.getOutstockOrderTime().toLocalDate();
+            //冻结时长
+            listDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
+        }
+        //发货冻结
+        if (MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && CharSequenceUtil.isBlank(listDTO.getOutstockOrderId())) {
+            labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
+        }
+        //七日未发
+        if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
+            labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
+        }
+        //要货冻结
+        if (CharSequenceUtil.isBlank(listDTO.getFirstMileDeliveryId())
+                && Arrays.asList(RequisitionApplicationStatusEnum.HANDLE_ING.getStatus(),RequisitionApplicationStatusEnum.HANDLE.getStatus()).contains(listDTO.getRequisitionApplicationStatus())
+                && MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+            labelList.add(OrderProcessingLableEnum.REQUISITION_FROZEN.getCode());
+        }
+        listDTO.setLabelList(labelList);
+
+        //出库状态
+        if (CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.TRANSFER_INFO.getCode())
+                || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.MACHINE_INFO.getCode())
+                || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.SO_OUTSTOCK.getCode())) {
+            listDTO.setOutstockOrderStatusName(ApproveStatusEnum.getName(listDTO.getOutstockOrderStatus()));
+        }
+    }
+
+    /**
+     * 明细数据处理
+     * @author will
+     * @date 2025/2/26 10:12
+     * @param processingDetailEntityList
+     * @param mainListDTO
+     */
+    private void handleDetailPaging (List<FirstMileProcessingDetailEntity> processingDetailEntityList,FirstMileProcessingDTO.ListDTO mainListDTO) {
+        List<FirstMileProcessingDetailDTO.ListDTO> detailList = new ArrayList<>();
+        for (FirstMileProcessingDetailEntity entity : processingDetailEntityList) {
+            FirstMileProcessingDetailDTO.ListDTO listDTO = FirstMileProcessingDetailConverter.INSTANCE.entityToList(entity);
+            //发货单审核状态名称
+            listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
+            listDTO.setIndexId(listDTO.getMainId());
             //标签
             List<String> labelList = new ArrayList<>();
             //已出
@@ -316,23 +533,16 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                 labelList.add(OrderProcessingLableEnum.OUTSTOCK.getCode());
                 LocalDate localDate = ObjUtil.isEmpty(listDTO.getOutstockOrderTime()) ? LocalDate.now() : listDTO.getOutstockOrderTime().toLocalDate();
                 //冻结时长
-                listDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
+                mainListDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - mainListDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
             }
             //发货冻结
-            if (MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && CharSequenceUtil.isBlank(listDTO.getOutstockOrderId())) {
+            if (MathUtil.compareTo(mainListDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && CharSequenceUtil.isBlank(listDTO.getOutstockOrderId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
             }
             //七日未发
-            if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(listDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
+            if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(mainListDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - mainListDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
                 labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
             }
-            //要货冻结
-            if (CharSequenceUtil.isBlank(listDTO.getFirstMileDeliveryId())
-                    && Arrays.asList(RequisitionApplicationStatusEnum.HANDLE_ING.getStatus(),RequisitionApplicationStatusEnum.HANDLE.getStatus()).contains(listDTO.getRequisitionApplicationStatus())
-                    && MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
-                labelList.add(OrderProcessingLableEnum.REQUISITION_FROZEN.getCode());
-            }
-
             listDTO.setLabelList(labelList);
 
             //出库状态
@@ -341,6 +551,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                     || CharSequenceUtil.equals(listDTO.getOutstockOrderType(),SourceTypeEnum.SO_OUTSTOCK.getCode())) {
                 listDTO.setOutstockOrderStatusName(ApproveStatusEnum.getName(listDTO.getOutstockOrderStatus()));
             }
+            detailList.add(listDTO);
         }
+        mainListDTO.setDetailList(detailList);
     }
 }

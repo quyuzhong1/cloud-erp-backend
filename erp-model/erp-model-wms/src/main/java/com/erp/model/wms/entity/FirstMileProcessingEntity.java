@@ -150,6 +150,12 @@ public class FirstMileProcessingEntity extends BaseEntity<FirstMileProcessingEnt
     @TableField("bill_date")
     private LocalDate billDate;
 
+    /**
+     * 要货申请类型
+     */
+    @TableField(exist = false)
+    private String type;
+
     public static final String REQUISITION_APPLICATION_ID = "requisition_application_id";
 
     public static final String REQUISITION_APPLICATION_CODE = "requisition_application_code";
