@@ -357,12 +357,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             buildCartonSpecWeight(addDTO, type);
             //装箱没有fnsku，根据任务明细拆分
             List<WmsCartonDetailDTO.AddDTO> addDTOList = new ArrayList<>();
+            Map<String, List<PackingTaskDetailEntity>> skuDetailMap = copyTaskDetailList.stream().collect(Collectors.groupingBy(PackingTaskDetailEntity::getSkuId));
             addDTO.getDetailList().forEach(v->{
                 if(CharSequenceUtil.isBlank(v.getFnSku())){
                     Integer totalNum = v.getPackQty();
-                    List<PackingTaskDetailEntity> taskDetailList = copyTaskDetailList.stream().filter(obj->obj.getSkuId().equals(v.getSkuId())).collect(Collectors.toList());
+                    List<PackingTaskDetailEntity> taskDetailList = skuDetailMap.get(v.getSkuId());
                     for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
-                        String key = packingTaskDetailEntity.getSkuId()+packingTaskDetailEntity.getFnSku();
                         if(totalNum <= 0){
                             continue;
                         }
@@ -376,6 +376,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         addDTOList.add(addDTO1);
                         packingTaskDetailEntity.setDeliveryQty(Math.max(packingTaskDetailEntity.getDeliveryQty() - addDTO1.getPackQty(),0));
                     }
+                    skuDetailMap.put(v.getSkuId(), taskDetailList);
                 }else{
                     addDTOList.add(v);
                 }
