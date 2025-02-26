@@ -30,6 +30,7 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.CfgAppClientService;
+import com.google.common.collect.Lists;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
 import com.sdk.oms.shopee.dto.product.request.ProductRequest;
 import com.sdk.oms.shopee.dto.product.response.Item;
@@ -67,6 +68,9 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 		}
 		
 		List<Object> itemIds = findMongoData.stream().map(f -> f.get("item_id")).collect(Collectors.toList());
+		if(CollUtil.isEmpty(itemIds)) {
+			return new ArrayList<>();
+		}
 		
 		AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
 		List<CfgAppClientEntity> cfgAppClientEntityList = cfgAppClientService.lambdaQuery()
@@ -84,6 +88,8 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
 			throw new ServiceException("shopee授权未配置");
 		}
 		ShopAuthEntity shopAuthEntity = shopAuthEntityList.get(0);
+		
+		JSONArray jsonArray = new JSONArray();
 		ProductRequest productRequest = ProductRequest.builder()
                 .host(cfgAppClientEntity.getUrl())
                 .offset(0)
@@ -94,32 +100,44 @@ public class DmpInputShopeeProductDetailInitHandler extends DmpInputInitHandler{
                 .timeFrom(null)
                 .timeTo(null)
                 .build();
-		productRequest.setItemIdList(StringUtils.join(itemIds, ","));
 		
-		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+		List<List<Object>> partition = Lists.partition(itemIds, 50);
 
-    	ShopeeResponse data = null;
-    	long sleepTime = 1000;
-    	int count = 0;
-    	while(data == null) {
-    		data = this.execute(productRequest);
-    		if(data == null) {
-    			if(count == 10) {
-    				throw new ServiceException("调用shopee产品明细接口重试" + count + "失败");
-    			}
-    			try {
-					Thread.sleep(sleepTime);
-				} catch (InterruptedException e) {
-					Thread.currentThread().interrupt();
-				}
-    			sleepTime = sleepTime + 1000;
-    			count = count + 1;
-    		}
-    	}
-        
-    	JSONObject result = data.getResponse();
-        DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		JSONArray jsonArray = result.getJSONArray("item_list");
+		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
+		DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
+		ShopeeResponse data;
+    	long sleepTime;
+    	int count;
+		for(List<Object> p : partition) {
+			productRequest.setItemIdList(StringUtils.join(p, ","));
+			
+	    	data = null;
+	    	sleepTime = 1000;
+	    	count = 0;
+	    	while(data == null) {
+	    		data = this.execute(productRequest);
+	    		if(data == null) {
+	    			if(count == 10) {
+	    				throw new ServiceException("调用shopee产品明细接口重试" + count + "失败");
+	    			}
+	    			try {
+						Thread.sleep(sleepTime);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+	    			sleepTime = sleepTime + 1000;
+	    			count = count + 1;
+	    		}
+	    	}
+	        
+	    	JSONObject result = data.getResponse();
+	        
+			JSONArray item_list = result.getJSONArray("item_list");
+			if(CollUtil.isNotEmpty(item_list)) {
+				jsonArray.addAll(item_list);
+			}
+		}
+		
 		List<JSONObject> resultList = new ArrayList<>();
 		if(CollUtil.isNotEmpty(jsonArray)) {
 			for(Object object : jsonArray) {
