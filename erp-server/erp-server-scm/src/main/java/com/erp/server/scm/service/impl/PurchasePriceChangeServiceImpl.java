@@ -129,7 +129,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public String add(PurchasePriceChangeDTO.AddDTO dto) {
+    public PurchasePriceChangeEntity add(PurchasePriceChangeDTO.AddDTO dto) {
 
         /**
          * 报价明细
@@ -170,9 +170,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //添加日志
             String content = String.format("新增了一个{%s}-采购调价-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), id, "新增操作");
-            return id;
+            return changeEntity;
         }
-        return "";
+        return null;
     }
 
     /**
@@ -233,13 +233,13 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
-        String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+    public PurchasePriceChangeEntity addAndSubmit(PurchasePriceChangeDTO.AddDTO dto) {
+        PurchasePriceChangeEntity entity = this.add(dto);
+        if (null == entity) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submitApprove(Arrays.asList(id), Boolean.TRUE);
-        return result;
+        Boolean result = this.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
+        return entity;
     }
 
     /**

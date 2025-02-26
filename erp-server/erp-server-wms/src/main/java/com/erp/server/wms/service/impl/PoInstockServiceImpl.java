@@ -334,12 +334,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     public Boolean submit(List<String> ids) {
         //根据ids查询
         List<PoInstockEntity> list = getList(ids);
-        //待提交或审核不通过并且未作废允许提交
-        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
-        }
-
         submitList(ids, list);
         return Boolean.TRUE;
     }
@@ -347,6 +341,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void submitList(List<String> ids, List<PoInstockEntity> list) {
+        //待提交或审核不通过并且未作废允许提交
+        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
         //本次下推入库明细信息
         List<PoInstockDetailEntity> thisDetailList = poInstockDetailService.listByMainIds(ids);
         List<String> podIds = thisDetailList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
