@@ -202,7 +202,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPrice());
                 }
             }
-            shudiyunB2cOrderDTO.setDelivery_quantity();
             shudiyunB2cOrderDTO.setStatus("已创建");
 
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
