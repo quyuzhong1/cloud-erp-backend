@@ -1,32 +1,27 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.utils.CollectionUtils;
-import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
-import com.sdk.wms.antu.dto.request.*;
+import com.sdk.wms.antu.dto.request.AntuBaseRequest;
+import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
+import com.sdk.wms.antu.dto.request.AntuCreateInboundReq;
+import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
 import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
-import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
-import com.sdk.wms.antu.enums.AntuEnums;
-import com.sdk.wms.antu.service.AntuService;
 import com.sdk.wms.antu.dto.response.AntuResponse;
 import com.sdk.wms.antu.dto.response.AntuWarehouseResp;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
+import com.sdk.wms.antu.enums.AntuEnums;
+import com.sdk.wms.antu.service.AntuService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
@@ -68,7 +63,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             antuCreateInboundReq.setSmCode("TCHY");
         }
         log.warn("安兔创建入库单json :{}", JSONUtil.toJsonStr(antuCreateInboundReq));
-        AntuResponse<String> antuResponse = antuService.createInboundBill(antuCreateInboundReq);
+        AntuResponse<String> antuResponse = antuService.createInboundBill(antuCreateInboundReq,getPlatForm());
         return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
     }
 
@@ -83,19 +78,19 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             antuCreateInboundReq.setSmCode("TCHY");
         }
         // 修改入库单
-        AntuResponse<String> antuResponse = antuService.editInboundBill(antuCreateInboundReq);
+        AntuResponse<String> antuResponse = antuService.editInboundBill(antuCreateInboundReq,getPlatForm());
         return isSuccess(antuResponse.getAsk()) ? success(antuResponse.getData()) : failure(antuResponse.getMessage());
     }
 
     @Override
     public ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq) {
-        AntuResponse<String> response = antuService.cancelInboundBill(cancelInboundReq.getReceivingCode());
+        AntuResponse<String> response = antuService.cancelInboundBill(cancelInboundReq.getReceivingCode(),getPlatForm());
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
     @Override
     public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq) {
         AntuCalculateFeeReq antuCalculateFeeReq = ThirdWarehouseConverter.INSTANCE.reqToAntuCalculateFeeReq(calculateFeeReq);
-        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq);
+        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq,getPlatForm());
         List<AntuCalculateFeeResp> antuCalculateFeeRespList = response.getData();
         List<ThirdWarehouseCalculateFeeResponse> dataList = ThirdWarehouseConverter.INSTANCE.antuResToThirdWarehouseResponse(antuCalculateFeeRespList);
         return isSuccess(response.getAsk()) ? success(dataList) : failure(response.getMessage());
@@ -105,35 +100,16 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AntuCreateOutboundReq antuCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToAntu(createOutboundReq);
         this.handleData(antuCreateOutboundReq);
         log.warn("安兔创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
-        AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq);
+        AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
         if(response.getMessage().contains("参考编号已存在")){
             return success(response.getOrderCode());
         }
         return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
     }
-    @Override
-    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq) {
-        AntuUploadFileReq antuUploadFileReq = ThirdWarehouseConverter.INSTANCE.reqToAntuUpdateFileReq(uploadFileReq);
-        if (CharSequenceUtil.isNotBlank(uploadFileReq.getFileType())){
-            antuUploadFileReq.setFileType(uploadFileReq.getFileType());
-        }
-        if (CharSequenceUtil.isNotBlank(uploadFileReq.getModule())){
-            antuUploadFileReq.setModule(uploadFileReq.getModule());
-        }
-        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuUploadFileReq);
-        AntuUploadFileResp antuCalculateFeeRespList = response.getData();
-        ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.antuResToThirdWarehouseUploadFileResponse(antuCalculateFeeRespList);
-        return isSuccess(response.getAsk()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
-    }
-
-    @Override
-    protected ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadFileReq) {
-        return ApiResult.error("功能未开发");
-    }
 
     @Override
     public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        AntuResponse<String> response = antuService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason());
+        AntuResponse<String> response = antuService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason(),getPlatForm());
         if(!isSuccess(response.getAsk())){
             return failure(response.getMessage());
         }
@@ -154,7 +130,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(AntuBaseRequest.builder()
                         .pageSize(1)
                         .page(1)
-                .build());
+                .build(),getPlatForm());
         if(!isSuccess(response.getAsk())){
             throw new ServiceException("授权失败,"+response.getMessage());
         }
@@ -184,11 +160,6 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 }
                 antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());
             }
-        }
-        if (CollUtil.isNotEmpty(antuCreateOutboundReq.getAttach())){
-            antuCreateOutboundReq.getAttach().forEach(attach -> {
-                attach.setFileType("pdf");
-            });
         }
     }
     public boolean isSuccess(String ask){
