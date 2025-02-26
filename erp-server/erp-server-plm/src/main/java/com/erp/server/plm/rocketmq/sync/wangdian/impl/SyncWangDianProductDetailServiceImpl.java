@@ -3,6 +3,7 @@ package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -34,7 +35,6 @@ import org.springframework.util.StringUtils;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -78,8 +78,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         ProductPurchaseEntity productPurchase = Optional.ofNullable(productPurchaseService.getBySkuId(entity.getId())).orElse(new ProductPurchaseEntity());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
         GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
-        dto.setGoodsNo(getOrDefault(info, ProductInfoEntity::getSpuNo, entity.getSkuNo()));
-        dto.setGoodsName(getOrDefault(info, ProductInfoEntity::getName, entity.getName()));
+        dto.setGoodsNo(entity.getSkuNo());
+        dto.setGoodsName(entity.getName());
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
@@ -125,10 +125,6 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         plmPushMsgService.save(plmPushMsgEntity);
         
         return null;
-    }
-
-    private <T> T getOrDefault(ProductInfoEntity entity, Function<ProductInfoEntity, T> getter, T defaultValue) {
-        return (entity != null && getter.apply(entity) != null) ? getter.apply(entity) : defaultValue;
     }
 
     @Override
