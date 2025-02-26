@@ -18,6 +18,7 @@ public enum OmsPlatformEnum {
     OMS_GOOD_CANG("goodcang","谷仓海外仓"),
     OMS_IML("iml","艾姆勒海外仓"),
     OMS_ANTU("antu","安兔"),
+    OMS_SPT("spt","速派通"),
     ;
 
     @EnumValue
