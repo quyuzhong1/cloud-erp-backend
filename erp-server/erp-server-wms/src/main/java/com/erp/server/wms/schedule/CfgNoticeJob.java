@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -189,10 +190,15 @@ public class CfgNoticeJob {
         if (CollUtil.isEmpty(contentList)) {
             return;
         }
+
+        // 由于采用关键字（系统预警）
+        String activeProfile = SpringUtil.getActiveProfile();
+        String noticeTitle = StrUtil.isBlank(activeProfile) ? title : StrUtil.format("{}-{}", activeProfile, title);
+
         //按人员发送飞书通知
-        sendNoticeByUser(userIdList, title, contentList);
+        sendNoticeByUser(userIdList, noticeTitle, contentList);
         //按飞书群发送通知
-        sendNoticeByFsGroup(fsGroupList, title, contentList);
+        sendNoticeByFsGroup(fsGroupList, noticeTitle, contentList);
     }
     /**
      * 根据人员发送通知

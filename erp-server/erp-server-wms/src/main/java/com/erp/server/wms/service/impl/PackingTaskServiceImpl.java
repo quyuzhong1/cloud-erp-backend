@@ -359,9 +359,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<WmsCartonDetailDTO.AddDTO> addDTOList = new ArrayList<>();
             Map<String, List<PackingTaskDetailEntity>> skuDetailMap = copyTaskDetailList.stream().collect(Collectors.groupingBy(PackingTaskDetailEntity::getSkuId));
             addDTO.getDetailList().forEach(v->{
+                List<PackingTaskDetailEntity> taskDetailList = skuDetailMap.get(v.getSkuId());
+                Integer totalNum = v.getPackQty();
                 if(CharSequenceUtil.isBlank(v.getFnSku())){
-                    Integer totalNum = v.getPackQty();
-                    List<PackingTaskDetailEntity> taskDetailList = skuDetailMap.get(v.getSkuId());
                     for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
                         if(totalNum <= 0){
                             continue;
@@ -376,10 +376,21 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                         addDTOList.add(addDTO1);
                         packingTaskDetailEntity.setDeliveryQty(Math.max(packingTaskDetailEntity.getDeliveryQty() - addDTO1.getPackQty(),0));
                     }
-                    skuDetailMap.put(v.getSkuId(), taskDetailList);
                 }else{
+                    for(PackingTaskDetailEntity packingTaskDetailEntity : taskDetailList){
+                        if(totalNum <= 0){
+                            continue;
+                        }
+                        if(0>=packingTaskDetailEntity.getDeliveryQty()){
+                            continue;
+                        }
+                        if (v.getFnSku().equals(packingTaskDetailEntity.getFnSku())){
+                            packingTaskDetailEntity.setDeliveryQty(Math.max(packingTaskDetailEntity.getDeliveryQty() - totalNum,0));
+                        }
+                    }
                     addDTOList.add(v);
                 }
+                skuDetailMap.put(v.getSkuId(), taskDetailList);
             });
             addDTO.setDetailList(addDTOList);
             //新增装箱信息
