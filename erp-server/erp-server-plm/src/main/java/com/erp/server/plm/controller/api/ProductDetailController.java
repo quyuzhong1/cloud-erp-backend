@@ -650,7 +650,7 @@ public class ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "产品信息-单位管理-新增|修改：单位名称={name}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-单位管理-新增|修改：单位名称={name}", keyIdName = "name")
     @PostMapping("/saveOrUpdateProductUnit")
     //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
     public ApiResult<?> saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
