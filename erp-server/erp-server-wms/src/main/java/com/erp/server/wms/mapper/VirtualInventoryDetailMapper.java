@@ -66,4 +66,18 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @return List<VirtualInventoryDetailEntity>
      */
     List<VirtualInventoryDetailEntity> getByOutParam(@Param("skuId")String skuId,@Param("warehouseId") String warehouseId,@Param("virtualWarehouseId") String virtualWarehouseId);
+    /**
+     * 按SKU查询库龄差异
+     * @author will
+     * @date 2025/2/20 11:51
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryAgeDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+    /**
+     * 按汇总查询库龄差异
+     * @author will
+     * @date 2025/2/20 11:51
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryAgeDTO.SendNoticeTotalDTO>
+     */
+    List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

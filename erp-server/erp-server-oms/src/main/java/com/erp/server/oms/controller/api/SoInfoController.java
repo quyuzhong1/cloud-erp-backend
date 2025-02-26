@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -828,6 +829,9 @@ public class SoInfoController extends BaseController {
      */
     @PostMapping("/batchUploadLogisticLabel")
     public ApiResult<List<BatchResultDTO>> batchUploadLogisticLabel(@ModelAttribute @Validated List<MultipartFile> files) {
+        if (CollUtil.isEmpty(files)){
+            throw new ServiceException("上传文件不能为空");
+        }
         if (files.size() > 20){
             throw new ServiceException("单次上传不要超过10个文件");
         }

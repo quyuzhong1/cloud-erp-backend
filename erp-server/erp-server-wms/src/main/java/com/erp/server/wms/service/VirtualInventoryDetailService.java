@@ -152,4 +152,18 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return PagingVO<DynamicExcelDTO>
      */
     PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    /**
+     * 按SKU查询库龄差异
+     * @author will
+     * @date 2025/2/19 19:24
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryAgeDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+    /**
+     * 按汇总查询库龄差异
+     * @author will
+     * @date 2025/2/19 19:26
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryAgeDTO.SendNoticeTotalDTO>
+     */
+    List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

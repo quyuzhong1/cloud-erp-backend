@@ -135,10 +135,15 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
             sdyDTO.setQuantity_buyer_returned(qtyTotal);
+            if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dmpSoRefundEntity.getSourceSystem())) {
+                sdyDTO.setOnline_applied_amount(dmpSoRefundEntity.getAmount());
+                sdyDTO.setOrder_seller_payed(dmpSoRefundEntity.getAmount());
+            } else {
+                BigDecimal amountTotal = dmpSoRefundDetailEntityList.stream().filter(req -> req.getAmount() != null).map(DmpSoRefundDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                sdyDTO.setOnline_applied_amount(amountTotal);
+                sdyDTO.setOrder_seller_payed(amountTotal);
+            }
 
-            BigDecimal amountTotal = dmpSoRefundDetailEntityList.stream().filter(req -> req.getAmount() != null).map(DmpSoRefundDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            sdyDTO.setOnline_applied_amount(amountTotal);
-            sdyDTO.setOrder_seller_payed(amountTotal);
             if (dmpSoRefundDetailEntity.getAmount() != null && dmpSoRefundDetailEntity.getQty() != null && dmpSoRefundDetailEntity.getQty() != 0) {
                 sdyDTO.setPrice(dmpSoRefundDetailEntity.getAmount().divide(MathUtil.valueOf(dmpSoRefundDetailEntity.getQty()), 2, RoundingMode.DOWN));
             } else {

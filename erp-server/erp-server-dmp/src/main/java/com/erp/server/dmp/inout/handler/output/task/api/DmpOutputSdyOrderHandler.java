@@ -211,7 +211,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             Integer totalQty = dmpSoDetailEntities.stream().mapToInt(DmpSoDetailEntity::getQty).sum();
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
-            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
+
 
             shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPayAmount());
             shudiyunB2cOrderDTO.setTotal_freight(dmpSoInfoEntity.getShippingAmount());
@@ -267,7 +267,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                         if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                             shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
                         }
-                        shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                        shudiyunB2cOrderDTO.setTransaction_currency_code("CNY");
                         shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                         shudiyunB2cOrderDTO.setPlatform_id(shopInfo.getDictPlatform());
                         shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(shopInfo.getDictPlatform()));
@@ -329,19 +329,32 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
                 shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
 
-                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
-                if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                    shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+
+                if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getCurrencyCode())) {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(dmpSoInfoEntity.getCurrencyCode());
+                    DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, dmpSoInfoEntity.getCurrencyCode());
+                    if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                    } else {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dmpSoInfoEntity.getCurrencyCode());
+                    }
+                } else {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                    DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
+                    if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                    } else {
+                        shudiyunB2cOrderDTO.setTransaction_currency(shopInfo.getTradeCurrency());
+                    }
                 }
-                shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                 shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
                 shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
 
                 shudiyunB2cOrderDTO.setSku_code("");
                 shudiyunB2cOrderDTO.setSku_name("");
-                shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
-                shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
+                shudiyunB2cOrderDTO.setSpec_no("");
+                shudiyunB2cOrderDTO.setSpec_name("");
 
                 shudiyunB2cOrderDTO.setGoods_status("未发货");
                 // 商品状态
@@ -406,6 +419,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             } else {
                 shudiyunB2cOrderDTO.setRoot_node_no_initial(dmpSoInfoEntity.getThirdCode());
             }
+            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
+
             result.put(dmpSoDetailEntity.getId(), shudiyunB2cOrderDTO);
 
         }
