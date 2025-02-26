@@ -2,7 +2,6 @@ package com.erp.server.sys.controller.api;
 
 
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,14 +14,12 @@ import com.erp.model.sys.dto.DepartmentSearchDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.server.sys.service.SysDepartmentUserService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -33,7 +30,6 @@ import java.util.Set;
  * @Date 2022-07-13 18:49
  * @Created by yl
  */
-@Slf4j
 @RestController
 @LogSystemModule("部门管理")
 @RequestMapping("departmentUser")
@@ -45,22 +41,9 @@ public class SysDepartmentUserController extends BaseController {
 
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量保存部门人员:部门id={departmentId},用户ids={userIds}")
     @RequestMapping("/batchSave")
-    public ApiResult<?> batchSave(@RequestBody BatchSysDepartUserDTO dto) {
-        List<BatchResultDTO> resultDTOS = new LinkedList<>();
-        for (String userId : dto.getUserIds()) {
-            try {
-                boolean flag = sysDepartmentUserService.saveBatchDepartmentUser(new BatchSysDepartUserDTO(dto.getDepartmentId(), dto.getUserIds()));
-                if (flag){
-                    resultDTOS.add(BatchResultDTO.success(userId, userId,"保存部门人员成功"));
-                } else {
-                    resultDTOS.add(BatchResultDTO.fail(userId,userId,"保存部门人员失败"));
-                }
-            }catch (Exception e){
-                log.error("保存部门人员失败",e);
-                resultDTOS.add(BatchResultDTO.fail(userId, userId, e.getMessage()));
-            }
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    public ApiResult batchSave(@RequestBody BatchSysDepartUserDTO dto) {
+        boolean flag = sysDepartmentUserService.saveBatchDepartmentUser(dto);
+        return flag == true ? success() : failure();
     }
 
     @LogAction(value = LogActionEnum.DELETE, desc = "批量删除部门人员")
@@ -96,13 +79,13 @@ public class SysDepartmentUserController extends BaseController {
         return success(dto);
     }
 
-    
+
     /**
      * 根据部门id获取员工信息
      * @author yl
      * @date 2023-06-05 12:02
      * @param deptId
-     * @return 
+     * @return
      */
     @GetMapping("/listDeptUserByDeptId")
     public ApiResult<List<FindUserDTO>> listDeptUserByDeptId(@RequestParam("deptId") String deptId) {
