@@ -187,7 +187,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
-                shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPriceOrigin(), dmpSoDetailEntity.getQty()));
 
             } else {
                 //线上订单
@@ -197,9 +196,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 } else {
                     shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
                 }
-                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPrice());
-                shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getSellPrice(), dmpSoDetailEntity.getQty()));
-
+                if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
+                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
+                } else {
+                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPrice());
+                }
             }
             shudiyunB2cOrderDTO.setStatus("已创建");
 
@@ -402,11 +403,10 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
 
             shudiyunB2cOrderDTO.setRemark(dmpSoDetailEntity.getItemRemark());
-
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getQty());
-            shudiyunB2cOrderDTO.setUnit("PCS");
+            shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(shudiyunB2cOrderDTO.getPrice(), shudiyunB2cOrderDTO.getGoods_transaction_quantity()));
 
-            shudiyunB2cOrderDTO.setGoods_transaction_amount(dmpSoDetailEntity.getAfterAmount());
+            shudiyunB2cOrderDTO.setUnit("PCS");
             shudiyunB2cOrderDTO.setPost_amount(dmpSoInfoEntity.getShippingAmount());
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getPlatformSku());
             if (CharSequenceUtil.isBlank(dmpSoDetailEntity.getSkuName())) {
