@@ -734,7 +734,7 @@
                  warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
              where vi.sku_id is not null
             ) diff
-        where  diff.diffQty > 0
+        where  diff.diffQty > 0 limit 100
     </select>
 
 </mapper>
