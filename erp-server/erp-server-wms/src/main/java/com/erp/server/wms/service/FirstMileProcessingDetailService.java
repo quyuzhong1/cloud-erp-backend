@@ -22,5 +22,13 @@ public interface FirstMileProcessingDetailService extends SuperService<FirstMile
      * @date 2025/2/25 19:14
      * @param allDetailList
      */
-    void addFirstMileOrderDetail(List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> allDetailList);
+    Boolean addFirstMileOrderDetail(List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> allDetailList);
+    /**
+     * 根据主表id集合查询
+     * @author will
+     * @date 2025/2/26 09:59
+     * @param mainIdList
+     * @return java.util.List<com.erp.model.wms.entity.FirstMileProcessingDetailEntity>
+     */
+    List<FirstMileProcessingDetailEntity> listByMainIdList(List<String> mainIdList);
 }

@@ -40,5 +40,17 @@
         first_mile_delivery_id, first_mile_delivery_code, first_mile_delivery_detail_id, delivery_approve_status, delivery_qty, outstock_order_id, outstock_order_code, outstock_order_type, outstock_order_status, outstock_order_time, outstock_qty, main_id
     </sql>
 
+    <!-- 删除未关联主表的明细信息 -->
+    <delete id="deleteUnrelatedDetail">
+        DELETE FROM first_mile_processing_detail fmpd
+        WHERE fmpd.is_deleted = false
+          AND NOT EXISTS (
+            SELECT 1
+            FROM first_mile_processing fmp
+            WHERE fmp.id = fmpd.main_id
+              AND fmp.is_deleted = false
+        );
+    </delete>
+
 
 </mapper>

@@ -58,6 +58,10 @@ public class FirstMileProcessingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
+         * index
+         */
+        private String indexId;
+        /**
          * 主键id【可排序】
          */
         private String id;
@@ -183,6 +187,10 @@ public class FirstMileProcessingDTO implements Serializable {
          * 标签,outstock出库,frozen发货冻结,unShipped七日未发
          */
         private List<String> labelList;
+        /**
+         * 明细信息
+         */
+        private List<FirstMileProcessingDetailDTO.ListDTO> detailList;
     }
 
     /**

@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -22,7 +23,87 @@ import java.time.LocalDateTime;
 public class FirstMileProcessingDetailDTO implements Serializable {
 
 
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * indexId
+         */
+        private String indexId;
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
 
+        /**
+         * 头程发货单id
+         */
+        private String firstMileDeliveryId;
+        /**
+         * 头程发货单编码
+         */
+        private String firstMileDeliveryCode;
+        /**
+         * 头程发货单审核状态
+         */
+        private String deliveryApproveStatus;
+        /**
+         * 头程发货单审核状态名称
+         */
+        private String deliveryApproveStatusName;
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 出库单据id【可排序】
+         */
+        private String outstockOrderId;
+        /**
+         * 出库单据编码【可排序】
+         */
+        private String outstockOrderCode;
+        /**
+         * 出库单据类型（同sourceType）【可排序】
+         */
+        private String outstockOrderType;
+        /**
+         * 出库单据类型名称（同sourceType）
+         */
+        private String outstockOrderTypeName;
+        /**
+         * 出库单据状态【可排序】
+         */
+        private String outstockOrderStatus;
+        /**
+         * 出库单据状态名称
+         */
+        private String outstockOrderStatusName;
+        /**
+         * 出库单据时间【可排序】
+         */
+        private LocalDateTime outstockOrderTime;
+        /**
+         * 出库数量【可排序】
+         */
+        private Integer outstockQty;
+        /**
+         * 更新时间【可排序】
+         */
+        private LocalDateTime updateTime;
+
+        /**
+         * 标签,outstock出库,frozen发货冻结,unShipped七日未发
+         */
+        private List<String> labelList;
+    }
 
     /**
     * 详情

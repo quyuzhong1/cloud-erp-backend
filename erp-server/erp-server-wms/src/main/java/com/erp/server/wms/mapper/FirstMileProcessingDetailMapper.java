@@ -15,5 +15,10 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface FirstMileProcessingDetailMapper extends BaseMapper<FirstMileProcessingDetailEntity> {
-
+    /**
+     * 删除未关联主表的明细数据
+     * @author will
+     * @date 2025/2/26 09:13
+     */
+    void deleteUnrelatedDetail();
 }
