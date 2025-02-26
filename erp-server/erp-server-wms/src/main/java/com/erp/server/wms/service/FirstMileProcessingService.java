@@ -26,7 +26,7 @@ public interface FirstMileProcessingService extends SuperService<FirstMileProces
     * @param list
     * @return
     */
-    Boolean addOrupdate(List<FirstMileProcessingDTO.AddOrUpdateDTO> list);
+    Boolean addOrupdate(List<FirstMileProcessingDTO.AddOrUpdateDTO> list,LocalDate startDate);
 
     /**
      * 分页查询
@@ -51,4 +51,12 @@ public interface FirstMileProcessingService extends SuperService<FirstMileProces
      * @param startDate
      */
     void autoUpdateFirstMileProcessing(LocalDate startDate);
+    /**
+     * 删除订单跟踪数据
+     * @author will
+     * @date 2025/2/18 09:56
+     * @param dto 
+     * @return java.lang.Boolean
+     */
+    Boolean deleteFirstMileProcessing(FirstMileProcessingDTO.DeleteDTO dto);
 }

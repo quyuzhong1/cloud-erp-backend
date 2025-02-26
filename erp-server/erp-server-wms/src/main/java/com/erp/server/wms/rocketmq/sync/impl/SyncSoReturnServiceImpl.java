@@ -49,6 +49,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
+import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.rocketmq.sync.SyncSoReturnService;
 import com.erp.server.wms.service.*;
 import jodd.util.StringUtil;
@@ -101,6 +102,9 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 
     @Resource
     private OtherInstockService otherInstockService;
+
+    @Resource
+    private SyncSoReturnInstockService syncSoReturnInstockService;
 
     @Lazy
     @Resource
@@ -262,6 +266,10 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
         inventoryTransCore(Collections.singletonList(inStockEntity));
         //推送金蝶
         sendPushTask(Collections.singletonList(inStockEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //推送数帝云
+        List<SoReturnInstockDetailEntity> detailEntities = soReturnInstockDetailService.listDetailByMainId(inStockEntity.getId());
+        syncSoReturnInstockService.syncDataToSdy(inStockEntity, detailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode());
+
         //如果其他入库单已存在，生成一个相反的入库单
         if(Objects.nonNull(dbOtherInstockEntity)){
             OtherInstockEntity dbReturnOtherInstockEntity = otherInstockService.getByThirdCode(dbOtherInstockEntity.getThirdCode(), InventoryDirectionEnum.RETURN_GOODS);

@@ -181,14 +181,10 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         addLogisticsTrack(detailEntity,trackTime,trackDesc);
 
         //推送数帝云
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
-                //同步速递云运单
-                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
-            }
-        });
+        if (detailEntity.getSignTime() != null) {
+            LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
+            logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
+        }
 
         //操作日志
         String msg = CharSequenceUtil.format("用户【{}】从【{}】变更为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), oldTrackStatusName, newTrackStatusName);
@@ -354,9 +350,10 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         LogisticsBillDetailEntity detailEntity = lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo()).last(SqlConstants.LIMIT_1).one();
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
-
-            //同步速递云运单
-            logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(logisticsTrackEntity.getStatus()));
+            if (detailEntity.getSignTime() != null) {
+                //同步速递云运单
+                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(logisticsTrackEntity.getStatus()));
+            }
         }
     }
 

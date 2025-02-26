@@ -276,21 +276,23 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			}
 		}
 
-		Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
-		if (isQuerySync != null && isQuerySync) {
-			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
-			if(CollUtil.isNotEmpty(erpQuerySync)) {
-				requestData = erpQuerySync.get(0).getRequestData();
-				//如果查询同步后还是没有数据，当删除处理
-				isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
-				if (isQuerySync != null && isQuerySync) {
-					//查询是否之前有推送过数帝云
-					List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.lambdaQuery()
-							.eq(DmpOutputTaskRecordEntity::getSourceCode, erpQuerySync.get(0).getSourceCode())
-							.orderByDesc(DmpOutputTaskRecordEntity::getCreateTime)
-							.list();
-					if (CollUtil.isNotEmpty(list)) {
-						requestData = isDeletedHandler(list, erpQuerySync.get(0).getSourceCode());
+		if(requestData.trim().startsWith("{")) {
+			Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+			if (isQuerySync != null && isQuerySync) {
+				List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+				if(CollUtil.isNotEmpty(erpQuerySync)) {
+					requestData = erpQuerySync.get(0).getRequestData();
+					//如果查询同步后还是没有数据，当删除处理
+					isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+					if (isQuerySync != null && isQuerySync) {
+						//查询是否之前有推送过数帝云
+						List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.lambdaQuery()
+								.eq(DmpOutputTaskRecordEntity::getSourceCode, erpQuerySync.get(0).getSourceCode())
+								.orderByDesc(DmpOutputTaskRecordEntity::getCreateTime)
+								.list();
+						if (CollUtil.isNotEmpty(list)) {
+							requestData = isDeletedHandler(list, erpQuerySync.get(0).getSourceCode());
+						}
 					}
 				}
 			}

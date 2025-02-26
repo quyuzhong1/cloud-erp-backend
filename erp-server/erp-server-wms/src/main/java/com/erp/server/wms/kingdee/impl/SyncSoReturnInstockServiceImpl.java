@@ -120,7 +120,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
         }
 
-        if (detailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
             shudiyunB2cOrderDTO.setIs_gift(1);
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
@@ -129,8 +129,10 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
             shudiyunB2cOrderDTO.setIs_comb(1);
-            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getSkuNo());
-            shudiyunB2cOrderDTO.setSuite_name(bomChildrenSkuDTO.getSkuName());
+            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+            BomChildrenSkuDTO finalBomChildrenSkuDTO1 = bomChildrenSkuDTO;
+            String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO1.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setSuite_name(skuName);
         } else {
             bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
@@ -167,9 +169,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         if (entity.getBillDate() != null) {
             shudiyunB2cOrderDTO.setReturn_receipt_time(localDate.format(entity.getBillDate()));
         }
-        shudiyunB2cOrderDTO.setReturn_receipt_amount(detailEntity.getAmount());
-        shudiyunB2cOrderDTO.setSuite_no("");
-        shudiyunB2cOrderDTO.setSuite_name("");
+        shudiyunB2cOrderDTO.setReturn_receipt_amount(detailEntity.getReturnAmount());
 
         // 商品状态
         if (entity.getSourceType().equals(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode())) {

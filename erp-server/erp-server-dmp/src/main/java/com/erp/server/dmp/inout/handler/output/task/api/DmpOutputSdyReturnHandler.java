@@ -12,6 +12,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -138,6 +140,10 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 sdyDTO.setBiz_status("已完成");
             }
             sdyDTO.setStatus("已创建");
+
+            sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
+            sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
+
             int qtyTotal = dmpSoReturnDetailEntityList.stream().mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);

@@ -17,6 +17,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.*;
+import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
@@ -42,17 +45,6 @@ import com.common.message.constant.RedisKeyConstant;
 import com.common.message.constant.RocketMqNewTag;
 import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputBlackEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.entity.DmpSoDetailEntity;
-import com.erp.model.dmp.entity.DmpSoInfoEntity;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackCompareSignEnum;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskStatusEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputResponse;
@@ -80,6 +72,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	protected DmpHandlerCache dmpHandlerCache;
 	@Autowired
 	protected DmpOutputTaskRecordService dmpOutputTaskRecordService;
+	@Autowired
+	protected DmpOutputTaskRecordMergeService dmpOutputTaskRecordMergeService;
 	@Autowired
 	@Qualifier("dmpOutputExecutorPool")
 	protected ExecutorService dmpOutputExecutorPool;
@@ -122,6 +116,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		    	bean.dealDmpOutputTaskRecordEntityList(dmpCfgOutputEntity , outputData);
 		    }
 		});
+
+
 		dmpOutputTaskService.lambdaUpdate()
 				.eq(DmpOutputTaskEntity::getId, dmpRequest.getOutputTaskId())
 				.set(DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.FINISH.getCode())
@@ -137,16 +133,25 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
     		return;
     	}
-		
+
 		List<DmpOutputTaskRecordEntity> pushDmpOutputTaskRecordEntityList = new ArrayList<>();
+		List<String> lockIds = new ArrayList<>();
 		for(DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity : dmpOutputTaskRecordEntityList) {
 			String dataId = dmpOutputTaskRecordEntity.getDataId();
 			String redisKey = "dmp:output:task:" + dataId;
-			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 1800, TimeUnit.SECONDS)) {
+			if(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 10800, TimeUnit.SECONDS)) {
 				pushDmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
 			}else {
 				log.error(redisKey + "任务正在执行中");
+				lockIds.add(dmpOutputTaskRecordEntity.getId());
 			}
+		}
+		if(CollUtil.isNotEmpty(lockIds)) {
+			dmpOutputTaskRecordService.lambdaUpdate()
+				.in(DmpOutputTaskRecordEntity::getId, lockIds)
+				.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+				.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+				.update();
 		}
 		
 		if(CollUtil.isEmpty(pushDmpOutputTaskRecordEntityList)) {
@@ -166,8 +171,11 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				String redisKey = "dmp:output:task:" + dataId;
 				try {
 					if(!dmpOutputTaskRecordService.getById(dmpOutputTaskRecordEntity.getId()).getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
-						this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+						if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
+							this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+						}
 					}
+
 				} catch (Exception e) {
 					log.error("处理推送数据失败{}" , dmpOutputTaskRecordEntity.getId() , e);
 				}finally {

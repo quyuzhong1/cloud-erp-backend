@@ -571,6 +571,19 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchRestockingReplenishment(List<String> ids, String replenishmentRemark) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return;
+        }
+        update(Wrappers.<ReplenishmentSuggestionEntity>lambdaUpdate()
+                .in(ReplenishmentSuggestionEntity::getId, ids)
+                .set(ReplenishmentSuggestionEntity::getReplenishmentRemark, replenishmentRemark)
+                .set(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
+        );
+    }
+
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
 //    public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {

@@ -109,6 +109,11 @@ public class SoB2cErrorEntity implements Serializable{
     @TableField("retry_count")
     private Integer retryCount = 0;
 
+    /**
+     * 错误码
+     */
+    @TableField("code")
+    private String code;
 
     public static final String MAIN_ID = "main_id";
 

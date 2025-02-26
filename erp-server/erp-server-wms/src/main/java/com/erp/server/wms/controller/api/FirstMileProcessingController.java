@@ -8,7 +8,6 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.FirstMileProcessingDTO;
-import com.erp.model.wms.dto.SoB2cProcessingDTO;
 import com.erp.server.wms.service.FirstMileProcessingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -60,4 +59,16 @@ public class FirstMileProcessingController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 删除订单跟踪数据
+     * @author will
+     * @date 2024/12/18 12:13
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/deleteFirstMileProcessing")
+    public ApiResult deleteFirstMileProcessing(@RequestBody FirstMileProcessingDTO.DeleteDTO dto) {
+        Boolean flag = firstMileProcessingService.deleteFirstMileProcessing(dto);
+        return flag == true ? success() : failure();
+    }
 }

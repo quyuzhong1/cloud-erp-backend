@@ -49,10 +49,10 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * 消费
      * @author will
      * @date 2024/12/10 12:28
-     * @param virtualTransFlowEntity
+     * @param businessId
      * @return Boolean
      */
-    Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity,String msgId);
+    Boolean consumeMessage(String businessId,String msgId);
     /**
      * 查询虚拟仓库存明细id集合
      * @author will
@@ -103,4 +103,18 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @return void
      */
     void updateHandleVirtualTransFlow(VirtualTransFlowEntity entity);
+    /**
+     * 按sku显示冻结库存差异
+     * @author will
+     * @date 2025/2/19 19:29
+     * @return java.util.List<com.erp.model.wms.dto.VirtualTransFlowDetailDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualTransFlowDetailDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+    /**
+     * 按汇总显示冻结库存差异
+     * @author will
+     * @date 2025/2/19 19:29
+     * @return java.util.List<com.erp.model.wms.dto.VirtualTransFlowDetailDTO.SendNoticeTotalDTO>
+     */
+    List<VirtualTransFlowDetailDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

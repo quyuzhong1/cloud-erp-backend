@@ -10,14 +10,13 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeGlobalListingDTO;
 import com.sdk.oms.shopee.dto.global.request.GlobalProductRequest;
 import com.sdk.oms.shopee.dto.global.response.GlobalItemInfo;
 import com.sdk.oms.shopee.service.ShopeeGlobalProductService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.sql.Timestamp;
@@ -41,7 +40,7 @@ import java.util.stream.Collectors;
 //@BusinessType(BusinessTypeEnum.GLOBAL_PRODUCT)
 public class ShopeeGlobalListingHandler extends AbstractProductHandler<PlatformShopeeGlobalListingDTO, PlatformProductDTO> {
     @Resource
-    private ShopeeFeign shopeeFiegn;
+    private ShopInfoFeign shopInfoFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -77,7 +76,7 @@ public class ShopeeGlobalListingHandler extends AbstractProductHandler<PlatformS
         }
         List<GlobalItemInfo> itemInfos = new ArrayList<>();
 
-        ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
+        ApiResult<ShopAuthEntity> shopeeShopById = shopInfoFeign.getShopAuthById(data.getShopId());
         if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData()) && Objects.nonNull(shopeeShopById.getData().getType())
                && "shopee_merchant".equalsIgnoreCase(shopeeShopById.getData().getType())) {
             GlobalProductRequest productRequest = GlobalProductRequest.builder()

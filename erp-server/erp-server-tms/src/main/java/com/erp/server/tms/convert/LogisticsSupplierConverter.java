@@ -25,6 +25,7 @@ public interface LogisticsSupplierConverter {
             @Mapping(target = "code", source = "id"),
             @Mapping(target = "value", source = "supplierName"),
             @Mapping(target = "disabled", source = "disabled"),
+            @Mapping(target = "type", source = "type.code"),
 
     })
     BaseDropDownDTO.DisabledDTO convertBySupplierDown(LogisticsSupplierEntity logisticsChannel);

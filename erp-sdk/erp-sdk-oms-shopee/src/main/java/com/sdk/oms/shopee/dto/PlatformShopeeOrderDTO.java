@@ -104,28 +104,23 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
 //        orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
         String orderStatus = orderDetail.getOrderStatus();
         if (OrderStatusEnum.UNPAID.getCode().equals(orderStatus)) {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setInvalidStatus(false);
         } else if (OrderStatusEnum.READY_TO_SHIP.getCode().equals(orderStatus)){
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setInvalidStatus(false);
         } else if (OrderStatusEnum.PROCESSED.getCode().equals(orderStatus) || OrderStatusEnum.RETRY_SHIP.getCode().equals(orderStatus)) {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setInvalidStatus(false);
         } else if (OrderStatusEnum.SHIPPED.getCode().equals(orderStatus) || OrderStatusEnum.TO_CONFIRM_RECEIVE.getCode().equals(orderStatus)) {
             //已完成之前 全为待发货
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setInvalidStatus(false);
         }  else if (OrderStatusEnum.IN_CANCEL.getCode().equals(orderStatus)) {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.REJECT.getCode());
             orderDTO.setInvalidStatus(false);
@@ -134,7 +129,6 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             isCancel = Boolean.TRUE;
         } else if (OrderStatusEnum.CANCELLED.getCode().equals(orderStatus)) {
             // 作废状态（false未作废，true已作废）
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.WAIT_SUBMIT.getCode());
             orderDTO.setInvalidStatus(true);
@@ -142,12 +136,10 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             orderDTO.setInvalidType(SoB2cInvalidTypeEnum.ENUM_MANUAL.getCode());
             isCancel = Boolean.TRUE;
         } else if (OrderStatusEnum.INVOICE_PENDING.getCode().equals(orderStatus)) {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setInvalidStatus(false);
         }else if (OrderStatusEnum.TO_RETURN.getCode().equals(orderStatus) || OrderStatusEnum.COMPLETED.getCode().equals(orderStatus)) {
-            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             orderDTO.setBillStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             orderDTO.setApproveStatusStr(ApproveStatusEnum.APPROVE.getCode());
             orderDTO.setInvalidStatus(false);
@@ -165,6 +157,9 @@ public class PlatformShopeeOrderDTO extends CleanBaseDTO {
             Instant instant2 = Instant.ofEpochSecond(paytime);
             // 付款时间
             orderDTO.setPayTime(LocalDateTime.ofInstant(instant2, zone));
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+        }else {
+            orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         }
         // 订单金额
         orderDTO.setAmount(BigDecimal.valueOf(orderDetail.getTotalAmount()));

@@ -94,8 +94,8 @@ public class SoDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售订单产品信息")
     @PostMapping("/import")
-    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "warehouseId") String warehouseId, @RequestParam(value = "isTax") Boolean isTax, HttpServletResponse response) {
-        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile, response, warehouseId,isTax);
+    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "customerId") String customerId, @RequestParam(value = "warehouseId") String warehouseId, @RequestParam(value = "isTax") Boolean isTax, HttpServletResponse response) {
+        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile, response, warehouseId,isTax,customerId);
         return success(result);
     }
 

@@ -1,5 +1,6 @@
 package com.erp.server.msg.model;
 
+import com.erp.model.msg.dto.NoticeMsgCardButtonDTO;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -20,5 +21,10 @@ public class WarnMsgContentDTO implements Serializable {
      * 预警内容
      */
     private String content;
+
+    /**
+     * 按钮信息
+     */
+    private NoticeMsgCardButtonDTO noticeMsgCardButtonDTO;
 
 }

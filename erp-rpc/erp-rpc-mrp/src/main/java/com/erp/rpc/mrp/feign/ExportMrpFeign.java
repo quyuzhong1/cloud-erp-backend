@@ -96,6 +96,13 @@ public interface ExportMrpFeign {
     @PostMapping("/feign/export/exportMrpSalesCalcList")
     PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
 
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    @PostMapping("/feign/export/exportMrpSalesCalcTemplateList")
+    PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
+
 
     /**
      * 导出库存预测依据

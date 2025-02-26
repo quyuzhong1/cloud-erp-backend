@@ -32,7 +32,6 @@ import org.springframework.util.StopWatch;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,27 +72,20 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     * 修改
     */
     @Override
-    public Boolean addOrUpdate(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
+    public Boolean addOrUpdate(List<SoB2bProcessingDTO.AddOrUpdateDTO> list,LocalDate startDate) {
 
         //删除多余b2b订单
-        baseMapper.deleteB2bOrder();
+        baseMapper.deleteB2bOrder(startDate);
 
         if (CollUtil.isEmpty(list)) {
             return Boolean.TRUE;
         }
         // 数据处理
         List<SoB2bProcessingEntity> soB2bProcessingList =  handleData(list);
-        List<SoB2bProcessingEntity> addList = soB2bProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
-        List<SoB2bProcessingEntity> updateList = soB2bProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId()) && !obj.getIsDiff()).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(addList)) {
-            log.warn("新增数据！size= {}",addList.size());
-            super.saveBatch(addList);
+        if (CollUtil.isEmpty(soB2bProcessingList)) {
+            return Boolean.TRUE;
         }
-        if (CollUtil.isNotEmpty(updateList)) {
-            log.warn("更新数据！size= {}",updateList.size());
-            super.updateBatchById(updateList);
-        }
-        return Boolean.TRUE;
+        return super.saveBatch(soB2bProcessingList);
     }
 
     @Override
@@ -170,8 +162,13 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
-        ApplicationContextUtils.getBean(SoB2bProcessingServiceImpl.class).addOrUpdate(addList);
+        ApplicationContextUtils.getBean(SoB2bProcessingServiceImpl.class).addOrUpdate(addList,startDate);
         log.warn("数据更新成功!");
+    }
+
+    @Override
+    public Boolean deleteB2bProcessing(SoB2bProcessingDTO.DeleteDTO dto) {
+        return baseMapper.deleteB2bProcessing(dto);
     }
 
     /**
@@ -274,43 +271,15 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
     * 新增修改处理数据
     */
     private List<SoB2bProcessingEntity> handleData(List<SoB2bProcessingDTO.AddOrUpdateDTO> list) {
-        //查询已存在的数据，判断哪些需要删除和更新
-        List<SoB2bProcessingEntity> oldList = this.list();
-
         List<SoB2bProcessingEntity> newList = new ArrayList<>();
         for (SoB2bProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
                 continue;
             }
             SoB2bProcessingEntity entity = SoB2bProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
-            //旧数据
-            SoB2bProcessingEntity old = oldList.stream().filter(obj ->
-                    CharSequenceUtil.equals(obj.getSoDetailId(), addOrUpdateDTO.getSoDetailId())
-                    && CharSequenceUtil.equals(obj.getDeliveryNoticeDetailId(), addOrUpdateDTO.getDeliveryNoticeDetailId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(old)) {
-                //校验数据是否一样
-                boolean isDiff = CharSequenceUtil.equals(entity.toString(), old.toString());
-                entity.setIsDiff(isDiff);
-                entity.setId(old.getId());
-            }
             newList.add(entity);
         }
         return newList;
-    }
-
-    /**
-     * 根据发货通知单明细id查询
-     * @author will
-     * @date 2024/12/20 10:17
-     * @param soDetailIdList
-     * @return List<SoB2bProcessingEntity>
-     */
-    private List<SoB2bProcessingEntity> listBySoDetailIdList (List<String> soDetailIdList) {
-        if (CollUtil.isEmpty(soDetailIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(SoB2bProcessingEntity::getSoDetailId,soDetailIdList).list();
     }
 
     /**

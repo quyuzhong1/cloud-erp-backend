@@ -143,5 +143,18 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      */
     List<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params, @Param("lastId") String lastId);
     Page<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> listWarehouseStatistics(@Param("page")  Page<VirtualInventoryDiffDTO.SearchParamDTO> page, @Param("params") VirtualInventoryDiffDTO.SearchParamDTO params, @Param("lastId") String lastId);
-
+    /**
+     * 按SKU显示库存分配差异
+     * @author will
+     * @date 2025/2/20 11:28
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryDiffDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualInventoryDiffDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+    /**
+     * 按汇总显示库存分配差异
+     * @author will
+     * @date 2025/2/20 11:28
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryDiffDTO.SendNoticeTotalDTO>
+     */
+    List<VirtualInventoryDiffDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

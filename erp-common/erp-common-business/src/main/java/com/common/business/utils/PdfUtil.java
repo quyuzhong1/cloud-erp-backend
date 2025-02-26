@@ -18,7 +18,9 @@ import sun.misc.BASE64Encoder;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
@@ -200,4 +202,57 @@ public class PdfUtil {
         }
     }
 
+//    public static void main(String[] args) {
+//        String pdfUrl = "https://open-fs-va.tiktokshop.com/wsos_v2/oec_fulfillment_doc_tts/object/wsos67adaf28a29f8b05?expire=1739522222&skipCookie=true&timeStamp=1739435822&sign=b6ed190f6700177e41a76d27e2603956edb1381a02b8ee28bb8284f3d19e14dc"; // 替换为你的PDF文件URL
+//        try {
+//            String base64String = convertPdfUrlToBase64(pdfUrl);
+//            System.out.println("Base64 encoded PDF:\n" + base64String);
+//
+//            // 桌面路径（根据操作系统自动获取）
+//            String desktopPath = System.getProperty("user.home") + "/Desktop/output.pdf";
+//
+//            try {
+//                // 将Base64字符串解码为PDF文件并保存到桌面
+//                saveBase64ToPdf(base64String, desktopPath);
+//                System.out.println("PDF文件已保存到桌面: " + desktopPath);
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    public static String convertPdfUrlToBase64(String pdfUrl) throws IOException {
+        URL url = new URL(pdfUrl);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try (InputStream inputStream = url.openStream()) {
+            byte[] buffer = new byte[4096];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, bytesRead);
+            }
+        }
+
+        byte[] pdfBytes = outputStream.toByteArray();
+        return Base64.getEncoder().encodeToString(pdfBytes);
+    }
+
+    /**
+     * 将Base64字符串解码为PDF文件并保存到指定路径
+     *
+     * @param base64String Base64编码的PDF字符串
+     * @param outputPath   输出文件路径
+     * @throws IOException 如果文件写入失败
+     */
+    public static void saveBase64ToPdf(String base64String, String outputPath) throws IOException {
+        // 解码Base64字符串为字节数组
+        byte[] pdfBytes = Base64.getDecoder().decode(base64String);
+
+        // 将字节数组写入文件
+        try (FileOutputStream fos = new FileOutputStream(outputPath)) {
+            fos.write(pdfBytes);
+        }
+    }
 }

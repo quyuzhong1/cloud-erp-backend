@@ -41,6 +41,8 @@
         pt.source_id as sourceId,
         pt.source_code as sourceCode,
         pt.source_type as sourceType,
+        pt.business_id as businessId,
+        pt.business_code as businessCode,
         pt.delivery_qty as deliveryQty,
         pt.warehouse_id as warehouseId,
         pt.warehouse_name as warehouseName,
@@ -51,7 +53,7 @@
         from packing_task pt
         where pt.is_deleted = FALSE
         <if test="params.sourceCode != null and params.sourceCode != ''">
-            and pt.source_code ILIKE concat('%',#{params.sourceCode}::text,'%')
+            and (COALESCE(pt.source_code, '') || ' ' || COALESCE(pt.business_code, '')) ILIKE concat('%',#{params.sourceCode}::text,'%')
         </if>
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
             and ${params.sqlMap.default}

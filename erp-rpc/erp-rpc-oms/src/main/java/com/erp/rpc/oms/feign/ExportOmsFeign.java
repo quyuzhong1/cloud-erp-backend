@@ -23,6 +23,9 @@ public interface ExportOmsFeign {
     PagingVO<SoReturnDTO.PagingView> exportSoReturn(@RequestBody PagingDTO<SoReturnDTO.PagingParam> dto);
     @PostMapping("/feign/export/soB2CAbnormal")
     PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/soB2CAbnormalPools")
+    PagingVO<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/soB2C")
     PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(Request.Options options, @RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
     @PostMapping("/feign/export/soB2CDeclare")
@@ -33,6 +36,8 @@ public interface ExportOmsFeign {
     PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto);
     @PostMapping("/feign/export/warehouseSku")
     PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
+    @PostMapping("/feign/export/customerSku")
+    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> exportCustomerSku(@RequestBody PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
     @PostMapping("/feign/export/shop")
     PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto);
     @PostMapping("/feign/export/customer")

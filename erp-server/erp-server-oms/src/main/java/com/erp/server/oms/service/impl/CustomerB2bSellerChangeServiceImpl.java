@@ -16,6 +16,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -32,6 +33,7 @@ import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
 import com.erp.model.oms.entity.CustomerB2bSellerChangeEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -43,10 +45,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.mapper.CustomerB2bSellerChangeMapper;
-import com.erp.server.oms.service.CustomerB2bSellerChangeService;
-import com.erp.server.oms.service.CustomerInfoService;
-import com.erp.server.oms.service.CustomerSellerService;
-import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -72,6 +71,10 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER_B2
 @Slf4j
 @Service
 public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<CustomerB2bSellerChangeMapper, CustomerB2bSellerChangeEntity> implements CustomerB2bSellerChangeService {
+
+    @Resource
+    private CommonService commonService;
+
     @Resource
     private OperateLogService operateLogService;
 
@@ -222,7 +225,16 @@ public class CustomerB2bSellerChangeServiceImpl extends SuperServiceImpl<Custome
         }
         for(CustomerB2bSellerChangeDTO.TabFlagDTO tabFlagDTO : tabFlagDTOList){
             if(tabFlagDTO.getTabFlag().equals(ApproveStatusEnum.APPROVE_ING.getCode())){
-                tabFlagDTO.setTabFlagName("待审核");
+                tabFlagDTO.setTabFlagName("待我审核");
+                //需要审核的业务ids
+                List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.CUSTOMER_B2B_CHANGE_SELLER.getCode());
+                int waitApproveCount = 0;
+                if(CollectionUtils.isNotEmpty(businessIds)){
+                    List<CustomerB2bSellerChangeEntity> changeEntityList = lambdaQuery().in(CustomerB2bSellerChangeEntity::getMainId,businessIds).list();
+                    changeEntityList = changeEntityList.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)).collect(Collectors.toList());
+                    waitApproveCount = changeEntityList.size();
+                }
+                tabFlagDTO.setCount(waitApproveCount);
             }
             if(tabFlagDTO.getTabFlag().equals(ApproveStatusEnum.REJECT.getCode())){
                 tabFlagDTO.setTabFlagName("不通过");

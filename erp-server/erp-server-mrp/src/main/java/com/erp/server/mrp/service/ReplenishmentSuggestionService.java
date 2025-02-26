@@ -136,6 +136,14 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     BatchResultDTO restoreReplenishment(String id, String replenishmentRemark);
 
     /**
+     * 批量暂不补货
+     *
+     * @param ids                 建议id
+     * @param replenishmentRemark 备注
+     */
+    void batchRestockingReplenishment(List<String> ids, String replenishmentRemark);
+
+    /**
      * 批量设置规则
      *
      * @param id

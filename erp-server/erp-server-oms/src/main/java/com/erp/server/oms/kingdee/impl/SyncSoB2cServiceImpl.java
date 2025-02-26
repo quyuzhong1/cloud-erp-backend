@@ -101,7 +101,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
         } else {
             shudiyunB2cOrderDTO.setTransaction_type("配货单");
-            shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
+            shudiyunB2cOrderDTO.setTransaction_sub_type("线上订单");
         }
         if (CharSequenceUtil.isBlank(soB2cEntity.getBillStatus())) {
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
@@ -115,7 +115,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         Integer totalQty = soB2cDetailEntityList.stream().mapToInt(SoB2cDetailEntity::getQty).sum();
         shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
-        shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty);
 
         //取消金额、数量
         if (soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
@@ -128,10 +127,14 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 BigDecimal totalCancelGoodsAmount = soB2cDetailEntityList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
                 shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(totalCancelGoodsAmount);
 
-                // 取消商品数量（合计）
-                shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
             }
         }
+        if ((Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null )
+                || (Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) && soB2cEntity.getInvalidStatus() != null)) {
+            // 取消商品数量（合计）
+            shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+        }
+
 
         shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getPayAmount());
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
@@ -146,7 +149,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
             shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
             shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
-            shudiyunB2cOrderDTO.setShop_name(shopInfo.getName());
             customerId = shopInfo.getCustomerId();
         }
 
@@ -192,6 +194,11 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
         }
+        if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+            shudiyunB2cOrderDTO.setIs_gift(1);
+        } else {
+            shudiyunB2cOrderDTO.setIs_gift(0);
+        }
 
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soB2cDetailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
@@ -228,18 +235,9 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setGoods_transaction_quantity(soB2cDetailEntity.getQty());
         shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
-
         shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount());
-        if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal shareDiscount = BigDecimal.ZERO;
-            //获得售价占比分摊的商品优惠额
-            if (totalAmount.compareTo(BigDecimal.ZERO) > 0) {
-                shareDiscount = soB2cDetailEntity.getAmount().divide(totalAmount, 4, RoundingMode.DOWN).multiply(totalDiscount);
-            }
-            //计算为真实售价(原始币别)-商品分摊优惠/订单数量
-            shudiyunB2cOrderDTO.setPrice(soB2cDetailEntity.getAmount().subtract((totalDiscount.subtract(shareTotalDiscount))).divide(MathUtil.valueOf(soB2cDetailEntity.getQty()), 4, RoundingMode.DOWN));
-            shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount().subtract((totalDiscount.subtract(shareTotalDiscount))));
-        }
+        shudiyunB2cOrderDTO.setPrice(soB2cDetailEntity.getPrice());
+        shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount());
 
         if (skuVO.getRetailPrice() != null) {
             shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
@@ -270,6 +268,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getPlatformCode());
+        shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
         if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
             shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());

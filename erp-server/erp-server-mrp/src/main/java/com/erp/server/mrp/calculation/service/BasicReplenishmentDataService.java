@@ -416,6 +416,7 @@ public class BasicReplenishmentDataService {
                     Map<String, ProductSaleEntity> productSaleEntityMap = getProductSaleMap(skuIds);
                     List<String> notRestockingId = new ArrayList<>();
                     List<String> suggestionIds = new ArrayList<>();
+                    List<String> restockingIds = new ArrayList<>();
                     List<ReplenishmentSuggestionDetailEntity> details = new ArrayList<>();
                     for (ReplenishmentSuggestionEntity entity : suggestionMap.getValue()) {
                         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_JSRQ, calculationDate);
@@ -435,15 +436,20 @@ public class BasicReplenishmentDataService {
                         details.add(detail);
                         //判断是否需要补货
                         boolean isOver180Days = sale.getListingTime().plusDays(replenishmentDays.getStart()).isBefore(calculationDate);
-                        int saleQty = Optional.ofNullable(historySalesMap.get(entity.getId())).orElse(0);
+                        int saleQty = Optional.ofNullable(historySalesMap.get(entity.getShopId() + "-" + entity.getSkuId())).orElse(0);
+                        details.add(detail);
                         if (Boolean.TRUE.equals(isOver180Days) && saleQty == 0 &&
                                 ReplenishmentTypeEnum.NORMAL.getCode().equals(entity.getReplenishmentType())) {
                             notRestockingId.add(entity.getId());
                         } else {
                             suggestionIds.add(entity.getId());
+                            if (ReplenishmentTypeEnum.NOT_RESTOCKING.getCode().equals(entity.getReplenishmentType())) {
+                                restockingIds.add(entity.getId());
+                            }
                         }
                     }
                     replenishmentSuggestionDetailService.saveOrUpdateBatch(details);
+                    replenishmentSuggestionService.batchRestockingReplenishment(restockingIds, "");
                     replenishmentSuggestionService.batchNotRestockingReplenishment(notRestockingId, "上市超180天，360天内无销量的商品，系统自动标记暂不补货");
                     replenishmentTaskService.saveTask(suggestionIds);
                 }, threadPoolTaskExecutor)).toArray(CompletableFuture[]::new)).join();

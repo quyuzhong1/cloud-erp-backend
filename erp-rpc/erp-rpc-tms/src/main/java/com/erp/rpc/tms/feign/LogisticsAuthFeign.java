@@ -33,6 +33,10 @@ public interface LogisticsAuthFeign {
     @GetMapping("/feign/logisticsAuth/getAuthBySupplierId")
     LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(@RequestParam("logisticsSupplierId") String logisticsSupplierId);
 
+
+    @GetMapping("/feign/logisticsAuth/listAuthBySupplierId")
+    List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(@RequestParam("logisticsSupplierIds") List<String> logisticsSupplierIds);
+
     /**
      * 根据渠道id查询渠道关联的平台信息
      * @Author Luo_WG

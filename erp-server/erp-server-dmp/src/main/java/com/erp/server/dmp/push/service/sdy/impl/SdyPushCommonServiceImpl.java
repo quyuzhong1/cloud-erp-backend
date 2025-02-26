@@ -29,29 +29,32 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
     private SdyCommonService sdyCommonService;
 
     @Override
-    public ApiResult executeConsumer(ShudiyunB2cOrderDTO shudiyunB2cOrderDTO) {
+    public ApiResult executeConsumer(List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTO) {
 
         String path = sdyCommonService.getSdyUrl() + "/openapi/information/save";
-
+        String dataStr = "";
         //入参
-        HashMap<String, Object> orderParams = new HashMap<>(1);
+        HashMap<String, Object> orderParams = new HashMap<>(2);
+        orderParams.put("count", shudiyunB2cOrderDTO.size());
+        orderParams.put("list", shudiyunB2cOrderDTO);
+        dataStr = JSONUtil.toJsonStr(orderParams);
 
         //设置请求头
         Map<String, String> orderHeaderMap = new HashMap<>(1);
 
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(path, JSONUtil.toJsonStr(shudiyunB2cOrderDTO), null, orderHeaderMap, RequestMethod.POST);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(path, dataStr, null, orderHeaderMap, RequestMethod.POST);
 
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
 
-            log.error("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}", path, orderParams.toString(), JSONUtil.toJsonStr(apiResult));
+            log.error("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}", path, dataStr, JSONUtil.toJsonStr(apiResult));
             return ApiResult.error("", JSONUtil.toJsonStr(apiResult.getData()));
         }
 
         SdySaveResultDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), SdySaveResultDTO.class);
         if (orderDTO.getErrno() != 0) {
             log.error(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
-                    path, orderParams.toString(), JSONUtil.toJsonStr(orderDTO)));
+                    path, dataStr, JSONUtil.toJsonStr(orderDTO)));
             return ApiResult.error("", JSONUtil.toJsonStr(orderDTO));
         }
 

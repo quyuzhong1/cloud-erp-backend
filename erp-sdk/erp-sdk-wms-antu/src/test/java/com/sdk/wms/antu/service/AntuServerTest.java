@@ -10,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -204,5 +205,32 @@ public class AntuServerTest {
                 .build();
         AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq);
         System.out.println(JSONUtil.toJsonStr(response));
+    }
+
+    @Test
+    public void uploadFile() {
+        String fileData = "";
+        try {
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("fileBase64.txt");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null){
+                builder.append(line);
+            }
+            fileData = builder.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        AntuUploadFileReq antuCalculateFeeReq = AntuUploadFileReq.builder()
+                .fileType("pdf")
+                .fileData(fileData)
+                .module("order_label")
+                .fileNote("")
+                .fileUrl("")
+                .build();
+        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuCalculateFeeReq);
+        System.out.println(JSONUtil.toJsonStr(response));
+        //{"ask":"Success","message":"","data":{"attachId":92484,"url":"https://hk-wms-oms-cdn.yunwms.com/ecoms/ntzq7s7/pdf/2025/02/14/20250214102241_53xkl.pdf"}}
     }
 }

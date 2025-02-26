@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -466,8 +467,29 @@ public class FirstMileProcessingDTO implements Serializable {
         @NotNull(message = "批准数量不能为空")
         private Integer approveQty;
 
-
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
     }
 
-
+    /**
+     * 删除dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+        /**
+         * 要货申请明细id
+         */
+        private List<String> requisitionApplicationDetailIdList;
+        /**
+         * 头程发货单明细id
+         */
+        private List<String> firstMileDeliveryDetailIdList;
+    }
 }

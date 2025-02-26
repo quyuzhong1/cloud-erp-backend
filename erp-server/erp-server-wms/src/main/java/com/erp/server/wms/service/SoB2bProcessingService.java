@@ -27,7 +27,7 @@ public interface SoB2bProcessingService extends SuperService<SoB2bProcessingEnti
     * @param list
     * @return
     */
-    Boolean addOrUpdate(List<SoB2bProcessingDTO.AddOrUpdateDTO> list);
+    Boolean addOrUpdate(List<SoB2bProcessingDTO.AddOrUpdateDTO> list,LocalDate startDate);
 
     /**
      * 分页查询
@@ -52,4 +52,12 @@ public interface SoB2bProcessingService extends SuperService<SoB2bProcessingEnti
      * @param startDate
      */
     void autoUpdateSoB2bProcessing(LocalDate startDate);
+    /**
+     * 删除b2b销售订单跟踪数据
+     * @author will
+     * @date 2025/2/18 10:05
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean deleteB2bProcessing(SoB2bProcessingDTO.DeleteDTO dto);
 }

@@ -52,6 +52,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSubcontractOrderService;
+import com.erp.server.scm.mapper.PurchaseOrderMapper;
 import com.erp.server.scm.mapper.SubcontractOrderMapper;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -149,6 +150,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     @Resource
     private KingdeePaymentConditionService kingdeePaymentConditionService;
+    @Resource
+    private PurchaseOrderMapper purchaseOrderMapper;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -765,8 +768,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.ERROR_98004);
@@ -796,6 +799,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(poIds)) {
             return;
         }
+
         //提交
         Boolean submit = purchaseOrderService.submit(poIds, Boolean.FALSE);
         if (!submit) {
@@ -1504,6 +1508,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 dmpMqFeign.sendTask(resultList);
             }
         });
+    }
+
+
+    @Override
+    public void updateCreatePoTypeBySubcontractOrderIds(List<String> idList) {
+        if (CollUtil.isEmpty(idList)){
+            return;
+        }
+        List<PurchaseOrderEntity> list = purchaseOrderService.lambdaQuery()
+                .eq(PurchaseOrderEntity::getSourceType, SourceTypeEnum.SUBCONTRACT_ORDER.getCode())
+                .in(PurchaseOrderEntity::getSourceId, idList)
+                .list();
+        if(CollUtil.isNotEmpty(list)){
+            List<String> poIds = list.stream().map(PurchaseOrderEntity::getId).collect(Collectors.toList());
+            //更新采购申请单的生成状态
+            purchaseOrderService.updateCreatePoType(poIds);
+        }
     }
 
 }
