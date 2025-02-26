@@ -151,4 +151,14 @@ public class ShopeeOrderService {
                 "order_chargeable_weight_gram,edt_from,edt_to,prescription_images,prescription_check_status");
         return ShopeeApiUtils.sendGet(orderRequest.getHost() + path, paramMap);
     }
+    
+    public ShopeeResponse getEscrowDetail(OrderRequest orderRequest) {
+    	String path = "/api/v2/payment/get_escrow_detail";
+    	orderRequest.setPath(path);
+    	long timestamp = System.currentTimeMillis() / 1000L;
+    	orderRequest.setTimestamp(timestamp);
+    	HashMap<String, Object> paramMap = getOrderCommonParam(orderRequest);
+    	paramMap.put("order_sn", orderRequest.getOrderSns());
+    	return ShopeeApiUtils.sendGet(orderRequest.getHost() + path, paramMap);
+    }
 }

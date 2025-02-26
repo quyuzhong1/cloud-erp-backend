@@ -39,6 +39,8 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 	public static final String SHOPEE_ORDER_SHIPPING_DATA = "Shopee_orderShipping_data";
 
 	public static final String SHOPEE_ORDER_DETAIL_DATA = "Shopee_orderDetail_data";
+	
+	public static final String SHOPEE_ESCROW_DATA = "Shopee_escrow_data";
 
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
@@ -46,6 +48,8 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 		List<Map<String, Object>> detailMongoData = new ArrayList<>();
 		// 获取配送信息
 		List<Map<String, Object>> shipmentMongoData = new ArrayList<>();
+		
+		List<Map<String, Object>> paymentMongoData = new ArrayList<>();
 		List<ParamData> paramDataList = new ArrayList<>();
 		Set<List<Map<String, Object>>> keySet = dmpInputDataDmpRelationMaps.keySet();
 		if(CollUtil.isNotEmpty(keySet)) {
@@ -57,9 +61,11 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			shipmentMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ORDER_SHIPPING_DATA);
 			detailMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ORDER_DETAIL_DATA);
+			paymentMongoData = mongoService.findMongoData(paramDataList, SHOPEE_ESCROW_DATA);
 		}
 		Map<String, List<Map<String, Object>>> orderSnShipmentMaps = shipmentMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
 		Map<String, List<Map<String, Object>>> orderSnDetailMaps = detailMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
+		Map<String, List<Map<String, Object>>> orderSnEscrowMaps = paymentMongoData.stream().collect(Collectors.groupingBy(f -> f.get("order_sn").toString()));
 
 
 		ZoneId zone = ZoneId.systemDefault();
@@ -77,7 +83,7 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 				if (null == detailMaps){
 					ServiceException.runError("最新明细信息为空");
 				}
-
+				
 				// 标签json
 				JSONObject labelJsonObject = new JSONObject();
 				// 配送方式
@@ -214,6 +220,21 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 						dmpDataMap.put("platformUpdateTime", LocalDateTime.ofInstant(instant, zone));
 					}
 				}
+				
+				List<Map<String, Object>> escrowMapsList = orderSnEscrowMaps.get(dmpDataMap.getOrDefault("thirdCode", "").toString());
+				if(CollUtil.isNotEmpty(escrowMapsList)) {
+					Map<String, Object> escrowMaps = escrowMapsList.stream()
+							.max(Comparator.comparing(map -> (String) map.get(DmpInputMongoHandler.MONGO_BASE_MONGOUPDATETIME)))
+							.orElse(null);
+					if(escrowMaps != null) {
+						Object order_income = escrowMaps.get("order_income");
+						if(order_income != null) {
+							Map<String, Object> orderIncome = (Map<String, Object>) order_income;
+							dmpDataMap.put("totalDiscount", orderIncome.get("payment_promotion"));
+						}
+					}
+				}
+				
 			}
 		}
 	}
