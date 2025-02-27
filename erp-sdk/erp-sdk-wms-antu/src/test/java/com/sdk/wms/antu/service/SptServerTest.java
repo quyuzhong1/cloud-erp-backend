@@ -11,8 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
-import java.io.*;
-import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -20,16 +18,16 @@ import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes= AntuService.class)
-public class AntuServerTest {
+public class SptServerTest {
 
-    public AntuServerTest(){
+    public SptServerTest(){
         Map<String,Object> authMap = new HashMap<>();
         //生产
 //        authMap.put("appToken","bee4c5e37009b3f4d8a18f7ce44a2365");
 //        authMap.put("appKey","674f5f45f2ffdaa6705d88d38d5d04a3");
         //测试
-        authMap.put("appToken","d836186400053ed9ac13b2ab0211d8fa");
-        authMap.put("appKey","2dd02ab336824a7833041d29cbe22c06");
+        authMap.put("appToken","b704c637a0ecfed5dbda799a987291d4");
+        authMap.put("appKey","ae60ef5fd2ba671c510d3eb1ae788046");
         ThirdWarehouseContext.setAuthMap(authMap);
     }
 
@@ -38,9 +36,19 @@ public class AntuServerTest {
 
     @Test
     public void getWarehouseTest() {
-        AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
+        AntuGetProductReq antuProductReq = AntuGetProductReq.builder().page(1)
+                .pageSize(100)
                 .build();
-        AntuResponse<List<AntuWarehouseResp>> response = antuService.getTransferWarehouse(antuProductReq, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(antuProductReq, OmsPlatformEnum.OMS_SPT);
+        System.out.println(response);
+    }
+
+    @Test
+    public void getTransferWarehouseTest() {
+        AntuGetProductReq antuProductReq = AntuGetProductReq.builder().page(1)
+                .pageSize(100)
+                .build();
+        AntuResponse<List<AntuWarehouseResp>> response = antuService.getTransferWarehouse(antuProductReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
 
@@ -49,15 +57,15 @@ public class AntuServerTest {
         AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
                 .page(1)
                 .pageSize(100)
-                .updateStartTime("2024-06-25 15:47:18")
-                .updateEndTime("2024-06-25 15:47:18")
+//                .updateStartTime("2024-06-25 15:47:18")
+//                .updateEndTime("2024-06-25 15:47:18")
                 .build();
-        AntuResponse<List<AntuProductResp>> response = antuService.getSkuList(antuProductReq, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuProductResp>> response = antuService.getSkuList(antuProductReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(JSONUtil.toJsonStr(response));
     }
     @Test
     public void getReceivingRegionTest() {
-        AntuResponse<List<AntuRegionResp>> response = antuService.getReceivingRegion(OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuRegionResp>> response = antuService.getReceivingRegion(OmsPlatformEnum.OMS_SPT);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -67,7 +75,7 @@ public class AntuServerTest {
                 .page(1)
                 .pageSize(100)
                 .build();
-        AntuResponse<List<AntuInventoryResp>> response = antuService.getProductInventory(req, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuInventoryResp>> response = antuService.getProductInventory(req, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
 
@@ -76,9 +84,10 @@ public class AntuServerTest {
         AntuGetReceiptReq req = AntuGetReceiptReq.builder()
                 .page(1)
                 .pageSize(100)
-                .receivingCodeArr(Arrays.asList("RVA091-240702-0001"))
+                .receivingCode("RVVIJIM-250226-0005")
+//                .receivingCodeArr(Arrays.asList("RVVIJIM-250226-0005"))
                 .build();
-        AntuResponse<List<AntuReceiptResp>> response = antuService.getReceiptBatch(req, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuReceiptResp>> response = antuService.getReceiptBatch(req, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
 
@@ -87,16 +96,16 @@ public class AntuServerTest {
         AntuGetOutboundReq req = AntuGetOutboundReq.builder()
                 .page(1)
                 .pageSize(100)
-                .modifyDateFrom(LocalDateTime.parse("2024-08-26T18:30:11"))
-                .modifyDateTo(LocalDateTime.parse("2024-08-28T18:40:11"))
+//                .modifyDateFrom(LocalDateTime.parse("2024-08-26T18:30:11"))
+//                .modifyDateTo(LocalDateTime.parse("2024-08-28T18:40:11"))
                 .build();
-        AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
 
     @Test
     public void getShippingMethodTest() {
-        AntuResponse<List<AntuLogisticsProductsResp>> response = antuService.getShippingMethod(null, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuLogisticsProductsResp>> response = antuService.getShippingMethod(null, OmsPlatformEnum.OMS_SPT);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -107,7 +116,7 @@ public class AntuServerTest {
                 .swOrderNumber("14465312644131564841")
                 .shippingMethod("PAC")
                 .verify(1)
-                .warehouseCode("BR01")
+                .warehouseCode("CNLG")
                 .countryCode("BR")
                 .province("PR")
                 .city("Curitiba")
@@ -124,18 +133,18 @@ public class AntuServerTest {
                 .email("")
                 .items(Arrays.asList(
                         AntuCreateOutboundReq.Item.builder()
-                                .productSku("3PL-1C-TEST")
+                                .productSku("D014")
                                 .quantity(1)
                                 .build()
                 ))
                 .build();
-        AntuResponse<String> response = antuService.createOutboundBill(antuCreateOutboundReq, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<String> response = antuService.createOutboundBill(antuCreateOutboundReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
 
     @Test
     public void cancelOutboundBillTest() {
-        AntuResponse<String> response = antuService.cancelOutboundBill("A001-240621-0003","平台拦截", OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<String> response = antuService.cancelOutboundBill("A001-240621-0003","平台拦截", OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
 
@@ -144,42 +153,44 @@ public class AntuServerTest {
         AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
                 .referenceNo("wjtest20231206")
                 .incomeType(0)
-                .transitWarehouseCode("SZW")
-                .receivingType("T")
+//                .transitWarehouseCode("CNLG")
+                .receivingType("D")
                 .smCode("PAC")
                 .contacter("张三")
                 .contactPhone("123456789")
-                .warehouseCode("BR01")
+                .warehouseCode("CNLG")
                 .customerType("Y")
                 .verify(0)
                 .items(Arrays.asList(AntuCreateInboundReq.Item.builder()
-                        .productSku("3PL-1C-TEST")
+                        .productSku("D014")
                         .boxNo(1)
                         .quantity(1)
                         .build()))
                 .build();
         System.out.println(JSONUtil.toJsonStr(antuGetReceiptReq));
-        AntuResponse<String> response = antuService.createInboundBill(antuGetReceiptReq, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<String> response = antuService.createInboundBill(antuGetReceiptReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
 
     @Test
     public void editInboundBillTest() {
         AntuCreateInboundReq antuGetReceiptReq = AntuCreateInboundReq.builder()
-                .receivingCode("RVA001-240826-0003")
+                .referenceNo("wjtest20231206")
+                .receivingCode("RVVIJIM-250226-0005")
+                .warehouseCode("CNLG")
                 .verify(1)
                 .items(Arrays.asList(AntuCreateInboundReq.Item.builder()
-                        .productSku("3PL-1C-TEST")
+                        .productSku("D014")
                         .boxNo(1)
                         .quantity(14)
                         .build()))
                 .build();
-        AntuResponse<String> response = antuService.editInboundBill(antuGetReceiptReq, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<String> response = antuService.editInboundBill(antuGetReceiptReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
     @Test
     public void cancelInboundBillTest() {
-        AntuResponse<String> response = antuService.cancelInboundBill("RVA001-240826-0003", OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<String> response = antuService.cancelInboundBill("RVA001-240826-0003", OmsPlatformEnum.OMS_SPT);
         System.out.println(response);
     }
     @Test
@@ -188,7 +199,7 @@ public class AntuServerTest {
                 .page(1)
                 .pageSize(100)
                 .build();
-        AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -204,34 +215,7 @@ public class AntuServerTest {
 //                .width(1F)
 //                .height(1F)
                 .build();
-        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq, OmsPlatformEnum.OMS_ANTU);
+        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq, OmsPlatformEnum.OMS_SPT);
         System.out.println(JSONUtil.toJsonStr(response));
-    }
-
-    @Test
-    public void uploadFile() {
-        String fileData = "";
-        try {
-            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("fileBase64.txt");
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            StringBuilder builder = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null){
-                builder.append(line);
-            }
-            fileData = builder.toString();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        AntuUploadFileReq antuCalculateFeeReq = AntuUploadFileReq.builder()
-                .fileType("pdf")
-                .fileData(fileData)
-                .module("order_label")
-                .fileNote("")
-                .fileUrl("")
-                .build();
-        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuCalculateFeeReq, OmsPlatformEnum.OMS_ANTU);
-        System.out.println(JSONUtil.toJsonStr(response));
-        //{"ask":"Success","message":"","data":{"attachId":92484,"url":"https://hk-wms-oms-cdn.yunwms.com/ecoms/ntzq7s7/pdf/2025/02/14/20250214102241_53xkl.pdf"}}
     }
 }

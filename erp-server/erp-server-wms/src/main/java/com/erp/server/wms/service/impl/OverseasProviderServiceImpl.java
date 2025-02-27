@@ -12,7 +12,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -25,7 +24,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
@@ -35,6 +33,8 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.enums.SptWarehouseStatusEnum;
+import com.erp.model.wms.enums.SptWarehouseTypeEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
@@ -133,6 +133,12 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         viewDTO.setAuthStatusName(AuthStatusEnum.getName(viewDTO.getAuthStatus()));
         List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByMainIds(Collections.singletonList(id));
         List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
+        if(CollUtil.isNotEmpty(warehouseList)){
+            warehouseList.forEach(v->{
+                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.getName(v.getPlatformWarehouseType()));
+                v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
+            });
+        }
         viewDTO.setDetailList(warehouseList);
         return viewDTO;
     }

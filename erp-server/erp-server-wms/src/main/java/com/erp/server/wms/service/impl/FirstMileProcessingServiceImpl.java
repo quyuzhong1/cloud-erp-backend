@@ -473,12 +473,33 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                 continue;
             }
             handleDetailPaging(processingDetailEntityList,listDTO);
+            //发货单号
+            String firstMileDeliveryCodes = listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getFirstMileDeliveryCode).distinct().collect(Collectors.joining(","));
+            listDTO.setFirstMileDeliveryCodes(firstMileDeliveryCodes);
+            //发货单审核状态名称
+            String deliveryApproveStatusNames = listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getDeliveryApproveStatusName).distinct().collect(Collectors.joining(","));
+            listDTO.setDeliveryApproveStatusNames(deliveryApproveStatusNames);
+            //发货数量合计
+            Integer deliveryQtySum =listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+            listDTO.setDeliveryQtySum(deliveryQtySum);
+            //出库数量合计
+            Integer outstockQtySum = listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getOutstockQty).reduce(MathUtil.ZERO, Integer::sum);
+            listDTO.setOutstockQtySum(outstockQtySum);
         }
     }
-
+    /**
+     * 处理主表数据分页查询数据
+     * @author will
+     * @date 2025/2/27 10:17
+     * @param listDTO
+     */
     private void handleMainPaging (FirstMileProcessingDTO.ListDTO listDTO) {
         //发货单审核状态名称
         listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
+        listDTO.setFirstMileDeliveryCodes(listDTO.getFirstMileDeliveryCode());
+        listDTO.setDeliveryApproveStatusNames(listDTO.getDeliveryApproveStatusName());
+        listDTO.setDeliveryQtySum(listDTO.getDeliveryQty());
+        listDTO.setOutstockQtySum(listDTO.getOutstockQty());
         //标签
         List<String> labelList = new ArrayList<>();
         //已出

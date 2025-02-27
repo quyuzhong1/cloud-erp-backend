@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -43,6 +42,13 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         private String mainId;
 
         /**
+         * 第三方仓库类型 0标准 1中转 2虚拟
+         */
+        private String platformWarehouseType;
+
+        private String platformWarehouseTypeName;
+
+        /**
         * 仓库编码
         */
         private String platformWarehouseCode;
@@ -52,7 +58,12 @@ public class OverseasProviderWarehouseDTO implements Serializable {
         */
         private String platformWarehouseName;
 
+        /**
+         * 	第三方仓库状态 0:不可用;1:可用;2:停用
+         */
+        private String platformWarehouseStatus;
 
+        private String platformWarehouseStatusName;
 
 
         /**

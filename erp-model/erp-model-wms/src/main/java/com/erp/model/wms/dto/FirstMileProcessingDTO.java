@@ -95,6 +95,10 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String firstMileDeliveryCode;
         /**
+         * 头程发货单编码 逗号分隔
+         */
+        private String firstMileDeliveryCodes;
+        /**
          * 头程发货单审核状态【可排序】
          */
         private String deliveryApproveStatus;
@@ -103,9 +107,18 @@ public class FirstMileProcessingDTO implements Serializable {
          */
         private String deliveryApproveStatusName;
         /**
+         * 头程发货单审核状态名称 逗号分隔
+         */
+        private String deliveryApproveStatusNames;
+
+        /**
          * 发货数量【可排序】
          */
         private Integer deliveryQty;
+        /**
+         * 发货数量合计
+         */
+        private Integer deliveryQtySum;
         /**
          * SKU【可排序】
          */
@@ -178,6 +191,10 @@ public class FirstMileProcessingDTO implements Serializable {
          * 出库数量【可排序】
          */
         private Integer outstockQty;
+        /**
+         * 出库数量合计
+         */
+        private Integer outstockQtySum;
         /**
          * 更新时间【可排序】
          */
