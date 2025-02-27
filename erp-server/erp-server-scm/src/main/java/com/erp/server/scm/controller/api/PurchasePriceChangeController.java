@@ -355,7 +355,7 @@ public class PurchasePriceChangeController extends BaseController {
     /**
      * 更新明细备注
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新采购调价单明细备注:ids={ids},备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新采购调价单明细备注:备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",

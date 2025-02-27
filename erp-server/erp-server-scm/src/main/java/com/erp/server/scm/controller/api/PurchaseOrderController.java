@@ -218,7 +218,7 @@ public class PurchaseOrderController extends BaseController {
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "修更新备注采购订单:明细备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新备注采购订单:明细备注={remark}")
     @PostMapping("/updateRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "purchase_user_id",
