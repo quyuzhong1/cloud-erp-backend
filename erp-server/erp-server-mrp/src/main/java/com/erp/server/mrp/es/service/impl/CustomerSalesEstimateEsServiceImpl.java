@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -39,5 +40,10 @@ public class CustomerSalesEstimateEsServiceImpl implements CustomerSalesEstimate
     @Override
     public void removeByPlatform(String platform) {
         customerSalesEstimateEsRepository.deleteByPlatform(platform);
+    }
+
+    @Override
+    public List<CustomerSalesEstimateEsEntity> listByShopSkuIdAndDate(List<String> shopSkuId, LocalDate startDate, LocalDate endDate) {
+        return null;
     }
 }
