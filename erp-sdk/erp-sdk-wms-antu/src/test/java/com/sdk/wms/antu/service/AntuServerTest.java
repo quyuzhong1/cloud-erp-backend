@@ -230,7 +230,7 @@ public class AntuServerTest {
                 .fileNote("")
                 .fileUrl("")
                 .build();
-        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuCalculateFeeReq);
+        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuCalculateFeeReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(JSONUtil.toJsonStr(response));
         //{"ask":"Success","message":"","data":{"attachId":92484,"url":"https://hk-wms-oms-cdn.yunwms.com/ecoms/ntzq7s7/pdf/2025/02/14/20250214102241_53xkl.pdf"}}
     }
