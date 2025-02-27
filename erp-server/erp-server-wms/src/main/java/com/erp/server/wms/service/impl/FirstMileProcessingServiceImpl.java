@@ -518,7 +518,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             labelList.add(OrderProcessingLableEnum.UN_SHIPPED.getCode());
         }
         //要货冻结
-        if (CharSequenceUtil.isBlank(listDTO.getFirstMileDeliveryId())
+        if (MathUtil.compareTo(listDTO.getApproveQty(),listDTO.getDeliveryQty()) > MathUtil.ZERO
                 && Arrays.asList(RequisitionApplicationStatusEnum.HANDLE_ING.getStatus(),RequisitionApplicationStatusEnum.HANDLE.getStatus()).contains(listDTO.getRequisitionApplicationStatus())
                 && MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
             labelList.add(OrderProcessingLableEnum.REQUISITION_FROZEN.getCode());
@@ -541,11 +541,25 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * @param mainListDTO
      */
     private void handleDetailPaging (List<FirstMileProcessingDetailEntity> processingDetailEntityList,FirstMileProcessingDTO.ListDTO mainListDTO) {
+
+        //主表要货冻结
+        Integer totalDeliveryQty = processingDetailEntityList.stream().map(FirstMileProcessingDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
+        if (MathUtil.compareTo(mainListDTO.getApproveQty(),totalDeliveryQty) > MathUtil.ZERO
+                && Arrays.asList(RequisitionApplicationStatusEnum.HANDLE_ING.getStatus(),RequisitionApplicationStatusEnum.HANDLE.getStatus()).contains(mainListDTO.getRequisitionApplicationStatus())
+                && MathUtil.compareTo(mainListDTO.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+            mainListDTO.setLabelList(Collections.singletonList(OrderProcessingLableEnum.REQUISITION_FROZEN.getCode()));
+        }
+        //主表剩余冻结数量
+        if (MathUtil.compareTo(mainListDTO.getFrozenQty(),MathUtil.ZERO) > MathUtil.ZERO) {
+            mainListDTO.setFrozenQty(MathUtil.valueOfZero(mainListDTO.getFrozenQty()) - MathUtil.valueOfZero(totalDeliveryQty));
+        }
+
         List<FirstMileProcessingDetailDTO.ListDTO> detailList = new ArrayList<>();
         for (FirstMileProcessingDetailEntity entity : processingDetailEntityList) {
             FirstMileProcessingDetailDTO.ListDTO listDTO = FirstMileProcessingDetailConverter.INSTANCE.entityToList(entity);
             //发货单审核状态名称
             listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
+            listDTO.setOutstockOrderTypeName(SourceTypeEnum.getName(listDTO.getOutstockOrderType()));
             listDTO.setIndexId(listDTO.getMainId());
             //标签
             List<String> labelList = new ArrayList<>();
@@ -559,6 +573,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             //发货冻结
             if (MathUtil.compareTo(mainListDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && CharSequenceUtil.isBlank(listDTO.getOutstockOrderId())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
+                //明细冻结
+                listDTO.setFrozenQty(entity.getDeliveryQty());
+                listDTO.setFrozenDays(ObjectUtil.isEmpty(mainListDTO.getFrozenTime()) ? null : (Math.toIntExact(LocalDate.now().toEpochDay() - mainListDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1));
             }
             //七日未发
             if (CharSequenceUtil.isBlank(listDTO.getOutstockOrderId()) && ObjectUtil.isNotEmpty(mainListDTO.getFrozenTime()) && (LocalDate.now().toEpochDay() - mainListDTO.getFrozenTime().toLocalDate().toEpochDay() >= 7)) {
