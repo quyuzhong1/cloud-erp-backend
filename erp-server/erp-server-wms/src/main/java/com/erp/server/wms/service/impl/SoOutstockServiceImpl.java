@@ -264,6 +264,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
 
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
+
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
         return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
@@ -1559,11 +1562,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
         Map<String, String> customerPlatformTypeMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType));
 
+        //查询虚拟仓信息
+        List<String> virtualWarehouseIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseEntities = CollectionUtils.isNotEmpty(virtualWarehouseIds)?virtualWarehouseService.listByIds(virtualWarehouseIds):new ArrayList<>();
         for (SoOutstockDTO.PagingViewDTO item : list) {
             //设置跟踪单号
 //            if(trackNoMAp.containsKey(item.getId())){
 //                item.setTrackNo(trackNoMAp.get(item.getId()));
 //            }
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntities.stream().filter(obj -> obj.getId().equals(item.getVirtualWarehouseId())).findFirst().orElse(null);
+            if (Objects.nonNull(virtualWarehouseEntity)) {
+                item.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+            }
             if (StringUtils.isNotEmpty(item.getTrackNos())){
                 String[] split = item.getTrackNos().split(",");
                 item.setTrackNo(Arrays.stream(split).collect(Collectors.toList()));
