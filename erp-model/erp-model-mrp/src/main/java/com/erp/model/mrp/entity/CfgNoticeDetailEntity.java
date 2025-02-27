@@ -3,7 +3,6 @@ package com.erp.model.mrp.entity;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,7 +34,7 @@ public class CfgNoticeDetailEntity extends BaseEntity<CfgNoticeDetailEntity> {
     /**
     * 通知json
     */
-    @TableField(value = "notice_value_json", typeHandler = JacksonTypeHandler.class, jdbcType = JdbcType.OTHER)
+    @TableField(value = "notice_value_json", jdbcType = JdbcType.OTHER)
     private JSONObject noticeValueJson;
     /**
     * 主表id
