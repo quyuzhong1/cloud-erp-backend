@@ -510,7 +510,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             listDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - listDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
         }
         //发货冻结
-        if (MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && CharSequenceUtil.isBlank(listDTO.getOutstockOrderId())) {
+        if (MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && !ApproveStatusEnum.APPROVE.getStatus().equals(listDTO.getOutstockOrderStatus())) {
             labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
         }
         //七日未发
@@ -574,7 +574,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
                 mainListDTO.setFrozenDays(Math.toIntExact(localDate.toEpochDay() - mainListDTO.getFrozenTime().toLocalDate().toEpochDay()) + 1);
             }
             //发货冻结
-            if (MathUtil.compareTo(mainListDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && CharSequenceUtil.isBlank(listDTO.getOutstockOrderId())) {
+            if (MathUtil.compareTo(listDTO.getFrozenQty(),MathUtil.ZERO) != MathUtil.ZERO && CharSequenceUtil.isNotBlank(listDTO.getFirstMileDeliveryId()) && !ApproveStatusEnum.APPROVE.getStatus().equals(listDTO.getOutstockOrderStatus())) {
                 labelList.add(OrderProcessingLableEnum.FROZEN.getCode());
             }
             //七日未发
