@@ -60,6 +60,7 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
             ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty, formulaResult);
             salesEstimates.add(salesEstimateDTO);
         }
+
         replenishmentResultDTO.setSalesEstimates(salesEstimates);
         //开始计算分时段销量和日均预估
         calculationTimePeriodSalesEstimates(replenishmentResultDTO, basicCalcDate);

@@ -9,7 +9,7 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.erp.model.mrp.dto.CfgNoticeDTO;
 import com.erp.model.mrp.entity.CfgNoticeDetailEntity;
-import com.erp.model.wms.enums.CfgVirtualNoticeObjectTypeEnum;
+import com.erp.model.mrp.enums.CfgNoticeObjectTypeEnum;
 import com.erp.model.wms.enums.CfgVirtualNoticeTimeTypeEnum;
 import com.erp.server.mrp.mapper.CfgNoticeDetailMapper;
 import com.erp.server.mrp.service.CfgNoticeDetailService;
@@ -38,7 +38,7 @@ public class CfgNoticeDetailServiceImpl extends SuperServiceImpl<CfgNoticeDetail
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addOrUpdateNoticeObjectList(List<CfgNoticeDTO.NoticeObjectDTO> noticeObjectDTOList, String id) {
-        List<CfgNoticeDetailEntity> oldList = this.listByMainIdListAndType(Collections.singletonList(id), Arrays.asList(CfgVirtualNoticeObjectTypeEnum.NOTICE_USER.getCode(), CfgVirtualNoticeObjectTypeEnum.NOTICE_GROUP.getCode()));
+        List<CfgNoticeDetailEntity> oldList = this.listByMainIdListAndType(Collections.singletonList(id), Arrays.asList(CfgNoticeObjectTypeEnum.NOTICE_USER.getCode(), CfgNoticeObjectTypeEnum.NOTICE_GROUP.getCode()));
         List<String> newIds = noticeObjectDTOList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
                 map(CfgNoticeDTO.NoticeObjectDTO::getId).collect(Collectors.toList());
         List<String> deleteIds = getDeleteIds(newIds, oldList);
@@ -58,7 +58,7 @@ public class CfgNoticeDetailServiceImpl extends SuperServiceImpl<CfgNoticeDetail
 
     @Override
     public void addNOrUpdateoticeTimeList(List<CfgNoticeDTO.NoticeTimeDTO> noticeTimeDTOList, String id) {
-        List<CfgNoticeDetailEntity> oldList = this.listByMainIdListAndType(Collections.singletonList(id), Arrays.asList(CfgVirtualNoticeObjectTypeEnum.NOTICE_DAY.getCode(), CfgVirtualNoticeObjectTypeEnum.NOTICE_WEEK.getCode()));
+        List<CfgNoticeDetailEntity> oldList = this.listByMainIdListAndType(Collections.singletonList(id), Arrays.asList(CfgNoticeObjectTypeEnum.NOTICE_DAY.getCode(), CfgNoticeObjectTypeEnum.NOTICE_WEEK.getCode()));
         List<String> newIds = noticeTimeDTOList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
                 map(CfgNoticeDTO.NoticeTimeDTO::getId).collect(Collectors.toList());
         List<String> deleteIds = getDeleteIds(newIds, oldList);
