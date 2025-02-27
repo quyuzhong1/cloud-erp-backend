@@ -11,9 +11,11 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.query.PurchasePriceQueryHandler;
@@ -28,10 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -377,7 +376,7 @@ public class PurchasePriceController extends BaseController {
     /**
      * 更新明细备注
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新明细备注采购价目:ids={ids},明细备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新明细备注采购价目:明细备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -386,8 +385,35 @@ public class PurchasePriceController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult<?> updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = purchasePriceService.updateDetailRemark(dto.getIds(),dto.getRemark());
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchasePriceDetailEntity> detailList = purchasePriceDetailService.listByIds(dto.getIds());
+        Map<String, PurchasePriceDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(PurchasePriceDetailEntity::getPurchasePriceId).distinct().collect(Collectors.toList());
+        Map<String, PurchasePriceEntity> entityMap = purchasePriceService.mapByIds(mainIds);
+        for (String id : dto.getIds()) {
+            PurchasePriceDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购明细不存在"));
+                continue;
+            }
+            PurchasePriceEntity entity = entityMap.get(detailEntity.getPurchasePriceId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目不存在"));
+                continue;
+            }
+            try {
+                Boolean disabled = purchasePriceService.updateDetailRemark(Collections.singletonList(id), dto.getRemark());
+                if (disabled){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "更新采购价目明细备注失败"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "更新采购价目明细备注成功"));
+                }
+            }catch (Exception e){
+                log.error("更新采购采购价目明细备注失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
