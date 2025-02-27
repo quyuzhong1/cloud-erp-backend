@@ -33,6 +33,7 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.enums.SptWarehouseStatusEnum;
 import com.erp.model.wms.enums.SptWarehouseTypeEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -135,7 +136,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         if(CollUtil.isNotEmpty(warehouseList)){
             warehouseList.forEach(v->{
                 v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.getName(v.getPlatformWarehouseType()));
-                v.setPlatformWarehouseStatusName(SptWarehouseTypeEnum.getName(v.getPlatformWarehouseStatus()));
+                v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
             });
         }
         viewDTO.setDetailList(warehouseList);
