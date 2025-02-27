@@ -4608,6 +4608,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
+            //正常情况下箱规尺寸>=包装尺寸，毛重>=净重
+            if(MathUtil.valueOf(dto.getBoxLength()).compareTo(MathUtil.valueOf(dto.getProductLength()))<0){
+                errorMsgList.add("箱规长度必须大于包装长度");
+            }
+            if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(MathUtil.valueOf(dto.getProductWidth()))<0){
+                errorMsgList.add("箱规宽度必须大于包装宽度");
+            }
+            if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(MathUtil.valueOf(dto.getProductHeight()))<0){
+                errorMsgList.add("箱规高度必须大于包装高度");
+            }
+            if(MathUtil.valueOf(dto.getGrossWeight()).compareTo(MathUtil.valueOf(dto.getNetWeight()))<0){
+                errorMsgList.add("毛重必须大于净重");
+            }
+
             //存在错误信息则返回
             if (CollUtil.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -5100,6 +5114,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
+            //正常情况下箱规尺寸>=包装尺寸，毛重>=净重
+            if(MathUtil.valueOf(dto.getBoxLength()).compareTo(MathUtil.valueOf(dto.getProductLength()))<0){
+                errorMsgList.add("箱规长度必须大于包装长度");
+            }
+            if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(MathUtil.valueOf(dto.getProductWidth()))<0){
+                errorMsgList.add("箱规宽度必须大于包装宽度");
+            }
+            if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(MathUtil.valueOf(dto.getProductHeight()))<0){
+                errorMsgList.add("箱规高度必须大于包装高度");
+            }
+            if(MathUtil.valueOf(dto.getGrossWeight()).compareTo(MathUtil.valueOf(dto.getNetWeight()))<0){
+                errorMsgList.add("毛重必须大于净重");
+            }
+
             //存在错误信息则返回
             if (CollUtil.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -5236,31 +5264,31 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * MOQ(最小起订量)
              */
-            if(MathUtil.valueOfInteger(dto.getMoq()) > 0){
+            if(StringUtils.isNotBlank(dto.getMoq()) && MathUtil.valueOfInteger(dto.getMoq()) > 0){
                 productPurchaseDTO.setMoq(MathUtil.valueOfInteger(dto.getMoq()));
             }
             /**
              * 试产数量
              */
-            if(MathUtil.valueOfLong(dto.getTrialProductionQty()) > 0){
+            if(StringUtils.isNotBlank(dto.getTrialProductionQty()) && MathUtil.valueOfLong(dto.getTrialProductionQty()) > 0){
                 productPurchaseDTO.setTrialProductionQty(MathUtil.valueOfLong(dto.getTrialProductionQty()));
             }
             /**
              * 首批量产数量
              */
-            if(MathUtil.valueOfLong(dto.getFirstMassQty()) > 0){
+            if(StringUtils.isNotBlank(dto.getFirstMassQty()) && MathUtil.valueOfLong(dto.getFirstMassQty()) > 0){
                 productPurchaseDTO.setFirstMassQty(MathUtil.valueOfLong(dto.getFirstMassQty()));
             }
             /**
              * 计划首批下单量
              */
-            if(MathUtil.valueOfLong(dto.getPlanOrderQty()) > 0){
+            if(StringUtils.isNotBlank(dto.getPlanOrderQty()) && MathUtil.valueOfLong(dto.getPlanOrderQty()) > 0){
                 productPurchaseDTO.setPlanOrderQty(MathUtil.valueOfLong(dto.getPlanOrderQty()));
             }
             /**
              * 实际首批到货量
              */
-            if(MathUtil.valueOfLong(dto.getActualArrivalQty()) > 0){
+            if(StringUtils.isNotBlank(dto.getActualArrivalQty()) && MathUtil.valueOfLong(dto.getActualArrivalQty()) > 0){
                 productPurchaseDTO.setActualArrivalQty(MathUtil.valueOfLong(dto.getActualArrivalQty()));
             }
             /**
@@ -5284,7 +5312,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 交货周期(天)
              */
-            if(MathUtil.valueOf(dto.getDeliveryCycle()).compareTo(BigDecimal.ZERO) > 0){
+            if(StringUtils.isNotBlank(dto.getDeliveryCycle()) && MathUtil.valueOf(dto.getDeliveryCycle()).compareTo(BigDecimal.ZERO) > 0){
                 productPurchaseDTO.setDeliveryCycle(MathUtil.valueOf(dto.getDeliveryCycle()));
             }
             /**
@@ -5319,7 +5347,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 年目标销量
              */
-            if(MathUtil.valueOfLong(dto.getYearSaleQty()) > 0){
+            if(StringUtils.isNotBlank(dto.getYearSaleQty()) && MathUtil.valueOfLong(dto.getYearSaleQty()) > 0){
                 productSaleDTO.setYearSaleQty(MathUtil.valueOfLong(dto.getYearSaleQty()));
             }
             /**
@@ -5433,7 +5461,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 报关申报价（$）
              */
-            if(MathUtil.valueOf(dto.getDeclarePrice()).compareTo(BigDecimal.ZERO) > 0){
+            if( MathUtil.valueOf(dto.getDeclarePrice()).compareTo(BigDecimal.ZERO) > 0){
                 productLogisticsDTO.setDeclarePrice(MathUtil.valueOf(dto.getDeclarePrice()));
             }
             /**
@@ -5827,13 +5855,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
 
+            //正常情况下箱规尺寸>=包装尺寸，毛重>=净重
+            if(MathUtil.valueOf(dto.getBoxLength()).compareTo(MathUtil.valueOf(dto.getProductLength()))<0){
+                errorMsgList.add("箱规长度必须大于包装长度");
+            }
+            if(MathUtil.valueOf(dto.getBoxWidth()).compareTo(MathUtil.valueOf(dto.getProductWidth()))<0){
+                errorMsgList.add("箱规宽度必须大于包装宽度");
+            }
+            if(MathUtil.valueOf(dto.getBoxHeight()).compareTo(MathUtil.valueOf(dto.getProductHeight()))<0){
+                errorMsgList.add("箱规高度必须大于包装高度");
+            }
+            if(MathUtil.valueOf(dto.getGrossWeight()).compareTo(MathUtil.valueOf(dto.getNetWeight()))<0){
+                errorMsgList.add("毛重必须大于净重");
+            }
+
             //存在错误信息则返回
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(dto);
                 continue;
             }
-
             ProductNoSpecDTO productNoSpecDTO = new ProductNoSpecDTO();
 
 
@@ -6138,6 +6179,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 净重
              */
             productPackDTO.setNetWeight(MathUtil.valueOf(dto.getNetWeight()));
+            //箱规尺寸>=包装尺寸，毛重>=净重
+
+
             /**
              * 单箱重量
              */
