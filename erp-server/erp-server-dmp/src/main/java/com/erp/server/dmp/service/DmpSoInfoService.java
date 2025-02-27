@@ -42,4 +42,10 @@ public interface DmpSoInfoService extends SuperService<DmpSoInfoEntity> {
      * 查询缺失明细的订单
      */
     List<DmpSoInfoEntity> findSoMissingDetail(LocalDateTime startTime, LocalDateTime endTime, String sourceSystem, String nextLevelId);
+
+    /**
+     * 领星导入
+     */
+    void lxSoUpdate();
+
 }
