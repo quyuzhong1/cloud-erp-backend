@@ -13,6 +13,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -20,9 +21,9 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
 import org.apache.poi.ss.formula.functions.T;
 
 import java.io.IOException;
@@ -887,17 +888,21 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 校验是否缺货状态
+     *
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
      * @param skuId
      * @param warehouseId
      * @param qty
+     * @param skuMappingDTOList
+     * @param warehouseList
+     * @param bomChildrenSkuDTOList
      * @return
      */
     Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
                             List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
-                            String skuId, String warehouseId, Integer qty);
+                            SoB2cDetailEntity soDetailEntity, String warehouseId, Integer qty, List<ListingInfoWithSkuMappingDTO> skuMappingDTOList, List<WarehouseDTO.UpdateDTO> warehouseList, List<BomChildrenSkuDTO> bomChildrenSkuDTOList);
 
 
     void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration,Boolean isUpdateTransferStatus);
