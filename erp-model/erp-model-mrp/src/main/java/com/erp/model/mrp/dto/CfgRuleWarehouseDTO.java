@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
+import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
 import lombok.*;
 
 import javax.validation.Valid;
@@ -138,6 +139,14 @@ public class CfgRuleWarehouseDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+        /**
+         * 仓库配置
+         */
+        private CfgRuleWarehouseEntity cfgRuleWarehouse;
+        /**
+         * 仓库配置明细
+         */
+        private List<CfgRuleWarehouseDetailEntity> cfgRuleWarehouseDetailList;
     }
 
     @Getter

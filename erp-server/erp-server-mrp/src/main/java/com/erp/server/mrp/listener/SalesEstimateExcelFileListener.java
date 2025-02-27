@@ -36,24 +36,25 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
 
     private final Map<String, String> platformMap;
 
-    private final String platform;
+    private final String platformName;
 
     private static final String REGEX = "^([1-9]\\d{0,8}|0)(\\.\\d{1,2})?$";
 
-    public SalesEstimateExcelFileListener(Map<String, String> skuMap, List<ShopInfoEntity> shopInfoList, Map<String, String> platformMap, String platform) {
+    public SalesEstimateExcelFileListener(Map<String, String> skuMap, List<ShopInfoEntity> shopInfoList, Map<String, String> platformMap, String platformName) {
         this.skuMap = skuMap;
         this.shopInfoList = shopInfoList;
         this.platformMap = platformMap;
-        this.platform = platform;
+        this.platformName = platformName;
     }
 
 
     @Override
     public void invoke(CfgRuleSalesEstimateFileDTO.ExcelDTO data, AnalysisContext context) {
         //注解验证信息
-        List<String> msgList = FieldValidUtil.fieldValid(data);
-        if (!CollectionUtils.isEmpty(msgList)) {
-            msgList.add(String.join(",", msgList));
+        List<String> msgList = new ArrayList<>();
+        List<String> errorMsgList = FieldValidUtil.fieldValid(data);
+        if (!CollectionUtils.isEmpty(errorMsgList)) {
+            msgList.add(errorMsgList.stream().distinct().collect(Collectors.joining(",")));
         }
         if (!platformMap.containsKey(data.getPlatformName())) {
             msgList.add("平台不存在");
@@ -78,11 +79,11 @@ public class SalesEstimateExcelFileListener extends AnalysisEventListener<CfgRul
         if (!ObjectUtils.isEmpty(date) && LocalDate.now().isAfter(date)) {
             msgList.add("日期，仅限导入未来日期的预估销量，必须晚于今日");
         }
-        if (data.getSalesQty().matches(REGEX)) {
+        if (!ObjectUtils.isEmpty(data.getSalesQty()) && !data.getSalesQty().matches(REGEX)) {
             msgList.add("预估日销量：0≤X≤999999999，最多保留2位小数");
         }
-        if (!platform.equals(platformMap.get(data.getPlatformName()))) {
-            msgList.add("只能导入" + platformMap.get(platform) + "平台的数据");
+        if (!platformName.equals(data.getPlatformName())) {
+            msgList.add("只能导入" + platformName + "平台的数据");
         }
         CustomerSalesEstimateEsEntity dto = successList.stream()
                 .filter(v -> v.getPlatformName().equals(data.getPlatformName()))

@@ -1,6 +1,10 @@
 package com.erp.model.mrp.dto;
 
-import com.erp.model.mrp.entity.*;
+import com.erp.model.mrp.entity.CfgRuleExpireTimeEntity;
+import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
+import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+import com.erp.model.mrp.entity.CfgRuleOverseasInstockDaysEntity;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -8,9 +12,7 @@ import lombok.Setter;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 @Getter
@@ -194,10 +196,9 @@ public class CfgRuleExpireTimeDTO {
          */
         private String refId;
         /**
-         * sku类型
-         *
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */
-        private String skuType;
+        private String platformType;
         /**
          * 区域
          */
@@ -234,7 +235,7 @@ public class CfgRuleExpireTimeDTO {
             ReplenishmentResultDTO.BasicDTO entity = resultDTO.getReplenishment();
             CfgRuleExpireTimeDTO.StrategyDTO dto = new CfgRuleExpireTimeDTO.StrategyDTO();
             dto.setRefId(entity.getId());
-            dto.setSkuType(resultDTO.getReplenishmentDetail().getSkuType());
+            dto.setPlatformType(entity.getPlatformType());
             dto.setArea(entity.getArea());
             dto.setShopId(entity.getShopId());
             dto.setCfgRuleExpireTimeList(cfgRuleExpireTimeList);
@@ -251,7 +252,7 @@ public class CfgRuleExpireTimeDTO {
     @Setter
     public static class StrategyResultDTO {
         /**
-         * 备货id
+         * 时效id
          */
         private String id;
         /**
@@ -274,30 +275,11 @@ public class CfgRuleExpireTimeDTO {
          * 采购频率天数（天）
          */
         private Integer purchaseCycleDays;
-        /**
-         * 安全天数（天）
-         */
-        private Integer safeDays;
+
         /**
          * 入库天数（天）
          */
         private Integer instockDays;
-        /**
-         * 常规品备货系数
-         */
-        private BigDecimal stockingRatio;
-        /**
-         * 新品备货系数
-         */
-        private BigDecimal newStockingRatio;
-        /**
-         * sku备货系数
-         */
-        private BigDecimal refStockingRatio;
-        /**
-         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-         */
-        private String platformType;
         /**
          * 关联id
          */
@@ -314,49 +296,32 @@ public class CfgRuleExpireTimeDTO {
          * 物流最小时效
          */
         private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult;
-        /**
-         * 备货默认明细系数
-         */
-        private List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults;
-        /**
-         * 备货明细系数
-         */
-        private List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults;
 
-
-        public void buildStrategyResultDTO(CfgRuleStockUpEntity entity, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults,
+        public void buildStrategyResultDTO(String platformType, CfgRuleExpireTimeEntity entity, CfgRuleExpireTimeEntity defaultExpireTime,
                                            CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult,
-                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult,List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults
+                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult
         ) {
-            CfgRuleStockUpEntity effectiveEntity = Optional.ofNullable(entity).orElse(defaultStockUp);
             // 设置实体字段值
-            this.setId(effectiveEntity.getId());
-//            this.setPurchaseApproveDays(getOrDefault(entity, CfgRuleStockUpEntity::getPurchaseApproveDays, defaultStockUp.getPurchaseApproveDays()));
-//            this.setProductionDays(getOrDefault(entity, CfgRuleStockUpEntity::getProductionDays, defaultStockUp.getProductionDays()));
-//            this.setSupplierDeliveryDays(getOrDefault(entity, CfgRuleStockUpEntity::getSupplierDeliveryDays, defaultStockUp.getSupplierDeliveryDays()));
-//            this.setQcDays(getOrDefault(entity, CfgRuleStockUpEntity::getQcDays, defaultStockUp.getQcDays()));
-//            this.setPurchaseCycleDays(getOrDefault(entity, CfgRuleStockUpEntity::getPurchaseCycleDays, defaultStockUp.getPurchaseCycleDays()));
-//            this.setSafeDays(getOrDefault(entity, CfgRuleStockUpEntity::getSafeDays, defaultStockUp.getSafeDays()));
-//            this.setInstockDays(getOrDefault(entity, CfgRuleStockUpEntity::getInstockDays, defaultStockUp.getInstockDays()));
-
-            // 设置默认/新备货比率
-            this.setStockingRatio(defaultStockUp.getStockingRatio());
-            this.setNewStockingRatio(defaultStockUp.getNewStockingRatio());
-            this.setRefStockingRatio(entity != null ? entity.getStockingRatio() : null);
-
-            // 设置平台类型和引用ID
-//            this.setPlatformType(getOrDefault(entity, CfgRuleStockUpEntity::getPlatformType, defaultStockUp.getPlatformType()));
-            this.setRefId(entity != null ? entity.getRefId() : "");
+            this.setId(getOrDefault(entity, CfgRuleExpireTimeEntity::getId, defaultExpireTime.getId()));
+            this.setPurchaseApproveDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getPurchaseApproveDays, defaultExpireTime.getPurchaseApproveDays()));
+            this.setProductionDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getProductionDays, defaultExpireTime.getProductionDays()));
+            this.setSupplierDeliveryDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getSupplierDeliveryDays, defaultExpireTime.getSupplierDeliveryDays()));
+            this.setQcDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getQcDays, defaultExpireTime.getQcDays()));
+            this.setPurchaseCycleDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getPurchaseCycleDays, defaultExpireTime.getPurchaseCycleDays()));
+            if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType)) {
+                this.setInstockDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getPlatformInstockDays, defaultExpireTime.getPlatformInstockDays()));
+            } else {
+                this.setInstockDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getOverseasInstockDays, defaultExpireTime.getOverseasInstockDays()));
+            }
+            this.setRefId(getOrDefault(entity, CfgRuleExpireTimeEntity::getRefId, ""));
             // 设置物流和备货比率结果
             this.setLogisticsResult(logisticsResult);
             this.setLogisticsMinResult(logisticsMinResult);
             this.setLogisticsMaxResult(logisticsMaxResult);
-            this.setStockingRatioResults(stockingRatioResults);
-            this.setRefStockingRatioResults(refStockingRatioResults);
         }
 
         // 提取默认值的辅助方法
-        private <T> T getOrDefault(CfgRuleStockUpEntity entity, Function<CfgRuleStockUpEntity, T> getter, T defaultValue) {
+        private <T> T getOrDefault(CfgRuleExpireTimeEntity entity, Function<CfgRuleExpireTimeEntity, T> getter, T defaultValue) {
             return (entity != null && getter.apply(entity) != null) ? getter.apply(entity) : defaultValue;
         }
     }

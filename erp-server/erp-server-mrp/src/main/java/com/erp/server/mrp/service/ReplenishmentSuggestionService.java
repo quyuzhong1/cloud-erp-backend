@@ -341,8 +341,7 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     /**
      * 根据数据类型和订单类型查询历史销量
      *
-     * @param replenishmentIds 建议主表id
-     * @param salesQtyType     销量数据类型
+     * @param suggestionList 建议主表id
      * @param cfgRuleSalesQtyList        订单类型
      * @param startDate        开始时间
      * @param endDate          结束时间

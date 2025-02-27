@@ -26,7 +26,6 @@ import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +61,6 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @CacheEvict(cacheNames = "cache:mrp:getWarehouse", allEntries = true, beforeInvocation = true)
     public Boolean update(CfgRuleWarehouseDTO.UpdateDTO updateDTO) {
         CfgRuleWarehouseEntity cfgRuleWarehouseEntity =  BeanMapperUtils.map(CfgRuleWarehouseEntity.class, updateDTO);
         //旧数据
@@ -188,7 +186,6 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
 
 
     @Override
-    @CacheEvict(cacheNames = "cache:mrp:getWarehouse", allEntries = true, beforeInvocation = true)
     public void refreshVirtual() {
         CfgRuleWarehouseEntity ruleWarehouseEntity = getOne(Wrappers.emptyWrapper());
         if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
@@ -224,24 +221,13 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
             return new CfgRuleWarehouseDTO.WarehouseShopDTO();
         }
 
-//        if (Boolean.FALSE.equals(dto.getIsEnableVirtual())) {
-//            List<String> shopNameList = handleCheckShop(dto.getCfgLocalWarehouseList(), list);
-//            if (CollectionUtils.isNotEmpty(shopNameList)) {
-//                resultDTO.setShopNameList(shopNameList);
-//            }
-//        }
+
         if (Boolean.TRUE.equals(dto.getIsEnableVirtual())) {
             List<String> virtualShopNameList = handleCheckShop(dto.getCfgLocalVirtualWarehouseList(),list);
             if (CollectionUtils.isNotEmpty(virtualShopNameList)) {
                 resultDTO.setVirtualShopNameList(virtualShopNameList);
             }
         }
-//        if (Boolean.TRUE.equals(dto.getIsEnableOverseas())) {
-//            List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(),list);
-//            if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
-//                resultDTO.setOverseasShopNameList(overseasShopNameList);
-//            }
-//        }
         return resultDTO;
     }
 

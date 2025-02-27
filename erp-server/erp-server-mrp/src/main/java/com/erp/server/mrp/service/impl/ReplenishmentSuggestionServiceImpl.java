@@ -583,6 +583,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 .set(ReplenishmentSuggestionEntity::getReplenishmentType, ReplenishmentTypeEnum.NORMAL.getCode())
         );
     }
+
 //    @Override
 //    @Transactional(rollbackFor = Exception.class)
 //    public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO) {

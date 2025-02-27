@@ -13,9 +13,12 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesEstimateFileDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesEstimateFileEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -25,8 +28,12 @@ import com.erp.server.mrp.es.service.CustomerSalesEstimateEsService;
 import com.erp.server.mrp.listener.SalesEstimateExcelFileListener;
 import com.erp.server.mrp.mapper.CfgRuleSalesEstimateFileMapper;
 import com.erp.server.mrp.service.CfgRuleSalesEstimateFileService;
+import com.erp.server.mrp.service.CfgRuleSalesQtyService;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -57,6 +64,10 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
     @Resource
     private CustomerSalesEstimateEsService customerSalesEstimateEsService;
 
+    @Resource
+    @Lazy
+    private CfgRuleSalesQtyService cfgRuleSalesQtyService;
+
     @Override
     public PagingVO<CfgRuleSalesEstimateFileDTO.PagingView> filePage(PagingDTO<CfgRuleSalesEstimateFileDTO.PagingParamDTO> params) {
         Page<CfgRuleSalesEstimateFileEntity> page = page(new Page<>(params.getCurrPage(), params.getPageSize()),
@@ -73,8 +84,13 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void importFile(MultipartFile excelFile, String platform, HttpServletResponse response) {
 
+        CfgRuleSalesQtyEntity salesQty = cfgRuleSalesQtyService.getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery()
+                .eq(CfgRuleSalesQtyEntity::getPlatform, platform)
+                .last("LIMIT 1")
+        );
         List<SkuVO> skuVOS = plmTaskFeign.listApproveSku();
         Map<String, String> skuMap = skuVOS.stream()
                 .collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuId, (o1, o2) -> o1));
@@ -84,9 +100,17 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
                 .eq(com.erp.model.oms.entity.DictBasicEntity::getStatus, Boolean.TRUE)
                 .eq(com.erp.model.oms.entity.DictBasicEntity::getIsDeleted, Boolean.FALSE)
                 .list();
+        String platformName = salesPlatformList.stream()
+                .filter(v -> v.getValue().equals(platform))
+                .map(DictBasicEntity::getName)
+                .findFirst()
+                .orElse("");
+        if (ObjectUtils.isEmpty(salesQty)) {
+            throw new ServiceException(ApiError.ERROR_CFG_RULE_SALES_NOT_EXIST, platformName);
+        }
         Map<String, String> platformMap = salesPlatformList.stream()
                 .collect(Collectors.toMap(com.erp.model.oms.entity.DictBasicEntity::getName, com.erp.model.oms.entity.DictBasicEntity::getValue, (o1, o2) -> o1));
-        SalesEstimateExcelFileListener excelListenerUtil = new SalesEstimateExcelFileListener(skuMap, shopInfoList, platformMap, platform);
+        SalesEstimateExcelFileListener excelListenerUtil = new SalesEstimateExcelFileListener(skuMap, shopInfoList, platformMap, platformName);
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), CfgRuleSalesEstimateFileDTO.ExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -96,9 +120,6 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
             log.error(ApiError.ERROR_1016.msg, e);
             throw new ServiceException(ApiError.ERROR_1016);
         }
-        customerSalesEstimateEsService.removeByPlatform(platform);
-        // 保存数据
-        customerSalesEstimateEsService.saveAll(excelListenerUtil.getSuccessList());
         List<CfgRuleSalesEstimateFileDTO.ExcelDTO> errorList = excelListenerUtil.getErrorList();
         if (!CollectionUtils.isEmpty(errorList)) {
             StringBuilder sb = new StringBuilder();
@@ -112,6 +133,16 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
             } catch (IOException e) {
                 throw new ServiceException(ApiError.ERROR_95125);
             }
+        } else {
+            customerSalesEstimateEsService.removeByPlatform(platform);
+            // 保存数据
+            customerSalesEstimateEsService.saveAll(excelListenerUtil.getSuccessList());
+            String fileUrl = FastDFSClientUtil.uploadFile(excelFile);
+            CfgRuleSalesEstimateFileEntity salesEstimateFile = new CfgRuleSalesEstimateFileEntity();
+            salesEstimateFile.setSalesQtyId(salesQty.getId());
+            salesEstimateFile.setFileName(excelFile.getOriginalFilename());
+            salesEstimateFile.setFileUrl(fileUrl);
+            save(salesEstimateFile);
         }
     }
 }
