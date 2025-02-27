@@ -134,7 +134,8 @@ public class SoLabelServiceImpl extends SuperServiceImpl<SoLabelMapper, SoLabelE
         if (CollUtil.isEmpty(soLabelEntityList)){
             throw new ServiceException("无可打印的物流面单");
         }
-        List<String> base64List = soLabelEntityList.stream().map(SoLabelEntity::getLogisticsLabelBase64).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        Map<String, String> baseMap = soLabelEntityList.stream().collect(Collectors.toMap(SoLabelEntity::getMainId, SoLabelEntity::getLogisticsLabelBase64));
+        List<String> base64List = ids.stream().map(e -> baseMap.getOrDefault(e,null)).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         try {
             String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
             // 设置响应头，告诉浏览器返回的是一个 PDF 文件
