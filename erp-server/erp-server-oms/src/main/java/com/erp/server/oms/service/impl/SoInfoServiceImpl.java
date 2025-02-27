@@ -3644,7 +3644,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }else if (CharSequenceUtil.isAllNotBlank(skuNo, customerSku)){
                     SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
                     if (Objects.isNull(skuMappingViewDTO)){
-                        msgList.add("客户SKU映射不存在");
+                        msgList.add("SKU和客户SKU不匹配");
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
