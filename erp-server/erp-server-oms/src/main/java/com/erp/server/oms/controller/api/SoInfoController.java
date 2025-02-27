@@ -832,9 +832,9 @@ public class SoInfoController extends BaseController {
         if (CollUtil.isEmpty(files)){
             throw new ServiceException("上传文件不能为空");
         }
-        if (files.size() > 20){
-            throw new ServiceException("单次上传不要超过10个文件");
-        }
+//        if (files.size() > 20){
+//            throw new ServiceException("单次上传不要超过20个文件");
+//        }
         List<BatchResultDTO> resultDTOS = soInfoService.batchUploadLogisticLabel(files);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
