@@ -187,6 +187,12 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         private List<String> orderType;
 
         /**
+         * 预估销量类型（SYSTEM/AI/CUSTOMER）
+         */
+        @NotNull(message = "预估销量类型不能为空")
+        private String salesEstimateType;
+
+        /**
          * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */
         @NotBlank(message = "平台类型不能为空")
