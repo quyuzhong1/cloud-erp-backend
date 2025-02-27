@@ -113,7 +113,7 @@ public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         if (CharSequenceUtil.isNotBlank(uploadFileReq.getModule())){
             antuUploadFileReq.setModule(uploadFileReq.getModule());
         }
-        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuUploadFileReq);
+        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuUploadFileReq,getPlatForm());
         AntuUploadFileResp antuCalculateFeeRespList = response.getData();
         ThirdWarehouseUploadFileResponse resToThirdWarehouseResponse = ThirdWarehouseConverter.INSTANCE.antuResToThirdWarehouseUploadFileResponse(antuCalculateFeeRespList);
         return isSuccess(response.getAsk()) ? success(resToThirdWarehouseResponse) : failure(response.getMessage());
