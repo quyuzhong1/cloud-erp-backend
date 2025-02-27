@@ -422,7 +422,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         List<PurchasePriceChangeEntity> priceChangeList = this.listByIds(ids);
         priceChangeList = priceChangeList.stream().filter(p -> !ApproveStatusEnum.APPROVE.equals(p.getApproveStatus())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(priceChangeList)) {
-            return Boolean.TRUE;
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
 
