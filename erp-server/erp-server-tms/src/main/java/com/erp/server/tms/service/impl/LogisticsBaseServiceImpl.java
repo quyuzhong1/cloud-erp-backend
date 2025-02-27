@@ -12,7 +12,6 @@ import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.dto.DmpLogisticsTrackRegisterDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.AuthTypeEnum;
@@ -32,7 +31,6 @@ import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.ShopeeFeign;
 import com.erp.server.tms.convert.LogisticsAddressConverter;
-import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.service.*;
 import com.erp.tms.aliexpress.api.IopResponse;
@@ -98,6 +96,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             return syncShopifyChannel(platform);
         } else if (LogisticsPlatformEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)) {
             return syncTikTokChannel(platform);
+        } else if (LogisticsPlatformEnum.SPT.getCode().equalsIgnoreCase(platform)) {
+          return syncSingleChannel(platform);
         } else {
             return syncSingleChannel(platform);
         }
