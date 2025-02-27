@@ -193,8 +193,8 @@ public class AntuService {
     /**
      * 上传文件
      */
-    public AntuResponse<AntuUploadFileResp> uploadFile(@Valid AntuUploadFileReq antuUploadFileReq){
-        String response = AntuUtils.callService(AntuConstants.GET_UPLOAD_FILE,antuUploadFileReq);
+    public AntuResponse<AntuUploadFileResp> uploadFile(@Valid AntuUploadFileReq antuUploadFileReq,OmsPlatformEnum platformEnum){
+        String response = AntuUtils.callService(platformEnum,AntuConstants.GET_UPLOAD_FILE,antuUploadFileReq);
         log.debug("上传文件:{}", response);
         return JSON.parseObject(response,new TypeReference<AntuResponse<AntuUploadFileResp>>() {}.getType());
     }
