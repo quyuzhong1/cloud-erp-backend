@@ -187,7 +187,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         Map<String, List<FirstMileProcessingEntity>> map = list.stream().collect(Collectors.groupingBy(FirstMileProcessingEntity::getRequisitionApplicationDetailId));
         for (Map.Entry<String, List<FirstMileProcessingEntity>> entry : map.entrySet()) {
             List<FirstMileProcessingEntity> value = entry.getValue();
-            if (entry.getKey().equals("1895008242050498562")) {
+            if (entry.getKey().equals("1895364939667681281")) {
                 log.error("wer");
             }
             //主表数据处理
@@ -215,9 +215,11 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     private List<FirstMileProcessingDTO.AddOrUpdateDTO> generateAddOrUpdateData (Map<String, List<BomChildrenSkuDTO>> bomMap,List<FirstMileProcessingEntity> list, List<SoB2bProcessingDTO.ResponseDTO> machineList,
                                           List<SoB2bProcessingDTO.ResponseDTO> transferList,List<SoB2bProcessingDTO.ResponseDTO> soOutstockList) {
         //所有发货明细id集合
-        List<String> deliveryDetailIdList = list.stream().map(FirstMileProcessingEntity::getFirstMileDeliveryDetailId).distinct().collect(Collectors.toList());
-        //查询发货信息
-        FirstMileProcessingEntity firstMileProcessingEntity = list.get(0);
+        List<String> deliveryDetailIdList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getFirstMileDeliveryDetailId())).map(FirstMileProcessingEntity::getFirstMileDeliveryDetailId).distinct().collect(Collectors.toList());
+        //查询发货信息,空字符串排后面,取第一条数据生成主表数据
+        FirstMileProcessingEntity firstMileProcessingEntity = list.stream()
+                .sorted(Comparator.comparing(FirstMileProcessingEntity::getFirstMileDeliveryId, Comparator.comparing(str -> str.equals("") ? "z" : str)))
+                .findFirst().orElse(null);
         List<FirstMileProcessingDTO.AddOrUpdateDTO> mainList = handleBomData(null,deliveryDetailIdList, bomMap, Collections.singletonList(firstMileProcessingEntity) , machineList, transferList, soOutstockList);
         //fba的需要新增明细数据
         if (!CharSequenceUtil.equals("fba",firstMileProcessingEntity.getType())) {
