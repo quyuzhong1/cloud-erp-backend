@@ -5199,7 +5199,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 throw new ServiceException(ApiError.ERROR_95017);
             }
             //sku信息
-            BeanMapper.copy(dto, productSkuBaseInfoDTO);
+            BeanMapper.copyNonNull(dto, productSkuBaseInfoDTO);
             if (StringUtils.isNotBlank(dto.getPlanListingTime())) {
                 productSkuBaseInfoDTO.setPlanListingTime(LocalDate.parse(dto.getPlanListingTime(), dateTimeFormatter));
             }
