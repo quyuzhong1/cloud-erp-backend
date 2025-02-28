@@ -36,6 +36,13 @@ public interface FirstMileProcessingService extends SuperService<FirstMileProces
      * @return PagingVO<ListDTO>
      */
     PagingVO<FirstMileProcessingDTO.ListDTO> paging(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出分页列表数据
+     * @param dto
+     * @return
+     */
+    PagingVO<FirstMileProcessingDTO.ListDTO> exportPaging(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto);
     /**
      * 导出
      * @author will

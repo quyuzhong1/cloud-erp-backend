@@ -260,4 +260,35 @@
             and ra.create_time >= #{startDate}
         </if>
     </select>
+
+    <!--导出分页查询- -->
+    <select id="exportPaging" resultType="com.erp.model.wms.dto.FirstMileProcessingDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from first_mile_processing fmp
+        left join product_detail pd on fmp.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on fmp.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on fmp.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        where ${params.sqlMap.default}
+        and fmp.is_deleted = false
+        <if test="params.label != null and params.label == 'outstock'">
+            and  (fmp.outstock_order_id != '' or  exists (select 0 from first_mile_processing_detail where is_deleted = false and outstock_order_id !='' and main_id = fmp.id) )
+        </if>
+        <if test="params.label != null and params.label == 'frozen'">
+            and fmp.frozen_qty != 0 and ((fmp.first_mile_delivery_id != '' and fmp.outstock_order_id = '') or EXISTS (select 0 from first_mile_processing_detail where is_deleted = false and first_mile_delivery_id != '' and outstock_order_id ='' and main_id = fmp.id ) )
+        </if>
+        <if test="params.label != null and params.label == 'unShipped'">
+            and (fmp.outstock_order_id = '' or exists (select 0 from first_mile_processing_detail where is_deleted = false and   outstock_order_id ='' and main_id = fmp.id))  and fmp.frozen_time is not null and EXTRACT(DAY FROM (now() - fmp.frozen_time)) >= 7
+        </if>
+        <if test="params.label != null and params.label == 'requisitionFrozen'">
+            and (fmp.approve_qty > fmp.delivery_qty and fmp.approve_qty > (select COALESCE(sum(delivery_qty),0) as deliveryQty from first_mile_processing_detail where is_deleted = false and main_id = fmp.id)) and fmp.requisition_application_status in ('handleIng','handle') and fmp.frozen_qty > 0
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fmp.requisition_application_id DESC,fmp.first_mile_delivery_id desc
+    </select>
 </mapper>
