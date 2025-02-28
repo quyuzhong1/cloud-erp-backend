@@ -22,11 +22,11 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgNoticeDTO;
 import com.erp.model.mrp.entity.CfgNoticeDetailEntity;
 import com.erp.model.mrp.entity.CfgNoticeEntity;
+import com.erp.model.mrp.enums.CfgNoticeNodeEnum;
 import com.erp.model.mrp.enums.CfgNoticeObjectTypeEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.wms.enums.CfgVirtualNoticeNodeTypeEnum;
 import com.erp.model.wms.enums.CfgVirtualNoticeTimeTypeEnum;
 import com.erp.model.wms.enums.CfgVirtualNoticeWeekOptionEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -258,7 +258,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
 
         for (CfgNoticeDTO.ListDTO item : records) {
             //通知节点
-            item.setNoticeNodeName(CfgVirtualNoticeNodeTypeEnum.getName(item.getNoticeNode()));
+            item.setNoticeNodeName(CfgNoticeNodeEnum.getName(item.getNoticeNode()));
             CfgNoticeDTO.NoticeRuleDTO noticeRuleDTO = JSONUtil.toBean(item.getNoticeRule(), CfgNoticeDTO.NoticeRuleDTO.class);
             StringBuilder noticeRuleName = new StringBuilder();
             if ( VitualWarehouseChannelTypeEnum.SHOP.getCode().equals(noticeRuleDTO.getRuleType())) {
@@ -291,7 +291,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
             List<Map<String, Object>> noticeObjectList = new ArrayList<>();
             for (CfgNoticeDetailEntity detailEntity : detailList) {
                 // 将 JSON 字符串转为 Map
-                Map<String,Object> map = JSONUtil.toBean(item.getNoticeRule(), new TypeReference<Map<String, Object>>() {}.getType(),false);
+                Map<String,Object> map = JSONUtil.toBean(detailEntity.getNoticeValueJson(), new TypeReference<Map<String, Object>>() {}.getType(),false);
                 map.put(" ", CfgNoticeObjectTypeEnum.getName(detailEntity.getNoticeType()));
                 if (CfgNoticeObjectTypeEnum.NOTICE_USER.getCode().equals(detailEntity.getNoticeType())) {
                     List<String> noticeObject = (List<String>) map.get("noticeObjectList");
