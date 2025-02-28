@@ -117,7 +117,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
             List<WmsCartonDetailDTO.AddDTO> addDTOS = map.get(key);
             WmsCartonDetailEntity detailEntity = CartonConverter.INSTANCE.AddDetailToCartonDetail(addDTOS.get(0));
             int packQty = addDTOS.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
-            BigDecimal grossWeight = addDTOS.stream().map(WmsCartonDetailDTO.AddDTO::getGrossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal grossWeight = addDTOS.stream().map(WmsCartonDetailDTO.AddDTO::getGrossWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
             detailEntity.setPackQty(packQty);
             detailEntity.setGrossWeight(grossWeight);
             detailEntityList.add(detailEntity);
