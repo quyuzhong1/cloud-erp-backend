@@ -52,10 +52,8 @@ import com.sdk.oms.tiktok.dto.tiktok.split.SplitAttributesDTO;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -773,7 +771,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
          * 拆分后金额、费用根据金额比例进行分摊
          */
         //验证拆分数据
-        checkSplitData(entity,soB2cRefList);
+        checkSplitData(entity,soB2cRefList, dto.getIsSyncPlatform());
         //原单据明细
         List<SoB2cDetailEntity> oldDetailList = soB2cDetailService.listByMainId(dto.getId());
         if (CollectionUtils.isEmpty(oldDetailList)) {
@@ -976,11 +974,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     /**
      * @param entity
      * @param soB2cRefList
+     * @param checkTikTok
      * @description: 验证拆分数据
      * @author Will
      * @date: 2023/8/23 15:12
      */
-    private void checkSplitData(SoB2cEntity entity,List<SoB2cRefEntity> soB2cRefList) {
+    private void checkSplitData(SoB2cEntity entity, List<SoB2cRefEntity> soB2cRefList, Boolean checkTikTok) {
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                 || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus()) ||SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
@@ -995,7 +994,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
         }
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform()) && checkTikTok) {
             TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
             SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
             SplitAttributesBean splitAttributesBean = splitAttributesDTO.getData().getSplitAttributes().stream().filter(req -> entity.getPlatformCode().equals(req.getOrderId())).findFirst().orElse(null);
@@ -1045,7 +1044,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<SoB2cDTO.ViewSplitDTO> resultList = new ArrayList<>();
         for (SoB2cEntity entity : soB2cList) {
             //验证拆分数据
-            checkSplitData(entity,soB2cRefList);
+            checkSplitData(entity,soB2cRefList, true);
             SoB2cDTO.ViewSplitDTO viewSplitDTO = new SoB2cDTO.ViewSplitDTO();
             viewSplitDTO.setId(entity.getId());
             viewSplitDTO.setCode(entity.getCode());
