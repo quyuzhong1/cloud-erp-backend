@@ -408,7 +408,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             return true;
         }
         if (dtoPackageIds.size() != soPackageIds.size() || !new HashSet<>(dtoPackageIds).containsAll(soPackageIds)){
-            if(soB2cEntityList.size() == 1 && dtoPackageIds.size() > 1){
+            if(!soB2cEntityList.isEmpty() && dtoPackageIds.size() > 1){
                 SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
                 if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
                     soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"tiktok平台拆单，ERP更新拆单信息失败:{订单已提交发货，无法拆单}","","","");
@@ -426,6 +426,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                         soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP取消物流单失败，无法更新拆单信息:"+e.getMessage(),"","","");
                         return false;
                     }
+                }
+                //erp已做了拆分，先取消拆单
+                if(soB2cEntityList.size() > 1){
+                    //做取消拆分
+                    soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
                 }
                 //做拆分，根据package拆分
                 SoB2cDTO.SplitSaveDTO splitSaveDTO = new SoB2cDTO.SplitSaveDTO();
@@ -480,8 +485,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 }
                 return false;
             }else{
-                SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
-                soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"tiktok平台包裹号与erp不一致","","","");
+                //更新包裹号
+                for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
+                    soB2cDetailEntity.setPlatformPackageId(dtoPackageIds.get(0));
+                }
+                soB2cDetailService.updateBatchById(detailList);
+                return false;
             }
         }
         //如果是已经做了拆单，不允许更新订单
