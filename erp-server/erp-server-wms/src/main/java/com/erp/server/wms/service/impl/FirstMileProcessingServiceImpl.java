@@ -119,6 +119,16 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     }
 
     @Override
+    public PagingVO<FirstMileProcessingDTO.ListDTO> exportPaging(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        IPage<FirstMileProcessingDTO.ListDTO> pageData = this.baseMapper.exportPaging(dto.page(), dto.getParams());
+        // 填充名称
+        List<FirstMileProcessingDTO.ListDTO> listDTOList = fillPageData(pageData.getRecords());
+        return new PagingVO<>(listDTOList, (int) pageData.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+
+    @Override
     public Boolean exportExcel(FirstMileProcessingDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("头程虚拟仓列表信息", EXPORT_WMS_FIRST_MILE_PROCESSING.getCode(), dto);
         return Boolean.TRUE;
@@ -248,16 +258,20 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             return resultList;
         }
         //给主表添加明细数据
-        mainList.forEach(obj -> {
+        for (FirstMileProcessingDTO.AddOrUpdateDTO obj : mainList) {
             List<FirstMileProcessingDTO.AddOrUpdateDTO> detailList = resultList.stream().filter(o -> CharSequenceUtil.isNotBlank(obj.getFirstMileDeliveryDetailId()) && CharSequenceUtil.equals(obj.getSkuId(), o.getSkuId())).collect(Collectors.toList());
-            List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> oldDetailList = CollUtil.isEmpty(obj.getDetailList()) ? new ArrayList<>() : obj.getDetailList() ;
+            List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> oldDetailList = CollUtil.isEmpty(obj.getDetailList()) ? new ArrayList<>() : obj.getDetailList();
             //转明细对象
             List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> processingDetailList = BeanUtil.copyToList(detailList, FirstMileProcessingDetailDTO.AddOrUpdateDTO.class);
-            processingDetailList.forEach(o -> o.setMainId(obj.getId()));
-            oldDetailList.addAll(processingDetailList);
+
+            List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> addDetailList = processingDetailList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getFirstMileDeliveryId())).map(o -> {
+                o.setMainId(obj.getId());
+                return o;
+            }).collect(Collectors.toList());
+            oldDetailList.addAll(addDetailList);
             obj.setDetailList(oldDetailList);
             cleanFbaData(obj);
-        });
+        }
         return mainList;
     }
 
@@ -415,19 +429,6 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
         entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - totalQty);
     }
 
-    /**
-     * 根据发货通知单明细id查询
-     * @author will
-     * @date 2024/12/20 10:17
-     * @param applicationDetailIdList
-     * @return List<FirstMileProcessingEntity>
-     */
-    private List<FirstMileProcessingEntity> listByApplicationDetailIdList (List<String> applicationDetailIdList) {
-        if (CollUtil.isEmpty(applicationDetailIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(FirstMileProcessingEntity::getRequisitionApplicationDetailId,applicationDetailIdList).list();
-    }
 
     /**
      * 分页查询
@@ -435,9 +436,9 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
      * @date 2024/12/18 11:24
      * @param list
      */
-    private void fillPageData(List<FirstMileProcessingDTO.ListDTO> list) {
+    private List<FirstMileProcessingDTO.ListDTO> fillPageData(List<FirstMileProcessingDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
-            return;
+            return Collections.emptyList();
         }
         //明细信息
         //查询加工单数据
@@ -450,6 +451,8 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             List<FirstMileProcessingDetailEntity> firstMileProcessingDetailList = firstMileProcessingDetailService.listByMainIdList(mainIdList);
             detailList.addAll(firstMileProcessingDetailList);
         }
+        //返回数据
+        List<FirstMileProcessingDTO.ListDTO> resultList = new ArrayList<>();
 
         for (FirstMileProcessingDTO.ListDTO listDTO : list) {
             listDTO.setIndexId(listDTO.getId());
@@ -462,22 +465,19 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             List<FirstMileProcessingDetailEntity> processingDetailEntityList = detailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), listDTO.getId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(processingDetailEntityList)) {
                 handleMainPaging(listDTO);
+                resultList.add(listDTO);
                 continue;
             }
+
             handleDetailPaging(processingDetailEntityList,listDTO);
-            //发货单号
-            String firstMileDeliveryCodes = listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getFirstMileDeliveryCode).distinct().collect(Collectors.joining(","));
-            listDTO.setFirstMileDeliveryCodes(firstMileDeliveryCodes);
-            //发货单审核状态名称
-            String deliveryApproveStatusNames = listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getDeliveryApproveStatusName).distinct().collect(Collectors.joining(","));
-            listDTO.setDeliveryApproveStatusNames(deliveryApproveStatusNames);
-            //发货数量合计
-            Integer deliveryQtySum =listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            listDTO.setDeliveryQtySum(deliveryQtySum);
-            //出库数量合计
-            Integer outstockQtySum = listDTO.getDetailList().stream().map(FirstMileProcessingDetailDTO.ListDTO::getOutstockQty).reduce(MathUtil.ZERO, Integer::sum);
-            listDTO.setOutstockQtySum(outstockQtySum);
+
+            //返回对象添加主数据（导出）
+            resultList.add(listDTO);
+            //返回数据添加明细数据（导出）
+            List<FirstMileProcessingDTO.ListDTO> exportDetailList = BeanUtil.copyToList(listDTO.getDetailList(), FirstMileProcessingDTO.ListDTO.class);
+            resultList.addAll(exportDetailList);
         }
+        return resultList;
     }
     /**
      * 处理主表数据分页查询数据
@@ -488,10 +488,6 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
     private void handleMainPaging (FirstMileProcessingDTO.ListDTO listDTO) {
         //发货单审核状态名称
         listDTO.setDeliveryApproveStatusName(ApproveStatusEnum.getName(listDTO.getDeliveryApproveStatus()));
-        listDTO.setFirstMileDeliveryCodes(listDTO.getFirstMileDeliveryCode());
-        listDTO.setDeliveryApproveStatusNames(listDTO.getDeliveryApproveStatusName());
-        listDTO.setDeliveryQtySum(listDTO.getDeliveryQty());
-        listDTO.setOutstockQtySum(listDTO.getOutstockQty());
         //标签
         List<String> labelList = new ArrayList<>();
         //已出
@@ -542,7 +538,7 @@ public class FirstMileProcessingServiceImpl extends SuperServiceImpl<FirstMilePr
             mainListDTO.setLabelList(Collections.singletonList(OrderProcessingLableEnum.REQUISITION_FROZEN.getCode()));
         }
         //主表剩余冻结数量
-        if (MathUtil.compareTo(mainListDTO.getFrozenQty(),totalDeliveryQty) > MathUtil.ZERO) {
+        if (MathUtil.compareTo(mainListDTO.getFrozenQty(),totalDeliveryQty) >= MathUtil.ZERO) {
             mainListDTO.setFrozenQty(MathUtil.valueOfZero(mainListDTO.getFrozenQty()) - MathUtil.valueOfZero(totalDeliveryQty));
         }
 
