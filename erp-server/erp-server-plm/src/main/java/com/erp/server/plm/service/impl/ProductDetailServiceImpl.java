@@ -165,6 +165,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProductInfoService productInfoService;
 
     @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
     private ProductImagesService productImagesService;
 
     @Resource
@@ -1892,7 +1895,29 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
         //1.新增产品表 主表信息
-        String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
+        String id;
+        if (StringUtils.isBlank(productSpuBaseInfoDTO.getId())) {
+            id = productInfoService.updateSpec(productSpuBaseInfoDTO);
+        }else {
+            id = productSpuBaseInfoDTO.getId();
+            ProductInfoEntity byId = productInfoService.getById(id);
+            BeanMapper.copyNonNull(productSpuBaseInfoDTO, byId);
+            //判断是否是迭代产品
+            if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(byId.getType())) {
+                ProductDetailEntity productDetailEntity = productDetailService.getById(byId.getIterateRefSkuId());
+                if (ObjectUtils.isEmpty(productDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST);
+                }
+                byId.setIterateRefSkuId(productDetailEntity.getId());
+                byId.setIterateRefSkuNo(productDetailEntity.getSkuNo());
+            } else {
+                byId.setType(ProductTypeEnum.NEW_PRODUCT.getCode());
+                byId.setIterateRefSkuId("");
+                byId.setIterateRefSkuNo("");
+            }
+            productInfoService.saveOrUpdate(byId);
+        }
+
 
         //2.修改/新增 sku信息
 
@@ -1921,18 +1946,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
                 ProductCostEntity byId = productCostService.getById(productCostDTO.getId());
                 if(Objects.nonNull(byId)){
-                    try {
-                        BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
-                        byId.setSkuId(skuId);
-                        LoginUser loginUser = UserContext.getLoginUser();
-                        if (ObjectUtils.isNotEmpty(loginUser)) {
-                            byId.setUpdateUserId(loginUser.getUid());
-                            byId.setUpdateUserName(loginUser.getUserName());
-                        }
-                        productCostService.saveOrUpdate(byId);
-                    }catch (Exception e) {
-                        throw new ServiceException(ApiError.ERROR_COPY_NOTNULL_ERROR);
+                    BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
                     }
+                    productCostService.saveOrUpdate(byId);
                 }else{
                     productCostDTO.setSkuId(skuId);
                     productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
@@ -1950,20 +1971,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productPurchaseDTO.setId(productKey.getPurchaseId());
                 ProductPurchaseEntity byId = productPurchaseService.getById(productPurchaseDTO.getId());
                 if(Objects.nonNull(byId)){
-                    try {
-                        BeanMapper.copyNonNull(productNoSpecDTO.getProductPurchaseDTO(),byId);
-                        byId.setSkuId(skuId);
-                        LoginUser loginUser = UserContext.getLoginUser();
-                        if (ObjectUtils.isNotEmpty(loginUser)) {
-                            byId.setUpdateUserId(loginUser.getUid());
-                            byId.setUpdateUserName(loginUser.getUserName());
-                        }
-                        //验证数据
-                        productPurchaseService.checkProductPurchase(byId);
-                        productPurchaseService.saveOrUpdate(byId);
-                    } catch (Exception e) {
-                        throw new ServiceException(ApiError.ERROR_COPY_NOTNULL_ERROR);
+                    BeanMapper.copyNonNull(productNoSpecDTO.getProductPurchaseDTO(),byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
                     }
+                    //验证数据
+                    productPurchaseService.checkProductPurchase(byId);
+                    productPurchaseService.saveOrUpdate(byId);
                 }else{
                     productPurchaseDTO.setSkuId(skuId);
                     productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
@@ -1989,18 +2006,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productSaleDTO.setId(productKey.getSaleId());
                 ProductSaleEntity byId = productSaleService.getById(productSaleDTO.getId());
                 if(Objects.nonNull(byId)){
-                    try {
-                        BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
-                        byId.setSkuId(skuId);
-                        LoginUser loginUser = UserContext.getLoginUser();
-                        if (ObjectUtils.isNotEmpty(loginUser)) {
-                            byId.setUpdateUserId(loginUser.getUid());
-                            byId.setUpdateUserName(loginUser.getUserName());
-                        }
-                        productSaleService.saveOrUpdate(byId);
-                    } catch (Exception e) {
-                        throw new ServiceException(ApiError.ERROR_COPY_NOTNULL_ERROR);
+                    BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
                     }
+                    productSaleService.saveOrUpdate(byId);
                 }else {
                     productSaleDTO.setSkuId(skuId);
                     productSaleService.saveOrUpdate(productSaleDTO);
@@ -2017,20 +2030,16 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productLogisticsDTO.setId(productKey.getLogisticsId());
                 ProductLogisticsEntity byId = productLogisticsService.getById(productLogisticsDTO.getId());
                 if(Objects.nonNull(byId)){
-                    try {
-                        BeanMapper.copyNonNull(productLogisticsDTO, byId);
-                        byId.setSkuId(skuId);
-                        LoginUser loginUser = UserContext.getLoginUser();
-                        if (ObjectUtils.isNotEmpty(loginUser)) {
-                            byId.setUpdateUserId(loginUser.getUid());
-                            byId.setUpdateUserName(loginUser.getUserName());
-                        }
-
-                        productLogisticsService.saveOrUpdate(byId);
-                        productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(byId.getSkuId()));
-                    } catch (Exception e) {
-                        throw new ServiceException(ApiError.ERROR_COPY_NOTNULL_ERROR);
+                    BeanMapper.copyNonNull(productLogisticsDTO, byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
                     }
+
+                    productLogisticsService.saveOrUpdate(byId);
+                    productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(byId.getSkuId()));
                 }else {
                     productLogisticsDTO.setSkuId(skuId);
                     productLogisticsService.saveOrUpdate(productLogisticsDTO);
