@@ -1,5 +1,7 @@
 package com.common.core.utils;
 
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import com.github.dozermapper.core.DozerBeanMapperBuilder;
 import com.github.dozermapper.core.Mapper;
 
@@ -38,36 +40,38 @@ public class BeanMapper {
         return destinationList;
     }
 
-    public static <S, T> T copyNonNull(S source, T target) throws IllegalAccessException {
+    public static <S, T> T copyNonNull(S source, T target)  {
         if (source == null || target == null) {
             throw new IllegalArgumentException("Source and target objects must not be null");
         }
+        try {
+            Field[] sourceFields = source.getClass().getDeclaredFields();
+            Field[] targetFields = target.getClass().getDeclaredFields();
 
-        Field[] sourceFields = source.getClass().getDeclaredFields();
-        Field[] targetFields = target.getClass().getDeclaredFields();
+            Map<String, Field> targetFieldMap = new HashMap<>();
+            for (Field field : targetFields) {
+                field.setAccessible(true);
+                targetFieldMap.put(field.getName(), field);
+            }
 
-        Map<String, Field> targetFieldMap = new HashMap<>();
-        for (Field field : targetFields) {
-            field.setAccessible(true);
-            targetFieldMap.put(field.getName(), field);
-        }
-
-        for (Field sourceField : sourceFields) {
-            sourceField.setAccessible(true);
-            Object value = sourceField.get(source);
-            if (value != null) {
-                Field targetField = targetFieldMap.get(sourceField.getName());
-                if (targetField != null) {
-                    int mod = targetField.getModifiers();
-                    if (!Modifier.isStatic(mod) && !Modifier.isFinal(mod)) {
-                        targetField.setAccessible(true);
-                        targetField.set(target, value);
+            for (Field sourceField : sourceFields) {
+                sourceField.setAccessible(true);
+                Object value = sourceField.get(source);
+                if (value != null) {
+                    Field targetField = targetFieldMap.get(sourceField.getName());
+                    if (targetField != null) {
+                        int mod = targetField.getModifiers();
+                        if (!Modifier.isStatic(mod) && !Modifier.isFinal(mod)) {
+                            targetField.setAccessible(true);
+                            targetField.set(target, value);
+                        }
                     }
                 }
             }
+            return target;
+        } catch (IllegalAccessException e) {
+            throw new ServiceException(ApiError.ERROR_COPY_NOTNULL_ERROR,e.getMessage());
         }
-
-        return target;
     }
 
 }
