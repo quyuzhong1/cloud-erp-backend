@@ -5189,7 +5189,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if(MathUtil.valueOf(dto.getMassCost()).compareTo(BigDecimal.ZERO) > 0){
                 productInfoDTO.setMoldCost(MathUtil.valueOf(dto.getMoldCost()));
             }
-            productInfoDTO.setEntrustedDevelopCost(MathUtil.valueOf(dto.getEntrustedDevelopCost()));
+            if(MathUtil.valueOf(dto.getEntrustedDevelopCost()).compareTo(BigDecimal.ZERO) > 0){
+                productInfoDTO.setEntrustedDevelopCost(MathUtil.valueOf(dto.getEntrustedDevelopCost()));
+            }
             // 添加默认spu
             productInfoDTO.setSpuNo(Optional.ofNullable(dto.getSpuNo()).orElse(dto.getSkuNo()));
             //检查spu编号是否重复
