@@ -165,6 +165,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     private ProductInfoService productInfoService;
 
     @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
     private ProductImagesService productImagesService;
 
     @Resource
@@ -1892,7 +1895,29 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
         //1.新增产品表 主表信息
-        String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
+        String id;
+        if (StringUtils.isBlank(productSpuBaseInfoDTO.getId())) {
+            id = productInfoService.updateSpec(productSpuBaseInfoDTO);
+        }else {
+            id = productSpuBaseInfoDTO.getId();
+            ProductInfoEntity byId = productInfoService.getById(id);
+            BeanMapper.copyNonNull(productSpuBaseInfoDTO, byId);
+            //判断是否是迭代产品
+            if (ProductTypeEnum.ITERATIVE_PRODUCT.getCode().equals(byId.getType())) {
+                ProductDetailEntity productDetailEntity = productDetailService.getById(byId.getIterateRefSkuId());
+                if (ObjectUtils.isEmpty(productDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_PRODUCT_ITERATE_REF_SKU_NOT_EXIST);
+                }
+                byId.setIterateRefSkuId(productDetailEntity.getId());
+                byId.setIterateRefSkuNo(productDetailEntity.getSkuNo());
+            } else {
+                byId.setType(ProductTypeEnum.NEW_PRODUCT.getCode());
+                byId.setIterateRefSkuId("");
+                byId.setIterateRefSkuNo("");
+            }
+            productInfoService.saveOrUpdate(byId);
+        }
+
 
         //2.修改/新增 sku信息
 
@@ -1918,9 +1943,25 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductCostDTO productCostDTO = productNoSpecDTO.getProductCostDTO();
             if (ObjectUtils.isNotEmpty(productKey)) {
                 productCostDTO.setId(productKey.getCostId());
+
+                ProductCostEntity byId = productCostService.getById(productCostDTO.getId());
+                if(Objects.nonNull(byId)){
+                    BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
+                    }
+                    productCostService.saveOrUpdate(byId);
+                }else{
+                    productCostDTO.setSkuId(skuId);
+                    productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
+                }
+            }else{
+                productCostDTO.setSkuId(skuId);
+                productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
             }
-            productCostDTO.setSkuId(skuId);
-            productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
         }
 
         //4.修改/新增 采购信息
@@ -1928,9 +1969,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
             if (ObjectUtils.isNotEmpty(productKey)) {
                 productPurchaseDTO.setId(productKey.getPurchaseId());
+                ProductPurchaseEntity byId = productPurchaseService.getById(productPurchaseDTO.getId());
+                if(Objects.nonNull(byId)){
+                    BeanMapper.copyNonNull(productNoSpecDTO.getProductPurchaseDTO(),byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
+                    }
+                    //验证数据
+                    productPurchaseService.checkProductPurchase(byId);
+                    productPurchaseService.saveOrUpdate(byId);
+                }else{
+                    productPurchaseDTO.setSkuId(skuId);
+                    productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
+                }
+            }else{
+                productPurchaseDTO.setSkuId(skuId);
+                productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
             }
-            productPurchaseDTO.setSkuId(skuId);
-            productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
+
         }
         //新增/修改采购备注信息
         if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseRemarkList())) {
@@ -1945,123 +2004,57 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!ObjectUtils.isEmpty(productSaleDTO)) {
             if (ObjectUtils.isNotEmpty(productKey)) {
                 productSaleDTO.setId(productKey.getSaleId());
+                ProductSaleEntity byId = productSaleService.getById(productSaleDTO.getId());
+                if(Objects.nonNull(byId)){
+                    BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
+                    }
+                    productSaleService.saveOrUpdate(byId);
+                }else {
+                    productSaleDTO.setSkuId(skuId);
+                    productSaleService.saveOrUpdate(productSaleDTO);
+                }
+            }else {
+                productSaleDTO.setSkuId(skuId);
+                productSaleService.saveOrUpdate(productSaleDTO);
             }
-            productSaleDTO.setSkuId(skuId);
-            productSaleService.saveOrUpdate(productSaleDTO);
         }
         //6.修改/新增 物流信息
         ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
         if (!ObjectUtils.isEmpty(productLogisticsDTO)) {
             if (ObjectUtils.isNotEmpty(productKey)) {
                 productLogisticsDTO.setId(productKey.getLogisticsId());
-            }
-            productLogisticsDTO.setSkuId(skuId);
-            productLogisticsService.saveOrUpdate(productLogisticsDTO);
-        }
+                ProductLogisticsEntity byId = productLogisticsService.getById(productLogisticsDTO.getId());
+                if(Objects.nonNull(byId)){
+                    BeanMapper.copyNonNull(productLogisticsDTO, byId);
+                    byId.setSkuId(skuId);
+                    LoginUser loginUser = UserContext.getLoginUser();
+                    if (ObjectUtils.isNotEmpty(loginUser)) {
+                        byId.setUpdateUserId(loginUser.getUid());
+                        byId.setUpdateUserName(loginUser.getUserName());
+                    }
 
-        //7.修改/新增 包装信息
-        ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
-        if (!ObjectUtils.isEmpty(productPackDTO)) {
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productPackDTO.setId(productKey.getPackId());
+                    productLogisticsService.saveOrUpdate(byId);
+                    productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(byId.getSkuId()));
+                }else {
+                    productLogisticsDTO.setSkuId(skuId);
+                    productLogisticsService.saveOrUpdate(productLogisticsDTO);
+                }
+            }else {
+                productLogisticsDTO.setSkuId(skuId);
+                productLogisticsService.saveOrUpdate(productLogisticsDTO);
             }
-            productPackDTO.setSkuId(skuId);
-            productPackService.saveOrUpdate(productPackDTO);
-        }
-        return true;
-    }
-
-    /**
-     * @Description 新增无规格sku信息 并推送金蝶
-     * @Author jack
-     * @Date 2025-02-07
-     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
-     **/
-    @Override
-    @Transactional
-    public Boolean inportExcelAndSync(ProductNoSpecDTO productNoSpecDTO,ProductDetailEntity productBy) {
-        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
-        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
-        productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
-        //1.新增产品表 主表信息
-        String id = productInfoService.updateSpec(productSpuBaseInfoDTO);
-
-        //2.修改/新增 sku信息
-
-        productSkuBaseInfoDTO.setProductId(id);
-        //如果是修改sku图片 还需要修改图片表
-        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getImagesUrl())) {
-            ProductImagesDTO productImagesDTO = new ProductImagesDTO();
-            productImagesDTO.setSkuId(productSkuBaseInfoDTO.getId());
-            productImagesDTO.setProductId(productSkuBaseInfoDTO.getProductId());
-            productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
-            productImagesService.updateProductImage(productImagesDTO);
-        }
-        String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-        if (StringUtils.isBlank(productSkuBaseInfoDTO.getId())) {
-            ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
-            skuId = productIdBySku.getId();
-        }
-
-        ProductKeyDTO productKey = productDetailMapper.getProductKey(skuId);
-
-        //3.修改/新增 成本信息
-        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductCostDTO())) {
-            ProductCostDTO productCostDTO = productNoSpecDTO.getProductCostDTO();
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productCostDTO.setId(productKey.getCostId());
-            }
-            productCostDTO.setSkuId(skuId);
-            productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
-        }
-
-        //4.修改/新增 采购信息
-        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
-            ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productPurchaseDTO.setId(productKey.getPurchaseId());
-            }
-            productPurchaseDTO.setSkuId(skuId);
-            productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
-        }
-        //新增/修改采购备注信息
-        if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseRemarkList())) {
-            List<ProductPurchaseRemarkDTO> productPurchaseRemarkList = productNoSpecDTO.getProductPurchaseRemarkList();
-            productPurchaseRemarkList.forEach(req -> {
-                req.setProductId(id);
-            });
-            productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
-        }
-        //5.修改/新增 销售信息
-        ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
-        if (!ObjectUtils.isEmpty(productSaleDTO)) {
-            LambdaUpdateWrapper<ProductSaleEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper();
-            if(Objects.nonNull(productSaleDTO.getSaleState())){
-                lambdaUpdateWrapper.set(ProductSaleEntity::getSaleState,productSaleDTO.getSaleState());
-            }
-            if(Objects.nonNull(productSaleDTO.getIsMarketable())){
-                lambdaUpdateWrapper.set(ProductSaleEntity::getIsMarketable,productSaleDTO.getIsMarketable());
-            }
-            lambdaUpdateWrapper.set(ProductSaleEntity::getSkuId,skuId);
-            lambdaUpdateWrapper.eq(ProductSaleEntity::getId,productKey.getSaleId());
-            productSaleService.update(lambdaUpdateWrapper);
-        }
-        //6.修改/新增 物流信息
-        ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
-        if (!ObjectUtils.isEmpty(productLogisticsDTO)) {
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productLogisticsDTO.setId(productKey.getLogisticsId());
-            }
-            productLogisticsDTO.setSkuId(skuId);
-            productLogisticsService.saveOrUpdate(productLogisticsDTO);
         }
 
         //7.修改/新增 包装信息
         ProductPackDTO productPackDTO = productNoSpecDTO.getProductPackDTO();
         if (!ObjectUtils.isEmpty(productPackDTO)) {
             LambdaUpdateWrapper<ProductPackEntity> lambdaUpdateWrapper = new LambdaUpdateWrapper();
-            if (Objects.nonNull(productPackDTO.getProductLength())) {
+            if (Objects.nonNull(productPackDTO.getProductLength()) && productPackDTO.getProductLength().compareTo(BigDecimal.ZERO) > 0) {
                 lambdaUpdateWrapper.set(ProductPackEntity::getProductLength, productPackDTO.getProductLength());
             }
             if (Objects.nonNull(productPackDTO.getProductWidth()) && productPackDTO.getProductWidth().compareTo(BigDecimal.ZERO) > 0) {
@@ -2096,6 +2089,20 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackService.update(lambdaUpdateWrapper);
 
         }
+        return true;
+    }
+
+    /**
+     * @Description 新增无规格sku信息 并推送金蝶
+     * @Author jack
+     * @Date 2025-02-07
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return java.lang.Boolean
+     **/
+    @Override
+    @Transactional
+    public Boolean inportExcelAndSync(ProductNoSpecDTO productNoSpecDTO,ProductDetailEntity productBy) {
+        inportExcel(productNoSpecDTO);
         //只同步审核通过的
         if(Objects.nonNull(productBy) && productBy.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
             //发送金蝶
