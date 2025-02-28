@@ -411,7 +411,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             if(soB2cEntityList.size() == 1 && dtoPackageIds.size() > 1){
                 SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
                 if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
-                    soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP更新拆单信息失败","","","");
+                    soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"tiktok平台拆单，ERP更新拆单信息失败:{订单已提交发货，无法拆单}","","","");
                     return false;
                 }
                 SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soB2cEntity.getId());
@@ -463,8 +463,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                     soB2cDetailService.updateBatchById(splitDetailList);
                 }
                 return false;
-            }
-            if(soB2cEntityList.size() > 1 && dtoPackageIds.size()  == 1){
+            }else if(soB2cEntityList.size() > 1 && dtoPackageIds.size()  == 1){
                 //做取消拆分
                 BatchResultDTO batchResultDTO = soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
                 //更新拆分后的packageId
@@ -480,6 +479,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                     soB2cDetailService.updateBatchById(cancelSplitDetailList);
                 }
                 return false;
+            }else{
+                SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
+                soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"tiktok平台包裹号与erp不一致","","","");
             }
         }
         //如果是已经做了拆单，不允许更新订单
