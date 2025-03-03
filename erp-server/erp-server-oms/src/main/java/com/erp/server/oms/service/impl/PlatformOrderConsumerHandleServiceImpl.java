@@ -424,13 +424,22 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                         }
                     }catch (Exception e){
                         soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP取消物流单失败，无法更新拆单信息:"+e.getMessage(),"","","");
-                        return false;
+                        throw new ServiceException(e.getMessage());
                     }
                 }
                 //erp已做了拆分，先取消拆单
                 if(soB2cEntityList.size() > 1){
-                    //做取消拆分
-                    soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
+                    try {
+                        //做取消拆分
+                        BatchResultDTO batchResultDTO = soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
+                        if(!batchResultDTO.getSuccess()){
+                            soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+batchResultDTO.getMsg(),"","","");
+                            return false;
+                        }
+                    }catch (Exception e){
+                        soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+e.getMessage(),"","","");
+                        throw new ServiceException(e.getMessage());
+                    }
                 }
                 //做拆分，根据package拆分
                 SoB2cDTO.SplitSaveDTO splitSaveDTO = new SoB2cDTO.SplitSaveDTO();
@@ -455,7 +464,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                     groupList.add(groupSplitSaveDTO);
                 });
                 splitSaveDTO.setGroupList(groupList);
-                SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = soB2cSplitService.splitSave(splitSaveDTO);
+                SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO;
+                try {
+                    //做取消拆分
+                    splitSaveResultDTO = soB2cSplitService.splitSave(splitSaveDTO);
+                }catch (Exception e){
+                    soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单-ERP拆单失败，"+e.getMessage(),"","","");
+                    throw new ServiceException(e.getMessage());
+                }
                 //更新拆分后的packageId
                 List<String> splitSoIds = splitSaveResultDTO.getSoB2cIds();
                 if(CollectionUtils.isNotEmpty(splitSoIds)){
@@ -464,13 +480,25 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                     Map<String,String> linePackageMap = dto.getDetails().stream().collect(Collectors.toMap(PlatformOrderDetailDTO::getPlatformLineNumber,PlatformOrderDetailDTO::getPlatformPackageId,(v1,v2)->v1));
                     splitDetailList.forEach(v->{
                         v.setPlatformPackageId(linePackageMap.get(v.getPlatformLineNumber()));
+                        v.setSourceDetailId(v.getPlatformSkuNo()+linePackageMap.get(v.getPlatformLineNumber()));
                     });
                     soB2cDetailService.updateBatchById(splitDetailList);
                 }
                 return false;
             }else if(soB2cEntityList.size() > 1 && dtoPackageIds.size()  == 1){
                 //做取消拆分
-                BatchResultDTO batchResultDTO = soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
+                BatchResultDTO batchResultDTO;
+                try {
+                    //做取消拆分
+                    batchResultDTO = soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
+                    if(!batchResultDTO.getSuccess()){
+                        soB2cErrorService.generateErrorOrder(soB2cEntityList.get(0).getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+batchResultDTO.getMsg(),"","","");
+                        return false;
+                    }
+                }catch (Exception e){
+                    soB2cErrorService.generateErrorOrder(soB2cEntityList.get(0).getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+e.getMessage(),"","","");
+                    throw new ServiceException(e.getMessage());
+                }
                 //更新拆分后的packageId
                 String cancelSplitSoIds = batchResultDTO.getId();
                 if(StringUtils.isNotBlank(cancelSplitSoIds)){
@@ -479,6 +507,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                     Map<String,String> linePackageMap = dto.getDetails().stream().collect(Collectors.toMap(PlatformOrderDetailDTO::getPlatformLineNumber,PlatformOrderDetailDTO::getPlatformPackageId,(v1,v2)->v1));
                     cancelSplitDetailList.forEach(v->{
                         v.setPlatformPackageId(linePackageMap.get(v.getPlatformLineNumber()));
+                        v.setSourceDetailId(v.getPlatformSkuNo()+linePackageMap.get(v.getPlatformLineNumber()));
                     });
 
                     soB2cDetailService.updateBatchById(cancelSplitDetailList);
@@ -488,6 +517,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 //更新包裹号
                 for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
                     soB2cDetailEntity.setPlatformPackageId(dtoPackageIds.get(0));
+                    soB2cDetailEntity.setSourceDetailId(soB2cDetailEntity.getPlatformSkuNo()+dtoPackageIds.get(0));
                 }
                 soB2cDetailService.updateBatchById(detailList);
                 return false;
