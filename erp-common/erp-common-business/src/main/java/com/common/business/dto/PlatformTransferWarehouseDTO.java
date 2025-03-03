@@ -51,4 +51,7 @@ public class PlatformTransferWarehouseDTO extends UniqueDto {
 
     //目的仓名称
     private String destinationWarehouseName;
+
+    //仓库状态 0:不可用;1:可用;2:停用
+    private String platformWarehouseStatus;
 }
