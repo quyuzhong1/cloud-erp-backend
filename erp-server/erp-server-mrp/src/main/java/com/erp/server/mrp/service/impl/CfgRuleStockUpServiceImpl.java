@@ -8,28 +8,23 @@ import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.mrp.dto.CfgRuleSafeDaysDTO;
-import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
-import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
-import com.erp.model.mrp.entity.CfgRuleSafeDaysEntity;
-import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
-import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
+import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.mrp.mapper.CfgRuleStockUpMapper;
-import com.erp.server.mrp.service.CfgRuleSafeDaysService;
-import com.erp.server.mrp.service.CfgRuleStockUpService;
-import com.erp.server.mrp.service.CfgRuleStockingRatioService;
-import com.erp.server.mrp.service.OperateLogService;
+import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -54,6 +49,12 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
 
     @Resource
     private CfgRuleSafeDaysService cfgRuleSafeDaysService;
+
+    @Resource
+    private CfgRuleExpireTimeService cfgRuleExpireTimeService;
+
+    @Resource
+    private CfgRuleLogisticsService cfgRuleLogisticsService;
 
 
     /**
@@ -154,8 +155,15 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void customUpdate(CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO) {
+        // 更新时效数据
+        CfgRuleExpireTimeDTO.UpdateDTO expireTimeDTO = BeanMapperUtils.map(CfgRuleExpireTimeDTO.UpdateDTO.class, stockUpUpdateDTO);
+        expireTimeDTO.setPlatformCfgLogisticsList(stockUpUpdateDTO.getCfgLogisticsList());
+        cfgRuleExpireTimeService.update(expireTimeDTO);
+        // 更新备货数据
         CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
+        updateDTO.setPlatformSafeDays(stockUpUpdateDTO.getSafeDays());
         ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).update(updateDTO);
     }
 
@@ -178,6 +186,36 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             return Collections.emptyList();
         }
         return lambdaQuery().in(CfgRuleStockUpEntity::getRefId, refIdList).list();
+    }
+
+    @Override
+    public CfgRuleStockUpDTO.RefViewDTO viewByRefId(String refId) {
+        CfgRuleStockUpDTO.RefViewDTO refViewDTO = new CfgRuleStockUpDTO.RefViewDTO();
+        CfgRuleStockUpEntity cfgRuleStockUp = getByRefId(refId);
+        if (!ObjectUtils.isEmpty(cfgRuleStockUp)) {
+            refViewDTO.setStockingRatio(cfgRuleStockUp.getStockingRatio());
+            refViewDTO.setSafeDays(cfgRuleStockUp.getPlatformSafeDays());
+            List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(cfgRuleStockUp.getId()));
+            List<CfgRuleStockingRatioDTO.ViewDTO> dtos = cfgRuleStockingRatioList.stream()
+                    .map(v -> {
+                        CfgRuleStockingRatioDTO.ViewDTO viewDTO = BeanMapperUtils.map(CfgRuleStockingRatioDTO.ViewDTO.class, v);
+                        viewDTO.setDateList(Arrays.asList(v.getStartDate(), v.getEndDate()));
+                        return viewDTO;
+                    })
+                    .collect(Collectors.toList());
+            refViewDTO.setStockingRatioList(dtos);
+        }
+        CfgRuleExpireTimeEntity cfgRuleExpireTime = cfgRuleExpireTimeService.getByRefId(refId);
+        if (!ObjectUtils.isEmpty(cfgRuleExpireTime)) {
+            refViewDTO.setPurchaseApproveDays(cfgRuleExpireTime.getPurchaseApproveDays());
+            refViewDTO.setProductionDays(cfgRuleExpireTime.getProductionDays());
+            refViewDTO.setQcDays(cfgRuleExpireTime.getQcDays());
+            refViewDTO.setSupplierDeliveryDays(cfgRuleExpireTime.getSupplierDeliveryDays());
+            refViewDTO.setPurchaseCycleDays(cfgRuleExpireTime.getPurchaseCycleDays());
+            List<CfgRuleLogisticsEntity> cfgRuleLogisticsList = cfgRuleLogisticsService.listByExpireTimeIdList(Collections.singletonList(cfgRuleExpireTime.getId()));
+            refViewDTO.setCfgLogisticsList(BeanMapperUtils.copyList(CfgRuleLogisticsDTO.ViewDTO.class, cfgRuleLogisticsList));
+        }
+        return refViewDTO;
     }
 
     /**

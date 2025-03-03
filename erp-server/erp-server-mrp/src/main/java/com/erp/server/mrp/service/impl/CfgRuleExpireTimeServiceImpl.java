@@ -128,6 +128,11 @@ public class CfgRuleExpireTimeServiceImpl extends SuperServiceImpl<CfgRuleExpire
         return viewDTO;
     }
 
+    @Override
+    public CfgRuleExpireTimeEntity getByRefId(String refId) {
+        return getOne(Wrappers.<CfgRuleExpireTimeEntity>lambdaQuery().eq(CfgRuleExpireTimeEntity::getRefId, refId).last("LIMIT 1"));
+    }
+
 
     private CfgRuleExpireTimeEntity getRefByPlatformType(String refId) {
         CfgRuleExpireTimeEntity refEntity = getDefaultByPlatformType(refId);

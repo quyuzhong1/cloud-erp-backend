@@ -55,17 +55,15 @@ public class CfgRuleStockUpController extends BaseController {
         return success(cfgRuleStockUpService.view(platform,""));
     }
 
-//    /**
-//     * 根据关联id和平台类型查询
-//     * @author will
-//     * @date 2024/9/5 17:58
-//     * @param platformType
-//     * @param refId
-//     * @return ApiResult<ViewDTO>
-//     */
-//    @GetMapping("/viewByRefId")
-//    @LogViewService
-//    public ApiResult<CfgRuleStockUpDTO.ViewDTO> viewByRefId(@RequestParam("platformType") String platformType,@RequestParam("refId") String refId) {
-//        return success(cfgRuleStockUpService.view(platformType,refId));
-//    }
+    /**
+     * 根据关联id和平台类型查询
+     * @author will
+     * @date 2024/9/5 17:58
+     * @return ApiResult<ViewDTO>
+     */
+    @GetMapping("/viewByRefId")
+    @LogViewService
+    public ApiResult<CfgRuleStockUpDTO.RefViewDTO> viewByRefId(@RequestParam("refId") String refId) {
+        return success(cfgRuleStockUpService.viewByRefId(refId));
+    }
 }

@@ -361,7 +361,6 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
         CfgRuleStockUpDTO.CustomUpdateDTO resultDTO = new CfgRuleStockUpDTO.CustomUpdateDTO();
         resultDTO.setRefId(entity.getId());
         resultDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-        resultDTO.setPlatformType(entity.getPlatformType());
         if (ObjectUtil.isNotEmpty(excelDTO.getProductionDays())) {
             resultDTO.setProductionDays(Integer.valueOf(excelDTO.getProductionDays()));
         }

@@ -61,4 +61,10 @@ public interface CfgRuleStockUpService extends SuperService<CfgRuleStockUpEntity
      * @return List<CfgRuleStockUpEntity>
      */
     List<CfgRuleStockUpEntity> listByRefIdList(List<String> refIdList);
+
+    /**
+     * 查询产品时效备货配置
+     * @param refId 关联id
+     */
+    CfgRuleStockUpDTO.RefViewDTO viewByRefId(String refId);
 }
