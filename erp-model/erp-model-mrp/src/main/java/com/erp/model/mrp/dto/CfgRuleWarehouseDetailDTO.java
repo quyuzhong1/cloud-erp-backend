@@ -160,7 +160,7 @@ public class CfgRuleWarehouseDetailDTO implements Serializable {
         /**
          * 仓库平台
          */
-        List<String> shopIdList;
+        private List<String> shopIdList;
     }
 
     /**
