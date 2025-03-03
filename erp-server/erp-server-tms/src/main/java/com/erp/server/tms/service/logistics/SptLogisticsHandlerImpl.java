@@ -72,7 +72,7 @@ public class SptLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
             //实体转换
             List<LogisticsSaleChannelEntity> response =
-                    LogisticsChannelConverter.INSTANCE.channelConvertByAntu(antuResponse.getData());
+                    LogisticsChannelConverter.INSTANCE.channelConvertBySpt(antuResponse.getData());
 
             logAndReturnSuccess(chanelQueryVO, RequestStatusEnums.SUCCESS, antuResponse);
 

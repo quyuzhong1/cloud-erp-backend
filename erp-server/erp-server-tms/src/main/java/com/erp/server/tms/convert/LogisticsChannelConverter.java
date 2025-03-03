@@ -294,4 +294,18 @@ public interface LogisticsChannelConverter {
     })
     LogisticsSaleChannelEntity channelConvertByAntu(AntuLogisticsProductsResp data);
     List<LogisticsSaleChannelEntity> channelConvertByAntu(List<AntuLogisticsProductsResp> data);
+
+
+    @Mappings({
+            @Mapping(target = "code", source = "code"),
+            @Mapping(target = "cnName", source = "name"),
+            @Mapping(target = "enName", source = "nameEn"),
+            @Mapping(target = "isTrack", constant = "true"),
+            @Mapping(target = "logisticsPlatform", constant = "spt"),
+            @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
+            @Mapping(target = "platformWarehouseCode", source = "warehouseCode"),
+            @Mapping(target = "id", ignore = true)
+    })
+    LogisticsSaleChannelEntity channelConvertBySpt(AntuLogisticsProductsResp data);
+    List<LogisticsSaleChannelEntity> channelConvertBySpt(List<AntuLogisticsProductsResp> data);
 }
