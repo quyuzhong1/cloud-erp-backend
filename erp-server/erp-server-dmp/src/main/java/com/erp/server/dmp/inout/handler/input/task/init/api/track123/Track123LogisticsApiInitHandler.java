@@ -1,7 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.track123;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
@@ -12,7 +12,6 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.utils.RedisUtil;
-import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -21,7 +20,6 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.vo.request.LogisticsRegisterVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
@@ -40,7 +38,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,72 +119,8 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
     }
 
     private ResponseData getTrackData(LogisticsBillDetailQueryDTO query, CfgAppClientEntity cfgAppClient) {
-//        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
-        // 分页查询
         List<LogisticsTrackDTO.UpdateTrackDTO> list =  pageDmpLogisticsTrack(query);
-//        if (list.size() > MathUtil.NUMBER_100){
-//
-//            List<String> noList = new ArrayList<>();
-//
-//            //过滤掉上次已经拉取过的任务
-//            Object o = redisUtil.lGet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, 0 , -1);
-//            if (ObjectUtil.isNotEmpty(o)) {
-//                List<List<String>> redisTrackList = (List<List<String>>) o;
-//                for (List<String> strings : redisTrackList) {
-//                    Iterator<LogisticsTrackDTO.UpdateTrackDTO> iterator = list.iterator();
-//                    while (iterator.hasNext()) {
-//                        LogisticsTrackDTO.UpdateTrackDTO dto = iterator.next();
-//                        if (strings.contains(dto.getId())) {
-//                            iterator.remove();
-//                        }
-//                    }
-//                }
-//
-//            }
-//
-//            //过滤后查询是否超过100条
-//            if (list.size() > MathUtil.NUMBER_100){
-//                //列表数据较多情况下，进行分割集合
-//                List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-//
-//                //一次请求一百条并存储到redis下次过滤
-//                List<String> collect = partition.get(0).stream().map(LogisticsTrackDTO.UpdateTrackDTO::getId).distinct().collect(Collectors.toList());
-//                noList.addAll(collect);
-//                // 缓存到redis
-//                redisUtil.lSet(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO, noList);
-//
-//                //物流商数据处理
-//                ResponseData responseData = this.processTrackData(partition.get(0), cfgAppClient);
-//                if (Objects.nonNull(responseData)){
-//                    return responseData;
-//                }
-//            } else {
-//                // 缓存到redis
-//                redisUtil.del(RedisCacheConstants.DMP_TRACK123_TRACK_LOGISTICS_NO);
-//
-//                //物流商数据处理
-//                ResponseData responseData = this.processTrackData(list, cfgAppClient);
-//                if (Objects.nonNull(responseData)){
-//                    return responseData;
-//                }
-//            }
-//
-//            //物流商数据处理
-///*            partition.forEach(e -> {
-//                ResponseData responseData = this.processTrackData(e, cfgAppClient);
-//                if (Objects.nonNull(responseData)){
-//                    responseDataList.add(responseData);
-//                }
-//            });*/
-//        }else {
-            //物流商数据处理
-            ResponseData responseData = this.processTrackData(list, cfgAppClient);
-            if (Objects.nonNull(responseData)){
-                return responseData;
-            }
-//        }
-        log.info("========同步物流轨迹数据完成==========");
-        return null;
+        return processTrackData(list, cfgAppClient);
     }
 
     private ResponseData processTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records, CfgAppClientEntity cfgAppClient) {
@@ -194,24 +131,22 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
             }
             String token = cfgAppClient.getClientSecret();
             //根据配置进行获取
-            List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
+            List<String> trackNoList = new ArrayList<>();
             //根据配置进行组装注册数据
             records.forEach(record -> {
                 String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && StrUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
                 if (StrUtil.isBlank(trackNo) && StrUtil.isNotBlank(record.getTrackNo())) {
                     trackNo = record.getTrackNo();
                 }
-                logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
-                        .trackNo(trackNo)
-                        .phoneSuffix(record.getTelNumber())
-                        .build());
+                if (CharSequenceUtil.isNotBlank(trackNo)){
+                    trackNoList.add(trackNo);
+                }
             });
-            if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
+            if (CollectionUtils.isEmpty(trackNoList)) {
                 return null;
             }
-
             TrackRequest trackRequest = TrackRequest.builder()
-                    .trackNos(logisticsRegisterVOS.stream().map(LogisticsRegisterVO::getTrackNo).distinct().collect(Collectors.toList()))
+                    .trackNos(trackNoList)
                     .cursor("")
                     .queryPageSize(100)
                     .build();
@@ -232,30 +167,30 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
      */
     private List<LogisticsTrackDTO.UpdateTrackDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
         // 缓存获取上次执行最后的页码
-        int currentPage = 1;
-        Object lastPageObj = redisUtil.get(RedisCacheConstants.DMP_LOGISTICS_TRACK);
-        if (null != lastPageObj) {
-            currentPage = (Integer) lastPageObj;
-        }
-        query.setCurrent(currentPage);
+//        int currentPage = 1;
+//        Object lastPageObj = redisUtil.get(RedisCacheConstants.DMP_LOGISTICS_TRACK);
+//        if (null != lastPageObj) {
+//            currentPage = (Integer) lastPageObj;
+//        }
+//        query.setCurrent(currentPage);
 
         List<LogisticsTrackDTO.UpdateTrackDTO> list = foreignService.listTrackDto(query);
-        if (CollectionUtils.isEmpty(list)) {
-            if (null != lastPageObj){
-                // 移除缓存 等下次任务从最小时间开始
-                redisUtil.del(RedisCacheConstants.DMP_LOGISTICS_TRACK);
-            }
-            return Collections.emptyList();
-        }
-
-        if (list.size() < query.getSize()) {
-            // 移除缓存 等下次任务
-            redisUtil.del(RedisCacheConstants.DMP_LOGISTICS_TRACK);
-        } else {
-            currentPage = currentPage + 1;
-            // 缓存页数,等下次任务执行带页码
-            redisUtil.set(RedisCacheConstants.DMP_LOGISTICS_TRACK, currentPage);
-        }
+//        if (CollectionUtils.isEmpty(list)) {
+//            if (null != lastPageObj){
+//                // 移除缓存 等下次任务从最小时间开始
+//                redisUtil.del(RedisCacheConstants.DMP_LOGISTICS_TRACK);
+//            }
+//            return Collections.emptyList();
+//        }
+//
+//        if (list.size() < query.getSize()) {
+//            // 移除缓存 等下次任务
+//            redisUtil.del(RedisCacheConstants.DMP_LOGISTICS_TRACK);
+//        } else {
+//            currentPage = currentPage + 1;
+//            // 缓存页数,等下次任务执行带页码
+//            redisUtil.set(RedisCacheConstants.DMP_LOGISTICS_TRACK, currentPage);
+//        }
         return list;
     }
 
