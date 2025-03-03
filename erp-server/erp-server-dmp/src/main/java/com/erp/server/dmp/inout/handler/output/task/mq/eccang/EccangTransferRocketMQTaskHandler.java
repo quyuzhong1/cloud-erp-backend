@@ -73,7 +73,7 @@ public class EccangTransferRocketMQTaskHandler extends DmpOutputRocketMQTaskHand
 		warehouse.setPlatform(sourcePlatform);
     	warehouse.setProvider(sourcePlatform);
     	warehouse.setProviderErpId(dmpTransferWarehouseInfoEntity.getAuthId());
-    	
+		warehouse.setCountryCode(dmpTransferWarehouseInfoEntity.getCountryCode());
         return warehouse;
     }
 
