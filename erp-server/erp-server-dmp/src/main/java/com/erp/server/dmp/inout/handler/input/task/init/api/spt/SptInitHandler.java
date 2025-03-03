@@ -18,6 +18,7 @@ import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.sdk.wms.antu.dto.request.AntuGetProductReq;
 import com.sdk.wms.antu.dto.response.AntuResponse;
 import com.sdk.wms.antu.utils.AntuUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ import java.util.List;
 /**
  * dmp输入init任务基础处理器下的速派通api获取数据方式
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class SptInitHandler extends DmpInputInitHandler {
@@ -69,6 +71,7 @@ public class SptInitHandler extends DmpInputInitHandler {
 			while(true) {
 				antuGetProductReq.setPage(page);
 				String response = AntuUtils.callService(getPlatForm(),apiType, antuGetProductReq);
+				log.info(getPlatForm().getName()+"（"+apiType+"）api接口返回数据：{}", response);
 				AntuResponse<List<?>> result = JSONObject.parseObject(response,new TypeReference<AntuResponse<List<Object>>>() {}.getType());
 				List<?> data = result.getData();
 				int size = data.size();

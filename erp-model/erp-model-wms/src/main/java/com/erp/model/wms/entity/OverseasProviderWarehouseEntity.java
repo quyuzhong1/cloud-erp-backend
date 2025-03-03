@@ -72,14 +72,8 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
     /**
      * 仓库类型 0标准 1中转 2虚拟
      */
-    @TableField("platform_warehouse_type")
-    private String platformWarehouseType;
-    /**
-     * 仓库类型 0标准 1中转 2虚拟
-     */
     @TableField("platform_warehouse_status")
     private String platformWarehouseStatus;
-
 
     public static final String MAIN_ID = "main_id";
 
@@ -94,8 +88,6 @@ public class OverseasProviderWarehouseEntity extends BaseEntity<OverseasProvider
     public static final String WAREHOUSE_NAME = "warehouse_name";
 
     public static final String WAREHOUSE_CODE = "warehouse_code";
-
-    public static final String PLATFORM_WAREHOUSE_TYPE = "platform_warehouse_type";
 
     public static final String PLATFORM_WAREHOUSE_STATUS = "platform_warehouse_status";
 
