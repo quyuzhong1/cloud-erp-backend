@@ -23,4 +23,9 @@ public interface CfgRuleExpireTimeService extends SuperService<CfgRuleExpireTime
      */
     CfgRuleExpireTimeDTO.ViewDTO view();
 
+    /**
+     * 根据关联id查询配置
+     * @param refId 关联id
+     */
+    CfgRuleExpireTimeEntity getByRefId(String refId);
 }
