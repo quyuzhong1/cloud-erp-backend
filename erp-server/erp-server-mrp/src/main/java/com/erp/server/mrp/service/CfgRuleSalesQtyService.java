@@ -29,15 +29,6 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
     */
     Boolean batchUpdate(CfgRuleSalesQtyDTO.UpdateDTO dto);
 
-//    /**
-//     * 修改
-//     * @author will
-//     * @date 2024/8/27 9:56
-//     * @param updateDTO
-//     * @return Boolean
-//     */
-//    String update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO);
-
     /**
      * 查看详情
      * @author will

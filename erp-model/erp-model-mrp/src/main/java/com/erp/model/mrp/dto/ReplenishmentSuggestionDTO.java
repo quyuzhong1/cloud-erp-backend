@@ -147,8 +147,8 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 销量设置
          */
-//        @Valid
-//        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+        @Valid
+        private CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO;
 
     }
 
