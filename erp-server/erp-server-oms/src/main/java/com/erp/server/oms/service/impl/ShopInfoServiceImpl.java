@@ -1579,32 +1579,44 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
         ShopDTO.SelectDTO params = dto.getParams();
-        if (params.getShowByAuth()){
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-                return new PagingVO<>();
-            }
-
-            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-            List<String> shopIdList;
-            if (StringUtils.isNotBlank(params.getDictPlatform())) {
-                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
-                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            } else {
-                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            }
-            if (CollectionUtils.isEmpty(shopIdList)) {
-                return new PagingVO<>();
-            }
-            params.setShopIdList(shopIdList);
+        if (Objects.nonNull(params.getShowByAuth()) && params.getShowByAuth()){
+            params.setPermissionSql(sysUserFeign.getShopPermissionSql("si.id"));
+//            LoginUser userInfo = UserContext.getDefaultLoginUser();
+//            sysUserFeign.getShopUserList(userInfo.getUid());
+//
+//            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
+//            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
+//                return new PagingVO<>();
+//            }
+//
+//            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
+//            List<String> shopIdList;
+//            if (StringUtils.isNotBlank(params.getDictPlatform())) {
+//                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
+//                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+//            } else {
+//                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
+//            }
+//            if (CollectionUtils.isEmpty(shopIdList)) {
+//                return new PagingVO<>();
+//            }
+//            params.setShopIdList(shopIdList);
         }
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<ShopDTO.ListDTO> records = pagResult.getRecords();
-        //排序
-        pagResult.setRecords(records);
+        //填充
+        fillData(records);
         return new PagingVO<>(pagResult);
+    }
+
+    private void fillData(List<ShopDTO.ListDTO> records) {
+        if (CollUtil.isEmpty(records)){
+            return;
+        }
+        records.forEach(e ->{
+            e.setDictPlatformName(PlatformDictEnum.getNameByCode(e.getDictPlatform()));
+        });
     }
 
     @Override

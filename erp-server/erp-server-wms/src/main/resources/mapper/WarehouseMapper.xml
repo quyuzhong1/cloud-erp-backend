@@ -391,6 +391,10 @@
             from warehouse wh
             where
             wh.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                #{params.permissionSql}
+            </if>
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
             </if>
@@ -430,5 +434,12 @@
         </if>
         wh.disabled , wh.index asc
         ) wls
+    </select>
+    <select id="listApproveWarehouse" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
+        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code
+        from warehouse where is_deleted = false
+        <if test="permissionSql!=null and permissionSql!=''">
+            #{permissionSql}
+        </if>
     </select>
 </mapper>

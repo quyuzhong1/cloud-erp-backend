@@ -1,0 +1,148 @@
+package com.erp.server.sys.service.impl;
+
+
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.vo.LoginUser;
+import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.sys.entity.AuthUserWarehouseEntity;
+import com.erp.server.sys.constant.SysConstant;
+import com.erp.server.sys.mapper.AuthUserWarehouseMapper;
+import com.erp.server.sys.service.AuthUserWarehouseService;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+//import com.erp.server.sys.service.OperateLogService;
+import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
+import com.erp.model.sys.dto.AuthUserWarehouseDTO;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import com.common.core.utils.*;
+import com.common.core.enums.ApiError;
+/**
+ * <p>
+ * 用户-仓库权限 服务实现类
+ * </p>
+ *
+ * @author zdy
+ * @since 2025-02-27
+ */
+@Slf4j
+@Service
+public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWarehouseMapper, AuthUserWarehouseEntity> implements AuthUserWarehouseService {
+//    @Autowired
+//    private OperateLogService operateLogService;
+
+    @GlobalTransactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(AuthUserWarehouseDTO.AddDTO addDTO) {
+        AuthUserWarehouseEntity authUserWarehouseEntity = new AuthUserWarehouseEntity();
+        BeanMapperUtils.copy(addDTO, authUserWarehouseEntity);
+
+        // 数据处理
+        handleData(authUserWarehouseEntity);
+
+        log.info("开始新增用户-仓库权限");
+        boolean save = super.save(authUserWarehouseEntity);
+        if(!save) {
+            throw new ServiceException("用户-仓库权限保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "用户-仓库权限" , authUserWarehouseEntity.getId());
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+//        operateLogService.addModuleOperateLog(msg, null, authUserWarehouseEntity.getId(), "新增操作");
+        // TODO 新增明细（如果有明细的话）
+
+        return new BaseResultDTO.AddDTO(authUserWarehouseEntity.getId(), authUserWarehouseEntity.getId());
+    }
+
+    /**
+    * 修改
+    */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean update(AuthUserWarehouseDTO.UpdateDTO addOrUpdateDTO) {
+        AuthUserWarehouseEntity old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "用户-仓库权限"));
+        AuthUserWarehouseEntity authUserWarehouseEntity =  BeanMapperUtils.map(AuthUserWarehouseEntity.class, addOrUpdateDTO);
+
+        // 数据处理
+        handleData(authUserWarehouseEntity);
+        log.info("编辑 开始修改用户-仓库权限数据，id：【{}】", old.getId());
+        boolean save = super.updateById(authUserWarehouseEntity);
+        if(!save) {
+            throw new ServiceException("用户-仓库权限保存失败");
+        }
+        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+
+        // 记录主单操作日志
+            log.info("编辑 开始记录用户-仓库权限日志数据，id：【{}】", authUserWarehouseEntity.getId());
+            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), authUserWarehouseEntity.getId(), "用户-仓库权限");
+        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+//        operateLogService.addModuleOperateLogByObj(old, authUserWarehouseEntity, null, authUserWarehouseEntity.getId(), msg);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<SysUserDTO.WarehouseDTO> getWarehouseUserList(String userId) {
+        if (CharSequenceUtil.isBlank(userId)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getWarehouseUserList(userId);
+    }
+
+    @Override
+    public String getWarehousePermissionSql(String warehouseTableField) {
+        if (CharSequenceUtil.isBlank(warehouseTableField)){
+            return SysConstant.ADMIN_PERMISSON_SQL;
+        }
+        LoginUser defaultLoginUser = UserContext.getDefaultLoginUser();
+        if ("0".equals(defaultLoginUser.getUid())){
+            return SysConstant.ADMIN_PERMISSON_SQL;
+        }
+        List<SysUserDTO.WarehouseDTO> warehouseUserList = this.getWarehouseUserList(defaultLoginUser.getUid());
+        if (CollUtil.isEmpty(warehouseUserList)){
+            return SysConstant.ADMIN_PERMISSON_SQL;
+        }
+        Integer dataScope = warehouseUserList.stream().min(Comparator.comparing(SysUserDTO.WarehouseDTO::getDataScope)).map(SysUserDTO.WarehouseDTO::getDataScope).orElse(MathUtil.ONE);
+        if (MathUtil.ZERO.equals(dataScope)){
+            return SysConstant.ADMIN_PERMISSON_SQL;
+        }
+        StringBuilder sqlString = new StringBuilder();
+        //店铺
+        List<String> warehouseTableFieldList = Arrays.asList(warehouseTableField.split(","));
+        int warehouseTableFieldSize = warehouseTableFieldList.size();
+        if (CollectionUtils.isNotEmpty(warehouseUserList)) {
+            if (1 == dataScope){
+                if (warehouseTableFieldSize == 1) {
+                    sqlString.append(" AND string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',',')");
+                } else {
+                    sqlString.append(" AND (string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',',')");
+                    sqlString.append(" OR ");
+                    for (int i = 1; i < warehouseTableFieldSize; i++) {
+                        sqlString.append("string_to_array(").append(warehouseTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',','))");
+                    }
+                }
+            }
+        }
+        return sqlString.toString();
+    }
+
+
+    /**
+    * 新增修改处理数据
+    */
+    private void handleData(AuthUserWarehouseEntity authUserWarehouseEntity) {
+    // TODO 验证数据 & 数据赋值
+    }
+}

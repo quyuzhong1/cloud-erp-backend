@@ -4,9 +4,6 @@ import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.dto.DmpPushTaskFeignDTO;
-import com.erp.model.dmp.dto.DmpPushWdtDTO;
-import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
@@ -957,7 +954,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .collect(Collectors.toMap(InventoryDirectionEnum::getName, Function.identity()));
 
         // 发货仓库
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse();
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse(Boolean.FALSE);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList
                 .stream()
                 .collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));

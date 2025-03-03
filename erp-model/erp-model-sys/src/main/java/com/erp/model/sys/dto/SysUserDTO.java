@@ -84,4 +84,24 @@ public class SysUserDTO implements Serializable {
      */
     private String deptName;
 
+    @Data
+    @NoArgsConstructor
+    public static class ShopDTO {
+        //用户id
+        private String userId;
+        //店铺id
+        private String shopId;
+        //数据权限(0-全部，1-部分)
+        private Integer dataScope;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseDTO {
+        //用户id
+        private String userId;
+        //仓库id
+        private String warehouseId;
+        //数据权限(0-全部，1-部分)
+        private Integer dataScope;
+    }
 }

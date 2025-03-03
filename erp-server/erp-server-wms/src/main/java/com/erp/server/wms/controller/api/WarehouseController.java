@@ -317,8 +317,11 @@ public class WarehouseController extends BaseController {
      * 仓库列表
      */
     @GetMapping("/list")
-    public ApiResult<List<WarehouseDTO.ListDTO>> list() {
-        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+    public ApiResult<List<WarehouseDTO.ListDTO>> list(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(showByAuth);
         return success(list);
     }
 
@@ -332,6 +335,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/selectPaging")
     public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<WarehouseDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);
+        }
         PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
         return success(pagingVO);
     }
