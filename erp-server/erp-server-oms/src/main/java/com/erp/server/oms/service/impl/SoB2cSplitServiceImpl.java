@@ -29,10 +29,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -715,6 +712,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform()) && dto.getIsSyncPlatform()) {
             service.tikTokSplit(resultDTO);
         }
+        //清楚异常
+        soB2cService.removeSignError(dto.getId(), SoB2cErrorTypeEnum.OTHER.getCode());
         return resultDTO;
     }
 
