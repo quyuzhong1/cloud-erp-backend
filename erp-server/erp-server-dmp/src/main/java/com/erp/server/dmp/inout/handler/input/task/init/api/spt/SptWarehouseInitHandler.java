@@ -114,6 +114,4 @@ public class SptWarehouseInitHandler extends DmpInputInitHandler {
 	private static OmsPlatformEnum getPlatForm() {
 		return OmsPlatformEnum.OMS_SPT;
 	}
-
-
 }

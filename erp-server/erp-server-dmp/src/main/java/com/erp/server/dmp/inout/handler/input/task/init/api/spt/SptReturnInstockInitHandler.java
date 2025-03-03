@@ -36,7 +36,7 @@ import java.util.List;
 @Slf4j
 @Service
 @Scope("prototype")
-public class AntuReturnInstockInitHandler extends DmpInputInitHandler {
+public class SptReturnInstockInitHandler extends DmpInputInitHandler {
 
     @Resource
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;
