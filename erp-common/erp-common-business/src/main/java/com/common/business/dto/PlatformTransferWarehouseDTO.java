@@ -54,4 +54,6 @@ public class PlatformTransferWarehouseDTO extends UniqueDto {
 
     //仓库状态 0:不可用;1:可用;2:停用
     private String platformWarehouseStatus;
+    //仓库所在国家/地区代码
+    private String countryCode;
 }
