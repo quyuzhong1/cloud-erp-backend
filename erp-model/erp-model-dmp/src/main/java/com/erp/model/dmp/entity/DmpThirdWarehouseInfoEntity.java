@@ -1,14 +1,14 @@
 package com.erp.model.dmp.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -162,6 +162,13 @@ public class DmpThirdWarehouseInfoEntity extends BaseEntity<DmpThirdWarehouseInf
     @TableField("data_encrypt")
     private String dataEncrypt;
 
+    /**
+     * 仓库平台状态
+     */
+    @TableField("platform_warehouse_status")
+    private String platformWarehouseStatus;
+
+    public static final String PLATFORM_WAREHOUSE_STATUS = "platform_warehouse_status";
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

@@ -93,6 +93,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             return syncShopifyChannel(platform);
         } else if (LogisticsPlatformEnum.TIK_TOK.getCode().equalsIgnoreCase(platform)) {
             return syncTikTokChannel(platform);
+        } else if (LogisticsPlatformEnum.SPT.getCode().equalsIgnoreCase(platform)) {
+          return syncSingleChannel(platform);
         } else {
             return syncSingleChannel(platform);
         }
