@@ -68,11 +68,11 @@ public class SptLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .collect(Collectors.toMap(OverseasProviderWarehouseEntity::getPlatformWarehouseCode,
                             OverseasProviderWarehouseEntity::getId));
 
-            antuResponse.getData().forEach(data -> data.setErpWarehouseId(warehouseMap.get(data.getWarehouseCode())));
+            antuResponse.getData().forEach(data -> data.setErpWarehouseId(warehouseMap.get(data.getWarehouseCode())).setLogisticsPlatform(getPlatForm().getCode()));
 
             //实体转换
             List<LogisticsSaleChannelEntity> response =
-                    LogisticsChannelConverter.INSTANCE.channelConvertBySpt(antuResponse.getData());
+                    LogisticsChannelConverter.INSTANCE.channelConvertByAntu(antuResponse.getData());
 
             logAndReturnSuccess(chanelQueryVO, RequestStatusEnums.SUCCESS, antuResponse);
 
