@@ -175,13 +175,17 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
         //销量信息
         CfgRuleSalesQtyEntity entity = getDefaultByPlatformType(null, refId);
+        CfgRuleSalesQtyDTO.ViewDetailDTO viewDetailDTO = new CfgRuleSalesQtyDTO.ViewDetailDTO();
+        if (ObjectUtils.isEmpty(entity)) {
+            return viewDetailDTO;
+        }
+        BeanMapperUtils.copy(entity,viewDetailDTO);
         //日销量数据
         List<CfgRuleSalesFormulaEntity> salesFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(Collections.singletonList(entity.getId()));
         List<CfgRuleSalesFormulaDTO.ViewDTO> salesViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, salesFormulaList);
         Map<String, List<CfgRuleSalesFormulaDTO.ViewDTO>> salesMap = salesViewList.stream()
                 .collect(Collectors.groupingBy(CfgRuleSalesFormulaDTO.ViewDTO::getType));
-        CfgRuleSalesQtyDTO.ViewDetailDTO viewDetailDTO = new CfgRuleSalesQtyDTO.ViewDetailDTO();
-        BeanMapperUtils.copy(entity,viewDetailDTO);
+
         //默认日销量
         List<CfgRuleSalesFormulaDTO.ViewDTO> defaultSalesFormula = salesMap.get(CfgRuleSalesFormulaTypeEnum.DEFAULT.getCode());
         if (CollectionUtils.isNotEmpty(defaultSalesFormula)) {
