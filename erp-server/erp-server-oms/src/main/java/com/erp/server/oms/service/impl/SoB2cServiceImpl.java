@@ -2509,7 +2509,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
             attach.setAttachId(uploadFileResponse.getData().getAttachId());
             createOutboundReq.setAttach(Collections.singletonList(attach));
-            createOutboundReq.setDistributorType(DistributorTypeEnum.GOOD_CANG_TRANSPORT_LOGISTICS.getCode());
+            createOutboundReq.setDistributorType(DistributorTypeEnum.SELF_LOGISTICS.getCode());
         }
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
         log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
