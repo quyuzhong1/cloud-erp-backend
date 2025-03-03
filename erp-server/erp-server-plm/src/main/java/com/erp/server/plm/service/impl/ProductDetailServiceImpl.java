@@ -2896,9 +2896,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
         for (SkuVO skuVO : skuList) {
             if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
-                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
-                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
-                skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                skuVO.setActualTaxCost(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getCostPrice() : skuVO.getActualTaxCost());
+                skuVO.setNotTaxCostPrice(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getNotTaxCostPrice() : skuVO.getNotTaxCostPrice());
             }
         }
         return skuList;
@@ -3233,7 +3233,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             List<String> categoryIdList = skuList.stream().map(SkuVO::getCategoryId).distinct().collect(Collectors.toList());
             List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listByIds(categoryIdList);
 
-            List<String> skuNoList = skuList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuNo())).map(SkuVO::getSkuNo).distinct().collect(Collectors.toList());
+            List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).filter(StringUtils::isNotEmpty).distinct().collect(Collectors.toList());
             List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
 
             for (SkuVO skuVO : skuList) {
@@ -3242,9 +3242,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     skuVO.setUnitQty(Objects.nonNull(packEntity.getBoxQty()) ? packEntity.getBoxQty().intValue() : null);
                 }
                 if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
-                    DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
-                    skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
-                    skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+                    DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                    skuVO.setActualTaxCost(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getCostPrice() : skuVO.getActualTaxCost());
+                    skuVO.setNotTaxCostPrice(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getNotTaxCostPrice() : skuVO.getNotTaxCostPrice());
                 }
                 //产品分类
                 String categoryName = basicCategoryList.stream().filter(obj -> obj.getId().equals(skuVO.getCategoryId())).map(BasicCategoryEntity::getName).findFirst().orElse("");
@@ -6249,8 +6249,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
         for (SkuInfoSimpleVO skuVO : skuList) {
             if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
-                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
-                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                skuVO.setActualTaxCost(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getCostPrice() : skuVO.getActualTaxCost());
             }
         }
         return skuList;
@@ -6338,13 +6338,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(skuList)){
             return Collections.emptyList();
         }
-        List<String> skuNoList = skuList.stream().filter(e -> StringUtils.isNotEmpty(e.getSkuNo())).map(SkuVO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNoList = skuList.stream().map(SkuVO::getSkuNo).filter(StringUtils::isNotEmpty).distinct().collect(Collectors.toList());
         List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
         for (SkuVO skuVO : skuList) {
             if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
-                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(new DmpSkuCostEntity());
-                skuVO.setActualTaxCost(dmpSkuCost.getCostPrice());
-                skuVO.setNotTaxCostPrice(dmpSkuCost.getNotTaxCostPrice());
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                skuVO.setActualTaxCost(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getCostPrice() : skuVO.getActualTaxCost());
+                skuVO.setNotTaxCostPrice(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getNotTaxCostPrice() : skuVO.getNotTaxCostPrice());
             }
         }
         return skuList;
