@@ -9,6 +9,7 @@ import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.ShopTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.DecimalMin;
@@ -960,9 +961,10 @@ public class ShopDTO implements Serializable {
         private List<String> ids;
     }
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO{
 
         /**
          * 关键词
@@ -981,9 +983,9 @@ public class ShopDTO implements Serializable {
          */
         private String dictAreaCode;
         /**
-         * 是否已授权
+         * 是否过滤权限
          */
-        private Boolean showByAuth = false;
+        private Boolean showByAuth;
         /**
          * 平台
          */
@@ -1005,6 +1007,14 @@ public class ShopDTO implements Serializable {
          * 账号
          */
         private String account;
+        /***
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
         /**
          * 禁用状态
          */

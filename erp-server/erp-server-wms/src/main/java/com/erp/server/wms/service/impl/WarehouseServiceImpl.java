@@ -156,18 +156,19 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        List<WarehouseEntity> list = this.list();
-        if (CollectionUtils.isEmpty(list)) {
-            return new ArrayList<>();
+    public List<WarehouseDTO.ListDTO> listApproveWarehouse(Boolean showByAuth) {
+        String permissionSql = null;
+        if (Objects.nonNull(showByAuth) && showByAuth){
+            permissionSql = sysUserFeign.getWarehousePermissionSql("id");
         }
-        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-
+        List<WarehouseDTO.ListDTO> resultList = baseMapper.listApproveWarehouse(permissionSql);
+        if (CollectionUtils.isEmpty(resultList)) {
+            return Collections.emptyList();
+        }
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
         // 填充信息
         this.fillListData(resultList, warehouseBindMap);
-
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
@@ -327,7 +328,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListTreeDTO> listTree() {
-        List<WarehouseDTO.ListDTO> list = listApproveWarehouse();
+        List<WarehouseDTO.ListDTO> list = listApproveWarehouse(Boolean.FALSE);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
@@ -454,6 +455,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         if(params.isFilterSelfAddFlag()){
             params.setWarehouseManageType(WarehouseManageTypeEnum.SELF_BUILD.getCode());
+        }
+        if (Objects.nonNull(params.getShowByAuth()) && params.getShowByAuth()){
+            params.setPermissionSql(sysUserFeign.getWarehousePermissionSql("wh.id"));
         }
         IPage<WarehouseDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<WarehouseDTO.ListDTO> records = pagResult.getRecords();

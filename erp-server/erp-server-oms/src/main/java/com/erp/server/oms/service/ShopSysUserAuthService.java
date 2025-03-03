@@ -23,6 +23,7 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param dto
      * @return Boolean
      */
+    @Deprecated
     Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto);
     /**
      * @description: 查看详情
@@ -31,6 +32,7 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param dto
      * @return ViewDTO
      */
+    @Deprecated
     ShopSysUserAuthDTO.ViewDTO view(ShopSysUserAuthDTO.ViewParamDTO dto);
     /**
      * @description: 根据用户id集合查询店铺权限设置
@@ -39,6 +41,7 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param userIdList
      * @return List<ViewDTO>
      */
+    @Deprecated
     List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList);
     /**
      * @description:根据店铺id查询已关联用户id
@@ -47,6 +50,7 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param shopIdList
      * @return List<String>
      */
+    @Deprecated
     List<String> listUserIdByShopIdList(List<String> shopIdList);
 
     /**
@@ -56,5 +60,6 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param dto
      * @return java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>
      **/
+    @Deprecated
     List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(ShopSysUserAuthDTO.UserAuthShopParamDTO dto);
 }

@@ -962,7 +962,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .collect(Collectors.toMap(InventoryDirectionEnum::getName, Function.identity()));
 
         // 发货仓库
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse();
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse(Boolean.FALSE);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList
                 .stream()
                 .collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));

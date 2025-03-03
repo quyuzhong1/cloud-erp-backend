@@ -758,12 +758,16 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO{
 
         /**
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
 
         /**
          * 是否需要过滤组织

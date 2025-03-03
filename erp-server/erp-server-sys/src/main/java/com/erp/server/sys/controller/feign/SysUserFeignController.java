@@ -18,7 +18,6 @@ import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
-import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -63,8 +62,10 @@ public class SysUserFeignController extends BaseController {
     @Autowired
     private SysRoleMenuService sysRoleMenuService;
 
-    @Autowired
-    private KingdeeUserRefPostService kingdeeUserRefPostService;
+    @Resource
+    private AuthUserShopService authUserShopService;
+    @Resource
+    private AuthUserWarehouseService authUserWarehouseService;
 
     @Resource
     private SysUserWechatService wechatService;
@@ -157,6 +158,42 @@ public class SysUserFeignController extends BaseController {
     public List<String> getDepUserList(@RequestBody String userId) {
         List<String> depUserList = sysUserInfoService.getDepUserList(userId);
         return depUserList;
+    }
+
+    /**
+     * 根据用户id 获取 所有店铺
+     *
+     * @return
+     */
+    @PostMapping("/getShopUserList")
+    public List<SysUserDTO.ShopDTO> getShopUserList(@RequestBody String userId) {
+        return authUserShopService.getShopUserList(userId);
+    }
+    /**
+     * 根据用户id 获取 所有仓库
+     *
+     * @return
+     */
+    @PostMapping("/getWarehouseUserList")
+    public List<SysUserDTO.WarehouseDTO> getWarehouseUserList(@RequestBody String userId) {
+        return authUserWarehouseService.getWarehouseUserList(userId);
+    }
+
+    /**
+     * 获取用户店铺权限
+     * @return
+     */
+    @PostMapping("/getShopPermissionSql")
+    public String getShopPermissionSql(@RequestBody String shopTableField){
+        return authUserShopService.getShopPermissionSql(shopTableField);
+    }
+    /**
+     * 获取用户仓库权限
+     * @return
+     */
+    @PostMapping("/getWarehousePermissionSql")
+    public String getWarehousePermissionSql(@RequestBody String warehouseTableField){
+        return authUserWarehouseService.getWarehousePermissionSql(warehouseTableField);
     }
 
     /**

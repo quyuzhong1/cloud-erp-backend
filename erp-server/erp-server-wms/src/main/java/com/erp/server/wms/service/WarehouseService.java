@@ -39,7 +39,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @date: 2023/3/21 14:27
      * @return List<WarehouseDTO>
      */
-    List<WarehouseDTO.ListDTO> listApproveWarehouse();
+    List<WarehouseDTO.ListDTO> listApproveWarehouse(Boolean showByAuth);
 
     /**
      * @description:

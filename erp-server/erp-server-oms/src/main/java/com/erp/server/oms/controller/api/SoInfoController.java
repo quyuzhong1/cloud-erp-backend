@@ -83,6 +83,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )

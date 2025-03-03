@@ -1,5 +1,6 @@
 package com.common.business.mapper;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.utils.MathUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Named;
@@ -66,5 +67,17 @@ public class NumberMapperWork {
            //转换异常 暂不抛出异常
         }
         return 0L;
+    }
+
+    @Named("typeToDataScope")
+    public Integer typeToDataScope(String type){
+        if (CharSequenceUtil.isBlank(type)){
+            return MathUtil.ONE;
+        }
+        if ("all".equals(type)){
+            return MathUtil.ZERO;
+        }else {
+            return MathUtil.ONE;
+        }
     }
 }
