@@ -11,7 +11,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesFormulaDTO;
@@ -26,9 +25,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -172,10 +171,10 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
 
     @Override
-    public CfgRuleSalesQtyDTO.ViewDetailDTO viewDetail(String platformType, String refId) {
+    public CfgRuleSalesQtyDTO.ViewDetailDTO viewDetail(String refId) {
 
         //销量信息
-        CfgRuleSalesQtyEntity entity = getDefaultByPlatformType(platformType, refId);
+        CfgRuleSalesQtyEntity entity = getDefaultByPlatformType(null, refId);
         //日销量数据
         List<CfgRuleSalesFormulaEntity> salesFormulaList = cfgRuleSalesFormulaService.listBySalesQtyIdList(Collections.singletonList(entity.getId()));
         List<CfgRuleSalesFormulaDTO.ViewDTO> salesViewList = BeanMapperUtils.copyList(CfgRuleSalesFormulaDTO.ViewDTO.class, salesFormulaList);
@@ -346,7 +345,7 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
      */
     private CfgRuleSalesQtyEntity getDefaultByPlatformType(String platform, String refId) {
        return lambdaQuery()
-               .eq(CfgRuleSalesQtyEntity::getPlatform,platform)
+               .eq(!ObjectUtils.isEmpty(platform), CfgRuleSalesQtyEntity::getPlatform, platform)
                .eq(CfgRuleSalesQtyEntity::getRefId,CharSequenceUtil.isNotBlank(refId) ? refId : "")
                .last("LIMIT 1")
                .one();
