@@ -220,12 +220,23 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         if (CollectionUtils.isEmpty(list)) {
             return new CfgRuleWarehouseDTO.WarehouseShopDTO();
         }
-
+        if (Boolean.FALSE.equals(dto.getIsEnableVirtual())) {
+            List<String> shopNameList = handleCheckShop(dto.getCfgLocalWarehouseList(), list);
+            if (CollectionUtils.isNotEmpty(shopNameList)) {
+                resultDTO.setShopNameList(shopNameList);
+            }
+        }
 
         if (Boolean.TRUE.equals(dto.getIsEnableVirtual())) {
-            List<String> virtualShopNameList = handleCheckShop(dto.getCfgLocalVirtualWarehouseList(),list);
+            List<String> virtualShopNameList = handleCheckVirtualShop(dto.getCfgLocalVirtualWarehouseList(),list);
             if (CollectionUtils.isNotEmpty(virtualShopNameList)) {
                 resultDTO.setVirtualShopNameList(virtualShopNameList);
+            }
+        }
+        if (Boolean.TRUE.equals(dto.getIsEnableOverseas())) {
+            List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(),list);
+            if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
+                resultDTO.setOverseasShopNameList(overseasShopNameList);
             }
         }
         return resultDTO;
@@ -263,7 +274,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
      * @param shopList
      * @return List<String>
      */
-    private List<String> handleCheckShop (List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgList,List<ShopInfoEntity> shopList) {
+    private List<String> handleCheckVirtualShop (List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgList,List<ShopInfoEntity> shopList) {
         if (CollectionUtils.isEmpty(cfgList)) {
             return Collections.emptyList();
         }
@@ -276,6 +287,32 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                 //按平台
                 List<String> platformShopIdList = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDictPlatform(), warehouseDTO.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
                 shopIdList.addAll(platformShopIdList);
+            }
+        }
+        return shopList.stream().filter(obj -> !shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
+    }
+
+
+    /**
+     * 处理验证店铺数据
+     * @author will
+     * @return List<String>
+     */
+    private List<String> handleCheckShop(List<CfgRuleWarehouseDetailDTO.WarehouseUpdateDTO> cfgLocalWarehouseList, List<ShopInfoEntity> shopList) {
+        if (CollectionUtils.isEmpty(cfgLocalWarehouseList)) {
+            return Collections.emptyList();
+        }
+        List<String> shopIdList = new ArrayList<>();
+        for (CfgRuleWarehouseDetailDTO.WarehouseUpdateDTO updateDTO : cfgLocalWarehouseList) {
+            for (CfgRuleWarehouseDetailDTO.WarehousePlatformDTO dto : updateDTO.getWarehousePlatform()) {
+                if (CharSequenceUtil.equals(VitualWarehouseChannelTypeEnum.SHOP.getCode(), dto.getChannelType())) {
+                    //按店铺
+                    shopIdList.addAll(dto.getShopIdList());
+                } else {
+                    //按平台
+                    List<String> platformShopIdList = shopList.stream().filter(obj -> dto.getPlatformList().contains(obj.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                    shopIdList.addAll(platformShopIdList);
+                }
             }
         }
         return shopList.stream().filter(obj -> !shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
