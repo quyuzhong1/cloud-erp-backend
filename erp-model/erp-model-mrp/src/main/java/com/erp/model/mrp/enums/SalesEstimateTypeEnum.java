@@ -13,7 +13,7 @@ public enum SalesEstimateTypeEnum implements EnumMessage {
     SYSTEM("SYSTEM", "系统"),
     AI("AI", "AI"),
     CUSTOMER("CUSTOMER", "自定义导入"),
-    update_Import("updateImport", "导入更新");
+    UPDATE_IMPORT("updateImport", "导入更新");
 
     private final String code;
 

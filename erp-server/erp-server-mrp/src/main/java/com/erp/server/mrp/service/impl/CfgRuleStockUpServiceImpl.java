@@ -160,10 +160,12 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         // 更新时效数据
         CfgRuleExpireTimeDTO.UpdateDTO expireTimeDTO = BeanMapperUtils.map(CfgRuleExpireTimeDTO.UpdateDTO.class, stockUpUpdateDTO);
         expireTimeDTO.setPlatformCfgLogisticsList(stockUpUpdateDTO.getCfgLogisticsList());
+        expireTimeDTO.setId(stockUpUpdateDTO.getExpireTimeId());
         cfgRuleExpireTimeService.update(expireTimeDTO);
         // 更新备货数据
         CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
         updateDTO.setPlatformSafeDays(stockUpUpdateDTO.getSafeDays());
+        updateDTO.setId(stockUpUpdateDTO.getStockUpId());
         ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).update(updateDTO);
     }
 
@@ -195,6 +197,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         if (!ObjectUtils.isEmpty(cfgRuleStockUp)) {
             refViewDTO.setStockingRatio(cfgRuleStockUp.getStockingRatio());
             refViewDTO.setSafeDays(cfgRuleStockUp.getPlatformSafeDays());
+            refViewDTO.setStockUpId(cfgRuleStockUp.getId());
             List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(cfgRuleStockUp.getId()));
             List<CfgRuleStockingRatioDTO.ViewDTO> dtos = cfgRuleStockingRatioList.stream()
                     .map(v -> {
@@ -207,6 +210,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         }
         CfgRuleExpireTimeEntity cfgRuleExpireTime = cfgRuleExpireTimeService.getByRefId(refId);
         if (!ObjectUtils.isEmpty(cfgRuleExpireTime)) {
+            refViewDTO.setExpireTimeId(cfgRuleExpireTime.getId());
             refViewDTO.setPurchaseApproveDays(cfgRuleExpireTime.getPurchaseApproveDays());
             refViewDTO.setProductionDays(cfgRuleExpireTime.getProductionDays());
             refViewDTO.setQcDays(cfgRuleExpireTime.getQcDays());
