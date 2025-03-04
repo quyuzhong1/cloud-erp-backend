@@ -61,6 +61,14 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 							throw new ServiceException("退货订单"+ parent_order_id +"未查询到订单数据");
 						}
 						v.put("sourceId", sourceId);
+						Object issue_status = v.get("issue_status");
+						if(issue_status != null) {
+							if("finish".equals(issue_status.toString())) {
+								v.put("status", "4");
+							}else {
+								v.put("status", "1");
+							}
+						}
 					}
 				}
 			}

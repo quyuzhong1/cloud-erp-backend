@@ -95,7 +95,7 @@ public class TikTokSdkClientService {
     public void setRedisUtil(RedisUtil redisUtil) {
         TikTokSdkClientService.redisUtil = redisUtil;
     }
-    public static void main(String[] args) {
+//    public static void main(String[] args) {
 //
 //        //标记发货
 //        TikTokSdkClientService sdkClientService = new TikTokSdkClientService();
@@ -255,7 +255,7 @@ public class TikTokSdkClientService {
 //            pageToken = orderDTO.getData().getNextPageToken();
 //        }*/
 //
-    }
+//    }
 
     /**
      * 获取token

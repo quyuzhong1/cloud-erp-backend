@@ -7,7 +7,6 @@ import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
@@ -38,6 +37,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -84,6 +84,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
         int pageSizeValue = getPageSizeValue(dmpInputApiInitRequest);
 
         long current = 1;
+        LocalDateTime trackTime = LocalDateTime.now().minusMonths(3);
         //根据跟踪单获取跟踪轨迹
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
@@ -91,6 +92,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
                 .current(current)
                 .registerStatus(1)
                 .trackEnable(true)
+                .trackTime(trackTime)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
         ResponseData trackData = getTrackData(query, cfgAppClient);
