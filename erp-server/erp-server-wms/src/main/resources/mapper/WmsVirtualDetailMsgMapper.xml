@@ -38,8 +38,8 @@
             ,vtf.sku_id,vtf.warehouse_id,vtf.virtual_warehouse_id
         from wms_virtual_detail_msg wvdm
         inner join virtual_trans_flow vtf on wvdm.business_id = vtf.id and vtf.is_deleted = false
-        where vtf.is_deleted = false and vtf.status in ('waitHandle', 'fail', 'doing')
-        order by vtf.trade_time asc;
+        where wvdm.is_deleted = false and wvdm.status in ('waitHandle', 'fail', 'doing')
+        order by wvdm.trade_time asc;
     </select>
 
 
