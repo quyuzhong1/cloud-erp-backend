@@ -374,10 +374,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
     @Setter
     public static class StrategyResultDTO {
         /**
-         * 是否同常规品配置一致,true是，false否
-         */
-        private Boolean isCfgSame;
-        /**
          * 断货数据是否从历史销量中排除,true是，false否
          */
         private Boolean isIgnoreOutOfStock;
@@ -391,17 +387,17 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          */
         private JSONArray orderType;
         /**
-         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         * 平台类型
          */
-        private String platformType;
+        private String platform;
+        /**
+         * 预估销量类型（SYSTEM/AI/CUSTOMER）
+         */
+        private String salesEstimateType;
         /**
          * 关联id
          */
         private String refId;
-        /**
-         * 类型，new 新品、conventional常规品
-         */
-        private String type;
         /**
          * 降噪配置
          */
@@ -425,14 +421,12 @@ public class CfgRuleSalesQtyDTO implements Serializable {
                                                                List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults,
                                                                List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoisingResults) {
             StrategyResultDTO resultDTO = new StrategyResultDTO();
-//            todo
-//            resultDTO.setIsCfgSame(cfgRuleSalesQty.getIsCfgSame());
             resultDTO.setIsIgnoreOutOfStock(cfgRuleSalesQty.getIsIgnoreOutOfStock());
             resultDTO.setSalesQtyType(cfgRuleSalesQty.getSalesQtyType());
             resultDTO.setOrderType(cfgRuleSalesQty.getOrderType());
-//            resultDTO.setPlatformType(cfgRuleSalesQty.getPlatformType());
+            resultDTO.setPlatform(cfgRuleSalesQty.getPlatform());
+            resultDTO.setSalesEstimateType(cfgRuleSalesQty.getSalesEstimateType());
             resultDTO.setRefId(cfgRuleSalesQty.getRefId());
-//            resultDTO.setType(cfgRuleSalesQty.getType());
             resultDTO.setFormulaResults(formulaResults);
             resultDTO.setDenoisingResults(denoisingResults);
             resultDTO.setDefaultFormulaResults(defaultFormulaResults);

@@ -25,6 +25,8 @@ import static com.erp.model.mrp.enums.RecentTimePeriodEnum.*;
 public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
     @Resource
     private StockingDateSalesHandler stockingDateSalesHandler;
+//    @Resource
+//    private SalesEstimateFactory salesEstimateFactory;
 
     @Override
     public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
@@ -60,7 +62,8 @@ public class SalesEstimateHandler extends AbstractSkuCalculationHandler {
             ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty, formulaResult);
             salesEstimates.add(salesEstimateDTO);
         }
-
+//        cfgRuleStrategyDTO.getSalesQtyResult().
+//        salesEstimateFactory.getSalesEstimate()
         replenishmentResultDTO.setSalesEstimates(salesEstimates);
         //开始计算分时段销量和日均预估
         calculationTimePeriodSalesEstimates(replenishmentResultDTO, basicCalcDate);

@@ -21,6 +21,8 @@ public class CfgRuleExpireTimeDTO {
     @Getter
     @Setter
     public static class UpdateDTO {
+
+        private String id;
         /**
          * 采购审批天数（天）
          */
