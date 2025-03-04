@@ -1004,7 +1004,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cSplitService.cancelSplit(id);
+                result = soB2cSplitService.cancelSplit(id, true);
             } catch (Exception e) {
                 log.error("B2C销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);

@@ -29,10 +29,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
@@ -692,8 +689,25 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     @Override
     @DataIdempotent(keyIdName = "dto.id")
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
+        SoB2cDTO.SplitSaveResultDTO resultDTO = service.handleSplit(dto);
+        service.splitRule(resultDTO);
+        return resultDTO;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public SoB2cDTO.SplitSaveResultDTO handleSplit(SoB2cDTO.SplitSaveDTO dto) {
         //订单拆分字段处理
         SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSaveHandle(dto);
+        //如果是TikTok平台拆分订单，需要同步到平台
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform()) && dto.getIsSyncPlatform()) {
+            service.tikTokSplit(resultDTO);
+        }
+        //清楚异常
+        soB2cService.removeSignError(dto.getId(), SoB2cErrorTypeEnum.OTHER.getCode());
+        return resultDTO;
+    }
+
+    public void splitRule(SoB2cDTO.SplitSaveResultDTO resultDTO) {
         List<SoB2cEntity> entityList = resultDTO.getNeedRuleIds();
         if(CollectionUtils.isNotEmpty(entityList)){
             for (SoB2cEntity entity : entityList) {
@@ -728,11 +742,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
             }
         }
-        //如果是TikTok平台拆分订单，需要同步到平台
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform())) {
-            service.tikTokSplit(resultDTO);
-        }
-        return resultDTO;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -751,7 +760,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
          * 拆分后金额、费用根据金额比例进行分摊
          */
         //验证拆分数据
-        checkSplitData(entity,soB2cRefList);
+        checkSplitData(entity,soB2cRefList, dto.getIsSyncPlatform());
         //原单据明细
         List<SoB2cDetailEntity> oldDetailList = soB2cDetailService.listByMainId(dto.getId());
         if (CollectionUtils.isEmpty(oldDetailList)) {
@@ -905,7 +914,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 this.updateById(add);
             }
             //用于同步到TikTok拆分数据的入参
-            List<String> sourceDetailIds = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
+            List<String> sourceDetailIds = detailList.stream().map(req -> req.getPlatformLineNumber()).collect(Collectors.toList());
             groupsBean.setOrderLineItemIds(sourceDetailIds);
             groupsBean.setId(add.getId());
             splittableGroups.add(groupsBean);
@@ -954,11 +963,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     /**
      * @param entity
      * @param soB2cRefList
+     * @param checkTikTok
      * @description: 验证拆分数据
      * @author Will
      * @date: 2023/8/23 15:12
      */
-    private void checkSplitData(SoB2cEntity entity,List<SoB2cRefEntity> soB2cRefList) {
+    private void checkSplitData(SoB2cEntity entity, List<SoB2cRefEntity> soB2cRefList, Boolean checkTikTok) {
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                 || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus()) ||SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
@@ -973,7 +983,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
         }
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform()) && checkTikTok) {
             TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
             SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
             SplitAttributesBean splitAttributesBean = splitAttributesDTO.getData().getSplitAttributes().stream().filter(req -> entity.getPlatformCode().equals(req.getOrderId())).findFirst().orElse(null);
@@ -1023,7 +1033,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<SoB2cDTO.ViewSplitDTO> resultList = new ArrayList<>();
         for (SoB2cEntity entity : soB2cList) {
             //验证拆分数据
-            checkSplitData(entity,soB2cRefList);
+            checkSplitData(entity,soB2cRefList, true);
             SoB2cDTO.ViewSplitDTO viewSplitDTO = new SoB2cDTO.ViewSplitDTO();
             viewSplitDTO.setId(entity.getId());
             viewSplitDTO.setCode(entity.getCode());
@@ -1097,7 +1107,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancelSplit(String id) {
+    public BatchResultDTO cancelSplit(String id, Boolean isCheckPlatform) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -1107,6 +1117,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 //        if () {
 //            throw new ServiceException("已作废，已冻结，待发货，已发货不允许还原拆分");
 //        }
+        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform()) && isCheckPlatform) {
+            throw new ServiceException("tiktok订单不允许取消拆分，请在tiktok后台操作");
+        }
         //关联关系
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listSourceByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT.getCode());
         if (CollectionUtils.isEmpty(soB2cRefList)) {
@@ -1154,7 +1167,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         operateLogService.addModuleOperateLog( CharSequenceUtil.format("订单取消拆分"), ModuleTypeEnum.SO_B2C.getCode(), soB2cRefList.get(0).getSourceId(), "取消拆分");
         //删除原单备注
         this.lambdaUpdate().eq(SoB2cEntity::getId,soB2cRefList.get(0).getSourceId()).set(SoB2cEntity::getRemark,"").update();
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消拆分");
+        return BatchResultDTO.success(soB2cRefList.get(0).getSourceId(), entity.getCode(), "取消拆分");
     }
 
     @Override
