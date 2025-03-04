@@ -93,7 +93,7 @@
            </foreach>
        </if>
        ORDER BY sb2cl.update_time desc
-        limit 100
+        limit 300
     </select>
 
     <!-- 根据物流单号或者运单号查询 -->
