@@ -323,7 +323,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             throw new ServiceException("暂未入库反审，不支持消费");
         }
         //根据当前流水id查询原流水信息
-        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getUnApprovedTxnFlowBySourceDetailId(entity.getSourceType(), entity.getSourceDetailId(),entity.getTradeTime());
+        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getUnApprovedTxnFlowBySource(entity);
         if (ObjUtil.isEmpty(oldTransFlowEntity)) {
             throw new ServiceException("未找到原虚拟仓出库库存流水信息");
         }
