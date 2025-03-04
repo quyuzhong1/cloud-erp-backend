@@ -1328,7 +1328,7 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         log.warn("SKU编号【{}】对应的一级供应商id：【{}】", item.getSkuNo(), Objects.isNull(skuVO)? "":skuVO.getSupplierId());
         BigDecimal purchasePrice = BigDecimal.ZERO;
         String currency = CurrencyEnum.CNY.getCurrencyCode();
-        if (Objects.nonNull(skuVO)) {
+        if (Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getNotTaxCostPrice())) {
             purchasePrice = skuVO.getNotTaxCostPrice();
         }
         item.setCostSource(Objects.isNull(skuVO) ? "" : skuVO.getCostSource());

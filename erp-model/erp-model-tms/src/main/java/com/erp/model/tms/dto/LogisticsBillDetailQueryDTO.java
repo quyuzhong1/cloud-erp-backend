@@ -60,6 +60,10 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      */
     private LocalDateTime trackTime;
     /**
+     * 物流轨迹更新时间
+     */
+    private LocalDateTime updateTime;
+    /**
      * 跟踪号
      */
     private List<String> trackNoList;

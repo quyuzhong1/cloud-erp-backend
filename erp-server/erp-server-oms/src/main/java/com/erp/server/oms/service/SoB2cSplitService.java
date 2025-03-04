@@ -96,13 +96,14 @@ public interface SoB2cSplitService extends SuperService<SoB2cEntity> {
     List<SoB2cDTO.CheckCancelSplitDTO> checkCancelSplit(List<String> ids);
 
     /**
+     * @param id
+     * @param isCheckPlatform
+     * @return BatchResultDTO
      * @description: 取消合并
      * @author Will
      * @date: 2023/8/21 9:24
-     * @param id
-     * @return BatchResultDTO
      */
-    BatchResultDTO cancelSplit(String id);
+    BatchResultDTO cancelSplit(String id, Boolean isCheckPlatform);
 
     /**
      * 组合sku拆分数据
