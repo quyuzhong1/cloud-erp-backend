@@ -101,17 +101,6 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/user/getDepUserList")
     List<String> getDepUserList(@RequestBody String userId);
-    /**
-     * 获取店铺的用户
-     */
-    @GetMapping("feign/user/getShopUserList")
-    List<SysUserDTO.ShopDTO> getShopUserList(@RequestBody String userId);
-
-    /**
-     * 获取仓库的用户
-     */
-    @GetMapping("feign/user/getWarehouseUserList")
-    List<SysUserDTO.WarehouseDTO> getWarehouseUserList(@RequestBody String userId);
 
     /**
      * 根据用户id 获取用户角色的id
@@ -592,17 +581,4 @@ public interface SysUserFeign {
 
     @PostMapping("feign/dept/getDeptByIds")
     List<SysDepartmentEntity> getDeptByIds(@RequestBody List<String> ids);
-
-    /**
-     * 获取用户店铺权限
-     * @return
-     */
-    @PostMapping("feign/user/getShopPermissionSql")
-    String getShopPermissionSql(@RequestBody String shopTableField);
-    /**
-     * 获取用户仓库权限
-     * @return
-     */
-    @PostMapping("feign/user/getWarehousePermissionSql")
-    String getWarehousePermissionSql(@RequestBody String warehouseTableField);
 }

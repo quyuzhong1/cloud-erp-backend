@@ -53,4 +53,26 @@ public interface AuthUserShopService extends SuperService<AuthUserShopEntity> {
      * 同步权限数据
      */
     void initShopDataOmsToSys();
+
+    /**
+     * 获取用户权限列表
+     * @param userIdList
+     * @return
+     */
+    List<SysUserDTO.ShopDTO> listShopIdByUserIds(List<String> userIdList);
+
+    /**
+     * 根据店铺获取用户列表
+     * @param shopIdList
+     * @return
+     */
+    List<String> listUserIdByShopIdList(List<String> shopIdList);
+
+    /**
+     * 批量更新用户店铺权限
+     * @param uid
+     * @param shopIdList
+     * @param shopAuthType
+     */
+    void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType);
 }

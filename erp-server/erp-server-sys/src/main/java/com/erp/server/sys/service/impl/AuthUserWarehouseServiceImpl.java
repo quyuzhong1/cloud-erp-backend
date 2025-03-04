@@ -7,7 +7,9 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.vo.LoginUser;
 import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.sys.entity.AuthUserShopEntity;
 import com.erp.model.sys.entity.AuthUserWarehouseEntity;
+import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.mapper.AuthUserWarehouseMapper;
 import com.erp.server.sys.service.AuthUserWarehouseService;
@@ -98,7 +100,7 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         if (CharSequenceUtil.isBlank(userId)){
             return Collections.emptyList();
         }
-        return baseMapper.getWarehouseUserList(userId);
+        return baseMapper.getWarehouseUserList(userId, null);
     }
 
     @Override
@@ -114,8 +116,8 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         if (CollUtil.isEmpty(warehouseUserList)){
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
-        Integer dataScope = warehouseUserList.stream().min(Comparator.comparing(SysUserDTO.WarehouseDTO::getDataScope)).map(SysUserDTO.WarehouseDTO::getDataScope).orElse(MathUtil.ONE);
-        if (MathUtil.ZERO.equals(dataScope)){
+        String authType = warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
+        if ("all".equals(authType)){
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         StringBuilder sqlString = new StringBuilder();
@@ -123,7 +125,7 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         List<String> warehouseTableFieldList = Arrays.asList(warehouseTableField.split(","));
         int warehouseTableFieldSize = warehouseTableFieldList.size();
         if (CollectionUtils.isNotEmpty(warehouseUserList)) {
-            if (1 == dataScope){
+            if ("part".equals(authType)){
                 if (warehouseTableFieldSize == 1) {
                     sqlString.append(" AND string_to_array(").append(warehouseTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).collect(Collectors.toList()), ",")).append("',',')");
                 } else {
@@ -136,6 +138,61 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
             }
         }
         return sqlString.toString();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType) {
+        if (CharSequenceUtil.isBlank(uid)){
+            return;
+        }
+        List<AuthUserWarehouseEntity> list = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, uid).list();
+        if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(warehouseAuthType)){
+            AuthUserWarehouseEntity auth = list.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
+            if (Objects.isNull(auth)){
+                //清空历史
+                this.lambdaUpdate().eq(AuthUserWarehouseEntity::getUserId, uid).remove();
+                //新增全部授权
+                AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
+                entity.setAuthType(AuthDataTypeEnum.ENUM_ALL.getCode());
+                entity.setUserId(uid);
+                this.save(entity);
+            }
+        }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(warehouseAuthType)){
+            //删除移除的权限
+            List<String> ids = new ArrayList<>();
+            if (CollUtil.isNotEmpty(list)){
+                ids = list.stream().map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
+                List<String> deleteIdList = list.stream().filter(e -> !warehouseIdList.contains(e.getWarehouseId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
+                        .map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(deleteIdList)){
+                    this.removeByIds(deleteIdList);
+                }
+            }
+            //添加新增权限
+            List<AuthUserWarehouseEntity> addList = new ArrayList<>();
+            List<String> finalIds = ids;
+            warehouseIdList.forEach(warehouseId ->{
+                if (CollUtil.isEmpty(finalIds) || !finalIds.contains(warehouseId)){
+                    AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
+                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                    entity.setUserId(uid);
+                    entity.setWarehouseId(warehouseId);
+                    addList.add(entity);
+                }
+            });
+            if (CollUtil.isNotEmpty(addList)){
+                this.saveBatch(addList);
+            }
+        }
+    }
+
+    @Override
+    public List<SysUserDTO.WarehouseDTO> listWarehouseIdByUserIds(List<String> userIds) {
+        if (CollUtil.isEmpty(userIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getWarehouseUserList(null,userIds);
     }
 
 

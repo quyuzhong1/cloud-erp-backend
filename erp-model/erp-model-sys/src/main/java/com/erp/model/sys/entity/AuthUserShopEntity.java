@@ -34,17 +34,15 @@ public class AuthUserShopEntity extends BaseEntity<AuthUserShopEntity> {
     @TableField("shop_id")
     private String shopId;
     /**
-    * 数据权限(0-全部，1-部分)
-    */
-    @TableField("data_scope")
-    private Integer dataScope;
+     * 授权类型（all全部，part部分）字典shopAuthType
+     */
+    @TableField("auth_type")
+    private String authType;
 
 
     public static final String USER_ID = "user_id";
 
     public static final String SHOP_ID = "shop_id";
-
-    public static final String DATA_SCOPE = "data_scope";
 
     @Override
     public Serializable pkVal() {

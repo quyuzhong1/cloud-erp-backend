@@ -14,7 +14,7 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="user_id" property="userId" />
        <result column="warehouse_id" property="warehouseId" />
-       <result column="data_scope" property="dataScope" />
+       <result column="auth_type" property="authType" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -28,13 +28,21 @@
         update_time,
         version,
         is_deleted,
-        user_id, warehouse_id, data_scope
+        user_id, warehouse_id, auth_type
     </sql>
     <select id="getWarehouseUserList" resultType="com.erp.model.sys.dto.SysUserDTO$WarehouseDTO">
-        select user_id,warehouse_id,data_scope
+        select user_id,warehouse_id,auth_type
         from auth_user_warehouse
         where is_deleted = false
-          and user_id = #{userId}
+        <if test="userId != null and userId != ''">
+            and user_id = #{userId}
+        </if>
+        <if test="userIds !=null and userIds.size()>0">
+            AND user_id in
+            <foreach collection="userIds" item="userId" open="(" separator="," close=")">
+                #{userId}
+            </foreach>
+        </if>
     </select>
 
 

@@ -81,8 +81,10 @@ public class SysUserDTO implements Serializable {
         private String userId;
         //店铺id
         private String shopId;
-        //数据权限(0-全部，1-部分)
-        private Integer dataScope;
+        /**
+         * 授权类型（all全部授权，part指定授权）字典shopAuthType
+         */
+        private String authType;
     }
     @Data
     @NoArgsConstructor
@@ -91,7 +93,9 @@ public class SysUserDTO implements Serializable {
         private String userId;
         //仓库id
         private String warehouseId;
-        //数据权限(0-全部，1-部分)
-        private Integer dataScope;
+        /**
+         * 授权类型（all全部授权，part指定授权）字典shopAuthType
+         */
+        private String authType;
     }
 }

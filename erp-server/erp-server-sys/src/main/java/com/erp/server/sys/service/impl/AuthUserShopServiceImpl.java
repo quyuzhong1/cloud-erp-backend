@@ -6,31 +6,33 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
+import com.erp.model.oms.enums.ShopAuthTypeEnum;
+import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.AuthUserShopEntity;
+import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.convert.AuthUserConvert;
 import com.erp.server.sys.mapper.AuthUserShopMapper;
 import com.erp.server.sys.service.AuthUserShopService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-//import com.erp.server.sys.service.OperateLogService;
-import com.common.core.exception.ServiceException;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.AuthUserShopDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 用户-店铺权限 服务实现类
@@ -109,7 +111,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         if (CharSequenceUtil.isBlank(userId)){
             return Collections.emptyList();
         }
-        return baseMapper.getShopUserList(userId);
+        return baseMapper.getShopUserList(userId,null);
     }
 
     @Override
@@ -125,8 +127,8 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         if (CollUtil.isEmpty(shopUserList)){
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
-        Integer dataScope = shopUserList.stream().min(Comparator.comparing(SysUserDTO.ShopDTO::getDataScope)).map(SysUserDTO.ShopDTO::getDataScope).orElse(MathUtil.ONE);
-        if (MathUtil.ZERO.equals(dataScope)){
+        String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
+        if ("all".equals(authType)){
             return SysConstant.ADMIN_PERMISSON_SQL;
         }
         StringBuilder sqlString = new StringBuilder();
@@ -134,7 +136,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
         int shopTableFieldSize = shopTableFieldList.size();
         if (CollectionUtils.isNotEmpty(shopUserList)) {
-            if (1 == dataScope){
+            if ("part".equals(authType)){
                 if (shopTableFieldSize == 1) {
                     sqlString.append(" AND string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
                 } else {
@@ -158,7 +160,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         List<AuthUserShopEntity> shopEntityList = AuthUserConvert.INSTANCE.OmsShopAuthToSysShopAuth(list);
         List<List<AuthUserShopEntity>> partition = ListUtil.partition(shopEntityList, MathUtil.NUMBER_100);
         partition.forEach(authUserShopEntities -> authUserShopEntities.forEach(e->{
-            AuthUserShopEntity one = this.lambdaQuery().eq(AuthUserShopEntity::getDataScope, e.getDataScope()).eq(AuthUserShopEntity::getShopId, e.getShopId()).eq(AuthUserShopEntity::getUserId, e.getUserId()).last("limit 1").one();
+            AuthUserShopEntity one = this.lambdaQuery().eq(AuthUserShopEntity::getAuthType, e.getAuthType()).eq(AuthUserShopEntity::getShopId, e.getShopId()).eq(AuthUserShopEntity::getUserId, e.getUserId()).last("limit 1").one();
             if (Objects.isNull(one)){
                 this.save(e);
             }else {
@@ -166,5 +168,75 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
                 this.updateById(e);
             }
         }));
+    }
+
+    @Override
+    public List<SysUserDTO.ShopDTO> listShopIdByUserIds(List<String> userIdList) {
+        if (CollUtil.isEmpty(userIdList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getShopUserList(null,userIdList);
+    }
+
+    @Override
+    public List<String> listUserIdByShopIdList(List<String> shopIdList) {
+        if (CollectionUtils.isEmpty(shopIdList)) {
+            return Collections.emptyList();
+        }
+        List<AuthUserShopEntity> list = lambdaQuery().in(AuthUserShopEntity::getShopId, shopIdList)
+                .or()
+                .eq(AuthUserShopEntity::getAuthType, ShopAuthTypeEnum.ENUM_ALL.getCode())
+                .list();
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return list.stream().map(AuthUserShopEntity::getUserId).distinct().collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void batchSaveOrUpdate(String uid, List<String> shopIdList, String shopAuthType) {
+        if (CharSequenceUtil.isBlank(uid)){
+            return;
+        }
+        List<AuthUserShopEntity> list = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, uid).list();
+        if (AuthDataTypeEnum.ENUM_ALL.getCode().equals(shopAuthType)){
+            AuthUserShopEntity auth = list.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
+            if (Objects.isNull(auth)){
+                //清空历史
+                this.lambdaUpdate().eq(AuthUserShopEntity::getUserId, uid).remove();
+                //新增全部授权
+                AuthUserShopEntity entity = new AuthUserShopEntity();
+                entity.setAuthType(AuthDataTypeEnum.ENUM_ALL.getCode());
+                entity.setUserId(uid);
+                this.save(entity);
+            }
+        }else if (AuthDataTypeEnum.ENUM_PART.getCode().equals(shopAuthType)){
+            //删除移除的权限
+            List<String> ids = new ArrayList<>();
+            if (CollUtil.isNotEmpty(list)){
+                ids = list.stream().map(AuthUserShopEntity::getId).collect(Collectors.toList());
+                List<String> deleteIdList = list.stream().filter(e -> !shopIdList.contains(e.getShopId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
+                        .map(AuthUserShopEntity::getId).collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(deleteIdList)){
+                    this.removeByIds(deleteIdList);
+                }
+            }
+            //添加新增权限
+            List<AuthUserShopEntity> addList = new ArrayList<>();
+            List<String> finalIds = ids;
+            shopIdList.forEach(shopId ->{
+                if (CollUtil.isEmpty(finalIds) || !finalIds.contains(shopId)){
+                    AuthUserShopEntity entity = new AuthUserShopEntity();
+                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                    entity.setUserId(uid);
+                    entity.setShopId(shopId);
+                    addList.add(entity);
+                }
+            });
+            if (CollUtil.isNotEmpty(addList)){
+                this.saveBatch(addList);
+            }
+        }
     }
 }
