@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -124,7 +125,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
                 wmsVirtualDetailMsgService.updateStatus(entity);
                 break;
             }
-            WmsVirtualDetailMsgEntity entity = new WmsVirtualDetailMsgEntity();
+            WmsVirtualDetailMsgEntity entity = BeanUtil.toBean(listDTO, WmsVirtualDetailMsgEntity.class);
             entity.setStatus(VirtualDetailMsgStatusEnum.SUCCESS.getCode());
             wmsVirtualDetailMsgService.updateStatus(entity);
         }
