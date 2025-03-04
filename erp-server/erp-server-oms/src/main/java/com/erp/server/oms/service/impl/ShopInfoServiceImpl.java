@@ -1769,7 +1769,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             CustomerInfoEntity customerInfoEntity = this.autoCreateShopCustomer(shopInfoEntity.getId());
             if (Objects.nonNull(customerInfoEntity)) {
                 ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
-                if (Objects.isNull( approveStatus)||!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus.getStatus())) {
+                if (Objects.equals(ApproveStatusEnum.REJECT.getStatus(), approveStatus.getStatus()) || Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), approveStatus.getStatus())) {
                     List<String> ids = Arrays.asList(customerInfoEntity.getId());
                     //提交
                     Boolean submitResult = customerInfoService.submit(ids);
