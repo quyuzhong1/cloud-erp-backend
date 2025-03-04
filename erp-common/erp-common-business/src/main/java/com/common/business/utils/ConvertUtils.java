@@ -24,7 +24,7 @@ import java.util.regex.Pattern;
 public class ConvertUtils {
 
     public static final String UNKNOWN = "unknown";
-    public static final String REGEX = "\\s*";
+    public static final String REGEX = "\\s+";
 
     private ConvertUtils() {
     }
