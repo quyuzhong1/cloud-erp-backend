@@ -105,6 +105,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			dmpResponse.setDmpCfgInputConvertEntity(dmpCfgInputConvertEntityList.get(0));
 		}
 		List<DmpOutputTaskRecordEntity> outputData = this.outputData(dmpRequest, dmpResponse);
+		this.dealDeleteDmpBaseEntity(dmpRequest, dmpResponse, outputData);
 		dmpResponse.setOutputData(outputData);
 		if(CollUtil.isNotEmpty(outputData)) {
 			dmpOutputTaskRecordService.saveBatch(outputData);
@@ -117,7 +118,6 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		    }
 		});
 
-
 		dmpOutputTaskService.lambdaUpdate()
 				.eq(DmpOutputTaskEntity::getId, dmpRequest.getOutputTaskId())
 				.set(DmpOutputTaskEntity::getStatus, DmpOutputTaskStatusEnum.FINISH.getCode())
@@ -128,6 +128,41 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	protected abstract List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse);
+	
+	protected void dealDeleteDmpBaseEntity(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse, List<DmpOutputTaskRecordEntity> outputData) {
+		Map<DmpCfgInputConvertEntity, Set<String>> deleteConvertInputDmpBaseEntityMaps = dmpRequest.getDeleteConvertInputDmpBaseEntityMaps();
+		if(CollUtil.isEmpty(deleteConvertInputDmpBaseEntityMaps)) {
+			return;
+		}
+		Set<String> allDeleteConvertInputDmpBaseEntitySet = new HashSet<>();
+		for(Map.Entry<DmpCfgInputConvertEntity, Set<String>> deleteConvertInputDmpBaseEntityMap : deleteConvertInputDmpBaseEntityMaps.entrySet()) {
+			Set<String> deleteConvertInputDmpBaseEntitySet = deleteConvertInputDmpBaseEntityMap.getValue();
+			if(CollUtil.isNotEmpty(deleteConvertInputDmpBaseEntitySet)) {
+				allDeleteConvertInputDmpBaseEntitySet.addAll(deleteConvertInputDmpBaseEntitySet);
+			}
+		}
+		if(CollUtil.isNotEmpty(allDeleteConvertInputDmpBaseEntitySet)) {
+			Map<String, DmpOutputTaskRecordEntity> dataIdRecordMaps = dmpOutputTaskRecordService.lambdaQuery()
+						.in(DmpOutputTaskRecordEntity::getDataId, allDeleteConvertInputDmpBaseEntitySet)
+						.list()
+						.stream()
+						.filter(d -> StringUtils.isNotBlank(d.getRequestData()) && d.getRequestData().trim().startsWith("{"))
+						.collect(Collectors.toMap(DmpOutputTaskRecordEntity::getDataId, d -> d , (d1 , d2) -> d2));
+			for(Map.Entry<String, DmpOutputTaskRecordEntity> dataIdRecordMap : dataIdRecordMaps.entrySet()) {
+				DmpOutputTaskRecordEntity value = dataIdRecordMap.getValue();
+				DmpOutputTaskRecordEntity newValue = new DmpOutputTaskRecordEntity();
+				String id = identifierGenerator.nextId(newValue).toString();
+				newValue.setId(id);
+				newValue.setSourceCode(value.getSourceCode());
+				newValue.setMainId(dmpRequest.getOutputTaskId());
+				newValue.setDataId(value.getDataId());
+				JSONObject parseObject = JSON.parseObject(value.getRequestData());
+				parseObject.put("status", "已删除");
+				newValue.setRequestData(parseObject.toJSONString());
+				outputData.add(newValue);
+			}
+		}
+	}
 	
 	public void dealDmpOutputTaskRecordEntityList(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
     	if(CollUtil.isEmpty(dmpOutputTaskRecordEntityList)) {
