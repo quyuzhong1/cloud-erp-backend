@@ -136,7 +136,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
         if(CollUtil.isNotEmpty(warehouseList)){
             warehouseList.forEach(v->{
-                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.TRANSIT.getName());
+                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.STANDARD.getName());
                 v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
             });
         }

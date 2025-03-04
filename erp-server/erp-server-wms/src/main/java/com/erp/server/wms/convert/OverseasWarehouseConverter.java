@@ -46,7 +46,8 @@ public interface OverseasWarehouseConverter {
             @Mapping(target = "platformToWarehouseName", source = "destinationWarehouseName"),
             @Mapping(target = "logisticsProductCode", source = "logisticsChannelCode"),
             @Mapping(target = "logisticsProductName", source = "logisticsChannelName"),
-            @Mapping(target = "platformWarehouseStatus", source = "platformWarehouseStatus")
+            @Mapping(target = "platformWarehouseStatus", source = "platformWarehouseStatus"),
+            @Mapping(target = "country", source = "countryCode")
     })
     OverseasTransferWarehouseEntity transferDtoConvert(PlatformTransferWarehouseDTO dto);
 
