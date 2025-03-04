@@ -104,6 +104,14 @@ public class CfgRuleStockUpDTO implements Serializable {
     @Getter
     @Setter
     public static class RefViewDTO {
+        /**
+         * 备货id
+         */
+        private String stockUpId;
+        /**
+         * 时效id
+         */
+        private String expireTimeId;
 
         /**
          * 关联id
@@ -171,10 +179,15 @@ public class CfgRuleStockUpDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CustomUpdateDTO {
+
         /**
-         * 主键id
+         * 备货id
          */
-        private String id;
+        private String stockUpId;
+        /**
+         * 时效id
+         */
+        private String expireTimeId;
 
         /**
          * 是否是自定义
@@ -248,6 +261,10 @@ public class CfgRuleStockUpDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
+        /**
+         * id
+         */
+        private String id;
         /**
          * 是否是自定义
          */

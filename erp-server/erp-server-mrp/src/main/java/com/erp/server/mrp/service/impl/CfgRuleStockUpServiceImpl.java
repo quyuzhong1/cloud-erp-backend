@@ -160,10 +160,12 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         // 更新时效数据
         CfgRuleExpireTimeDTO.UpdateDTO expireTimeDTO = BeanMapperUtils.map(CfgRuleExpireTimeDTO.UpdateDTO.class, stockUpUpdateDTO);
         expireTimeDTO.setPlatformCfgLogisticsList(stockUpUpdateDTO.getCfgLogisticsList());
+        expireTimeDTO.setId(stockUpUpdateDTO.getExpireTimeId());
         cfgRuleExpireTimeService.update(expireTimeDTO);
         // 更新备货数据
         CfgRuleStockUpDTO.UpdateDTO updateDTO = BeanMapperUtils.map(CfgRuleStockUpDTO.UpdateDTO.class, stockUpUpdateDTO);
         updateDTO.setPlatformSafeDays(stockUpUpdateDTO.getSafeDays());
+        updateDTO.setId(stockUpUpdateDTO.getStockUpId());
         ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).update(updateDTO);
     }
 
