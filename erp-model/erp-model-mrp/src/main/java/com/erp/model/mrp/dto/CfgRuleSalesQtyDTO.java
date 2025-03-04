@@ -195,8 +195,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */
-        @NotBlank(message = "平台类型不能为空")
-        @Size(max = 32,message = "平台类型最大长度不能超过32位")
         private String platform;
 
         /**
