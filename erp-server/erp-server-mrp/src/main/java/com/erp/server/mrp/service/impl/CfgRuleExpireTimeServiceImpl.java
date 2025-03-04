@@ -62,8 +62,8 @@ public class CfgRuleExpireTimeServiceImpl extends SuperServiceImpl<CfgRuleExpire
         }
 
         //物流信息
-        cfgRuleLogisticsService.update(dto.getOverseasCfgLogisticsList(), cfgRuleExpireTime, dto.getIsCustom(), true);
-        cfgRuleLogisticsService.update(dto.getPlatformCfgLogisticsList(), cfgRuleExpireTime, dto.getIsCustom(), false);
+        cfgRuleLogisticsService.update(dto.getOverseasCfgLogisticsList(), cfgRuleExpireTime, dto.getIsBatch(), true);
+        cfgRuleLogisticsService.update(dto.getPlatformCfgLogisticsList(), cfgRuleExpireTime, dto.getIsBatch(), false);
         //海外入库时间
         cfgRuleOverseasInstockDaysService.update(dto.getOverseasInstockDaysList(), cfgRuleExpireTime);
 

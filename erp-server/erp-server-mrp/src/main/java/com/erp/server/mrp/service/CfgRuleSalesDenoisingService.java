@@ -26,7 +26,7 @@ public interface CfgRuleSalesDenoisingService extends SuperService<CfgRuleSalesD
      * @author will
      * @date: 2024-08-23
      */
-     void update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isCustom);
+     void update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isBatch);
 
     /**
      * 根据销量id集合查询

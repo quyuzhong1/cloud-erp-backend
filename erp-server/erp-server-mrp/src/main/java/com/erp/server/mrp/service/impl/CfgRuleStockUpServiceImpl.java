@@ -78,9 +78,9 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
             throw new ServiceException("备货（规则设置）保存失败");
         }
         //常规备货系数
-        cfgRuleStockingRatioService.update(updateDTO.getStockingRatioList(), cfgRuleStockUpEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), updateDTO.getIsCustom());
+        cfgRuleStockingRatioService.update(updateDTO.getStockingRatioList(), cfgRuleStockUpEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), updateDTO.getIsBatch());
         //新品备货系数
-        cfgRuleStockingRatioService.update(updateDTO.getNewStockingRatioList(), cfgRuleStockUpEntity, CfgRuleStockingRatioTypeEnum.NEW.getCode(), updateDTO.getIsCustom());
+        cfgRuleStockingRatioService.update(updateDTO.getNewStockingRatioList(), cfgRuleStockUpEntity, CfgRuleStockingRatioTypeEnum.NEW.getCode(), updateDTO.getIsBatch());
         //平台安全天数
         cfgRuleSafeDaysService.update(updateDTO.getPlatformSafeDaysList(),cfgRuleStockUpEntity, CfgRulePlatformTypeEnum.AMAZON.getCode());
         //海外安全天数

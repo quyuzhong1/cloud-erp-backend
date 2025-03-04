@@ -1,12 +1,13 @@
 package com.erp.server.mrp.calculation.strategy.sales;
 
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.SalesEstimateTypeEnum;
 
 /**
  * 销量预估策略
  */
 
-public interface SalesEstimateStrategy<T, R> {
+public interface SalesEstimateStrategy {
 
     default boolean isMatch(String type) {
         return getType().getCode().equals(type);
@@ -23,7 +24,7 @@ public interface SalesEstimateStrategy<T, R> {
     /**
      * 处理逻辑
      *
-     * @param t 参数
+     * @param dto 参数
      */
-    R process(T t);
+    void process(ReplenishmentResultDTO dto);
 }

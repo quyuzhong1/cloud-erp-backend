@@ -289,7 +289,7 @@ public class ReplenishmentSuggestionController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = replenishmentSuggestionService.batchUpdateRule(id, dto.getStockUpUpdateDTO(),dto.getSalesQtyUpdateDTO());
+                resultDTO = replenishmentSuggestionService.batchUpdateRule(id, dto.getStockUpUpdateDTO(),dto.getSalesQtyUpdateDTO(), dto.getIsBatch());
             } catch (Exception e) {
                 log.error("批量设置规则", e);
                 ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);

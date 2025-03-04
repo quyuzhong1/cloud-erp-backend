@@ -149,11 +149,12 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param id
      * @param stockUpUpdateDTO
      * @param salesQtyUpdateDTO
+     * @param isBatch
      * @return BatchResultDTO
      * @author will
      * @date 2024/8/29 15:57
      */
-    BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO);
+    BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO, Boolean isBatch);
 
     /**
      * 恢复规则设置

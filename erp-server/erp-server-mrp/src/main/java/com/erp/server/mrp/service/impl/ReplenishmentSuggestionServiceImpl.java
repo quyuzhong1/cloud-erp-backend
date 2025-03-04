@@ -48,6 +48,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.mrp.calculation.handler.SalesEstimateHandler;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
+import com.erp.server.mrp.calculation.strategy.sales.AbstractSalesEstimateStrategy;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.service.HistoryInventoryEsService;
@@ -586,7 +587,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO) {
+    public BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO, Boolean isBatch) {
         if (ObjectUtil.isEmpty(stockUpUpdateDTO) && ObjectUtil.isEmpty(salesQtyUpdateDTO)) {
             throw new ServiceException("备货、销量设置不能全部为空！");
         }
@@ -600,6 +601,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             stockUpUpdateDTO.setRefId(id);
             stockUpUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             stockUpUpdateDTO.setIsCustom(Boolean.TRUE);
+            stockUpUpdateDTO.setIsBatch(isBatch);
             cfgRuleStockUpService.customUpdate(stockUpUpdateDTO);
         }
         //更新销量信息
@@ -607,6 +609,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             salesQtyUpdateDTO.setRefId(id);
             salesQtyUpdateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
             salesQtyUpdateDTO.setIsCustom(Boolean.TRUE);
+            salesQtyUpdateDTO.setIsBatch(isBatch);
             cfgRuleSalesQtyService.batchUpdate(salesQtyUpdateDTO);
         }
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.UPDATE);
@@ -1542,24 +1545,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     /**
-     * 异步获取主表数据
-     *
-     * @param suggestionIds 建议id
-     */
-    private List<ReplenishmentSuggestionEntity> listReplenishmentSuggestion(List<String> suggestionIds) {
-        List<List<String>> partition = Lists.partition(suggestionIds, 1000);
-        return partition.stream()
-                .map(suggestionIdList -> CompletableFuture.supplyAsync(
-                        () -> listByIds(suggestionIdList),
-                        threadPoolTaskExecutor))
-                .collect(Collectors.toList())
-                .stream()
-                .map(CompletableFuture::join)  // 等待每个 CompletableFuture 完成
-                .flatMap(List::stream)
-                .collect(Collectors.toList());
-    }
-
-    /**
      * 异步获取详情数据
      *
      * @param suggestionIds 建议id
@@ -2075,7 +2060,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             if (ObjectUtils.isEmpty(formulaResult)) {
                 continue;
             }
-            BigDecimal saleQty = salesEstimateHandler.getSaleQty(salesInfos, avgTimePeriodSales, formulaResult, basicCalcDate);
+            BigDecimal saleQty = AbstractSalesEstimateStrategy.getSaleQty(salesInfos, avgTimePeriodSales, formulaResult, basicCalcDate);
             ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty, formulaResult);
             salesEstimates.add(salesEstimateDTO);
         }

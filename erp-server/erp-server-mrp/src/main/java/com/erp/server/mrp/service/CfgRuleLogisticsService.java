@@ -26,7 +26,7 @@ public interface CfgRuleLogisticsService extends SuperService<CfgRuleLogisticsEn
      * @author will
      * @date: 2024-08-23
      */
-    Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList, CfgRuleExpireTimeEntity cfgRuleExpireTime, Boolean isCustom, boolean isOverseas);
+    Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList, CfgRuleExpireTimeEntity cfgRuleExpireTime, Boolean isBatch, boolean isOverseas);
 
     /**
      * 根据备货主表id查询

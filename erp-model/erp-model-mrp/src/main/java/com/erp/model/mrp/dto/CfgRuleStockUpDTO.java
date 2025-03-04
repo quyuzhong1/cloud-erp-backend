@@ -195,6 +195,11 @@ public class CfgRuleStockUpDTO implements Serializable {
         private Boolean isCustom = true;
 
         /**
+         * 是否是批量
+         */
+        private Boolean isBatch = false;
+
+        /**
          * 采购审批天数（天）
          */
         private Integer purchaseApproveDays;
@@ -269,6 +274,10 @@ public class CfgRuleStockUpDTO implements Serializable {
          * 是否是自定义
          */
         private Boolean isCustom = false;
+        /**
+         * 是否是批量
+         */
+        private Boolean isBatch = false;
 
         /**
          * 常规品备货系数信息

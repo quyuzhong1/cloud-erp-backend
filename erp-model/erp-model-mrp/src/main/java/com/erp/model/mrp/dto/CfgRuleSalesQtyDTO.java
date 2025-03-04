@@ -210,6 +210,10 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          * 是否是自定义
          */
         private Boolean isCustom = false;
+        /**
+         * 是否是批量
+         */
+        private Boolean isBatch = false;
 
         /**
          * 是否同常规品设置
