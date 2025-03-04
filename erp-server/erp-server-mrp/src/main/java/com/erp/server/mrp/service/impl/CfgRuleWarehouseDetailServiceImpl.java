@@ -301,7 +301,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             }
             List<String> partitionIdList = detailEntity.getPartitionIdJson().stream().map(Object::toString).collect(Collectors.toList());
             viewDTO.setPartitionIdList(partitionIdList);
-            String partitionName = partitionEntityList.stream().filter(obj -> partitionIdList.contains(obj.getId())).map(DictPartitionEntity::getName)
+            String partitionName = CollectionUtils.isEmpty(partitionIdList) ? "全部军区" : partitionEntityList.stream().filter(obj -> partitionIdList.contains(obj.getId())).map(DictPartitionEntity::getName)
                     .distinct().sorted().collect(Collectors.joining(","));
             viewDTO.setPartitionName(partitionName);
             resultList.add(viewDTO);

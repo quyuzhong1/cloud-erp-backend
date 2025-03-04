@@ -53,7 +53,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isCustom) {
+    public Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isBatch) {
         if (CollectionUtils.isEmpty(salesFormulaList)) {
             salesFormulaList = Collections.emptyList();
         }
@@ -62,7 +62,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
         //原信息
         List<CfgRuleSalesFormulaEntity> oldList = listBySalesQtyIdList(Collections.singletonList(cfgRuleSalesQtyEntity.getId()), skuType);
         //自定义更新无需删除
-        if (Boolean.FALSE.equals(isCustom)) {
+        if (Boolean.FALSE.equals(isBatch)) {
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -76,7 +76,7 @@ public class CfgRuleSalesFormulaServiceImpl extends SuperServiceImpl<CfgRuleSale
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list,oldList,cfgRuleSalesQtyEntity.getId(),isCustom, skuType);
+        handleData(list,oldList,cfgRuleSalesQtyEntity.getId(),isBatch, skuType);
         log.info("编辑 开始修改销量公式（规则设置）数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {

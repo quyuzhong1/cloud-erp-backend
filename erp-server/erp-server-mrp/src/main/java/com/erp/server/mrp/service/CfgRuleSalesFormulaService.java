@@ -29,7 +29,7 @@ public interface CfgRuleSalesFormulaService extends SuperService<CfgRuleSalesFor
      * @author will
      * @date: 2024-08-23
      */
-    Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity,String skuType, Boolean isCustom);
+    Boolean update(List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity,String skuType, Boolean isBatch);
 
     /**
      * 获取默认的日销量数据

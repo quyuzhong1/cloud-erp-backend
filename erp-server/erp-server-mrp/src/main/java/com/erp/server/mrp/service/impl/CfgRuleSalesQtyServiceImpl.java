@@ -77,19 +77,21 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
 
         //销量信息调整
         List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = handleSalesFormula(updateDTO.getDefaultSalesQtyDTO(), updateDTO.getDynamicSalesQtyList(), updateDTO.getFixedSalesQtyList());
-        cfgRuleSalesFormulaService.update(salesFormulaList,cfgRuleSalesQtyEntity,CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), updateDTO.getIsCustom());
-        //新品销量信息调整
-        if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDefault())) {
-            updateDTO.getDefaultNewSalesQtyDTO().setId(null);
+        cfgRuleSalesFormulaService.update(salesFormulaList,cfgRuleSalesQtyEntity,CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), updateDTO.getIsBatch());
+        if (Boolean.FALSE.equals(updateDTO.getIsCustom())) {
+            //新品销量信息调整
+            if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDefault())) {
+                updateDTO.getDefaultNewSalesQtyDTO().setId(null);
+            }
+            if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDynamic())) {
+                updateDTO.getDynamicNewSalesQtyList().forEach(obj -> obj.setId(null));
+            }
+            List<CfgRuleSalesFormulaDTO.UpdateDTO> salesNewFormulaList = handleSalesFormula(updateDTO.getDefaultNewSalesQtyDTO(), updateDTO.getDynamicNewSalesQtyList(), updateDTO.getFixedSalesQtyList());
+            cfgRuleSalesFormulaService.update(salesNewFormulaList,cfgRuleSalesQtyEntity,CfgRuleStockingRatioTypeEnum.NEW.getCode(), updateDTO.getIsBatch());
         }
-        if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDynamic())) {
-            updateDTO.getDynamicNewSalesQtyList().forEach(obj -> obj.setId(null));
-        }
-        List<CfgRuleSalesFormulaDTO.UpdateDTO> salesNewFormulaList = handleSalesFormula(updateDTO.getDefaultNewSalesQtyDTO(), updateDTO.getDynamicNewSalesQtyList(), updateDTO.getFixedSalesQtyList());
-        cfgRuleSalesFormulaService.update(salesNewFormulaList,cfgRuleSalesQtyEntity,CfgRuleStockingRatioTypeEnum.NEW.getCode(), updateDTO.getIsCustom());
 
         //销量去噪
-        cfgRuleSalesDenoisingService.update(updateDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),updateDTO.getIsCustom());
+        cfgRuleSalesDenoisingService.update(updateDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),updateDTO.getIsBatch());
         //新品去噪信息处理
         if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDenoising())) {
             updateDTO.getNewSalesDenoisingList().forEach(obj -> obj.setId(null));
@@ -366,23 +368,26 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
             if (CharSequenceUtil.isBlank(cfgRuleSalesQtyEntity.getSalesQtyType())) {
                 cfgRuleSalesQtyEntity.setSalesQtyType(oldEntity.getSalesQtyType());
             }
-            if (CollectionUtils.isNotEmpty(cfgRuleSalesQtyEntity.getOrderType())) {
+            if (CollectionUtils.isEmpty(cfgRuleSalesQtyEntity.getOrderType())) {
                 cfgRuleSalesQtyEntity.setOrderType(oldEntity.getOrderType());
             }
-            if (ObjectUtil.isNotEmpty(cfgRuleSalesQtyEntity.getPlatform())) {
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getPlatform())) {
                 cfgRuleSalesQtyEntity.setPlatform(oldEntity.getPlatform());
             }
-            if (ObjectUtil.isNotEmpty(cfgRuleSalesQtyEntity.getIsCfgSameDefault())) {
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsCfgSameDefault())) {
                 cfgRuleSalesQtyEntity.setIsCfgSameDefault(oldEntity.getIsCfgSameDefault());
             }
-            if (ObjectUtil.isNotEmpty(cfgRuleSalesQtyEntity.getIsCfgSameDynamic())) {
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsCfgSameDynamic())) {
                 cfgRuleSalesQtyEntity.setIsCfgSameDynamic(oldEntity.getIsCfgSameDynamic());
             }
-            if (ObjectUtil.isNotEmpty(cfgRuleSalesQtyEntity.getIsCfgSameDenoising())) {
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getIsCfgSameDenoising())) {
                 cfgRuleSalesQtyEntity.setIsCfgSameDenoising(oldEntity.getIsCfgSameDenoising());
             }
-            if (ObjectUtil.isNotEmpty(cfgRuleSalesQtyEntity.getSalesEstimateType())) {
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getSalesEstimateType())) {
                 cfgRuleSalesQtyEntity.setSalesEstimateType(oldEntity.getSalesEstimateType());
+            }
+            if (ObjectUtil.isEmpty(cfgRuleSalesQtyEntity.getOrderTypeName())) {
+                cfgRuleSalesQtyEntity.setOrderTypeName(oldEntity.getOrderTypeName());
             }
         }
     }

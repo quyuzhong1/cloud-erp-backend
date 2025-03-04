@@ -64,7 +64,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = "cache:mrp:logistics:listByExpireTimeIdList", allEntries = true, beforeInvocation = true)
-    public Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList, CfgRuleExpireTimeEntity cfgRuleExpireTime, Boolean isCustom, boolean isOverseas) {
+    public Boolean update(List<CfgRuleLogisticsDTO.UpdateDTO> logisticsList, CfgRuleExpireTimeEntity cfgRuleExpireTime, Boolean isBatch, boolean isOverseas) {
         if (CollectionUtils.isEmpty(logisticsList)) {
             logisticsList = Collections.emptyList();
         }
@@ -72,8 +72,8 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
         //原物流信息
         List<CfgRuleLogisticsEntity> oldList = listByExpireTimeIdList(Collections.singletonList(cfgRuleExpireTime.getId()),
                 isOverseas ? CfgRulePlatformTypeEnum.OVERSEAS.getCode() : CfgRulePlatformTypeEnum.AMAZON.getCode());
-        //自定义更新无需删除
-        if (Boolean.FALSE.equals(isCustom)) {
+        //批量更新无需删除
+        if (Boolean.FALSE.equals(isBatch)) {
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -86,7 +86,7 @@ public class CfgRuleLogisticsServiceImpl extends SuperServiceImpl<CfgRuleLogisti
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list,cfgRuleExpireTime.getId(),oldList,isCustom, isOverseas);
+        handleData(list,cfgRuleExpireTime.getId(),oldList,isBatch, isOverseas);
         log.info("编辑 开始修改时效物流（规则设置）数据，id：【{}】", cfgRuleExpireTime.getId());
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {

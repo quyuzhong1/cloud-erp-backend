@@ -268,7 +268,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
                         .map(ShopInfoEntity::getName)
                         .collect(Collectors.joining(","));
                 noticeRuleName.append("按店铺（")
-                        .append(shopName)
+                        .append(CharSequenceUtil.isBlank(shopName) ? "全部" : shopName)
                         .append("）");
             } else {
                 String platformName = dictBasicList
@@ -277,7 +277,7 @@ public class CfgNoticeServiceImpl extends SuperServiceImpl<CfgNoticeMapper, CfgN
                         .map(DictBasicEntity::getName)
                         .collect(Collectors.joining(","));
                 noticeRuleName.append("按平台（")
-                        .append(platformName)
+                        .append(CharSequenceUtil.isBlank(platformName) ? "全部" : platformName)
                         .append("）");
             }
             //通知规则

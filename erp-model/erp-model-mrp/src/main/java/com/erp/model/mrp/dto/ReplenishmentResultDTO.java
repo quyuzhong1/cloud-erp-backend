@@ -1291,6 +1291,14 @@ public class ReplenishmentResultDTO {
             dto.setPercentJson(formulaResult.getPercentJson());
             return dto;
         }
+
+        public static SalesEstimateDTO buildSalesEstimateDTO(LocalDate calcDate, BigDecimal saleQty) {
+            SalesEstimateDTO dto = new SalesEstimateDTO();
+            dto.setDate(calcDate);
+            dto.setSalesQty(saleQty);
+            dto.setMonth(calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            return dto;
+        }
     }
 
     @Getter

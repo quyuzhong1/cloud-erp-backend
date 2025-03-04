@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.strategy.sales;
 
+import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.CfgSettingDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
@@ -8,6 +9,7 @@ import com.erp.model.mrp.enums.SalesEstimateTypeEnum;
 import com.erp.server.mrp.es.entity.CustomerSalesEstimateEsEntity;
 import com.erp.server.mrp.es.service.CustomerSalesEstimateEsService;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -16,17 +18,16 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.erp.model.mrp.enums.SalesEstimateTypeEnum.CUSTOMER;
+import static com.erp.model.mrp.enums.SalesEstimateTypeEnum.UPDATE_IMPORT;
 
 @Component
-public class CustomerStrategy implements SalesEstimateStrategy {
-
-
+public class UpdateImportStrategy implements SalesEstimateStrategy {
     @Resource
     private CustomerSalesEstimateEsService customerSalesEstimateEsService;
+
     @Override
     public SalesEstimateTypeEnum getType() {
-        return CUSTOMER;
+        return UPDATE_IMPORT;
     }
 
     @Override
@@ -34,6 +35,8 @@ public class CustomerStrategy implements SalesEstimateStrategy {
         ReplenishmentResultDTO.BasicDTO replenishment = dto.getReplenishment();
         LocalDate basicCalcDate = LocalDate.parse(dto.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
         CfgRuleStrategyDTO cfgRuleStrategyDTO = dto.getCfgRuleStrategy();
+        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> formulaResults = cfgRuleStrategyDTO.getSalesQtyResult().getFormulaResults();
+        List<CfgRuleSalesQtyDTO.StrategyFormulaResultDTO> defaultFormulaResults = cfgRuleStrategyDTO.getSalesQtyResult().getDefaultFormulaResults();
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = new ArrayList<>();
         //计算天数
         int days = cfgRuleStrategyDTO.getSettings()
@@ -47,9 +50,20 @@ public class CustomerStrategy implements SalesEstimateStrategy {
                 .collect(Collectors.toMap(CustomerSalesEstimateEsEntity::getDate, CustomerSalesEstimateEsEntity::getSalesQty, (o1, o2) -> o1));
         for (int i = 0; i < days; i++) {
             LocalDate calcDate = basicCalcDate.plusDays(i);
-            BigDecimal saleQty = Optional.ofNullable(saleQtyMap.get(calcDate)).orElse(BigDecimal.ZERO);
-            ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty);
-            salesEstimates.add(salesEstimateDTO);
+            BigDecimal saleQty = saleQtyMap.get(calcDate);
+            if (ObjectUtils.isEmpty(saleQty)) {
+                //获取最大优先级的规则 优先取 sku 固定规则，其次sku动态规则，其次sku默认规则，取不到则取系统动态规则，其次系统默认规则
+                CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult = SystemStrategy.getStrategyFormulaResultDTO(formulaResults, calcDate, defaultFormulaResults);
+                if (ObjectUtils.isEmpty(formulaResult)) {
+                    continue;
+                }
+                saleQty = SystemStrategy.getSaleQty(dto.getSalesInfos(), dto.getAvgTimePeriodSales(), formulaResult, basicCalcDate);
+                ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty, formulaResult);
+                salesEstimates.add(salesEstimateDTO);
+            } else {
+                ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty);
+                salesEstimates.add(salesEstimateDTO);
+            }
         }
         dto.setSalesEstimates(salesEstimates);
     }

@@ -12,7 +12,6 @@ import lombok.experimental.Accessors;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -172,7 +171,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 断货数据是否从历史销量中排除,true是，false否
          */
-        @NotNull(message = "断货排除不能为空")
         private Boolean isIgnoreOutOfStock;
 
         /**
@@ -189,14 +187,11 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 预估销量类型（SYSTEM/AI/CUSTOMER）
          */
-        @NotNull(message = "预估销量类型不能为空")
         private String salesEstimateType;
 
         /**
          * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */
-        @NotBlank(message = "平台类型不能为空")
-        @Size(max = 32,message = "平台类型最大长度不能超过32位")
         private String platform;
 
         /**
@@ -215,30 +210,30 @@ public class CfgRuleSalesQtyDTO implements Serializable {
          * 是否是自定义
          */
         private Boolean isCustom = false;
+        /**
+         * 是否是批量
+         */
+        private Boolean isBatch = false;
 
         /**
          * 是否同常规品设置
          */
-        @NotNull(message = "是否同常规品设置不能为空")
         private Boolean isCfgSameDefault;
         /**
          * 默认日销量
          */
         @Valid
-        @NotNull(message = "常规品默认设置不能为空")
         private CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultSalesQtyDTO;
 
         /**
          * 新品默认日销量
          */
         @Valid
-        @NotNull(message = "新品默认设置不能为空")
         private CfgRuleSalesFormulaDTO.DefaultUpdateDTO defaultNewSalesQtyDTO;
 
         /**
          * 是否同常规品设置
          */
-        @NotNull(message = "是否同常规品设置不能为空")
         private Boolean isCfgSameDynamic;
         /**
          * 动态日销量
@@ -259,7 +254,6 @@ public class CfgRuleSalesQtyDTO implements Serializable {
         /**
          * 是否同常规品设置
          */
-        @NotNull(message = "是否同常规品设置不能为空")
         private Boolean isCfgSameDenoising;
         /**
          *销量去噪
