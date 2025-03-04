@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
@@ -15,13 +16,14 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoDetailService;
@@ -818,5 +820,34 @@ public class SoInfoController extends BaseController {
     public ApiResult unLockVirtualInventory(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = soInfoService.unLockVirtualInventory(dto.getId());
         return result ? success():failure();
+    }
+
+    /**
+     * 批量上传物流面单
+     * @param files
+     * @return
+     */
+    @PostMapping("/batchUploadLogisticLabel")
+    public ApiResult<List<BatchResultDTO>> batchUploadLogisticLabel(@ModelAttribute @Validated List<MultipartFile> files) {
+        if (CollUtil.isEmpty(files)){
+            throw new ServiceException("上传文件不能为空");
+        }
+//        if (files.size() > 20){
+//            throw new ServiceException("单次上传不要超过20个文件");
+//        }
+        List<BatchResultDTO> resultDTOS = soInfoService.batchUploadLogisticLabel(files);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 单个上传物流面单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/singleUploadLogisticLabel")
+    public ApiResult<BatchResultDTO> singleUploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) {
+        BatchResultDTO result = soInfoService.singleUploadLogisticLabel(dto.getFile(), dto.getId());
+        return result.getSuccess() ? success(result) : failure(result);
     }
 }
