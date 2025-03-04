@@ -519,7 +519,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
+        //销售部门id
+        List<String> salesDeptIdList = list.stream().map(CustomerDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
         for (CustomerDTO.PagingViewDTO item : list) {
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String groupId = item.getGroupId();
@@ -679,6 +685,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         String code = customer.getCode();
 
+        if(!customer.getCountryId().equals(dto.getCountryId()) &&
+                (customer.getPlatformType().equals(PlatformDictEnum.AMAZON.getCode()) ||customer.getPlatformType().equals(PlatformDictEnum.SHOPEE.getCode()) )){
+            throw new ServiceException("B2B客户平台归属为shopee和亚马逊时，国家字段不允许修改");
+        }
         //旧的
         CustomerInfoEntity old = new CustomerInfoEntity();
 
@@ -2211,8 +2221,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(customerCategoryList)){
             customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
         }
+        //销售部门id
+        List<String> salesDeptIdList = records.stream().map(CustomerDTO.PagingExportDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
 
         for (CustomerDTO.PagingExportDTO item : records) {
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
             item.setDisabledName(disabledName);
