@@ -94,6 +94,10 @@ public class GatewayRequestContextFilter<T> implements GlobalFilter, Ordered {
             if (MediaType.APPLICATION_FORM_URLENCODED.equals(contentType)) {
                 return readFormData(exchange, chain, gatewayContext);
             }
+            if (null != contentType && contentType.toString().contains(MediaType.TEXT_PLAIN_VALUE)) {
+                return readBody(exchange, chain, gatewayContext);
+            }
+
         }
         log.debug("[GatewayContext]ContentType:{},Gateway context is set with {}", contentType, gatewayContext);
         return chain.filter(exchange);
