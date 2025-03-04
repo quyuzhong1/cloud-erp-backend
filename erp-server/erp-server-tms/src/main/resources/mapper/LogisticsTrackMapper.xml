@@ -48,7 +48,7 @@
         and lbd.is_deleted = false and lbd.track_no != ''
         and lbd.track_time  <![CDATA[<=]]> CURRENT_DATE - INTERVAL '3 month'
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
-            and lb.order_type in ('B2B','B2C')
+            and lb.order_type in ('B2B','B2C','AfterSale')
         </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
             and lb.order_type = 'firstMile'

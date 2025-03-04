@@ -193,51 +193,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     }
 
     @Override
-    public PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query) {
-        Page<LogisticsBillDetailEntity> page = new Page<>();
-        page.setSize(query.getSize());
-        page.setCurrent(query.getCurrent());
-        IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
-        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
-    }
-
-    @Override
-    public PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query) {
-        Page<LogisticsTrackDTO.UpdateTrackDTO> page = new Page<>();
-        page.setSize(query.getSize());
-        page.setCurrent(query.getCurrent());
-        IPage<LogisticsTrackDTO.UpdateTrackDTO> result = baseMapper.getTrackDtoPage(page, query);
-        buildTrackData(result.getRecords());
-        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
-    }
-
-    @Override
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return baseMapper.listTrackDto(query);
-    }
-
-    /**
-     * 回填数据
-     * @param records
-     */
-    private void buildTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
-        if (CollectionUtils.isEmpty(records)){
-            return;
-        }
-        List<String> carrierIds = records.stream().filter(e -> StringUtils.isNotEmpty(e.getCarrierId())).map(LogisticsTrackDTO.UpdateTrackDTO::getCarrierId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(carrierIds)){
-            return;
-        }
-        List<LogisticsCarrierEntity> carrierEntityList = logisticsCarrierService.listByIds(carrierIds);
-        records.forEach(updateTrackDTO -> {
-            LogisticsCarrierEntity carrier = carrierEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(updateTrackDTO.getCarrierId())
-                    && e.getId().equals(updateTrackDTO.getCarrierId())).findFirst().orElse(null);
-            if (Objects.nonNull(carrier)){
-                updateTrackDTO.setCarrierCode(carrier.getCarrierCode());
-            }else {
-                updateTrackDTO.setCarrierId(updateTrackDTO.getCarrierId());
-            }
-        });
     }
 
     @Override
@@ -382,6 +339,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         }
         errorList.forEach(e ->{
             this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status)
+                    .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                    .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
                     .set(LogisticsBillDetailEntity::getRegisterResult, e.getErrorMsg())
                     .eq(LogisticsBillDetailEntity::getId, e.getId()).update();
         });
@@ -395,6 +354,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         //根据跟踪号进行的更新
         sucessList.forEach(e ->{
             this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status)
+                    .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                    .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
                     .set(CharSequenceUtil.isNotBlank(e.getPlatformOrderNo()), LogisticsBillDetailEntity::getPlatformOrderNo, e.getPlatformOrderNo())
                     .eq(LogisticsBillDetailEntity::getTrackNo, e.getTrackNo()).ne(LogisticsBillDetailEntity::getRegisterStatus, status).update();
         });
