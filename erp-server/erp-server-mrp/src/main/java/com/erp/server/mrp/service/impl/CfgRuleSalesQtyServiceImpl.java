@@ -111,12 +111,12 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         List<CfgPlatformMappingEntity> platformMapping = cfgPlatformMappingService.list();
         Map<String, String> platformMap = platformMapping.stream()
                 .collect(Collectors.toMap(CfgPlatformMappingEntity::getPlatform, CfgPlatformMappingEntity::getType, (o1, o2) -> o1));
-        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformMap.get(platformType))) {
+        if (PlatformMappingTypeEnum.AMAZON_PLATFORM.getCode().equals(platformMap.get(platformType))) {
             return orderType.stream()
                     .map(FbaOrderTypeEnum::getNameByCode)
                     .collect(Collectors.joining(","));
 
-        } else if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(platformMap.get(platformType))) {
+        } else if (PlatformMappingTypeEnum.OVERSEAS_PLATFORM.getCode().equals(platformMap.get(platformType))) {
             return orderType.stream()
                     .map(OverseasOrderTypeEnum::getNameByCode)
                     .collect(Collectors.joining(","));
