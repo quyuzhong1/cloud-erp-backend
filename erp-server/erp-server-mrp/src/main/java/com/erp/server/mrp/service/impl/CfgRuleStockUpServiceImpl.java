@@ -231,7 +231,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
      * @date 2024/8/24 9:30
      */
     private CfgRuleStockUpEntity getDefaultByPlatformType(String platformType, String refId) {
-        return lambdaQuery().eq(CfgRuleStockUpEntity::getPlatform, platformType)
+        return lambdaQuery().eq(!ObjectUtil.isEmpty(platformType),CfgRuleStockUpEntity::getPlatform, platformType)
                 .eq(CfgRuleStockUpEntity::getRefId, CharSequenceUtil.isBlank(refId) ? "" : refId)
                 .last("limit 1")
                 .one();
