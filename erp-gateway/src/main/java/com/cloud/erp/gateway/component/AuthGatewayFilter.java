@@ -132,23 +132,25 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
         GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
         if (null != gatewayContext) {
             MultiValueMap<String, String> formData = gatewayContext.getFormData();
-            String data = formData.getFirst("data");
-            if (StringUtils.isNotBlank(data)) {
-                // 解析 JSON 获取 token 字段
-                try {
-                    JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(data));
-                    String token = jsonObject.getOrDefault("token", "").toString();
-                    if (StringUtils.isNotBlank(token)) {
-                        //解析token
-                        LoginUser loginUser = tokenService.getLoginUser(token);
-                        if (Objects.isNull(loginUser)) {
-                            ServiceException.runError(ApiError.ERROR_403.msg);
+            if (null != formData){
+                String data = formData.getFirst("data");
+                if (StringUtils.isNotBlank(data)) {
+                    // 解析 JSON 获取 token 字段
+                    try {
+                        JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(data));
+                        String token = jsonObject.getOrDefault("token", "").toString();
+                        if (StringUtils.isNotBlank(token)) {
+                            //解析token
+                            LoginUser loginUser = tokenService.getLoginUser(token);
+                            if (Objects.isNull(loginUser)) {
+                                ServiceException.runError(ApiError.ERROR_403.msg);
+                            }
+                            loginUser.setAccessToken(token);
+                            request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
                         }
-                        loginUser.setAccessToken(token);
-                        request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
             }
         }

@@ -1,6 +1,5 @@
 package com.cloud.erp.gateway.filter;
 
-import cn.hutool.json.JSONUtil;
 import com.cloud.erp.gateway.context.ContextExtraDataGenerator;
 import com.cloud.erp.gateway.context.GatewayContext;
 import com.cloud.erp.gateway.context.GatewayContextExtraData;
@@ -26,7 +25,6 @@ import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpRequestDecorator;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.util.CollectionUtils;
-import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -45,7 +43,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * 读取并缓存请求数据
@@ -96,9 +93,6 @@ public class GatewayRequestContextFilter<T> implements GlobalFilter, Ordered {
             }
             if (MediaType.APPLICATION_FORM_URLENCODED.equals(contentType)) {
                 return readFormData(exchange, chain, gatewayContext);
-            }
-            if (null != contentType && contentType.toString().contains(MediaType.MULTIPART_FORM_DATA_VALUE)) {
-                return readMultipartFormData(exchange, chain, gatewayContext);
             }
         }
         log.debug("[GatewayContext]ContentType:{},Gateway context is set with {}", contentType, gatewayContext);
@@ -390,35 +384,5 @@ public class GatewayRequestContextFilter<T> implements GlobalFilter, Ordered {
             }
         }
         return pathFlag;
-    }
-
-    private Mono<Void> readMultipartFormData(ServerWebExchange exchange, GatewayFilterChain chain, GatewayContext<T> gatewayContext) {
-        HttpHeaders headers = exchange.getRequest().getHeaders();
-        return exchange.getMultipartData()
-                .flatMap(multipartData -> {
-                    MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
-                    // 解析表单数据
-                    List<Mono<Void>> partProcessingMonos = multipartData.entrySet().stream()
-                            .flatMap(entry -> entry.getValue().stream().map(part ->
-                                    part.content()
-                                            .map(dataBuffer -> {
-                                                byte[] bytes = new byte[dataBuffer.readableByteCount()];
-                                                dataBuffer.read(bytes);
-                                                return new String(bytes, StandardCharsets.UTF_8);
-                                            })
-                                            .reduce((s1, s2) -> s1 + s2)
-                                            .defaultIfEmpty("") // 处理空内容
-                                            .doOnNext(value -> formData.add(entry.getKey(), value))
-                                            .then()
-                            ))
-                            .collect(Collectors.toList());
-
-                    gatewayContext.setFormData(formData);
-
-                    // 确保所有 `Mono<Void>` 处理完后再 `filter`
-                    return Flux.merge(partProcessingMonos)
-                            .then(Mono.fromRunnable(() -> gatewayContext.setFormData(formData)))
-                            .then(Mono.defer(() -> recreateRequest(exchange, chain, gatewayContext, headers))); // 确保请求继续向下传递
-                });
     }
 }
