@@ -131,8 +131,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
         // 缓存获取
         GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
         if (null != gatewayContext) {
-            MultiValueMap<String, String> formData = gatewayContext.getFormData();
-            String data = formData.getFirst("data");
+            String data = gatewayContext.getRequestBody();
             if (StringUtils.isNotBlank(data)) {
                 // 解析 JSON 获取 token 字段
                 try {
