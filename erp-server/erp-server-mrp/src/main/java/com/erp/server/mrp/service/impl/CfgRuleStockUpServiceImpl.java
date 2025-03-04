@@ -197,6 +197,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         if (!ObjectUtils.isEmpty(cfgRuleStockUp)) {
             refViewDTO.setStockingRatio(cfgRuleStockUp.getStockingRatio());
             refViewDTO.setSafeDays(cfgRuleStockUp.getPlatformSafeDays());
+            refViewDTO.setStockUpId(cfgRuleStockUp.getId());
             List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList = cfgRuleStockingRatioService.listByStockUpIdList(Collections.singletonList(cfgRuleStockUp.getId()));
             List<CfgRuleStockingRatioDTO.ViewDTO> dtos = cfgRuleStockingRatioList.stream()
                     .map(v -> {
@@ -209,6 +210,7 @@ public class CfgRuleStockUpServiceImpl extends SuperServiceImpl<CfgRuleStockUpMa
         }
         CfgRuleExpireTimeEntity cfgRuleExpireTime = cfgRuleExpireTimeService.getByRefId(refId);
         if (!ObjectUtils.isEmpty(cfgRuleExpireTime)) {
+            refViewDTO.setExpireTimeId(cfgRuleExpireTime.getId());
             refViewDTO.setPurchaseApproveDays(cfgRuleExpireTime.getPurchaseApproveDays());
             refViewDTO.setProductionDays(cfgRuleExpireTime.getProductionDays());
             refViewDTO.setQcDays(cfgRuleExpireTime.getQcDays());
