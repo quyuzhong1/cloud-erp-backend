@@ -78,15 +78,17 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
         //销量信息调整
         List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = handleSalesFormula(updateDTO.getDefaultSalesQtyDTO(), updateDTO.getDynamicSalesQtyList(), updateDTO.getFixedSalesQtyList());
         cfgRuleSalesFormulaService.update(salesFormulaList,cfgRuleSalesQtyEntity,CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), updateDTO.getIsCustom());
-        //新品销量信息调整
-        if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDefault())) {
-            updateDTO.getDefaultNewSalesQtyDTO().setId(null);
+        if (Boolean.FALSE.equals(updateDTO.getIsCustom())) {
+            //新品销量信息调整
+            if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDefault())) {
+                updateDTO.getDefaultNewSalesQtyDTO().setId(null);
+            }
+            if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDynamic())) {
+                updateDTO.getDynamicNewSalesQtyList().forEach(obj -> obj.setId(null));
+            }
+            List<CfgRuleSalesFormulaDTO.UpdateDTO> salesNewFormulaList = handleSalesFormula(updateDTO.getDefaultNewSalesQtyDTO(), updateDTO.getDynamicNewSalesQtyList(), updateDTO.getFixedSalesQtyList());
+            cfgRuleSalesFormulaService.update(salesNewFormulaList,cfgRuleSalesQtyEntity,CfgRuleStockingRatioTypeEnum.NEW.getCode(), updateDTO.getIsCustom());
         }
-        if (Boolean.TRUE.equals(updateDTO.getIsCfgSameDynamic())) {
-            updateDTO.getDynamicNewSalesQtyList().forEach(obj -> obj.setId(null));
-        }
-        List<CfgRuleSalesFormulaDTO.UpdateDTO> salesNewFormulaList = handleSalesFormula(updateDTO.getDefaultNewSalesQtyDTO(), updateDTO.getDynamicNewSalesQtyList(), updateDTO.getFixedSalesQtyList());
-        cfgRuleSalesFormulaService.update(salesNewFormulaList,cfgRuleSalesQtyEntity,CfgRuleStockingRatioTypeEnum.NEW.getCode(), updateDTO.getIsCustom());
 
         //销量去噪
         cfgRuleSalesDenoisingService.update(updateDTO.getSalesDenoisingList(),cfgRuleSalesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),updateDTO.getIsCustom());
