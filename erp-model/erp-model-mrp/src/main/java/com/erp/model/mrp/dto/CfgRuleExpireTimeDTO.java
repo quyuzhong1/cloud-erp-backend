@@ -92,6 +92,11 @@ public class CfgRuleExpireTimeDTO {
         private Boolean isCustom = false;
 
         /**
+         * 是否是批量
+         */
+        private Boolean isBatch = false;
+
+        /**
          * 物流信息
          */
         @NotEmpty(message = "fba物流信息配置不能为空")

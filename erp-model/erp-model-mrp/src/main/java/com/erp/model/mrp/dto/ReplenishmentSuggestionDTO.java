@@ -133,6 +133,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
     public static class BatchUpdateRuleDTO {
 
         /**
+         * 是否批量
+         */
+        private Boolean isBatch = false;
+
+        /**
          * 主键ids
          */
         @NotEmpty(message = "主键ids不能为空")

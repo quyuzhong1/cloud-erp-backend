@@ -52,7 +52,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isCustom) {
+    public void update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isBatch) {
         if (CollectionUtils.isEmpty(salesDenoisingList)) {
             salesDenoisingList = Collections.emptyList();
         }
@@ -62,7 +62,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         //原去噪信息
         List<CfgRuleSalesDenoisingEntity> oldList = listBySalesQtyIdList(Collections.singletonList(cfgRuleSalesQtyEntity.getId()), skuType);
         //自定义更新无需删除
-        if (Boolean.FALSE.equals(isCustom)) {
+        if (Boolean.FALSE.equals(isBatch)) {
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (CollectionUtils.isNotEmpty(deleteIds)) {
@@ -74,7 +74,7 @@ public class CfgRuleSalesDenoisingServiceImpl extends SuperServiceImpl<CfgRuleSa
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        handleData(list,oldList,cfgRuleSalesQtyEntity.getId(),isCustom, skuType);
+        handleData(list,oldList,cfgRuleSalesQtyEntity.getId(),isBatch, skuType);
         log.info("编辑 开始修改销量去噪信息数据，id：【{}】", cfgRuleSalesQtyEntity.getId());
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
