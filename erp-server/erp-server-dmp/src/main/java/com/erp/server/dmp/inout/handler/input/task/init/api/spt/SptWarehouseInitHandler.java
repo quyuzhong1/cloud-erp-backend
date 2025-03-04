@@ -20,6 +20,7 @@ import com.sdk.wms.antu.dto.request.AntuGetProductReq;
 import com.sdk.wms.antu.dto.response.AntuResponse;
 import com.sdk.wms.antu.dto.response.AntuWarehouseResp;
 import com.sdk.wms.antu.utils.AntuUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
 /**
  * dmp输入init任务基础处理器下的速派通api获取数据方式
  */
+@Slf4j
 @Service
 @Scope("prototype")
 public class SptWarehouseInitHandler extends DmpInputInitHandler {
@@ -73,6 +75,7 @@ public class SptWarehouseInitHandler extends DmpInputInitHandler {
 			while(true) {
 				antuGetProductReq.setPage(page);
 				String apiResponse = AntuUtils.callService(getPlatForm(),apiType, antuGetProductReq);
+				log.info(getPlatForm().getName()+"（"+apiType+"）api接口返回数据：{}", apiResponse);
 				AntuResponse<List<AntuWarehouseResp>> response = JSONObject.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
 
 				List<AntuWarehouseResp> data = response.getData();

@@ -100,6 +100,12 @@ public class DmpTransferWarehouseInfoEntity extends BaseEntity<DmpTransferWareho
      */
     @TableField("platform_warehouse_status")
     private String platformWarehouseStatus;
+    /**
+     * 国家编码
+     */
+    @TableField("country_code")
+    private String countryCode;
+
 
     public static final String PLATFORM_WAREHOUSE_STATUS = "platform_warehouse_status";
 
