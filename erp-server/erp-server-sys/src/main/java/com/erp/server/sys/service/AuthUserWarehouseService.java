@@ -49,4 +49,19 @@ public interface AuthUserWarehouseService extends SuperService<AuthUserWarehouse
      * @return
      */
     String getWarehousePermissionSql(String warehouseTableField);
+
+    /**
+     * 更新用户仓库权限
+     * @param uid
+     * @param warehouseIdList
+     * @param warehouseAuthType
+     */
+    void batchSaveOrUpdate(String uid, List<String> warehouseIdList, String warehouseAuthType);
+
+    /**
+     * 根据用户获取店铺列表
+     * @param userIds
+     * @return
+     */
+    List<SysUserDTO.WarehouseDTO> listWarehouseIdByUserIds(List<String> userIds);
 }

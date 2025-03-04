@@ -68,16 +68,4 @@ public class NumberMapperWork {
         }
         return 0L;
     }
-
-    @Named("typeToDataScope")
-    public Integer typeToDataScope(String type){
-        if (CharSequenceUtil.isBlank(type)){
-            return MathUtil.ONE;
-        }
-        if ("all".equals(type)){
-            return MathUtil.ZERO;
-        }else {
-            return MathUtil.ONE;
-        }
-    }
 }

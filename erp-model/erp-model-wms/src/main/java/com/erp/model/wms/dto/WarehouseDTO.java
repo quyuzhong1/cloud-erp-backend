@@ -257,6 +257,10 @@ public class WarehouseDTO implements Serializable {
          * 仓库类型 对应dict 表id
          */
         private String typeId;
+        /**
+         * 类型名称
+         */
+        private String typeName;
 
         /**
          * 组织id

@@ -22,7 +22,6 @@ import java.util.List;
 public interface AuthUserConvert {
     AuthUserConvert INSTANCE = Mappers.getMapper(AuthUserConvert.class);
 
-    @Mapping(target = "dataScope", source = "authType", qualifiedByName = "typeToDataScope")
     AuthUserShopEntity OmsShopAuthToSysShopAuth(ShopSysUserAuthEntity entity);
     List<AuthUserShopEntity> OmsShopAuthToSysShopAuth(List<ShopSysUserAuthEntity> list);
 }

@@ -26,5 +26,5 @@ public interface AuthUserWarehouseMapper extends BaseMapper<AuthUserWarehouseEnt
      * @param userId
      * @return
      */
-    List<SysUserDTO.WarehouseDTO> getWarehouseUserList(@Param("userId") String userId);
+    List<SysUserDTO.WarehouseDTO> getWarehouseUserList(@Param("userId") String userId,@Param("userIds") List<String> userIds);
 }

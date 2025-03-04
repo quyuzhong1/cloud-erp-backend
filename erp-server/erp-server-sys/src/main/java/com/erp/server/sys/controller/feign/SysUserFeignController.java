@@ -161,42 +161,6 @@ public class SysUserFeignController extends BaseController {
     }
 
     /**
-     * 根据用户id 获取 所有店铺
-     *
-     * @return
-     */
-    @PostMapping("/getShopUserList")
-    public List<SysUserDTO.ShopDTO> getShopUserList(@RequestBody String userId) {
-        return authUserShopService.getShopUserList(userId);
-    }
-    /**
-     * 根据用户id 获取 所有仓库
-     *
-     * @return
-     */
-    @PostMapping("/getWarehouseUserList")
-    public List<SysUserDTO.WarehouseDTO> getWarehouseUserList(@RequestBody String userId) {
-        return authUserWarehouseService.getWarehouseUserList(userId);
-    }
-
-    /**
-     * 获取用户店铺权限
-     * @return
-     */
-    @PostMapping("/getShopPermissionSql")
-    public String getShopPermissionSql(@RequestBody String shopTableField){
-        return authUserShopService.getShopPermissionSql(shopTableField);
-    }
-    /**
-     * 获取用户仓库权限
-     * @return
-     */
-    @PostMapping("/getWarehousePermissionSql")
-    public String getWarehousePermissionSql(@RequestBody String warehouseTableField){
-        return authUserWarehouseService.getWarehousePermissionSql(warehouseTableField);
-    }
-
-    /**
      * 根据用户id 获取用户角色的id
      *
      * @return

@@ -41,17 +41,7 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param userIdList
      * @return List<ViewDTO>
      */
-    @Deprecated
     List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList);
-    /**
-     * @description:根据店铺id查询已关联用户id
-     * @author Will
-     * @date: 2023/9/7 9:36
-     * @param shopIdList
-     * @return List<String>
-     */
-    @Deprecated
-    List<String> listUserIdByShopIdList(List<String> shopIdList);
 
     /**
      * 下拉用户拥有权限的店铺
@@ -60,6 +50,5 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param dto
      * @return java.util.List<com.erp.model.oms.dto.ShopSysUserAuthDTO.ViewShopDTO>
      **/
-    @Deprecated
     List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(ShopSysUserAuthDTO.UserAuthShopParamDTO dto);
 }

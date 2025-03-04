@@ -25,5 +25,5 @@ public interface AuthUserShopMapper extends BaseMapper<AuthUserShopEntity> {
      * @param userId
      * @return
      */
-    List<SysUserDTO.ShopDTO> getShopUserList(@Param("userId") String userId);
+    List<SysUserDTO.ShopDTO> getShopUserList(@Param("userId") String userId, @Param("userIds") List<String> userIds);
 }

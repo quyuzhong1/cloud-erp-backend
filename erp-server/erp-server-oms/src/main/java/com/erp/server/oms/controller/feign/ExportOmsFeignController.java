@@ -85,6 +85,11 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/soB2CAbnormal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
     public PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
         return soB2cService.exportSoB2CAbnormal(dto);
@@ -96,6 +101,11 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/soB2C")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
         return soB2cService.exportSoB2C(dto);
