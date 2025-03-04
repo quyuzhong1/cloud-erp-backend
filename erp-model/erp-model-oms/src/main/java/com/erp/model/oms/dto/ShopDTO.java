@@ -660,6 +660,15 @@ public class ShopDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 国家id
+         */
+        private String dictCountryCode;
+
+        /**
+         * 国家名
+         */
+        private String countryName;
+        /**
          * 客户的id
          * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
