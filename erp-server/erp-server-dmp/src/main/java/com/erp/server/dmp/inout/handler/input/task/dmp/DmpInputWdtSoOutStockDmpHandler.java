@@ -23,7 +23,7 @@ public class DmpInputWdtSoOutStockDmpHandler extends DmpInputWdtDmpHandler{
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 				Object status = dmpDataMap.get("status");
 				if(status != null) {
-					dmpDataMap.put("status", "110".equals(status.toString()) ? "1" : status);
+					dmpDataMap.put("status", "110".equals(status.toString()) ? "1" : "2");
 				}
 			}
 		}
