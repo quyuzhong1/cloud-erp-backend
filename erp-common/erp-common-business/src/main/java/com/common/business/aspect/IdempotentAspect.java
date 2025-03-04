@@ -147,6 +147,7 @@ public class IdempotentAspect {
                     return true;
                 }
             }
+            return false;
         } else if (Map.class.isAssignableFrom(clazz)) {
             Map map = (Map) o;
             for (Object value : map.entrySet()) {
@@ -155,6 +156,7 @@ public class IdempotentAspect {
                     return true;
                 }
             }
+            return false;
         }
         return o instanceof MultipartFile || o instanceof HttpServletRequest || o instanceof HttpServletResponse
                 || o instanceof BindingResult;
