@@ -2,7 +2,6 @@ package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -21,7 +20,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
-import com.erp.model.oms.enums.MercadolibreBusinessModel‌Enum;
+import com.erp.model.oms.enums.MercadolibreBusinessModelEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
@@ -86,7 +85,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException("店铺不存在");
         }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModel‌Enum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
+        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_AUTHORIZE;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
@@ -150,7 +149,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
 
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModel‌Enum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
+        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
@@ -273,7 +272,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
 
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModel‌Enum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
+        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
