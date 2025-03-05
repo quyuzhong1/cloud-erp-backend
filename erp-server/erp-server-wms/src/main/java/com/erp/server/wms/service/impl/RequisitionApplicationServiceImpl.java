@@ -2156,12 +2156,25 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         }
         List<String> skuNo = records.stream().map(RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO::getSkuNo).collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNo);
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
 
         records.forEach(v->{
             SkuVO skuVO = skuVOList.stream().filter(t->t.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
             if(Objects.nonNull(skuVO)){
                 v.setImagesUrl(skuVO.getSkuImagesUrl());
                 v.setProductName(skuVO.getSkuName());
+            }
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(t->t.getSourceDetailId().equals(v.getSourceDetailId())).findFirst().orElse(null);
+            //如果能关联到要货申明细，设置为修改类型
+            if(Objects.nonNull(requisitionApplicationDetailEntity)){
+                v.setRequisitionDetailId(requisitionApplicationDetailEntity.getId());
+                v.setBomVersion(requisitionApplicationDetailEntity.getBomVersion());
+                v.setChangeType(RequisitionChangeTypeEnum.UPDATE.getCode());
+                v.setChangeTypeName(RequisitionChangeTypeEnum.UPDATE.getName());
+                v.setOriginRequisitionQty(requisitionApplicationDetailEntity.getRequisitionQty());
+            }else{
+                v.setChangeType(RequisitionChangeTypeEnum.ADD.getCode());
+                v.setChangeTypeName(RequisitionChangeTypeEnum.ADD.getName());
             }
         });
         return new PagingVO<>(iPage);

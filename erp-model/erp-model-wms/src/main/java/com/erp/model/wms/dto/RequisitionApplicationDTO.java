@@ -571,9 +571,30 @@ public class RequisitionApplicationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingSkuByDeliveryPlanDTO {
+        /**
+         * 要货申请明细id
+         */
+        private String requisitionDetailId;
 
         /**
-         * 第三方sku
+         * 变更类型
+         */
+        private String changeType;
+        /**
+         * 变更类型名称
+         */
+        private String changeTypeName;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 原要货数量
+         */
+        private Integer originRequisitionQty;
+        /**
+         * 发货计划明细id
          */
         private String sourceDetailId;
         /**
