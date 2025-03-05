@@ -152,12 +152,15 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
         resultEntity.setWarehouseName(itemList.stream().map(DmpSoOutstockDetailEntity::getWarehouseName).filter(StringUtils::isNotBlank).findAny().orElse(""));
         //出库时间
         LocalDateTime deliveryTime = entity.getDeliveryTime();
-		LocalDate localDate = deliveryTime.toLocalDate();
-		resultEntity.setPlanDeliveryDate(localDate);
-        resultEntity.setPackDate(localDate);
-        resultEntity.setActualDeliveryDate(deliveryTime);
-        // 出库日期
-        resultEntity.setBillDate(localDate);
+        if(deliveryTime != null) {
+        	LocalDate localDate = deliveryTime.toLocalDate();
+    		resultEntity.setPlanDeliveryDate(localDate);
+            resultEntity.setPackDate(localDate);
+            resultEntity.setActualDeliveryDate(deliveryTime);
+            // 出库日期
+            resultEntity.setBillDate(localDate);
+        }
+		
         //优惠金额
         resultEntity.setTotalDiscountAmount(entity.getTotalDiscountAmount());
         //运输单号
@@ -178,6 +181,7 @@ public class DmpOutputWdtSoOutstockRocketMQTaskHandler extends DmpOutputRocketMQ
         resultEntity.setLogisticsCompanyCode(entity.getLogisticsCompanyCode());
         resultEntity.setLogisticsCompanyName(entity.getLogisticsCompanyName());
         resultEntity.setTradeLabel(entity.getTradeLabel());
+        resultEntity.setStatus(entity.getStatus());
         
         return resultEntity;
     }

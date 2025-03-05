@@ -189,6 +189,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             }
             checkDomain("", dto.getDomain());
         }
+        if(CollectionUtils.isNotEmpty(dto.getDictCountryCodeList())){
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(dto.getDictCountryCodeList());
+            if(CollectionUtils.isNotEmpty(countryList)){
+                String countryName = countryList.get(0).getNameCn();
+                shop.setCountryName(countryName);
+                shop.setDictCountryCode(dto.getDictCountryCodeList().get(0));
+            }
+        }
         BeanMapper.copy(dto, shop);
 
         String salesOrgId = dto.getSalesOrgId();
@@ -526,10 +534,18 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         		if(!shopInfo.getChargeId().equals(dto.getChargeId())) {
         			errorFlag = true;
         		}
+                if(!shopInfo.getDictCountryCode().equals(dto.getDictCountryCode())) {
+                    errorFlag = true;
+                    customerInfoEntity.setCountryId(dto.getDictCountryCode());
+                }
         		if(errorFlag) {
-        			throw new ServiceException("对应的客户信息状态为审核中/已审核时，不可修改【店铺站点，结算币种，交易币种，销售组织，销售员】字段");
+        			throw new ServiceException("对应的客户信息状态为审核中/已审核时，不可修改【店铺站点，结算币种，交易币种，销售组织，销售员,国家】字段");
         		}
         	}
+            if(!shopInfo.getDictCountryCode().equals(dto.getDictCountryCode()) && customerInfoEntity != null) {
+                customerInfoEntity.setCountryId(dto.getDictCountryCode());
+                customerInfoService.updateById(customerInfoEntity);
+            }
         }
 
         //旧负责人
@@ -559,6 +575,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setEnableTime(dto.getEnableTime());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
+        shopInfo.setDictCountryCode(dto.getDictCountryCode());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -1752,7 +1769,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             CustomerInfoEntity customerInfoEntity = this.autoCreateShopCustomer(shopInfoEntity.getId());
             if (Objects.nonNull(customerInfoEntity)) {
                 ApproveStatusEnum approveStatus = customerInfoEntity.getApproveStatus();
-                if (Objects.isNull( approveStatus)||!Objects.equals(ApproveStatusEnum.APPROVE.getStatus(), approveStatus.getStatus())) {
+                if (Objects.equals(ApproveStatusEnum.REJECT.getStatus(), approveStatus.getStatus()) || Objects.equals(ApproveStatusEnum.WAIT_SUBMIT.getStatus(), approveStatus.getStatus())) {
                     List<String> ids = Arrays.asList(customerInfoEntity.getId());
                     //提交
                     Boolean submitResult = customerInfoService.submit(ids);
