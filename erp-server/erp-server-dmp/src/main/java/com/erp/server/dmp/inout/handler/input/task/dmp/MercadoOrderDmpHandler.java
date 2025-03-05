@@ -202,8 +202,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             dmpDataMap.put("payAmount", totalPaidAmount);
                             BigDecimal transactionAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("transactionAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("allAmount", transactionAmount);
-                            BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
-                            dmpDataMap.put("shippingCost", shippingAmount);
+                            BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingCost"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("shippingAmount", shippingAmount);
                             BigDecimal totalDiscount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("couponAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("totalDiscount", totalDiscount);
 
