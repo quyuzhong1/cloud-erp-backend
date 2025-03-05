@@ -2447,42 +2447,42 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             stockUpExportDTO.setPlatform(platformName);
             stockUpExportDTO.setSkuNo(pagingView.getSkuNo());
             stockUpExportDTO.setShopName(shopName);
-            //空运
-            CfgRuleLogisticsEntity oneLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.AIRFREIGHT.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
-            stockUpExportDTO.setOneLogisticsCycleDays(oneLogisticsEntity.getLogisticsCycleDays());
-            stockUpExportDTO.setOneLogisticsDays(oneLogisticsEntity.getLogisticsDays());
-            stockUpExportDTO.setOneIndex(oneLogisticsEntity.getIndex());
-
-            //快递
-            CfgRuleLogisticsEntity twoLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.EXPRESS.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
-            stockUpExportDTO.setTwoLogisticsCycleDays(twoLogisticsEntity.getLogisticsCycleDays());
-            stockUpExportDTO.setTwoLogisticsDays(twoLogisticsEntity.getLogisticsDays());
-            stockUpExportDTO.setTwoIndex(twoLogisticsEntity.getIndex());
-
-            //海运散装
-            CfgRuleLogisticsEntity threeLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
-            stockUpExportDTO.setThreeLogisticsCycleDays(threeLogisticsEntity.getLogisticsCycleDays());
-            stockUpExportDTO.setThreeLogisticsDays(threeLogisticsEntity.getLogisticsDays());
-            stockUpExportDTO.setThreeIndex(threeLogisticsEntity.getIndex());
-
-            //海运整柜
-            CfgRuleLogisticsEntity fourLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
-            stockUpExportDTO.setFourLogisticsCycleDays(fourLogisticsEntity.getLogisticsCycleDays());
-            stockUpExportDTO.setFourLogisticsDays(fourLogisticsEntity.getLogisticsDays());
-            stockUpExportDTO.setFourIndex(fourLogisticsEntity.getIndex());
-
-            //铁运散装
-            CfgRuleLogisticsEntity fiveLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
-            stockUpExportDTO.setFiveLogisticsCycleDays(fiveLogisticsEntity.getLogisticsCycleDays());
-            stockUpExportDTO.setFiveLogisticsDays(fiveLogisticsEntity.getLogisticsDays());
-            stockUpExportDTO.setFiveIndex(fiveLogisticsEntity.getIndex());
-
-            //铁运整柜
-            CfgRuleLogisticsEntity sixLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
-            stockUpExportDTO.setSixLogisticsCycleDays(sixLogisticsEntity.getLogisticsCycleDays());
-            stockUpExportDTO.setSixLogisticsDays(sixLogisticsEntity.getLogisticsDays());
-            stockUpExportDTO.setSixIndex(sixLogisticsEntity.getIndex());
-            stockUpList.add(stockUpExportDTO);
+//            //空运
+//            CfgRuleLogisticsEntity oneLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.AIRFREIGHT.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+//            stockUpExportDTO.setOneLogisticsCycleDays(oneLogisticsEntity.getLogisticsCycleDays());
+//            stockUpExportDTO.setOneLogisticsDays(oneLogisticsEntity.getLogisticsDays());
+//            stockUpExportDTO.setOneIndex(oneLogisticsEntity.getIndex());
+//
+//            //快递
+//            CfgRuleLogisticsEntity twoLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.EXPRESS.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+//            stockUpExportDTO.setTwoLogisticsCycleDays(twoLogisticsEntity.getLogisticsCycleDays());
+//            stockUpExportDTO.setTwoLogisticsDays(twoLogisticsEntity.getLogisticsDays());
+//            stockUpExportDTO.setTwoIndex(twoLogisticsEntity.getIndex());
+//
+//            //海运散装
+//            CfgRuleLogisticsEntity threeLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+//            stockUpExportDTO.setThreeLogisticsCycleDays(threeLogisticsEntity.getLogisticsCycleDays());
+//            stockUpExportDTO.setThreeLogisticsDays(threeLogisticsEntity.getLogisticsDays());
+//            stockUpExportDTO.setThreeIndex(threeLogisticsEntity.getIndex());
+//
+//            //海运整柜
+//            CfgRuleLogisticsEntity fourLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.OCEAN_FREIGHT_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+//            stockUpExportDTO.setFourLogisticsCycleDays(fourLogisticsEntity.getLogisticsCycleDays());
+//            stockUpExportDTO.setFourLogisticsDays(fourLogisticsEntity.getLogisticsDays());
+//            stockUpExportDTO.setFourIndex(fourLogisticsEntity.getIndex());
+//
+//            //铁运散装
+//            CfgRuleLogisticsEntity fiveLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_BULK.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+//            stockUpExportDTO.setFiveLogisticsCycleDays(fiveLogisticsEntity.getLogisticsCycleDays());
+//            stockUpExportDTO.setFiveLogisticsDays(fiveLogisticsEntity.getLogisticsDays());
+//            stockUpExportDTO.setFiveIndex(fiveLogisticsEntity.getIndex());
+//
+//            //铁运整柜
+//            CfgRuleLogisticsEntity sixLogisticsEntity = cfgRuleLogisticList.stream().filter(obj -> CharSequenceUtil.equals(obj.getStockUpId(), stockUpEntity.getId()) && CharSequenceUtil.equals(obj.getLogisticsMethod(), LogisticsMethodEnum.RAILWAY_TRANSPORTATION_FCL.getCode())).findFirst().orElse(new CfgRuleLogisticsEntity());
+//            stockUpExportDTO.setSixLogisticsCycleDays(sixLogisticsEntity.getLogisticsCycleDays());
+//            stockUpExportDTO.setSixLogisticsDays(sixLogisticsEntity.getLogisticsDays());
+//            stockUpExportDTO.setSixIndex(sixLogisticsEntity.getIndex());
+//            stockUpList.add(stockUpExportDTO);
         }
         return stockUpList;
     }
