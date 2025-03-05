@@ -23,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -157,7 +158,16 @@ public class PackageForecastController extends BaseController {
         return success(resultBase64);
 
     }
-
+    /**
+     * 批量打印面单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchPrint")
+    public void batchPrint(@RequestBody @Valid BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        packageForecastService.batchPrint(dto.getIds(),response);
+    }
     /**
      * 取消
      *

@@ -5,7 +5,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -86,9 +85,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -1201,5 +1204,35 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             v.setAttachDTO(attachDTO);
         });
         return uploadFileViewDTOList;
+    }
+
+    @Override
+    public void batchPrint(List<String> ids, HttpServletResponse response) {
+        List<String> base64List = new ArrayList<>();
+        for (String id : ids) {
+            base64List.add(this.print(id));
+        }
+        if(CollectionUtils.isNotEmpty(base64List)){
+            try {
+                String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+
+                // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+                response.setContentType("application/pdf");
+                response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+                BASE64Decoder decoder = new BASE64Decoder();
+                try (OutputStream out = response.getOutputStream()) {
+                    // 将 Base64 编码的字符串解码为字节数组
+                    byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                    // 将字节数组写入到响应输出流中
+                    out.write(pdfBytes);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } catch (Exception e) {
+                log.error("组包预报批量打印打印失败>>>>>>>", e);
+                throw new ServiceException(e.getMessage());
+            }
+        }
     }
 }
