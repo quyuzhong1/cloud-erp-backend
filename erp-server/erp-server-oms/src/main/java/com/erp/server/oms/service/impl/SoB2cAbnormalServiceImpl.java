@@ -130,7 +130,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             return;
         }
         List<String> codes = soB2cEntityList.stream().map(SoB2cEntity::getCode).collect(Collectors.toList());
-        String msg = CharSequenceUtil.format("用户【{}】清楚订单异常，备注【{}】", UserContext.getDefaultLoginUser().getUserName(),dto.getRemark());
+        String msg = CharSequenceUtil.format("用户【{}】清除订单异常，备注【{}】", UserContext.getDefaultLoginUser().getUserName(),dto.getRemark());
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         soB2cEntityList.forEach(v->{
             v.setSignOrderError("");
