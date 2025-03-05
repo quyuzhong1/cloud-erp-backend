@@ -46,11 +46,6 @@ public class CfgRuleLogisticsEntity extends BaseEntity<CfgRuleLogisticsEntity> {
     */
     @TableField("logistics_cycle_days")
     private Integer logisticsCycleDays;
-    /**
-    * 备货id（cfg_rule_stock_up）
-    */
-    @TableField("stock_up_id")
-    private String stockUpId;
 
     /**
     * 时效id
@@ -79,8 +74,6 @@ public class CfgRuleLogisticsEntity extends BaseEntity<CfgRuleLogisticsEntity> {
     public static final String LOGISTICS_DAYS = "logistics_days";
 
     public static final String LOGISTICS_CYCLE_DAYS = "logistics_cycle_days";
-
-    public static final String STOCK_UP_ID = "stock_up_id";
 
     @Override
     public Serializable pkVal() {
