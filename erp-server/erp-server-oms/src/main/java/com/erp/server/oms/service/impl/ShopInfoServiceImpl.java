@@ -65,6 +65,7 @@ import com.sdk.oms.shopee.service.ShopeeShopService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
+import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.sdk.oms.shopify.utils.HmacVerificationUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -110,6 +111,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private DictBasicService dictBasicService;
+
+    @Resource
+    private ShopSdkServer shopSdkServer;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -576,6 +580,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setEnableTime(dto.getEnableTime());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
         shopInfo.setDictCountryCode(dto.getDictCountryCode());
+        shopInfo.setBusinessModel(dto.getBusinessModel‌());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -866,6 +871,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
         view.setAreaName(shop.getDictAreaCode());
         view.setPlatformName(platformName);
+
+        if (CharSequenceUtil.isNotBlank(shop.getBusinessModel()) && PlatformDictEnum.MERCADOLIBRE.getCode().equals(shop.getDictPlatform())) {
+            DictBasicEntity mercadolibreBusinessModel = dictBasicService.getByTypeAndValue("mercadolibreBusinessModel", shop.getBusinessModel());
+            if (ObjectUtil.isNotEmpty(mercadolibreBusinessModel)) {
+                view.setBusinessModelName‌(mercadolibreBusinessModel.getName());
+            }
+        }
 
         //客户名称
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(shop.getCustomerId());

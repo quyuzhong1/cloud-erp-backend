@@ -329,6 +329,11 @@ public class ShopDTO implements Serializable {
          * 渠道id
          */
         private List<String> channelIdList;
+
+        /**
+         * 平台经营模式
+         */
+        private String businessModel‌;
     }
 
 
@@ -508,6 +513,16 @@ public class ShopDTO implements Serializable {
          * 渠道信息
          */
         private List<ShopChannelRefDTO.ViewDTO> shopChannelRefDTOList;
+
+        /**
+         * 平台经营模式
+         */
+        private String businessModel‌;
+
+        /**
+         * 平台经营模式名称
+         */
+        private String businessModelName‌;
     }
 
     @Data
@@ -641,6 +656,11 @@ public class ShopDTO implements Serializable {
          */
 //         @NotBlank(message = "店铺退货仓库不能为空")
          private String returnWarehouse;
+
+        /**
+         * 平台经营模式
+         */
+        private String businessModel‌;
 
     }
     @Data
