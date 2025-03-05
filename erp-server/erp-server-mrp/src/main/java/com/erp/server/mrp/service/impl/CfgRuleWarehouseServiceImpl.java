@@ -233,11 +233,9 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                 resultDTO.setVirtualShopNameList(virtualShopNameList);
             }
         }
-        if (Boolean.TRUE.equals(dto.getIsEnableOverseas())) {
-            List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(),list);
-            if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
-                resultDTO.setOverseasShopNameList(overseasShopNameList);
-            }
+        List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(), list);
+        if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
+            resultDTO.setOverseasShopNameList(overseasShopNameList);
         }
         return resultDTO;
     }

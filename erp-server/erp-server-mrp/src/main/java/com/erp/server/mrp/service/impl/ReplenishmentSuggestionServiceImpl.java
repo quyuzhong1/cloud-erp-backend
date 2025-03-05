@@ -48,7 +48,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.mrp.calculation.handler.SalesEstimateHandler;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
-import com.erp.server.mrp.calculation.strategy.sales.AbstractSalesEstimateStrategy;
+import com.erp.server.mrp.calculation.strategy.sales.SystemStrategy;
 import com.erp.server.mrp.es.entity.HistoryInventoryEsEntity;
 import com.erp.server.mrp.es.entity.OrderHistorySalesEsEntity;
 import com.erp.server.mrp.es.service.HistoryInventoryEsService;
@@ -2060,7 +2060,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             if (ObjectUtils.isEmpty(formulaResult)) {
                 continue;
             }
-            BigDecimal saleQty = AbstractSalesEstimateStrategy.getSaleQty(salesInfos, avgTimePeriodSales, formulaResult, basicCalcDate);
+            BigDecimal saleQty = SystemStrategy.getSaleQty(salesInfos, avgTimePeriodSales, formulaResult, basicCalcDate);
             ReplenishmentResultDTO.SalesEstimateDTO salesEstimateDTO = ReplenishmentResultDTO.SalesEstimateDTO.buildSalesEstimateDTO(calcDate, saleQty, formulaResult);
             salesEstimates.add(salesEstimateDTO);
         }

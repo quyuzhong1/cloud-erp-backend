@@ -159,7 +159,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             }
         }
         //海外仓日志头
-        if (CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(entry.getKey()) && Boolean.TRUE.equals(ruleWarehouseEntity.getIsEnableOverseas())) {
+        if (CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(entry.getKey())) {
             msg.append("海外仓:<br>");
         }
         for (CfgRuleWarehouseDetailEntity detailEntity : value) {
@@ -171,19 +171,25 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             String shopNames = CharSequenceUtil.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(),detailEntity.getChannelType()) ? "全部店铺":
                     shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
             //平台
-            String dictPlatformName = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            String dictPlatformName;
+            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailEntity.getChannelType()) && Boolean.FALSE.equals(ruleWarehouseEntity.getIsEnableVirtual())) {
+                dictPlatformName =  dictBasicList.stream().filter(obj -> detailEntity.getChannelIdJson().contains(obj.getValue())).map(DictBasicEntity::getName).findFirst().orElse("全部");
+            } else {
+                dictPlatformName = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+
+            }
             //本地日志
             if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
                 if (Boolean.TRUE.equals(ruleWarehouseEntity.getIsEnableVirtual())) {
                     String partitionName = partitionEntityList.stream().filter(obj -> detailEntity.getPartitionIdJson().contains(obj.getId())).map(DictPartitionEntity::getName)
                             .distinct().sorted().collect(Collectors.joining(","));
-                    msg.append(CharSequenceUtil.format("•虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、关联军区【{}】<br>", virtualWarehouseName,warehouseName,dictPlatformName,shopNames, partitionName));
+                    msg.append(CharSequenceUtil.format("•虚拟仓【{}】、关联实体仓【{}】、关联平台【{}】、关联店铺【{}】、关联军区【{}】<br>", virtualWarehouseName,warehouseName,dictPlatformName,shopNames, CharSequenceUtil.isNotBlank(partitionName) ? partitionName : "全部"));
                 } else {
                     msg.append(CharSequenceUtil.format("•实体仓【{}】、平台【{}】、店铺【{}】<br>",  warehouseName,dictPlatformName,shopNames));
                 }
             }
             //海外仓日志
-            if (CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(entry.getKey()) && Boolean.TRUE.equals(ruleWarehouseEntity.getIsEnableOverseas())) {
+            if (CfgRuleWarehouseTypeEnum.OVERSEAS.getCode().equals(entry.getKey())) {
                 msg.append(CharSequenceUtil.format("•海外备货仓【{}】、平台【{}】、店铺【{}】<br>", warehouseName,dictPlatformName,shopNames));
             }
         }
@@ -301,7 +307,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             }
             List<String> partitionIdList = detailEntity.getPartitionIdJson().stream().map(Object::toString).collect(Collectors.toList());
             viewDTO.setPartitionIdList(partitionIdList);
-            String partitionName = partitionEntityList.stream().filter(obj -> partitionIdList.contains(obj.getId())).map(DictPartitionEntity::getName)
+            String partitionName = CollectionUtils.isEmpty(partitionIdList) ? "全部军区" : partitionEntityList.stream().filter(obj -> partitionIdList.contains(obj.getId())).map(DictPartitionEntity::getName)
                     .distinct().sorted().collect(Collectors.joining(","));
             viewDTO.setPartitionName(partitionName);
             resultList.add(viewDTO);
