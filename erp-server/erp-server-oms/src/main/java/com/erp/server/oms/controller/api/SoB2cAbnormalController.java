@@ -107,11 +107,11 @@ public class SoB2cAbnormalController extends BaseController {
 
 
     /**
-     * 清楚异常
+     * 清除异常
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "清楚异常")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "清除异常")
     @PostMapping(value = "/clearAbnormal")
     public ApiResult<?> clearAbnormal(@RequestBody @Validated SoB2cAbnormalDTO.ClearAbnormalDTO dto) {
         soB2cAbnormalService.clearAbnormal(dto);
