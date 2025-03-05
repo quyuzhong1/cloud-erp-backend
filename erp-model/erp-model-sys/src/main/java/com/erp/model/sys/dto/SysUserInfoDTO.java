@@ -77,7 +77,18 @@ public class SysUserInfoDTO implements Serializable {
     private String refId;
     //角色id 集合
     private List<String> roleIdList;
-
+    //店铺id集合
+    private List<String> shopIdList;
+    /**
+     * 店铺授权类型（all全部授权，part指定授权）
+     */
+    private String shopAuthType;
+    //仓库id集合
+    private List<String> warehouseIdList;
+    /**
+     * 仓库授权类型（all全部授权，part指定授权）
+     */
+    private String warehouseAuthType;
     /**
      * 店铺权限设置分页查询条件
      */

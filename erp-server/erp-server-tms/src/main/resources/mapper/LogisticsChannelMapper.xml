@@ -203,18 +203,21 @@
     <select id="getWarnReportByChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$WarnReportDTO">
         select
         lc.name as channelName,
-        count(DISTINCT lb.id) as total
+        count(lbd.id) as total
         from logistics_bill_detail lbd
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
         LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
-        where lbd.track_status not in('sign','manualComplete','systemComplete')
-        and lb.transport_no != '' and lbd.track_no != ''
+        where lbd.track_status not in('sign','manualComplete','systemComplete','deliveryFail')
+        and (lbd.track_no != '' or lb.transport_no != '')
         and lbd.is_deleted = false AND lc.name != ''
+        <if test="query.updateTime != null">
+            and lbd.update_time &lt; #{query.updateTime}
+        </if>
         <if test="query.trackTime != null">
-            and lbd.update_time &lt; #{query.trackTime}
+            and lbd.track_time > #{query.trackTime}
         </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
-            and lb.order_type in ('B2B','B2C')
+            and lb.order_type in ('B2B','B2C','AfterSale')
         </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
             and lb.order_type = 'firstMile'

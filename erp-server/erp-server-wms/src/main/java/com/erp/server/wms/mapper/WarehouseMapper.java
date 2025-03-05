@@ -60,4 +60,11 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @return IPage<ListDTO>
      */
     IPage<WarehouseDTO.ListDTO> pagingSelect(Page query,@Param("params") WarehouseDTO.SelectDTO params);
+
+    /**
+     * 查询仓库列表数据
+     * @param permissionSql
+     * @return
+     */
+    List<WarehouseDTO.ListDTO> listApproveWarehouse(String permissionSql);
 }

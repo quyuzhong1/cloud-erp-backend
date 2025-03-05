@@ -114,16 +114,16 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
         //创建旺店通原始订单任务
         List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
-        
+
         if(requestData.trim().startsWith("{")) {
-        	ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
-        	shudiyunB2cOrderDTOList.add(dto);
+            ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
+            shudiyunB2cOrderDTOList.add(dto);
         }else {
-        	shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
+            shudiyunB2cOrderDTOList = JSON.parseArray(requestData, ShudiyunB2cOrderDTO.class);
         }
-        
+
         shudiyunB2cOrderDTOList.forEach(shudiyunB2cOrderDTO -> {
-        	if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(shudiyunB2cOrderDTO.getPlatform_id())) {
+            if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(shudiyunB2cOrderDTO.getPlatform_id())) {
                 DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
                 request.setCfgOutputId("1861317267527064372");
                 List<QueryParam> queryParams = new ArrayList<>();
@@ -143,8 +143,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
      * 解析订单数据
      **/
     public Map<String, ShudiyunB2cOrderDTO> convert(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntityList1) {
-    	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
-    	if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
+        Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
+        if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
+            return result;
+        }
+        if (!dmpSoInfoEntity.getPayStatus()) {
             return result;
         }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
@@ -176,9 +179,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {
-            	if(dmpSoInfoEntity.getPlatformCreateTime() != null) {
-            		shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
-            	}
+                if(dmpSoInfoEntity.getPlatformCreateTime() != null) {
+                    shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
+                }
             }
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
@@ -278,9 +281,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                         shudiyunB2cOrderDTO.setSpec_name(dmpSoDetailEntity.getSpecifics());
                     }
                 }
-
-
-
 
                 shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getPlatformStatus()));
 
@@ -384,6 +384,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
             }
 
+            shudiyunB2cOrderDTO.setTaxation(dmpSoInfoEntity.getTotalTaxFee());
 
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getThirdCode());
 
@@ -483,9 +484,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         for(String changId : changeIds) {
             Map<String, ShudiyunB2cOrderDTO> result = this.convert(DmpSoInfoEntityMap.get(changId), DmpSoDetailEntityMap.get(changId));
             if(!result.isEmpty()) {
-            	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
-            		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
-            	}
+                for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
+                    map.put(r.getKey(), JSON.toJSONString(r.getValue()));
+                }
             }
         }
         return map;

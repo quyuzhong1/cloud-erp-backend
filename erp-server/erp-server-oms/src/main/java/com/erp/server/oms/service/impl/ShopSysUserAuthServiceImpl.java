@@ -13,6 +13,8 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
+import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopSysUserAuthMapper;
 import com.erp.server.oms.service.DictBasicService;
@@ -48,6 +50,8 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
 
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -132,7 +136,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
             return Collections.EMPTY_LIST;
         }
         //店铺权限设置信息
-        List<ShopSysUserAuthEntity> list = this.listByUserIdList(userIdList);
+        List<SysUserDTO.ShopDTO> list = authDataFeign.listShopIdByUserIds(userIdList);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
@@ -140,9 +144,9 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
         List<ShopInfoEntity> shopInfoList = shopInfoService.list();
 
         List<ShopSysUserAuthDTO.ViewDTO> resultList = new ArrayList<>();
-        Map<String, List<ShopSysUserAuthEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getUserId().concat(obj.getAuthType())));
-        for (Map.Entry<String, List<ShopSysUserAuthEntity>> entry :  map.entrySet()) {
-            List<ShopSysUserAuthEntity> value = entry.getValue();
+        Map<String, List<SysUserDTO.ShopDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getUserId().concat(String.valueOf(obj.getAuthType()))));
+        for (Map.Entry<String, List<SysUserDTO.ShopDTO>> entry :  map.entrySet()) {
+            List<SysUserDTO.ShopDTO> value = entry.getValue();
             ShopSysUserAuthDTO.ViewDTO viewDTO = new ShopSysUserAuthDTO.ViewDTO();
             viewDTO.setUserId(value.get(0).getUserId());
             viewDTO.setAuthType(value.get(0).getAuthType());
@@ -165,7 +169,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                 }
             } else {
                 //选择指定
-                for (ShopSysUserAuthEntity shopSysUserAuthEntity : value) {
+                for (SysUserDTO.ShopDTO shopSysUserAuthEntity : value) {
                     //店铺信息
                     ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shopInfoEntity)) {
@@ -187,25 +191,9 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
     }
 
     @Override
-    public List<String> listUserIdByShopIdList(List<String> shopIdList) {
-        if (CollectionUtils.isEmpty(shopIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        List<ShopSysUserAuthEntity> list = lambdaQuery().in(ShopSysUserAuthEntity::getShopId, shopIdList)
-                .or()
-                .eq(ShopSysUserAuthEntity::getAuthType, ShopAuthTypeEnum.ENUM_ALL.getCode())
-                .list();
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
-        }
-        List<String> userIdList = list.stream().map(ShopSysUserAuthEntity::getUserId).distinct().collect(Collectors.toList());
-        return userIdList;
-    }
-
-    @Override
     public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(ShopSysUserAuthDTO.UserAuthShopParamDTO dto) {
         //店铺权限设置信息
-        List<ShopSysUserAuthEntity> list = this.listByUserIdList(Arrays.asList(dto.getUserId()));
+        List<SysUserDTO.ShopDTO> list = authDataFeign.getShopUserList(dto.getUserId());
         if (CollectionUtils.isEmpty(list)) {
             return Collections.EMPTY_LIST;
         }
@@ -216,9 +204,9 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
 
         //店铺
         List<ShopSysUserAuthDTO.ViewShopDTO> resultList = new ArrayList<>();
-        Map<String, List<ShopSysUserAuthEntity>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getUserId().concat(obj.getAuthType())));
-        for (Map.Entry<String, List<ShopSysUserAuthEntity>> entry :  map.entrySet()) {
-            List<ShopSysUserAuthEntity> value = entry.getValue();
+        Map<String, List<SysUserDTO.ShopDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getUserId().concat(obj.getAuthType())));
+        for (Map.Entry<String, List<SysUserDTO.ShopDTO>> entry :  map.entrySet()) {
+            List<SysUserDTO.ShopDTO> value = entry.getValue();
 
 
             //全部指定则返回全部店铺信息
@@ -241,7 +229,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                 }
             } else {
                 //选择指定
-                for (ShopSysUserAuthEntity shopSysUserAuthEntity : value) {
+                for (SysUserDTO.ShopDTO shopSysUserAuthEntity : value) {
                     //店铺信息
                     ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shopInfoEntity)) {

@@ -4,14 +4,12 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
@@ -84,6 +82,11 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:paging"
+    )
     public ApiResult<List<SoB2cDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(soB2cService.tabList(dto));
     }
@@ -109,6 +112,11 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
         return success(soB2cService.paging(dto));
@@ -837,6 +845,11 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 18:31
      */
     @PostMapping("/mergePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:mergePaging"
+    )
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.MergeListDTO>> mergePaging(@RequestBody @Validated PagingDTO<SoB2cDTO.MergePagingParamDTO> dto) {
         return success(soB2cService.mergePaging(dto));
@@ -851,6 +864,11 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/24 16:18
      */
     @PostMapping("/mergePagingCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:mergePaging"
+    )
     public ApiResult<Integer> mergePagingCount(@RequestBody @Validated SoB2cDTO.MergePagingParamDTO dto) {
         return success(soB2cService.mergePagingCount(dto));
     }
@@ -975,16 +993,6 @@ public class SoB2cController extends BaseController {
             resultDTOS.add(result);
         }
 
-        //原有逻辑
-        if (CollectionUtils.isNotEmpty(allSoIdList)) {
-            for (String soId : allSoIdList) {
-                try {
-                    soB2cService.checkProductRegistrationAndUpdate(soId, "");
-                } catch (Exception e) {
-                    log.error("拆分保存后检查商品备案失败，soId:{}，异常信息{}", soId, e);
-                }
-            }
-        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -1014,7 +1022,7 @@ public class SoB2cController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = soB2cSplitService.cancelSplit(id);
+                result = soB2cSplitService.cancelSplit(id, true);
             } catch (Exception e) {
                 log.error("B2C销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);

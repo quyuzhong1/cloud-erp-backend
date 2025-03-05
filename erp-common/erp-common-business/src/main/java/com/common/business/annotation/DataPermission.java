@@ -21,6 +21,19 @@ public @interface DataPermission {
     String tableField() default "";
 
     /**
+     * 店铺权限过滤 例如： shopTableField = si.ship_id
+     * 根据数据库表的si.ship_id 字段查询是否有权限操作数据
+     * @return
+     */
+    String shopTableField() default "";
+    /**
+     * 店铺权限过滤 例如： warehouseTableField = si.warehouse_id
+     * 根据数据库表的si.warehouse_id 字段查询是否有权限操作数据
+     * @return
+     */
+    String warehouseTableField() default "";
+
+    /**
      * 菜单权限编码
      */
     String menuCode() default "";

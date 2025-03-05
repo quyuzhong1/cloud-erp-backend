@@ -64,7 +64,18 @@ public class WarehouseController extends BaseController {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
     }
-
+    /**
+     * 仓库自定义分页列表
+     * 产品要求不同的高级搜索
+     * @param
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
+    public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+        PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
+        return success(pagingVO);
+    }
     /**
      * 添加仓库
      *
@@ -317,8 +328,11 @@ public class WarehouseController extends BaseController {
      * 仓库列表
      */
     @GetMapping("/list")
-    public ApiResult<List<WarehouseDTO.ListDTO>> list() {
-        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+    public ApiResult<List<WarehouseDTO.ListDTO>> list(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(showByAuth);
         return success(list);
     }
 
@@ -332,6 +346,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/selectPaging")
     public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<WarehouseDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);
+        }
         PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
         return success(pagingVO);
     }

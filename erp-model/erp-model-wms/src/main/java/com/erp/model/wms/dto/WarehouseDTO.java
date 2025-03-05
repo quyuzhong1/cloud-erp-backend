@@ -257,6 +257,10 @@ public class WarehouseDTO implements Serializable {
          * 仓库类型 对应dict 表id
          */
         private String typeId;
+        /**
+         * 类型名称
+         */
+        private String typeName;
 
         /**
          * 组织id
@@ -586,80 +590,6 @@ public class WarehouseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
-
-
-
-
-        /**
-         * 仓库名
-         */
-        private String name;
-
-
-        /**
-         * 仓库地址
-         */
-        private String address;
-
-        /**
-         * 是否虚拟仓 true 是 false 不是
-         */
-        private Boolean isVirtual;
-
-        /**
-         * 状态
-         * 是否禁用
-         * true 禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 联系人
-         */
-        private String contacts;
-
-        /**
-         * 是否启用仓位
-         */
-        private Boolean isEnableLocation;
-
-        /**
-         * 金蝶仓库编号
-         */
-        private String kingdeeWarehouseCode;
-
-        /**
-         * 经营类型 来源  http://172.16.100.11:3002/project/92/interface/api/13147 type=warehouseManageType
-         */
-        private String warehouseManageType;
-
-
-        /**
-         * 地理位置 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=geographyLocation
-         */
-        private String geographyLocation;
-
-
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
-
-
-        /**
-         * 审核状态
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 类型id 集合
-         */
-        private List<String> typeIdList;
-
-        /**
-         * 库存组织id 集合
-         */
-        private List<String> orgIdList;
         /**
          * 页面高级查询
          */
@@ -758,12 +688,16 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO{
 
         /**
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
 
         /**
          * 是否需要过滤组织

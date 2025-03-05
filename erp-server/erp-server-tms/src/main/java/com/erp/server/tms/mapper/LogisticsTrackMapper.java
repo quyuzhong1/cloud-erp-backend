@@ -21,15 +21,6 @@ import java.util.List;
 @Mapper
 public interface LogisticsTrackMapper extends BaseMapper<LogisticsTrackEntity> {
 
-    void deleteByTrackNo(@Param("trackNo") String trackNo);
-
-    /**
-     * 获取最新一条物流轨迹记录
-     * @param trackNo
-     * @return
-     */
-    LogisticsTrackEntity getMaxByTrackTime(@Param("trackNo") String trackNo);
-
     /**
      * 查询3个月无物流轨迹记录数据
      * @param query

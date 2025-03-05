@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -41,6 +42,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
@@ -63,7 +65,6 @@ import com.sdk.oms.shopee.service.ShopeeShopService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
-import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.sdk.oms.shopify.utils.HmacVerificationUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -111,9 +112,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     private DictBasicService dictBasicService;
 
     @Resource
-    private ShopSdkServer shopSdkServer;
-
-    @Resource
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
@@ -151,6 +149,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private ShopChannelRefService shopChannelRefService;
+    @Resource
+    private AuthDataFeign authDataFeign;
     /**
      * 添加店铺
      *
@@ -1548,32 +1548,24 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
         ShopDTO.SelectDTO params = dto.getParams();
-        if (params.getShowByAuth()){
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-                return new PagingVO<>();
-            }
-
-            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-            List<String> shopIdList;
-            if (StringUtils.isNotBlank(params.getDictPlatform())) {
-                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
-                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            } else {
-                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            }
-            if (CollectionUtils.isEmpty(shopIdList)) {
-                return new PagingVO<>();
-            }
-            params.setShopIdList(shopIdList);
+        if (Objects.nonNull(params.getShowByAuth()) && params.getShowByAuth()){
+            params.setPermissionSql(authDataFeign.getShopPermissionSql("si.id"));
         }
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<ShopDTO.ListDTO> records = pagResult.getRecords();
-        //排序
-        pagResult.setRecords(records);
+        //填充
+        fillData(records);
         return new PagingVO<>(pagResult);
+    }
+
+    private void fillData(List<ShopDTO.ListDTO> records) {
+        if (CollUtil.isEmpty(records)){
+            return;
+        }
+        records.forEach(e ->{
+            e.setDictPlatformName(PlatformDictEnum.getNameByCode(e.getDictPlatform()));
+        });
     }
 
     @Override

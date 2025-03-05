@@ -76,6 +76,18 @@ public class ShopInfoController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 店铺自定义分页查询
+     *
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
+    public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
+        return success(pagingVO);
+    }
+
 
     /**
      * 添加店铺
@@ -508,6 +520,9 @@ public class ShopInfoController extends BaseController {
      */
     @PostMapping("/listSelect")
     public ApiResult<List<ShopDTO.ListDTO>> listSelect(@RequestBody ShopDTO.SelectDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
+        }
         List<ShopDTO.ListDTO> list = shopInfoService.listSelect(dto);
         return success(list);
     }
@@ -533,5 +548,19 @@ public class ShopInfoController extends BaseController {
     public ApiResult<List<ShopInfoEntity>> listAuthPlatform(@RequestBody List<String> platformDTO) {
         List<ShopInfoEntity> list = shopInfoService.listAuthPlatform(platformDTO);
         return success(list);
+    }
+
+    /**
+     * 店铺分页查询-高级搜索
+     *
+     * @return ApiResult<PagingVO <ShopDTO.ListDTO>>
+     * @author zdy
+     */
+    @PostMapping("/pagingSelect")
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
+        }
+        return shopInfoService.pagingSelect(dto);
     }
 }
