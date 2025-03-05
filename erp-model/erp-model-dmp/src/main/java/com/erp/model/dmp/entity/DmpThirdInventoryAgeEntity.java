@@ -68,6 +68,11 @@ public class DmpThirdInventoryAgeEntity extends BaseEntity<DmpThirdInventoryAgeE
      */
     @TableField("input_task_id")
     private String inputTaskId;
+    /**
+     * 批次入库单号
+     */
+    @TableField("receiving_code")
+    private String receivingCode;
 
 
     public static final String CONVERT_ID = "convert_id";

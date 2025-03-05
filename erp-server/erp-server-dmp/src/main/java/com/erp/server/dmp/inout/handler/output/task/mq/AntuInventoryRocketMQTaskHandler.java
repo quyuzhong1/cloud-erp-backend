@@ -101,7 +101,8 @@ public class AntuInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
         // 库龄信息
         List<PlatformInventoryDTO.PlatformInventoryAgeDTO> ageList = new LinkedList<>();
         if (CollectionUtils.isNotEmpty(dmpDetailList)){
-            ageList = dmpDetailList.stream().map(this::convertAgeInfo).collect(Collectors.toList());
+            // 按日期分组合并
+            ageList = convertAndGroupByPutAwayData(dmpDetailList);
         }
         platformInventoryDTO.setAgeInfoList(ageList);
         return platformInventoryDTO;
@@ -109,13 +110,21 @@ public class AntuInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 
     /**
      * 明细转换
+     * 按日期合并
      */
-    private PlatformInventoryDTO.PlatformInventoryAgeDTO  convertAgeInfo(DmpThirdInventoryAgeEntity ageEntity) {
-        PlatformInventoryDTO.PlatformInventoryAgeDTO platformInventoryAgeDTO = new PlatformInventoryDTO.PlatformInventoryAgeDTO();
-        platformInventoryAgeDTO.setInventoryQty(ageEntity.getInventoryQty());
-        platformInventoryAgeDTO.setPullDate(ageEntity.getUpdateTime().toLocalDate());
-        platformInventoryAgeDTO.setPutAwayDate(ageEntity.getPutAwayDate());
-        return platformInventoryAgeDTO;
+    private List<PlatformInventoryDTO.PlatformInventoryAgeDTO> convertAndGroupByPutAwayData(List<DmpThirdInventoryAgeEntity> ageList) {
+        Map<LocalDate, List<DmpThirdInventoryAgeEntity>> groupList = ageList.stream()
+                .collect(Collectors.groupingBy(DmpThirdInventoryAgeEntity::getPutAwayDate));
+
+       return groupList.entrySet().stream().map(entry -> {
+            List<DmpThirdInventoryAgeEntity> value = entry.getValue();
+           int allQty = value.stream().mapToInt(DmpThirdInventoryAgeEntity::getInventoryQty).sum();
+            PlatformInventoryDTO.PlatformInventoryAgeDTO platformInventoryAgeDTO = new PlatformInventoryDTO.PlatformInventoryAgeDTO();
+            platformInventoryAgeDTO.setInventoryQty(allQty);
+            platformInventoryAgeDTO.setPullDate(value.get(0).getUpdateTime().toLocalDate());
+            platformInventoryAgeDTO.setPutAwayDate(entry.getKey());
+            return platformInventoryAgeDTO;
+        }).collect(Collectors.toList());
     }
 
     @Override

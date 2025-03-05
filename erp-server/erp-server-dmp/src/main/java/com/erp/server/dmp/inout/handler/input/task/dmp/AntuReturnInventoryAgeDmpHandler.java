@@ -64,6 +64,9 @@ public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
 
             LocalDateTime parse = LocalDateTime.parse(ibFifoTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             batchInfoMap.put("putAwayDate", parse.toLocalDate());
+            // 批次单号
+            String receivingCode = batchInfoMap.getOrDefault("receiving_code", "").toString();
+            batchInfoMap.put("receivingCode", receivingCode);
 
             // 补充主单信息定位mainId
             String warehouseCode = dmpInputMongoEntity.getOrDefault("warehouse_code", "").toString();
