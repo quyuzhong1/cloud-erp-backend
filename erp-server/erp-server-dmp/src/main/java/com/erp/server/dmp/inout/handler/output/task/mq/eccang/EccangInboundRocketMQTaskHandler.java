@@ -84,7 +84,7 @@ public class EccangInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 
 		//不是已签收状态不推送ERP
 		if (!(AntuEnums.ReceivingStatusEnum.COMPLETE_LISTING.getCode().equals(dmpThirdInboundEntity.getReceivingStatus())
-				|| AntuEnums.ReceivingStatusEnum.COMPLETION_RECEIVING_DESTINATION_WAREHOUSE.getCode().equals(dmpThirdInboundEntity.getReceivingStatus()))
+				|| AntuEnums.ReceivingStatusEnum.COMPLETION_RECEIVING_DESTINATION_WAREHOUSE.getCode().equals(dmpThirdInboundEntity.getReceivingStatus())
 				|| AntuEnums.ReceivingStatusEnum.RECEIVING_DESTINATION_WAREHOUSE.getCode().equals(dmpThirdInboundEntity.getReceivingStatus()))
 		) {
 			return null;
@@ -98,7 +98,7 @@ public class EccangInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 			Receiving receiving = new Receiving();
 			receiving.setProductSku(gcReceiving.getProductSku());
 			receiving.setReceiveQty(gcReceiving.getQuantity());
-			receiving.setReceiveTime(gcReceiving.getRdUpdateTime());
+			receiving.setReceiveTime(receiveTime);
 			receivingDataList.add(receiving);
 		}
 		platformInboundDTO.setReceivingDataList(receivingDataList);
