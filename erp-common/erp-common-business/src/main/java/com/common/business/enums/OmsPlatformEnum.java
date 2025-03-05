@@ -19,6 +19,7 @@ public enum OmsPlatformEnum {
     OMS_IML("iml","艾姆勒海外仓"),
     OMS_ANTU("antu","安兔"),
     OMS_SPT("spt","速派通"),
+    OMS_ECCANG("eccang","易仓"),
     ;
 
     @EnumValue
