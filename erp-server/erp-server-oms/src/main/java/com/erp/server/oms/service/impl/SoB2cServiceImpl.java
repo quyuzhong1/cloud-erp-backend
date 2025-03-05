@@ -138,7 +138,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -2507,6 +2506,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());
             }
             ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
+            attach.setFileType(FileTypeEnum.PDF.getCode());
             attach.setAttachId(uploadFileResponse.getData().getAttachId());
             createOutboundReq.setAttach(Collections.singletonList(attach));
             createOutboundReq.setDistributorType(DistributorTypeEnum.SELF_LOGISTICS.getCode());
