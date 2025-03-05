@@ -40,6 +40,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -82,6 +83,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.BeanUtils;
@@ -2133,6 +2135,36 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         lambdaUpdate().set(RequisitionApplicationEntity::getPickPushDownStatus, pickPushDownStatus)
                 .eq(RequisitionApplicationEntity::getId, requisitionApplicationId)
                 .update();
+    }
+
+    @Override
+    public PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto) {
+        RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO pagingParamDTO = dto.getParams();
+        String requisitionId = pagingParamDTO.getId();
+        RequisitionApplicationEntity requisitionApplicationEntity = getById(requisitionId);
+        if (ObjectUtil.isEmpty(requisitionApplicationEntity)) {
+            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+        }
+        if(!SourceTypeEnum.DELIVERY_PLAN.getCode().equals(requisitionApplicationEntity.getSourceType())){
+            throw new ServiceException("要货申请不是发货计划下推");
+        }
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> iPage = baseMapper.pagingSkuByDeliveryPlan(query,pagingParamDTO,requisitionApplicationEntity.getSourceId());
+        List<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> records = iPage.getRecords();
+        if(CollectionUtils.isEmpty(records)){
+            return new PagingVO<>(iPage);
+        }
+        List<String> skuNo = records.stream().map(RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNo);
+
+        records.forEach(v->{
+            SkuVO skuVO = skuVOList.stream().filter(t->t.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
+            if(Objects.nonNull(skuVO)){
+                v.setImagesUrl(skuVO.getSkuImagesUrl());
+                v.setProductName(skuVO.getSkuName());
+            }
+        });
+        return new PagingVO<>(iPage);
     }
 
     /**
