@@ -2,8 +2,8 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -105,7 +105,7 @@ public class CfgNoticeJob {
             //需要发送通知的飞书群
             List<String> fsGroupList = new ArrayList<>();
 
-            List<CfgNoticeDetailEntity> cfgDetailList = detailList.stream().filter(e -> StrUtil.equals(e.getMainId(), obj.getId())).collect(Collectors.toList());
+            List<CfgNoticeDetailEntity> cfgDetailList = detailList.stream().filter(e -> CharSequenceUtil.equals(e.getMainId(), obj.getId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(cfgDetailList)) {
                 XxlJobHelper.log("系统配置明细为空,配置id:{}", obj.getId());
                 return;
@@ -193,7 +193,7 @@ public class CfgNoticeJob {
 
         // 由于采用关键字（系统预警）
         String activeProfile = SpringUtil.getActiveProfile();
-        String noticeTitle = StrUtil.isBlank(activeProfile) ? title : StrUtil.format("{}-{}", activeProfile, title);
+        String noticeTitle = CharSequenceUtil.isBlank(activeProfile) ? title : CharSequenceUtil.format("{}-{}", activeProfile, title);
 
         //按人员发送飞书通知
         sendNoticeByUser(userIdList, noticeTitle, contentList);
@@ -233,7 +233,7 @@ public class CfgNoticeJob {
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
                     log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
                 }
-            }, i * 200, TimeUnit.MILLISECONDS);
+            }, i * 200L, TimeUnit.MILLISECONDS);
         }
         executor.shutdown();
     }
@@ -271,7 +271,7 @@ public class CfgNoticeJob {
                     String content = contentList.get(counter.getAndIncrement());
                     WarnMsgInfoDTO warnMsgInfoDTO = getWarnMsgInfoDTO(fsGroup,title, content);
                     mqProducerService.sendWarnMsg(warnMsgInfoDTO);
-                }, i * 200, TimeUnit.MILLISECONDS);
+                }, i * 200L, TimeUnit.MILLISECONDS);
             }
         }
         executor.shutdown();
@@ -341,7 +341,7 @@ public class CfgNoticeJob {
             }
             List<String> list = new ArrayList<>();
             sendNoticeSkuList.forEach(e -> {
-                list.add(StrUtil.format("\nSKU：{}\n实体仓：{}\n实体仓实际：{}\n已分配虚拟仓：{}\n实体仓未分配：{}\n",
+                list.add(CharSequenceUtil.format("\nSKU：{}\n实体仓：{}\n实体仓实际：{}\n已分配虚拟仓：{}\n实体仓未分配：{}\n",
                         e.getSkuNo(), e.getWarehouseName(), e.getRealQty(), e.getDistributionQty(), e.getUnDistributionQty()));
             });
             return list;
@@ -351,10 +351,10 @@ public class CfgNoticeJob {
         if (CollUtil.isEmpty(sendNoticeTotalList)) {
             return Collections.emptyList();
         }
-        StringBuffer str = new StringBuffer();
-        str.append(StrUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
+        StringBuilder str = new StringBuilder();
+        str.append(CharSequenceUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("\nSKU({}) 实体仓({}) 差异数量({})", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
+            str.append(CharSequenceUtil.format("\nSKU({}) 实体仓({}) 差异数量({})", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
         });
         return Collections.singletonList(str.toString());
     }
@@ -372,7 +372,7 @@ public class CfgNoticeJob {
             }
             List<String> list = new ArrayList<>();
             sendNoticeSkuList.forEach(e -> {
-                list.add(StrUtil.format("\nSKU：{}\n虚拟仓：{}\n实体仓：{}\n平均库龄：{}\n平均库龄(正推)：{}\n",
+                list.add(CharSequenceUtil.format("\nSKU：{}\n虚拟仓：{}\n实体仓：{}\n平均库龄：{}\n平均库龄(正推)：{}\n",
                         e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getBackAvgInventoryAge(), e.getAvgInventoryAge()));
             });
             return list;
@@ -382,10 +382,10 @@ public class CfgNoticeJob {
         if (CollUtil.isEmpty(sendNoticeTotalList)) {
             return Collections.emptyList();
         }
-        StringBuffer str = new StringBuffer();
-        str.append(StrUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
+        StringBuilder str = new StringBuilder();
+        str.append(CharSequenceUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("\nSKU({}) 虚拟仓({}) 库龄({}) 正推库龄({})",
+            str.append(CharSequenceUtil.format("\nSKU({}) 虚拟仓({}) 库龄({}) 正推库龄({})",
                     e.getSkuNo(), e.getVirtualWarehouseName(), e.getBackAvgInventoryAge(), e.getAvgInventoryAge()));
         });
         return Collections.singletonList(str.toString());
@@ -404,7 +404,7 @@ public class CfgNoticeJob {
             }
             List<String> list = new ArrayList<>();
             sendNoticeSkuList.forEach(e -> {
-                list.add(StrUtil.format("\nSKU：{}\n虚拟仓：{}\n实体仓：{}\n冻结库存：{}\n单据冻结数：{}\n",
+                list.add(CharSequenceUtil.format("\nSKU：{}\n虚拟仓：{}\n实体仓：{}\n冻结库存：{}\n单据冻结数：{}\n",
                         e.getSkuNo(), e.getVirtualWarehouseName(), e.getWarehouseName(), e.getVirtualFrozenQty(), e.getBillFrozenQty()));
             });
             return list;
@@ -414,10 +414,10 @@ public class CfgNoticeJob {
         if (CollUtil.isEmpty(sendNoticeTotalList)) {
             return Collections.emptyList();
         }
-        StringBuffer str = new StringBuffer();
-        str.append(StrUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
+        StringBuilder str = new StringBuilder();
+        str.append(CharSequenceUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
         sendNoticeTotalList.forEach(e -> {
-            str.append(StrUtil.format("\nSKU({}) 虚拟仓({}) 冻结库存({}) 单据冻结库存({})",
+            str.append(CharSequenceUtil.format("\nSKU({}) 虚拟仓({}) 冻结库存({}) 单据冻结库存({})",
                     e.getSkuNo(), e.getVirtualWarehouseName(), e.getVirtualFrozenQty(), e.getBillFrozenQty()));
         });
         return Collections.singletonList(str.toString());
