@@ -116,6 +116,7 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
+    ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
     /**
      * 警告信息 从800 开始
      */
@@ -1544,10 +1545,10 @@ public enum ApiError implements Serializable {
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
 
 
-    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于包装长度"),
-    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于包装宽度"),
-    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
-    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
+    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于等于包装长度"),
+    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
+    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
+    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 
