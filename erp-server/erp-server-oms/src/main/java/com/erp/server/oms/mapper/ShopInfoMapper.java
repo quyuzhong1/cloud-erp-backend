@@ -51,4 +51,12 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      * @return IPage<AreaDTO>
      */
     IPage<ShopDTO.AreaDTO> pagingSelectArea(Page query,@Param("params") ShopDTO.AreaParamDTO params);
+
+    /**
+     * 根据参数获取店铺列表
+     * @param platformList
+     * @param permissionSql
+     * @return
+     */
+    List<ShopInfoEntity> listByParam(@Param("platformList") List<String> platformList, @Param("permissionSql") String permissionSql);
 }

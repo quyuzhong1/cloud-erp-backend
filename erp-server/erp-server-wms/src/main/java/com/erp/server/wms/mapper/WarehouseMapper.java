@@ -67,4 +67,11 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
      * @return
      */
     List<WarehouseDTO.ListDTO> listApproveWarehouse(String permissionSql);
+
+    /**
+     * 根据参数查询仓库列表
+     * @param dto
+     * @return
+     */
+    List<WarehouseEntity> listByParam(@Param("params") WarehouseDTO.ListParamDTO dto);
 }

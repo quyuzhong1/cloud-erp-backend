@@ -940,13 +940,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public List<ShopDTO.ListTreeDTO> listTree() {
+    public List<ShopDTO.ListTreeDTO> listTree(Boolean showByAuth) {
         List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<String> platformList = list.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList);
+        String permissionSql = null;
+        if (Objects.nonNull(showByAuth) && showByAuth){
+            permissionSql = authDataFeign.getShopPermissionSql("");
+        }
+        List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList,permissionSql);
 
         List<ShopDTO.ListTreeDTO> resultList = new ArrayList<>();
         for (DictBasicDTO.ViewDTO viewDTO : list) {
@@ -1307,17 +1311,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     /**
      * @param platformList
+     * @param permissionSql
      * @return List<ShopInfoEntity>
      * @description: 根据平台集合查询
      * @author Will
      * @date: 2023/9/7 16:39
      */
-    private List<ShopInfoEntity> listByPlatformList(List<String> platformList) {
+    private List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql) {
         if (CollectionUtils.isEmpty(platformList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
-        List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, platformList).list();
-        return list;
+        return baseMapper.listByParam(platformList,permissionSql);
     }
 
     @Override

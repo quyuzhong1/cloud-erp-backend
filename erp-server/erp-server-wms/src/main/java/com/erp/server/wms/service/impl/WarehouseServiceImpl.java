@@ -177,6 +177,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        if (Objects.nonNull(dto.getShowByAuth()) && dto.getShowByAuth()){
+            dto.setPermissionSql(authDataFeign.getWarehousePermissionSql("wh.id"));
+        }
         List<WarehouseEntity> list = baseMapper.listWarehouse(dto);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -1244,12 +1247,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
             typeIdList = dictList.stream().filter(e -> dto.getTypeCodeList().contains(e.getValue())).map(DictBasicDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         }
-        List<WarehouseEntity> list = lambdaQuery()
-                .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
-                .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()), WarehouseEntity::getOrgId, dto.getOrgIdList())
-                .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()), WarehouseEntity::getId, dto.getWarehouseIdList())
-                .in(CollectionUtils.isNotEmpty(typeIdList), WarehouseEntity::getTypeId, typeIdList)
-                .list();
+        dto.setTypeIdList(typeIdList);
+        if (Objects.nonNull(dto.getShowByAuth()) && dto.getShowByAuth()){
+            dto.setPermissionSql(authDataFeign.getWarehousePermissionSql("id"));
+        }
+        List<WarehouseEntity> list = baseMapper.listByParam(dto);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }

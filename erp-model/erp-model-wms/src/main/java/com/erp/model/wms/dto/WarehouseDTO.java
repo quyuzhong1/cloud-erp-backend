@@ -325,7 +325,7 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ListInventoryQtyParamDTO {
+    public static class ListInventoryQtyParamDTO extends SortDTO{
 
         /**
          * 明细信息
@@ -346,7 +346,10 @@ public class WarehouseDTO implements Serializable {
          * 启用状态
          */
         private Boolean disabled;
-
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
     }
 
     @Data
@@ -409,6 +412,15 @@ public class WarehouseDTO implements Serializable {
          * overseas	海外第三方仓
          */
         private List<String> typeCodeList;
+        private List<String> typeIdList;
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
+        /**
+         * 权限sql
+         */
+        private String permissionSql;
 
     }
 
