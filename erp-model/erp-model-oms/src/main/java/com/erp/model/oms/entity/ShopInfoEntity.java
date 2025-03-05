@@ -221,6 +221,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
      @TableField("return_warehouse")
      private String returnWarehouse;
+     /**
+     * 平台经营模式
+     */
+     @TableField("business_model")
+     private String businessModel;
 
     public static final String PLATFORM_DICT = "platform_dict";
 
