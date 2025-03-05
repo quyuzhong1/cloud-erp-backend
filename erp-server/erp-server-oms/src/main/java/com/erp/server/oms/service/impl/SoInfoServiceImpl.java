@@ -3617,7 +3617,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setCustomsFee(customsFee);
             addSo.setDiscountAmount(discountAmount);
             this.buildPartition(addSo);
-            handleVirtualWarehouse(addSo);
+            if (CharSequenceUtil.isNotBlank(addSo.getCustomerId())){
+                handleVirtualWarehouse(addSo);
+            }
             Boolean isAdd = Boolean.TRUE;
             List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {
