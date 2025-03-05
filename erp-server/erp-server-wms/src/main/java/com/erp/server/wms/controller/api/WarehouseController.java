@@ -362,6 +362,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/listWarehouseInventoryQty")
     public ApiResult<List<WarehouseDTO.ListInventoryQtyDTO>> listWarehouseInventoryQty(@RequestBody @Valid WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);
+        }
         List<WarehouseDTO.ListInventoryQtyDTO> list = warehouseService.listWarehouseInventoryQty(dto);
         return success(list);
     }
@@ -371,6 +374,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/listWarehouseByParams")
     public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseByParams(@RequestBody @Valid WarehouseDTO.ListParamDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);
+        }
         List<WarehouseDTO.ListDTO> list = warehouseService.listWarehouseByParams(dto);
         return success(list);
     }

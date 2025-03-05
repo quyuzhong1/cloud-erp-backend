@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 虚拟仓实体仓关联关系
@@ -92,6 +93,9 @@ public class VirtualWarehouseRelationController extends BaseController {
      */
     @PostMapping("/warehouse/pagingSelect")
     public ApiResult<PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO>> pagingSelect(@RequestBody @Validated PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);
+        }
         PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> list = virtualWarehouseRelationService.warehousePagingSelect(dto);
         return success(list);
     }
