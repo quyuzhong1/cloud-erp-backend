@@ -1,40 +1,24 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONUtil;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.wrapper.FeignQuery;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
-import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.wms.dto.third.ThirdWarehouseCancelOutboundReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
-import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
-import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
-import com.sdk.wms.antu.dto.request.AntuCreateOutboundReq;
-import com.sdk.wms.antu.dto.response.AntuResponse;
 import com.sdk.wms.antu.service.AntuService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * @author jack
  * @date 2025-02-26
  * @description 速派通处理器
  *
- *
+ * 速派通海外仓 -- 来源易仓平台，统一继承易仓处理器
  */
 @Slf4j
 @Service
 @Validated
-public class SptHandlerServiceImpl extends AntuHandlerServiceImpl {
+public class SptHandlerServiceImpl extends EccangHandlerServiceImpl {
 
     @Resource
     private AntuService antuService;
@@ -42,66 +26,5 @@ public class SptHandlerServiceImpl extends AntuHandlerServiceImpl {
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.OMS_SPT;
-    }
-
-
-    @Override
-    public ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        AntuCreateOutboundReq antuCreateOutboundReq = OverseasWarehouseInboundConverter.INSTANCE.outboundDtoToAntu(createOutboundReq);
-        this.handleData(antuCreateOutboundReq);
-        log.warn(getPlatForm().getName()+"创建出库单json :{}", JSONUtil.toJsonStr(antuCreateOutboundReq));
-        AntuResponse<String> response =  antuService.createOutboundBill(antuCreateOutboundReq,getPlatForm());
-        if(response.getMessage().contains("参考编号已存在")){
-            return success(response.getOrderCode());
-        }
-        return isSuccess(response.getAsk()) ? success(response.getData()) : failure(response.getMessage());
-    }
-
-    @Override
-    public ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        AntuResponse<String> response = antuService.cancelOutboundBill(cancelOutboundReq.getOrderCode(),cancelOutboundReq.getReason(),getPlatForm());
-        if(!isSuccess(response.getAsk())){
-            return failure(response.getMessage());
-        }
-        if(Objects.isNull(response.getCancelStatus())){
-            return failure(response.getMessage());
-        }
-        if(response.getCancelStatus().equals(1)){
-            return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
-        }
-        if(response.getCancelStatus().equals(3)){
-            return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_FAILED.getCode());
-        }
-        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
-    }
-
-    /**
-     * 创建订单数据处理
-     *
-     * @param antuCreateOutboundReq
-     */
-    private void handleData(AntuCreateOutboundReq antuCreateOutboundReq) {
-        //处理地址1
-        if(CharSequenceUtil.isBlank(antuCreateOutboundReq.getAddress1())){
-            antuCreateOutboundReq.setAddress1(CharSequenceUtil.isNotBlank(antuCreateOutboundReq.getAddress2())?antuCreateOutboundReq.getAddress2():antuCreateOutboundReq.getAddress3());
-        }
-        //处理邮编
-        if(CharSequenceUtil.isNotBlank(antuCreateOutboundReq.getZipcode())){
-            antuCreateOutboundReq.setZipcode(antuCreateOutboundReq.getZipcode().replace("-",""));
-        }
-        //处理省份
-        if(CharSequenceUtil.isNotBlank(antuCreateOutboundReq.getProvince())){
-            if(antuCreateOutboundReq.getProvince().length() != 2){
-                List<DictCityEntity> dictCityEntityList = FeignQuery.create(DictCityEntity.class)
-                        .eq(DictCityEntity::getCountryCode,antuCreateOutboundReq.getCountryCode())
-                        .eq(DictCityEntity::getType,"province")
-                        .last(CharSequenceUtil.format("and (code_en = '{}'  or code_pt = '{}')",antuCreateOutboundReq.getProvince(),antuCreateOutboundReq.getProvince()))
-                        .list();
-                if(CollUtil.isEmpty(dictCityEntityList)){
-                    throw new ServiceException(getPlatForm().getName()+"不支持该省份下单");
-                }
-                antuCreateOutboundReq.setProvince(dictCityEntityList.get(0).getCodeTwo());
-            }
-        }
     }
 }
