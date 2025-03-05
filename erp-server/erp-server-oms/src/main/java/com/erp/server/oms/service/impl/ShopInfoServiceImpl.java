@@ -559,6 +559,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setEnableTime(dto.getEnableTime());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
+        shopInfo.setBusinessModel(dto.getBusinessModel‌());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
             List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByIds(Arrays.asList(warehouseId));
@@ -849,6 +850,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         String platformName = Objects.nonNull(dictBasic) ? dictBasic.getName() : "";
         view.setAreaName(shop.getDictAreaCode());
         view.setPlatformName(platformName);
+
+        if (CharSequenceUtil.isNotBlank(shop.getBusinessModel()) && PlatformDictEnum.MERCADOLIBRE.getCode().equals(shop.getDictPlatform())) {
+            DictBasicEntity mercadolibreBusinessModel = dictBasicService.getByTypeAndValue("mercadolibreBusinessModel", shop.getBusinessModel());
+            if (ObjectUtil.isNotEmpty(mercadolibreBusinessModel)) {
+                view.setBusinessModelName‌(mercadolibreBusinessModel.getName());
+            }
+        }
 
         //客户名称
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(shop.getCustomerId());
