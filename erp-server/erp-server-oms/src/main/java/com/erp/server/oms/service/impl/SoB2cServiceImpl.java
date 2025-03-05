@@ -1257,7 +1257,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //同步数帝云
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
-        soB2cDetailEntityList.removeIf(s -> org.apache.commons.lang3.StringUtils.isBlank(s.getSkuId()));
         if(CollUtil.isNotEmpty(soB2cDetailEntityList)) {
         	syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode());
         }

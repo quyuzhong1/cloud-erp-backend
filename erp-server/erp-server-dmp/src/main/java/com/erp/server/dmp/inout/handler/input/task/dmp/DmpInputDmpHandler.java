@@ -78,6 +78,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 	protected ServiceImpl dmpEntityServiceImpl;
 	protected final MD5 md5 = MD5.create();
 	protected List<BaseEntity> changeConvertInputDmpBaseEntityList = new ArrayList<>();
+	protected Set<String> deleteConvertInputDmpBaseEntitySet = new HashSet<>();
 	
 	public static final String INPUT_TASK_ID = "input_task_id";
 	public static final String CONVERT_ID = "convert_id";
@@ -161,6 +162,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 			dmpListTimeExecutorPool.execute(() -> pushSoInfoSkuListingTime(dmpResponse.getConvertInputDmpBaseEntityListMaps()));
 		}
 		dmpResponse.getChangeConvertInputDmpBaseEntityListMaps().put(dmpCfgInputConvertEntity, changeConvertInputDmpBaseEntityList);
+		dmpResponse.getDeleteConvertInputDmpBaseEntityMaps().put(dmpCfgInputConvertEntity, deleteConvertInputDmpBaseEntitySet);
 		this.afterToDoStatus(dmpRequest, dmpResponse);
 		
 		DmpOutputTaskRequest dmpOutputDmpRequest = new DmpOutputTaskRequest();
@@ -169,6 +171,7 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		dmpOutputDmpRequest.setConvertInputMongoEntityListMaps(dmpResponse.getConvertInputMongoEntityListMaps());
 		dmpOutputDmpRequest.setConvertInputDmpBaseEntityListMaps(dmpResponse.getConvertInputDmpBaseEntityListMaps());
 		dmpOutputDmpRequest.setChangeConvertInputDmpBaseEntityListMaps(dmpResponse.getChangeConvertInputDmpBaseEntityListMaps());
+		dmpOutputDmpRequest.setDeleteConvertInputDmpBaseEntityMaps(dmpResponse.getDeleteConvertInputDmpBaseEntityMaps());
 		this.doBaseChain(dmpRequest, dmpResponse, chain, dmpOutputDmpRequest);
 	}
 
@@ -350,6 +353,9 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		                .update();
 				}
 			}
+			if(needDealDetailDelete()) {
+				this.dealDetailDelete(beanDmpInputDmpEntityMaps);
+			}
 		}
 		
 		if(CollUtil.isNotEmpty(dmpInputDataDmpRelationEntityList)) {
@@ -357,6 +363,46 @@ public abstract class DmpInputDmpHandler extends DmpInputTaskHandler{
 		}
 		
 		return saveDmpInputDmpEntityList;
+	}
+	
+	/**
+	 * 是否要处理明细删除
+	 * @return
+	 */
+	protected boolean needDealDetailDelete(){
+		return false;
+	}
+	
+	/**
+	 * 处理明细是否有删除
+	 * @param beanDmpInputDmpEntityMaps
+	 */
+	protected void dealDetailDelete(Map<String , Map<String, Object>> beanDmpInputDmpEntityMaps){
+		if(CollUtil.isNotEmpty(beanDmpInputDmpEntityMaps)) {
+			Collection<Map<String, Object>> values = beanDmpInputDmpEntityMaps.values();
+			List<Object> list = new ArrayList<>();
+			String mainId = StrUtils.underlineToCamel(MAIN_ID, true);
+			for(Map<String, Object> value : values) {
+				Object v = value.get(mainId);
+				if(v != null && StringUtils.isNotBlank(v.toString())) {
+					list.add(v);
+				}
+			}
+			QueryWrapper<?> wrapper = new QueryWrapper<>();
+			wrapper.in(MAIN_ID, list);
+			List<Map<String, Object>> dbListMaps = dmpEntityServiceImpl.listMaps(wrapper);
+			if(CollUtil.isNotEmpty(dbListMaps)) {
+				for(Map<String, Object> dbListMap : dbListMaps) {
+					if(!beanDmpInputDmpEntityMaps.containsKey(dbListMap.get(UNIQUE_ENCRYPT).toString())) {
+						String deleteId = dbListMap.get(BaseEntity.FIELD_ID).toString();
+						deleteConvertInputDmpBaseEntitySet.add(deleteId);
+					}
+				}
+				if(CollUtil.isNotEmpty(deleteConvertInputDmpBaseEntitySet)) {
+					dmpEntityServiceImpl.removeByIds(deleteConvertInputDmpBaseEntitySet);
+				}
+			}
+		}
 	}
 	
 	protected Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> convertData(List<Map<String, Object>> dmpInputMongoEntityList) {

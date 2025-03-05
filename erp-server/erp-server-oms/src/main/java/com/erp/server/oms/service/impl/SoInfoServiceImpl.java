@@ -3617,7 +3617,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setCustomsFee(customsFee);
             addSo.setDiscountAmount(discountAmount);
             this.buildPartition(addSo);
-            handleVirtualWarehouse(addSo);
+            if (CharSequenceUtil.isNotBlank(addSo.getCustomerId())){
+                handleVirtualWarehouse(addSo);
+            }
             Boolean isAdd = Boolean.TRUE;
             List<SoDetailEntity> soDetailList = new ArrayList<>(list.size());
             for (B2BSoImportExcelDTO item : list) {
@@ -3646,6 +3648,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
+                        addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }else if (CharSequenceUtil.isNotBlank(skuNo)){
                     SkuVO skuVO = skuList.stream().filter(s -> s.getSkuNo().equals(skuNo)).findFirst().orElse(null);
@@ -3654,6 +3657,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     } else {
                         addDetail.setSkuId(skuVO.getSkuId());
                         addDetail.setSkuNo(skuVO.getSkuNo());
+                        SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> skuNo.equals(e.getProductSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
+                        addDetail.setPlatformSkuNo(Objects.nonNull(skuMappingViewDTO) ? skuMappingViewDTO.getPlatformSkuNo() : CharSequenceUtil.EMPTY);
                     }
                 }else if (CharSequenceUtil.isNotBlank(customerSku)){
                     SkuMappingDTO.SkuMappingViewDTO skuMappingViewDTO = skuMappingViewDTOS.stream().filter(e -> customerSku.equals(e.getPlatformSkuNo()) && customerId.equals(e.getCustomerId())).findFirst().orElse(null);
@@ -3662,6 +3667,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                     }else {
                         addDetail.setSkuId(skuMappingViewDTO.getProductSkuId());
                         addDetail.setSkuNo(skuMappingViewDTO.getProductSkuNo());
+                        addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }
                 if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
