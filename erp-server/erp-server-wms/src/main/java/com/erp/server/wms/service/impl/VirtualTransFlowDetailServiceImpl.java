@@ -116,16 +116,15 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         //按操作时间排序
         List<WmsVirtualDetailMsgDTO.ListDTO> list = msgList.stream().sorted(Comparator.comparing(WmsVirtualDetailMsgDTO.ListDTO::getTradeTime)).collect(Collectors.toList());
         for (WmsVirtualDetailMsgDTO.ListDTO listDTO : list) {
+            WmsVirtualDetailMsgEntity entity = BeanUtil.toBean(listDTO, WmsVirtualDetailMsgEntity.class);
             try {
                 ApplicationContextUtils.getBean(VirtualTransFlowDetailServiceImpl.class).consumeMessage(listDTO.getBusinessId(),listDTO.getId());
             } catch (Exception e) {
-                WmsVirtualDetailMsgEntity entity = new WmsVirtualDetailMsgEntity();
                 entity.setRemark(e.getMessage());
                 entity.setStatus(VirtualDetailMsgStatusEnum.FAIL.getCode());
                 wmsVirtualDetailMsgService.updateStatus(entity);
                 break;
             }
-            WmsVirtualDetailMsgEntity entity = BeanUtil.toBean(listDTO, WmsVirtualDetailMsgEntity.class);
             entity.setStatus(VirtualDetailMsgStatusEnum.SUCCESS.getCode());
             wmsVirtualDetailMsgService.updateStatus(entity);
         }
