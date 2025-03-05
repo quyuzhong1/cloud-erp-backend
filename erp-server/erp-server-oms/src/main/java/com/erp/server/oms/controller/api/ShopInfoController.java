@@ -76,6 +76,18 @@ public class ShopInfoController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 店铺自定义分页查询
+     *
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
+    public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
+        return success(pagingVO);
+    }
+
 
     /**
      * 添加店铺

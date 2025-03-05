@@ -211,64 +211,9 @@ public class ShopDTO implements Serializable {
     public static class PagingParamDTO  extends SortDTO {
 
         /**
-         * 店铺名称
-         */
-        private String name;
-
-        /**
          * 平台
          */
         private String dictPlatform;
-
-        /**
-         * 账号
-         */
-        private String account;
-
-        /**
-         * 国家
-         */
-        private String dictCountryCode;
-
-        /**
-         * 禁用状态集合
-         */
-        private List<Boolean> disabledList;
-
-        /**
-         * 授权状态集合
-         */
-        private List<String> authStatusList;
-
-        /**
-         * 创建人id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间集合
-         */
-        private List<LocalDateTime> createTimeList;
-
-
-        /**
-         * 授权时间
-         */
-        private List<LocalDateTime> authTimeList;
-
-        /**
-         * 修改人id 集合
-         */
-        private List<String> updateUserIdList;
-
-        /**
-         * 修改时间
-         */
-        private List<LocalDateTime> updateTimeList;
-        /**
-         * 销售组织id
-         */
-        private List<String> salesOrgIdList;
         /**
          * 页面高级查询
          */

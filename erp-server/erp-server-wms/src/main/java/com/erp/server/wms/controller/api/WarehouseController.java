@@ -64,7 +64,18 @@ public class WarehouseController extends BaseController {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
     }
-
+    /**
+     * 仓库自定义分页列表
+     * 产品要求不同的高级搜索
+     * @param
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
+    public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+        PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
+        return success(pagingVO);
+    }
     /**
      * 添加仓库
      *
