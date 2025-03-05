@@ -98,5 +98,5 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      **/
     List<RequisitionApplicationDTO.PrintFnskuDetailDTO> listPrintPreviewByIds(@Param("ids")List<String> ids);
 
-    IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(Page<T> query, @Param("params")RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO pagingParamDTO);
+    IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(Page<T> query, @Param("params")RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO pagingParamDTO,@Param("id")String id);
 }

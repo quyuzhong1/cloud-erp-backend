@@ -2140,8 +2140,16 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto) {
         RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO pagingParamDTO = dto.getParams();
+        String requisitionId = pagingParamDTO.getId();
+        RequisitionApplicationEntity requisitionApplicationEntity = getById(requisitionId);
+        if (ObjectUtil.isEmpty(requisitionApplicationEntity)) {
+            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+        }
+        if(!SourceTypeEnum.DELIVERY_PLAN.getCode().equals(requisitionApplicationEntity.getSourceType())){
+            throw new ServiceException("要货申请不是发货计划下推");
+        }
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> iPage = baseMapper.pagingSkuByDeliveryPlan(query,pagingParamDTO);
+        IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> iPage = baseMapper.pagingSkuByDeliveryPlan(query,pagingParamDTO,requisitionApplicationEntity.getSourceId());
         List<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> records = iPage.getRecords();
         if(CollectionUtils.isEmpty(records)){
             return new PagingVO<>(iPage);

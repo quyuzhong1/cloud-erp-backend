@@ -575,6 +575,10 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 第三方sku
          */
+        private String sourceDetailId;
+        /**
+         * 第三方sku
+         */
         private String platformSku;
 
         /**
@@ -637,10 +641,10 @@ public class RequisitionApplicationDTO implements Serializable {
         private Map<String, String> sqlMap;
 
         /**
-         * 发货计划id
+         * 要货申请id
          */
-        @NotBlank(message = "发货计划id不能为空")
-        private String deliveryPlanId;
+        @NotBlank(message = "id不能为空")
+        private String id;
     }
     /**
      * 列表查询参数
