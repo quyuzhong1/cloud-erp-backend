@@ -570,6 +570,83 @@ public class RequisitionApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class PagingSkuByDeliveryPlanDTO {
+
+        /**
+         * 第三方sku
+         */
+        private String platformSku;
+
+        /**
+         * 第三方产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         * 图片
+         */
+        private String imagesUrl;
+        /**
+         * mSKU
+         */
+        private String mSKU;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+    }
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingSkuByDeliveryPlanParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 发货计划id
+         */
+        @NotBlank(message = "发货计划id不能为空")
+        private String deliveryPlanId;
+    }
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
          * 页面高级查询
