@@ -26,6 +26,8 @@ import java.util.*;
 @Scope("prototype")
 public class EccangReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
 
+    public static final String INDEX_NUM = "indexNum";
+
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
         Object refundsObj = dmpInputMongoEntity.get("batch_info");
@@ -40,6 +42,8 @@ public class EccangReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler
 
         List<Map<String, Object>> resultList = new LinkedList<>();
 
+        Map<String, Integer> uniqueFieldSetIndexMap = new HashMap<>();
+
         for (Map<String, Object> batchInfoMap : batchInfo) {
             String ibType = batchInfoMap.getOrDefault("ib_type", "").toString();
             String ibStatus = batchInfoMap.getOrDefault("ib_status", "").toString();
@@ -50,14 +54,20 @@ public class EccangReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler
             if (!"0".equalsIgnoreCase(ibType)){
                 continue;
             }
+            // 批次单号
+            String receivingCode = batchInfoMap.getOrDefault("receiving_code", "").toString();
+            batchInfoMap.put("receivingCode", receivingCode);
+
+            Integer indexNumber = uniqueFieldSetIndexMap.getOrDefault(receivingCode, 0);
+            // 当前行号索引
+            batchInfoMap.put(INDEX_NUM, indexNumber);
+            // 累计次数
+            uniqueFieldSetIndexMap.put(receivingCode, indexNumber + 1);
 
             String ibFifoTime = batchInfoMap.getOrDefault("ib_fifo_time", "1970-01-01 00:00:00").toString();
 
             LocalDateTime parse = LocalDateTime.parse(ibFifoTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             batchInfoMap.put("putAwayDate", parse.toLocalDate());
-            // 批次单号
-            String receivingCode = batchInfoMap.getOrDefault("receiving_code", "").toString();
-            batchInfoMap.put("receivingCode", receivingCode);
 
             // 补充主单信息定位mainId
             String warehouseCode = dmpInputMongoEntity.getOrDefault("warehouse_code", "").toString();

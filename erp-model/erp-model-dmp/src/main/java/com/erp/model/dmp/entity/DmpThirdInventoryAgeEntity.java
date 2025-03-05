@@ -70,6 +70,12 @@ public class DmpThirdInventoryAgeEntity extends BaseEntity<DmpThirdInventoryAgeE
     @TableField("receiving_code")
     private String receivingCode;
 
+    /**
+     * 批次索引下标
+     */
+    @TableField("index_num")
+    private Integer indexNum;
+
     public static final String CONVERT_ID = "convert_id";
 
     public static final String NEXT_LEVEL_ID = "next_level_id";
