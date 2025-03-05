@@ -10,7 +10,6 @@ import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.model.wms.enums.inventory.InventoryModeEnum;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -176,9 +175,8 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      *
      * @Auther will
      * @Date 2025/2/12 09:40
-     * @param sourceType
-     * @param sourceDetailId
+     * @param entity
      * @return VirtualTransFlowEntity
      */
-    VirtualTransFlowEntity getUnApprovedTxnFlowBySourceDetailId(String sourceType, String sourceDetailId, LocalDateTime dateTime);
+    VirtualTransFlowEntity getUnApprovedTxnFlowBySource(VirtualTransFlowEntity entity);
 }
