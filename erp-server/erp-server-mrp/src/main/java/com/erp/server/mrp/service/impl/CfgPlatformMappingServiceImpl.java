@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -14,6 +15,7 @@ import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleStockingModeEnum;
 import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -29,10 +31,8 @@ import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -228,6 +228,12 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         if (CollectionUtils.isEmpty(updateList)) {
             return list;
         }
+        List<DictBasicEntity> salesPlatformList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType())
+                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
+                .list();
+        Map<String, String> salePlatformMap = salesPlatformList.stream()
+                .collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (o1, o2) -> o1));
         for (CfgPlatformMappingDTO.UpdateDTO updateDTO : updateList) {
             //非禁用时生效时间不能为空
             if (!updateDTO.getDisabled() && ObjectUtils.isEmpty(updateDTO.getEffectiveDate())) {
@@ -237,6 +243,16 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
             long count = updateList.stream().filter(obj -> CharSequenceUtil.equals(obj.getType(), updateDTO.getType())).count();
             if (count > MathUtil.ONE) {
                 throw new ServiceException(CharSequenceUtil.format("补货建议平台【{}】重复",CfgRulePlatformTypeEnum.getName(updateDTO.getType())));
+            }
+            Set<String> platformList = updateList.stream().map(CfgPlatformMappingDTO.UpdateDTO::getPlatformList).flatMap(Collection::stream)
+                    .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                    .entrySet().stream()
+                    .filter(entry -> entry.getValue() > 1)
+                    .map(Map.Entry::getKey)
+                    .map(salePlatformMap::get)
+                    .collect(Collectors.toSet());
+            if (CollectionUtils.isNotEmpty(platformList)) {
+                throw new ServiceException(CharSequenceUtil.format("平台映射【{}】重复", platformList));
             }
             for (String platform : updateDTO.getPlatformList()) {
                 CfgPlatformMappingEntity entity = new CfgPlatformMappingEntity();

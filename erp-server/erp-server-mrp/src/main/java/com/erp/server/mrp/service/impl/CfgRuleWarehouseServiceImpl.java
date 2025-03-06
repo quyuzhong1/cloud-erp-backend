@@ -308,7 +308,12 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                     shopIdList.addAll(dto.getShopIdList());
                 } else {
                     //按平台
-                    List<String> platformShopIdList = shopList.stream().filter(obj -> dto.getPlatformList().contains(obj.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                    List<String> platformShopIdList;
+                    if (CollectionUtils.isNotEmpty(dto.getPlatformList()) && !"".equals(dto.getPlatformList().get(0))) {
+                        platformShopIdList = shopList.stream().filter(obj -> dto.getPlatformList().contains(obj.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                    } else {
+                        platformShopIdList = shopList.stream().map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                    }
                     shopIdList.addAll(platformShopIdList);
                 }
             }
