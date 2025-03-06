@@ -97,8 +97,8 @@ public class EccangInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 		for(AntuReceiptResp.Item gcReceiving : itemList) {
 			Receiving receiving = new Receiving();
 			receiving.setProductSku(gcReceiving.getProductSku());
-			receiving.setReceiveQty(gcReceiving.getQuantity());
-			receiving.setReceiveTime(receiveTime);
+			receiving.setReceiveQty(gcReceiving.getReceivedQuantity());
+			receiving.setReceiveTime(gcReceiving.getRdUpdateTime());
 			receivingDataList.add(receiving);
 		}
 		platformInboundDTO.setReceivingDataList(receivingDataList);
