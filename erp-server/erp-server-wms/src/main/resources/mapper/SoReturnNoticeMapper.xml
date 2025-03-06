@@ -38,6 +38,7 @@
             srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        left join so_b2c sb on sb.id = srn.so_id and sb.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
          and   srn.is_deleted = FALSE

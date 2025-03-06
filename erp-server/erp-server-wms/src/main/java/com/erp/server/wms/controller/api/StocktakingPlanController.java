@@ -55,8 +55,9 @@ public class StocktakingPlanController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sp.warehouse_id",
             menuCode = "wms:stocktakingPlan:paging",
-            tableAlias = "stocktaking_plan"
+            tableAlias = "sp"
     )
     public ApiResult<List<StocktakingPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(stocktakingPlanService.tabList(dto));
@@ -72,8 +73,9 @@ public class StocktakingPlanController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sp.warehouse_id",
             menuCode = "wms:stocktakingPlan:paging",
-            tableAlias = "stocktaking_plan"
+            tableAlias = "sp"
     )
     @WebAdvanceQuery(handler = StocktakingPlanQueryHandler.class)
     public ApiResult<PagingVO<StocktakingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<StocktakingPlanDTO.PagingParamDTO> dto) {
@@ -89,10 +91,6 @@ public class StocktakingPlanController extends BaseController {
    */
    @LogAction(value = LogActionEnum.INSERT, desc = "新增盘点计划")
    @PostMapping("/add")
-//   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//           tableField = "create_user_id",
-//           menuCode = "wms:stocktakingPlan:add",
-//           serviceClass = StocktakingPlanService.class)
    public ApiResult<String> add(@RequestBody @Validated StocktakingPlanDTO.AddDTO dto) {
       return success(stocktakingPlanService.add(dto));
    }
@@ -125,11 +123,6 @@ public class StocktakingPlanController extends BaseController {
     */
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交盘点计划")
     @PostMapping("/addAndSubmit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:addAndSubmit",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "id")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated StocktakingPlanDTO.AddDTO dto) {
         stocktakingPlanService.addAndSubmit(dto);
         return success();

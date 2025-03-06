@@ -53,6 +53,7 @@ public class OverseasInventoryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "opw.warehouse_id",
             menuCode = "wms:overseasInventory:paging",
             tableAlias = "oi"
     )
@@ -72,6 +73,7 @@ public class OverseasInventoryController extends BaseController {
     @PostMapping("/total")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "opw.warehouse_id",
             menuCode = "wms:overseasInventory:paging",
             tableAlias = "oi"
     )
@@ -88,7 +90,6 @@ public class OverseasInventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外仓库存")
     @PostMapping(value = "/exportExcel")
-    @WebAdvanceQuery(handler = OverseasInventoryQueryHandler.class)
     public ApiResult<?> exportExcel(@RequestBody @Validated OverseasInventoryDTO.ExportDTO dto) {
         Boolean flag = overseasInventoryService.exportExcel(dto);
         return flag ? success() : failure();

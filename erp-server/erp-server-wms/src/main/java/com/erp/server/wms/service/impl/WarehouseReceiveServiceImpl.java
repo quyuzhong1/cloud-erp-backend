@@ -1919,7 +1919,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
 
     @Override
     public PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WarehouseReceiveExcelDTO> page = baseMapper.warehouseReceiveExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         //获取sku的id集合
         List<String> skuIdList = page.getRecords().stream().map(WarehouseReceiveExcelDTO::getSkuId).collect(Collectors.toList());

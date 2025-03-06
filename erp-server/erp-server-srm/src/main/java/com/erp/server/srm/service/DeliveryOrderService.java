@@ -47,7 +47,7 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 
-    List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList);
+    List<DeliveryOrderDTO.TabListDTO> tabList(DeliveryOrderDTO.ParamDTO paramDTO);
 
     DeliveryOrderDTO.ViewDTO view(String id);
 
@@ -58,8 +58,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     boolean delete(List<String> ids);
 
     boolean confirmPrint(List<String> ids);
-
-    List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto);
 
     List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(BaseIdsDTO.IdsDTO dto);
 

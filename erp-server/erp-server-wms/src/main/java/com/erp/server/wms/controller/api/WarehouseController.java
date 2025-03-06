@@ -56,6 +56,7 @@ public class WarehouseController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "id",
             menuCode = "wms:warehouse:paging",
             tableAlias = "warehouse"
     )

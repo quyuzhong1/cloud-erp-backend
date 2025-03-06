@@ -58,6 +58,7 @@ public class PoReturnController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "return_user_id",
+            warehouseTableField = "pro.return_warehouse_id",
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro"
     )
@@ -77,6 +78,7 @@ public class PoReturnController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "return_user_id",
+            warehouseTableField = "pro.return_warehouse_id",
             menuCode = "wms:purchaseReturnOrder:paging",
             tableAlias = "pro")
     public ApiResult<List<PurchaseReturnOrderDTO.ReturnOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {

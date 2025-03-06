@@ -50,7 +50,8 @@
         srid.return_amount_local_currency ,
         srid.tax_return_amount_local_currency
         FROM so_return_instock_detail srid
-        INNER JOIN so_return_instock sri ON sri.id = srid.main_id
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id and sri.is_deleted=FALSE
+        left join so_b2c sb on sb.id = sri.so_id and sb.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
           and srid.is_deleted = FALSE

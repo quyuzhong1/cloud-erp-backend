@@ -209,6 +209,14 @@ public class WaveListDTO implements Serializable {
          * 拣货单打印时间
          */
         private String pickingPrintTime;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
     }
 
     @Data
