@@ -89,6 +89,9 @@
             <if test="params.skuType != null and params.skuType != ''">
                 and rsd.sku_type = #{params.skuType}
             </if>
+            <if test="params.replenishmentType != null and params.replenishmentType != ''">
+                and rs.replenishment_type = #{params.replenishmentType}
+            </if>
             <if test="params.favorite != null and params.favorite ">
                 and exists (select id from replenishment_suggestion_favorite where is_deleted = false and replenishment_suggestion_id =  rs.id and user_id = #{userId})
             </if>
