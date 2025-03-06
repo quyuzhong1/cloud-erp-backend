@@ -333,7 +333,7 @@ public class ShopDTO implements Serializable {
         /**
          * 平台经营模式
          */
-        private String businessModel‌;
+        private String businessModel;
     }
 
 
@@ -517,12 +517,12 @@ public class ShopDTO implements Serializable {
         /**
          * 平台经营模式
          */
-        private String businessModel‌;
+        private String businessModel;
 
         /**
          * 平台经营模式名称
          */
-        private String businessModelName‌;
+        private String businessModelName;
     }
 
     @Data
@@ -660,7 +660,7 @@ public class ShopDTO implements Serializable {
         /**
          * 平台经营模式
          */
-        private String businessModel‌;
+        private String businessModel;
 
     }
     @Data
