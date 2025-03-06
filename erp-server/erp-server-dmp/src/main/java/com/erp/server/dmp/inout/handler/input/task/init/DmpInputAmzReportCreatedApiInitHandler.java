@@ -118,7 +118,11 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj){
             String msg = StrUtil.format("【亚马逊创建报告】 platformShopCode={}, 报告类型={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode(), reportType);
-            throw new ServiceException(msg);
+            log.warn(msg);
+            // 触发限流不执行当前
+            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+            initDmpResponse.setDoNextStatus(false);
+            return Collections.emptyList();
         }
         String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
 
