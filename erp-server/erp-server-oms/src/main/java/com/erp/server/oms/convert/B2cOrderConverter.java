@@ -1,8 +1,5 @@
 package com.erp.server.oms.convert;
 
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.mapper.BigDecimalMapperWork;
-import com.common.business.mapper.BooleanMapperWork;
 import com.common.business.mapper.NumberMapperWork;
 import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.dto.*;
@@ -89,6 +86,7 @@ public interface B2cOrderConverter {
             @Mapping(target = "zipcode", source = "postCode"),
             @Mapping(target = "address1", source = "firstAddress"),
             @Mapping(target = "address2", source = "secondAddress"),
+            @Mapping(target = "address3", source = "fullAddress"),
             @Mapping(target = "email", source = "email"),
             @Mapping(target = "district", source = "districtName"),
             @Mapping(target = "taxNumber", source = "receiverTaxNo"),
