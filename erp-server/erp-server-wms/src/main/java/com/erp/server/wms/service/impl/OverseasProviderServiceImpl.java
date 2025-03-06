@@ -405,7 +405,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 return Collections.emptyList();
             }
             return getGucangCalculateFeeReq(providerWarehouseEntity, params);
-        }else if (PlatformDictEnum.ANTU.getCode().equals(platform)){
+        }else if (PlatformDictEnum.ANTU.getCode().equals(platform) || PlatformDictEnum.SPT.getCode().equals(platform)){
             if (CollUtil.isEmpty(params.getToCountryList())){
                 return Collections.emptyList();
             }
