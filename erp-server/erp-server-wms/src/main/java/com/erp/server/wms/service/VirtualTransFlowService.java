@@ -164,16 +164,9 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param remark
      */
     void updateRemark(String id, String remark);
-    /**
-     *
-     * @Auther will
-     * @Date 2025/2/12 09:40
-     * @param sourceType
-     * @param sourceDetailId
-     * @param dateTime
-     * @return VirtualTransFlowEntity
-     */
-    VirtualTransFlowEntity getUnApprovedTxnFlowBySourceDetailId(String sourceType, String sourceDetailId, LocalDateTime dateTime);
+
+    VirtualTransFlowEntity getUnApprovedTxnFlowBySource(VirtualTransFlowEntity entity);
+
     /**
      * 查询流水
      * @author will
