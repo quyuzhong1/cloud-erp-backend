@@ -2444,7 +2444,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String secondAddress = receiver.getSecondAddress();
         String fullAddress = receiver.getFullAddress();
         String address2;
-        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
+        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform()) || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
             address2 = secondAddress;
         } else {
             address2 = secondAddress + fullAddress;
