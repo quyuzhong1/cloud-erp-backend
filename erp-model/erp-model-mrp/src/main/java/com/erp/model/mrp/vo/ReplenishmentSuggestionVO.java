@@ -53,6 +53,10 @@ public class ReplenishmentSuggestionVO {
          */
         private String productName;
         /**
+         *  fnsku、msku
+         */
+        private List<FnMSkuDTO> fnMSKuList;
+        /**
          * 国家
          */
         private String country;
@@ -704,5 +708,19 @@ public class ReplenishmentSuggestionVO {
          * 去噪销量
          */
         private BigDecimal denoisingQty;
+    }
+
+    @Getter
+    @Setter
+    public static class FnMSkuDTO {
+        /**
+         * fnsku
+         */
+        private String fnSku;
+
+        /**
+         * msku
+         */
+        private String mSku;
     }
 }

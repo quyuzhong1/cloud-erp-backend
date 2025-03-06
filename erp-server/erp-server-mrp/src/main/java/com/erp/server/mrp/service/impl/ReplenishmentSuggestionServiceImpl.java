@@ -212,6 +212,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             dates.add(date);
             date = date.plusDays(1);
         }
+
+        //oms信息
+
+
         for (ReplenishmentSuggestionVO.PagingView view : records) {
             SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuVO());
             ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(view.getShopId())).findFirst().orElse(new ShopInfoEntity());
