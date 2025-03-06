@@ -353,7 +353,7 @@ public class CfgNoticeJob {
         }
         StringBuilder str = new StringBuilder();
         str.append(CharSequenceUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
-        sendNoticeTotalList.forEach(e -> {
+        sendNoticeTotalList.stream().limit(100).forEach(e -> {
             str.append(CharSequenceUtil.format("\nSKU({}) 实体仓({}) 差异数量({})", e.getSkuNo(), e.getWarehouseName(), e.getDiffQty()));
         });
         return Collections.singletonList(str.toString());
@@ -384,7 +384,7 @@ public class CfgNoticeJob {
         }
         StringBuilder str = new StringBuilder();
         str.append(CharSequenceUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
-        sendNoticeTotalList.forEach(e -> {
+        sendNoticeTotalList.stream().limit(100).forEach(e -> {
             str.append(CharSequenceUtil.format("\nSKU({}) 虚拟仓({}) 库龄({}) 正推库龄({})",
                     e.getSkuNo(), e.getVirtualWarehouseName(), e.getBackAvgInventoryAge(), e.getAvgInventoryAge()));
         });
@@ -416,7 +416,7 @@ public class CfgNoticeJob {
         }
         StringBuilder str = new StringBuilder();
         str.append(CharSequenceUtil.format("差异：{}条\n",sendNoticeTotalList.size()));
-        sendNoticeTotalList.forEach(e -> {
+        sendNoticeTotalList.stream().limit(100).forEach(e -> {
             str.append(CharSequenceUtil.format("\nSKU({}) 虚拟仓({}) 冻结库存({}) 单据冻结库存({})",
                     e.getSkuNo(), e.getVirtualWarehouseName(), e.getVirtualFrozenQty(), e.getBillFrozenQty()));
         });

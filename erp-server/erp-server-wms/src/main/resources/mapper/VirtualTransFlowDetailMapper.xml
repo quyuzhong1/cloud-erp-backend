@@ -261,7 +261,7 @@
                  left join product_detail pd on vidh.sku_id = pd.id and pd.is_deleted = false
                  left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
             ) as all_data
-        where  frozenIsDiff = true limit 100
+        where  frozenIsDiff = true
     </select>
 
 
