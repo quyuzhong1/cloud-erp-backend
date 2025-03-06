@@ -355,7 +355,7 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 		soReturnInstockEntity.setInventoryOrgName(company.getCompanyName());
 		soReturnInstockEntity.setWarehouseKeeperId(warehouseEntity.getChargeId());
 		soReturnInstockEntity.setApproveUserName("system");
-		soReturnInstockEntity.setSourceCode(dto.getOrderReferenceNo());
+		soReturnInstockEntity.setSourceCode(dto.getUniqueId());
 		soReturnInstockEntity.setSourceType(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode());
 		soReturnInstockEntity.setThirdCode(dto.getPlatformReturnOrderNo());
 		soReturnInstockEntity.setPlatformOrderCode(dto.getPlatformOrderNo());
