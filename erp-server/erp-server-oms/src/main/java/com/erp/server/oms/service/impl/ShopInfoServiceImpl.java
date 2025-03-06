@@ -256,7 +256,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 //        }
 
         if (StringUtils.isBlank(countryId)) {
-            countryId = DictValueEnum.GL.getCode();
+            countryId = DictValueEnum.ALL.getCode();
         }
         customer.setName(shop.getName());
         customer.setCountryId(countryId);
