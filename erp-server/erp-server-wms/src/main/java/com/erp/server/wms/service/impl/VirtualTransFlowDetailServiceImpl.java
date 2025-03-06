@@ -133,7 +133,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 60)
     public Boolean consumeMessage(String businessId,String msgId) {
         VirtualTransFlowEntity entity = virtualTransFlowService.getById(businessId);
         if (ObjUtil.isEmpty(entity)) {
