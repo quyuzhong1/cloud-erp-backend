@@ -44,4 +44,9 @@ public class ExportWmsVirtualTransFlowDetailHandler extends AbstractPageFileEven
     public String getExcelPath() {
         return "excel/wms/virtualTransFlowDetail.xlsx";
     }
+
+    @Override
+    protected int getPageSize() {
+        return 100000;
+    }
 }
