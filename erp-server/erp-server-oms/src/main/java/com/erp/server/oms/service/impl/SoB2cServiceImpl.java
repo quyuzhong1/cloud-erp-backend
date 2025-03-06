@@ -2444,20 +2444,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String secondAddress = receiver.getSecondAddress();
         String fullAddress = receiver.getFullAddress();
         String address2;
-        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform()) || PlatformDictEnum.SPT.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
+        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
             address2 = secondAddress;
         } else {
             address2 = secondAddress + fullAddress;
         }
         //转化收货人
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
+        receiverInfo.setAddress2(address2);
         //速派通地址3赋值
         if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
-            receiverInfo.setAddress3(fullAddress);
+            receiverInfo.setAddress2(receiver.getSecondAddress());
+            receiverInfo.setAddress3(receiver.getFullAddress());
         }
-        receiverInfo.setAddress2(address2);
         createOutboundReq.setReceiverInfo(receiverInfo);
-
 
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
