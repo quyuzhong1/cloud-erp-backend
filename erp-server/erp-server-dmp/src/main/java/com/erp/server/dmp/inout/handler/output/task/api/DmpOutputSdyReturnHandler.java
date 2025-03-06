@@ -148,10 +148,14 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
             sdyDTO.setQuantity_buyer_returned(qtyTotal);
-
-            BigDecimal amountTotal = dmpSoReturnDetailEntityList.stream().map(DmpSoReturnDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            sdyDTO.setOnline_applied_amount(amountTotal);
-            sdyDTO.setOrder_seller_payed(amountTotal);
+            if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+                sdyDTO.setOnline_applied_amount(dmpSoReturnEntity.getAllAmount());
+                sdyDTO.setOrder_seller_payed(dmpSoReturnEntity.getAllAmount());
+            } else {
+                BigDecimal amountTotal = dmpSoReturnDetailEntityList.stream().map(DmpSoReturnDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                sdyDTO.setOnline_applied_amount(amountTotal);
+                sdyDTO.setOrder_seller_payed(amountTotal);
+            }
 
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
                 //RMA.退货单
