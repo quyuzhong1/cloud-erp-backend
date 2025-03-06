@@ -31,5 +31,5 @@ public interface WaveListPdaService extends SuperService<WaveListEntity> {
     /**
      * tabList
      */
-    List<WaveListDTO.TabDTO> tabList();
+    List<WaveListDTO.TabDTO> tabList(WaveListDTO.SearchParamDTO paramDTO);
 }

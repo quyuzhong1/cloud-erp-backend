@@ -285,8 +285,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     }
 
     @Override
-    public List<WaveListDTO.TabDTO> tabList() {
-        List<WaveListDTO.TabDTO> list = waveListService.tabList();
+    public List<WaveListDTO.TabDTO> tabList(WaveListDTO.SearchParamDTO paramDTO) {
+        List<WaveListDTO.TabDTO> list = waveListService.tabList(paramDTO);
         Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
 
         List<WaveListDTO.TabDTO> resultList = new ArrayList<>();

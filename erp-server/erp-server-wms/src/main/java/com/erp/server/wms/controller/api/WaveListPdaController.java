@@ -1,7 +1,6 @@
 package com.erp.server.wms.controller.api;
 
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -11,7 +10,6 @@ import com.erp.model.wms.dto.WaveListPdaDTO;
 import com.erp.server.wms.query.WaveListPdaAdvanceQueryHandler;
 import com.erp.server.wms.service.WaveListDetailPdaService;
 import com.erp.server.wms.service.WaveListPdaService;
-import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -29,8 +27,6 @@ public class WaveListPdaController {
     @Resource
     private WaveListPdaService waveListPdaService;
     @Resource
-    private WaveListService waveListService;
-    @Resource
     private WaveListDetailPdaService waveListDetailPdaService;
 
     /**
@@ -47,8 +43,8 @@ public class WaveListPdaController {
      * tabList
      */
     @GetMapping("/tabList")
-    public ApiResult<List<WaveListDTO.TabDTO>> tabList() {
-        List<WaveListDTO.TabDTO> list = waveListPdaService.tabList();
+    public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestBody(required = false) WaveListDTO.SearchParamDTO paramDTO) {
+        List<WaveListDTO.TabDTO> list = waveListPdaService.tabList(paramDTO);
         return ApiResult.success(list);
     }
 

@@ -44,8 +44,6 @@ public interface SrmDeliveryOrderFeign {
     List<DeliveryOrderDetailEntity> listDetailByDetailSourceIds(@RequestBody List<String> purchaseDetailIds);
     @PostMapping("/feign/deliveryOrder/listDetailDTOByDetailSourceIds")
     public List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(@RequestBody List<String> purchaseDetailIds);
-    @PostMapping("/feign/deliveryOrder/getExportList")
-    List<DeliveryOrderExportExcelDTO> getExportList(@RequestBody DeliveryOrderDTO.ParamDTO dto);
 
     @PostMapping("/feign/deliveryOrder/listGenerateReceive")
     List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(@RequestBody BaseIdsDTO.IdsDTO dto);
