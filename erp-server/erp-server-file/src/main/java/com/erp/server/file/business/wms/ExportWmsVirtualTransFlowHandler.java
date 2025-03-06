@@ -44,4 +44,9 @@ public class ExportWmsVirtualTransFlowHandler extends AbstractPageFileEventHandl
     protected PagingVO<VirtualTransFlowDTO.ListDTO> getPageData(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
         return exportWmsFeign.exportVirtualTransFlow(dto);
     }
+
+    @Override
+    protected int getPageSize() {
+        return 100000;
+    }
 }
