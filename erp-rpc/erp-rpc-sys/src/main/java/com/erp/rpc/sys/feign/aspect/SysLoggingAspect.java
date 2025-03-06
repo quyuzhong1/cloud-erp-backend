@@ -1,6 +1,7 @@
 package com.erp.rpc.sys.feign.aspect;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -9,7 +10,6 @@ import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.annotation.Idempotent;
 import com.common.business.config.GlobalExceptionHandler;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -57,7 +57,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Pattern;
@@ -234,7 +233,7 @@ public class SysLoggingAspect {
             log.debug("Sys Logging doAround.after:");
             return checkAndResolveException(obj, null);
         } catch (Throwable e) {
-            log.error("[系统日志]添加系统日志-doAround-异常：{}", e.getMessage());
+            log.error("[系统日志]添加系统日志-doAround-异常：{}", ExceptionUtil.stacktraceToString(e));
             return checkAndResolveException(obj, e);
         } finally {
             UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();
@@ -312,13 +311,17 @@ public class SysLoggingAspect {
         } else if (Collection.class.isAssignableFrom(clazz)) {
             Collection collection = (Collection) o;
             for (Object value : collection) {
-                return value instanceof MultipartFile;
+                if(value instanceof MultipartFile){
+                    return true;
+                }
             }
         } else if (Map.class.isAssignableFrom(clazz)) {
             Map map = (Map) o;
             for (Object value : map.entrySet()) {
                 Map.Entry entry = (Map.Entry) value;
-                return entry.getValue() instanceof MultipartFile;
+                if(entry.getValue() instanceof MultipartFile){
+                    return true;
+                }
             }
         }
         return o instanceof MultipartFile || o instanceof HttpServletRequest || o instanceof HttpServletResponse
@@ -412,7 +415,7 @@ public class SysLoggingAspect {
             dtoList = constructBatchByParams(logAction, request, actionPath, requestParams, currentSysName, joinPoint);
         } else {
             // 其他单条处理创建
-            dtoList = Collections.singletonList(initDto(logAction, request, actionPath, requestParams, currentSysName, description));
+            dtoList = Collections.singletonList(initDto(logAction, request, actionPath, requestParams, currentSysName, description, ""));
         }
         return dtoList;
     }
@@ -435,9 +438,9 @@ public class SysLoggingAspect {
         // 组合
         ids.forEach(id -> {
             // 初始化
-            SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, description);
+            SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, description, id);
             // 处理数据
-            handleData(id, logAction, dto);
+            handleData(id, logAction, dto, description);
             dtoList.add(dto);
         });
         return dtoList;
@@ -462,7 +465,7 @@ public class SysLoggingAspect {
                         // 将请求参数填充  {paramName1} {paramName2}
                         String currentDesc = StrUtil.format(logAction.desc(), paramsMap);
                         // 初始化
-                        SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                        SysLogRecordDTO.AddDTO dto = initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc, "");
                         // 设置记录ID
                         Object idObj = paramsMap.get(logAction.keyIdName());
                         dto.setRecordId(null != idObj ? idObj.toString() : "");
@@ -477,7 +480,7 @@ public class SysLoggingAspect {
                         // 将请求参数填充  {paramName1} {paramName2}
                         String currentDesc = logAction.desc().replace("{name}", Objects.requireNonNull(e.getOriginalFilename()));
                         // 初始化
-                        return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc);
+                        return initDto(logAction, request, actionPath, requestParams, currentSysName, currentDesc, "");
                     })
                     .collect(Collectors.toList());
         } else {
@@ -491,12 +494,24 @@ public class SysLoggingAspect {
     /**
      * 批量操作数据处理
      */
-    private static void handleData(String id, LogAction logAction, SysLogRecordDTO.AddDTO dto) {
+    private static void handleData(String id, LogAction logAction, SysLogRecordDTO.AddDTO dto, String description) {
         // 设置记录ID
         dto.setRecordId(id);
+        String descName = logAction.value().getName();
+        // 自定义批量更新替换
+        if (LogActionEnum.CUSTOM_BATCH_UPDATE.equals(logAction.value())){
+            if (logAction.desc().contains("{") && logAction.desc().contains("}") && StringUtils.isNotBlank(description)){
+                // 解析后描述内容
+                descName = description;
+            } else {
+                // 按当前注解静态描述
+                descName = logAction.desc();
+            }
+        }
+
         if (StringUtils.isBlank(dto.getResponseParams()) || StringUtils.isNotBlank(dto.getErrorMsg())) {
             // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "异常");
+            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, descName, dto.getSystemModule(), id, "异常");
             // 设置当前描述
             dto.setDescription(lastResult);
             return;
@@ -505,9 +520,14 @@ public class SysLoggingAspect {
         if (null == data || !(JSONUtil.isTypeJSONArray(data))) {
             // 设置当前描述
             // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, "操作成功");
+            String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, descName, dto.getSystemModule(), id, "操作成功");
             // 设置当前描述
             dto.setDescription(lastResult);
+            // 新增或单响应记录单据编号
+            if (StringUtils.isBlank(dto.getRecordCode())){
+                 String newRecordCode = parseRecordCodeFormResponse(data);
+                 dto.setRecordCode(newRecordCode);
+            }
             return;
         }
         List<BatchResultDTO> list = JSONUtil.toList(data, BatchResultDTO.class);
@@ -516,7 +536,7 @@ public class SysLoggingAspect {
             return;
         }
         // 批量操作描述:（操作行为）了（系统模块） id为: 结果为:
-        String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, logAction.value().getName(), dto.getSystemModule(), id, currentResult.getMsg());
+        String lastResult = StrUtil.format(BATCH_OPERATION_LOG_DEC, descName, dto.getSystemModule(), id, currentResult.getMsg());
         // 设置当前描述
         dto.setDescription(lastResult);
         // 设置记录Code
@@ -531,7 +551,9 @@ public class SysLoggingAspect {
                                                   String actionPath,
                                                   String requestParams,
                                                   String currentSysName,
-                                                  String description) {
+                                                  String description,
+                                                  String id
+    ) {
         SysLogRecordDTO.AddDTO dto = new SysLogRecordDTO.AddDTO();
         dto.setSystemModule(currentSysName);
         dto.setAction(logAction.value().getCode());
@@ -547,8 +569,16 @@ public class SysLoggingAspect {
         // 缓存获取其他信息
         UpdateRecordItemBO bo = LOG_INFO_THREAD_LOCAL.get();
         BeanUtil.copyProperties(bo, dto);
+        if (StringUtils.isBlank(id)){
+            dto.setRecordId(id);
+        }
         if (null != bo) {
             dto.setStatus(StringUtils.isBlank(bo.getErrorMsg()) ? LogStatusEnum.SUCCESS.getName() : LogStatusEnum.ERROR.getName());
+            // 空单据记录按响应重新解析
+            String newRecordCode = parseRecordCodeFormBatchResponse(bo.getResponseParams(), dto.getRecordId(), dto.getRecordCode());
+            if (StringUtils.isNotBlank(newRecordCode)){
+                dto.setRecordCode(newRecordCode);
+            }
         }
         return dto;
     }
@@ -561,8 +591,14 @@ public class SysLoggingAspect {
         // 兼容直接List<String>数组提交
         if (JSONUtil.isTypeJSONArray(requestParams)){
             JSONArray jsonArray = new JSONArray(requestParams);
-            if (!jsonArray.isEmpty() && (jsonArray.get(0) instanceof String)){
+            if (jsonArray.isEmpty()){
+                throw new ServiceException("未找到批量请求参数内容:" + requestParams);
+            }
+            if ((jsonArray.get(0) instanceof String)){
                 return jsonArray.toList(String.class);
+            } else {
+                // 兼容List<Object> 提交
+                return parseIdsFormList(jsonArray, logAction, requestParams);
             }
         }
 
@@ -963,5 +999,73 @@ public class SysLoggingAspect {
         return result;
     }
 
+
+    /**
+     * 空单据记录按批量响应重新解析
+     * @param responseParams 响应json
+     * @param recordId 记录ID
+     * @param recordCode 来源记录号
+     * @return 响应体解析的单号
+     */
+    private static String parseRecordCodeFormBatchResponse(String responseParams, String recordId, String recordCode) {
+        try {
+            JSONObject jsonObject = JSONUtil.parseObj(responseParams);
+            Object dataObj = jsonObject.get("data");
+            if (null == dataObj){
+                return "";
+            }
+            if (dataObj instanceof Collection){
+                if (StringUtils.isBlank(recordId) || !recordId.equalsIgnoreCase(recordCode) || StringUtils.isBlank(responseParams)) {
+                    // 来源为空/单号不等于ID/响应为空
+                    return "";
+                }
+                JSONArray jsonArray = JSONUtil.parseArray(dataObj);
+                JSONObject curObj = jsonArray.stream()
+                        .map(JSONUtil::parseObj)
+                        .filter(e -> recordId.equalsIgnoreCase(e.getStr("id")))
+                        .findFirst()
+                        .orElse(new JSONObject());
+                return curObj.getStr("code");
+            } else {
+                return JSONUtil.parseObj(dataObj).getStr("code");
+            }
+        } catch (Exception e) {
+            log.warn("响应解析单号失败：responseParams={},error={}", responseParams, e.getMessage());
+            return "";
+        }
+    }
+
+
+    /**
+     * 空单据记录按响应重新解析
+     * @param data 响应json
+     * @return 响应体解析的单号
+     */
+    private static String parseRecordCodeFormResponse(String data) {
+        JSONObject jsonObject = JSONUtil.parseObj(data);
+        return jsonObject.getStr("code");
+    }
+
+
+    /**
+     * 解析List<Object>请求参数的ids
+     */
+    private static List<String> parseIdsFormList(JSONArray jsonArray, LogAction logAction, String requestParams) {
+        // 兼容List<Object> 提交
+        String idKey = logAction.keyIdName();
+        if (StringUtils.isBlank(idKey)){
+            idKey = "id";
+        }
+        List<String> ids = new LinkedList<>();
+        for (Object item : jsonArray) {
+            JSONObject jsonObject = JSONUtil.parseObj(item);
+            String id = jsonObject.getStr(idKey);
+            if(StringUtils.isBlank(id)){
+               ServiceException.runError("解析请求参数IDS异常:没有id或的keyIdName对应字段："+ requestParams);
+            }
+            ids.add(id);
+        }
+        return ids;
+    }
 
 }

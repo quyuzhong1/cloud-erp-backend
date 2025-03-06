@@ -34,8 +34,8 @@ public class WarehouseReceiveFeignController {
 
     @PostMapping("/addWarehouseReceive")
     public String add(@RequestBody WarehouseReceiveDTO.AddDTO dto) {
-        String id = warehouseReceiveService.add(dto);
-        return id;
+        WarehouseReceiveEntity entity = warehouseReceiveService.add(dto);
+        return entity.getId();
     }
 
     /**

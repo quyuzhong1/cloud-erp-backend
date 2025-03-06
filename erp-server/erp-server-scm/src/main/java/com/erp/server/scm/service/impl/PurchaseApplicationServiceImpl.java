@@ -14,10 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -80,6 +77,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_APPLICATION;
+import static com.common.core.constant.EnumMessage.getByCode;
 
 /**
  * <p>
@@ -203,7 +201,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public String add(PurchaseApplicationDTO.AddDTO dto) {
+    public PurchaseApplicationEntity add(PurchaseApplicationDTO.AddDTO dto) {
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
         //处理数据id
@@ -219,7 +217,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //新增明细
             purchaseApplicationDetailService.add(dto.getDetails(),entity.getId());
         }
-        return entity.getId();
+        return entity;
     }
 
     @Override
@@ -575,15 +573,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
+    public BatchResultDTO delete(PurchaseApplicationEntity entity) {
         //待提交允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-
+        List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //采购申请单明细数据
@@ -618,41 +614,33 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //删除操作日志
         moduleOperateLogService.removeByBusinessIds(ids);
         //删除主表数据
-        return this.removeByIds(ids);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
-        //待提交并且未作废允许提交
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()) ).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98032);
+        boolean result = this.removeByIds(ids);
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         }
-
-        log.info("采购申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-        //启动流程 TODO
-
-        //更新审核状态
-        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
-        //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
-        return Boolean.TRUE;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(PurchaseApplicationDTO.AddDTO dto) {
+    public BatchResultDTO submit(String id) {
+        //根据ids查询
+        PurchaseApplicationEntity entity = getById(id);
+        return this.submitEntity(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO addAndSubmit(PurchaseApplicationDTO.AddDTO dto) {
         //新增
-        String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        PurchaseApplicationEntity entity = this.add(dto);
+        if (StringUtils.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        entity = this.getById(entity.getId());
         //提交
-        return this.submit(Arrays.asList(id));
+        return this.submitEntity(entity);
     }
 
     @Override
@@ -678,14 +666,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
+    public BatchResultDTO cancelProcess(PurchaseApplicationEntity entity) {
 
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购申请单撤销流程，ids=【{}】", ids);
 
         //撤销现有流程
@@ -694,9 +681,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //更新单据为待提交
         updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购申请单【%s】取消流程", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"取消流程操作");
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
@@ -705,7 +692,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()));
+        BatchResultDTO resultDTO = this.submit(dto.getId());
+        return resultDTO.getSuccess();
     }
 
     @Override
@@ -1379,5 +1367,25 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
         }
         return records;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submitEntity(PurchaseApplicationEntity entity) {
+        //待提交并且未作废允许提交
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()) ).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98032);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        log.info("采购申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //启动流程 TODO
+
+        //更新审核状态
+        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 }

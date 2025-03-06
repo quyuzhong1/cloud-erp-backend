@@ -35,6 +35,7 @@
         si.remark,
         si.customer_order_no AS customerOrderNo,
         si.is_declare as isDeclare,
+        si.is_upload_label as isUploadLabel,
         sod.sku_id AS skuId,
         sod.sku_no AS skuNo,
         sod.qty,

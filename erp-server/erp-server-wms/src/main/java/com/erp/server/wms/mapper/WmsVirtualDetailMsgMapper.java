@@ -1,6 +1,7 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import org.apache.ibatis.annotations.Mapper;
 
@@ -23,5 +24,5 @@ public interface WmsVirtualDetailMsgMapper extends BaseMapper<WmsVirtualDetailMs
      * @date 2025/2/18 11:57
      * @return java.util.List<com.erp.model.wms.entity.WmsVirtualDetailMsgEntity>
      */
-    List<WmsVirtualDetailMsgEntity> listFirstVirtualDetailMsg();
+    List<WmsVirtualDetailMsgDTO.ListDTO> listFirstVirtualDetailMsg();
 }

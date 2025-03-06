@@ -27,7 +27,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     /**
      * 新增
      *
-     * @param mainId
+     * @param billEntity
      * @param list
      * @return
      * @author lambda
@@ -74,21 +74,6 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @date 2023-11-17
      */
     BatchResultDTO updateStatus(String id, String trackStatus, LocalDateTime trackTime,String trackDesc);
-
-    /**
-     * 分页获取轨迹数据
-     *
-     * @param query
-     * @return
-     */
-    PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query);
-
-    /**
-     *
-     * @param query
-     * @return
-     */
-    PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query);
 
     /**
      * 列表查询

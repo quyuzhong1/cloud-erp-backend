@@ -184,6 +184,57 @@ public class MercadoSdkClientService {
         return tokenDTO;
     }
 
+
+    public static void main(String[] args) {
+        String path = "/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s";
+        ShopDTO.RefreshTokenDTO dto = new ShopDTO.RefreshTokenDTO();
+        dto.setBaseUrl("https://api.mercadolibre.com");
+        dto.setClientId("3457166802805723");
+        dto.setClientSecret("QucvI4VWHO0w3AZftOElz5liVOurfjQG");
+        dto.setRefreshToken("TG-67c67d374499d20001e5286c-2201503196");
+        String baseUrl = String.format(dto.getBaseUrl() + path, dto.getClientId(), dto.getClientSecret(), dto.getRefreshToken());
+
+        //入参（无）
+        Map<String, Object> param = new HashMap<>();
+
+        //请求头（无）
+        Map<String, String> headerMap = new HashMap<>();
+
+        String token = "";
+        long sleepTime = 1000;
+        int count = 0;
+        //解析数据
+        PlatformMercadoRefreshTokenDTO refreshTokenDTO = null;
+        while(StringUtil.isBlank(token)) {
+            String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
+            try {
+                refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
+//            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
+            } catch (Exception e) {
+                log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
+                        bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
+            }
+
+            if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
+                if(count == 10) {
+                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+                sleepTime = sleepTime + 1000;
+                count = count + 1;
+            } else {
+                token = refreshTokenDTO.getAccessToken();
+            }
+
+        }
+    }
+
     /**
      * 美客多刷新token方法
      *
@@ -685,15 +736,6 @@ public class MercadoSdkClientService {
         }
         return null;
 
-    }
-
-    public static void main(String[] args) {
-        Map<String, String> authMap = new HashMap<>();
-        authMap.put("token", "APP_USR-3457166802805723-022502-5d2a95e663faac516a366b8d1da7aee0-2201503196");
-        Long shippingId = Long.valueOf("44525228893");
-        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
-        String result = sdkClientService.printShippingLabel(authMap, shippingId);
-        System.out.println(result);
     }
 
     /**

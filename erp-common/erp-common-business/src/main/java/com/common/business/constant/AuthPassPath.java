@@ -18,5 +18,5 @@ public class AuthPassPath {
             + "/open/api/;/logisticsTrack/webhookByTrack123;/webhook/receive/;/overseasInventory/shopifyShippedInfo";
 
 
-
+    public static final String EVENT_TRACKING_PATH = "/sysEventTracking/add";
 }

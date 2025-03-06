@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
@@ -356,7 +357,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateDetailRemark(BaseIdsDTO.RemarkDTO dto);
+    Boolean updateDetailRemark(List<String> ids, String remark);;
     /**
      * @description: 更新备注
      * @author Will
@@ -364,7 +365,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
+    BatchResultDTO updateRemark(SoInfoEntity entity, String remark);
 
     /**
      * 根据销售订单判断是否已经下推过发货通知单
@@ -498,4 +499,19 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return
      */
     Boolean existsByCustomerAndSku(String customer,String platformSku);
+
+    /**
+     * 批量上传物流面单
+     * @param files
+     * @return
+     */
+    List<BatchResultDTO> batchUploadLogisticLabel(List<MultipartFile> files);
+
+    /**
+     * 单个物流面单上传
+     * @param file
+     * @param id
+     * @return
+     */
+    BatchResultDTO singleUploadLogisticLabel(MultipartFile file, String id);
 }

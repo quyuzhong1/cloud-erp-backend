@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class ProductDetailBatchUpdateDTO implements Serializable {
     /**
      * 主键id

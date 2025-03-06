@@ -196,14 +196,15 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(feedbackList.get(0).get("dateCreated")), formatter);
                             // 转换为 LocalDateTime
                             dmpDataMap.put("payTime", offsetDateTime.toLocalDateTime());
+                            dmpDataMap.put("payStatus", Boolean.TRUE);
 
                             dmpDataMap.put("currencyCode", feedbackList.get(0).get("currencyId"));
                             BigDecimal totalPaidAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("totalPaidAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("payAmount", totalPaidAmount);
                             BigDecimal transactionAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("transactionAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("allAmount", transactionAmount);
-                            BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
-                            dmpDataMap.put("shippingCost", shippingAmount);
+                            BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingCost"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("shippingAmount", shippingAmount);
                             BigDecimal totalDiscount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("couponAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("totalDiscount", totalDiscount);
 

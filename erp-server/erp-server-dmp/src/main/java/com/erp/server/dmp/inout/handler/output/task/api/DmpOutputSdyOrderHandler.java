@@ -147,6 +147,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
             return result;
         }
+        if (!dmpSoInfoEntity.getPayStatus()) {
+            return result;
+        }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
         if (CollUtil.isEmpty(dmpSoDetailEntities)) {
             return result;
@@ -172,7 +175,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
             shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
 
-            shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
+            shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getPlatformCode());
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {

@@ -88,7 +88,7 @@ public class ImageUtil {
      * @param targetSizeInBytes
      * @return MultipartFile
      */
-    public static MultipartFile compressImageMultipartFile(File inputFile, long targetSizeInBytes) throws IOException {
+    public static MultipartFile compressImageMultipartFile(File inputFile, long  targetSizeInBytes) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream =  compressImage(inputFile,targetSizeInBytes);
         // 使用 MockMultipartFile 创建 MultipartFile 对象并返回
         return new MockMultipartFile("file", inputFile.getName(), "image/jpeg", byteArrayOutputStream.toByteArray());

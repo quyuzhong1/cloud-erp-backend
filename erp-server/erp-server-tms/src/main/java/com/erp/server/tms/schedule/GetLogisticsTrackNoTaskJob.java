@@ -88,7 +88,7 @@ public class GetLogisticsTrackNoTaskJob {
             //平台
             String logisticsPlatform = entry.getKey();
 
-            Boolean isAliExpress = aliExpress.equals(logisticsPlatform);
+            boolean isAliExpress = aliExpress.equals(logisticsPlatform);
 
             List<LogisticsChannelDTO.LogisticsPlatformDTO> platformLogisticsList = entry.getValue();
             //这个平台对应的渠道id

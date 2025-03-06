@@ -83,8 +83,18 @@ public interface OrderHistorySalesEsService {
 
     /**
      * 删除历史数据
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param shopSkuIds  店铺skuId
+     * @param startDate  开始日期
+     * @param endDate    结束日期
+     */
+    void deleteByDateBetween(List<String> shopSkuIds, LocalDate startDate, LocalDate endDate);
+
+    /**
+     * 删除历史数据
+     *
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      */
     void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
 

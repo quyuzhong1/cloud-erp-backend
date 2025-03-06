@@ -1,20 +1,24 @@
 package com.cloud.erp.gateway.component;
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.cloud.erp.gateway.context.GatewayContext;
 import com.cloud.erp.gateway.utils.ServletUtils;
 import com.cloud.erp.gateway.web.server.TokenService;
 import com.common.business.constant.AuthPassPath;
 import com.common.business.constant.TokenConstants;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -28,7 +32,6 @@ import java.util.Objects;
 
 /**
  * @Classname AuthGatewayFilter
-
  * @Date 2022-07-11 11:38
  * @Created by yl
  */
@@ -70,7 +73,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                 return unauthorizedResponse(exchange, ApiError.ERROR_5001.msg, ApiError.ERROR_5001.code);
             }
             //判断是否是app 如果是 直接放行
-            if(uri.contains(OPEN_API_URL)){
+            if (uri.contains(OPEN_API_URL)) {
                 return chain.filter(exchange);
             }
 
@@ -87,6 +90,13 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
             if (flag) {
                 return chain.filter(exchange);
             }
+            // 埋点路径解析
+            if (AuthPassPath.EVENT_TRACKING_PATH.contains(uri)) {
+                // 解析请求参数token用户
+                parseFormDataToken(exchange, request);
+                return chain.filter(exchange);
+            }
+
             HttpHeaders headers = request.getHeaders();
             String token = headers.getFirst(TokenConstants.AUTHENTICATION);
             if (StringUtils.isBlank(token)) {
@@ -117,5 +127,29 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
         return ServletUtils.webFluxResponseWriter(exchange.getResponse(), msg, code);
     }
 
-
+    private void parseFormDataToken(ServerWebExchange exchange, ServerHttpRequest request) {
+        // 缓存获取
+        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+        if (null != gatewayContext) {
+            String data = gatewayContext.getRequestBody();
+            if (StringUtils.isNotBlank(data)) {
+                // 解析 JSON 获取 token 字段
+                try {
+                    JSONObject jsonObject = JSONUtil.parseObj(JSONUtil.toJsonStr(data));
+                    String token = jsonObject.getOrDefault("token", "").toString();
+                    if (StringUtils.isNotBlank(token)) {
+                        //解析token
+                        LoginUser loginUser = tokenService.getLoginUser(token);
+                        if (Objects.isNull(loginUser)) {
+                            ServiceException.runError(ApiError.ERROR_403.msg);
+                        }
+                        loginUser.setAccessToken(token);
+                        request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 }

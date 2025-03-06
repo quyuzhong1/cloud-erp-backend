@@ -116,6 +116,7 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
+    ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
     /**
      * 警告信息 从800 开始
      */
@@ -1022,6 +1023,7 @@ public enum ApiError implements Serializable {
     IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
+    ERROR_PDF_SO_MERGE(92115,"打印面单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
@@ -1543,10 +1545,10 @@ public enum ApiError implements Serializable {
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
 
 
-    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于包装长度"),
-    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于包装宽度"),
-    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
-    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
+    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于等于包装长度"),
+    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
+    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
+    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 

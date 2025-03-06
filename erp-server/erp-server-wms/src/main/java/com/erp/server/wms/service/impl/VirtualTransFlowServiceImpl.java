@@ -267,12 +267,13 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
-    public VirtualTransFlowEntity getUnApprovedTxnFlowBySourceDetailId(String sourceType, String sourceDetailId, LocalDateTime dateTime) {
+    public VirtualTransFlowEntity getUnApprovedTxnFlowBySource(VirtualTransFlowEntity entity) {
         return   lambdaQuery()
-                .eq(VirtualTransFlowEntity::getSourceType, sourceType)
-                .eq(VirtualTransFlowEntity::getSourceDetailId, sourceDetailId)
+                .eq(VirtualTransFlowEntity::getSourceType, entity.getSourceType())
+                .eq(VirtualTransFlowEntity::getSourceDetailId, entity.getSourceDetailId())
+                .eq(VirtualTransFlowEntity::getSkuId, entity.getSkuId())
                 .eq(VirtualTransFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
-                .le(VirtualTransFlowEntity::getTradeTime, dateTime)
+                .le(VirtualTransFlowEntity::getTradeTime, entity.getTradeTime())
                 .last("limit 1")
                 .one();
     }

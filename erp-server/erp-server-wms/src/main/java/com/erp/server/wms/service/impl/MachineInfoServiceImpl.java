@@ -6,14 +6,10 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.LoginUser;
@@ -63,6 +59,7 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -211,7 +208,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public String add(MachineInfoDTO.AddDTO dto) {
+    public MachineInfoEntity add(MachineInfoDTO.AddDTO dto) {
         MachineInfoEntity entity = new MachineInfoEntity();
         BeanMapperUtils.copy(dto, entity);
         //处理数据id
@@ -231,7 +228,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //新增明细
             machineDetailService.add(dto.getDetailList(), entity.getId());
         }
-        return entity.getId();
+        return entity;
     }
 
 
@@ -260,15 +257,15 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public String addAndSubmit(MachineInfoDTO.AddDTO dto) {
+    public MachineInfoEntity addAndSubmit(MachineInfoDTO.AddDTO dto) {
         //新增
-        String id = this.add(dto);
-        if (CharSequenceUtil.isBlank(id)) {
+        MachineInfoEntity entity = this.add(dto);
+        if (CharSequenceUtil.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Collections.singletonList(id));
-        return id;
+        this.submit(Collections.singletonList(entity.getId()));
+        return entity;
     }
 
     @Override
@@ -318,11 +315,11 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean updateAndSubmit(MachineInfoDTO.UpdateDTO dto) {
+    public BatchResultDTO updateAndSubmit(MachineInfoDTO.UpdateDTO dto) {
         //修改
         this.update(dto);
         //提交
-        return this.submit(Collections.singletonList(dto.getId()));
+        return this.submit(dto.getId());
     }
 
     @Override
@@ -1222,5 +1219,91 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
                 dmpMqFeign.sendTask(resultList);
             }
         });
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submit(String id) {
+        MachineInfoEntity old = this.getById(id);
+        if (ObjectUtils.isEmpty(old)) {
+            throw new ServiceException(ApiError.ERROR_99052);
+        }
+        return this.submitEntity(old);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submitEntity(MachineInfoEntity entity) {
+        //待提交或审核不通过并且未作废允许提交
+        long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+        log.info("加工单提交，id=【{}】", entity.getId());
+        //更新审核状态
+        updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("提交了一个加工单【%s】", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(),"提交成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO cancelProcessEntity(MachineInfoEntity entity) {
+        //审核中允许审核
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        log.info("加工单撤销流程，id=【{}】", entity.getId());
+
+        //撤销现有流程
+        workflowFeign.cancelProcess(Collections.singletonList(entity.getId()));
+
+        //更新单据为待提交
+        updateApproveStatusForDisApprove(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("加工单【%s】取消流程", ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "取消流程操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(),"撤销成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public BatchResultDTO invalid(String id, String reason) {
+        if (StringUtils.isBlank(id)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //根据id查询
+        MachineInfoEntity entity = this.getByIdOpt(id).orElseThrow(()-> new ServiceException(ApiError.ERROR_99052));
+        //非待提交和审核不通过不能作废
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98005);
+        }
+        long invalidCount = Stream.of(entity).filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (invalidCount > 0) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+        log.info("加工单作废，id=【{}】", id);
+
+        //更新
+        lambdaUpdate().eq(MachineInfoEntity::getId, id)
+                .set(MachineInfoEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+                .set(MachineInfoEntity::getInvalidRemark, reason)
+                .update();
+        //删除关联关系表数据
+        machineRefSoService.removeByMachineIdList(Collections.singletonList(id));
+        //作废发送金蝶
+        sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_INVALID.getCode());
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("作废了一个加工单【%s】，作废原因：".concat(reason), ModuleTypeEnum.MACHINE_INFO.getCode(), pairList, "作废操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(),"作废成功");
     }
 }
