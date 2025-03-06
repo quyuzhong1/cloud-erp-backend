@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -14,6 +13,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Will
@@ -27,25 +27,26 @@ public class BeanMapUtil {
     private BeanMapUtil() {
     }
 
-    // 为保证可见性和有序性，防止出现半初始化
-    private static volatile BeanMapUtil INSTANCE;
+    // 使用 AtomicReference 管理单例实例
+    private static final AtomicReference<BeanMapUtil> INSTANCE = new AtomicReference<>();
 
     /**
      * 获取单例
      * @return
      */
     public static BeanMapUtil getInstance() {
-        if (INSTANCE == null) {
+        BeanMapUtil instance = INSTANCE.get();
+        if (instance == null) {
             synchronized (BeanMapUtil.class) {
-                if (null == INSTANCE) {
-                    INSTANCE = new BeanMapUtil();
-                    return INSTANCE;
+                instance = INSTANCE.get();
+                if (instance == null) {
+                    instance = new BeanMapUtil();
+                    INSTANCE.set(instance);
                 }
             }
         }
-        return INSTANCE;
+        return instance;
     }
-
 
     /**
      * 对象转Map（支持多重嵌套对象转换Map）

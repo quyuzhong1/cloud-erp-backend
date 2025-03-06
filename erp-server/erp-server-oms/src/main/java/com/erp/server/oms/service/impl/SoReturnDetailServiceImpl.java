@@ -629,7 +629,7 @@ public class SoReturnDetailServiceImpl extends SuperServiceImpl<SoReturnDetailMa
             //含税退货金额（本位币）
             BigDecimal taxReturnAmountLocalCurrency = soReturnDetailEntity.getTaxReturnAmountLocalCurrency();
             //页面退货数量不等于退货订单
-            if(dto.getReturnQty() != soReturnDetailEntity.getReturnQty()){
+            if(!dto.getReturnQty().equals(soReturnDetailEntity.getReturnQty())){
                 //退货金额
                 returnAmount = returnAmount.divide(BigDecimal.valueOf(soReturnDetailEntity.getReturnQty()), 4, RoundingMode.DOWN)
                         .multiply(BigDecimal.valueOf(dto.getReturnQty()))

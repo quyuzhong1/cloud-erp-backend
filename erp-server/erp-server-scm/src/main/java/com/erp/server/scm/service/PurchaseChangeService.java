@@ -12,6 +12,7 @@ import com.erp.model.scm.entity.PurchaseChangeEntity;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -47,7 +48,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return Boolean
      */
-    String add(PurchaseChangeDTO.AddDTO dto);
+    PurchaseChangeEntity add(PurchaseChangeDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -71,7 +72,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param ids
      * @return Boolean
      */
-    Boolean invalid(List<String> ids,String reason);
+    BatchResultDTO invalid(PurchaseChangeEntity entity, String reason);
     /**
      * @description: 审核
      * @author Will
@@ -99,10 +100,10 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @description: 提交
      * @author Will
      * @date: 2023/3/16 16:10
-     * @param ids
+     * @param id
      * @return Boolean
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(String id);
     /**
      * @description: 新增并提交
      * @author Will
@@ -110,7 +111,7 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseChangeDTO.AddDTO dto);
+    BatchResultDTO addAndSubmit(PurchaseChangeDTO.AddDTO dto);
     /**
      * @description: 修改并提交
      * @author Will
@@ -118,15 +119,15 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
      * @param dto
      * @return Boolean
      */
-    Boolean updateAndSubmit(PurchaseChangeDTO.UpdateDTO dto);
+    BatchResultDTO updateAndSubmit(PurchaseChangeDTO.UpdateDTO dto);
     /**
      * @description: 撤销流程
      * @author Will
      * @date: 2023/4/3 11:46
-     * @param ids
+     * @param entity
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(PurchaseChangeEntity entity);
     /**
      * @description: 查询数量
      * @author Will
@@ -149,4 +150,10 @@ public interface PurchaseChangeService extends SuperService<PurchaseChangeEntity
     List<PurchaseChangeEntity> listByPoIds(List<String> ids);
 
     PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto);
+
+
+    /**
+     * 提交
+     */
+    BatchResultDTO submitEntity(PurchaseChangeEntity entity);
 }

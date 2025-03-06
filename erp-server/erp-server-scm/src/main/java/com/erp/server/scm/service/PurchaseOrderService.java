@@ -9,6 +9,7 @@ import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -64,7 +65,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param ids
      * @return Boolean
      */
-    Boolean delete(List<String> ids);
+    BatchResultDTO delete(PurchaseOrderEntity entity);
     /**
      * @description: 批量审核
      * @author Will
@@ -106,7 +107,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(PurchaseOrderEntity entity);
 
     /**
      * 根据ids查询
@@ -153,7 +154,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto);
+    BatchResultDTO addAndSubmit(PurchaseOrderDTO.AddDTO dto);
     /**
      * @description:
      * @author Will
@@ -177,7 +178,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param remark
      * @return Boolean
      */
-    Boolean invalid(List<String> ids, String remark);
+    BatchResultDTO invalid(PurchaseOrderEntity entity, String remark);
     /**
      * @description: 下推签收单弹框数据显示
      * @author Will
@@ -491,4 +492,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param purchaseCalcQtyParamsDTO 参数
      */
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
+
+
+    /**
+     * 单提交
+     */
+    BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess);
 }

@@ -844,7 +844,7 @@ public class ExportWmsFeignController {
     @PostMapping("/exportFirstMileProcessing")
     @WebAdvanceQuery
     public PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(@RequestBody PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto){
-        return firstMileProcessingService.paging(dto);
+        return firstMileProcessingService.exportPaging(dto);
     }
 
     /**

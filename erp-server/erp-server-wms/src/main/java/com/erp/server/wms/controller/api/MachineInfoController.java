@@ -14,6 +14,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
@@ -25,9 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
  * 加工单 
@@ -97,9 +97,9 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:add",
             serviceClass = MachineInfoService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated MachineInfoDTO.AddDTO dto) {
-        String id = machineInfoService.add(dto);
-        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated MachineInfoDTO.AddDTO dto) {
+        MachineInfoEntity entity = machineInfoService.add(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -116,9 +116,9 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:add",
             serviceClass = MachineInfoService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated MachineInfoDTO.AddDTO dto) {
-        String id = machineInfoService.addAndSubmit(dto);
-        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
+    public ApiResult<BaseResultDTO.AddDTO> addAndSubmit(@RequestBody @Validated MachineInfoDTO.AddDTO dto) {
+        MachineInfoEntity entity = machineInfoService.addAndSubmit(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -154,9 +154,23 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:update",
             serviceClass = MachineInfoService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated MachineInfoDTO.UpdateDTO dto) {
-        Boolean flag = machineInfoService.updateAndSubmit(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> updateAndSubmit(@RequestBody @Validated MachineInfoDTO.UpdateDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(1);
+        String id = dto.getId();
+        BatchResultDTO submit;
+            try {
+                submit =  machineInfoService.updateAndSubmit(dto);
+            } catch (Exception e) {
+                log.error("修改并提交加工单失败", e);
+                MachineInfoEntity entity = machineInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "提交加工单不存在, 修改并提交加工单");
+                    resultDTOS.add(submit);
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -173,9 +187,23 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:submit",
             serviceClass = MachineInfoService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = machineInfoService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, MachineInfoEntity> entityMap = machineInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            MachineInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(machineInfoService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("加工单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -238,9 +266,28 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:delete",
             serviceClass = MachineInfoService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = machineInfoService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, MachineInfoEntity> entityMap = machineInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            MachineInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = machineInfoService.delete(Collections.singletonList(id));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(entity.getId(), entity.getCode(), "删除成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), "删除失败"));
+                }
+            }catch (Exception e){
+                log.error("加工单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -257,9 +304,23 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:invalid",
             serviceClass = MachineInfoService.class,
             keyIdName = "ids")
-    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = machineInfoService.invalid(dto.getIds(),dto.getRemark());
-        return flag == true ? success() : failure();
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, MachineInfoEntity> entityMap = machineInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            MachineInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(machineInfoService.invalid(id, dto.getRemark()));
+            }catch (Exception e){
+                log.error("加工单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -342,9 +403,23 @@ public class MachineInfoController extends BaseController {
             menuCode = "wms:machineInfo:cancelProcess",
             serviceClass = MachineInfoService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = machineInfoService.cancelProcess(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<MachineInfoEntity> entityList = machineInfoService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            MachineInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"加工单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(machineInfoService.cancelProcessEntity(entity));
+            }catch (Exception e){
+                log.error("加工单撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -1,7 +1,7 @@
 package com.common.core.utils;
 
-import cn.hutool.core.util.ClassUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ClassUtil;
 import com.common.core.enums.ApiError;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -24,8 +25,8 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EnumCacheUtils {
 
-    // 为保证可见性和有序性，防止出现半初始化
-    private static volatile EnumCacheUtils INSTANCE;
+    // 使用 AtomicReference 管理单例实例
+    private static final AtomicReference<EnumCacheUtils> INSTANCE = new AtomicReference<>();
 
     // 扫描的公共包路径
     private static final String[] SCAN_COMMON_ENUM_PACKAGE_PATH = {"com.common.business.enums", "com.common.core.enums"};
@@ -34,7 +35,7 @@ public class EnumCacheUtils {
     private static String SERVICE_ENUM_PACKAGE_PATH = "";
 
     // 枚举缓存
-    private static volatile Map<String,List<Map<String,Object>>> enumMaps = new ConcurrentHashMap();
+    private static final AtomicReference<Map<String, List<Map<String, Object>>>> enumMaps = new AtomicReference<>(null);
 
     private static final Lock lock = new ReentrantLock();
 
@@ -63,15 +64,17 @@ public class EnumCacheUtils {
      * @return
      */
     public static EnumCacheUtils getInstance() {
-        if (INSTANCE == null) {
-            synchronized (EnumCacheUtils.class) {
-                if (INSTANCE == null) {
-                    INSTANCE = new EnumCacheUtils();
-                    return INSTANCE;
+        EnumCacheUtils instance = INSTANCE.get();
+        if (instance == null) {
+            synchronized (BeanMapUtil.class) {
+                instance = INSTANCE.get();
+                if (instance == null) {
+                    instance = new EnumCacheUtils();
+                    INSTANCE.set(instance);
                 }
             }
         }
-        return INSTANCE;
+        return instance;
     }
 
     /**
@@ -81,39 +84,47 @@ public class EnumCacheUtils {
 
     }
 
-    public Map<String,List<Map<String,Object>>> getData() {
-        if(enumMaps != null && !enumMaps.isEmpty()) {
-            return enumMaps;
+    public Map<String, List<Map<String, Object>>> getData() {
+        Map<String, List<Map<String, Object>>> currentEnumMaps = enumMaps.get();
+        if (currentEnumMaps != null && !currentEnumMaps.isEmpty()) {
+            return currentEnumMaps;
         }
+
         lock.lock();
         try {
-            // 读取某个包及子包下面的所有枚举类
-            Set<Class<?>> searchClazzSets = Sets.newHashSet();
-            Arrays.asList(SCAN_COMMON_ENUM_PACKAGE_PATH).forEach(enumPackagePath-> {
-                log.info("扫描包{}下面的所有枚举类", enumPackagePath);
-                searchClazzSets.addAll(ClassUtil.scanPackage(enumPackagePath,(clazz)-> clazz.isEnum()));
-            });
-            if(CharSequenceUtil.isNotBlank(SERVICE_ENUM_PACKAGE_PATH)) {
-                log.info("扫描包{}下面的所有枚举类", SERVICE_ENUM_PACKAGE_PATH);
-                searchClazzSets.addAll(ClassUtil.scanPackage(SERVICE_ENUM_PACKAGE_PATH,(clazz)-> clazz.isEnum()));
-            }
-            // 遍历所有的枚举类
-            if (searchClazzSets != null && searchClazzSets.size() > 0) {
-                for (Class clazz : searchClazzSets) {
-                    if(excludeScan.contains(clazz.getSimpleName())) {
-                        continue;
-                    }
-                    // 获取某个具体枚举类的，只处理枚举类中包含code和name的枚举类
-                    if(checkPermitEnum(clazz)) {
-                        List<Map<String, Object>> list = getEnumValueByClass(clazz);
-                        enumMaps.put(clazz.getSimpleName().replace("Enum","").replace("enum",""), list);
+            // 双重检查锁定
+            currentEnumMaps = enumMaps.get();
+            if (currentEnumMaps == null || currentEnumMaps.isEmpty()) {
+                currentEnumMaps = new ConcurrentHashMap<>();
+                // 读取某个包及子包下面的所有枚举类
+                Set<Class<?>> searchClazzSets = Sets.newHashSet();
+                Arrays.asList(SCAN_COMMON_ENUM_PACKAGE_PATH).forEach(enumPackagePath -> {
+                    log.info("扫描包{}下面的所有枚举类", enumPackagePath);
+                    searchClazzSets.addAll(ClassUtil.scanPackage(enumPackagePath, clazz -> clazz.isEnum()));
+                });
+                if (CharSequenceUtil.isNotBlank(SERVICE_ENUM_PACKAGE_PATH)) {
+                    log.info("扫描包{}下面的所有枚举类", SERVICE_ENUM_PACKAGE_PATH);
+                    searchClazzSets.addAll(ClassUtil.scanPackage(SERVICE_ENUM_PACKAGE_PATH, clazz -> clazz.isEnum()));
+                }
+                // 遍历所有的枚举类
+                if (searchClazzSets != null && !searchClazzSets.isEmpty()) {
+                    for (Class<?> clazz : searchClazzSets) {
+                        if (excludeScan.contains(clazz.getSimpleName())) {
+                            continue;
+                        }
+                        // 获取某个具体枚举类的，只处理枚举类中包含code和name的枚举类
+                        if (checkPermitEnum(clazz)) {
+                            List<Map<String, Object>> list = getEnumValueByClass(clazz);
+                            currentEnumMaps.put(clazz.getSimpleName().replace("Enum", "").replace("enum", ""), list);
+                        }
                     }
                 }
+                enumMaps.set(currentEnumMaps);
             }
         } finally {
             lock.unlock();
         }
-        return enumMaps;
+        return currentEnumMaps;
     }
 
     private static boolean checkPermitEnum(Class tt) {
