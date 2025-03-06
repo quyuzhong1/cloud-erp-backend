@@ -136,7 +136,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         }
 
 
-        shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getPayAmount());
+        shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
         String customerId = "";
         ShopInfoEntity shopInfo = shopInfoList.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
