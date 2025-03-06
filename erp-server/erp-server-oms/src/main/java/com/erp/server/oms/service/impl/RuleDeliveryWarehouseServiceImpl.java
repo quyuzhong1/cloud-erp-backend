@@ -353,7 +353,17 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
             detailMap.put("isOutStock", true);
             return;
         }
+        //根据SKU查询BOM判断是否是组合SKU
         skuIdList.add(skuId);
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        String combination = BomTypeEnum.COMBINATION.getType();
+        bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
+        //汇总子sku 和父级sku全量ids
+        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        //汇总skuIds
+        if (CollectionUtils.isNotEmpty(childSkuIds) && CollectionUtils.isNotEmpty(skuIdList)){
+            skuIdList.addAll(childSkuIds);
+        }
         List<String> warehouseIdList = Collections.singletonList(warehouseId);
         List<String> detailIdList = Collections.singletonList(detailId);
         //即时库存数据
@@ -369,16 +379,7 @@ public class RuleDeliveryWarehouseServiceImpl extends SuperServiceImpl<RuleDeliv
 
         SoB2cDetailDTO.WaitDeliveryParamDTO paramDTO = new SoB2cDetailDTO.WaitDeliveryParamDTO(skuIdList, warehouseIdList, detailIdList);
         List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList = soB2cDetailService.listWaitDeliveryQty(paramDTO);
-        //根据SKU查询BOM判断是否是组合SKU
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
-        String combination = BomTypeEnum.COMBINATION.getType();
-        bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
-        //汇总子sku 和父级sku全量ids
-        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
-        //汇总skuIds
-        if (CollectionUtils.isNotEmpty(childSkuIds) && CollectionUtils.isNotEmpty(skuIdList)){
-            skuIdList.addAll(childSkuIds);
-        }
+
 
         //获取仓库信息
         List<WarehouseDTO.UpdateDTO> deliveryWarehouseList = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(warehouseId));

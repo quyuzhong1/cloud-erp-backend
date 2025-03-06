@@ -1,12 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
-import com.sdk.wms.antu.service.AntuService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
-
-import javax.annotation.Resource;
 
 /**
  * @author jack
@@ -19,9 +16,6 @@ import javax.annotation.Resource;
 @Service
 @Validated
 public class SptHandlerServiceImpl extends EccangHandlerServiceImpl {
-
-    @Resource
-    private AntuService antuService;
 
     @Override
     public OmsPlatformEnum getPlatForm() {

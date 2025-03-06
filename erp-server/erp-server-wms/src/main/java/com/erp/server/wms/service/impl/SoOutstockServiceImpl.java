@@ -548,7 +548,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setCountryName(countryName);
         }
 
-        if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(soOutstock.getSourceType())) {
+        if ("qimen".equals(soOutstock.getCreateUserName()) || "wangdiantong".equals(soOutstock.getCreateUserName())){
             String countryName = countryList.stream().filter(e -> e.getId().equals(soOutstock.getCountry())).map(DictCountryDTO.ListDTO::getNameCn).findFirst().orElse("");
             result.setCountryId(soOutstock.getCountry());
             result.setCountryName(countryName);
@@ -3430,7 +3430,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (!isB2c) {
                 pushTaskEntity = syncKingdeeSoOutstockService.syncDataToKingdee(obj, operate);
             } else {
-                if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(obj.getSourceType())){
+                if ("qimen".equals(obj.getCreateUserName()) || "wangdiantong".equals(obj.getCreateUserName())){
                     pushTaskEntity = syncKingdeeSoOutstockService.syncWdtDataToKingdee(obj, operate);
                 }else {
                     pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, operate);
