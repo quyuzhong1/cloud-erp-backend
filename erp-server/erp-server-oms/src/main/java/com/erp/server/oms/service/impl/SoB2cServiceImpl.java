@@ -2451,6 +2451,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //转化收货人
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
+        //速派通地址3赋值
+        if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
+            receiverInfo.setAddress3(fullAddress);
+        }
         receiverInfo.setAddress2(address2);
         createOutboundReq.setReceiverInfo(receiverInfo);
 
