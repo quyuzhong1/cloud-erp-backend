@@ -1,6 +1,6 @@
 package com.common.business.aspect;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.annotation.Idempotent;
 import com.common.business.utils.MD5Util;
@@ -122,7 +122,7 @@ public class IdempotentAspect {
             for (Object o : paramsArray) {
                 if (!ObjectUtils.isEmpty(o) && !isFilterObject(o)) {
                     try {
-                        params.append(JSONObject.toJSONString(o)).append(" ");
+                        params.append(JSON.toJSONString(o)).append(" ");
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -143,14 +143,20 @@ public class IdempotentAspect {
         } else if (Collection.class.isAssignableFrom(clazz)) {
             Collection collection = (Collection) o;
             for (Object value : collection) {
-                return value instanceof MultipartFile;
+                if (value instanceof MultipartFile) {
+                    return true;
+                }
             }
+            return false;
         } else if (Map.class.isAssignableFrom(clazz)) {
             Map map = (Map) o;
             for (Object value : map.entrySet()) {
                 Map.Entry entry = (Map.Entry) value;
-                return entry.getValue() instanceof MultipartFile;
+                if (entry.getValue() instanceof MultipartFile) {
+                    return true;
+                }
             }
+            return false;
         }
         return o instanceof MultipartFile || o instanceof HttpServletRequest || o instanceof HttpServletResponse
                 || o instanceof BindingResult;

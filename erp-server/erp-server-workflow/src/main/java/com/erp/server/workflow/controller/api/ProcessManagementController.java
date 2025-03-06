@@ -2,6 +2,7 @@ package com.erp.server.workflow.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -10,6 +11,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.sys.dto.BatchSysDepartUserDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.server.workflow.query.ProcessManagementQueryHandler;
 import com.erp.server.workflow.service.ProcessManagementService;
@@ -21,7 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 流程管理
@@ -111,8 +114,34 @@ public class ProcessManagementController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量-转办任务:ids={ids},转办目标人={targetUserId}")
     @PostMapping("/transfer/batch")
-    public ApiResult<Boolean> transferBatchProcess(@RequestBody @Valid ProcessManagementDTO.TransferBatchDTO dto) {
-        return success(processManagementService.transferBatch(dto));
+    public ApiResult<?> transferBatchProcess(@RequestBody @Valid ProcessManagementDTO.TransferBatchDTO dto) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        // 查询当前执行任务
+        Map<String, ProcessManagementDTO.ManagementTaskDTO> entityMap = processManagementService.listTaskById(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProcessManagementDTO.ManagementTaskDTO::getTaskManagementId, e -> e));
+        for (String id : dto.getIds()) {
+            ProcessManagementDTO.ManagementTaskDTO entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"流程管理不存在"));
+                continue;
+            }
+            try {
+                boolean flag = processManagementService.transferBatch(new ProcessManagementDTO.TransferBatchDTO(
+                        Collections.singletonList(id),
+                        dto.getTargetUserId(),
+                        dto.getRemark()));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getBusinessCode(),"转办任务成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getBusinessCode(),"转办任务失败"));
+                }
+            }catch (Exception e){
+                log.error("转办任务失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, entity.getBusinessCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

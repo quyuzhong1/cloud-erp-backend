@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -236,6 +237,7 @@ public class ProductInfoDTO {
     
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class IdsDateDto{
         /**
          * 表 ids

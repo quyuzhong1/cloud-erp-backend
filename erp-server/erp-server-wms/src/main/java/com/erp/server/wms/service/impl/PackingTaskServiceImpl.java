@@ -1414,7 +1414,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         }else {
             //待审核的数据可以上传装箱数据
             firstMileDeliveryEntity = this.getFirstMileDeliveryByTask(packingTask);
-            checkFirstMileStatus(firstMileDeliveryEntity);
+            checkFirstMileStatus(firstMileDeliveryEntity,packingTask);
         }
     }
 
@@ -1922,15 +1922,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         return list;
     }
 
-    private void checkFirstMileStatus(FirstMileDeliveryEntity firstMileDeliveryEntity) {
+    private void checkFirstMileStatus(FirstMileDeliveryEntity firstMileDeliveryEntity, PackingTaskEntity packingTask) {
         if (Objects.isNull(firstMileDeliveryEntity)){
             return;
         }
 //        if(FbaDemandTypeEnum.DEMAND_PLATFORM_WAREHOUSE.getCode().equals(firstMileDeliveryEntity.getDemandType())){
 //            throw new ServiceException("已生成发货单，不允许修改装箱数据和删除");
 //        }
-        if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_92251);
+        if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())
+                && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(packingTask.getWeightingStatus())
+                || PackingTaskStatusEnum.PACKED.getCode().equals(packingTask.getPackingStatus()))) {
+            //【发货单状态-已审核】且【装箱任务状态-已装箱/已称重时】不可编辑
+            throw new ServiceException(ApiError.ERROR_PACKING_DELIVERY_CHECK);
         }
         if(FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus())
                 || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus())){

@@ -63,15 +63,23 @@ public class FirstMileProcessingDetailDTO implements Serializable {
          */
         private Integer deliveryQty;
         /**
-         * 出库单据id【可排序】
+         * 剩余冻结数量
+         */
+        private Integer frozenQty;
+        /**
+         * 冻结时长（天）
+         */
+        private Integer frozenDays;
+        /**
+         * 出库单据id
          */
         private String outstockOrderId;
         /**
-         * 出库单据编码【可排序】
+         * 出库单据编码
          */
         private String outstockOrderCode;
         /**
-         * 出库单据类型（同sourceType）【可排序】
+         * 出库单据类型（同sourceType）
          */
         private String outstockOrderType;
         /**
@@ -79,7 +87,7 @@ public class FirstMileProcessingDetailDTO implements Serializable {
          */
         private String outstockOrderTypeName;
         /**
-         * 出库单据状态【可排序】
+         * 出库单据状态
          */
         private String outstockOrderStatus;
         /**
@@ -87,15 +95,15 @@ public class FirstMileProcessingDetailDTO implements Serializable {
          */
         private String outstockOrderStatusName;
         /**
-         * 出库单据时间【可排序】
+         * 出库单据时间
          */
         private LocalDateTime outstockOrderTime;
         /**
-         * 出库数量【可排序】
+         * 出库数量
          */
         private Integer outstockQty;
         /**
-         * 更新时间【可排序】
+         * 更新时间
          */
         private LocalDateTime updateTime;
 

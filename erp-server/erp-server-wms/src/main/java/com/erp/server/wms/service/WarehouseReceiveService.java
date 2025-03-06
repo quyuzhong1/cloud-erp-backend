@@ -53,7 +53,7 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    String add(WarehouseReceiveDTO.AddDTO dto);
+    WarehouseReceiveEntity add(WarehouseReceiveDTO.AddDTO dto);
 
     /**
      * 修改
@@ -89,7 +89,7 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
      * @param dto dto
      * @return java.lang.Boolean
      **/
-    Boolean addAndSubmit(WarehouseReceiveDTO.AddDTO dto);
+    WarehouseReceiveEntity addAndSubmit(WarehouseReceiveDTO.AddDTO dto);
 
     /**
      * 修改提交
@@ -348,4 +348,25 @@ public interface WarehouseReceiveService extends SuperService<WarehouseReceiveEn
     PagingVO<WarehouseReceiveExportExcelDTO> exportWarehouseReceive(PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto);
 
     WarehouseReceiveDTO.PagingTotalDTO pagingTotal(WarehouseReceiveDTO.PagingParamDTO dto);
+
+    /**
+     * 单提交
+     */
+    BatchResultDTO submitEntity(WarehouseReceiveEntity mainEntity);
+
+    /**
+     * 单作废
+     **/
+    BatchResultDTO invalidEntity(WarehouseReceiveEntity entity, String remark);
+
+    /**
+     * 单取消流程
+     **/
+    BatchResultDTO cancelProcessEntity(WarehouseReceiveEntity entity);
+
+    /**
+     * 批量删除
+     *
+     **/
+    BatchResultDTO deleteEntity(WarehouseReceiveEntity entity);
 }

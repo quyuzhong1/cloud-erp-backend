@@ -114,16 +114,16 @@
         where ${params.sqlMap.default}
         and fmp.is_deleted = false
         <if test="params.label != null and params.label == 'outstock'">
-            and fmp.outstock_order_id != ''
+            and  (fmp.outstock_order_id != '' or  exists (select 0 from first_mile_processing_detail where is_deleted = false and outstock_order_id !='' and main_id = fmp.id) )
         </if>
         <if test="params.label != null and params.label == 'frozen'">
-            and fmp.frozen_qty != 0 and fmp.first_mile_delivery_id != '' and fmp.outstock_order_id = ''
+            and fmp.frozen_qty != 0 and ((fmp.first_mile_delivery_id != '' and fmp.outstock_order_id = '') or EXISTS (select 0 from first_mile_processing_detail where is_deleted = false and first_mile_delivery_id != '' and outstock_order_id ='' and main_id = fmp.id ) )
         </if>
         <if test="params.label != null and params.label == 'unShipped'">
-            and fmp.outstock_order_id = '' and fmp.frozen_time is not null and EXTRACT(DAY FROM (now() - fmp.frozen_time)) >= 7
+            and (fmp.outstock_order_id = '' or exists (select 0 from first_mile_processing_detail where is_deleted = false and   outstock_order_id ='' and main_id = fmp.id))  and fmp.frozen_time is not null and EXTRACT(DAY FROM (now() - fmp.frozen_time)) >= 7
         </if>
         <if test="params.label != null and params.label == 'requisitionFrozen'">
-            and fmp.first_mile_delivery_id = '' and fmp.requisition_application_status in ('handleIng','handle')
+            and (fmp.approve_qty > fmp.delivery_qty and fmp.approve_qty > (select COALESCE(sum(delivery_qty),0) as deliveryQty from first_mile_processing_detail where is_deleted = false and main_id = fmp.id)) and fmp.requisition_application_status in ('handleIng','handle') and fmp.frozen_qty > 0
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -248,11 +248,47 @@
         ON ra.id = rad.main_id AND rad.is_deleted = false
         left JOIN first_mile_delivery fmd
         ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.invalid_status = false
+        left join (
+        select fmdd.id,fmdd.main_id,fmdd.delivery_qty,fsd.sku_id,fsd.fn_sku from first_mile_delivery_detail fmdd
+        left join fba_shipment_detail fsd on fsd.is_deleted = false and fmdd.source_detail_id = fsd.id
+        where fmdd.is_deleted = false
+        ) fmdd on fmd.id = fmdd.main_id and rad.sku_id = fmdd.sku_id and rad.platform_fn_sku = fmdd.fn_sku
         WHERE ra.type = 'fba'
         AND ra.is_deleted = false
-        AND ra.invalid_status = 'false' AND rad.from_virtual_warehouse_id != '' AND fmd.id ISNULL
+        AND ra.invalid_status = 'false' AND rad.from_virtual_warehouse_id != '' AND fmdd.id ISNULL
         <if test="startDate != null">
             and ra.create_time >= #{startDate}
         </if>
+    </select>
+
+    <!--导出分页查询- -->
+    <select id="exportPaging" resultType="com.erp.model.wms.dto.FirstMileProcessingDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from first_mile_processing fmp
+        left join product_detail pd on fmp.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on fmp.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on fmp.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        where ${params.sqlMap.default}
+        and fmp.is_deleted = false
+        <if test="params.label != null and params.label == 'outstock'">
+            and  (fmp.outstock_order_id != '' or  exists (select 0 from first_mile_processing_detail where is_deleted = false and outstock_order_id !='' and main_id = fmp.id) )
+        </if>
+        <if test="params.label != null and params.label == 'frozen'">
+            and fmp.frozen_qty != 0 and ((fmp.first_mile_delivery_id != '' and fmp.outstock_order_id = '') or EXISTS (select 0 from first_mile_processing_detail where is_deleted = false and first_mile_delivery_id != '' and outstock_order_id ='' and main_id = fmp.id ) )
+        </if>
+        <if test="params.label != null and params.label == 'unShipped'">
+            and (fmp.outstock_order_id = '' or exists (select 0 from first_mile_processing_detail where is_deleted = false and   outstock_order_id ='' and main_id = fmp.id))  and fmp.frozen_time is not null and EXTRACT(DAY FROM (now() - fmp.frozen_time)) >= 7
+        </if>
+        <if test="params.label != null and params.label == 'requisitionFrozen'">
+            and (fmp.approve_qty > fmp.delivery_qty and fmp.approve_qty > (select COALESCE(sum(delivery_qty),0) as deliveryQty from first_mile_processing_detail where is_deleted = false and main_id = fmp.id)) and fmp.requisition_application_status in ('handleIng','handle') and fmp.frozen_qty > 0
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fmp.requisition_application_id DESC,fmp.first_mile_delivery_id desc
     </select>
 </mapper>

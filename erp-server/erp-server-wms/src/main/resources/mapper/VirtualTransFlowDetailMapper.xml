@@ -74,9 +74,9 @@
         vid.last_outstock_date as last_outstock_date,
         vidh.update_time as updateTime,
         vid.bill_date
-        from 	virtual_inventory_detail_his vidh
+        from virtual_inventory_detail_his vidh
         left join virtual_inventory_detail vid on vidh.virtual_inventory_detail_id = vid.id and vid.is_deleted = false
-        where vidh.is_deleted = false) vm
+        where vidh.is_deleted = false and vid.qty != 0) vm
         left join product_detail pd on vm.skuId = pd.id and pd.is_deleted = false
         left join warehouse wh on vm.warehouseId = wh.id and wh.is_deleted = false
         left join virtual_warehouse vw on vm.virtualWarehouseId = vw.id and vw.is_deleted = false

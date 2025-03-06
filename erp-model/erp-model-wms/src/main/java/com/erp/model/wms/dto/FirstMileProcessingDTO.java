@@ -102,6 +102,7 @@ public class FirstMileProcessingDTO implements Serializable {
          * 头程发货单审核状态名称
          */
         private String deliveryApproveStatusName;
+
         /**
          * 发货数量【可排序】
          */

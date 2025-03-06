@@ -10,6 +10,8 @@ import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.*;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -47,7 +49,7 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @author Will
      * @date: 2023/4/12 11:41
      */
-    String add(PoInstockDTO.AddDTO dto,Boolean isNotCheck);
+    PoInstockEntity add(PoInstockDTO.AddDTO dto,Boolean isNotCheck);
 
     /**
      * @param dto
@@ -56,7 +58,7 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
      * @author Will
      * @date: 2023/4/12 11:44
      */
-    String addAndSubmit(PoInstockDTO.AddDTO dto);
+    PoInstockEntity addAndSubmit(PoInstockDTO.AddDTO dto);
 
 
     /**
@@ -334,4 +336,31 @@ public interface PoInstockService extends SuperService<PoInstockEntity> {
     List<QcInfoEntity> getReceiveQcInfo (List<WarehouseReceiveDetailEntity> resultReceiveDetailList, List<String> notHasPodIdList);
 
     PagingVO<PoInstockDTO.ListDTO> exportPoInStock(PagingDTO<PoInstockDTO.ExportParamDTO> dto);
+
+
+    /**
+     * 批量提交
+     */
+    void submitList(List<String> ids, List<PoInstockEntity> list);
+
+    /**
+     * 单提交
+     */
+    BatchResultDTO submitEntity(PoInstockEntity entity);
+
+    /**
+     * 单删除
+     */
+    BatchResultDTO deleteEntity(PoInstockEntity entity);
+
+    /**
+     * 单删除
+     */
+    BatchResultDTO invalidEntity(PoInstockEntity entity, String reason);
+
+
+    /**
+     * 单撤销
+     */
+    BatchResultDTO cancelProcess(PoInstockEntity entity);
 }

@@ -3,30 +3,27 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
-import com.erp.model.wms.enums.VirtualDetailMsgStatusEnum;
 import com.erp.server.wms.convert.WmsVirtualDetailMsgConverter;
 import com.erp.server.wms.mapper.WmsVirtualDetailMsgMapper;
+import com.erp.server.wms.service.VirtualTransFlowDetailService;
 import com.erp.server.wms.service.WmsVirtualDetailMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -43,6 +40,8 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
     @Resource
     private MQProducerService mqProducerService;
 
+    @Resource
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -70,21 +69,19 @@ public class WmsVirtualDetailMsgServiceImpl extends SuperServiceImpl<WmsVirtualD
 
     @Override
     public void virtualDetailMsgJob() {
-        List<WmsVirtualDetailMsgEntity> wmsVirtualDetailMsgList = baseMapper.listFirstVirtualDetailMsg();
+        List<WmsVirtualDetailMsgDTO.ListDTO> wmsVirtualDetailMsgList = baseMapper.listFirstVirtualDetailMsg();
         if (CollUtil.isEmpty(wmsVirtualDetailMsgList)) {
+            log.warn("未找到需要同步的数据");
           return;
         }
-        for (WmsVirtualDetailMsgEntity entity : wmsVirtualDetailMsgList) {
-            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.WMS_VIRTUAL_DETAIL_MSG_TOPIC, RocketMqTagEnum.WMS_VIRTUAL_DETAIL_MSG_TAG.getName(),
-                    entity, StrUtil.format("{}_{}", entity.getBusinessId(), entity.getStatus()));
-            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
-                throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-            }
-            log.warn("发送MQ数据成功，result = {},businessId = {}", JSONUtil.toJsonStr(result), entity.getBusinessId());
-            //更新状态进行中
-            entity.setStatus(VirtualDetailMsgStatusEnum.DOING.getCode());
-            this.updateById(entity);
-        }
+        //按sku、仓库、虚拟仓分组
+        Map<String, List<WmsVirtualDetailMsgDTO.ListDTO>> map = wmsVirtualDetailMsgList.stream().collect(Collectors.groupingBy(obj -> obj.getSkuId().concat("|").concat(obj.getWarehouseId()).concat("|").concat(obj.getVirtualWarehouseId())));
+        // 多线程更新库存流水
+        CompletableFuture<Void> allOf = CompletableFuture.allOf(map.entrySet().stream()
+                .map(value -> CompletableFuture.runAsync(() ->
+                        virtualTransFlowDetailService.consumeMsgJob(value.getValue()))
+                ).toArray(CompletableFuture[]::new));
+        allOf.thenRun(() -> log.info("虚拟仓库存流水消费，所有任务执行完毕")).join();
     }
 
     @Override
