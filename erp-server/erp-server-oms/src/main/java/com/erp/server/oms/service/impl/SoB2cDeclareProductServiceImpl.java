@@ -4,6 +4,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -103,7 +104,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(SoB2cDeclareProductDTO.UpdateDTO updateDTO) {
+    public BatchResultDTO update(SoB2cDeclareProductDTO.UpdateDTO updateDTO) {
         SoB2cDeclareProductEntity old = super.getById(updateDTO.getId());
         if(null == old){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单申报产品信息单");
@@ -128,7 +129,7 @@ public class SoB2cDeclareProductServiceImpl extends SuperServiceImpl<SoB2cDeclar
             String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cDeclareProductEntity.getId(), "B2C销售订单申报产品信息单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, soB2cDeclareProductEntity, ModuleTypeEnum.SO_B2C_DECLARE.getCode(), soB2cDeclareProductEntity.getSoId(), null, msg, "批量修改报关");
-        return Boolean.TRUE;
+        return BatchResultDTO.success(updateDTO.getId(), soB2cEntity.getCode(), "报关修改操作");
     }
     /**
      * 根据销售订单id获取申报信息

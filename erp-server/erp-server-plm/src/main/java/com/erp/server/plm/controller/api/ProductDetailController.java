@@ -21,6 +21,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.query.ProductDetailQueryHandler;
 import com.erp.server.plm.service.*;
@@ -44,6 +45,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -510,9 +512,31 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "采购信息-备注信息-新增-批量：id={id}")
     @PostMapping("/saveOrUpdatePurchaseRemarkBatch")
     //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemarkBatch")
-    public ApiResult saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
-        Boolean flag = productPurchaseRemarkService.saveOrUpdateBatch(dto);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<?> saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.size());
+        List<String> ids = dto.stream().map(ProductPurchaseRemarkDTO::getId).collect(Collectors.toList());
+        Map<String, ProductPurchaseRemarkEntity> entityMap = productPurchaseRemarkService.listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(ProductPurchaseRemarkEntity::getId, Function.identity()));
+        for (ProductPurchaseRemarkDTO remarkDTO : dto) {
+            ProductPurchaseRemarkEntity entity = entityMap.get(remarkDTO.getId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(remarkDTO.getId(), remarkDTO.getId(), "采购信息不存在"));
+                continue;
+            }
+            try {
+                Boolean result = productPurchaseRemarkService.saveOrUpdateBatch(Collections.singletonList(remarkDTO));
+                if (result){
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getProductId(), "采购信息-备注信息-新增成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getProductId(), "采购信息-备注信息-新增失败"));
+                }
+            }catch (Exception e){
+                log.error("采购信息-备注信息添加失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getProductId(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /*    *//**
@@ -626,14 +650,26 @@ public class ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "产品信息-单位管理-新增|修改：单位名称={name}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-单位管理-新增|修改：单位名称={name}", keyIdName = "name")
     @PostMapping("/saveOrUpdateProductUnit")
     //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
-    public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
-        Boolean flag = productUnitService.saveOrUpdateBatch(productUnitList);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<?> saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        for (ProductUnitDTO dto : productUnitList) {
+            try {
+                Boolean flag = productUnitService.saveOrUpdateBatch(Collections.singletonList(dto));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(), dto.getName(),"单位管理-新增|修改成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getName(),"单位管理-新增|修改失败"));
+                }
+            }catch (Exception e){
+                log.error("单位管理-新增|修改失败",e);
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), dto.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
     /**
      * 产品信息-单位管理-查询
      *
@@ -1186,9 +1222,34 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品详情批量更新字段:ids={ids},修改的字段名称编号={updateFiledCode}")
     @PostMapping("/updateBatchFiled")
-    public ApiResult updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
-        Boolean flag = productDetailService.updateBatchFiled(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProductDetailEntity> entityMap = productDetailService.listByIds(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProductDetailEntity::getId, e -> e));
+        for (String id : dto.getIds()) {
+            ProductDetailEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品明细不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = productDetailService.updateBatchFiled(new ProductDetailBatchUpdateDTO(
+                        Collections.singletonList(id),
+                        dto.getUpdateFiledCode(),
+                        dto.getValues()
+                ));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"产品详情批量更新成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"产品详情批量更新失败"));
+                }
+            }catch (Exception e){
+                log.error("产品详情批量更新失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
