@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleExpireTimeDTO;
@@ -131,6 +132,22 @@ public class CfgRuleExpireTimeServiceImpl extends SuperServiceImpl<CfgRuleExpire
     @Override
     public CfgRuleExpireTimeEntity getByRefId(String refId) {
         return getOne(Wrappers.<CfgRuleExpireTimeEntity>lambdaQuery().eq(CfgRuleExpireTimeEntity::getRefId, refId).last("LIMIT 1"));
+    }
+
+    @Override
+    public void deleteByRefId(String refId) {
+        CfgRuleExpireTimeEntity cfgRuleExpireTime = getByRefId(refId);
+        if (ObjectUtil.isEmpty(cfgRuleExpireTime)) {
+            return;
+        }
+        ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).removeById(cfgRuleExpireTime.getId());
+        //删除物流信息配置
+        cfgRuleLogisticsService.deleteByExpireTimeId(cfgRuleExpireTime.getId());
+    }
+
+    @Override
+    public List<CfgRuleExpireTimeEntity> listByRefIdList(List<String> refIdList) {
+        return list(Wrappers.<CfgRuleExpireTimeEntity>lambdaQuery().in(CfgRuleExpireTimeEntity::getRefId, refIdList));
     }
 
 
