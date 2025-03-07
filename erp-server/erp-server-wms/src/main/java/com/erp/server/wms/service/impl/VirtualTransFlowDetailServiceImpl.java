@@ -359,7 +359,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             }
         }
         //重算原出库流水时间后的结余
-        virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity.getBillDate());
+        virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity);
     }
 
 
