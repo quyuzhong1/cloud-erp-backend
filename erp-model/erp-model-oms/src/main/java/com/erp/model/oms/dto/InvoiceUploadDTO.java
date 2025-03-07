@@ -1,0 +1,339 @@
+package com.erp.model.oms.dto;
+
+import java.time.LocalDateTime;
+
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * 上传记录请求响应实体
+ * </p>
+ *
+ * @author zdy
+ * @since 2025-03-07
+*/
+@Data
+@NoArgsConstructor
+public class InvoiceUploadDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 单据编码
+        */
+        private String code;
+
+        /**
+        * 配置id
+        */
+        private String cfgId;
+
+        /**
+        * 发票类型:vat=VAT发票
+        */
+        private String invoiceType;
+
+        /**
+        * 店铺id
+        */
+        private String shopId;
+
+        /**
+        * 销售订单id
+        */
+        private String soId;
+
+        /**
+        * 销售订单编码
+        */
+        private String soCode;
+
+        /**
+        * 平台订单号
+        */
+        private String platformCode;
+
+        /**
+        * 模板类型:erp=ERP模板,official=官方模板
+        */
+        private String templateType;
+
+        /**
+        * 发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功
+        */
+        private String status;
+
+        /**
+        * 上传时间
+        */
+        private LocalDateTime uploadTime;
+
+        /**
+        * 备注
+        */
+        private String remark;
+
+        /**
+        * 文件地址
+        */
+        private String fileUrl;
+
+        /**
+        * 上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功
+        */
+        private String uploadStatus;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddDTO extends CommonDTO {
+        //明细
+        private List<InvoiceUploadDetailDTO.AddDTO> detailList;
+
+    }
+
+    /**
+    * 修改
+    */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateDTO extends CommonDTO {
+
+        /**
+        * 主键id
+        */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+        //明细
+        private List<InvoiceUploadDetailDTO.UpdateDTO> detailList;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 配置id
+        */
+        @NotBlank(message = "配置id不能为空")
+        @Size(max = 19,message = "配置id最大长度不能超过19位")
+        private String cfgId;
+
+        /**
+        * 发票类型:vat=VAT发票
+        */
+        @NotBlank(message = "发票类型:vat=VAT发票不能为空")
+        @Size(max = 30,message = "发票类型:vat=VAT发票最大长度不能超过30位")
+        private String invoiceType;
+
+        /**
+        * 店铺id
+        */
+        @NotBlank(message = "店铺id不能为空")
+        @Size(max = 19,message = "店铺id最大长度不能超过19位")
+        private String shopId;
+
+        /**
+        * 销售订单id
+        */
+        @NotBlank(message = "销售订单id不能为空")
+        @Size(max = 19,message = "销售订单id最大长度不能超过19位")
+        private String soId;
+
+        /**
+        * 销售订单编码
+        */
+        @NotBlank(message = "销售订单编码不能为空")
+        @Size(max = 32,message = "销售订单编码最大长度不能超过32位")
+        private String soCode;
+
+        /**
+        * 平台订单号
+        */
+        private String platformCode;
+
+        /**
+        * 模板类型:erp=ERP模板,official=官方模板
+        */
+        @NotBlank(message = "模板类型:erp=ERP模板,official=官方模板不能为空")
+        @Size(max = 30,message = "模板类型:erp=ERP模板,official=官方模板最大长度不能超过30位")
+        private String templateType;
+
+        /**
+        * 发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功
+        */
+        @NotBlank(message = "发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功不能为空")
+        @Size(max = 30,message = "发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功最大长度不能超过30位")
+        private String status;
+
+        /**
+        * 上传时间
+        */
+        private LocalDateTime uploadTime;
+
+        /**
+        * 备注
+        */
+        private String remark;
+
+        /**
+        * 文件地址
+        */
+        private String fileUrl;
+
+        /**
+        * 上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功
+        */
+        @NotBlank(message = "上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功不能为空")
+        @Size(max = 255,message = "上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功最大长度不能超过255位")
+        private String uploadStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+        /**
+         * 主键id
+         */
+        private String  id;
+        /**
+         * 明细id
+         */
+        private String  detailId;
+
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 配置id
+         */
+        private String cfgId;
+
+        /**
+         * 发票类型:vat=VAT发票
+         */
+        private String invoiceType;
+        /**
+         * 发票类型名称
+         */
+        private String invoiceTypeName;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 销售订单id
+         */
+        private String soId;
+
+        /**
+         * 销售订单编码
+         */
+        private String soCode;
+
+        /**
+         * 平台订单号
+         */
+        private String platformCode;
+
+        /**
+         * 模板类型:erp=ERP模板,official=官方模板
+         */
+        private String templateType;
+        /**
+         * 模板类型名称
+         */
+        private String templateTypeName;
+
+        /**
+         * 发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功
+         */
+        private String status;
+        private String statusName;
+
+        /**
+         * 上传时间
+         */
+        private LocalDateTime uploadTime;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 文件地址
+         */
+        private String fileUrl;
+
+        /**
+         * 上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功
+         */
+        private String uploadStatus;
+        private String uploadStatusName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * 产品sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList = new ArrayList<>();
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+}
