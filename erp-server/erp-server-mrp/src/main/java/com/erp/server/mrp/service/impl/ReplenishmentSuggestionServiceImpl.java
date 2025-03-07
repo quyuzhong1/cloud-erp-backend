@@ -1255,6 +1255,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     }
 
     @Override
+    public List<ReplenishmentSuggestionVO.SalesInfoVO> listReplenishmentSelect() {
+        return Collections.emptyList();
+    }
+
+    @Override
     public Integer inventoryDetailTotal(InventoryDetailTotalDTO params) {
         ReplenishmentInventoryTypeEnum inventoryType = ReplenishmentInventoryTypeEnum.of(params.getType());
         int totalQty = 0;
