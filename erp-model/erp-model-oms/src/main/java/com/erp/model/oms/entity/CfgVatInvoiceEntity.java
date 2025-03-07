@@ -49,8 +49,8 @@ public class CfgVatInvoiceEntity extends BaseEntity<CfgVatInvoiceEntity> {
     /**
     * 自动上传（默认是）
     */
-    @TableField("auto_upload")
-    private Boolean autoUpload;
+    @TableField("is_auto_upload")
+    private Boolean isAutoUpload;
     /**
     * VAT税率
     */
@@ -111,7 +111,7 @@ public class CfgVatInvoiceEntity extends BaseEntity<CfgVatInvoiceEntity> {
 
     public static final String ENABLE_TIME = "enable_time";
 
-    public static final String AUTO_UPLOAD = "auto_upload";
+    public static final String IS_AUTO_UPLOAD = "is_auto_upload";
 
     public static final String TAX_RATE = "tax_rate";
 

@@ -68,7 +68,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         /**
         * 自动上传（默认是）
         */
-        private Boolean autoUpload;
+        private Boolean isAutoUpload;
 
         /**
         * VAT税率
@@ -182,7 +182,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         * 自动上传（默认是）
         */
         @NotNull(message = "自动上传（默认是）不能为空")
-        private Boolean autoUpload;
+        private Boolean isAutoUpload;
 
         /**
         * VAT税率
@@ -291,7 +291,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         /**
          * 自动上传（默认是）
          */
-        private Boolean autoUpload;
+        private Boolean isAutoUpload;
 
         /**
          * VAT税率

@@ -1,8 +1,8 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.InvoiceUploadDetailEntity;
+import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.InvoiceUploadDetailDTO;
+import com.erp.model.oms.dto.InvoiceDetailDTO;
 
 import java.util.List;
 
@@ -14,7 +14,7 @@ import java.util.List;
  * @author zdy
  * @since 2025-03-07
  */
-public interface InvoiceUploadDetailService extends SuperService<InvoiceUploadDetailEntity> {
+public interface InvoiceDetailService extends SuperService<InvoiceDetailEntity> {
 
     /**
     * 新增
@@ -23,7 +23,7 @@ public interface InvoiceUploadDetailService extends SuperService<InvoiceUploadDe
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(InvoiceUploadDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO add(InvoiceDetailDTO.AddDTO dto);
 
     /**
     * 修改
@@ -32,19 +32,19 @@ public interface InvoiceUploadDetailService extends SuperService<InvoiceUploadDe
     * @param dto
     * @return
     */
-    Boolean update(InvoiceUploadDetailDTO.UpdateDTO dto);
+    Boolean update(InvoiceDetailDTO.UpdateDTO dto);
 
     /**
      * 批量新增
      * @param id
      * @param detailList
      */
-    void batchAdd(String id, List<InvoiceUploadDetailDTO.AddDTO> detailList);
+    void batchAdd(String id, List<InvoiceDetailDTO.AddDTO> detailList);
 
     /**
      * 批量更新
      * @param id
      * @param detailList
      */
-    void batchUpdate(String id, List<InvoiceUploadDetailDTO.UpdateDTO> detailList);
+    void batchUpdate(String id, List<InvoiceDetailDTO.UpdateDTO> detailList);
 }

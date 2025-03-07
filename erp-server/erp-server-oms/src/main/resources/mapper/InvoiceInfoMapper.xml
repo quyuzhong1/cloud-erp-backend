@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.oms.mapper.InvoiceUploadMapper">
+<mapper namespace="com.erp.server.oms.mapper.InvoiceInfoMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.InvoiceUploadEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.InvoiceInfoEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -40,18 +40,18 @@
         is_deleted,
         code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time, remark, file_url, upload_status
     </sql>
-    <select id="paging" resultType="com.erp.model.oms.dto.InvoiceUploadDTO$PagingViewDTO">
+    <select id="paging" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$PagingViewDTO">
         SELECT
-        iu.id,iu.code, iu.cfg_id, iu.invoice_type, iu.shop_id, iu.so_id, iu.so_code, iu.platform_code, iu.template_type, iu.status, iu.upload_time,
-        iu.remark, iu.file_url, iu.upload_status,
-        iud.id as detailId, iud.sku_id, iud.sku_no,
+        i.id,i.code, i.cfg_id, i.invoice_type, i.shop_id, i.so_id, i.so_code, i.platform_code, i.template_type, i.status, i.upload_time,
+        i.remark, i.file_url, i.upload_status,
+        id.id as detailId, id.sku_id, id.sku_no,
         si.name as shopName
-        FROM invoice_upload iu
-        left join invoice_upload_detail iud on iu.id = iud.main_id and iud.is_deleted = false
-        left join shop_info si on iu.shop_id = si.id and si.disabled = false
+        FROM invoice_info i
+        left join invoice_detail id on i.id = id.main_id and id.is_deleted = false
+        left join shop_info si on i.shop_id = si.id and si.disabled = false
         WHERE
         ${params.sqlMap.default}
-        and iu.is_deleted=FALSE
+        and i.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -62,7 +62,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        iu.create_time DESC
+        i.create_time DESC
     </select>
 
 

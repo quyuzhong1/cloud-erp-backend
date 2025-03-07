@@ -8,7 +8,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -22,8 +21,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("invoice_upload")
-public class InvoiceUploadEntity extends BaseEntity<InvoiceUploadEntity> {
+@TableName("invoice_info")
+public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
 
     /**
     * 单据编码
@@ -36,7 +35,7 @@ public class InvoiceUploadEntity extends BaseEntity<InvoiceUploadEntity> {
     @TableField("cfg_id")
     private String cfgId;
     /**
-    * 发票类型:vat=VAT发票  枚举：InvoiceUploadInvoiceTypeEnum
+    * 发票类型:vat=VAT发票  枚举：InvoiceInfoInvoiceTypeEnum
     */
     @TableField("invoice_type")
     private String invoiceType;
@@ -61,12 +60,12 @@ public class InvoiceUploadEntity extends BaseEntity<InvoiceUploadEntity> {
     @TableField("platform_code")
     private String platformCode;
     /**
-    * 模板类型:erp=ERP模板,official=官方模板  枚举：InvoiceUploadTemplateTypeEnum
+    * 模板类型:erp=ERP模板,official=官方模板  枚举：InvoiceInfoTemplateTypeEnum
     */
     @TableField("template_type")
     private String templateType;
     /**
-    * 发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功  枚举：InvoiceUploadStatusEnum
+    * 发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功  枚举：InvoiceInfoStatusEnum
     */
     @TableField("status")
     private String status;
@@ -86,7 +85,7 @@ public class InvoiceUploadEntity extends BaseEntity<InvoiceUploadEntity> {
     @TableField("file_url")
     private String fileUrl;
     /**
-    * 上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功  枚举：InvoiceUploadUploadStatusEnum
+    * 上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功  枚举：InvoiceInfoUploadStatusEnum
     */
     @TableField("upload_status")
     private String uploadStatus;

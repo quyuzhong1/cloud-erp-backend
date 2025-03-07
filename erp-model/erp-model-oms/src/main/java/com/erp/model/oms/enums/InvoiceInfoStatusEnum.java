@@ -6,14 +6,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 上传记录 发票类型 枚举
+ * 上传记录 发票状态 枚举
  * </p>
  *
  * @author zdy
  * @since 2025-03-07 14:15:46
  */
-public enum InvoiceUploadInvoiceTypeEnum implements EnumMessage {
-	VAT("vat", "VAT发票"),
+public enum InvoiceInfoStatusEnum implements EnumMessage {
+	INVOICING("invoicing", "开票中"),
+	INVOICE_FAILED("invoiceFailed", "开票失败"),
+	INVOICE_SUCCESS("invoiceSuccess", "开票成功"),
     ;
     /**
      * 类型
@@ -26,7 +28,7 @@ public enum InvoiceUploadInvoiceTypeEnum implements EnumMessage {
      */
     private String name;
 
-    InvoiceUploadInvoiceTypeEnum(String code, String name) {
+    InvoiceInfoStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -45,7 +47,7 @@ public enum InvoiceUploadInvoiceTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (InvoiceUploadInvoiceTypeEnum statusEnum : InvoiceUploadInvoiceTypeEnum.values()) {
+        for (InvoiceInfoStatusEnum statusEnum : InvoiceInfoStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

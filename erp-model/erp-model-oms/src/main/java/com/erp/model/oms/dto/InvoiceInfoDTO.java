@@ -6,13 +6,11 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -26,7 +24,7 @@ import javax.validation.constraints.Size;
 */
 @Data
 @NoArgsConstructor
-public class InvoiceUploadDTO implements Serializable {
+public class InvoiceInfoDTO implements Serializable {
 
 
 
@@ -118,7 +116,7 @@ public class InvoiceUploadDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
         //明细
-        private List<InvoiceUploadDetailDTO.AddDTO> detailList;
+        private List<InvoiceDetailDTO.AddDTO> detailList;
 
     }
 
@@ -135,7 +133,7 @@ public class InvoiceUploadDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
         //明细
-        private List<InvoiceUploadDetailDTO.UpdateDTO> detailList;
+        private List<InvoiceDetailDTO.UpdateDTO> detailList;
 
     }
 

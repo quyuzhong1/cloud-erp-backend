@@ -129,7 +129,7 @@ public enum ModuleTypeEnum {
     FBA_TRANSIT_CALCULATE_REPORT("114", "FBA在途核对报表"),
     RULE_PROMPT_WORD("115", "汉化管理"),
     CFG_VAT_INVOICE("116", "VAT发票设置"),
-    INVOICE_UPLOAD("117", "发票上传记录"),
+    INVOICE_INFO("117", "发票上传记录"),
     ;
 
 

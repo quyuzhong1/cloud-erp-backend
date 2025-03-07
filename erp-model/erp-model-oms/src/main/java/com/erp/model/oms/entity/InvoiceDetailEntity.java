@@ -7,7 +7,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -21,8 +20,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("invoice_upload_detail")
-public class InvoiceUploadDetailEntity extends BaseEntity<InvoiceUploadDetailEntity> {
+@TableName("invoice_detail")
+public class InvoiceDetailEntity extends BaseEntity<InvoiceDetailEntity> {
 
     /**
     * 主表id

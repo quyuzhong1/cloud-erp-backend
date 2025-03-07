@@ -2,8 +2,8 @@ package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.oms.dto.InvoiceUploadDTO;
-import com.erp.model.oms.entity.InvoiceUploadEntity;
+import com.erp.model.oms.dto.InvoiceInfoDTO;
+import com.erp.model.oms.entity.InvoiceInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -19,7 +19,7 @@ import org.apache.ibatis.annotations.Param;
  * @since 2025-03-07
  */
 @Mapper
-public interface InvoiceUploadMapper extends BaseMapper<InvoiceUploadEntity> {
+public interface InvoiceInfoMapper extends BaseMapper<InvoiceInfoEntity> {
 
-    IPage<InvoiceUploadDTO.PagingViewDTO> paging(@Param("query") Page<InvoiceUploadDTO.PagingViewDTO> query, @Param("params") InvoiceUploadDTO.PagingParamDTO params);
+    IPage<InvoiceInfoDTO.PagingViewDTO> paging(@Param("query") Page<InvoiceInfoDTO.PagingViewDTO> query, @Param("params") InvoiceInfoDTO.PagingParamDTO params);
 }

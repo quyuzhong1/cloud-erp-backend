@@ -6,15 +6,14 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 上传记录 模板类型 枚举
+ * 上传记录 发票类型 枚举
  * </p>
  *
  * @author zdy
  * @since 2025-03-07 14:15:46
  */
-public enum InvoiceUploadTemplateTypeEnum implements EnumMessage {
-	ERP("erp", "ERP模板"),
-	OFFICIAL("official", "官方模板"),
+public enum InvoiceInfoInvoiceTypeEnum implements EnumMessage {
+	VAT("vat", "VAT发票"),
     ;
     /**
      * 类型
@@ -27,7 +26,7 @@ public enum InvoiceUploadTemplateTypeEnum implements EnumMessage {
      */
     private String name;
 
-    InvoiceUploadTemplateTypeEnum(String code, String name) {
+    InvoiceInfoInvoiceTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -46,7 +45,7 @@ public enum InvoiceUploadTemplateTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (InvoiceUploadTemplateTypeEnum statusEnum : InvoiceUploadTemplateTypeEnum.values()) {
+        for (InvoiceInfoInvoiceTypeEnum statusEnum : InvoiceInfoInvoiceTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

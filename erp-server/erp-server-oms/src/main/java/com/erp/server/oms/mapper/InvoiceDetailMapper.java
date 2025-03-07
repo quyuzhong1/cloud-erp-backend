@@ -1,5 +1,5 @@
 package com.erp.server.oms.mapper;
-import com.erp.model.oms.entity.InvoiceUploadDetailEntity;
+import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
@@ -14,6 +14,6 @@ import org.apache.ibatis.annotations.Mapper;
  * @since 2025-03-07
  */
 @Mapper
-public interface InvoiceUploadDetailMapper extends BaseMapper<InvoiceUploadDetailEntity> {
+public interface InvoiceDetailMapper extends BaseMapper<InvoiceDetailEntity> {
 
 }

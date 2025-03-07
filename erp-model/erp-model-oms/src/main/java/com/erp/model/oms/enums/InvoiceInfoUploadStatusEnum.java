@@ -6,16 +6,16 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 上传记录 发票状态 枚举
+ * 上传记录 上传状态 枚举
  * </p>
  *
  * @author zdy
  * @since 2025-03-07 14:15:46
  */
-public enum InvoiceUploadStatusEnum implements EnumMessage {
-	INVOICING("invoicing", "开票中"),
-	INVOICE_FAILED("invoiceFailed", "开票失败"),
-	INVOICE_SUCCESS("invoiceSuccess", "开票成功"),
+public enum InvoiceInfoUploadStatusEnum implements EnumMessage {
+	WAITUPLOAD("waitUpload", "待上传"),
+	UPLOADFAILED("uploadFailed", "上传失败"),
+	UPLOADSUCCESS("uploadSuccess", "上传成功"),
     ;
     /**
      * 类型
@@ -28,7 +28,7 @@ public enum InvoiceUploadStatusEnum implements EnumMessage {
      */
     private String name;
 
-    InvoiceUploadStatusEnum(String code, String name) {
+    InvoiceInfoUploadStatusEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -47,7 +47,7 @@ public enum InvoiceUploadStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (InvoiceUploadStatusEnum statusEnum : InvoiceUploadStatusEnum.values()) {
+        for (InvoiceInfoUploadStatusEnum statusEnum : InvoiceInfoUploadStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }
