@@ -728,19 +728,4 @@ public class ReplenishmentSuggestionVO {
          */
         private String mSku;
     }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class FnMSkuDTO {
-        /**
-         * fnsku
-         */
-        private String fnSku;
-
-        /**
-         * msku
-         */
-        private String mSku;
-    }
 }
