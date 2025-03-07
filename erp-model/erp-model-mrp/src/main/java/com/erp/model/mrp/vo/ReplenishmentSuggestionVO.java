@@ -53,6 +53,10 @@ public class ReplenishmentSuggestionVO {
          */
         private String productName;
         /**
+         *  fnsku、msku
+         */
+        private List<FnMSkuDTO> fnMSKuList;
+        /**
          * 国家
          */
         private String country;
@@ -77,6 +81,10 @@ public class ReplenishmentSuggestionVO {
          */
         private String platform;
 
+        /**
+         * fba仓库
+         */
+        private String fbaWarehouseId;
         /**
          * 品牌名字
          */
@@ -704,5 +712,35 @@ public class ReplenishmentSuggestionVO {
          * 去噪销量
          */
         private BigDecimal denoisingQty;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FnMSkuDTO {
+        /**
+         * fnsku
+         */
+        private String fnSku;
+
+        /**
+         * msku
+         */
+        private String mSku;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FnMSkuDTO {
+        /**
+         * fnsku
+         */
+        private String fnSku;
+
+        /**
+         * msku
+         */
+        private String mSku;
     }
 }
