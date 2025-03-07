@@ -123,4 +123,12 @@ public interface InventoryFeign {
     @PostMapping(value = "/feign/instockForcast/poChangeBatch")
     void poChangeBatch(@RequestBody @Valid List<InstockForcastDTO.PoChangeDTO> dataList);
 
+
+    /**
+     * 根据sku获取库存列表
+     * @param skuNoList
+     * @return
+     */
+    @PostMapping("feign/inventory/listInventoryBySkuNos")
+    List<InventoryEntity> listInventoryBySkuNos(@RequestBody List<String> skuNoList);
 }

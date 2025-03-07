@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -61,7 +60,6 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,7 +73,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY_AGE;
 
 /**
  * @Classname: InventoryServiceImpl
@@ -1470,5 +1469,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             return new ArrayList<>();
         }
         return lambdaQuery().eq(InventoryEntity::getWarehouseId, warehouseId).lt(InventoryEntity::getQty,0).list();
+    }
+
+    @Override
+    public List<InventoryEntity> listInventoryBySkuNos(List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().select(InventoryEntity::getId,InventoryEntity::getSkuId,InventoryEntity::getSkuNo, InventoryEntity::getQty,
+                        InventoryEntity::getWarehouseId,InventoryEntity::getDictInventoryStatus, InventoryEntity::getWarehouseLocation)
+                .in(InventoryEntity::getSkuNo, skuNoList).list();
     }
 }
