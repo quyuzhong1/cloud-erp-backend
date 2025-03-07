@@ -326,6 +326,14 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         }
         List<String> shopIdList = deliverySuggestList.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class,shopIdList);
+        if (CollUtil.isEmpty(shopList)) {
+            throw new ServiceException("选择数据未发现关联店铺");
+        }
+        long count = shopList.stream().map(ShopInfoEntity::getWarehouseId).distinct().count();
+        //校验
+        if (count > MathUtil.ONE) {
+            throw new ServiceException("下推发货计划仓库必须一致");
+        }
         return deliverySuggestList.stream().map(obj -> new DeliverySuggestDTO.ShopSelectDTO(obj.getShopId(), shopList.stream().filter(e -> CharSequenceUtil.equals(e.getId(), obj.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse(""))).distinct().collect(Collectors.toList());
     }
 
