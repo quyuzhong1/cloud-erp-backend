@@ -304,6 +304,11 @@ public class ProductDetailDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 保险属性
+         */
+        private String insuranceProperty;
     }
 
     /**
