@@ -15,6 +15,7 @@
         rs.platform,
         rs.replenishment_type,
         rs.remark,
+        rs.fba_warehouse_id as fbaWarehouseId,
         rsd.id as detailId,
         rsd.sku_type,
         rsd.fba_usable_qty fbaUsableQty,

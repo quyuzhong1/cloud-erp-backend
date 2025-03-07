@@ -82,6 +82,10 @@ public class ReplenishmentSuggestionVO {
         private String platform;
 
         /**
+         * fba仓库
+         */
+        private String fbaWarehouseId;
+        /**
          * 品牌名字
          */
         private String brandName;
@@ -710,8 +714,24 @@ public class ReplenishmentSuggestionVO {
         private BigDecimal denoisingQty;
     }
 
-    @Getter
-    @Setter
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class FnMSkuDTO {
+        /**
+         * fnsku
+         */
+        private String fnSku;
+
+        /**
+         * msku
+         */
+        private String mSku;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class FnMSkuDTO {
         /**
          * fnsku
