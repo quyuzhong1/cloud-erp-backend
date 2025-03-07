@@ -5,8 +5,8 @@ import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailHisEntity;
+import com.erp.model.wms.entity.VirtualTransFlowEntity;
 
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -55,7 +55,7 @@ public interface VirtualInventoryDetailHisService extends SuperService<VirtualIn
      * 添加每日库存结余
      * @author will
      * @date 2024/12/20 14:05
-     * @param localDate
+     * @param oldTransFlowEntity
      */
-     void addVirtualInventoryDetailHis (LocalDate localDate);
+     void addVirtualInventoryDetailHis (VirtualTransFlowEntity oldTransFlowEntity);
 }
