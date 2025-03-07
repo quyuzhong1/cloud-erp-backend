@@ -191,7 +191,7 @@
             si.warehouse_id as warehouseId,
             si.virtual_warehouse_id as virtualWarehouseId,
             sd.frozen_time as frozenTime,
-            sd.qty - COALESCE(totalDeliveryQty,0) as frozenQty,
+            sd.frozen_qty as frozenQty,
             '' as outstockOrderId,
             '' as outstockOrderStatus,
             0 as outstockQty,
