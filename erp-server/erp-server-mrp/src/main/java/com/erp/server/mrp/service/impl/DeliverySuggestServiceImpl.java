@@ -323,7 +323,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<DeliverySuggestDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         //数据处理
-        List<DeliverySuggestDTO.ListDTO> list = handleList(pageData.getRecords());
+        List<DeliverySuggestDTO.ListDTO> list = handleList(pageData.getRecords(),pagingDTO.getParams().getPlatformType());
         pageData.setRecords(list);
         return new PagingVO(pageData);
     }
@@ -954,7 +954,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
      * @date 2024/10/23 11:23
      * @param list
      */
-    private List<DeliverySuggestDTO.ListDTO> handleList(List<DeliverySuggestDTO.ListDTO> list) {
+    private List<DeliverySuggestDTO.ListDTO> handleList(List<DeliverySuggestDTO.ListDTO> list,String PlatformType) {
         List<DeliverySuggestDTO.ListDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
@@ -978,7 +978,23 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         //币种信息
         List<String> currencyIdList = list.stream().map(DeliverySuggestDTO.ListDTO::getCurrency).distinct().collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+        //亚马逊数据处理
+        if (CharSequenceUtil.equals(PlatformType,CfgRulePlatformTypeEnum.AMAZON.getCode())) {
+            return handleAmazon(list,shopInfoList,countryList,deliveryPlanDetailList,dictBasicList,currencyList);
+        }
+        //海外数据处理
+        return handleOverseas(list,shopInfoList,countryList,deliveryPlanDetailList,dictBasicList,currencyList);
+    }
 
+    /**
+     * 亚马逊数据处理
+     */
+    private List<DeliverySuggestDTO.ListDTO> handleAmazon (List<DeliverySuggestDTO.ListDTO> list,List<ShopInfoEntity> shopInfoList, List<DictCountryEntity> countryList,
+                                                           List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList,List<DictBasicEntity> dictBasicList,List<CurrencyDTO.ViewDTO> currencyList ) {
+        List<DeliverySuggestDTO.ListDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
         Map<String, List<DeliverySuggestDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getPlatform().concat(obj.getShopId())));
         for (Map.Entry<String, List<DeliverySuggestDTO.ListDTO>> entry : map.entrySet()) {
             List<DeliverySuggestDTO.ListDTO> value = entry.getValue();
@@ -1042,6 +1058,84 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         return resultList;
     }
 
+    /**
+     * 海外数据处理
+     * @param list
+     * @param shopInfoList
+     * @param countryList
+     * @param deliveryPlanDetailList
+     * @param dictBasicList
+     * @param currencyList
+     * @return List<DeliverySuggestDTO.ListDTO>
+     */
+    private List<DeliverySuggestDTO.ListDTO> handleOverseas (List<DeliverySuggestDTO.ListDTO> list,List<ShopInfoEntity> shopInfoList, List<DictCountryEntity> countryList,
+                               List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList,List<DictBasicEntity> dictBasicList,List<CurrencyDTO.ViewDTO> currencyList ) {
+        List<DeliverySuggestDTO.ListDTO> resultList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(list)) {
+            return resultList;
+        }
+        Map<String, List<DeliverySuggestDTO.ListDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getPlatform().concat(obj.getShopId())));
+        for (Map.Entry<String, List<DeliverySuggestDTO.ListDTO>> entry : map.entrySet()) {
+            List<DeliverySuggestDTO.ListDTO> value = entry.getValue();
+            DeliverySuggestDTO.ListDTO parentListDTO = new DeliverySuggestDTO.ListDTO();
+
+            //店铺名称
+            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getShopId())).findFirst().orElse(new ShopInfoEntity());
+            parentListDTO.setId(value.get(0).getShopId());
+            parentListDTO.setShopId(value.get(0).getShopId());
+            parentListDTO.setShopName(shopInfoEntity.getName());
+            //平台信息
+            parentListDTO.setPlatform(value.get(0).getPlatform());
+            String platformName = dictBasicList.stream().filter(obj -> StrUtil.equals(obj.getValue(), value.get(0).getPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            parentListDTO.setPlatformName(platformName);
+
+            //国家
+            DictCountryEntity dictCountry = countryList.stream().filter(obj -> obj.getId().equals(shopInfoEntity.getDictCountryCode())).findFirst().orElse(new DictCountryEntity());
+            parentListDTO.setCountryName(dictCountry.getNameCn());
+            parentListDTO.setCountryImgUrl(dictCountry.getFlagUrl());
+
+            resultList.add(parentListDTO);
+            for (DeliverySuggestDTO.ListDTO listDTO : value) {
+                //数据类型
+                listDTO.setDataTypeName(CreateTypeEnum.getNameByCode(listDTO.getDataType()));
+                //物流方式
+                listDTO.setLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getLogisticsMethod()));
+                //物流方式（系统）
+                listDTO.setSysLogisticsMethodName(LogisticsMethodEnum.getName(listDTO.getSysLogisticsMethod()));
+                //状态名称
+                listDTO.setStatusName(SuggestStatusEnum.getName(listDTO.getStatus()));
+                //币别
+                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(listDTO.getCurrency())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+                listDTO.setCurrencySymbol(currencySymbol);
+
+                //以店铺id为父级id用于前端显示
+                listDTO.setParentId(listDTO.getShopId());
+                //补货计划
+                WmsDeliveryPlanDetailEntity wmsDeliveryPlanDetailEntity = deliveryPlanDetailList.stream().filter(obj -> {
+                    long count = BeanUtil.copyToList(JSONUtil.parseArray(obj.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).count();
+                    if (count > 0) {
+                        return Boolean.TRUE;
+                    }
+                    return Boolean.FALSE;
+                }).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(wmsDeliveryPlanDetailEntity)) {
+                    listDTO.setDeliveryPlanId(wmsDeliveryPlanDetailEntity.getMainId());
+                    listDTO.setDeliveryPlanCode(wmsDeliveryPlanDetailEntity.getCode());
+                    //已发数量
+                    Integer qty = BeanUtil.copyToList(JSONUtil.parseArray(wmsDeliveryPlanDetailEntity.getSourceJson()), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class).stream().filter(e -> StrUtil.equals(e.getSourceId(), listDTO.getId())).map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getPlanDeliveryQty).findFirst().orElse(MathUtil.ZERO);
+                    listDTO.setHasDeliveryPlanQty(qty);
+                    listDTO.setIsPush(Boolean.TRUE);
+                    listDTO.setIsPushName("已下推");
+                } else {
+                    listDTO.setIsPush(Boolean.FALSE);
+                    listDTO.setIsPushName("未下推");
+                }
+            }
+            resultList.addAll(value);
+        }
+        return resultList;
+    }
     /**
      * 是否下推发货计划
      * @author will

@@ -62,6 +62,7 @@ import com.erp.model.tms.entity.CfgSettingEntity;
 import com.erp.model.tms.enums.CfgSettingEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -1048,6 +1049,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isNotBlank(productSpuBaseInfoDTO.getId())) {
             //产品信息修改操作日志
             addProductInfoLog(productSpuBaseInfoDTO, productInfoEntity, productSpuBaseInfoDTO.getId(), productSpuBaseInfoDTO.getId());
+
+            //单品或者Bom都需要检查库存是否大于零
+            String skuId = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO().getId();
+            productChangeService.checkInventoryGreaterThanZero(productInfoEntity,productSpuBaseInfoDTO.getPropertyId(),skuId);
         }
         //1.修改产品表 主表信息
         productSpuBaseInfoDTO.setIsNoSpecAdd(MathUtil.ONE);
@@ -4451,6 +4456,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BasicDictEntity> basicDictList = basicDictService.list();
         List<ProductDetailEntity> productDetailEntityList = this.list();
+//        List<ProductDetailEntity> productDetailEntityList = this.listBySkuNoList(skuNoList);
         List<BasicCategoryEntity> categoryEntityList = basicCategoryService.list();
         List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = applicationCategoryList.stream()
@@ -4463,6 +4469,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         supplierNameList.addAll(mainSupplierNameList);
         supplierNameList.addAll(secondSupplierNameList);
         List<SupplierEntity> supplierList = scmTaskFeign.listBySupplierByNames(supplierNameList);
+
+        //查询产品信息
+        List<ProductInfoEntity> productInfoEntities = productInfoService.lambdaQuery().select(ProductInfoEntity::getId, ProductInfoEntity::getPropertyId).list();
+        Map<String, ProductInfoEntity> productInfoMap = productInfoEntities.stream().collect(Collectors.toMap(ProductInfoEntity::getId, ProductInfoEntity -> ProductInfoEntity));
+
+        // 调用远程服务，获取库存实体列表
+        List<String> skuNoList = successList.stream().map(ProductDetailUpdateApproveExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuNos(skuNoList);
+        // 排除在途的库存
+        Map<String, Integer> inventoryMap = inventoryEntities.stream()
+                .filter(v -> !v.getDictInventoryStatus().equals(InventoryStatusEnum.IN_TRANSIT.getCode()))
+                .collect(Collectors.groupingBy(InventoryEntity::getSkuNo, Collectors.summingInt(InventoryEntity::getQty)));
 
         for (ProductDetailUpdateApproveExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -4509,6 +4527,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     errorMsgList.add("采购员在系统中未找到");
                 }
             }
+            //产品属性
             BasicDictEntity productProperty = null;
             if(StringUtils.isNotBlank(dto.getProperty())){
                 productProperty = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_PROPERTY.getCode().equals(b.getType()) && b.getValue().
@@ -4516,6 +4535,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if (ObjectUtils.isEmpty(productProperty)) {
                     errorMsgList.add("产品属性在系统中未找到");
                 }else {
+                    ProductInfoEntity productInfoEntity = productInfoMap.get(productBy.getProductId());
+                    // 如果商品属性ID与实体中的属性ID不匹配,查sku库存
+                    if(Objects.nonNull(productInfoEntity) && !productInfoEntity.getPropertyId().equals(productProperty.getId())){
+                        Integer qty = inventoryMap.get(dto.getSkuNo());
+                        if(qty > 0){
+                            errorMsgList.add("SKU存在库存，产品属性不允许变更");
+                        }
+                    }
                     productInfoDTO.setProperty(productProperty.getValue());
                     productInfoDTO.setPropertyId(productProperty.getId());
                 }
@@ -4874,6 +4901,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BasicDictEntity> basicDictList = basicDictService.list();
         List<ProductDetailEntity> productDetailEntityList = this.list();
+//        List<ProductDetailEntity> productDetailEntityList = this.listBySkuNoList(skuNoList);
         List<ProductUnitEntity> unitEntityList = productUnitService.list();
         List<BasicCategoryEntity> categoryEntityList = basicCategoryService.list();
         List<ApplicationCategoryEntity> applicationCategoryList = applicationCategoryService.list();
@@ -4887,6 +4915,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         supplierNameList.addAll(mainSupplierNameList);
         supplierNameList.addAll(secondSupplierNameList);
         List<SupplierEntity> supplierList = scmTaskFeign.listBySupplierByNames(supplierNameList);
+
+        //查询产品信息
+        List<ProductInfoEntity> productInfoEntities = productInfoService.lambdaQuery().select(ProductInfoEntity::getId,  ProductInfoEntity::getPropertyId).list();
+        Map<String, ProductInfoEntity> productInfoMap = productInfoEntities.stream().collect(Collectors.toMap(ProductInfoEntity::getId, ProductInfoEntity -> ProductInfoEntity));
+
+        // 调用远程服务，获取库存实体列表
+        List<String> skuNoList = successList.stream().map(ProductDetailUpdateNotApproveExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuNos(skuNoList);
+        // 排除在途的库存
+        Map<String, Integer> inventoryMap = inventoryEntities.stream()
+                .filter(v -> !v.getDictInventoryStatus().equals(InventoryStatusEnum.IN_TRANSIT.getCode()))
+                .collect(Collectors.groupingBy(InventoryEntity::getSkuNo, Collectors.summingInt(InventoryEntity::getQty)));
 
         for (ProductDetailUpdateNotApproveExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -4973,13 +5013,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
             }
-
+            //产品属性
             BasicDictEntity productProperty = null;
             if(StringUtils.isNotBlank(dto.getProperty())){
                 productProperty = basicDictList.stream().filter(b -> BasicDictTypeEnum.PRODUCT_PROPERTY.getCode().equals(b.getType()) && b.getValue().
                         equals(dto.getProperty())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(productProperty)) {
                     errorMsgList.add("产品属性在系统中未找到");
+                }else {
+                    ProductInfoEntity productInfoEntity = productInfoMap.get(productBy.getProductId());
+                    // 如果商品属性ID与实体中的属性ID不匹配,查sku库存
+                    if(Objects.nonNull(productInfoEntity) && !productInfoEntity.getPropertyId().equals(productProperty.getId())){
+                        Integer qty = inventoryMap.get(dto.getSkuNo());
+                        if(qty > 0){
+                            errorMsgList.add("SKU存在库存，产品属性不允许变更");
+                        }
+                    }
                 }
             }
 
@@ -5016,7 +5065,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         declarePropertyList.add(declareProperty);
                     }
                 }
-
             }
 
             //产品开发状态
