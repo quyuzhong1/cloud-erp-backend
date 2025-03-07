@@ -4,6 +4,7 @@ package com.erp.server.mrp.service.impl;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
@@ -233,7 +234,9 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
                 resultDTO.setVirtualShopNameList(virtualShopNameList);
             }
         }
-        List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(), list);
+        //海外仓排除亚马逊
+        List<ShopInfoEntity> shopInfoList = list.stream().filter(v -> !PlatformDictEnum.AMAZON.getCode().equals(v.getDictPlatform())).collect(Collectors.toList());
+        List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(), shopInfoList);
         if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
             resultDTO.setOverseasShopNameList(overseasShopNameList);
         }
