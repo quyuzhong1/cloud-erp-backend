@@ -84,10 +84,11 @@ public class SptServerTest {
         AntuGetReceiptReq req = AntuGetReceiptReq.builder()
                 .page(1)
                 .pageSize(100)
-                .receivingCode("RVVIJIM-250226-0005")
+//                .receivingCode("RVVIJIM-250226-0005")
 //                .receivingCodeArr(Arrays.asList("RVVIJIM-250226-0005"))
                 .build();
         AntuResponse<List<AntuReceiptResp>> response = antuService.getReceiptBatch(req, OmsPlatformEnum.OMS_SPT);
+        List<AntuReceiptResp> data = response.getData();
         System.out.println(response);
     }
 

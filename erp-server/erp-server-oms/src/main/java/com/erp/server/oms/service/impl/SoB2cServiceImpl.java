@@ -4096,8 +4096,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 && CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId))
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
                 waitDeliveryQty = waitDeliveryQty*childrenSkuDTO.getQuantity();
-                qty = qty*childrenSkuDTO.getQuantity();
-                if((qty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())){
+                int childQty = qty*childrenSkuDTO.getQuantity();
+                if((childQty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())){
                     return true;
                 }
             }
