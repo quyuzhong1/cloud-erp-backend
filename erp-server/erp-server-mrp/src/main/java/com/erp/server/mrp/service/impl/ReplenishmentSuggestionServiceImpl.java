@@ -30,6 +30,7 @@ import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.*;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
@@ -44,6 +45,7 @@ import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.mrp.calculation.service.BasicReplenishmentDataService;
@@ -59,6 +61,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -176,6 +179,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
     @Resource
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    @Autowired
+    private SkuMappingFeign skuMappingFeign;
 
 
     @Override
@@ -212,7 +217,20 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             dates.add(date);
             date = date.plusDays(1);
         }
+
+        //oms信息
+        List<SkuMappingDTO.ListSkuParamDTO> dataList = new ArrayList<>();
+        records.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(),obj.getPlatform(),obj.getFbaWarehouseId())).distinct().forEach(dataList::add);
+        List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingFeign.listBySkuNoList(dataList);
+
         for (ReplenishmentSuggestionVO.PagingView view : records) {
+            //平台sku+仓库sku
+             List<ReplenishmentSuggestionVO.FnMSkuDTO> fnMSKuList = new ArrayList<>();
+            skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuNo(), view.getSkuNo()) && CharSequenceUtil.equals(obj.getDictPlatform(), view.getPlatform()) && CharSequenceUtil.equals(obj.getWarehouseId(), view.getFbaWarehouseId())).findFirst().ifPresent(obj -> {
+                fnMSKuList.add(new ReplenishmentSuggestionVO.FnMSkuDTO(obj.getPlatformSkuNo(),obj.getWarehouseSkuNo()));
+            });
+            view.setFnMSKuList(fnMSKuList);
+
             SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuVO());
             ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(view.getShopId())).findFirst().orElse(new ShopInfoEntity());
             DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(view.getCountry())).findFirst().orElse(new DictCountryEntity());

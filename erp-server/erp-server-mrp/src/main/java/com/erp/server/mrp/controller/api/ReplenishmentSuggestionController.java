@@ -762,4 +762,14 @@ public class ReplenishmentSuggestionController extends BaseController {
         replenishmentSuggestionService.exportCalcData(dto);
         return success();
     }
+
+    /**
+     * 补货预测下拉
+     * @return
+     */
+    @GetMapping("/listReplenishmentSelect")
+    public ApiResult<List<ReplenishmentSuggestionVO.SalesInfoVO>> listReplenishmentSelect() {
+        List<ReplenishmentSuggestionVO.SalesInfoVO> page = replenishmentSuggestionService.listReplenishmentSelect();
+        return success(page);
+    }
 }

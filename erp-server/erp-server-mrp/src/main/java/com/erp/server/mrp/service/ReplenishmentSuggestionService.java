@@ -450,4 +450,6 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param skuIdList  skuid
      */
     List<ReplenishmentSuggestionEntity> listByShopIdAndSkuId(List<String> shopIdList, List<String> skuIdList);
+
+    List<ReplenishmentSuggestionVO.SalesInfoVO> listReplenishmentSelect();
 }
