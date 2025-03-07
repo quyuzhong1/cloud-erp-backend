@@ -1041,6 +1041,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             //仓库名称
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> StrUtil.equals(obj.getId(), value.get(0).getFbaWarehouseId())).findFirst().orElse(new WarehouseEntity());
             parentListDTO.setFbaWarehouseName(warehouseEntity.getName());
+            parentListDTO.setFbaWarehouseId(warehouseEntity.getId());
             parentListDTO.setId(warehouseEntity.getId());
             //平台信息
             parentListDTO.setPlatform(value.get(0).getPlatform());
