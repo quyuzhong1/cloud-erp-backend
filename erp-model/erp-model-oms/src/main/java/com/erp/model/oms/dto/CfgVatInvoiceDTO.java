@@ -8,16 +8,14 @@ import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.Digits;
 
 /**
  * <p>
@@ -437,6 +435,8 @@ public class CfgVatInvoiceDTO implements Serializable {
         private BigDecimal taxPrice;
         //商品含税总价，Unit price(VAT inclusive)*Quantity
         private BigDecimal totalTaxPrice;
+        //币种符号
+        private String currencySymbol;
 
     }
     @Data
@@ -448,5 +448,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         private BigDecimal itemTotal;
         //Invoice total-Item Subtotal(VAT exclusive)
         private BigDecimal vatTotal;
+        //币种符号
+        private String currencySymbol;
     }
 }

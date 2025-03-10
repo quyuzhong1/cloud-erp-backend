@@ -109,7 +109,7 @@ public class CfgVatInvoiceController extends BaseController {
 
 
     /**
-     * 店铺 分页
+     * VAT配置分页
      *
      * @return
      */

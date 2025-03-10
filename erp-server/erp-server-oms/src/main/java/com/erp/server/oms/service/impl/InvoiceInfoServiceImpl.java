@@ -8,53 +8,42 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
-import com.erp.model.oms.entity.CfgVatInvoiceEntity;
-import com.erp.model.oms.entity.InvoiceInfoEntity;
-import com.erp.model.oms.enums.InvoiceInfoInvoiceTypeEnum;
-import com.erp.model.oms.enums.InvoiceInfoStatusEnum;
-import com.erp.model.oms.enums.InvoiceInfoTemplateTypeEnum;
-import com.erp.model.oms.enums.InvoiceInfoUploadStatusEnum;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
+import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.InvoiceInfoMapper;
-import com.erp.server.oms.service.CfgVatInvoiceService;
-import com.erp.server.oms.service.InvoiceDetailService;
-import com.erp.server.oms.service.InvoiceInfoService;
 import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
-import com.common.business.config.DocNoGenHelper;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.InvoiceInfoDTO;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -157,15 +146,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         return new PagingVO(pageData);
     }
 
-    @Override
-    public void exportInvoicePdf(List<String> ids, HttpServletResponse response) {
-        List<InvoiceInfoEntity> entityList = this.listByIds(ids);
-        List<String> cfgIds = entityList.stream().map(InvoiceInfoEntity::getCfgId).distinct().collect(Collectors.toList());
-        List<CfgVatInvoiceEntity> cfgList = cfgVatInvoiceService.listByIds(cfgIds);
-
-    }
-
-
 
     @Override
     public String downloadInvoice(String id) {
@@ -251,7 +231,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceTemplateDTO.setInvoiceCode(invoiceInfoEntity.getCode());
         invoiceTemplateDTO.setPlatformCreateTime(soB2cEntity.getPlatformOrderCreateTime());
         invoiceTemplateDTO.setPlatformCode(soB2cEntity.getPlatformCode());
-
+        invoiceTemplateDTO.setCurrencyCode(soB2cEntity.getCurrency());
+        String symbol = CurrencyEnum.getSymbolByCode(soB2cEntity.getCurrency());
+        invoiceTemplateDTO.setCurrencySymbol(symbol);
         List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
             CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();
@@ -262,6 +244,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
             detailDTO.setTaxPrice(soB2cDetailEntity.getPrice());
             detailDTO.setTotalTaxPrice(soB2cDetailEntity.getPrice().multiply(new BigDecimal(soB2cDetailEntity.getQty())));
+            detailDTO.setCurrencySymbol(symbol);
             detailDTOS.add(detailDTO);
         }
         invoiceTemplateDTO.setDetailDTOS(detailDTOS);
@@ -275,6 +258,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         totalDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
         totalDTO.setItemTotal(SubtotalVatInclusive.divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
         totalDTO.setVatTotal(invoiceTemplateDTO.getInvoiceTotal().subtract(totalDTO.getItemTotal()));
+        totalDTO.setCurrencySymbol(symbol);
+        invoiceTemplateDTO.setTotalDTOS(totalDTO);
         try {
             String fileUrl = cfgVatInvoiceService.createVatInvoicePdf(invoiceTemplateDTO);
             invoiceInfoEntity.setBillCreateTime(LocalDateTime.now());
