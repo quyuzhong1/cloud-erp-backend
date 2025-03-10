@@ -10,6 +10,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 /**
@@ -38,7 +39,7 @@ public class SalesEstimateHistoryEntity extends BaseEntity<SalesEstimateHistoryE
      * 日期
      */
     @TableField("date")
-    private Date date;
+    private LocalDate date;
 
     /**
      * 销量
