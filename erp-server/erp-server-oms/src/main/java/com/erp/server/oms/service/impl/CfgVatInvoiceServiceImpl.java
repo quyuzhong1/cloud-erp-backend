@@ -168,7 +168,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         Map<String, Object> map = BeanUtil.beanToMap(invoiceTemplateDTO);
         JRBeanCollectionDataSource detailDTOS = new JRBeanCollectionDataSource(invoiceTemplateDTO.getDetailDTOS());
         map.put("detailDTOS", detailDTOS);
-        JRBeanCollectionDataSource totalDTOS = new JRBeanCollectionDataSource(invoiceTemplateDTO.getTotalDTOS());
+        JRBeanCollectionDataSource totalDTOS = new JRBeanCollectionDataSource(Collections.singleton(invoiceTemplateDTO.getTotalDTOS()));
         map.put("totalDTOS", totalDTOS);
         byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Collections.singletonList(invoiceTemplateDTO));
         return FastDFSClientUtil.uploadFile(bytes, invoiceTemplateDTO.getInvoiceCode() + ".pdf", null);
@@ -210,17 +210,16 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         detailDTO1.setQty(1212);
         detailDTO1.setTaxRate(BigDecimal.TEN);
         detailDTO1.setPrice(BigDecimal.ONE);
+        detailDTO1.setTaxPrice(BigDecimal.TEN);
         detailDTO1.setTotalTaxPrice(BigDecimal.TEN);
         detailDTOS.add(detailDTO1);
         dto.setDetailDTOS(detailDTOS);
         //汇总
-        List<CfgVatInvoiceDTO.TotalDTO> totalDTOS = new ArrayList<>();
         CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
         totalDTO.setTaxRate(BigDecimal.TEN);
         totalDTO.setItemTotal(new BigDecimal("100"));
         totalDTO.setVatTotal(new BigDecimal("99"));
-        totalDTOS.add(totalDTO);
-        dto.setTotalDTOS(totalDTOS);
+        dto.setTotalDTOS(totalDTO);
         return dto;
     }
 
