@@ -517,6 +517,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
 
         String customerId = shopInfo.getCustomerId();
+        if(CollectionUtils.isNotEmpty(dto.getDictCountryCodeList())){
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(dto.getDictCountryCodeList());
+            if(CollectionUtils.isNotEmpty(countryList)){
+                String countryName = countryList.get(0).getNameCn();
+                shopInfo.setCountryName(countryName);
+                shopInfo.setDictCountryCode(dto.getDictCountryCodeList().get(0));
+            }
+        }
         if(StringUtils.isNotBlank(customerId)) {
         	CustomerInfoEntity customerInfoEntity = customerInfoService.getById(customerId);
         	if(customerInfoEntity != null && (customerInfoEntity.getApproveStatus() == ApproveStatusEnum.APPROVE_ING
@@ -696,6 +704,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             ShopInfoEntity other = this.lambdaQuery().eq(ShopInfoEntity::getCustomerId,customerId).ne(StringUtils.isNotBlank(shopInfo.getId()),ShopInfoEntity::getId,shopInfo.getId()).last("limit 1").one();
             if(Objects.nonNull(other)){
                 throw new ServiceException("【{}】已绑定店铺【{}】",customerInfoEntity.getName(),other.getName());
+            }
+            if(StringUtils.isNotBlank(shopInfo.getDictCountryCode()) && StringUtils.isNotBlank(customerInfoEntity.getCountryId()) && !shopInfo.getDictCountryCode().equals(customerInfoEntity.getCountryId())){
+                throw new ServiceException("店铺国家与客户国家不一致");
             }
             shopInfo.setCustomerId(customerInfoEntity.getId());
             shopInfo.setCustomerCode(customerInfoEntity.getCode());
