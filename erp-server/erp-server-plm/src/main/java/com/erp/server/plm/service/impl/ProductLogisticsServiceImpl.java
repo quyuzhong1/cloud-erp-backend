@@ -13,7 +13,6 @@ import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.enums.InsurancePropertyEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
@@ -72,29 +71,13 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
 
             list.forEach(item -> {
-                item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")));
-                item.setInsurancePropertyNameList(getInsurancePropertyList(item.getInsuranceProperty(), insurancePropertyMap));
+                if(StringUtils.isNotBlank(item.getInsuranceProperty())){
+                    item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")));
+                    item.setInsurancePropertyNameList(getInsurancePropertyList(item.getInsuranceProperty(), insurancePropertyMap));
+                }
             });
         }
         return list;
-    }
-
-    @Override
-    public String getInsurancePropertyName(String insuranceProperty) {
-        if(StringUtils.isBlank(insuranceProperty)){
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        if(insuranceProperty.contains(",")){
-            String[] split = insuranceProperty.split(",");
-            for (String s : split) {
-                sb.append(InsurancePropertyEnum.getName(s));
-                sb.append(",");
-            }
-            return sb.toString().substring(0,sb.length()-1);
-        }else {
-            return InsurancePropertyEnum.getName(insuranceProperty);
-        }
     }
 
     @Override
@@ -142,8 +125,10 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
 
             productLogisticsShowDTOS.forEach(item -> {
-                item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")));
-                item.setInsurancePropertyNameList(getInsurancePropertyList(item.getInsuranceProperty(), insurancePropertyMap));
+                if(StringUtils.isNotBlank(item.getInsuranceProperty())){
+                    item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")));
+                    item.setInsurancePropertyNameList(getInsurancePropertyList(item.getInsuranceProperty(), insurancePropertyMap));
+                }
             });
         }
         return productLogisticsShowDTOS;
