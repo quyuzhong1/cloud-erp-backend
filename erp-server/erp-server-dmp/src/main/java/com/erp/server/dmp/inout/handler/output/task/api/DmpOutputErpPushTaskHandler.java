@@ -142,6 +142,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 
 		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
+		String sourceId = dmpPushMsgEntity.getSourceId();
 		if(this.validateSourceId(dmpCfgOutputEntity, dmpOutputTaskRecordEntity , false)) {
 			return;
 		}
