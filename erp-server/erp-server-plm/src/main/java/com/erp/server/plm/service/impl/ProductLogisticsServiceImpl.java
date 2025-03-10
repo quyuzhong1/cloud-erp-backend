@@ -11,6 +11,7 @@ import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.InsurancePropertyEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -66,7 +67,7 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         List<ProductLogisticsShowDTO> list = productLogisticsMapper.list(productId);
         if (CollUtil.isNotEmpty(list)) {
             // 获取字典数据并缓存
-            List<BasicDictEntity> dictList = basicDictService.list();
+            List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
             Map<String, BasicDictEntity> mapById = dictList.stream()
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
 
@@ -105,7 +106,7 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
 
         if(Objects.isNull(mapById)){
             // 获取字典数据并缓存
-            List<BasicDictEntity> dictList = basicDictService.list();
+            List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
             mapById = dictList.stream()
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
         }
@@ -140,7 +141,7 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
 
         if (CollUtil.isNotEmpty(productLogisticsShowDTOS)) {
             // 获取字典数据并缓存
-            List<BasicDictEntity> dictList = basicDictService.list();
+            List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
             Map<String, BasicDictEntity> mapById = dictList.stream()
                     .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
 
