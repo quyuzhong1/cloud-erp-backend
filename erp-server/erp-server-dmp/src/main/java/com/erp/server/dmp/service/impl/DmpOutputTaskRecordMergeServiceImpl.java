@@ -13,12 +13,15 @@ import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.OutputTaskRecordMergeStatusEnum;
+import com.erp.server.dmp.inout.handler.output.task.api.DmpOutputErpPushTaskHandler;
+import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.mapper.DmpOutputTaskRecordMergeMapper;
 import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.OperateLogService;
@@ -33,6 +36,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordMergeDTO;
+
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
@@ -187,6 +192,35 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 					.eq(DmpOutputTaskRecordMergeEntity::getMergeId, id)
 					.list();
 			if (CollUtil.isEmpty(list)) {
+				List<DmpOutputTaskRecordEntity> leDataIdList = dmpOutputTaskRecordService.lambdaQuery()
+						.eq(DmpOutputTaskRecordEntity::getDataId, dmpOutputTaskRecordEntity.getDataId())
+						.ne(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+						.le(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
+						.list();
+				if(CollUtil.isNotEmpty(leDataIdList)) {
+					if(leDataIdList.stream().anyMatch(l -> !l.getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode()))) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一dataId")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return false;
+					}else {
+						if(validateMerge(leDataIdList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()), dmpOutputTaskRecordEntity)) {
+							return false;
+						}
+					}
+				}
+				
+				String outputClass = dmpCfgOutputEntity.getOutputClass();
+				if("DmpOutputErpPushTaskHandler".equals(outputClass)) {
+					DmpOutputErpPushTaskHandler dmpOutputErpPushTaskHandler = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(outputClass) , DmpOutputErpPushTaskHandler.class);
+					if(dmpOutputErpPushTaskHandler.validateSourceId(dmpCfgOutputEntity, dmpOutputTaskRecordEntity , true)) {
+						return false;
+					}
+				}
+				
 				String requestData = dmpOutputTaskRecordEntity.getRequestData();
 				Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
 				if (isQuerySync != null && isQuerySync) {
@@ -212,5 +246,42 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 			}
 		}
 		return true;
+	}
+
+    @Override
+	public boolean validateMerge(List<String> leMergeList , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	List<DmpOutputTaskRecordMergeEntity> leMergeEntityList = this.lambdaQuery()
+    			.in(DmpOutputTaskRecordMergeEntity::getMainId, leMergeList)
+    			.list();
+    	if(CollUtil.isNotEmpty(leMergeEntityList)) {
+			if(leMergeEntityList.stream().anyMatch(l -> l.getMergeStatus().equals(OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode()))) {
+				dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一dataId是待合并")
+					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.update();
+				return true;
+			}else {
+				List<String> mergeIds = leMergeEntityList.stream().filter(l -> l.getMergeStatus().equals(OutputTaskRecordMergeStatusEnum.MERGE.getCode()))
+					.map(DmpOutputTaskRecordMergeEntity::getMergeId).collect(Collectors.toList());
+				if(CollUtil.isNotEmpty(mergeIds)) {
+					Integer mergeCount = dmpOutputTaskRecordService.lambdaQuery()
+						.in(DmpOutputTaskRecordEntity::getId, mergeIds)
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.count();
+					if(mergeCount != null && mergeCount > 0) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一dataId是已合并")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return true;
+					}
+				}
+			}
+		}
+		return false;
 	}
 }
