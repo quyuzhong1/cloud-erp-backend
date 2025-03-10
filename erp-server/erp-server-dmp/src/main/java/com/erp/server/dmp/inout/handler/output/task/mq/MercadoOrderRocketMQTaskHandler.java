@@ -199,6 +199,9 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         if (dmpSoInfoEntityList.get(0).getPayTime() != null) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
+        //运费
+        BigDecimal shippingAmount = dmpSoInfoEntityList.stream().map(DmpSoInfoEntity::getShippingAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        orderDTO.setShippingFee(shippingAmount);
 
         orderDTO.setLabelJson(dmpSoInfoEntityList.get(0).getExtendData());
         orderDTO.setApproveStatusStr(dmpSoInfoEntityList.get(0).getOrderStatus());
