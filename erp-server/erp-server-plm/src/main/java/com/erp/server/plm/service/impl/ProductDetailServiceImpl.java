@@ -1141,6 +1141,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
         if (ObjectUtils.isNotEmpty(productLogisticsDTO)) {
             productLogisticsDTO.setSkuId(skuId);
+            //保险属性
+            if(CollUtil.isEmpty(productLogisticsDTO.getInsurancePropertyList())){
+                productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
+            }
             //SKU操作日志
             addProductLogisticsLog(productLogisticsDTO, id);
             productLogisticsService.saveOrUpdate(productLogisticsDTO);
@@ -1388,6 +1392,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //6.修改/新增 物流信息
         List<ProductLogisticsDTO> productLogisticsList = productManySpecDTO.getProductLogisticsList();
         if (!productLogisticsList.isEmpty()) {
+            productLogisticsList.forEach(productLogisticsDTO -> {
+                //保险属性
+                if(CollUtil.isEmpty(productLogisticsDTO.getInsurancePropertyList())){
+                    productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
+                }
+            });
             //操作日志
             productLogisticsList.forEach(obj -> addProductLogisticsLog(obj, productInfoDTO.getId()));
             productLogisticsService.saveOrUpdateBatch(productLogisticsList);
