@@ -449,6 +449,12 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("报关产品属性")
     @MenuCode("plm:product:detail:listLogistics")
     private String productProperty;
+    /**
+     * 保险属性
+     */
+    @ExcelProperty("保险属性")
+    @MenuCode("plm:product:detail:listLogistics")
+    private String insuranceProperty;
 
     /**
      * 报关申报价（$）
