@@ -213,6 +213,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             return isCreatePdf && cfgVatInvoiceEntity.getIsAutoUpload();
         }).collect(Collectors.toList());
         //上传发票
+        for (InvoiceInfoEntity invoiceInfoEntity : uploadInvoiceList) {
+            //TODO:调用亚马逊上传发票接口
+
+        }
         return resultDTOList;
     }
 
