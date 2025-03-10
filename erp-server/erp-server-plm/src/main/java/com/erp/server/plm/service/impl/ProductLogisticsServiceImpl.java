@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
@@ -63,8 +64,17 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     @Override
     public List<ProductLogisticsShowDTO> list(String productId) {
         List<ProductLogisticsShowDTO> list = productLogisticsMapper.list(productId);
-        if(CollUtil.isNotEmpty(list)){
-            list.forEach(productLogisticsShowDTO ->  productLogisticsShowDTO.setInsurancePropertyName(getInsurancePropertyName(productLogisticsShowDTO.getInsuranceProperty())));
+        if (CollUtil.isNotEmpty(list)) {
+            // 获取字典数据并缓存
+            List<BasicDictEntity> dictList = basicDictService.list();
+            Map<String, BasicDictEntity> mapById = dictList.stream()
+                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+
+            for (ProductLogisticsShowDTO productLogisticsShowDTO : list) {
+                List<BasicDictEntity> insurancePropertyList = getInsurancePropertyList(productLogisticsShowDTO.getInsuranceProperty(), mapById);
+                // 将 insurancePropertyList 设置回 DTO 中
+                productLogisticsShowDTO.setInsurancePropertyList(insurancePropertyList);
+            }
         }
         return list;
     }
@@ -87,6 +97,32 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         }
     }
 
+    @Override
+    public List<BasicDictEntity> getInsurancePropertyList(String insuranceProperty, Map<String, BasicDictEntity> mapById) {
+        if(StringUtils.isBlank(insuranceProperty)){
+            return Collections.emptyList();
+        }
+
+        if(Objects.isNull(mapById)){
+            // 获取字典数据并缓存
+            List<BasicDictEntity> dictList = basicDictService.list();
+            mapById = dictList.stream()
+                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+        }
+
+        String[] codes = insuranceProperty.split(",");
+        List<BasicDictEntity> insurancePropertyList = new ArrayList<>();
+        for (String code : codes) {
+            if (StringUtils.isNotBlank(code)) {
+                BasicDictEntity entity = mapById.get(code.trim());
+                if (entity != null) {
+                    insurancePropertyList.add(entity);
+                }
+            }
+        }
+        return insurancePropertyList;
+    }
+
     /**
      * @param skuId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
@@ -96,8 +132,28 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
      **/
     @Override
     public List<ProductLogisticsShowDTO> listBySkuId(String skuId) {
-        return productLogisticsMapper.listBySkuId(skuId);
+        // 验证和清理 skuId，防止 SQL 注入
+        if (StringUtils.isBlank(skuId)) {
+            return Collections.emptyList();
+        }
+        List<ProductLogisticsShowDTO> productLogisticsShowDTOS = productLogisticsMapper.listBySkuId(skuId);
+
+        if (CollUtil.isNotEmpty(productLogisticsShowDTOS)) {
+            // 获取字典数据并缓存
+            List<BasicDictEntity> dictList = basicDictService.list();
+            Map<String, BasicDictEntity> mapById = dictList.stream()
+                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+
+            for (ProductLogisticsShowDTO productLogisticsShowDTO : productLogisticsShowDTOS) {
+                List<BasicDictEntity> insurancePropertyList = getInsurancePropertyList(productLogisticsShowDTO.getInsuranceProperty(), mapById);
+                // 将 insurancePropertyList 设置回 DTO 中
+                productLogisticsShowDTO.setInsurancePropertyList(insurancePropertyList);
+            }
+        }
+        return productLogisticsShowDTOS;
     }
+
+
 
     /**
      * @param productLogisticsDTO 产品物流信息表

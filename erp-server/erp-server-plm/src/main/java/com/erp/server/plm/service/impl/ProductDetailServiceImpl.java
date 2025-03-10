@@ -2175,6 +2175,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 if(StringUtils.isNotBlank(saleCountry)) {
                     productPropertyIdAndSaleCountrys.addAll(Arrays.stream(saleCountry.split(",")).filter(StringUtils::isNotBlank).collect(Collectors.toList()));
                 }
+                //保险属性
+                if(StringUtils.isNotBlank(l.getInsuranceProperty())){
+                    l.setInsuranceProperty(productLogisticsService.getInsurancePropertyName(l.getInsuranceProperty()));
+                }
             }
 
             Map<String, String> chargeIdNameMaps = new HashMap<>();
