@@ -25,8 +25,6 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
      **/
     List<ProductLogisticsShowDTO> list(String productId);
-
-    String getInsurancePropertyName(String insuranceProperty);
     /**
      * @Description 获取保险属性列表
      * @Author jack
