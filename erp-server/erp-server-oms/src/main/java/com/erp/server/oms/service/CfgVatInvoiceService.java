@@ -5,6 +5,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * VAT发票设置 服务类
@@ -53,4 +55,11 @@ public interface CfgVatInvoiceService extends SuperService<CfgVatInvoiceEntity> 
      * @return
      */
     CfgVatInvoiceEntity getEnableCfgByShopId(String shopId);
+
+    /**
+     * 根据店铺获取店铺配置
+     * @param shopIdList
+     * @return
+     */
+    List<CfgVatInvoiceEntity> listCfgByShopIds(List<String> shopIdList);
 }

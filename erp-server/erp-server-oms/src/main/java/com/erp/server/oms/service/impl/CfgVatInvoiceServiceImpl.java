@@ -127,6 +127,14 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         return entity;
     }
 
+    @Override
+    public List<CfgVatInvoiceEntity> listCfgByShopIds(List<String> shopIdList) {
+        if (CollUtil.isEmpty(shopIdList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(CfgVatInvoiceEntity::getShopId,shopIdList).list();
+    }
+
     private void fillList(List<CfgVatInvoiceDTO.PagingViewDTO> records) {
         if (CollUtil.isEmpty(records)){
             return;
