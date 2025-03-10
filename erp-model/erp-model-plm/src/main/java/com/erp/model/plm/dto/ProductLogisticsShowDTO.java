@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.erp.model.plm.entity.BasicDictEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -200,7 +199,7 @@ public class ProductLogisticsShowDTO implements Serializable {
     /**
      * 保险属性
      */
-    private List<BasicDictEntity> insurancePropertyList;
+    private List<String> insurancePropertyList;
 
     private String insuranceProperty;
 }

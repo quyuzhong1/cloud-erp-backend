@@ -66,16 +66,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
     public List<ProductLogisticsShowDTO> list(String productId) {
         List<ProductLogisticsShowDTO> list = productLogisticsMapper.list(productId);
         if (CollUtil.isNotEmpty(list)) {
-            // 获取字典数据并缓存
-            List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
-            Map<String, BasicDictEntity> mapById = dictList.stream()
-                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
-
-            for (ProductLogisticsShowDTO productLogisticsShowDTO : list) {
-                List<BasicDictEntity> insurancePropertyList = getInsurancePropertyList(productLogisticsShowDTO.getInsuranceProperty(), mapById);
-                // 将 insurancePropertyList 设置回 DTO 中
-                productLogisticsShowDTO.setInsurancePropertyList(insurancePropertyList);
-            }
+            list.forEach(item ->
+                item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")))
+            );
         }
         return list;
     }
@@ -140,16 +133,9 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         List<ProductLogisticsShowDTO> productLogisticsShowDTOS = productLogisticsMapper.listBySkuId(skuId);
 
         if (CollUtil.isNotEmpty(productLogisticsShowDTOS)) {
-            // 获取字典数据并缓存
-            List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
-            Map<String, BasicDictEntity> mapById = dictList.stream()
-                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
-
-            for (ProductLogisticsShowDTO productLogisticsShowDTO : productLogisticsShowDTOS) {
-                List<BasicDictEntity> insurancePropertyList = getInsurancePropertyList(productLogisticsShowDTO.getInsuranceProperty(), mapById);
-                // 将 insurancePropertyList 设置回 DTO 中
-                productLogisticsShowDTO.setInsurancePropertyList(insurancePropertyList);
-            }
+            productLogisticsShowDTOS.forEach(item ->
+                item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")))
+            );
         }
         return productLogisticsShowDTOS;
     }

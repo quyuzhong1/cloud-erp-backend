@@ -1,15 +1,13 @@
 package com.erp.model.plm.dto;
 
-import com.common.core.anno.FieldValid;
-import com.erp.model.plm.enums.InsurancePropertyEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @Description 产品物流信息表
@@ -155,6 +153,7 @@ public class ProductLogisticsDTO implements Serializable {
      * 保险属性
      */
     private String insuranceProperty;
+    private List<String> insurancePropertyList;
 
     private static final long serialVersionUID = 1L;
 }
