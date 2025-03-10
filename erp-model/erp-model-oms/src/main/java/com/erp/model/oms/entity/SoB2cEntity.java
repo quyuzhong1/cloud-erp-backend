@@ -372,6 +372,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("third_system")
     private String thirdSystem;
 
+    /**
+     * 发票状态
+     */
+    @TableField("vat_invoice_status")
+    private String vatInvoiceStatus;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
