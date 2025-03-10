@@ -28,6 +28,7 @@ public enum NoticeTypeEnum {
     SYS_TASK("SYS_TASK", "系统服务任务通知", "msg_notice_sys_tag"),
     FLW_TASK("FLW_TASK", "工作流任务通知", "msg_notice_flw_tag"),
     TMS_TASK("TMS_TASK", "物流系统任务通知", "msg_notice_tms_tag"),
+    MRP_TASK("MRP_TASK", "补货系统任务通知", "msg_notice_mrp_tag"),
     ;
 
     /**
