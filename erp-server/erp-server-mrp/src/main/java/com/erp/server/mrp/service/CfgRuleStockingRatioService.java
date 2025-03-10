@@ -25,7 +25,7 @@ public interface CfgRuleStockingRatioService extends SuperService<CfgRuleStockin
      * @author will
      * @date: 2024-08-23
      */
-    Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList, CfgRuleStockUpEntity cfgRuleStockUpEntity, String type, Boolean isCustom);
+    Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList, CfgRuleStockUpEntity cfgRuleStockUpEntity, String type, Boolean isBatch);
 
     /**
      * 根据备货主表id查询

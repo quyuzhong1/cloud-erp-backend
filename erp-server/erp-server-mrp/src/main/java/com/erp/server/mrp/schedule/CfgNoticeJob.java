@@ -24,6 +24,7 @@ import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.wms.dto.WmsDeliveryPlanDetailDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
 import com.erp.model.wms.enums.CfgVirtualNoticeWeekOptionEnum;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -256,7 +257,8 @@ public class CfgNoticeJob {
             List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = FeignQuery.list(WmsDeliveryPlanDetailEntity.class);
             List<String> ids = deliveryPlanDetailList.stream()
                     .map(WmsDeliveryPlanDetailEntity::getSourceJson)
-                    .flatMap(jsonArray -> jsonArray.stream().map(Object::toString))
+                    .map(v -> BeanUtil.copyToList(JSONUtil.parseArray(v), WmsDeliveryPlanDetailDTO.SourceJsonDTO.class))
+                    .flatMap(v -> v.stream().map(WmsDeliveryPlanDetailDTO.SourceJsonDTO::getSourceId))
                     .collect(Collectors.toList());
             List<String> codes = list.stream()
                     .filter(v -> Boolean.FALSE.equals(v.getInvalidStatus()))
