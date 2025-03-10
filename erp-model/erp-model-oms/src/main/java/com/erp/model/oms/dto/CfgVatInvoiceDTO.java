@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -372,5 +373,18 @@ public class CfgVatInvoiceDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+    }
+
+    /**
+     * 批量修改
+     * 状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class InvoiceBatchUpdateDTO extends UpdateStateDTO.BatchUpdateDTO {
+        /**
+         * 启用时间
+         */
+        private LocalDateTime enableTime;
     }
 }

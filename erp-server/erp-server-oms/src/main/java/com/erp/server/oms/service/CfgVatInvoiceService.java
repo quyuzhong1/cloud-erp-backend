@@ -39,4 +39,18 @@ public interface CfgVatInvoiceService extends SuperService<CfgVatInvoiceEntity> 
      * @return
      */
     PagingVO<CfgVatInvoiceDTO.PagingViewDTO> paging(PagingDTO<CfgVatInvoiceDTO.PagingParamDTO> dto);
+
+    /**
+     * 批量启用禁用
+     * @param id
+     * @param disabled
+     */
+    void updateState(CfgVatInvoiceEntity id, Boolean disabled);
+
+    /**
+     * 根据店铺获取 已启用配置/最新配置
+     * @param shopId
+     * @return
+     */
+    CfgVatInvoiceEntity getEnableCfgByShopId(String shopId);
 }
