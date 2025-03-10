@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp.eccang;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.nacos.api.utils.StringUtils;
 import com.erp.server.dmp.inout.handler.input.task.dmp.DmpInputDbConvertDmpHandler;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -26,9 +27,15 @@ public class EccangReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
 			List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
 			Map<String, Object> mongoData = mongoDataMaps.get(0);
 			Object overseasDetail = mongoData.get("items");
-			if(overseasDetail != null) {
-				for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+			for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+				if(overseasDetail != null) {
 					dmpDataMap.put("detailListJson", JSON.toJSONString(overseasDetail));
+				}
+				// 兼容2个引用单号
+				String orderReferenceNo = dmpDataMap.getOrDefault("order_reference_no", "").toString();
+				if (StringUtils.isBlank(orderReferenceNo)){
+					String referenceNo = dmpDataMap.getOrDefault("reference_no", "").toString();
+					dmpDataMap.put("order_reference_no", referenceNo);
 				}
 			}
 		}
