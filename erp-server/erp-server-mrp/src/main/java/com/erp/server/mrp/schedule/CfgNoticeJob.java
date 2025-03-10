@@ -36,6 +36,7 @@ import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -58,6 +59,7 @@ import static com.erp.model.mrp.enums.CfgNoticeNodeEnum.GENERATE;
 
 @Component
 @Slf4j
+@EnableScheduling
 public class CfgNoticeJob {
 
     @Resource
