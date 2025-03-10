@@ -416,7 +416,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         //Subtotal(VAT inclusive)+Shipping+Promotion
         private BigDecimal invoiceTotal;
         //汇总
-        private List<TotalDTO> totalDTOS;
+        private TotalDTO totalDTOS;
     }
     @Data
     @NoArgsConstructor

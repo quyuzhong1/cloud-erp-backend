@@ -24,6 +24,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 
+import java.util.List;
+
 /**
  * 上传记录
  *
@@ -86,6 +88,22 @@ public class InvoiceInfoController extends BaseController {
     public ApiResult<PagingVO<InvoiceInfoDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
         PagingVO<InvoiceInfoDTO.PagingViewDTO> pagingVO = invoiceInfoService.paging(dto);
         return success(pagingVO);
+    }
+
+
+    /**
+     * 下载发票
+     * 返回下载地址
+     */
+    public ApiResult<String> downloadInvoice(@RequestBody @Validated BaseIdDTO dto) {
+        return success(invoiceInfoService.downloadInvoice(dto.getId()));
+    }
+
+    /**
+     * 生成发票
+     */
+    public ApiResult<List<BatchResultDTO>> generateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(invoiceInfoService.batchGenerateInvoice(dto.getIds()));
     }
 
     /**
