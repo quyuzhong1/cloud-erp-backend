@@ -1142,7 +1142,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (ObjectUtils.isNotEmpty(productLogisticsDTO)) {
             productLogisticsDTO.setSkuId(skuId);
             //保险属性
-            if(CollUtil.isEmpty(productLogisticsDTO.getInsurancePropertyList())){
+            if(CollUtil.isNotEmpty(productLogisticsDTO.getInsurancePropertyList())){
                 productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
             }
             //SKU操作日志
@@ -1394,7 +1394,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!productLogisticsList.isEmpty()) {
             productLogisticsList.forEach(productLogisticsDTO -> {
                 //保险属性
-                if(CollUtil.isEmpty(productLogisticsDTO.getInsurancePropertyList())){
+                if(CollUtil.isNotEmpty(productLogisticsDTO.getInsurancePropertyList())){
                     productLogisticsDTO.setInsuranceProperty(productLogisticsDTO.getInsurancePropertyList().stream().collect(Collectors.joining(",")));
                 }
             });
@@ -4423,6 +4423,50 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return false;
     }
 
+    private String getInsurancePropertyList(String insurancePropertyName, Map<String, BasicDictEntity> mapById, List<String> errorMsgList) {
+        if (StringUtils.isBlank(insurancePropertyName)) {
+            errorMsgList.add("保险属性不能为空");
+            return "";
+        }
+
+        // 处理空字符串和仅包含逗号的情况
+        insurancePropertyName = insurancePropertyName.trim();
+        if (insurancePropertyName.isEmpty() || insurancePropertyName.equals(",")) {
+            errorMsgList.add("保险属性不能为空或仅包含逗号");
+            return "";
+        }
+
+        StringBuilder result = new StringBuilder();
+        String[] properties = insurancePropertyName.split("\\s*,\\s*");
+
+        for (String property : properties) {
+            property = property.trim();
+            if (property.isEmpty()) {
+                continue;
+            }
+
+            if (InsurancePropertyEnum.NOT.getName().equals(property)) {
+                errorMsgList.add("保险属性【" + property + "】不能与其他属性同时存在");
+                continue;
+            }
+
+            BasicDictEntity entity = mapById.get(property);
+            if (entity == null) {
+                errorMsgList.add("保险属性【" + property + "】在系统中未找到");
+                continue;
+            }
+
+            result.append(entity.getValue()).append(",");
+        }
+
+        if (result.length() > 0) {
+            result.setLength(result.length() - 1); // 移除最后一个逗号
+        }
+
+        return result.toString();
+    }
+
+
 
     //导入更新（已审核）
     private Boolean importUpdateApprove(MultipartFile excelFile, HttpServletResponse response) {
@@ -4495,6 +4539,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, Integer> inventoryMap = inventoryEntities.stream()
                 .filter(v -> !v.getDictInventoryStatus().equals(InventoryStatusEnum.IN_TRANSIT.getCode()))
                 .collect(Collectors.groupingBy(InventoryEntity::getSkuNo, Collectors.summingInt(InventoryEntity::getQty)));
+
+        // 获取保险属性字典数据并缓存
+        List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
+        Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
+                .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
 
         for (ProductDetailUpdateApproveExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -4575,35 +4624,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             //保险属性
-            String insuranceProperty = "";
-            if(StringUtils.isNotBlank(dto.getInsuranceProperty())){
-                if(dto.getInsuranceProperty().contains(",")){
-                    StringBuilder sb = new StringBuilder();
-                    String[] split = dto.getInsuranceProperty().split(",");
-                    for (String s : split) {
-                        String code = InsurancePropertyEnum.getCode(s);
-                        if(StringUtils.isBlank(code)){
-                            errorMsgList.add("保险属性【"+s+"】在系统中未找到");
-                            continue;
-                        }else if(InsurancePropertyEnum.NOT.getName().equals(code)){
-                            errorMsgList.add("保险属性【"+InsurancePropertyEnum.NOT.getName()+"】不能与其他属性同时存在");
-                            continue;
-                        }
-                        sb.append(code);
-                        sb.append(",");
-                    }
-                    if(StringUtils.isNotBlank(sb.toString())){
-                        insuranceProperty = sb.toString().substring(0, sb.length() - 1);
-                    }
-                }else {
-                    if(StringUtils.isBlank(InsurancePropertyEnum.getCode(insuranceProperty))){
-                        errorMsgList.add("保险属性在系统中未找到");
-                    }else {
-                        insuranceProperty = InsurancePropertyEnum.getCode(insuranceProperty);
-                    }
-                }
-                dto.setInsuranceProperty(insuranceProperty);
-            }
+            String insurancePropertyName = getInsurancePropertyList(dto.getInsuranceProperty(), insurancePropertyMap,errorMsgList);
+            dto.setInsuranceProperty(insurancePropertyName);
 
             //产品开发状态
             String productState = dto.getProductStateName();
@@ -4788,8 +4810,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 保险属性
              */
-            if(StringUtils.isNotBlank(insuranceProperty)){
-                productLogisticsDTO.setInsuranceProperty(insuranceProperty);
+            if(StringUtils.isNotBlank(insurancePropertyName)){
+                productLogisticsDTO.setInsuranceProperty(insurancePropertyName);
             }
             /**
              * 报关产品属性
@@ -4979,6 +5001,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 .filter(v -> !v.getDictInventoryStatus().equals(InventoryStatusEnum.IN_TRANSIT.getCode()))
                 .collect(Collectors.groupingBy(InventoryEntity::getSkuNo, Collectors.summingInt(InventoryEntity::getQty)));
 
+        // 获取保险属性字典数据并缓存
+        List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
+        Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
+                .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
+
         for (ProductDetailUpdateNotApproveExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
 
@@ -5084,35 +5111,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             //保险属性
-            String insuranceProperty = "";
-            if(StringUtils.isNotBlank(dto.getInsuranceProperty())){
-                if(dto.getInsuranceProperty().contains(",")){
-                    StringBuilder sb = new StringBuilder();
-                    String[] split = dto.getInsuranceProperty().split(",");
-                    for (String s : split) {
-                        String code = InsurancePropertyEnum.getCode(s);
-                        if(StringUtils.isBlank(code)){
-                            errorMsgList.add("保险属性【"+s+"】在系统中未找到");
-                            continue;
-                        }else if(InsurancePropertyEnum.NOT.getName().equals(code)){
-                            errorMsgList.add("保险属性【"+InsurancePropertyEnum.NOT.getName()+"】不能与其他属性同时存在");
-                            continue;
-                        }
-                        sb.append(code);
-                        sb.append(",");
-                    }
-                    if(StringUtils.isNotBlank(sb.toString())){
-                        insuranceProperty = sb.toString().substring(0, sb.length() - 1);
-                    }
-                }else {
-                    if(StringUtils.isBlank(InsurancePropertyEnum.getCode(insuranceProperty))){
-                        errorMsgList.add("保险属性在系统中未找到");
-                    }else {
-                        insuranceProperty = InsurancePropertyEnum.getCode(insuranceProperty);
-                    }
-                }
-                dto.setInsuranceProperty(insuranceProperty);
-            }
+            String insurancePropertyName = getInsurancePropertyList(dto.getInsuranceProperty(), insurancePropertyMap,errorMsgList);
+            dto.setInsuranceProperty(insurancePropertyName);
 
             //产品等级
             BasicDictEntity productGrade = null;
@@ -5591,8 +5591,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 保险属性
              */
-            if(StringUtils.isNotBlank(insuranceProperty)){
-                productLogisticsDTO.setInsuranceProperty(insuranceProperty);
+            if(StringUtils.isNotBlank(insurancePropertyName)){
+                productLogisticsDTO.setInsuranceProperty(insurancePropertyName);
             }
             /**
              * 报关产品属性
@@ -5770,6 +5770,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         supplierNameList.addAll(secondSupplierNameList);
         List<SupplierEntity> supplierList = scmTaskFeign.listBySupplierByNames(supplierNameList);
 
+        // 获取保险属性字典数据并缓存
+        List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
+        Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
+                .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
+
         for (ProductDetailExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
 
@@ -5890,40 +5895,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             //保险属性
-            String insuranceProperty = "";
-            if(StringUtils.isBlank(dto.getInsuranceProperty())){
-                errorMsgList.add("保险属性不能为空");
-            }else {
-                if(dto.getInsuranceProperty().contains(",")){
-                    StringBuilder sb = new StringBuilder();
-                    String[] split = dto.getInsuranceProperty().split(",");
-                    for (String s : split) {
-                        String code = InsurancePropertyEnum.getCode(s);
-                        if(StringUtils.isBlank(code)){
-                            errorMsgList.add("保险属性【"+s+"】在系统中未找到");
-                            continue;
-                        }else if(InsurancePropertyEnum.NOT.getName().equals(code)){
-                            errorMsgList.add("保险属性【"+InsurancePropertyEnum.NOT.getName()+"】不能与其他属性同时存在");
-                            continue;
-                        }
-                        sb.append(code);
-                        sb.append(",");
-                    }
-                    if(StringUtils.isNotBlank(sb.toString())){
-                        insuranceProperty = sb.toString().substring(0, sb.length() - 1);
-                    }
-                }else {
-                    if(StringUtils.isBlank(InsurancePropertyEnum.getCode(insuranceProperty))){
-                        errorMsgList.add("保险属性在系统中未找到");
-                    }else {
-                        insuranceProperty = InsurancePropertyEnum.getCode(insuranceProperty);
-                    }
-                }
-
-                if(StringUtils.isBlank(insuranceProperty)){
-                    errorMsgList.add("保险属性不能为空");
-                }
-            }
+            String insurancePropertyName = getInsurancePropertyList(dto.getInsuranceProperty(), insurancePropertyMap,errorMsgList);
+            dto.setInsuranceProperty(insurancePropertyName);
 
             //图片是否完成
             String isFinishedImg = dto.getIsFinishedImg();
@@ -6301,7 +6274,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             /**
              * 保险属性
              */
-            productLogisticsDTO.setInsuranceProperty(insuranceProperty);
+            productLogisticsDTO.setInsuranceProperty(insurancePropertyName);
             /**
              * 报关产品属性
              */
