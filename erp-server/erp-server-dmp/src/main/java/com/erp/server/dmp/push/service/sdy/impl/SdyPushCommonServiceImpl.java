@@ -1,23 +1,23 @@
 package com.erp.server.dmp.push.service.sdy.impl;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.HttpCommonUtil;
-import com.erp.model.dmp.dto.SdySaveResultDTO;
-import com.common.business.dto.ShudiyunB2cOrderDTO;
-import com.erp.server.dmp.push.service.sdy.SdyCommonService;
-import com.erp.server.dmp.push.service.sdy.SdyPushCommonService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestMethod;
-
-import javax.annotation.Resource;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Service;
+
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.server.dmp.push.service.sdy.SdyCommonService;
+import com.erp.server.dmp.push.service.sdy.SdyPushCommonService;
+
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * 数帝云推送通用接口
@@ -31,33 +31,50 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
     @Override
     public ApiResult executeConsumer(List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTO) {
 
-        String path = sdyCommonService.getSdyUrl() + "/openapi/information/save";
-        String dataStr = "";
+        String url = sdyCommonService.getSdyUrl() + "/openapi/information/save";
+        String requestData = "";
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(2);
         orderParams.put("count", shudiyunB2cOrderDTO.size());
         orderParams.put("list", shudiyunB2cOrderDTO);
-        dataStr = JSONUtil.toJsonStr(orderParams);
+        requestData = JSONUtil.toJsonStr(orderParams);
 
-        //设置请求头
-        Map<String, String> orderHeaderMap = new HashMap<>(1);
-
-        //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(path, dataStr, null, orderHeaderMap, RequestMethod.POST);
-
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-
-            log.error("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}", path, dataStr, JSONUtil.toJsonStr(apiResult));
-            return ApiResult.error("", JSONUtil.toJsonStr(apiResult.getData()));
-        }
-
-        SdySaveResultDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(apiResult.getData()), SdySaveResultDTO.class);
-        if (orderDTO.getErrno() != 0) {
-            log.error(StrUtil.format("调用url={},入参params={}, 数帝云接口请求失败，返回值 responseMap={}",
-                    path, dataStr, JSONUtil.toJsonStr(orderDTO)));
-            return ApiResult.error("", JSONUtil.toJsonStr(orderDTO));
-        }
-
-        return ApiResult.success(apiResult);
+        boolean is429 = true;
+		String responseData = "";
+		int i = 0;
+		while(is429) {
+			log.warn("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
+			responseData = HttpUtil.post(url, requestData);
+			log.warn("请求数帝云响应报文：{}" , responseData);
+			if(StringUtils.isNotBlank(responseData)) {
+				Integer code = JSON.parseObject(responseData).getInteger("code");
+				if(code != null && 429 == code) {
+					try {
+						Thread.sleep(1000);
+						log.warn("数帝云限流次数={}" , i);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+				}else {
+					is429 = false;
+				}
+			}
+			i = i + 1;
+			if(i > 10) {
+				is429 = false;
+			}
+		}
+		JSONObject responseObject = null;
+		try {
+			responseObject = JSON.parseObject(responseData);
+			Integer errno = responseObject.getInteger("errno");
+			if(0 == errno) {
+				return ApiResult.success(responseObject);
+			}else {
+				return ApiResult.error("" , responseObject);
+			}
+		} catch (Exception e) {
+		}
+		return ApiResult.error(responseData);
     }
 }
