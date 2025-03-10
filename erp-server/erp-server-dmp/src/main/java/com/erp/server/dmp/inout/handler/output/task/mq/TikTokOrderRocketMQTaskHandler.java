@@ -225,6 +225,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         //优惠金额
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
 
+        //运费
+        orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
+
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
         orderDTO.setDetails(details);
