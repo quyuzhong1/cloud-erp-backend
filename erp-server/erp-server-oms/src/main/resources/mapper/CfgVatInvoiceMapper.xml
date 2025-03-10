@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.CfgVatInvoiceMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgVatInvoiceEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="disabled" property="disabled" />
+       <result column="shop_id" property="shopId" />
+       <result column="shop_country_id" property="shopCountryId" />
+       <result column="enable_time" property="enableTime" />
+       <result column="is_auto_upload" property="isAutoUpload" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="company_name" property="companyName" />
+       <result column="company_address" property="companyAddress" />
+       <result column="country_id" property="countryId" />
+       <result column="province" property="province" />
+       <result column="city" property="city" />
+       <result column="post_code" property="postCode" />
+       <result column="address" property="address" />
+       <result column="vat_no" property="vatNo" />
+       <result column="template_type" property="templateType" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        disabled, shop_id, shop_country_id, enable_time, is_auto_upload, tax_rate, company_name, company_address, country_id, province, city, post_code, address, vat_no, template_type
+    </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.CfgVatInvoiceDTO$PagingViewDTO">
+        SELECT
+        cvi.id,
+        cvi.disabled as disabled,
+        cvi.shop_id as shopId,
+        cvi.shop_country_id as shopCountryId,
+        cvi.enable_time as enableTime,
+        cvi.is_auto_upload as isAutoUpload,
+        cvi.tax_rate as taxRate,
+        cvi.company_name as companyName,
+        cvi.company_address as companyAddress,
+        cvi.country_id as countryId,
+        cvi.province,
+        cvi.city,
+        cvi.post_code,
+        cvi.address,
+        cvi.vat_no as vatNo,
+        cvi.template_type as templateType,
+        si.name as shopName,
+        cvi.update_user_name as updateUserName,
+        cvi.update_time as updateTime
+        FROM cfg_vat_invoice cvi
+        left join shop_info si on cvi.shop_id = si.id and si.disabled = false
+        WHERE
+        ${params.sqlMap.default}
+        and cvi.is_deleted=FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cvi.create_time DESC
+    </select>
+
+
+</mapper>
