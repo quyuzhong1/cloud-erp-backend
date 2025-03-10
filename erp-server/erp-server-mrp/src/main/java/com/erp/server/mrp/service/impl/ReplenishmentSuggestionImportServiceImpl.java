@@ -693,7 +693,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 //更新产品销量配置
                 cfgRuleSalesQtyService.batchUpdate(updateDTO);
                 //添加默认配置
-                cfgRuleSalesFormulaService.update(salesFormulaList, salesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), Boolean.FALSE);
+                cfgRuleSalesFormulaService.update(salesFormulaList, salesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), Boolean.TRUE);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
