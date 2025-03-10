@@ -224,6 +224,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         List<Map<String, Object>> orderItemsList = (List<Map<String, Object>>) orderItemsObj;
                         if (CollectionUtil.isNotEmpty(orderItemsList)) {
                             dmpDataMap.put("exchangeRate", orderItemsList.get(0).get("baseExchangeRate"));
+                            BigDecimal allAmount = orderItemsList.stream().map(req -> MathUtil.valueOf(req.get("fullUnitPrice")).multiply(MathUtil.valueOf(req.get("quantity")))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                            dmpDataMap.put("allAmount", allAmount);
                         }
                     }
 

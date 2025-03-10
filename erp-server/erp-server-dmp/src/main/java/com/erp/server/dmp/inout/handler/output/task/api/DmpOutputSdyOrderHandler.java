@@ -199,11 +199,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 } else {
                     shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
                 }
-                if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
-                } else {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPrice());
-                }
+                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
             }
             shudiyunB2cOrderDTO.setStatus("已创建");
 
@@ -377,7 +373,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     }
                 } else {
                     if (dmpSoInfoEntity.getIsCancel()) {
-                        shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getAllAmount());
+                        BigDecimal amount = dmpSoDetailEntities.stream().map(req -> req.getSellPriceOrigin().multiply(MathUtil.valueOf(req.getQty()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                        shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(amount);
                         // 取消商品数量（合计）
                         shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
                     }
