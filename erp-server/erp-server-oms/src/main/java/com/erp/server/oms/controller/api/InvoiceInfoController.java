@@ -6,6 +6,9 @@ import com.common.business.vo.PagingVO;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -85,4 +88,13 @@ public class InvoiceInfoController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 批量生成发票
+     * @param idsDTO
+     * @param response
+     */
+    @PostMapping("/exportInvoicePdf")
+    public void exportSoContractPdf(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO, HttpServletResponse response) {
+        invoiceInfoService.exportInvoicePdf(idsDTO.getIds(),response);
+    }
 }

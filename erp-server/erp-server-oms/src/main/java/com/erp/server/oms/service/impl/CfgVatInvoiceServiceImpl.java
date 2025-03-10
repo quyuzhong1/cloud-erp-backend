@@ -1,38 +1,52 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.constant.FileTemplateConstant;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.FileTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.JasperHelperUtil;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
+import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CfgVatInvoiceEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.CfgVatInvoiceTemplateTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.FileTemplateDTO;
+import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CfgVatInvoiceMapper;
 import com.erp.server.oms.service.CfgVatInvoiceService;
 import com.erp.server.oms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,6 +66,8 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
     private OperateLogService operateLogService;
     @Resource
     private SysUserFeign sysUserFeign;
+    @Resource
+    private FileTemplateFeign fileTemplateFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -140,7 +156,24 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
 
     @Override
     public String createVatInvoicePdf(CfgVatInvoiceDTO.InvoiceTemplateDTO invoiceTemplateDTO) {
-        return null;
+        FileTemplateDTO.GetOneDTO getOneDTO = new FileTemplateDTO.GetOneDTO();
+        getOneDTO.setName(FileTemplateConstant.CFG_VAT_INVOICE);
+        getOneDTO.setFileType(FileTypeEnum.JASPER.getCode());
+        getOneDTO.setSourceType(SourceTypeEnum.CFG_VAT_INVOICE.getCode());
+        FileTemplateEntity fileTemplateEntity = fileTemplateFeign.getByFileTemplate(getOneDTO);
+        //获取fastdfs文件
+        InputStream inputStream = FastDFSClientUtil.getInputStream(fileTemplateEntity.getUrl());
+        if (inputStream == null) {
+            log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
+            throw new ServiceException("获取fastdfs文件为空");
+        }
+        Map<String, Object> map = BeanUtil.beanToMap(invoiceTemplateDTO);
+        JRBeanCollectionDataSource detailDTOS = new JRBeanCollectionDataSource(invoiceTemplateDTO.getDetailDTOS());
+        map.put("detailDTOS", detailDTOS);
+        JRBeanCollectionDataSource totalDTOS = new JRBeanCollectionDataSource(invoiceTemplateDTO.getTotalDTOS());
+        map.put("totalDTOS", totalDTOS);
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Collections.singletonList(invoiceTemplateDTO));
+        return FastDFSClientUtil.uploadFile(bytes, invoiceTemplateDTO.getInvoiceCode() + ".pdf", null);
     }
 
     @Override

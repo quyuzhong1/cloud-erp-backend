@@ -3,10 +3,7 @@ package com.erp.server.oms.controller.api;
 
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -25,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,14 +77,14 @@ public class CfgVatInvoiceController extends BaseController {
     }
 
     /**
-     * 修改
+     * 批量修改
      * @author zdy
      * @date:  2025-03-07
      * @param dtoList
      * @return ApiResult
      */
     @PostMapping("/batchUpdate")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "VAT发票设置修改")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "VAT发票设置批量修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "oms:cfgVatInvoice:update",

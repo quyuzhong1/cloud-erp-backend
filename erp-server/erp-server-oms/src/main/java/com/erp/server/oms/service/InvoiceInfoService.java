@@ -5,6 +5,9 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
 /**
  * <p>
  * 上传记录 服务类
@@ -39,4 +42,11 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return
      */
     PagingVO<InvoiceInfoDTO.PagingViewDTO> paging(PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto);
+
+    /**
+     * 批量生成发票
+     * @param ids
+     * @param response
+     */
+    void exportInvoicePdf(List<String> ids, HttpServletResponse response);
 }

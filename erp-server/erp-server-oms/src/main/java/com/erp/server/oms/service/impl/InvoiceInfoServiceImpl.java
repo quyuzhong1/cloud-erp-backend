@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.entity.CfgVatInvoiceEntity;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
 import com.erp.model.oms.enums.InvoiceInfoInvoiceTypeEnum;
 import com.erp.model.oms.enums.InvoiceInfoStatusEnum;
@@ -19,6 +20,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.InvoiceInfoMapper;
+import com.erp.server.oms.service.CfgVatInvoiceService;
 import com.erp.server.oms.service.InvoiceDetailService;
 import com.erp.server.oms.service.InvoiceInfoService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -39,6 +41,7 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * <p>
@@ -59,6 +62,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     private InvoiceDetailService invoiceDetailService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private CfgVatInvoiceService cfgVatInvoiceService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -123,6 +128,16 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
+
+    @Override
+    public void exportInvoicePdf(List<String> ids, HttpServletResponse response) {
+        List<InvoiceInfoEntity> entityList = this.listByIds(ids);
+        List<String> cfgIds = entityList.stream().map(InvoiceInfoEntity::getCfgId).distinct().collect(Collectors.toList());
+        List<CfgVatInvoiceEntity> cfgList = cfgVatInvoiceService.listByIds(cfgIds);
+
+    }
+
+
 
     private void fillList(List<InvoiceInfoDTO.PagingViewDTO> records) {
         if (CollUtil.isEmpty(records)){

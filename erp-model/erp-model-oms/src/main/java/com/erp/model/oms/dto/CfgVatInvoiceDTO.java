@@ -402,7 +402,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         //发票生成时间，ERP自动生成，YYYY-MM-DD，以北京时间为准
         private LocalDateTime billCreateTime;
         //发票号，ERP自动生成，INV+YYYY+MM+DD+五位流水号
-        private LocalDateTime invoiceCode;
+        private String invoiceCode;
         //订单平台创建时间，取值订单信息的PurchaseDate
         private LocalDateTime platformCreateTime;
         //订单平台单号
@@ -418,7 +418,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         //根据映射平台SKU+店铺取SKU对照表的listing名称
         private String productName;
         //订单SKU的销售数量
-        private String qty;
+        private Integer qty;
         //开票税率，来源于模板配置中的开票税率
         private BigDecimal taxRate;
         //不含税单价，Unit price(VAT inclusive)/（1+VAT税率）
