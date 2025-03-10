@@ -762,4 +762,14 @@ public class ReplenishmentSuggestionController extends BaseController {
         replenishmentSuggestionService.exportCalcData(dto);
         return success();
     }
+
+
+    /**
+     * 临时接口
+     * @param exportSalesDTO 导出
+     */
+    @PostMapping("/exportSales")
+    public void exportSales(@RequestBody ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response) {
+        replenishmentSuggestionService.exportSales(exportSalesDTO, response);
+    }
 }

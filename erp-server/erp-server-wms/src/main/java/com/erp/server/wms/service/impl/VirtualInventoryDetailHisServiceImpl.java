@@ -17,6 +17,7 @@ import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
 import com.erp.model.wms.dto.VirtualInventoryDetailHisDTO;
 import com.erp.model.wms.dto.VirtualInventoryHisDTO;
 import com.erp.model.wms.entity.VirtualInventoryDetailHisEntity;
+import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import com.erp.server.wms.mapper.VirtualInventoryDetailHisMapper;
 import com.erp.server.wms.service.VirtualInventoryDetailHisService;
 import com.erp.server.wms.service.VirtualInventoryHisService;
@@ -95,7 +96,7 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
                 //添加虚拟仓每日库存
                 virtualInventoryHisService.addVirtualInventoryHis(localDate);
                 //添加虚拟仓明细每日库存
-                this.addVirtualInventoryDetailHis(localDate);
+                this.addVirtualInventoryDetailHis(new VirtualTransFlowEntity().setBillDate(localDate));
             } catch (Exception e) {
                 log.error("生成结余失败，date = {},msg = {}",localDate,e.getMessage());
                 sendWarnMsg(localDate);
@@ -107,12 +108,15 @@ public class VirtualInventoryDetailHisServiceImpl extends SuperServiceImpl<Virtu
      * 添加虚拟每日库存快照数据
      * @author will
      * @date 2024/12/11 12:13
-     * @param localDate
+     * @param oldTransFlowEntity
      */
     @Override
-    public void addVirtualInventoryDetailHis (LocalDate localDate) {
+    public void addVirtualInventoryDetailHis (VirtualTransFlowEntity oldTransFlowEntity) {
+        //日期
+        LocalDate localDate = oldTransFlowEntity.getBillDate();
+
         //查询数据
-        List<VirtualInventoryDetailHisDTO.ViewDTO> virtualInventoryHisList = baseMapper.listVirtualInventoryHisJobData(localDate);
+        List<VirtualInventoryDetailHisDTO.ViewDTO> virtualInventoryHisList = baseMapper.listVirtualInventoryHisJobData(oldTransFlowEntity);
         if (CollUtil.isEmpty(virtualInventoryHisList)) {
             return;
         }
