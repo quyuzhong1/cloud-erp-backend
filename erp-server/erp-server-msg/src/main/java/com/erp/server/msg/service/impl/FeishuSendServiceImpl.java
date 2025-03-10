@@ -1,13 +1,12 @@
 package com.erp.server.msg.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -32,13 +31,15 @@ import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.erp.server.msg.enums.FeishuMessageTypeEnum.INTERACTIVE;
@@ -113,11 +114,17 @@ public class FeishuSendServiceImpl extends BaseMessageSendService {
             log.error("飞书接收人为空，本次不发生消息");
             return null;
         }
-
-        MsgResultVO<T> msgResult;
         List<String> receiverUserIds = noticeMsgWrapInfoDTO.getReceiverUserIds();
-        noticeMsgWrapInfoDTO.setReceiverUserIds(receiverUserIds.stream().distinct().collect(Collectors.toList()));
-        Boolean isBatch = noticeMsgWrapInfoDTO.getReceiverUserIds().size() >  1;
+        //清除禁用、删除人员
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<String> userIdList = userList.stream().map(FindUserDTO::getUserId).filter(receiverUserIds::contains).distinct().collect(Collectors.toList());
+        if(CollUtil.isEmpty(userIdList)) {
+            log.error("存在禁用人员，飞书接收人为空，本次不发生消息");
+            return null;
+        }
+        MsgResultVO<T> msgResult;
+        noticeMsgWrapInfoDTO.setReceiverUserIds(userIdList);
+        boolean isBatch = userIdList.size() >  1;
         if(!isBatch) { // 单条消息
             msgResult = sendSingleMsg(noticeMsgInfo);
         } else { // 批量消息
