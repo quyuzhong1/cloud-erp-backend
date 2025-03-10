@@ -266,7 +266,7 @@ public class CfgNoticeJob {
                     .collect(Collectors.toList());
             sb.append(codes.size())
                     .append("条\n");
-            for (String code : codes) {
+            for (String code : codes.subList(0, Math.min(100, codes.size()))) {
                 sb.append(code)
                         .append("\n");
             }
@@ -278,7 +278,7 @@ public class CfgNoticeJob {
                     .collect(Collectors.toList());
             sb.append(codes.size())
                     .append("条\n");
-            for (String code : codes) {
+            for (String code : codes.subList(0, Math.min(100, codes.size()))) {
                 sb.append(code)
                         .append("\n");
             }
