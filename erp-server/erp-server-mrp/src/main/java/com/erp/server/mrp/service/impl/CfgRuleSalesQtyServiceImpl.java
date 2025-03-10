@@ -110,6 +110,9 @@ public class CfgRuleSalesQtyServiceImpl extends SuperServiceImpl<CfgRuleSalesQty
      * @param orderType 订单类型
      */
     private String getOrderTypeName(String platformType, List<String> orderType) {
+        if (CollectionUtils.isEmpty(orderType)) {
+            return null;
+        }
         List<CfgPlatformMappingEntity> platformMapping = cfgPlatformMappingService.list();
         Map<String, String> platformMap = platformMapping.stream()
                 .collect(Collectors.toMap(CfgPlatformMappingEntity::getPlatform, CfgPlatformMappingEntity::getType, (o1, o2) -> o1));
