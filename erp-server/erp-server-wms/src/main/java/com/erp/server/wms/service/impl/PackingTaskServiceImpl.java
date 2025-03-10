@@ -245,8 +245,10 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             FirstMileDeliveryEntity firstMileDeliveryEntity = this.getFirstMileDeliveryByTask(taskEntity);
             if(Objects.nonNull(firstMileDeliveryEntity)){
                 //>仅可操作关联单号未审核通过时候可编辑修改
-                if(firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
-                    throw new ServiceException(ApiError.ERROR_92140, firstMileDeliveryEntity.getCode());
+                if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())
+                        && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(taskEntity.getWeightingStatus())
+                        || PackingTaskStatusEnum.PACKED.getCode().equals(taskEntity.getPackingStatus()))) {
+                    throw new ServiceException(ApiError.ERROR_PACKING_DELIVERY_CHECK);
                 }
                 //已下推入库单，不允许修改装箱信息
                 OverseasWarehouseInboundEntity overseasWarehouseInbound = overseasWarehouseInboundService.getBySourceId(firstMileDeliveryEntity.getId(), OverseasInstockStatusEnum.CANCELED.getCode());
