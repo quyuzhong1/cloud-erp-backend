@@ -261,8 +261,9 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id, String remark) {
         PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> applicationDTOList = purchaseApplicationDetailFeign.listByMergeIdList(Collections.singletonList(id));
         //草稿和待确认支持作废
-        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
+        if (CollectionUtils.isNotEmpty(applicationDTOList)) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
         }
         if (old.getInvalidStatus()) {
