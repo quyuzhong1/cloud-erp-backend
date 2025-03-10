@@ -9,7 +9,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -39,8 +38,8 @@ public class CfgVatInvoiceEntity extends BaseEntity<CfgVatInvoiceEntity> {
     /**
     * 店铺国家id
     */
-    @TableField("shop_country_code")
-    private String shopCountryCode;
+    @TableField("shop_country_id")
+    private String shopCountryId;
     /**
     * 启用时间
     */
@@ -69,8 +68,8 @@ public class CfgVatInvoiceEntity extends BaseEntity<CfgVatInvoiceEntity> {
     /**
     * 国家二字码
     */
-    @TableField("country_code")
-    private String countryCode;
+    @TableField("country_id")
+    private String countryId;
     /**
     * 州/省
     */

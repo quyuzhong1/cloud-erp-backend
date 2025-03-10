@@ -96,12 +96,12 @@ public class CfgVatInvoiceController extends BaseController {
             try {
                 Boolean update = cfgVatInvoiceService.update(dto);
                 if (update){
-                    resultDTOS.add(BatchResultDTO.success(dto.getId(),dto.getCountryCode()));
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(),dto.getCountryId()));
                 }else {
-                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getCountryCode(),"修改失败"));
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getCountryId(),"修改失败"));
                 }
             }catch (Exception e){
-                resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getCountryCode(),e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getCountryId(),e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -152,5 +152,15 @@ public class CfgVatInvoiceController extends BaseController {
     @PostMapping("/delete")
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(cfgVatInvoiceService.delete(idsDTO.getIds()));
+    }
+
+    /**
+     * 创建发票VAT文件
+     * @return
+     */
+    @PostMapping("/createVatInvoicePdf")
+    public ApiResult<String> createVatInvoicePdf() {
+        CfgVatInvoiceDTO.InvoiceTemplateDTO invoiceTemplateDTO = cfgVatInvoiceService.createDefaultDTO();
+        return success(cfgVatInvoiceService.createVatInvoicePdf(invoiceTemplateDTO));
     }
 }

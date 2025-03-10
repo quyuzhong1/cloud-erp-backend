@@ -4,7 +4,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,7 +16,6 @@ import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
-import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -25,7 +23,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
-import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.CfgVatInvoiceEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.CfgVatInvoiceTemplateTypeEnum;
@@ -47,6 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -99,7 +97,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         CfgVatInvoiceEntity cfgVatInvoiceEntity =  BeanMapperUtils.map(CfgVatInvoiceEntity.class, addOrUpdateDTO);
         //编辑时不修改字段重新赋值
         cfgVatInvoiceEntity.setShopId(old.getShopId());
-        cfgVatInvoiceEntity.setShopCountryCode(old.getShopCountryCode());
+        cfgVatInvoiceEntity.setShopCountryId(old.getShopCountryId());
         cfgVatInvoiceEntity.setDisabled(old.getDisabled());
         // 数据处理
         handleData(cfgVatInvoiceEntity);
@@ -184,6 +182,48 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         return this.lambdaUpdate().in(CfgVatInvoiceEntity::getId, ids).remove();
     }
 
+    @Override
+    public CfgVatInvoiceDTO.InvoiceTemplateDTO createDefaultDTO() {
+        CfgVatInvoiceDTO.InvoiceTemplateDTO dto = new CfgVatInvoiceDTO.InvoiceTemplateDTO();
+        dto.setCustomerBillAddress("customerBillAddress");
+        dto.setCompanyName("companyName");
+        dto.setCompanyAddress("companyAddress");
+        dto.setVatNo("vatNo");
+        dto.setBillCreateTime(LocalDateTime.now());
+        dto.setInvoiceCode("invoiceCode");
+        dto.setPlatformCreateTime(LocalDateTime.now());
+        dto.setPlatformCode("platformCode");
+        dto.setShippingCost(BigDecimal.ZERO);
+        dto.setDiscount(BigDecimal.ONE);
+        dto.setInvoiceTotal(BigDecimal.TEN);
+        //明细
+        List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
+        CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();
+        detailDTO.setProductName("productName");
+        detailDTO.setQty(121);
+        detailDTO.setTaxRate(BigDecimal.TEN);
+        detailDTO.setPrice(BigDecimal.ONE);
+        detailDTO.setTotalTaxPrice(BigDecimal.TEN);
+        detailDTOS.add(detailDTO);
+        CfgVatInvoiceDTO.DetailDTO detailDTO1 = new CfgVatInvoiceDTO.DetailDTO();
+        detailDTO1.setProductName("productName");
+        detailDTO1.setQty(1212);
+        detailDTO1.setTaxRate(BigDecimal.TEN);
+        detailDTO1.setPrice(BigDecimal.ONE);
+        detailDTO1.setTotalTaxPrice(BigDecimal.TEN);
+        detailDTOS.add(detailDTO1);
+        dto.setDetailDTOS(detailDTOS);
+        //汇总
+        List<CfgVatInvoiceDTO.TotalDTO> totalDTOS = new ArrayList<>();
+        CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
+        totalDTO.setTaxRate(BigDecimal.TEN);
+        totalDTO.setItemTotal(new BigDecimal("100"));
+        totalDTO.setVatTotal(new BigDecimal("99"));
+        totalDTOS.add(totalDTO);
+        dto.setTotalDTOS(totalDTOS);
+        return dto;
+    }
+
     private void fillList(List<CfgVatInvoiceDTO.PagingViewDTO> records) {
         if (CollUtil.isEmpty(records)){
             return;
@@ -191,8 +231,8 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         List<DictCountryDTO.ListDTO> listDTOS = sysUserFeign.countryList();
         Map<String, String> countryMap = listDTOS.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         records.forEach(pagingViewDTO -> {
-            pagingViewDTO.setShopCountryName(countryMap.getOrDefault(pagingViewDTO.getShopCountryCode(), CharSequenceUtil.EMPTY));
-            pagingViewDTO.setCountryName(countryMap.getOrDefault(pagingViewDTO.getCountryCode(), CharSequenceUtil.EMPTY));
+            pagingViewDTO.setShopCountryName(countryMap.getOrDefault(pagingViewDTO.getShopCountryId(), CharSequenceUtil.EMPTY));
+            pagingViewDTO.setCountryName(countryMap.getOrDefault(pagingViewDTO.getCountryId(), CharSequenceUtil.EMPTY));
         });
     }
 
@@ -222,6 +262,6 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
             cfgVatInvoiceEntity.setTemplateType(CfgVatInvoiceTemplateTypeEnum.ERP.getCode());
         }
         //详细地址+城市+州/省+邮编+国家
-        cfgVatInvoiceEntity.setCompanyAddress(cfgVatInvoiceEntity.getAddress() + cfgVatInvoiceEntity.getCity() + cfgVatInvoiceEntity.getProvince() + cfgVatInvoiceEntity.getPostCode() + cfgVatInvoiceEntity.getCountryCode());
+        cfgVatInvoiceEntity.setCompanyAddress(cfgVatInvoiceEntity.getAddress() + cfgVatInvoiceEntity.getCity() + cfgVatInvoiceEntity.getProvince() + cfgVatInvoiceEntity.getPostCode() + cfgVatInvoiceEntity.getCountryId());
     }
 }

@@ -59,7 +59,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         /**
         * 店铺国家id
         */
-        private String shopCountryCode;
+        private String shopCountryId;
 
         /**
         * 启用时间
@@ -89,7 +89,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         /**
         * 国家二字码
         */
-        private String countryCode;
+        private String countryId;
 
         /**
         * 州/省
@@ -171,7 +171,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         */
         @NotBlank(message = "站点不能为空")
         @Size(max = 10,message = "站点最大长度不能超过10位")
-        private String shopCountryCode;
+        private String shopCountryId;
 
         /**
         * 启用时间
@@ -208,7 +208,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         */
         @NotBlank(message = "国家二字码不能为空")
         @Size(max = 10,message = "国家二字码最大长度不能超过10位")
-        private String countryCode;
+        private String countryId;
 
         /**
         * 州/省
@@ -278,7 +278,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         /**
          * 店铺国家id 【可排序】
          */
-        private String shopCountryCode;
+        private String shopCountryId;
         /**
          * 站点名称
          */
@@ -312,7 +312,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         /**
          * 国家二字码
          */
-        private String countryCode;
+        private String countryId;
         /**
          * 国家名称
          */
@@ -409,6 +409,12 @@ public class CfgVatInvoiceDTO implements Serializable {
         private String platformCode;
         //产品明细
         private List<DetailDTO> detailDTOS;
+        //运费，取值订单商品信息的ShippingPrice，多行明细时需要累加
+        private BigDecimal shippingCost;
+        //促销折扣，取值订单商品信息的PromotionDiscount，多行明细时需要累加
+        private BigDecimal discount;
+        //Subtotal(VAT inclusive)+Shipping+Promotion
+        private BigDecimal invoiceTotal;
         //汇总
         private List<TotalDTO> totalDTOS;
     }
@@ -427,12 +433,6 @@ public class CfgVatInvoiceDTO implements Serializable {
         private BigDecimal taxPrice;
         //商品含税总价，Unit price(VAT inclusive)*Quantity
         private BigDecimal totalTaxPrice;
-        //运费，取值订单商品信息的ShippingPrice，多行明细时需要累加
-        private BigDecimal shippingCost;
-        //促销折扣，取值订单商品信息的PromotionDiscount，多行明细时需要累加
-        private BigDecimal discount;
-        //Subtotal(VAT inclusive)+Shipping+Promotion
-        private BigDecimal invoiceTotal;
 
     }
     @Data

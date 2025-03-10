@@ -14,13 +14,13 @@
        <result column="is_deleted" property="isDeleted" />
        <result column="disabled" property="disabled" />
        <result column="shop_id" property="shopId" />
-       <result column="shop_country_code" property="shopCountryCode" />
+       <result column="shop_country_id" property="shopCountryId" />
        <result column="enable_time" property="enableTime" />
        <result column="is_auto_upload" property="isAutoUpload" />
        <result column="tax_rate" property="taxRate" />
        <result column="company_name" property="companyName" />
        <result column="company_address" property="companyAddress" />
-       <result column="country_code" property="countryCode" />
+       <result column="country_id" property="countryId" />
        <result column="province" property="province" />
        <result column="city" property="city" />
        <result column="post_code" property="postCode" />
@@ -40,20 +40,20 @@
         update_time,
         version,
         is_deleted,
-        disabled, shop_id, shop_country_code, enable_time, is_auto_upload, tax_rate, company_name, company_address, country_code, province, city, post_code, address, vat_no, template_type
+        disabled, shop_id, shop_country_id, enable_time, is_auto_upload, tax_rate, company_name, company_address, country_id, province, city, post_code, address, vat_no, template_type
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.CfgVatInvoiceDTO$PagingViewDTO">
         SELECT
         cvi.id,
         cvi.disabled as disabled,
         cvi.shop_id as shopId,
-        cvi.shop_country_code as shopCountryCode,
+        cvi.shop_country_id as shopCountryId,
         cvi.enable_time as enableTime,
         cvi.is_auto_upload as isAutoUpload,
         cvi.tax_rate as taxRate,
         cvi.company_name as companyName,
         cvi.company_address as companyAddress,
-        cvi.country_code,
+        cvi.country_id as countryId,
         cvi.province,
         cvi.city,
         cvi.post_code,

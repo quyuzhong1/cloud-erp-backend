@@ -76,4 +76,6 @@ public interface CfgVatInvoiceService extends SuperService<CfgVatInvoiceEntity> 
      * @return
      */
     Boolean delete(List<String> ids);
+
+    CfgVatInvoiceDTO.InvoiceTemplateDTO createDefaultDTO();
 }
