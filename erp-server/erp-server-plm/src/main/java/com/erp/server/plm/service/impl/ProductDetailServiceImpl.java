@@ -2171,6 +2171,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             String saleCountry = "";
             List<String> chargeIds = new ArrayList<>();
             List<String> productPropertyIdAndSaleCountrys = new ArrayList<>();
+            // 获取保险属性字典数据并缓存
+            List<BasicDictEntity> insurancePropertyList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
+            Map<String, BasicDictEntity>  insurancePropertyMap = insurancePropertyList.stream()
+                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+
             for(ProductDetailExcelExportDTO l : list) {
                 l.setApplicationCategoryName(applicationCategoryMap.get(l.getApplicationCategoryId()));
                 chargeId = l.getChargeId();
@@ -2187,7 +2192,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
                 //保险属性
                 if(StringUtils.isNotBlank(l.getInsuranceProperty())){
-                    l.setInsuranceProperty(productLogisticsService.getInsurancePropertyName(l.getInsuranceProperty()));
+                    l.setInsuranceProperty(String.join(",", productLogisticsService.getInsurancePropertyList(l.getInsuranceProperty(), insurancePropertyMap)));
                 }
             }
 
