@@ -44,11 +44,25 @@
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.CfgVatInvoiceDTO$PagingViewDTO">
         SELECT
-        cvi.id,cvi.disabled,cvi.shop_id, cvi.shop_country_code, cvi.enable_time, cvi.is_auto_upload, cvi.tax_rate, cvi.company_name, cvi.company_address, cvi.country_code,
-        cvi.province, cvi.city, cvi.post_code, cvi.address, cvi.vat_no, cvi.template_type,
+        cvi.id,
+        cvi.disabled as disabled,
+        cvi.shop_id as shopId,
+        cvi.shop_country_code as shopCountryCode,
+        cvi.enable_time as enableTime,
+        cvi.is_auto_upload as isAutoUpload,
+        cvi.tax_rate as taxRate,
+        cvi.company_name as companyName,
+        cvi.company_address as companyAddress,
+        cvi.country_code,
+        cvi.province,
+        cvi.city,
+        cvi.post_code,
+        cvi.address,
+        cvi.vat_no as vatNo,
+        cvi.template_type as templateType,
         si.name as shopName,
-        cvi.update_user_name,
-        cvi.update_time
+        cvi.update_user_name as updateUserName,
+        cvi.update_time as updateTime
         FROM cfg_vat_invoice cvi
         left join shop_info si on cvi.shop_id = si.id and si.disabled = false
         WHERE

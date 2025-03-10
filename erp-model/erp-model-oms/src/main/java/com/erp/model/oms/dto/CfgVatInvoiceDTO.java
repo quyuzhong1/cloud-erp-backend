@@ -262,12 +262,12 @@ public class CfgVatInvoiceDTO implements Serializable {
         private String  id;
 
         /**
-         * 禁用状态 false 启用
+         * 禁用状态 false 启用 【可排序】
          */
         private Boolean disabled;
 
         /**
-         * 店铺id
+         * 店铺id 【可排序】
          */
         private String shopId;
         /**
@@ -276,7 +276,7 @@ public class CfgVatInvoiceDTO implements Serializable {
         private String shopName;
 
         /**
-         * 店铺国家id
+         * 店铺国家id 【可排序】
          */
         private String shopCountryCode;
         /**
@@ -285,27 +285,27 @@ public class CfgVatInvoiceDTO implements Serializable {
         private String shopCountryName;
 
         /**
-         * 启用时间
+         * 启用时间 【可排序】
          */
         private LocalDateTime enableTime;
 
         /**
-         * 自动上传（默认是）
+         * 自动上传（默认是） 【可排序】
          */
         private Boolean isAutoUpload;
 
         /**
-         * VAT税率
+         * VAT税率 【可排序】
          */
         private BigDecimal taxRate;
 
         /**
-         * 公司名称
+         * 公司名称 【可排序】
          */
         private String companyName;
 
         /**
-         * 详细地址+城市+州/省+邮编+国家
+         * 详细地址+城市+州/省+邮编+国家 【可排序】
          */
         private String companyAddress;
 
@@ -339,12 +339,12 @@ public class CfgVatInvoiceDTO implements Serializable {
         private String address;
 
         /**
-         * VAT税号
+         * VAT税号【可排序】
          */
         private String vatNo;
 
         /**
-         * 模板类型:erp=ERP模板,official=官方模板
+         * 模板类型:erp=ERP模板,official=官方模板【可排序】
          */
         private String templateType;
         /**
@@ -352,11 +352,11 @@ public class CfgVatInvoiceDTO implements Serializable {
          */
         private String templateTypeName;
         /**
-         * 更新人
+         * 更新人【可排序】
          */
         private String updateUserName;
         /**
-         * 更新时间
+         * 更新时间【可排序】
          */
         private LocalDateTime updateTime;
 
@@ -386,5 +386,63 @@ public class CfgVatInvoiceDTO implements Serializable {
          * 启用时间
          */
         private LocalDateTime enableTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InvoiceTemplateDTO {
+        //买家账单地址，取值来源于亚马逊配送报告（bill-address-1，bill-address-2，bill-address-3，bill-city，bill-state，bill-postal-code，bill-country）
+        private String customerBillAddress;
+        //公司名称，来源于模板配置中的公司名称
+        private String companyName;
+        //公司地址，来源于模板配置中的公司地址
+        private String companyAddress;
+        //VAT税号，来源于模板配置中的VAT税号
+        private String vatNo;
+        //发票生成时间，ERP自动生成，YYYY-MM-DD，以北京时间为准
+        private LocalDateTime billCreateTime;
+        //发票号，ERP自动生成，INV+YYYY+MM+DD+五位流水号
+        private LocalDateTime invoiceCode;
+        //订单平台创建时间，取值订单信息的PurchaseDate
+        private LocalDateTime platformCreateTime;
+        //订单平台单号
+        private String platformCode;
+        //产品明细
+        private List<DetailDTO> detailDTOS;
+        //汇总
+        private List<TotalDTO> totalDTOS;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO{
+        //根据映射平台SKU+店铺取SKU对照表的listing名称
+        private String productName;
+        //订单SKU的销售数量
+        private String qty;
+        //开票税率，来源于模板配置中的开票税率
+        private BigDecimal taxRate;
+        //不含税单价，Unit price(VAT inclusive)/（1+VAT税率）
+        private BigDecimal price;
+        //商品含税单价，取值订单商品信息真实售价和原始币种
+        private BigDecimal taxPrice;
+        //商品含税总价，Unit price(VAT inclusive)*Quantity
+        private BigDecimal totalTaxPrice;
+        //运费，取值订单商品信息的ShippingPrice，多行明细时需要累加
+        private BigDecimal shippingCost;
+        //促销折扣，取值订单商品信息的PromotionDiscount，多行明细时需要累加
+        private BigDecimal discount;
+        //Subtotal(VAT inclusive)+Shipping+Promotion
+        private BigDecimal invoiceTotal;
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class TotalDTO{
+        //开票税率，来源于模板配置中的开票税率
+        private BigDecimal taxRate;
+        //Invoice total/（1+VAT税率）
+        private BigDecimal itemTotal;
+        //Invoice total-Item Subtotal(VAT exclusive)
+        private BigDecimal vatTotal;
     }
 }

@@ -75,6 +75,11 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
     @TableField("upload_time")
     private LocalDateTime uploadTime;
     /**
+     * 发票生成时间
+     */
+    @TableField("bill_create_time")
+    private LocalDateTime billCreateTime;
+    /**
     * 备注
     */
     @TableField("remark")

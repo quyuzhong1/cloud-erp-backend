@@ -231,7 +231,7 @@ public class InvoiceInfoDTO implements Serializable {
         private String  detailId;
 
         /**
-         * 单据编码
+         * 单据编码【可排序】
          */
         private String code;
 
@@ -241,7 +241,7 @@ public class InvoiceInfoDTO implements Serializable {
         private String cfgId;
 
         /**
-         * 发票类型:vat=VAT发票
+         * 发票类型:vat=VAT发票【可排序】
          */
         private String invoiceType;
         /**
@@ -250,7 +250,7 @@ public class InvoiceInfoDTO implements Serializable {
         private String invoiceTypeName;
 
         /**
-         * 店铺id
+         * 店铺id【可排序】
          */
         private String shopId;
 
@@ -260,17 +260,17 @@ public class InvoiceInfoDTO implements Serializable {
         private String soId;
 
         /**
-         * 销售订单编码
+         * 销售订单编码【可排序】
          */
         private String soCode;
 
         /**
-         * 平台订单号
+         * 平台订单号【可排序】
          */
         private String platformCode;
 
         /**
-         * 模板类型:erp=ERP模板,official=官方模板
+         * 模板类型:erp=ERP模板,official=官方模板【可排序】
          */
         private String templateType;
         /**
@@ -279,18 +279,22 @@ public class InvoiceInfoDTO implements Serializable {
         private String templateTypeName;
 
         /**
-         * 发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功
+         * 发票状态:invoicing=开票中,invoiceFailed=开票失败invoiceSuccess=开票成功 【可排序】
          */
         private String status;
         private String statusName;
 
         /**
-         * 上传时间
+         * 上传时间【可排序】
          */
         private LocalDateTime uploadTime;
+        /**
+         * 生成时间【可排序】
+         */
+        private LocalDateTime billCreateTime;
 
         /**
-         * 备注
+         * 备注【可排序】
          */
         private String remark;
 
@@ -300,7 +304,7 @@ public class InvoiceInfoDTO implements Serializable {
         private String fileUrl;
 
         /**
-         * 上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功
+         * 上传状态:waitUpload=待上传,uploadFailed=上传失败,uploadSuccess=上传成功 【可排序】
          */
         private String uploadStatus;
         private String uploadStatusName;
@@ -311,7 +315,7 @@ public class InvoiceInfoDTO implements Serializable {
         private String skuId;
 
         /**
-         * 产品sku编号
+         * 产品sku编号【可排序】
          */
         private String skuNo;
         /**

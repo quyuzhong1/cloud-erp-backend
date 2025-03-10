@@ -8,14 +8,17 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.entity.CfgVatInvoiceEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.CfgVatInvoiceTemplateTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
@@ -135,6 +138,19 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         return this.lambdaQuery().in(CfgVatInvoiceEntity::getShopId,shopIdList).list();
     }
 
+    @Override
+    public String createVatInvoicePdf(CfgVatInvoiceDTO.InvoiceTemplateDTO invoiceTemplateDTO) {
+        return null;
+    }
+
+    @Override
+    public Boolean delete(List<String> ids) {
+        if (CollUtil.isEmpty(ids)){
+            return Boolean.TRUE;
+        }
+        return this.lambdaUpdate().in(CfgVatInvoiceEntity::getId, ids).remove();
+    }
+
     private void fillList(List<CfgVatInvoiceDTO.PagingViewDTO> records) {
         if (CollUtil.isEmpty(records)){
             return;
@@ -152,6 +168,20 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
     * 新增修改处理数据
     */
     private void handleData(CfgVatInvoiceEntity cfgVatInvoiceEntity) {
+        String shopId = cfgVatInvoiceEntity.getShopId();
+        ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shopId);
+        if (Objects.isNull(shopInfo)){
+            throw new ServiceException("店铺记录不存在");
+        }
+        if (!PlatformDictEnum.AMAZON.getCode().equals(shopInfo.getDictPlatform())){
+            throw new ServiceException("只允许亚马逊平台店铺新增VAT发票配置");
+        }
+        if (CharSequenceUtil.isBlank(cfgVatInvoiceEntity.getId())){
+            Integer count = this.lambdaQuery().eq(CfgVatInvoiceEntity::getShopId, shopId).count();
+            if (count > 0){
+                throw new ServiceException("店铺【{}】已存在发票配置",shopInfo.getName());
+            }
+        }
         if (Objects.isNull(cfgVatInvoiceEntity.getIsAutoUpload())){
             cfgVatInvoiceEntity.setIsAutoUpload(Boolean.TRUE);
         }

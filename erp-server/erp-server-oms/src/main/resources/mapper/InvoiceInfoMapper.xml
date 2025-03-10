@@ -38,13 +38,28 @@
         update_time,
         version,
         is_deleted,
-        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time, remark, file_url, upload_status
+        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$PagingViewDTO">
         SELECT
-        i.id,i.code, i.cfg_id, i.invoice_type, i.shop_id, i.so_id, i.so_code, i.platform_code, i.template_type, i.status, i.upload_time,
-        i.remark, i.file_url, i.upload_status,
-        id.id as detailId, id.sku_id, id.sku_no,
+        i.id,
+        i.code as code,
+        i.cfg_id,
+        i.invoice_type as invoiceType,
+        i.shop_id as shopId,
+        i.so_id,
+        i.so_code as soCode,
+        i.platform_code as platformCode,
+        i.template_type as templateType,
+        i.status as status,
+        i.bill_create_time as billCreateTime,
+        i.remark as remark,
+        i.file_url,
+        i.upload_status as uploadStatus,
+        i.upload_time as uploadTime,
+        id.id as detailId,
+        id.sku_id,
+        id.sku_no as skuNo,
         si.name as shopName
         FROM invoice_info i
         left join invoice_detail id on i.id = id.main_id and id.is_deleted = false

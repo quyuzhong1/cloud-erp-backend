@@ -62,4 +62,17 @@ public interface CfgVatInvoiceService extends SuperService<CfgVatInvoiceEntity> 
      * @return
      */
     List<CfgVatInvoiceEntity> listCfgByShopIds(List<String> shopIdList);
+
+    /**
+     * 生成VAT发票
+     * @return
+     */
+    String createVatInvoicePdf(CfgVatInvoiceDTO.InvoiceTemplateDTO invoiceTemplateDTO);
+
+    /**
+     * 删除配置
+     * @param ids
+     * @return
+     */
+    Boolean delete(List<String> ids);
 }
