@@ -1,5 +1,6 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -31,11 +32,15 @@ import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
@@ -76,6 +81,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private ProductInfoService productInfoService;
 
 
     @Resource
@@ -98,6 +105,9 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Resource
     private ProductPurchaseService productPurchaseService;
+
+    @Resource
+    private InventoryFeign inventoryFeign;
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -122,6 +132,27 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     @Transactional
     public Boolean add(AddChangeDTO dto) {
+
+        // 如果商品信息为空，则直接返回
+        if (StringUtils.isBlank(dto.getDetailsJson())) {
+            return Boolean.FALSE;
+        }
+        // 解析商品信息JSON，转换为ProductSmallestUnitDTO对象
+        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(dto.getDetailsJson(), ProductSmallestUnitDTO.class);
+        // 获取商品的SKU编号
+        String skuNo = skuDTO.getProductManySkuDetail().getSkuNo();
+        String skuId = skuDTO.getProductManySkuDetail().getId();
+        // 获取商品属性ID
+        String propertyId = skuDTO.getProductManySpecBaseDTO().getPropertyId();
+        // 根据商品ID获取商品信息实体
+        ProductInfoEntity productInfoEntity = productInfoService.getById(skuDTO.getProductManySpecBaseDTO().getId());
+        // 如果商品信息实体为空，则抛出异常
+        if(Objects.isNull(productInfoEntity)){
+            throw new ServiceException(ApiError.ERROR_95162,skuNo);
+        }
+        //单品或者Bom都需要检查库存是否大于零
+        checkInventoryGreaterThanZero(productInfoEntity,propertyId, skuId);
+
         ProductChangeEntity change = new ProductChangeEntity();
         String type = dto.getType();
         String changeBom = BomConstant.CHANGE_BOM;
@@ -256,6 +287,59 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         checkSkuChangeAuditor(productChargeIdList);
 
+    }
+
+    /**
+     * 检查库存是否大于零
+     * 此方法用于检查给定商品的库存是否大于零如果库存大于零，则根据库存状态统计数量，并抛出异常
+     *
+     */
+    @Override
+    public void checkInventoryGreaterThanZero(ProductInfoEntity productInfoEntity,String propertyId , String skuId) {
+        // 如果商品属性ID与实体中的属性ID不匹配，则直接返回
+        if(productInfoEntity.getPropertyId().equals(propertyId)){
+            return;
+        }
+
+        // 创建一个用于查询库存的DTO对象，并设置SKU编号列表
+        InventoryQtyDTO.InventoryBySkuDTO inventoryBySkuDTO = new InventoryQtyDTO.InventoryBySkuDTO();
+        inventoryBySkuDTO.setSkuIdList(Collections.singletonList(skuId));
+
+        // 调用远程服务，获取库存实体列表
+        List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuIds(inventoryBySkuDTO);
+
+        // 如果库存实体列表不为空，则进行进一步处理
+        if(CollUtil.isNotEmpty(inventoryEntities)){
+            // 排除在途的库存
+            inventoryEntities = inventoryEntities.stream()
+                    .filter(v -> !v.getDictInventoryStatus().equals(InventoryStatusEnum.IN_TRANSIT.getCode()))
+                    .collect(Collectors.toList());
+
+            // 计算剩余库存的总数量
+            int totalQty = inventoryEntities.stream()
+                    .mapToInt(inventory -> Optional.ofNullable(inventory.getQty()).orElse(0))
+                    .sum();
+
+            // 如果总库存量大于0，则按库存状态统计数量，并抛出异常
+            if(totalQty > 0){
+                // 按库存状态统计数量
+                Map<String, Integer> qtyMap = inventoryEntities.stream()
+                        .collect(Collectors.groupingBy(
+                                InventoryEntity::getDictInventoryStatus,
+                                Collectors.summingInt(inventory -> Optional.ofNullable(inventory.getQty()).orElse(0))
+                        ));
+
+                // 构建包含库存状态和数量的字符串
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry<String, Integer> entry : qtyMap.entrySet()) {
+                    sb.append(InventoryStatusEnum.getNameByCode(entry.getKey())).append(":")
+                            .append(entry.getValue()).append(";");
+                }
+
+                // 抛出包含库存状态和数量信息的自定义异常
+                throw new ServiceException(ApiError.ERROR_95286,sb.toString());
+            }
+        }
     }
 
     /**
@@ -644,6 +728,26 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     public Boolean edit(UpdateChangeDTO dto) {
+        // 如果商品信息为空，则直接返回
+        if (StringUtils.isBlank(dto.getDetailsJson())) {
+            return Boolean.FALSE;
+        }
+        // 解析商品信息JSON，转换为ProductSmallestUnitDTO对象
+        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(dto.getDetailsJson(), ProductSmallestUnitDTO.class);
+        // 获取商品的SKU编号
+        String skuNo = skuDTO.getProductManySkuDetail().getSkuNo();
+        String skuId = skuDTO.getProductManySkuDetail().getId();
+        // 获取商品属性ID
+        String propertyId = skuDTO.getProductManySpecBaseDTO().getPropertyId();
+        // 根据商品ID获取商品信息实体
+        ProductInfoEntity productInfoEntity = productInfoService.getById(skuDTO.getProductManySpecBaseDTO().getId());
+        // 如果商品信息实体为空，则抛出异常
+        if(Objects.isNull(productInfoEntity)){
+            throw new ServiceException(ApiError.ERROR_95162,skuNo);
+        }
+        //单品或者Bom都需要检查库存是否大于零
+        checkInventoryGreaterThanZero(productInfoEntity,propertyId, skuId);
+
         String id = dto.getId();
         //获取到变更信息
         ProductChangeEntity changeEntity = this.getById(id);

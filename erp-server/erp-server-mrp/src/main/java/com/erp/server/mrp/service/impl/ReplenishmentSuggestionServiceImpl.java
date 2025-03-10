@@ -220,7 +220,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
         //oms信息
         List<SkuMappingDTO.ListSkuParamDTO> dataList = new ArrayList<>();
-        records.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(),obj.getPlatform(),obj.getFbaWarehouseId())).distinct().forEach(dataList::add);
+        records.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(),obj.getFbaWarehouseId(),obj.getPlatform())).distinct().forEach(dataList::add);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingFeign.listBySkuNoList(dataList);
 
         for (ReplenishmentSuggestionVO.PagingView view : records) {
@@ -1254,10 +1254,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
        );
     }
 
-    @Override
-    public List<ReplenishmentSuggestionVO.SalesInfoVO> listReplenishmentSelect() {
-        return Collections.emptyList();
-    }
 
     @Override
     public Integer inventoryDetailTotal(InventoryDetailTotalDTO params) {
