@@ -35,6 +35,8 @@ public class ShopifyOrderNextDmpHandler extends ShopifyOrderGetDetailDmpHandler 
 				BigDecimal quantity = BigDecimal.ZERO;
 				if (totalDiscountObj != null) {
 					totalDiscount = MathUtil.valueOf(totalDiscountObj);
+
+					dmpDataMap.put("discountAmount", MathUtil.valueOf(totalDiscountObj));
 				}
 				if (quantityObj != null) {
 					quantity = MathUtil.valueOf(quantityObj);
