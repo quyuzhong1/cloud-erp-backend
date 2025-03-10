@@ -43,7 +43,7 @@
        <result column="tax_amount" property="taxAmount" />
        <result column="pay_time" property="payTime" />
        <result column="product_name" property="productName" />
-       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_create_time" property="platformOrderCreateTime" />
        <result column="qty" property="qty" />
        <result column="recipient_name" property="recipientName" />
        <result column="shipping_price" property="shippingPrice" />
