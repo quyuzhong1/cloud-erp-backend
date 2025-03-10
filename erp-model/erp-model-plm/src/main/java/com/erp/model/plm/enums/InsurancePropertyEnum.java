@@ -1,4 +1,4 @@
-package com.common.business.enums;
+package com.erp.model.plm.enums;
 
 import com.common.core.constant.EnumMessage;
 import org.apache.commons.lang3.StringUtils;
@@ -41,6 +41,17 @@ public enum InsurancePropertyEnum implements EnumMessage {
         for (InsurancePropertyEnum item : InsurancePropertyEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
+            }
+        }
+        return "";
+    }
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (InsurancePropertyEnum item : InsurancePropertyEnum.values()) {
+            if (name.equals(item.getName())) {
+                return item.getCode();
             }
         }
         return "";
