@@ -75,6 +75,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -1257,12 +1258,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 });
         List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = list();
         List<String> suggestIds = replenishmentSuggestionList.stream()
-                .filter(v -> exportSalesDTO.getSkuShopList().stream().anyMatch(e -> e.getShopId().equals(v.getShopId()) && e.getSkuId().equals(v.getShopId())))
+                .filter(v -> exportSalesDTO.getSkuShopList().stream().anyMatch(e -> e.getShopId().equals(v.getShopId()) && e.getSkuId().equals(v.getSkuId())))
                 .map(ReplenishmentSuggestionEntity::getId)
                 .distinct()
                 .collect(Collectors.toList());
         List<ReplenishmentSuggestionDetailHistoryEntity> detailList = replenishmentSuggestionDetailHistoryService.list(Wrappers.<ReplenishmentSuggestionDetailHistoryEntity>lambdaQuery()
-                .eq(ReplenishmentSuggestionDetailHistoryEntity::getCalcDate, exportSalesDTO.getStartDate().format(DateTimeFormatter.ISO_DATE))
+                .eq(ReplenishmentSuggestionDetailHistoryEntity::getCalcDate, exportSalesDTO.getStartDate().format(DateTimeFormatter.BASIC_ISO_DATE))
                 .in(ReplenishmentSuggestionDetailHistoryEntity::getMainId, suggestIds)
         );
         Map<String, String> detailMap = detailList.stream()
@@ -1335,21 +1336,23 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             detailExports.add(detailExportList);
         }
         try {
-            response.setCharacterEncoding("utf-8");
-            response.setContentType("application/octet-stream");
-            response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode("", "UTF-8"));
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + URLEncoder.encode("销量预测.xlsx", StandardCharsets.UTF_8.name()));
+            response.setContentType("application/vnd.ms-excel");
             ExcelWriter writer = EasyExcel.write(response.getOutputStream()).build();
             WriteSheet sheet1 = EasyExcel.writerSheet(0, "汇总").head(ReplenishmentSuggestionDTO.HistorySaleExportDTO.class).build();
             writer.write(historySaleExportDTOS, sheet1);
             int i = 1;
             for (List<ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO> detailExport : detailExports) {
-                WriteSheet sheet2 = EasyExcel.writerSheet(0, "销量明细" + i).head(ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO.class).build();
+                WriteSheet sheet2 = EasyExcel.writerSheet(i, "销量明细" + i).head(ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO.class).build();
                 writer.write(detailExport, sheet2);
                 i++;
             }
             writer.finish();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ServiceException(e.getMessage(), e);
         }
 
     }

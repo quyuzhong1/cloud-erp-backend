@@ -21,6 +21,7 @@ import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -915,11 +916,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
 
 
         @ExcelProperty(value = "开始日期", index = 3)
-        private LocalDate startDate;
+        private String startDate;
 
 
         @ExcelProperty(value = "结束日期", index = 4)
-        private LocalDate endDate;
+        private String endDate;
 
 
         @ExcelProperty(value = "MAE", index = 5)
@@ -947,8 +948,8 @@ public class ReplenishmentSuggestionDTO implements Serializable {
             exportDTO.setSkuNo(shopDTO.getSkuNo());
             exportDTO.setShopName(shopDTO.getShopName());
             exportDTO.setPlatformName(platformName);
-            exportDTO.setStartDate(exportSalesDTO.getStartDate());
-            exportDTO.setEndDate(exportSalesDTO.getEndDate());
+            exportDTO.setStartDate(exportSalesDTO.getStartDate().format(DateTimeFormatter.ISO_DATE));
+            exportDTO.setEndDate(exportSalesDTO.getEndDate().format(DateTimeFormatter.ISO_DATE));
             return exportDTO;
         }
     }
@@ -970,11 +971,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
 
 
         @ExcelProperty(value = "计算日期", index = 3)
-        private LocalDate calcDate;
+        private String calcDate;
 
 
         @ExcelProperty(value = "预测日期", index = 4)
-        private LocalDate date;
+        private String date;
 
 
         @ExcelProperty(value = "预估日销量", index = 5)
@@ -998,8 +999,8 @@ public class ReplenishmentSuggestionDTO implements Serializable {
                         exportDTO.setSkuNo(shopDTO.getSkuNo());
                         exportDTO.setShopName(shopDTO.getShopName());
                         exportDTO.setPlatformName(platformName);
-                        exportDTO.setCalcDate(exportSalesDTO.getStartDate());
-                        exportDTO.setDate(v.getDate());
+                        exportDTO.setCalcDate(exportSalesDTO.getStartDate().format(DateTimeFormatter.ISO_DATE));
+                        exportDTO.setDate(v.getDate().format(DateTimeFormatter.ISO_DATE));
                         exportDTO.setSaleQty(v.getSalesQty());
                         exportDTO.setRealQty(Optional.ofNullable(historyMap.get(v.getDate())).orElse(0));
                         return exportDTO;
