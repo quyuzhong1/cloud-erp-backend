@@ -639,6 +639,10 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "店铺名称不能为空")
         @Size(max = 100, message = "店铺名称最大100字符")
         private String name;
+        /**
+         * 站点，必须选一个
+         */
+        private List<String> dictCountryCodeList;
 
         /**
          * 店铺负责人

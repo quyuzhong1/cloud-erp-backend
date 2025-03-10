@@ -2177,6 +2177,27 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 v.setChangeTypeName(RequisitionChangeTypeEnum.ADD.getName());
             }
         });
+
+        //获取子SKU集合
+        List<String> requisitionIds = records.stream().map(RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO::getRequisitionDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(requisitionIds);
+        List<String> skuIds = records.stream().filter(v-> StringUtils.isNotBlank(v.getRequisitionDetailId())).map(RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> allBomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        for (RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO productDTO : records) {
+            if(StringUtils.isBlank(productDTO.getRequisitionDetailId())){
+                continue;
+            }
+            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(productDTO.getSkuId())&& BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
+            List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(productDTO.getRequisitionDetailId())).collect(Collectors.toList());
+            int pickedQty;
+            if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){
+                Integer bomQty = currentBomList.stream().filter(v->v.getSkuId().equals(currentPickList.get(0).getSkuId())).findFirst().map(BomChildrenSkuDTO::getQuantity).orElse(0);
+                pickedQty = bomQty * currentPickList.get(0).getQty();
+            }else{
+                pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+            }
+            productDTO.setPickQty(pickedQty);
+        }
         return new PagingVO<>(iPage);
     }
 

@@ -644,6 +644,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination;
+        /**
+         * 应拣数量
+         */
+        private Integer pickQty;
     }
     /**
      * 列表查询参数
