@@ -419,6 +419,8 @@ public class CfgVatInvoiceDTO implements Serializable {
         private TotalDTO totalDTOS;
         //币种
         private String currencyCode;
+        //币种符号
+        private String currencySymbol;
     }
     @Data
     @NoArgsConstructor
