@@ -35,7 +35,7 @@ public class EccangReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
 				String orderReferenceNo = dmpDataMap.getOrDefault("order_reference_no", "").toString();
 				if (StringUtils.isBlank(orderReferenceNo)){
 					String referenceNo = dmpDataMap.getOrDefault("reference_no", "").toString();
-					dmpDataMap.put("order_reference_no", referenceNo);
+					dmpDataMap.put("orderReferenceNo", referenceNo);
 				}
 			}
 		}
