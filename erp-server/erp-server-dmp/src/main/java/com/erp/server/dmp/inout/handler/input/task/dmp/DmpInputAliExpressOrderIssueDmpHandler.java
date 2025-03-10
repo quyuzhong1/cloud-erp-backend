@@ -62,10 +62,10 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 				
 				Map<Long, Object> issueIdOrderMap = new HashMap<>();
 				if(CollUtil.isNotEmpty(issueIds)) {
-					List<ParamData> paramDataList = new ArrayList<>();
-					paramDataList.add(new ParamData("id", "id", PannoEnum.IN, issueIds));
-					paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
-					issueIdOrderMap = mongoService.findMongoData(paramDataList, ALIEXPRESS_ISSUEDETAIL_DATA).stream().collect(Collectors.toMap(a -> Long.valueOf(a.get("id").toString()), a -> a.get("buyer_return_no")));
+//					List<ParamData> paramDataList = new ArrayList<>();
+//					paramDataList.add(new ParamData("id", "id", PannoEnum.IN, issueIds));
+//					paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
+//					issueIdOrderMap = mongoService.findMongoData(paramDataList, ALIEXPRESS_ISSUEDETAIL_DATA).stream().collect(Collectors.toMap(a -> Long.valueOf(a.get("id").toString()), a -> a.get("buyer_return_no")));
 				}
 				
 				for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {

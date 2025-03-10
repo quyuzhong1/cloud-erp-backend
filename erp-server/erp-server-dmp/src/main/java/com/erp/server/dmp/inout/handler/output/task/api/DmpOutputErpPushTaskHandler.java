@@ -46,6 +46,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.push.service.sdy.SdyCommonService;
 import com.erp.server.dmp.service.DmpPushMsgHisService;
 import com.erp.server.dmp.service.DmpPushMsgService;
+import com.erp.server.dmp.service.impl.DmpOutputTaskRecordMergeServiceImpl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
@@ -141,29 +142,8 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		}
 
 		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
-		String sourceId = dmpPushMsgEntity.getSourceId();
-		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
-				.eq(DmpPushMsgEntity::getSourceId, sourceId)
-				.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
-				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
-				.ne(DmpPushMsgEntity::getId, dataId)
-				.select(DmpPushMsgEntity::getId)
-				.list();
-		if(CollUtil.isNotEmpty(sourceList)) {
-			Integer count = dmpOutputTaskRecordService.lambdaQuery()
-					.in(DmpOutputTaskRecordEntity::getDataId, sourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
-					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
-					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.count();
-			if(count > 0) {
-				dmpOutputTaskRecordService.lambdaUpdate()
-					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功")
-					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.update();
-				return;
-			}
+		if(this.validateSourceId(dmpCfgOutputEntity, dmpOutputTaskRecordEntity , false)) {
+			return;
 		}
 
 		String parentId = dmpPushMsgEntity.getParentId();
@@ -413,4 +393,58 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		return null;
 	}
 
+	/**
+	 * 校验数据是否删除处理
+	 */
+	private String isDeletedHandler(List<DmpOutputTaskRecordEntity> list, String sourceCode) {
+		DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus()) && req.getIsNeedSync()).findFirst().orElse(null);
+		if (ObjectUtil.isNotEmpty(taskRecordEntity) && !taskRecordEntity.getRequestData().contains("isQuerySync")) {
+			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(taskRecordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
+			shudiyunB2cOrderDTO1.setStatus("已删除");
+			return JSON.toJSONString(shudiyunB2cOrderDTO1);
+		} else {
+			dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+					.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
+					.update();
+			return "";
+		}
+	}
+	
+	public boolean validateSourceId(DmpCfgOutputEntity dmpCfgOutputEntity,
+			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity , boolean isMerge) {
+		String dataId = dmpOutputTaskRecordEntity.getDataId();
+		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
+		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
+		String sourceId = dmpPushMsgEntity.getSourceId();
+		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
+				.eq(DmpPushMsgEntity::getSourceId, sourceId)
+				.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
+				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+				.ne(DmpPushMsgEntity::getId, dataId)
+				.select(DmpPushMsgEntity::getId)
+				.list();
+		if(CollUtil.isNotEmpty(sourceList)) {
+			List<DmpOutputTaskRecordEntity> leDataIdList = dmpOutputTaskRecordService.lambdaQuery()
+					.in(DmpOutputTaskRecordEntity::getDataId, sourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
+					.list();
+			if(leDataIdList.stream().anyMatch(l -> !l.getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode()))) {
+				dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一sourceId")
+					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.update();
+				return true;
+			}
+			
+			if(isMerge) {
+				DmpOutputTaskRecordMergeServiceImpl dmpOutputTaskRecordMergeServiceImpl = ApplicationContextUtils.getBean(DmpOutputTaskRecordMergeServiceImpl.class);
+				return dmpOutputTaskRecordMergeServiceImpl.validateMerge(leDataIdList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()), dmpOutputTaskRecordEntity);
+			}
+		}
+		return false;
+	}
 }

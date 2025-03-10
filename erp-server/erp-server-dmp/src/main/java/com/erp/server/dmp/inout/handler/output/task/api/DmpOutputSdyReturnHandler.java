@@ -144,7 +144,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
             sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
 
-            int qtyTotal = dmpSoReturnDetailEntityList.stream().mapToInt(DmpSoReturnDetailEntity::getQty).sum();
+            int qtyTotal = dmpSoReturnDetailEntityList.stream().filter(d -> d.getQty() != null).mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
             sdyDTO.setQuantity_buyer_returned(qtyTotal);

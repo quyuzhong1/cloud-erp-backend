@@ -8,7 +8,7 @@ package com.erp.model.sys.enums;
  */
 public enum DictValueEnum {
 
-    GL("GL","全球");
+    ALL("ALL","全球");
 
 
     private String code;
