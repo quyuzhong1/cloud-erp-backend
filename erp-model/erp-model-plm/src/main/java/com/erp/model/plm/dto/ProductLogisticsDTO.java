@@ -1,5 +1,7 @@
 package com.erp.model.plm.dto;
 
+import com.common.core.anno.FieldValid;
+import com.erp.model.plm.enums.InsurancePropertyEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -148,6 +150,11 @@ public class ProductLogisticsDTO implements Serializable {
      * 电池容量单位 dict type=batteryCapacityUnit
      */
     private String batteryCapacityUnit;
+
+    /**
+     * 保险属性
+     */
+    private String insuranceProperty;
 
     private static final long serialVersionUID = 1L;
 }

@@ -24,6 +24,8 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      **/
     List<ProductLogisticsShowDTO> list(String productId);
 
+    String getInsurancePropertyName(String insuranceProperty);
+
     /**
      * @Description 产品物流信息查询列表
      * @Author Luo_WG

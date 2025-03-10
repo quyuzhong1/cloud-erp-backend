@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.enums.InsurancePropertyEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.*;
@@ -12,6 +11,7 @@ import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.InsurancePropertyEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.plm.mapper.ProductLogisticsMapper;
@@ -69,17 +69,22 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
         return list;
     }
 
-    private static String getInsurancePropertyName(String insuranceProperty) {
+    @Override
+    public String getInsurancePropertyName(String insuranceProperty) {
         if(StringUtils.isBlank(insuranceProperty)){
             return "";
         }
-        String[] split = insuranceProperty.split(",");
         StringBuilder sb = new StringBuilder();
-        for (String s : split) {
-            sb.append(InsurancePropertyEnum.getName(s));
-            sb.append(",");
+        if(insuranceProperty.contains(",")){
+            String[] split = insuranceProperty.split(",");
+            for (String s : split) {
+                sb.append(InsurancePropertyEnum.getName(s));
+                sb.append(",");
+            }
+            return sb.toString().substring(0,sb.length()-1);
+        }else {
+            return InsurancePropertyEnum.getName(insuranceProperty);
         }
-        return sb.toString().substring(0,sb.length()-1);
     }
 
     /**
