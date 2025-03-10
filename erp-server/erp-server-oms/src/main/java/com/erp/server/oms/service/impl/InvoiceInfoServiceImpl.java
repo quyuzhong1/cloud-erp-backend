@@ -233,6 +233,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             return isCreatePdf && cfgVatInvoiceEntity.getIsAutoUpload();
         }).collect(Collectors.toList());
         //上传发票
+        for (InvoiceInfoEntity invoiceInfoEntity : uploadInvoiceList) {
+            //TODO:调用亚马逊上传发票接口
+
+        }
         return resultDTOList;
     }
 
@@ -251,7 +255,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceTemplateDTO.setInvoiceCode(invoiceInfoEntity.getCode());
         invoiceTemplateDTO.setPlatformCreateTime(soB2cEntity.getPlatformOrderCreateTime());
         invoiceTemplateDTO.setPlatformCode(soB2cEntity.getPlatformCode());
-
+        invoiceTemplateDTO.setCurrencyCode(soB2cEntity.getCurrency());
         List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
             CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();

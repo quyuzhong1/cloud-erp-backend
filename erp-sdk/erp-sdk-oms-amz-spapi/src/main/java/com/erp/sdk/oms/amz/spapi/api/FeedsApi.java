@@ -13,24 +13,30 @@
 
 package com.erp.sdk.oms.amz.spapi.api;
 
+import com.amazonaws.auth.AWS4Signer;
+import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.*;
 import com.erp.sdk.oms.amz.spapi.client.*;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.feeds.*;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.google.gson.reflect.TypeToken;
 import lombok.Getter;
-import okhttp3.Call;
-import okhttp3.Interceptor;
-import okhttp3.Response;
+import okhttp3.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 public class FeedsApi {
@@ -921,24 +927,42 @@ public class FeedsApi {
     /**
      * 初始化Api
      */
-    public static FeedsApi initApi(AmazonMarketplaceEnum marketplaceEnum) {
-//        AWSAuthenticationCredentials awsAuthenticationCredentials = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentials(marketplaceEnum.getEndpointsEnum());
-//        LWAAuthorizationCredentials lwaAuthorizationCredentials = AmazonSpApiConfigUtils.buildLWAAuthorizationCredentials();
-//        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = AmazonSpApiConfigUtils.buildAWSAuthenticationCredentialsProvider();
-//        FeedsApi feedsApi = new FeedsApi.Builder()
-//                .awsAuthenticationCredentials(awsAuthenticationCredentials)
-//                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
-//                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
-//                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
-//                //北美，https://sellingpartnerapi-na.amazon.com
-//                //欧洲，https://sellingpartnerapi-eu.amazon.com
-//                //远东，https://sellingpartnerapi-fe.amazon.com
-//                .endpoint(marketplaceEnum.getEndpointsEnum().getEndpointsByProfile())
-//                .build();
-//        if (null == feedsApi) {
-//            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
-//        }
-//        return feedsApi;
-        return null;
+    public static FeedsApi initApi(AmazonEndpointsEnum endpointsEnum, AmazonShopInfoDTO shopInfoDTO) {
+        AWSAuthenticationCredentials awsAuthenticationCredentials = new AWSAuthenticationCredentials(shopInfoDTO.getAccessKeyId(), shopInfoDTO.getSecretKey(), endpointsEnum.getRegion());
+        LWAAuthorizationCredentials lwaAuthorizationCredentials = new LWAAuthorizationCredentials(shopInfoDTO.getClientId(), shopInfoDTO.getClientSecret(), shopInfoDTO.getRefreshToken(), shopInfoDTO.getAuthUrl(), null);
+        AWSAuthenticationCredentialsProvider awsAuthenticationCredentialsProvider = new AWSAuthenticationCredentialsProvider(shopInfoDTO.getRoleStr(), com.common.core.utils.UUID.randomUUID().toString());
+        FeedsApi feedsApi = new FeedsApi.Builder()
+                .awsAuthenticationCredentials(awsAuthenticationCredentials)
+                .lwaAuthorizationCredentials(lwaAuthorizationCredentials)
+                .awsAuthenticationCredentialsProvider(awsAuthenticationCredentialsProvider)
+                //注意，这里的endpoint分北美，欧洲，远东三个地域，每个区域的链接是不一样的
+                //北美，https://sellingpartnerapi-na.amazon.com
+                //欧洲，https://sellingpartnerapi-eu.amazon.com
+                //远东，https://sellingpartnerapi-fe.amazon.com
+                .endpoint(endpointsEnum.getEndpoints())
+                .build();
+        if (null == feedsApi) {
+            throw new RuntimeException("授权失败，未获取到API实例的话抛出异常，进行重试");
+        }
+        return feedsApi;
     }
+    private static final String AWS_ACCESS_KEY = "amzn1.application-oa2-client.aa03ca5c8fd741a49df6e35aac3c3287";
+    private static final String AWS_SECRET_KEY = "amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988";
+    private static final String AWS_REGION = "us-east-1"; // 根据实际情况选择区域
+    private static final String ACCESS_TOKEN = "Atza|IwEBIHSbYQlH1yxlSVJfU23cZVOrKnWvd14inCUbJQpGunKC7nT7dPcrpo8jfoK7Na1GSdV2PbTesKOxAOlxHpc-q-RVKpn-4Dbnk6bPdThsPJmQN3JKW8i6VV4wJB_Bm_tp7KJVkurlhDu2G79V63bAibbHcsQ-exSjHltvIe40xLnpeugxyKpUxKBa3H4Pj3Hc_C31H8Sz54O1A5lJX-tqdhhtyPFhg7W6ZFbosayEZpG1Sn1vljm-ZEOaMHkBfLamw5HBRUkc2QQlAwifRhhbtDRU9u87Kqsl5vPkY-Ai0cbUhjZdXNBroYfGBmImnhMWPhzCONitg3aP0c1AfGsYpYPttMHhQyTWd9pHWoqkacaznA"; // OAuth 2.0 access token
+
+    public static void main(String[] args) throws IOException {
+
+    }
+
+    private static String extractUploadUrlFromResponse(String responseBody) {
+        // Implement logic to parse JSON and extract upload URL
+        return "";
+    }
+
+    private static String extractFeedDocumentIdFromResponse(String responseBody) {
+        // Implement logic to parse JSON and extract feed document ID
+        return UUID.randomUUID().toString(); // Placeholder
+    }
+
 }
