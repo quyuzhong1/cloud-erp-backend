@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.InvoiceInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.InvoiceInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="cfg_id" property="cfgId" />
+       <result column="invoice_type" property="invoiceType" />
+       <result column="shop_id" property="shopId" />
+       <result column="so_id" property="soId" />
+       <result column="so_code" property="soCode" />
+       <result column="platform_code" property="platformCode" />
+       <result column="template_type" property="templateType" />
+       <result column="status" property="status" />
+       <result column="upload_time" property="uploadTime" />
+       <result column="remark" property="remark" />
+       <result column="file_url" property="fileUrl" />
+       <result column="upload_status" property="uploadStatus" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status
+    </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$PagingViewDTO">
+        SELECT
+        i.id,
+        i.code as code,
+        i.cfg_id,
+        i.invoice_type as invoiceType,
+        i.shop_id as shopId,
+        i.so_id,
+        i.so_code as soCode,
+        i.platform_code as platformCode,
+        i.template_type as templateType,
+        i.status as status,
+        i.bill_create_time as billCreateTime,
+        i.remark as remark,
+        i.file_url,
+        i.upload_status as uploadStatus,
+        i.upload_time as uploadTime,
+        id.id as detailId,
+        id.sku_id,
+        id.sku_no as skuNo,
+        si.name as shopName
+        FROM invoice_info i
+        left join invoice_detail id on i.id = id.main_id and id.is_deleted = false
+        left join shop_info si on i.shop_id = si.id and si.disabled = false
+        WHERE
+        ${params.sqlMap.default}
+        and i.is_deleted=FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        i.create_time DESC
+    </select>
+
+
+</mapper>
