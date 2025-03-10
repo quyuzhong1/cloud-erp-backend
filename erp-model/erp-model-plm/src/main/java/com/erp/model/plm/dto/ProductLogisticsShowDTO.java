@@ -200,6 +200,6 @@ public class ProductLogisticsShowDTO implements Serializable {
      * 保险属性
      */
     private List<String> insurancePropertyList;
-
+    private List<String> insurancePropertyNameList;
     private String insuranceProperty;
 }
