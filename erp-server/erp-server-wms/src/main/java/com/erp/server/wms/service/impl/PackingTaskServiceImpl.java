@@ -247,7 +247,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 //>仅可操作关联单号未审核通过时候可编辑修改
                 if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())
                         && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(taskEntity.getWeightingStatus())
-                        || PackingTaskStatusEnum.PACKED.getCode().equals(taskEntity.getPackingStatus()))) {
+                        && PackingTaskStatusEnum.PACKED.getCode().equals(taskEntity.getPackingStatus()))) {
                     throw new ServiceException(ApiError.ERROR_PACKING_DELIVERY_CHECK);
                 }
                 //已下推入库单，不允许修改装箱信息
@@ -1933,7 +1933,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 //        }
         if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())
                 && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(packingTask.getWeightingStatus())
-                || PackingTaskStatusEnum.PACKED.getCode().equals(packingTask.getPackingStatus()))) {
+                && PackingTaskStatusEnum.PACKED.getCode().equals(packingTask.getPackingStatus()))) {
             //【发货单状态-已审核】且【装箱任务状态-已装箱/已称重时】不可编辑
             throw new ServiceException(ApiError.ERROR_PACKING_DELIVERY_CHECK);
         }
