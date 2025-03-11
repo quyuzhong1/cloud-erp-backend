@@ -410,6 +410,10 @@ public class VirtualWarehouseDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportDTO {
         /**
+         * 主键id
+         */
+        private String id;
+        /**
          * 虚拟仓编号
          */
         private String code;
@@ -422,25 +426,49 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String warehouseId;
         /**
+         * 关联仓库名称
+         */
+        private String warehouseName;
+        /**
          * 关联外部仓平台
          */
         private String outSidePlatform;
+        /**
+         * 关联外部仓平台
+         */
+        private String outSidePlatformName;
         /**
          * 关联外部仓库id
          */
         private String outSideVirtualWarehouseId;
         /**
+         * 关联外部仓库名称
+         */
+        private String outSideVirtualWarehouseName;
+        /**
          * 是否启用
          */
-        private String disabled;
+        private Boolean disabled;
+        /**
+         * 是否启用
+         */
+        private String disabledStr;
         /**
          * 渠道类型
          */
         private String type;
         /**
+         * 渠道类型名称
+         */
+        private String typeName;
+        /**
          * 平台
          */
         private String dictPlatform;
+        /**
+         * 平台
+         */
+        private String dictPlatformName;
         /**
          * 店铺id
          */
