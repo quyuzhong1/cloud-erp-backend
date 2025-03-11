@@ -24,7 +24,9 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -892,7 +894,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
-     * @param skuId
      * @param warehouseId
      * @param qty
      * @param skuMappingDTOList
@@ -1054,4 +1055,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
+
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
 }
