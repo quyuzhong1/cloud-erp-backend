@@ -1046,7 +1046,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //产品款名和产品品名关系处理
-        handleProductNames(productSkuBaseInfoDTO,Boolean.TRUE);
+        handleProductNames(productSkuBaseInfoDTO);
 
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(productSpuBaseInfoDTO.getId());
