@@ -171,13 +171,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public List<BatchResultDTO> batchGenerateInvoice(List<String> ids) {
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        List<InvoiceInfoEntity> entities = super.listByIds(ids);
-        List<String> soIds = entities.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIds);
         List<CfgVatInvoiceEntity> cfgVatInvoiceEntities = cfgVatInvoiceService.listCfgByShopIds(shopIds);
-        List<SoB2cDetailEntity> allSoB2cDetailEntityList = soB2cDetailService.listByMainIds(soIds);
+        List<SoB2cDetailEntity> allSoB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
         List<String> platformSkuNoList = allSoB2cDetailEntityList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParam(RuleTypeEnum.PLATFORM.getCode(), soB2cEntityList.get(0).getDictPlatform(), platformSkuNoList);
         List<String> platformCodeList = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -187,12 +185,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 .eq(DmpSoBillDetailEntity::getSourcePlatform, PlatformDictEnum.AMAZON.getCode()).list();
         List<InvoiceInfoEntity> addList = new ArrayList<>();
         List<InvoiceDetailEntity> addDetailList = new ArrayList<>();
-        if(CollectionUtils.isEmpty(entities)){
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
             return new ArrayList<>();
         }
-        for (InvoiceInfoEntity entity : entities) {
+        for (SoB2cEntity entity : soB2cEntityList) {
             CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getShopId()) && !e.getDisabled() && entity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票配置"));
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getSoId()) && entity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getId()) && entity.getId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
             if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform()) || !soB2cEntity.hasPlatformWarehouseOrder()) {
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),"只有亚马逊FBA订单允许生成发票"));
                 continue;

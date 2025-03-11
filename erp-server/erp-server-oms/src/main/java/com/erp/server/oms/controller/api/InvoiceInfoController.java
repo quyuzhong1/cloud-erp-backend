@@ -94,13 +94,16 @@ public class InvoiceInfoController extends BaseController {
      * 下载发票
      * 返回下载地址
      */
+    @PostMapping("/downloadInvoice")
     public ApiResult<String> downloadInvoice(@RequestBody @Validated BaseIdDTO dto) {
         return success(invoiceInfoService.downloadInvoice(dto.getId()));
     }
 
     /**
      * 生成发票
+     * 传参销售订单ids
      */
+    @PostMapping("/generateInvoice")
     public ApiResult<List<BatchResultDTO>> generateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(invoiceInfoService.batchGenerateInvoice(dto.getIds()));
     }
@@ -108,6 +111,7 @@ public class InvoiceInfoController extends BaseController {
     /**
      * 上传发票
      */
+    @PostMapping("/uploadInvoice")
     public ApiResult<List<BatchResultDTO>> uploadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(invoiceInfoService.batchUploadInvoice(dto.getIds()));
     }
