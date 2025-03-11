@@ -5,7 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 
-import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -78,4 +78,13 @@ public interface CfgVatInvoiceService extends SuperService<CfgVatInvoiceEntity> 
     Boolean delete(List<String> ids);
 
     CfgVatInvoiceDTO.InvoiceTemplateDTO createDefaultDTO();
+
+    /**
+     * 根据店铺id更新销售订单发票配置状态
+     *
+     * @param shopId
+     * @param disabled
+     * @param enableTime
+     */
+    void updateSoB2CState(String shopId, Boolean disabled, LocalDateTime enableTime);
 }
