@@ -74,7 +74,7 @@ public class ShopSysUserAuthDTO implements Serializable {
         /**
          * 国家编码
          */
-        private String countryCode;
+        private String countryId;
         /**
          * 国家名称
          */
