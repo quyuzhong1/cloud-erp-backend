@@ -484,6 +484,7 @@ public class ProcessManagementDTO {
     }
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TransferBatchDTO {
         @NotNull(message = "id不能为空")
         @Size(min = 1, message = "id不能为空")

@@ -2,7 +2,6 @@ package com.erp.server.oms.sdk.authorize;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.PlatformAnnotate;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.ErpServerModuleEnum;
@@ -21,6 +20,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.MercadolibreBusinessModelEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
@@ -84,11 +84,19 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(shopInfo)) {
             throw new ServiceException("店铺不存在");
         }
-        AppClientEnum appClient = AppClientEnum.MERCADO_AUTHORIZE;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        findDTO.setBusinessType(appClient.getBusinessType());
-        findDTO.setDictPlatform(appClient.getPlatform());
-        findDTO.setPlatformType(appClient.getPlatformType());
+        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
+            AppClientEnum appClient = AppClientEnum.MERCADO_AUTHORIZE;
+            findDTO.setBusinessType(appClient.getBusinessType());
+            findDTO.setDictPlatform(appClient.getPlatform());
+            findDTO.setPlatformType(appClient.getPlatformType());
+        } else {
+            AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_AUTHORIZE;
+            findDTO.setBusinessType(appClient.getBusinessType());
+            findDTO.setDictPlatform(appClient.getPlatform());
+            findDTO.setPlatformType(appClient.getPlatformType());
+        }
+
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
 
         // 生成随机数据
@@ -139,11 +147,19 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         if (StringUtils.isBlank(code)) {
             throw new ServiceException(ApiError.ERROR_AUTHORIZE_CODE_NOT_NULL);
         }
-        AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
+
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        findDTO.setBusinessType(appClient.getBusinessType());
-        findDTO.setDictPlatform(appClient.getPlatform());
-        findDTO.setPlatformType(appClient.getPlatformType());
+        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
+            AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
+            findDTO.setBusinessType(appClient.getBusinessType());
+            findDTO.setDictPlatform(appClient.getPlatform());
+            findDTO.setPlatformType(appClient.getPlatformType());
+        } else {
+            AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
+            findDTO.setBusinessType(appClient.getBusinessType());
+            findDTO.setDictPlatform(appClient.getPlatform());
+            findDTO.setPlatformType(appClient.getPlatformType());
+        }
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("该类型店铺尚未配置开发者账号");
@@ -245,11 +261,28 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
     @Override
     public Boolean refreshToken(RefreshShopTokenDTO dto) {
         //先获取授权店铺 然后根据授权店铺进行
+        ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
+        if (Objects.isNull(shopInfo)) {
+            throw new ServiceException("店铺不存在");
+        }
+
+        ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(dto.getShopId());
+        if (ObjectUtil.isEmpty(shopAuthEntity)) {
+            return Boolean.FALSE;
+        }
+
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        AppClientEnum appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
-        findDTO.setBusinessType(appClientEnum.getBusinessType());
-        findDTO.setDictPlatform(appClientEnum.getPlatform());
-        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
+            AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
+            findDTO.setBusinessType(appClient.getBusinessType());
+            findDTO.setDictPlatform(appClient.getPlatform());
+            findDTO.setPlatformType(appClient.getPlatformType());
+        } else {
+            AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
+            findDTO.setBusinessType(appClient.getBusinessType());
+            findDTO.setDictPlatform(appClient.getPlatform());
+            findDTO.setPlatformType(appClient.getPlatformType());
+        }
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         if (Objects.isNull(cfgAppClient)) {
             return Boolean.FALSE;
@@ -257,10 +290,6 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         String clientId = cfgAppClient.getClientId();
         String baseUrl = cfgAppClient.getUrl();
         String clientSecret = cfgAppClient.getClientSecret();
-        ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(dto.getShopId());
-        if (ObjectUtil.isEmpty(shopAuthEntity)) {
-            return Boolean.FALSE;
-        }
 
         //组装请求实体
         ShopDTO.RefreshTokenDTO refreshTokenDTO = new ShopDTO.RefreshTokenDTO();

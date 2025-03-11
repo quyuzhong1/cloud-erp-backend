@@ -1,5 +1,9 @@
 package com.common.business.utils;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -9,25 +13,9 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.beans.BeanUtils;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Author 张代浩
@@ -36,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ConvertUtils {
 
     public static final String UNKNOWN = "unknown";
-    public static final String REGEX = "\\s*|\t|\r|\n";
+    public static final String REGEX = "\\s+";
 
     private ConvertUtils() {
     }

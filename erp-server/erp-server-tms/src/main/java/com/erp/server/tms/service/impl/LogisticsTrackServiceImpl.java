@@ -182,7 +182,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             return;
         }
         String code = LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode();
-//        LocalDateTime trackTime = LocalDateTime.now();
         //集合分区
         List<List<String>> partition = Lists.partition(trackNoList, MathUtil.NUMBER_100);
         partition.forEach(e -> logisticsBillDetailService.batchUpdateTrackStatus(e,code,null, null));

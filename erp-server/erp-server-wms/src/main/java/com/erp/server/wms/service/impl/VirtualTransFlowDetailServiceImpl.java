@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -11,6 +12,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -37,7 +39,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL;
@@ -103,10 +108,32 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
         downloadTaskFeign.saveDownloadTask("库龄流水", EXPORT_WMS_VIRTUAL_TRANS_FLOW_DETAIL.getCode(), dto);
         return Boolean.TRUE;
     }
+    @Override
+    public void consumeMsgJob(List<WmsVirtualDetailMsgDTO.ListDTO> msgList) {
+        if (CollUtil.isEmpty(msgList)) {
+            return;
+        }
+        //按操作时间排序
+        List<WmsVirtualDetailMsgDTO.ListDTO> list = msgList.stream().sorted(Comparator.comparing(WmsVirtualDetailMsgDTO.ListDTO::getTradeTime)).collect(Collectors.toList());
+        for (WmsVirtualDetailMsgDTO.ListDTO listDTO : list) {
+            WmsVirtualDetailMsgEntity entity = BeanUtil.toBean(listDTO, WmsVirtualDetailMsgEntity.class);
+            try {
+                ApplicationContextUtils.getBean(VirtualTransFlowDetailServiceImpl.class).consumeMessage(listDTO.getBusinessId(),listDTO.getId());
+            } catch (Exception e) {
+                entity.setRemark(e.getMessage());
+                entity.setStatus(VirtualDetailMsgStatusEnum.FAIL.getCode());
+                wmsVirtualDetailMsgService.updateStatus(entity);
+                break;
+            }
+            entity.setStatus(VirtualDetailMsgStatusEnum.SUCCESS.getCode());
+            wmsVirtualDetailMsgService.updateStatus(entity);
+        }
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @DistributeLocker(businessType = RedisKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 60)
+    @DistributeLocker(businessType = RedisKeyConstant.WMS_VIRTUAL_DETAIL_MSG_KEY,keyName = "msgId",waiteTime = 600)
     public Boolean consumeMessage(String businessId,String msgId) {
         VirtualTransFlowEntity entity = virtualTransFlowService.getById(businessId);
         if (ObjUtil.isEmpty(entity)) {
@@ -121,9 +148,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             log.warn("虚拟仓库存流水明细消息已处理，msgId = {}",msgId);
             return Boolean.TRUE;
         }
-        if (!CharSequenceUtil.equals(virtualDetailMsgEntity.getStatus(), VirtualDetailMsgStatusEnum.DOING.getCode())) {
-            throw new ServiceException("非进行中任务不支持消费");
-        }
         //反审
         if (InventoryOperationModeEnum.UN_APPROVE.getCode().equals(entity.getOperationMode())) {
             handleVirtualTransFlowUnapproved(entity);
@@ -135,7 +159,6 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             }
             updateHandleVirtualTransFlow(entity);
         }
-
         //再次查询状态查询任务表状态是否是已完成
         WmsVirtualDetailMsgEntity virtualDetailMsgEntityAgain = wmsVirtualDetailMsgService.getById(msgId);
         if (ObjectUtil.isEmpty(virtualDetailMsgEntityAgain) || CharSequenceUtil.equals(virtualDetailMsgEntityAgain.getStatus(), VirtualDetailMsgStatusEnum.SUCCESS.getCode())) {
@@ -172,7 +195,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
 
     @Override
     public void handleHisVirtualTransFlowDetail(VirtualTransFlowDetailDTO.HandleDTO dto) {
-        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listHisVirtualTransFlow(dto);
+        List<VirtualTransFlowEntity> virtualTransFlowList = virtualTransFlowService.listApproveFlowDetail(dto);
         if (CollUtil.isEmpty(virtualTransFlowList)) {
             return ;
         }
@@ -300,7 +323,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             throw new ServiceException("暂未入库反审，不支持消费");
         }
         //根据当前流水id查询原流水信息
-        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getUnApprovedTxnFlowBySourceDetailId(entity.getSourceType(), entity.getSourceDetailId(),entity.getTradeTime());
+        VirtualTransFlowEntity oldTransFlowEntity = virtualTransFlowService.getUnApprovedTxnFlowBySource(entity);
         if (ObjUtil.isEmpty(oldTransFlowEntity)) {
             throw new ServiceException("未找到原虚拟仓出库库存流水信息");
         }
@@ -336,7 +359,7 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             }
         }
         //重算原出库流水时间后的结余
-        virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity.getBillDate());
+        virtualInventoryDetailHisService.addVirtualInventoryDetailHis(oldTransFlowEntity);
     }
 
 

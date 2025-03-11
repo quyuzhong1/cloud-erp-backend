@@ -70,6 +70,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static cn.hutool.core.text.CharSequenceUtil.format;
 import static com.alibaba.fastjson.JSON.toJSONString;
@@ -278,7 +279,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public String add(SubcontractOrderDTO.AddDTO addDTO) {
+    public SubcontractOrderEntity add(SubcontractOrderDTO.AddDTO addDTO) {
         SubcontractOrderEntity subcontractOrderEntity = new SubcontractOrderEntity();
         BeanMapperUtils.copy(addDTO, subcontractOrderEntity);
         // 数据处理
@@ -298,7 +299,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         // 操作日志
         operateLogService.addModuleOperateLog(String.format("新增了一个委外订单【%s】", subcontractOrderEntity.getCode()), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), "新增操作");
-        return subcontractOrderEntity.getId();
+        return subcontractOrderEntity;
     }
 
     /**
@@ -306,7 +307,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void update(SubcontractOrderDTO.UpdateDTO updateDTO) {
+    public SubcontractOrderEntity update(SubcontractOrderDTO.UpdateDTO updateDTO) {
         SubcontractOrderEntity old = super.getById(updateDTO.getId());
         SubcontractOrderEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException("未找到委外订单"));
         // 待提交和审核不通过允许修改
@@ -331,55 +332,52 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         // 记录主单操作日志
         log.info("编辑 开始记录委外订单日志数据，单号：【{}】", subcontractOrderEntity.getCode());
         operateLogService.addModuleOperateLogByObj(old, subcontractOrderEntity, ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), subcontractOrderEntity.getId(), "", "");
+        return subcontractOrderEntity;
     }
 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
-    public void submit(List<String> ids) {
-       if (CollUtil.isEmpty(ids)) {
-          throw new ServiceException(ApiError.ERROR_98004);
-       }
-       List<SubcontractOrderEntity> list = super.listByIds(ids);
-       if (CollUtil.isEmpty(list)) {
-          throw new ServiceException(ApiError.ERROR_98073);
-       }
+    public BatchResultDTO submitEntity(SubcontractOrderEntity entity) {
        // 待提交或审核不通过并且未作废允许提交
-       long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+       long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
        if (count > 0) {
           throw new ServiceException(ApiError.ERROR_98010);
        }
         //提交流程
-        startProcess(list);
+        startProcess(Collections.singletonList(entity));
 
        // 更新单据审核状态
-       log.info("提交 开始修改委外订单状态数据，id集合：【{}】", toJSONString(ids));
-       this.updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+       log.info("提交 开始修改委外订单状态数据，id集合：【{}】", toJSONString(entity.getId()));
+       this.updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
 
        // 记录操作日志
-       log.info("提交 开始记录委外订单日志数据，id集合：【{}】", toJSONString(ids));
-       List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+       log.info("提交 开始记录委外订单日志数据，id集合：【{}】", toJSONString(entity.getId()));
+       List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
        operateLogService.batchAddModuleOperateLog("提交了一个委外订单【%s】", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "提交操作");
+       return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void addAndSubmit(SubcontractOrderDTO.AddDTO dto) {
+    public SubcontractOrderEntity addAndSubmit(SubcontractOrderDTO.AddDTO dto) {
         // 新增
-        String id = this.add(dto);
+        SubcontractOrderEntity entity = this.add(dto);
+        entity = this.getById(entity.getId());
         // 提交
-        this.submit(Arrays.asList(id));
+        this.submitEntity(entity);
+        return entity;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void updateAndSubmit(SubcontractOrderDTO.UpdateDTO dto) {
+    public BatchResultDTO updateAndSubmit(SubcontractOrderDTO.UpdateDTO dto) {
         // 修改
-        this.update(dto);
+        SubcontractOrderEntity entity = this.update(dto);
         // 提交
-        this.submit(Arrays.asList(dto.getId()));
+        return this.submitEntity(entity);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -481,18 +479,14 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void delete(List<String> ids) {
-       List<SubcontractOrderEntity> list = super.listByIds(ids);
-       if (CollUtil.isEmpty(list)) {
-         throw new ServiceException("未找到委外订单数据");
-       }
+    public BatchResultDTO deleteEntity(SubcontractOrderEntity entity) {
        // 只有待提交且未作废的数据允许删除
-       long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
+       long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) || obj.getInvalidStatus() ).count();
        if (count > 0) {
          throw new ServiceException(ApiError.ERROR_98009);
        }
-
-       // 删除日志数据
+        List<String> ids = Collections.singletonList(entity.getId());
+        // 删除日志数据
        log.info("删除 开始删除委外订单日志数据，id集合：【{}】", toJSONString(ids));
        operateLogService.removeByBusinessIds(ids);
 
@@ -503,7 +497,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
        super.removeByIds(ids);
 
         //发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
+        sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     /**
@@ -511,16 +506,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void cancelProcess(List<String> ids) {
-        List<SubcontractOrderEntity> list = super.listByIds(ids);
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未找到委外订单数据");
-        }
+    public BatchResultDTO cancelProcess(SubcontractOrderEntity entity) {
         // 只有待提交的数据允许撤销
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
            throw new ServiceException(ApiError.ERROR_98007);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         log.info("撤销 开始撤销流程，id集合：【{}】", toJSONString(ids));
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -537,8 +529,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
         //操作日志
         log.info("撤销 开始记录操作日志，id集合：【{}】", toJSONString(ids));
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("委外订单【%s】取消流程", ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "取消流程操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
@@ -1052,26 +1045,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public void invalid(List<String> ids, String remark) {
-        List<SubcontractOrderEntity> list = super.listByIds(ids);
-        if (CollUtil.isEmpty(list)) {
-            throw new ServiceException("未找到委外订单数据");
-        }
+    public BatchResultDTO invalidEntity(SubcontractOrderEntity entity, String remark) {
         //非待提交和审核不通过不能作废
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
-        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        long invalidCount = Stream.of(entity).filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
-
-        //验证存货核算是否关账
-        /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getSubcontractOrgId(),obj.getBillDate())
-                        ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getBillDate()))).
-                distinct().collect(Collectors.toList());
-        inventoryCloseRecordFeign.checkHsClosed(closedParamList);*/
+        List<String> ids = Collections.singletonList(entity.getId());
+        List<SubcontractOrderEntity> list = Collections.singletonList(entity);
 
 
         log.info("采购订单作废，ids=【{}】", JSONUtil.toJsonStr(ids));
@@ -1083,6 +1068,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //操作日志
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个委外订单【%s】，作废原因：".concat(remark), ModuleTypeEnum.SUBCONTRACT_ORDER.getCode(), pairList, "作废操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
     @Override

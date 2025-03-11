@@ -42,6 +42,7 @@ import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -448,6 +449,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 10:03
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateDisabled(UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         if (CollectionUtils.isEmpty(ids)) {
@@ -466,12 +468,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         //金蝶更新分录禁用
         DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+        // 新中台不适用
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//            }
+//        });
         return Boolean.TRUE;
     }
 

@@ -1585,8 +1585,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetailList(addDetailList);
-            String id = machineInfoService.add(addDTO);
-            ids.add(id);
+            MachineInfoEntity entity = machineInfoService.add(addDTO);
+            ids.add(entity.getId());
         }
         return ids;
     }

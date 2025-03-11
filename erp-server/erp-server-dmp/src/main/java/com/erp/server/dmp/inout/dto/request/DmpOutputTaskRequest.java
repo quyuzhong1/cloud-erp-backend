@@ -1,8 +1,10 @@
 package com.erp.server.dmp.inout.dto.request;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
@@ -55,6 +57,11 @@ public class DmpOutputTaskRequest extends DmpOutputRequest{
 	 * 变动的dmp业务信息
 	 */
 	private Map<DmpCfgInputConvertEntity , List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = new HashMap<>();
+	
+	/**
+	 * 删除的dmp业务信息
+	 */
+	private Map<DmpCfgInputConvertEntity , Set<String>> deleteConvertInputDmpBaseEntityMaps = new HashMap<>();
 	
 	/**
 	 * 是否校验数据

@@ -118,7 +118,7 @@ public class SoDetailController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "释放库存" ,keyIdName = "detailIdList")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "释放库存" ,keyIdName = "detailIdList")
     @PostMapping("/batchUnLockVirtualInventory")
     public ApiResult<List<BatchResultDTO>> batchUnLockVirtualInventory(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailIdList().size());

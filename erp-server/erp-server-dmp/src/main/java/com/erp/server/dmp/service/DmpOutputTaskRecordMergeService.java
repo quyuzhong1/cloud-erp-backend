@@ -41,4 +41,6 @@ public interface DmpOutputTaskRecordMergeService extends SuperService<DmpOutputT
     void sdyMergePush();
     
     boolean mergeDeal(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
+    
+    boolean validateMerge(List<String> leMergeList , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
 }

@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -103,8 +104,8 @@ public class PurchaseChangeController extends BaseController {
             serviceClass = PurchaseChangeService.class,
             keyIdName = "id")
     public ApiResult<Object> add(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
-        purchaseChangeService.add(dto);
-        return success();
+        PurchaseChangeEntity entity = purchaseChangeService.add(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -142,8 +143,8 @@ public class PurchaseChangeController extends BaseController {
             serviceClass = PurchaseChangeService.class,
             keyIdName = "id")
     public ApiResult<Object> addAndSubmit(@RequestBody @Validated PurchaseChangeDTO.AddDTO dto) {
-        Boolean flag = purchaseChangeService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+        BatchResultDTO resultDTO = purchaseChangeService.addAndSubmit(dto);
+        return resultDTO.getSuccess() ? success(resultDTO) : failure();
     }
 
     /**
@@ -161,8 +162,8 @@ public class PurchaseChangeController extends BaseController {
             serviceClass = PurchaseChangeService.class,
             keyIdName = "id")
     public ApiResult<Object> updateAndSubmit(@RequestBody @Validated PurchaseChangeDTO.UpdateDTO dto) {
-        Boolean flag = purchaseChangeService.updateAndSubmit(dto);
-        return flag == true ? success() : failure();
+        BatchResultDTO resultDTO = purchaseChangeService.updateAndSubmit(dto);
+        return resultDTO.getSuccess() ? success() : failure();
     }
 
     /**
@@ -199,8 +200,22 @@ public class PurchaseChangeController extends BaseController {
             serviceClass = PurchaseChangeService.class,
             keyIdName = "ids")
     public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchaseChangeService.cancelProcess(dto.getIds());
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseChangeEntity> entityMap = purchaseChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseChangeEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购变更单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseChangeService.cancelProcess(entity));
+            }catch (Exception e){
+                log.error("采购变更单撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -218,8 +233,22 @@ public class PurchaseChangeController extends BaseController {
             serviceClass = PurchaseChangeService.class,
             keyIdName = "ids")
     public ApiResult<Object> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = purchaseChangeService.invalid(dto.getIds(),dto.getRemark());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseChangeEntity> entityMap = purchaseChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseChangeEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购变更单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseChangeService.invalid(entity, dto.getRemark()));
+            }catch (Exception e){
+                log.error("采购变更单作废失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -238,8 +267,22 @@ public class PurchaseChangeController extends BaseController {
             serviceClass = PurchaseChangeService.class,
             keyIdName = "ids")
     public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = purchaseChangeService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchaseChangeEntity> entityMap = purchaseChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchaseChangeEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购变更单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchaseChangeService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("采购变更单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

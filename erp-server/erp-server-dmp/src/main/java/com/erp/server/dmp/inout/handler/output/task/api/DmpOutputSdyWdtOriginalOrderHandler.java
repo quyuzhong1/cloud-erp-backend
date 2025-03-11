@@ -119,6 +119,10 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
     	if (CollUtil.isEmpty(dmpSoDetailEntityList)) {
     		return result;
         }
+
+    	if (!"1".equals(dmpSoInfoEntity.getPayStatus()) && !"2".equals(dmpSoInfoEntity.getPayStatus())) {
+            return result;
+        }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         List<String> detailIds = dmpSoDetailEntityList.stream().map(req -> req.getThirdDetailId()).distinct().collect(Collectors.toList());
@@ -253,7 +257,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setPost_amount(BigDecimal.ZERO);
             if (CharSequenceUtil.isBlank(dmpSoDetailEntity.getGoodsNo())) {
-                continue;
+//                continue;
             }
             shudiyunB2cOrderDTO.setMsku_code(dmpSoDetailEntity.getGoodsNo());
             shudiyunB2cOrderDTO.setMsku_name(dmpSoDetailEntity.getGoodsName());

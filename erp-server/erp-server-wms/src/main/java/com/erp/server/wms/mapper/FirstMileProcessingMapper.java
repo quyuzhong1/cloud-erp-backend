@@ -32,6 +32,15 @@ public interface FirstMileProcessingMapper extends BaseMapper<FirstMileProcessin
      */
     IPage<FirstMileProcessingDTO.ListDTO> paging(Page<FirstMileProcessingDTO.PagingParamDTO> page,@Param("params") FirstMileProcessingDTO.PagingParamDTO params);
     /**
+     * 导出分页查询
+     * @author will
+     * @date 2024/12/18 11:48
+     * @param page
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<FirstMileProcessingDTO.ListDTO> exportPaging(Page<FirstMileProcessingDTO.PagingParamDTO> page,@Param("params") FirstMileProcessingDTO.PagingParamDTO params);
+    /**
      * 查询头程跟踪信息
      * @author will
      * @date 2024/12/19 10:20

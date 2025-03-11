@@ -40,5 +40,5 @@ public interface OutStockHistorySalesEsRepository extends ElasticsearchRepositor
      * @param startDate        开始时间
      * @param endDate          结束时间
      */
-    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
+    void deleteByShopSkuIdInAndDateBetween(List<String> shopSkuIds, LocalDate startDate, LocalDate endDate);
 }

@@ -190,6 +190,7 @@ public class DmpOutputTaskRecordController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/batchSync")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "重新同步")
     public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
         dmpOutputTaskRecordService.lambdaUpdate()
                 .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)

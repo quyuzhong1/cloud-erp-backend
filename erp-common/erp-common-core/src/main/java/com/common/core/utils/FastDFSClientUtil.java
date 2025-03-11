@@ -55,18 +55,14 @@ public class FastDFSClientUtil {
 	 */
 	public static StorageClient1 getStorageClient() {
 		if (storageClient1 == null) {
-			synchronized (FastDFSClientUtil.class) {
-				if (storageClient1 == null) {
-					try {
-						ClientGlobal.initByProperties(configFile);
-						TrackerClient trackerClient = new TrackerClient(ClientGlobal.g_tracker_group);
-						TrackerServer trackerServer = trackerClient.getTrackerServer();
-						StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
-						storageClient1 = new StorageClient1(trackerServer, storageServer);
-					} catch (Exception e) {
-						throw new RuntimeException("连接存储服务器出错", e);
-					}
-				}
+			try {
+				ClientGlobal.initByProperties(configFile);
+				TrackerClient trackerClient = new TrackerClient(ClientGlobal.g_tracker_group);
+				TrackerServer trackerServer = trackerClient.getTrackerServer();
+				StorageServer storageServer = trackerClient.getStoreStorage(trackerServer);
+				storageClient1 = new StorageClient1(trackerServer, storageServer);
+			} catch (Exception e) {
+				throw new RuntimeException("连接存储服务器出错", e);
 			}
 		}
 		return storageClient1;

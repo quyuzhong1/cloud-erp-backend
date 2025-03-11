@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -8,6 +9,8 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
 import com.erp.model.wms.entity.MachineInfoEntity;
+import io.seata.spring.annotation.GlobalTransactional;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -41,7 +44,7 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @param dto 
      * @return String 
      */
-    String add(MachineInfoDTO.AddDTO dto);
+    MachineInfoEntity add(MachineInfoDTO.AddDTO dto);
     /**
      * @description: 新增并提交
      * @author Will
@@ -49,7 +52,7 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @param dto
      * @return String 
      */
-    String addAndSubmit(MachineInfoDTO.AddDTO dto);
+    MachineInfoEntity addAndSubmit(MachineInfoDTO.AddDTO dto);
     /**
      * @description: 修改
      * @author Will
@@ -65,7 +68,7 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateAndSubmit(MachineInfoDTO.UpdateDTO dto);
+    BatchResultDTO updateAndSubmit(MachineInfoDTO.UpdateDTO dto);
     /**
      * @description: 提交
      * @author Will
@@ -196,4 +199,25 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO handleErrorData(String id);
+
+
+    /**
+     * 单事务提交
+     */
+    BatchResultDTO submit(String id);
+
+    /**
+     * 单事务作废
+     */
+    BatchResultDTO invalid(String id, String reason);
+
+    /**
+     * 单事务提交
+     */
+    BatchResultDTO submitEntity(MachineInfoEntity entity);
+
+    /**
+     * 取消流程
+     */
+    BatchResultDTO cancelProcessEntity(MachineInfoEntity entity);
 }

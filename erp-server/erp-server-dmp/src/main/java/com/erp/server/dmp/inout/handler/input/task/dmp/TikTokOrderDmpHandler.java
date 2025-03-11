@@ -188,8 +188,10 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 Object paymentObj = dmpDataMap.get("payment");
                 if (paymentObj != null) {
                     Map<String, Object> paymentMap = (Map<String, Object>) paymentObj;
+                    dmpDataMap.put("payStatus", Boolean.TRUE);
+                    dmpDataMap.put("totalTaxFee", paymentMap.get("tax"));
                     dmpDataMap.put("payAmount", paymentMap.get("totalAmount"));
-                    dmpDataMap.put("allAmount", paymentMap.get("subTotal"));
+                    dmpDataMap.put("allAmount", paymentMap.get("originalTotalProductPrice"));
                     dmpDataMap.put("currencyCode", paymentMap.get("currency"));
                     dmpDataMap.put("shippingAmount", paymentMap.get("shippingFee"));
                     dmpDataMap.put("totalDiscount", MathUtil.valueOf(paymentMap.get("sellerDiscount")).add(MathUtil.valueOf(paymentMap.get("platformDiscount"))));

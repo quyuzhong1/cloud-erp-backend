@@ -272,6 +272,11 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("estimated_shipping_fee")
     private BigDecimal estimatedShippingFee = BigDecimal.ZERO;
 
+    /**
+     * 总税费
+     */
+    @TableField("total_tax_fee")
+    private BigDecimal totalTaxFee = BigDecimal.ZERO;
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

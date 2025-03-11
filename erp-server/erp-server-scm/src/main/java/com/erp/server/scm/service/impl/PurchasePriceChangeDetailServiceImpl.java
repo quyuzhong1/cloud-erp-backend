@@ -378,7 +378,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             return;
         }
 
-        Map<String, List<PurchasePriceChangeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getPriceCode));
+        Map<String, List<PurchasePriceChangeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getSupplierId));
 
         for (Map.Entry<String, List<PurchasePriceChangeDetailEntity>> entry :map.entrySet()) {
 
@@ -387,7 +387,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
             List<PurchasePriceDetailEntity> list = updateList.stream().filter(obj -> purchasePriceDetailIdList.contains(obj.getId())).collect(Collectors.toList());
             //报价信息验证
-            purchasePriceDetailService.checkPurchasePriceDetail(value.get(0).getSupplierId(),purchasePriceChangeList.get(0).getPurchaseOrgId(),list);
+            purchasePriceDetailService.checkPurchasePriceDetail(entry.getKey(),purchasePriceChangeList.get(0).getPurchaseOrgId(),list);
         }
     }
 

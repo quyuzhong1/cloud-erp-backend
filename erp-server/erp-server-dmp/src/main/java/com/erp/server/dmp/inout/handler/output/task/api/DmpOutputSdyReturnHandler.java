@@ -109,7 +109,14 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
         for (DmpSoReturnDetailEntity dmpSoReturnDetailEntity : dmpSoReturnDetailEntityList) {
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
             sdyDTO.setBiz_uni_key(dmpSoReturnEntity.getId() + dmpSoReturnDetailEntity.getId());
-            sdyDTO.setBiz_no(dmpSoReturnEntity.getThirdCode());
+
+            sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(dmpSoReturnEntity.getSourceSystem())) {
+                if (CharSequenceUtil.isNotBlank(dmpSoReturnDetailEntity.getPlatformDetailId())) {
+                    sdyDTO.setBiz_no(dmpSoReturnDetailEntity.getPlatformDetailId());
+                }
+            }
 
             if (dmpSoReturnEntity.getReturnTime() != null) {
                 sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
@@ -144,14 +151,18 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
             sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
 
-            int qtyTotal = dmpSoReturnDetailEntityList.stream().mapToInt(DmpSoReturnDetailEntity::getQty).sum();
+            int qtyTotal = dmpSoReturnDetailEntityList.stream().filter(d -> d.getQty() != null).mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
             sdyDTO.setQuantity_buyer_returned(qtyTotal);
-
-            BigDecimal amountTotal = dmpSoReturnDetailEntityList.stream().map(DmpSoReturnDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            sdyDTO.setOnline_applied_amount(amountTotal);
-            sdyDTO.setOrder_seller_payed(amountTotal);
+            if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
+                sdyDTO.setOnline_applied_amount(dmpSoReturnEntity.getAllAmount());
+                sdyDTO.setOrder_seller_payed(dmpSoReturnEntity.getAllAmount());
+            } else {
+                BigDecimal amountTotal = dmpSoReturnDetailEntityList.stream().map(DmpSoReturnDetailEntity::getAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                sdyDTO.setOnline_applied_amount(amountTotal);
+                sdyDTO.setOrder_seller_payed(amountTotal);
+            }
 
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
                 //RMA.退货单

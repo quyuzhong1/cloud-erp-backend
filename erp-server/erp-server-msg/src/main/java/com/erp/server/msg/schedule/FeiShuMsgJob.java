@@ -105,12 +105,14 @@ public class FeiShuMsgJob {
         } else {
             day = 3;
         }
-        LocalDateTime trackTime = LocalDateTime.now().minusDays(day);
+        LocalDateTime updateTime = LocalDateTime.now().minusDays(day);
+        LocalDateTime trackTime = LocalDateTime.now().minusMonths(3);
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .registerStatus(1)
                 .trackEnable(true)
                 .trackTime(trackTime)
+                .updateTime(updateTime)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
         //获取汇总消息
