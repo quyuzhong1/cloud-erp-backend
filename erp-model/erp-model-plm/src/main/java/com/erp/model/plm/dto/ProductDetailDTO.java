@@ -123,16 +123,6 @@ public class ProductDetailDTO implements Serializable {
      */
     private String businessProcessId;
 
-    /**
-     * 产品款名
-     */
-    private String productModelName;
-
-    /**
-     * 产品款名(英文)
-     */
-    private String productModelNameEn;
-
     private static final long serialVersionUID = 1L;
 
 

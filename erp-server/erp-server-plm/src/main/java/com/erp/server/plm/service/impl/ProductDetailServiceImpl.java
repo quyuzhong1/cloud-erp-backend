@@ -1046,7 +1046,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //产品款名和产品品名关系处理
-        handleProductNames(productSkuBaseInfoDTO);
+        handleProductNames(productNoSpecDTO);
 
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(productSpuBaseInfoDTO.getId());
@@ -1223,32 +1223,37 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     //处理产品品名和产品款名关系
-    private void handleProductNames(ProductSkuBaseInfoDTO productSkuBaseInfoDTO) {
+    private void handleProductNames(ProductNoSpecDTO productNoSpecDTO) {
+        ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
+        ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
+        //sku
         String name = productSkuBaseInfoDTO.getName();
         String nameEn = productSkuBaseInfoDTO.getNameEn();
-        String productModelName = productSkuBaseInfoDTO.getProductModelName();
-        String productModelNameEn = productSkuBaseInfoDTO.getProductModelNameEn();
+        //spu
+        String spuName = productSpuBaseInfoDTO.getName();
+        String spuNameEn = productSpuBaseInfoDTO.getNameEn();
         // 默认空白 ；若产品品名(中文)有值、产品款名(中文)为空，则产品款名默认=产品品名，用户可再修改
-        if(StringUtils.isNotBlank(name) && StringUtils.isBlank(productModelName)){
-            productModelName = name;
+        if(StringUtils.isNotBlank(name) && StringUtils.isBlank(spuName)){
+            spuName = name;
         }
         // 默认空白 ；若产品款名(中文)有值、产品品名(中文)为空，则产品品名默认=产品款名，用户可再修改
-        else if(StringUtils.isNotBlank(productModelName) && StringUtils.isBlank(name)){
-            name = productModelName;
+        else if(StringUtils.isNotBlank(spuName) && StringUtils.isBlank(name)){
+            name = spuName;
         }
 
         // 默认空白 ；若产品品名(英文)有值、产品款名(英文)为空，则产品款名默认=产品品名，用户可再修改
-        if(StringUtils.isNotBlank(nameEn) && StringUtils.isBlank(productModelNameEn)){
-            productModelNameEn = nameEn;
+        if(StringUtils.isNotBlank(nameEn) && StringUtils.isBlank(spuNameEn)){
+            spuNameEn = nameEn;
         }
         // 默认空白 ；若产品款名(英文)有值、产品品名(英文)为空，则产品品名默认=产品款名，用户可再修改
-        else if(StringUtils.isNotBlank(productModelNameEn) && StringUtils.isBlank(nameEn)){
-            nameEn = productModelNameEn;
+        else if(StringUtils.isNotBlank(spuNameEn) && StringUtils.isBlank(nameEn)){
+            nameEn = spuNameEn;
         }
         productSkuBaseInfoDTO.setName(name);
         productSkuBaseInfoDTO.setNameEn(nameEn);
-        productSkuBaseInfoDTO.setProductModelName(productModelName);
-        productSkuBaseInfoDTO.setProductModelNameEn(productModelNameEn);
+
+        productSpuBaseInfoDTO.setName(spuName);
+        productSpuBaseInfoDTO.setNameEn(spuNameEn);
     }
 
     private void checkSizeAndWeight(ProductPackDTO productPackDTO) {
@@ -1384,7 +1389,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productDetailLists.forEach(obj -> {
                 ProductDetailEntity oldEntity = this.getById(obj.getId());
                 //产品款名和产品品名关系处理
-                handleProductName(obj);
+                handleProductNames(obj, productInfoDTO);
                 //sku操作日志
                 addProductDetailLog(obj, oldEntity, obj.getId(), productInfoDTO.getId());
             });
@@ -1497,21 +1502,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     //产品款名和产品品名关系处理
-    private void handleProductName(ProductDetailDTO obj) {
+    private void handleProductNames(ProductDetailDTO obj,ProductInfoDTO productInfoDTO ) {
+        //sku
         String name = obj.getName();
         String nameEn = obj.getNameEn();
-        String productModelName = obj.getProductModelName();
-        String productModelNameEn = obj.getProductModelNameEn();
-        // 默认空白 ；若产品品名(中文)有值、产品款名(中文)为空，则产品款名默认=产品品名，用户可再修改
-        if(StringUtils.isNotBlank(name) && StringUtils.isBlank(productModelName)){
-            productModelName = name;
+        //spu
+        String spuName = productInfoDTO.getName();
+        String spuNameEn = productInfoDTO.getNameEn();
+        if(StringUtils.isNotBlank(spuName) && StringUtils.isBlank(name)){
+            name = spuName;
         }
-        // 默认空白 ；若产品品名(英文)有值、产品款名(英文)为空，则产品款名默认=产品品名，用户可再修改
-        if(StringUtils.isNotBlank(nameEn) && StringUtils.isBlank(productModelNameEn)){
-            productModelNameEn = nameEn;
+        if(StringUtils.isNotBlank(spuNameEn) && StringUtils.isBlank(nameEn)){
+            nameEn = spuNameEn;
         }
-        obj.setProductModelName(productModelName);
-        obj.setProductModelNameEn(productModelNameEn);
+        obj.setName(name);
+        obj.setNameEn(nameEn);
     }
 
     /**

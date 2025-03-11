@@ -1,13 +1,10 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 public class ProductSkuBaseInfoDTO {
@@ -110,14 +107,4 @@ public class ProductSkuBaseInfoDTO {
      * 推荐仓位(大货区)
      */
     private String warehouseLocationLarge;
-
-    /**
-     * 产品款名
-     */
-    private String productModelName;
-
-    /**
-     * 产品款名(英文)
-     */
-    private String productModelNameEn;
 }

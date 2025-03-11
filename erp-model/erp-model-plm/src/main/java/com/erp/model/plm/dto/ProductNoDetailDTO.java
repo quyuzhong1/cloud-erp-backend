@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -225,15 +224,4 @@ public class ProductNoDetailDTO {
      * 应用分类名
      */
     private String applicationCategoryName;
-
-    /**
-     * 产品款名
-     */
-    private String productModelName;
-
-    /**
-     * 产品款名(英文)
-     */
-    private String productModelNameEn;
-
 }

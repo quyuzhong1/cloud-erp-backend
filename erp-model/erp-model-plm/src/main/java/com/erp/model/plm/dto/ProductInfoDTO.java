@@ -204,16 +204,6 @@ public class ProductInfoDTO {
 
     private String applicationCategoryId;
 
-    /**
-     * 产品款名
-     */
-    private String productModelName;
-
-    /**
-     * 产品款名(英文)
-     */
-    private String productModelNameEn;
-
     @Data
     @NoArgsConstructor
     public static class ProductRolePeopleDTO {
