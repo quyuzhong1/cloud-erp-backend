@@ -3,6 +3,7 @@ package com.erp.model.sys.dto;
 import java.time.LocalDateTime;
 
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -186,10 +187,10 @@ public class SysEventTrackingDTO implements Serializable {
         private String deptId;
 
         /**
-        * 触发埋点的时间
+        * 触发时间
         */
 //        @NotNull(message = "触发埋点的时间不能为空")
-        private Long eventTime;
+        private LocalDateTime eventTime;
 
         /**
         * 客户端的设备信息
@@ -223,6 +224,21 @@ public class SysEventTrackingDTO implements Serializable {
 //        @NotBlank(message = "sdk相关信息不能为空")
         @Size(max = 64,message = "sdk相关信息最大长度不能超过64位")
         private String sdk;
+
+        /**
+         * 数据类型描述
+         */
+        private String typeDesc;
+
+        /**
+         * 设备类型
+         */
+        private String deviceType;
+
+        /**
+         * 时区
+         */
+        private String timeZone;
 
 
     }
