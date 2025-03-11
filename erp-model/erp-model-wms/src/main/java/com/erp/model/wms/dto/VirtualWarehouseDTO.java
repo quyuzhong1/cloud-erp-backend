@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -401,6 +400,28 @@ public class VirtualWarehouseDTO implements Serializable {
          * 分区id集合
          */
         private List<String> partitionIdList;
+
+    }
+
+    /**
+     * 导出列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+        /**
+         * 虚拟仓编号
+         */
+        private String code;
+        /**
+         * 虚拟仓名称
+         */
+        private String name;
+        /**
+         * 关联仓库Id
+         */
+        private String warehouseId;
+
 
     }
 }

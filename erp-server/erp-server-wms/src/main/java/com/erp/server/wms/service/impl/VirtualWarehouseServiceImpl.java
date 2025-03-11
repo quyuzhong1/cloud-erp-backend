@@ -29,12 +29,15 @@ import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
-import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.VirtualWarehouseChannelEntity;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseMapper;
@@ -49,6 +52,8 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT;
 
 /**
  * <p>
@@ -81,7 +86,8 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     private ShopInfoFeign shopInfoFeign;
     @Resource
     private VirtualWarehouseChannelPartitionRefService  virtualWarehouseChannelPartitionRefService;
-
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -547,5 +553,11 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     @Override
     public List<String> listWarehouseBySql(String compareCodeSplicingValueSql) {
         return baseMapper.listWarehouseBySql(compareCodeSplicingValueSql);
+    }
+
+    @Override
+    public Boolean exportExcel(VirtualWarehouseDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("虚拟仓库设置导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT.getCode(), dto);
+        return Boolean.TRUE;
     }
 }
