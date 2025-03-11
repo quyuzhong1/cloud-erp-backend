@@ -2541,7 +2541,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<String> userIdList = CollUtil.isEmpty(userList) ? Collections.emptyList() : userList.stream().map(FindUserDTO::getUserId).distinct().collect(Collectors.toList());
 
-        List<ThirdUnionDTO> unionIds = unionIdList.stream().filter(u -> userIdList.contains(u) &&  userIds.contains(u.getUserId())).collect(Collectors.toList());
+        List<ThirdUnionDTO> unionIds = unionIdList.stream().filter(u -> userIdList.contains(u.getUserId()) &&  userIds.contains(u.getUserId())).collect(Collectors.toList());
         return unionIds;
     }
 
