@@ -175,7 +175,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
             shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
 
-            shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getPlatformCode());
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {
@@ -186,12 +185,15 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
+
+                shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
 
             } else {
+                shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getPlatformCode());
                 //线上订单
                 shudiyunB2cOrderDTO.setTransaction_type("线上订单");
                 if (CharSequenceUtil.isBlank(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()))) {
