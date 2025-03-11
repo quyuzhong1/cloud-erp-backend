@@ -110,4 +110,14 @@ public class ProductSkuBaseInfoDTO {
      * 推荐仓位(大货区)
      */
     private String warehouseLocationLarge;
+
+    /**
+     * 产品款名
+     */
+    private String productModelName;
+
+    /**
+     * 产品款名(英文)
+     */
+    private String productModelNameEn;
 }
