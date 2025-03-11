@@ -388,12 +388,16 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (CollUtil.isEmpty(records)){
             return;
         }
+        List<String> shopIds = records.stream().map(InvoiceInfoDTO.PagingViewDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIds);
 //        List<String> skuIds = records.stream().map(InvoiceInfoDTO.PagingViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
 //        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         records.forEach(pagingViewDTO -> {
 //            SkuVO skuVO = skuVOS.stream().filter(e -> CharSequenceUtil.isNotBlank(pagingViewDTO.getSkuId()) && pagingViewDTO.getSkuId().equals(e.getSkuId())).findFirst().orElse(null);
 //            pagingViewDTO.setProductName(Objects.nonNull(skuVO) ? skuVO.getSkuName() : CharSequenceUtil.EMPTY);
             pagingViewDTO.setInvoiceTypeName(InvoiceInfoInvoiceTypeEnum.getName(pagingViewDTO.getInvoiceType()));
+            ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(pagingViewDTO.getShopId()) && pagingViewDTO.getShopId().equals(e.getId())).findFirst().orElse(null);
+            pagingViewDTO.setShopName(Objects.nonNull(shopInfoEntity) ? shopInfoEntity.getName() : CharSequenceUtil.EMPTY);
             pagingViewDTO.setTemplateTypeName(InvoiceInfoTemplateTypeEnum.getName(pagingViewDTO.getTemplateType()));
             pagingViewDTO.setStatusName(InvoiceInfoStatusEnum.getName(pagingViewDTO.getStatus()));
             pagingViewDTO.setUploadStatusName(InvoiceInfoUploadStatusEnum.getName(pagingViewDTO.getUploadStatus()));
