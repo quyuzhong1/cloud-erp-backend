@@ -48,6 +48,9 @@ import org.thymeleaf.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -177,62 +180,11 @@ public class MercadoSdkClientService {
                     bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), e.getMessage()));
         }
         if (StringUtil.isBlank(tokenDTO.getAccessToken())) {
-            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+            throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE_LOCAL.getName(), bodyStr);
         }
 
         //返回token实体
         return tokenDTO;
-    }
-
-
-    public static void main(String[] args) {
-        String path = "/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s";
-        ShopDTO.RefreshTokenDTO dto = new ShopDTO.RefreshTokenDTO();
-        dto.setBaseUrl("https://api.mercadolibre.com");
-        dto.setClientId("3457166802805723");
-        dto.setClientSecret("QucvI4VWHO0w3AZftOElz5liVOurfjQG");
-        dto.setRefreshToken("TG-67c67d374499d20001e5286c-2201503196");
-        String baseUrl = String.format(dto.getBaseUrl() + path, dto.getClientId(), dto.getClientSecret(), dto.getRefreshToken());
-
-        //入参（无）
-        Map<String, Object> param = new HashMap<>();
-
-        //请求头（无）
-        Map<String, String> headerMap = new HashMap<>();
-
-        String token = "";
-        long sleepTime = 1000;
-        int count = 0;
-        //解析数据
-        PlatformMercadoRefreshTokenDTO refreshTokenDTO = null;
-        while(StringUtil.isBlank(token)) {
-            String bodyStr = OkHttpUtils.doPost(baseUrl, param, headerMap);
-            try {
-                refreshTokenDTO = JSONUtil.toBean(bodyStr, PlatformMercadoRefreshTokenDTO.class);
-//            log.info(String.format("::::: 美客多刷新token ::::: 请求地址 => %s, 平台返回值 => %s ", baseUrl, refreshTokenDTO));
-            } catch (Exception e) {
-                log.error("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}, 错误信息={}", bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多刷新token失败，返回值 responseMap={}",
-                        bodyStr, param.toString(), JSONUtil.toJsonStr(bodyStr), ExceptionUtil.stacktraceToString(e)));
-            }
-
-            if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
-                if(count == 10) {
-                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
-
-                }
-                try {
-                    Thread.sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-                sleepTime = sleepTime + 1000;
-                count = count + 1;
-            } else {
-                token = refreshTokenDTO.getAccessToken();
-            }
-
-        }
     }
 
     /**
@@ -273,7 +225,7 @@ public class MercadoSdkClientService {
 
             if(StringUtil.isBlank(refreshTokenDTO.getAccessToken())) {
                 if(count == 10) {
-                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE.getName(), bodyStr);
+                    throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.MERCADOLIBRE_LOCAL.getName(), bodyStr);
 
                 }
                 try {
@@ -420,15 +372,16 @@ public class MercadoSdkClientService {
         return resultList;
     }
 
-//    public static void main(String[] args) {
-//        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
-//        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
-//        JobTaskDTO task = new JobTaskDTO();
-//        shopInfoDTO.setAccessToken("APP_USR-3457166802805723-022400-6fb4be44aa7ddefdd0329f70180caf11-2119968271");
-//        task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-//        task.setNextTime(LocalDateTime.parse("2025-02-24 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-//        sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
-//    }
+    public static void main(String[] args) {
+        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
+        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
+        JobTaskDTO task = new JobTaskDTO();
+        shopInfoDTO.setUserId(2119968271L);
+        shopInfoDTO.setAccessToken("APP_USR-5344160433223219-031022-1a5190634d7aba85c9b279a5ffb4af4d-2119968271");
+        task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        task.setNextTime(LocalDateTime.parse("2025-02-24 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
+    }
 
     /**
      * 发送请求获取指定店铺的订单
@@ -438,39 +391,47 @@ public class MercadoSdkClientService {
      */
     public List<OrderViewDTO> sendMercadoGetOrder(MercadoShopInfoDTO shopInfoDTO, JobTaskDTO task) {
         String url = MercadoConstant.URL;
-        String path = "/marketplace/orders/search";
-        //每次最多获取200条
+        String path = "/orders/search";
+        //每页最大50条
         Integer pageSize = 50;
         //当前页数
         Integer pageNo = 0;
         //总页数
         Integer pageCount = 1;
+// 获取原始时间
+        LocalDateTime localDateTime = task.getLastTime();
+
+        OffsetDateTime utcTime = localDateTime.atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .withOffsetSameInstant(ZoneOffset.UTC);
+// 定义格式化器
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        String resultt = utcTime.format(formatter);
+
 
         List<OrderViewDTO> resultList = new ArrayList<>();
         Boolean nexflag = true;
-
         while (nexflag) {
             int offset = pageSize * pageNo;
 
             StringBuffer sb = new StringBuffer();
             sb.append(url);
             sb.append(path);
-            sb.append("?");
-            //paid, cancelled, payment_required, confirmed
-            sb.append("limit=");//每页最大50条
+            sb.append("?seller=");
+            sb.append(shopInfoDTO.getUserId());
+            sb.append("&limit=");
             sb.append(pageSize);
             sb.append("&offset=");
             sb.append(offset);
+            sb.append("&order.date_last_updated.from=");
+            sb.append(task.getLastTime());
+            sb.append("&order.date_last_updated.to=");
+            sb.append(task.getNextTime());
+            sb.append("&order.status=");
+            sb.append("cancelled,paid,invalid");
 
             //入参
             HashMap<String, Object> params = new HashMap<>(2);
-//            params.put("seller.id", "1511265855");
-//            params.put("seller.id", shopInfoDTO.getUserId());
-            params.put("order.status", "cancelled,paid,invalid");
-            params.put("last_updated.from", task.getLastTime());
-            params.put("last_updated.to", task.getNextTime());
-            params.put("limit", pageSize);
-            params.put("offset", offset);
             //设置请求头
             Map<String, String> headerMap = new HashMap<>(1);
             headerMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
@@ -700,7 +661,7 @@ public class MercadoSdkClientService {
      * @return
      */
     public MercadoShopInfoDTO getShopInfoByShopId(String shopId) {
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopId);
+        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), shopId);
         // 缓存获取
         Object tokenObj = redisUtil.get(tokenKey);
         if (null != tokenObj) {
