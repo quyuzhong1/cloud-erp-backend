@@ -402,6 +402,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         soB2cEntityList = soB2cEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
         List<String> ids = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(ids);
+        //过滤掉包裹号为空的订单
+        detailList = detailList.stream().filter(v->StringUtils.isNotBlank(v.getPlatformPackageId())).collect(Collectors.toList());
+        List<String> filterSoIds = detailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        soB2cEntityList = soB2cEntityList.stream().filter(v->filterSoIds.contains(v.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soB2cEntityList)){
+            return true;
+        }
         List<String> dtoPackageIds = dto.getDetails().stream().map(PlatformOrderDetailDTO::getPlatformPackageId).distinct().collect(Collectors.toList());
         List<String> soPackageIds = detailList.stream().map(SoB2cDetailEntity::getPlatformPackageId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(dtoPackageIds) || CollectionUtils.isEmpty(soPackageIds)){
@@ -447,12 +454,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 splitSaveDTO.setIsSyncPlatform(false);
                 Map<String,List<PlatformOrderDetailDTO>> packageIdMap = dto.getDetails().stream().collect(Collectors.groupingBy(PlatformOrderDetailDTO::getPlatformPackageId));
                 List<SoB2cDTO.GroupSplitSaveDTO> groupList = new ArrayList<>();
-                packageIdMap.forEach((k,v) -> {
+                List<SoB2cDetailEntity> finalDetailList = detailList;
+                packageIdMap.forEach((k, v) -> {
                     SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = new SoB2cDTO.GroupSplitSaveDTO();
                     List<SoB2cDTO.SplitDetailSaveDTO> splitDetailList = new ArrayList<>();
                     v.forEach(e -> {
                         SoB2cDTO.SplitDetailSaveDTO splitDetailSaveDTO = new SoB2cDTO.SplitDetailSaveDTO();
-                        SoB2cDetailEntity soB2cDetailEntity = detailList.stream().filter(d -> d.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
+                        SoB2cDetailEntity soB2cDetailEntity = finalDetailList.stream().filter(d -> d.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
                         if(Objects.isNull(soB2cDetailEntity)){
                             return;
                         }
