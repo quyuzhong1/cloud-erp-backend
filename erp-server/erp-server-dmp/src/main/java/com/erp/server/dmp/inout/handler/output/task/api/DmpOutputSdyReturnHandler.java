@@ -109,7 +109,14 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
         for (DmpSoReturnDetailEntity dmpSoReturnDetailEntity : dmpSoReturnDetailEntityList) {
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
             sdyDTO.setBiz_uni_key(dmpSoReturnEntity.getId() + dmpSoReturnDetailEntity.getId());
-            sdyDTO.setBiz_no(dmpSoReturnEntity.getThirdCode());
+
+            sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(dmpSoReturnEntity.getSourceSystem())) {
+                if (CharSequenceUtil.isNotBlank(dmpSoReturnDetailEntity.getPlatformDetailId())) {
+                    sdyDTO.setBiz_no(dmpSoReturnDetailEntity.getPlatformDetailId());
+                }
+            }
 
             if (dmpSoReturnEntity.getReturnTime() != null) {
                 sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
