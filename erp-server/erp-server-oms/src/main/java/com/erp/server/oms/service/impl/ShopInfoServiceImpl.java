@@ -518,6 +518,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
         String customerId = shopInfo.getCustomerId();
         if(CollectionUtils.isNotEmpty(dto.getDictCountryCodeList())){
+            dto.setDictCountryCode(dto.getDictCountryCodeList().get(0));
             List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(dto.getDictCountryCodeList());
             if(CollectionUtils.isNotEmpty(countryList)){
                 String countryName = countryList.get(0).getNameCn();
@@ -544,14 +545,13 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         		}
                 if(!shopInfo.getDictCountryCode().equals(dto.getDictCountryCode())) {
                     errorFlag = true;
-                    customerInfoEntity.setCountryId(dto.getDictCountryCode());
                 }
         		if(errorFlag) {
         			throw new ServiceException("对应的客户信息状态为审核中/已审核时，不可修改【店铺站点，结算币种，交易币种，销售组织，销售员,国家】字段");
         		}
         	}
-            if(!shopInfo.getDictCountryCode().equals(dto.getDictCountryCode()) && customerInfoEntity != null) {
-                customerInfoEntity.setCountryId(dto.getDictCountryCode());
+            if(customerInfoEntity != null && !shopInfo.getDictCountryCode().equals(customerInfoEntity.getCountryId())) {
+                customerInfoEntity.setCountryId(shopInfo.getDictCountryCode());
                 customerInfoService.updateById(customerInfoEntity);
             }
         }
@@ -583,7 +583,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setEnableTime(dto.getEnableTime());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
-        shopInfo.setDictCountryCode(dto.getDictCountryCode());
+
         shopInfo.setBusinessModel(dto.getBusinessModel());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
