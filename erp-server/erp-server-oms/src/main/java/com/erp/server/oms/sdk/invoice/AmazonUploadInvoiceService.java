@@ -1,5 +1,6 @@
 package com.erp.server.oms.sdk.invoice;
 
+import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
@@ -78,6 +79,12 @@ public class AmazonUploadInvoiceService {
                 feedOptions.put("DocumentType","Invoice");
                 createFeedSpecification.setFeedOptions(feedOptions);
                 CreateFeedResponse createFeedResponse = feedsApi.createFeed(createFeedSpecification);
+                if (null != createFeedResponse) {
+                    log.error("亚马逊上传发票成功,feedId:{}", createFeedResponse.getFeedId());
+                } else {
+                    log.error("亚马逊上传发票,feed失败,传参:{}", JSONUtil.toJsonStr(createFeedSpecification));
+                    throw new ServiceException("上传发票失败");
+                }
             } else {
                 throw new ServiceException("预签名url上传发票失败");
             }
