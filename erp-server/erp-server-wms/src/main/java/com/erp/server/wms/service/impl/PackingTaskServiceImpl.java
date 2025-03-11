@@ -1863,6 +1863,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isNotEmpty(cartonEntityList)){
             for (WmsCartonEntity carton : cartonEntityList){
                 List<WmsCartonDetailEntity> detailEntityList = boxMap.get(carton.getId());
+                if(CollUtil.isEmpty(detailEntityList)){
+                    continue;
+                }
                 BigDecimal grossWeight = detailEntityList.stream().map(WmsCartonDetailEntity::getGrossWeight).reduce(BigDecimal.ZERO, BigDecimal::add);
                 Integer packQty = detailEntityList.stream().map(WmsCartonDetailEntity::getPackQty).reduce(MathUtil.ZERO, Integer::sum);
                 list.add(WmsCartonSpecDTO.CartonDTO.builder()
