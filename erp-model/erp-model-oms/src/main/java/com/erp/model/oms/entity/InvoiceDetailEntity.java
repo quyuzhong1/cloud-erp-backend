@@ -39,6 +39,11 @@ public class InvoiceDetailEntity extends BaseEntity<InvoiceDetailEntity> {
     @TableField("sku_no")
     private String skuNo;
     /**
+    * 产品名称
+    */
+    @TableField("product_name")
+    private String productName;
+    /**
     * 平台sku
     */
     @TableField("platform_sku_no")

@@ -43,6 +43,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -243,9 +244,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceTemplateDTO.setCompanyName(cfgVatInvoiceEntity.getCompanyName());
         invoiceTemplateDTO.setCompanyAddress(cfgVatInvoiceEntity.getCompanyAddress());
         invoiceTemplateDTO.setVatNo(cfgVatInvoiceEntity.getVatNo());
-        invoiceTemplateDTO.setBillCreateTime(LocalDateTime.now());
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        invoiceTemplateDTO.setBillCreateTime(LocalDateTime.now().format(dateTimeFormatter));
         invoiceTemplateDTO.setInvoiceCode(invoiceInfoEntity.getCode());
-        invoiceTemplateDTO.setPlatformCreateTime(soB2cEntity.getPlatformOrderCreateTime());
+        invoiceTemplateDTO.setPlatformCreateTime(soB2cEntity.getPlatformOrderCreateTime().format(dateTimeFormatter));
         invoiceTemplateDTO.setPlatformCode(soB2cEntity.getPlatformCode());
         invoiceTemplateDTO.setCurrencyCode(soB2cEntity.getCurrency());
         String symbol = CurrencyEnum.getSymbolByCode(soB2cEntity.getCurrency());
@@ -257,23 +259,33 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             detailDTO.setProductName(listingInfoEntity.getPlatformSkuName());
             detailDTO.setQty(soB2cDetailEntity.getQty());
             detailDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
+            detailDTO.setTaxRateStr(detailDTO.getTaxRate() + "%");
             detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
+            detailDTO.setPriceStr(symbol + detailDTO.getPrice());
             detailDTO.setTaxPrice(soB2cDetailEntity.getPrice());
+            detailDTO.setTaxPriceStr(symbol + detailDTO.getTaxPrice());
             detailDTO.setTotalTaxPrice(soB2cDetailEntity.getPrice().multiply(new BigDecimal(soB2cDetailEntity.getQty())));
+            detailDTO.setTotalTaxPriceStr(symbol + detailDTO.getTotalTaxPrice());
             detailDTO.setCurrencySymbol(symbol);
             detailDTOS.add(detailDTO);
         }
         invoiceTemplateDTO.setDetailDTOS(detailDTOS);
         BigDecimal shippingCost = dmpSoBillDetailEntityList.stream().map(DmpSoBillDetailEntity::getShippingPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceTemplateDTO.setShippingCost(shippingCost);
+        invoiceTemplateDTO.setShippingCostStr(symbol + invoiceTemplateDTO.getShippingCost());
         BigDecimal discountAmount = dmpSoBillDetailEntityList.stream().map(DmpSoBillDetailEntity::getDiscountAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceTemplateDTO.setDiscount(discountAmount);
+        invoiceTemplateDTO.setDiscountStr(symbol + invoiceTemplateDTO.getDiscount());
         BigDecimal SubtotalVatInclusive = detailDTOS.stream().map(CfgVatInvoiceDTO.DetailDTO::getTotalTaxPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceTemplateDTO.setInvoiceTotal(SubtotalVatInclusive.add(shippingCost).add(discountAmount));
+        invoiceTemplateDTO.setInvoiceTotalStr(symbol + invoiceTemplateDTO.getInvoiceTotal());
         CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
         totalDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
+        totalDTO.setTaxRateStr(totalDTO.getTaxRate() + "%");
         totalDTO.setItemTotal(SubtotalVatInclusive.divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
+        totalDTO.setItemTotalStr(symbol + totalDTO.getItemTotal());
         totalDTO.setVatTotal(invoiceTemplateDTO.getInvoiceTotal().subtract(totalDTO.getItemTotal()));
+        totalDTO.setVatTotalStr(symbol +  totalDTO.getVatTotal());
         totalDTO.setCurrencySymbol(symbol);
         invoiceTemplateDTO.setTotalDTOS(totalDTO);
         try {
@@ -335,11 +347,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (CollUtil.isEmpty(records)){
             return;
         }
-        List<String> skuIds = records.stream().map(InvoiceInfoDTO.PagingViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
+//        List<String> skuIds = records.stream().map(InvoiceInfoDTO.PagingViewDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+//        List<SkuVO> skuVOS = plmTaskFeign.listSkuProductByIds(skuIds);
         records.forEach(pagingViewDTO -> {
-            SkuVO skuVO = skuVOS.stream().filter(e -> CharSequenceUtil.isNotBlank(pagingViewDTO.getSkuId()) && pagingViewDTO.getSkuId().equals(e.getSkuId())).findFirst().orElse(null);
-            pagingViewDTO.setProductName(Objects.nonNull(skuVO) ? skuVO.getSkuName() : CharSequenceUtil.EMPTY);
+//            SkuVO skuVO = skuVOS.stream().filter(e -> CharSequenceUtil.isNotBlank(pagingViewDTO.getSkuId()) && pagingViewDTO.getSkuId().equals(e.getSkuId())).findFirst().orElse(null);
+//            pagingViewDTO.setProductName(Objects.nonNull(skuVO) ? skuVO.getSkuName() : CharSequenceUtil.EMPTY);
             pagingViewDTO.setInvoiceTypeName(InvoiceInfoInvoiceTypeEnum.getName(pagingViewDTO.getCode()));
             pagingViewDTO.setTemplateTypeName(InvoiceInfoTemplateTypeEnum.getName(pagingViewDTO.getTemplateType()));
             pagingViewDTO.setStatusName(InvoiceInfoStatusEnum.getName(pagingViewDTO.getStatus()));

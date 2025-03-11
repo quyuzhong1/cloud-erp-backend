@@ -49,6 +49,7 @@ import javax.annotation.Resource;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -150,7 +151,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
     public void updateState(CfgVatInvoiceEntity entity, Boolean disabled) {
         if (!entity.getDisabled().equals(disabled)){
             //更新配置
-            this.lambdaUpdate().eq(CfgVatInvoiceEntity::getDisabled, disabled).update();
+            this.lambdaUpdate().eq(CfgVatInvoiceEntity::getId, entity.getId()).set(CfgVatInvoiceEntity::getDisabled, disabled).update();
             String msg = StrUtil.format("用户【{}】修改【{}】由【{}】改为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置" , entity.getDisabled() ? "禁用" : "启用", disabled? "禁用" : "启用");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), entity.getId(), "编辑操作");
         }
@@ -219,13 +220,17 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         dto.setCompanyName("companyName");
         dto.setCompanyAddress("companyAddress");
         dto.setVatNo("vatNo");
-        dto.setBillCreateTime(LocalDateTime.now());
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        dto.setBillCreateTime(LocalDateTime.now().format(dateTimeFormatter));
         dto.setInvoiceCode("invoiceCode");
-        dto.setPlatformCreateTime(LocalDateTime.now());
+        dto.setPlatformCreateTime(LocalDateTime.now().format(dateTimeFormatter));
         dto.setPlatformCode("platformCode");
         dto.setShippingCost(BigDecimal.ZERO);
+        dto.setShippingCostStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ZERO);
         dto.setDiscount(BigDecimal.ONE);
+        dto.setDiscountStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ONE);
         dto.setInvoiceTotal(BigDecimal.TEN);
+        dto.setInvoiceTotalStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
         dto.setCurrencyCode(CurrencyEnum.CNY.getCurrencyCode());
         dto.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //明细
@@ -234,26 +239,37 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         detailDTO.setProductName("productName");
         detailDTO.setQty(121);
         detailDTO.setTaxRate(BigDecimal.TEN);
+        detailDTO.setTaxRateStr(BigDecimal.TEN + "%");
         detailDTO.setPrice(BigDecimal.ONE);
+        detailDTO.setPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ONE);
         detailDTO.setTaxPrice(BigDecimal.TEN);
+        detailDTO.setTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
         detailDTO.setTotalTaxPrice(BigDecimal.TEN);
+        detailDTO.setTotalTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
         detailDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         detailDTOS.add(detailDTO);
         CfgVatInvoiceDTO.DetailDTO detailDTO1 = new CfgVatInvoiceDTO.DetailDTO();
         detailDTO1.setProductName("productName");
         detailDTO1.setQty(1212);
         detailDTO1.setTaxRate(BigDecimal.TEN);
+        detailDTO1.setTaxRateStr(BigDecimal.TEN + "%");
         detailDTO1.setPrice(BigDecimal.ONE);
+        detailDTO1.setPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ONE);
         detailDTO1.setTaxPrice(BigDecimal.TEN);
+        detailDTO1.setTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
         detailDTO1.setTotalTaxPrice(BigDecimal.TEN);
+        detailDTO1.setTotalTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
         detailDTO1.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         detailDTOS.add(detailDTO1);
         dto.setDetailDTOS(detailDTOS);
         //汇总
         CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
         totalDTO.setTaxRate(BigDecimal.TEN);
+        totalDTO.setTaxRateStr(BigDecimal.TEN + "%");
         totalDTO.setItemTotal(new BigDecimal("100"));
+        totalDTO.setItemTotalStr(CurrencyEnum.CNY.getCurrencySymbol() + new BigDecimal("100"));
         totalDTO.setVatTotal(new BigDecimal("99"));
+        totalDTO.setVatTotalStr(CurrencyEnum.CNY.getCurrencySymbol() + new BigDecimal("99"));
         totalDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         dto.setTotalDTOS(totalDTO);
         return dto;
@@ -290,6 +306,9 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
             if (count > 0){
                 throw new ServiceException("店铺【{}】已存在发票配置",shopInfo.getName());
             }
+        }
+        if (Objects.isNull(cfgVatInvoiceEntity.getDisabled())){
+            cfgVatInvoiceEntity.setDisabled(Boolean.FALSE);
         }
         if (Objects.isNull(cfgVatInvoiceEntity.getIsAutoUpload())){
             cfgVatInvoiceEntity.setIsAutoUpload(Boolean.TRUE);
