@@ -46,7 +46,6 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
     private final RequisitionApplicationDetailService requisitionApplicationDetailService = SpringUtil.getBean(RequisitionApplicationDetailService.class);
     private final FirstMileDeliveryService firstMileDeliveryService = SpringUtil.getBean(FirstMileDeliveryService.class);
     private final SoDeliveryNoticeService soDeliveryNoticeService = SpringUtil.getBean(SoDeliveryNoticeService.class);
-    private final PackingTaskService packingTaskService = SpringUtil.getBean(PackingTaskService.class);
     private final SoDeliveryNoticeDetailService soDeliveryNoticeDetailService = SpringUtil.getBean(SoDeliveryNoticeDetailService.class);
     private final PickingListsService pickingListsService = SpringUtil.getBean(PickingListsService.class);
     private final FirstMileDeliveryDetailService firstMileDeliveryDetailService = SpringUtil.getBean(FirstMileDeliveryDetailService.class);
@@ -119,11 +118,9 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
         List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listByCodes(codes);
         List<SoDeliveryNoticeEntity> soDeliveryNoticeEntities =  soDeliveryNoticeService.listByCodes(codes);
         List<RequisitionApplicationEntity> requisitionApplicationEntityList = requisitionApplicationService.listByCodes(codes);
-        List<PackingTaskEntity> packingTaskEntityList =  packingTaskService.listBySourceCodes(codes);
         Map<String,FirstMileDeliveryEntity> firstMileDeliveryServiceMap = firstMileDeliveryEntities.stream().collect(Collectors.toMap(FirstMileDeliveryEntity::getCode, Function.identity()));
         Map<String,SoDeliveryNoticeEntity> soDeliveryNoticeEntityMap = soDeliveryNoticeEntities.stream().collect(Collectors.toMap(SoDeliveryNoticeEntity::getCode, Function.identity()));
         Map<String,RequisitionApplicationEntity> requisitionApplicationMap = requisitionApplicationEntityList.stream().collect(Collectors.toMap(RequisitionApplicationEntity::getCode, Function.identity()));
-        Map<String,PackingTaskEntity> packingTaskMap = packingTaskEntityList.stream().collect(Collectors.toMap(PackingTaskEntity::getSourceCode, Function.identity()));
         List<String> firstMileDeliveryId = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getId).distinct().collect(Collectors.toList());
         List<String> soDeliveryNoticeIds = soDeliveryNoticeEntities.stream().map(SoDeliveryNoticeEntity::getId).distinct().collect(Collectors.toList());
         List<String> requisitionApplicationIds = requisitionApplicationEntityList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
@@ -148,13 +145,6 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             //检查字段空值
             if(CollectionUtils.isNotEmpty(errFieldMsg)){
                 packingExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errFieldMsg));
-                errorList.add(packingExcelDTO);
-                it.remove();
-                continue;
-            }
-            PackingTaskEntity packingTaskEntity = packingTaskMap.get(packingExcelDTO.getCode());
-            if (Objects.isNull(packingTaskEntity)){
-                packingExcelDTO.setErrorMsg("装箱任务不存在");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;
@@ -219,15 +209,6 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             }
             //SKU是否存在
             if (Objects.nonNull(firstMileDeliveryEntity)){
-                //【发货单状态-已审核】且【装箱任务状态-已装箱/已称重时】不可编辑
-                if (ApproveStatusEnum.APPROVE.getStatus().equals(firstMileDeliveryEntity.getApproveStatus())
-                        && (PackingWeightStatusEnum.WEIGHTED.getCode().equals(packingTaskEntity.getWeightingStatus())
-                        && PackingTaskStatusEnum.PACKED.getCode().equals(packingTaskEntity.getPackingStatus()))) {
-                    packingExcelDTO.setErrorMsg(ApiError.ERROR_PACKING_DELIVERY_CHECK.msg);
-                    errorList.add(packingExcelDTO);
-                    it.remove();
-                    continue;
-                }
                 List<FirstMileDeliveryDetailEntity> currentDetailList = firstMileDeliveryDetailEntityMap.get(firstMileDeliveryEntity.getId());
                 if(currentDetailList.stream().noneMatch(v->v.getSkuNo().equals(packingExcelDTO.getSku()))){
                     packingExcelDTO.setErrorMsg("SKU在发货单不存在");
