@@ -1295,34 +1295,29 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             if (ObjectUtils.isEmpty(detailId)) {
                 continue;
             }
-
-            List<BigDecimal> calcList = saleEstimateList.stream()
-                    .filter(v -> v.getReplenishmentDetailId().equals(detailId))
-                    .collect(Collectors.toMap(SalesEstimateHistoryEntity::getMonth, SalesEstimateHistoryEntity::getSalesQty, BigDecimal::add))
-                    .entrySet()
-                    .stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .map(Map.Entry::getValue)
-                    .collect(Collectors.toList());
-
             List<BigDecimal> basicData = new ArrayList<>();
-            List<String> monthList = saleEstimateList.stream()
-                    .filter(v -> v.getReplenishmentDetailId().equals(detailId))
-                    .map(SalesEstimateHistoryEntity::getMonth)
-                    .distinct()
-                    .sorted(Comparator.comparing(v -> v))
-                    .collect(Collectors.toList());
-            for (String month : monthList) {
-                Map<String, BigDecimal> monthlySales = salesHistoryDTOS.stream()
-                        .filter(v -> v.getShopSkuIds().equals(shopDTO.getShopId() + "-" + shopDTO.getSkuId()))
-                        .collect(Collectors.groupingBy(
-                                entry -> entry.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM")),
-                                Collectors.mapping(
-                                        entry -> BigDecimal.valueOf(Optional.ofNullable(entry.getOriginalSalesQty()).orElse(0)),
-                                        Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
-                                )
-                        ));
+            List<BigDecimal> calcList = new ArrayList<>();
+            Map<String, BigDecimal> monthlySales = salesHistoryDTOS.stream()
+                    .filter(v -> v.getShopSkuIds().equals(shopDTO.getShopId() + "-" + shopDTO.getSkuId()))
+                    .collect(Collectors.groupingBy(
+                            entry -> entry.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                            Collectors.mapping(
+                                    entry -> BigDecimal.valueOf(Optional.ofNullable(entry.getOriginalSalesQty()).orElse(0)),
+                                    Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                            )
+                    ));
+            LocalDate temp = exportSalesDTO.getStartDate();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            while (!temp.isAfter(exportSalesDTO.getEndDate())) {
+                String month = temp.format(formatter);
+                BigDecimal qty = saleEstimateList.stream()
+                        .filter(v -> v.getReplenishmentDetailId().equals(detailId))
+                        .filter(v -> v.getMonth().equals(month))
+                        .map(SalesEstimateHistoryEntity::getSalesQty)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                calcList.add(qty);
                 basicData.add(Optional.ofNullable(monthlySales.get(month)).orElse(BigDecimal.ZERO));
+                temp = temp.plusMonths(1);
             }
             DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, "");
             exportDTO.setMAEScore(metricsResult.getMAEScore());
