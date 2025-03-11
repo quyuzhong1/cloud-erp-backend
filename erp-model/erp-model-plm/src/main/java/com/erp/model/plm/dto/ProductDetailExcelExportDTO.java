@@ -43,13 +43,13 @@ public class ProductDetailExcelExportDTO {
      */
     @ExcelProperty("款名（中文）")
     @MenuCode("plm:product:detail:listProinfo")
-    private String productModelName;
+    private String spuName;
     /**
      * 款名（英文）
      */
     @ExcelProperty("款名（英文）")
     @MenuCode("plm:product:detail:listProinfo")
-    private String productModelNameEn;
+    private String spuNameEn;
     /**
      * sku编号
      */

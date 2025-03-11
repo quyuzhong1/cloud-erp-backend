@@ -1,6 +1,5 @@
 package com.erp.model.plm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -173,16 +172,4 @@ public class ProductManySpecBaseDTO implements Serializable{
      * 应用分类名
      */
     private String applicationCategoryName;
-
-    /**
-     * 产品款名
-     */
-    @TableField("product_model_name")
-    private String productModelName;
-
-    /**
-     * 产品款名(英文)
-     */
-    @TableField("product_model_name_en")
-    private String productModelNameEn;
 }

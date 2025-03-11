@@ -170,18 +170,6 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
     @TableField(exist = false)
     private BigDecimal destDeclarePrice;
 
-    /**
-     * 产品款名
-     */
-    @TableField("product_model_name")
-    private String productModelName;
-
-    /**
-     * 产品款名(英文)
-     */
-    @TableField("product_model_name_en")
-    private String productModelNameEn;
-
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }
