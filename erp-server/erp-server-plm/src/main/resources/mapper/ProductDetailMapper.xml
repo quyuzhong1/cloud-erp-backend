@@ -368,9 +368,7 @@
                pi.is_customized,
                pi.sales_channel,
                pd.status,
-               pi.application_category_id,
-               pd.product_model_name,
-               pd.product_model_name_en
+               pi.application_category_id
         FROM product_info pi
                  LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
                  LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
@@ -418,9 +416,7 @@
                pi.is_customized,
                pi.sales_channel,
                pd.status,
-               pi.application_category_id,
-               pd.product_model_name,
-               pd.product_model_name_en
+               pi.application_category_id
         FROM product_info pi
                  LEFT JOIN product_detail pd on pi.id = pd.product_id AND pd.is_deleted = FALSE
                  LEFT JOIN product_unit unit ON pd.unit_id = unit.id AND unit.is_deleted = FALSE
@@ -466,6 +462,8 @@
         SELECT
         pd.images_url as imageUrl,
         pi.spu_no as spuNo,
+        pi.name as spuName,
+        pi.name_en as spuNameEn,
         pd.sku_no as skuNo,
         pi.category_id AS categoryId,
         pi.category AS mainCategory,
@@ -550,9 +548,7 @@
         pd.warehouse_location,
         pd.warehouse_location_large,
         pi.application_category_id,
-        pl.insurance_property,
-        pd.product_model_name,
-        pd.product_model_name_en
+        pl.insurance_property
         FROM product_info pi
         INNER JOIN product_detail pd ON pi.id = pd.product_id AND pd.is_deleted = FALSE
         LEFT JOIN product_purchase pp ON pp.sku_id = pd."id" AND pp.is_deleted = FALSE
