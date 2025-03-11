@@ -19,6 +19,7 @@ import com.common.business.utils.JasperHelperUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
@@ -196,6 +197,8 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         dto.setShippingCost(BigDecimal.ZERO);
         dto.setDiscount(BigDecimal.ONE);
         dto.setInvoiceTotal(BigDecimal.TEN);
+        dto.setCurrencyCode(CurrencyEnum.CNY.getCurrencyCode());
+        dto.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         //明细
         List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
         CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();
@@ -203,7 +206,9 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         detailDTO.setQty(121);
         detailDTO.setTaxRate(BigDecimal.TEN);
         detailDTO.setPrice(BigDecimal.ONE);
+        detailDTO.setTaxPrice(BigDecimal.TEN);
         detailDTO.setTotalTaxPrice(BigDecimal.TEN);
+        detailDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         detailDTOS.add(detailDTO);
         CfgVatInvoiceDTO.DetailDTO detailDTO1 = new CfgVatInvoiceDTO.DetailDTO();
         detailDTO1.setProductName("productName");
@@ -212,6 +217,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         detailDTO1.setPrice(BigDecimal.ONE);
         detailDTO1.setTaxPrice(BigDecimal.TEN);
         detailDTO1.setTotalTaxPrice(BigDecimal.TEN);
+        detailDTO1.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         detailDTOS.add(detailDTO1);
         dto.setDetailDTOS(detailDTOS);
         //汇总
@@ -219,6 +225,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         totalDTO.setTaxRate(BigDecimal.TEN);
         totalDTO.setItemTotal(new BigDecimal("100"));
         totalDTO.setVatTotal(new BigDecimal("99"));
+        totalDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
         dto.setTotalDTOS(totalDTO);
         return dto;
     }

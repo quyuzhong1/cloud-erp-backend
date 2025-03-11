@@ -51,11 +51,4 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     List<BatchResultDTO> batchGenerateInvoice(List<String> ids);
 
     void batchSave(List<InvoiceInfoEntity> addList, List<InvoiceDetailEntity> addDetailList);
-
-    /**
-     * 批量生成发票
-     * @param ids
-     * @param response
-     */
-    void exportInvoicePdf(List<String> ids, HttpServletResponse response);
 }
