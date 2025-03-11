@@ -1045,13 +1045,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
 
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
-
     /**
-     * 获取物流面单
+     * 根据店铺更新未配置vat的订单
      *
-     * @param entity
-     * @param soB2cLogisticsEntity
+     * @param shopId
+     * @param enableTime
+     * @param vatInvoiceStatus
      * @return
      */
-    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+    void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 }

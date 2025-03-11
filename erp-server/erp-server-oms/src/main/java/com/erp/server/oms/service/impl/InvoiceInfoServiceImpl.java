@@ -31,6 +31,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.InvoiceInfoMapper;
+import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +82,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private ListingInfoService listingInfoService;
+
+    @Resource
+    private AmazonUploadInvoiceService amazonUploadInvoiceService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -214,9 +218,17 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }).collect(Collectors.toList());
         //上传发票
         for (InvoiceInfoEntity invoiceInfoEntity : uploadInvoiceList) {
-            //TODO:调用亚马逊上传发票接口
-
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            try {
+                amazonUploadInvoiceService.uploadInvoice(soB2cEntity,invoiceInfoEntity.getFileUrl(),invoiceInfoEntity.getCode());
+                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
+            }catch (Exception e){
+                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
+                log.error("亚马逊上传发票失败,{}",e.getMessage());
+                resultDTOList.add(BatchResultDTO.fail(invoiceInfoEntity.getId(),invoiceInfoEntity.getCode(),StrUtil.format("亚马逊上传发票失败,{}",e.getMessage())));
+            }
         }
+        soB2cService.updateBatchById(soB2cEntityList);
         return resultDTOList;
     }
 
@@ -268,9 +280,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             String fileUrl = cfgVatInvoiceService.createVatInvoicePdf(invoiceTemplateDTO);
             invoiceInfoEntity.setBillCreateTime(LocalDateTime.now());
             invoiceInfoEntity.setFileUrl(fileUrl);
+            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.WAIT_UPLOAD.getCode());
         }catch (Exception e){
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(StrUtil.format("生成发票失败,{}",e.getMessage()));
+            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
         }
     }
 
@@ -313,6 +327,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }else{
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode());
         }
+        soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.PENDING.getCode());
         return invoiceInfoEntity;
     }
 

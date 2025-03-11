@@ -373,7 +373,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private String thirdSystem;
 
     /**
-     * 发票状态
+     * 发票状态 VatInvoiceStatusEnum
      */
     @TableField("vat_invoice_status")
     private String vatInvoiceStatus;
