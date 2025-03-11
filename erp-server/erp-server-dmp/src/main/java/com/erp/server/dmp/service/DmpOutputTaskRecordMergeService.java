@@ -38,7 +38,7 @@ public interface DmpOutputTaskRecordMergeService extends SuperService<DmpOutputT
     Boolean update(DmpOutputTaskRecordMergeDTO.UpdateDTO dto);
 
 
-    void sdyMergePush();
+    void sdyMergePush(List<DmpOutputTaskRecordMergeEntity> list);
     
     boolean mergeDeal(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
     

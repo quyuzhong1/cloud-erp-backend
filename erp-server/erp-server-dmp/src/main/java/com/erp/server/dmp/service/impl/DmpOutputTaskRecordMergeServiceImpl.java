@@ -135,11 +135,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void sdyMergePush() {
-        List<DmpOutputTaskRecordMergeEntity> list = this.lambdaQuery()
-                .eq(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode())
-                .last("LIMIT 1000")
-                .list();
+    public void sdyMergePush(List<DmpOutputTaskRecordMergeEntity> list) {
         if (CollUtil.isEmpty(list)) {
             return;
         }
