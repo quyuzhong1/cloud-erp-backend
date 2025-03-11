@@ -32,7 +32,7 @@ public class EccangReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
 					dmpDataMap.put("detailListJson", JSON.toJSONString(overseasDetail));
 				}
 				// 兼容2个引用单号
-				String orderReferenceNo = dmpDataMap.getOrDefault("order_reference_no", "").toString();
+				String orderReferenceNo = dmpDataMap.getOrDefault("orderReferenceNo", "").toString();
 				if (StringUtils.isBlank(orderReferenceNo)){
 					String referenceNo = dmpDataMap.getOrDefault("reference_no", "").toString();
 					dmpDataMap.put("orderReferenceNo", referenceNo);
