@@ -54,7 +54,7 @@
         i.status as status,
         i.bill_create_time as billCreateTime,
         i.remark as remark,
-        i.file_url,
+        i.file_url as fileUrl,
         i.upload_status as uploadStatus,
         i.upload_time as uploadTime,
         id.id as detailId,

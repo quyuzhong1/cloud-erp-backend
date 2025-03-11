@@ -11,6 +11,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.server.oms.service.InvoiceInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -101,6 +103,24 @@ public class InvoiceInfoController extends BaseController {
      */
     public ApiResult<List<BatchResultDTO>> generateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(invoiceInfoService.batchGenerateInvoice(dto.getIds()));
+    }
+
+    /**
+     * 上传发票
+     */
+    public ApiResult<List<BatchResultDTO>> uploadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(invoiceInfoService.batchUploadInvoice(dto.getIds()));
+    }
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    public ApiResult<Object> export(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        Boolean result = invoiceInfoService.export(dto);
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
 }
