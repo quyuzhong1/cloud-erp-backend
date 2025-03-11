@@ -2338,7 +2338,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     }
                 }
                 if (StringUtils.isNotBlank(req.getSaleCountry())) {
-                    req.setProductProperty(Arrays.stream(req.getSaleCountry().split(",")).filter(StringUtils::isNotBlank)
+                    req.setSaleCountry(Arrays.stream(req.getSaleCountry().split(",")).filter(StringUtils::isNotBlank)
                             .map(c -> finalDictValueMaps.get(c)).filter(d -> d != null).collect(Collectors.joining(",")));
                 }
                 if(StringUtils.isNotBlank(req.getImageUrl())){
