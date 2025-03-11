@@ -104,7 +104,8 @@
         sb2c.is_out_of_range_delivery as isOutOfRangeDelivery,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        sb2c.vat_invoice_status as vatInvoiceStatus
     </sql>
 
     <!-- 通用查询结果列 -->

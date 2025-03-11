@@ -3636,6 +3636,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     data.setTrackStatusName(logisticsBillVo.getTrackStatusName());
                 }
             }
+            data.setVatInvoiceStatusName(SoB2cVatStatusEnum.getName(data.getVatInvoiceStatus()));
             //店铺
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {

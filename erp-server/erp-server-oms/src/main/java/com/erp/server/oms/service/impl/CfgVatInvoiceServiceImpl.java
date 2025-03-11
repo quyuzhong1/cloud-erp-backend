@@ -27,7 +27,7 @@ import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.entity.CfgVatInvoiceEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.CfgVatInvoiceTemplateTypeEnum;
-import com.erp.model.oms.enums.VatInvoiceStatusEnum;
+import com.erp.model.oms.enums.SoB2cVatStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.FileTemplateDTO;
@@ -106,7 +106,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         if (disabled){
             return;
         }
-        soB2cService.updateFbaNotVatInvoice(shopId,enableTime, VatInvoiceStatusEnum.PENDING.getCode());
+        soB2cService.updateFbaNotVatInvoice(shopId,enableTime, SoB2cVatStatusEnum.PENDING.getCode());
     }
 
     /**
