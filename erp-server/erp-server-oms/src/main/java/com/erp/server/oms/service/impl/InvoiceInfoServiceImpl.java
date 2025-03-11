@@ -29,6 +29,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
@@ -46,6 +47,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INFO;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_SUPPLIER;
 
 /**
  * <p>
@@ -86,6 +90,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private AmazonUploadInvoiceService amazonUploadInvoiceService;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -305,6 +312,40 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     public void batchSave(List<InvoiceInfoEntity> addList, List<InvoiceDetailEntity> addDetailList) {
         this.saveBatch(addList);
         invoiceDetailService.saveBatch(addDetailList);
+    }
+
+    @Override
+    public List<BatchResultDTO> batchUploadInvoice(List<String> ids) {
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
+        List<InvoiceInfoEntity> entities = super.listByIds(ids);
+        List<String> soIds = entities.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
+        List<SoB2cEntity> updateSoB2cEntityList = new ArrayList<>();
+        for (InvoiceInfoEntity entity : entities) {
+            if(!entity.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"不是已开票状态的发票不能上传发票"));
+            }
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getSoId()) && entity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            try {
+                amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
+                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
+            }catch (Exception e){
+                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
+                log.error("亚马逊上传发票失败",e);
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("亚马逊上传发票失败,{}",e.getMessage())));
+            }
+            updateSoB2cEntityList.add(soB2cEntity);
+        }
+        if (CollUtil.isNotEmpty(updateSoB2cEntityList)){
+            soB2cService.updateBatchById(updateSoB2cEntityList);
+        }
+        return resultDTOList;
+    }
+
+    @Override
+    public Boolean export(InvoiceInfoDTO.PagingParamDTO dto) {
+        downloadTaskFeign.saveDownloadTask("发票管理", EXPORT_INVOICE_INFO.getCode(), dto);
+        return Boolean.TRUE;
     }
 
     private List<InvoiceDetailEntity> buildInvoiceDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, InvoiceInfoEntity invoiceInfoEntity) {
