@@ -59,6 +59,7 @@
         i.upload_time as uploadTime,
         id.id as detailId,
         id.sku_id,
+        id.product_name as productName,
         id.sku_no as skuNo,
         si.name as shopName
         FROM invoice_info i
