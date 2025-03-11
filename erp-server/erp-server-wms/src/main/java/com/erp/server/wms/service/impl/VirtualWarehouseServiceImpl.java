@@ -560,4 +560,9 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         downloadTaskFeign.saveDownloadTask("虚拟仓库设置导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT.getCode(), dto);
         return Boolean.TRUE;
     }
+
+    @Override
+    public PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto) {
+        return null;
+    }
 }

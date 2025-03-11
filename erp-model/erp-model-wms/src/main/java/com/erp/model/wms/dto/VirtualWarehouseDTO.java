@@ -421,7 +421,57 @@ public class VirtualWarehouseDTO implements Serializable {
          * 关联仓库Id
          */
         private String warehouseId;
-
-
+        /**
+         * 关联外部仓平台
+         */
+        private String outSidePlatform;
+        /**
+         * 关联外部仓库id
+         */
+        private String outSideVirtualWarehouseId;
+        /**
+         * 是否启用
+         */
+        private String disabled;
+        /**
+         * 渠道类型
+         */
+        private String type;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 分区id
+         */
+        private String partitionId;
+        /**
+         * 分区名称
+         */
+        private String partitionName;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 }
