@@ -154,7 +154,6 @@ public class CfgVatInvoiceDTO implements Serializable {
         /**
         * 禁用状态 false 启用
         */
-        @NotNull(message = "禁用状态 false 启用不能为空")
         private Boolean disabled;
 
         /**
