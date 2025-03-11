@@ -109,7 +109,9 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         shudiyunB2cOrderDTO.setBiz_status(SoB2cBillStatusEnum.getName(soB2cEntity.getBillStatus()));
 
         shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, soB2cEntity.getVersion(), soB2cDetailEntity.getVersion()));
-        shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(soB2cEntity.getAmount());
+
+        BigDecimal amount = soB2cDetailEntityList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(amount);
         //总优惠金额
         shudiyunB2cOrderDTO.setDiscount_deduction_amount(soB2cEntity.getTotalDiscount());
 
@@ -136,7 +138,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         }
 
 
-        shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getPayAmount());
+        shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
         String customerId = "";
         ShopInfoEntity shopInfo = shopInfoList.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
