@@ -140,7 +140,12 @@ public class CfgVatInvoiceController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(id,id,"发票配置不存在"));
                 continue;
             }
-            cfgVatInvoiceService.updateState(entity, updateDTO.getDisabled());
+            try {
+                cfgVatInvoiceService.updateState(entity, updateDTO.getDisabled());
+                resultDTOS.add(BatchResultDTO.success(id,id));
+            }catch (Exception e){
+                resultDTOS.add(BatchResultDTO.fail(id,id,e.getMessage()));
+            }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

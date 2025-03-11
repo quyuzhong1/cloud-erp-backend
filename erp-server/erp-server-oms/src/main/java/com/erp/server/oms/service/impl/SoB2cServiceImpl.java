@@ -9622,6 +9622,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return baseMapper.listProductSalesExport(query, params, skuIdList);
     }
 
+    @Override
+    public void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus) {
+        if (CharSequenceUtil.isAllNotBlank(shopId, vatInvoiceStatus) || Objects.isNull(enableTime)){
+            return;
+        }
+        baseMapper.updateFbaNotVatInvoice(shopId, enableTime, vatInvoiceStatus);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

@@ -27,6 +27,7 @@ import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.entity.CfgVatInvoiceEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.CfgVatInvoiceTemplateTypeEnum;
+import com.erp.model.oms.enums.VatInvoiceStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.FileTemplateDTO;
@@ -36,6 +37,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CfgVatInvoiceMapper;
 import com.erp.server.oms.service.CfgVatInvoiceService;
 import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
@@ -67,6 +69,8 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
     private SysUserFeign sysUserFeign;
     @Resource
     private FileTemplateFeign fileTemplateFeign;
+    @Resource
+    private SoB2cService soB2cService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -81,10 +85,27 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         if(!save) {
             throw new ServiceException("VAT发票设置保存失败");
         }
+        //启用配置
+        updateSoB2CState(cfgVatInvoiceEntity.getShopId(),cfgVatInvoiceEntity.getDisabled(),cfgVatInvoiceEntity.getEnableTime());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置" , cfgVatInvoiceEntity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), cfgVatInvoiceEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(cfgVatInvoiceEntity.getId(), cfgVatInvoiceEntity.getId());
+    }
+
+    /**
+     * 根据店铺id更新销售订单发票配置状态
+     *
+     * @param shopId
+     * @param disabled
+     * @param enableTime
+     */
+    @Override
+    public void updateSoB2CState(String shopId, Boolean disabled, LocalDateTime enableTime) {
+        if (disabled){
+            return;
+        }
+        soB2cService.updateFbaNotVatInvoice(shopId,enableTime, VatInvoiceStatusEnum.PENDING.getCode());
     }
 
     /**
@@ -125,8 +146,16 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateState(CfgVatInvoiceEntity entity, Boolean disabled) {
-
+        if (!entity.getDisabled().equals(disabled)){
+            //更新配置
+            this.lambdaUpdate().eq(CfgVatInvoiceEntity::getDisabled, disabled).update();
+            String msg = StrUtil.format("用户【{}】修改【{}】由【{}】改为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置" , entity.getDisabled() ? "禁用" : "启用", disabled? "禁用" : "启用");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), entity.getId(), "编辑操作");
+        }
+        //启用配置
+        updateSoB2CState(entity.getShopId(),disabled,entity.getEnableTime());
     }
 
     @Override
@@ -239,6 +268,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         records.forEach(pagingViewDTO -> {
             pagingViewDTO.setShopCountryName(countryMap.getOrDefault(pagingViewDTO.getShopCountryId(), CharSequenceUtil.EMPTY));
             pagingViewDTO.setCountryName(countryMap.getOrDefault(pagingViewDTO.getCountryId(), CharSequenceUtil.EMPTY));
+            pagingViewDTO.setTemplateTypeName(CfgVatInvoiceTemplateTypeEnum.getName(pagingViewDTO.getTemplateType()));
         });
     }
 

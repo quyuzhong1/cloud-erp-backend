@@ -82,11 +82,6 @@ public class DmpSoBillDetailEntity extends BaseEntity<DmpSoBillDetailEntity> {
     @TableField("platform_detail_id")
     private String platformDetailId;
     /**
-    * 来源ID
-    */
-    @TableField("source_id")
-    private String sourceId;
-    /**
     * ERP店铺ID
     */
     @TableField("shop_id")
@@ -184,8 +179,8 @@ public class DmpSoBillDetailEntity extends BaseEntity<DmpSoBillDetailEntity> {
     /**
     * 平台创建时间
     */
-    @TableField("platform_create_time")
-    private LocalDateTime platformCreateTime;
+    @TableField("platform_order_create_time")
+    private LocalDateTime platformOrderCreateTime;
     /**
     * 数量
     */
