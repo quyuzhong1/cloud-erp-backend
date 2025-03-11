@@ -55,7 +55,8 @@ public class ShopifyRefundOrderDmpHandler extends DmpInputDoNextDmpHandler{
             dmpMap.put("shopId", shopId);
             // 主单信息
             dmpMap.put("thirdCode", shopifyRefund.getId());
-            dmpMap.put("platformCode", shopifyRefund.getOrderId());
+            dmpMap.put("platformCode", shopifyRefund.getId());
+            dmpMap.put("platformOrderCode", shopifyRefund.getOrderId());
             dmpMap.put("platformCreateTime", shopifyRefund.getCreatedAt());
             dmpMap.put("platformUpdateTime", shopifyRefund.getProcessedAt());
 
