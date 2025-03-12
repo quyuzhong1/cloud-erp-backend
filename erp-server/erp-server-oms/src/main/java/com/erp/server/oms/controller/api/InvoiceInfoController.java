@@ -11,7 +11,6 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.server.oms.service.InvoiceInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +84,7 @@ public class InvoiceInfoController extends BaseController {
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<InvoiceInfoDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
-        PagingVO<InvoiceInfoDTO.PagingViewDTO> pagingVO = invoiceInfoService.paging(dto);
+        PagingVO<InvoiceInfoDTO.PagingViewDTO> pagingVO = invoiceInfoService.paging(dto, false);
         return success(pagingVO);
     }
 
@@ -105,7 +104,8 @@ public class InvoiceInfoController extends BaseController {
      */
     @PostMapping("/generateInvoice")
     public ApiResult<List<BatchResultDTO>> generateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(invoiceInfoService.batchGenerateInvoice(dto.getIds()));
+        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchGenerateInvoice(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -113,7 +113,8 @@ public class InvoiceInfoController extends BaseController {
      */
     @PostMapping("/uploadInvoice")
     public ApiResult<List<BatchResultDTO>> uploadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(invoiceInfoService.batchUploadInvoice(dto.getIds()));
+        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchUploadInvoice(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

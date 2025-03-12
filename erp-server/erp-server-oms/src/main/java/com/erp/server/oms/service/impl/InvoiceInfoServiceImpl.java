@@ -36,7 +36,9 @@ import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -93,6 +95,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Value("${fdfs.publicUrl}")
+    private String fdfsPubUrl;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -148,12 +153,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
-    public PagingVO<InvoiceInfoDTO.PagingViewDTO> paging(PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
+    public PagingVO<InvoiceInfoDTO.PagingViewDTO> paging(PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto, Boolean isExport) {
         InvoiceInfoDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page<InvoiceInfoDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<InvoiceInfoDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
-        fillList(pageData.getRecords());
+        fillList(pageData.getRecords(), isExport);
         return new PagingVO(pageData);
     }
 
@@ -469,7 +474,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         return invoiceInfoEntity;
     }
 
-    private void fillList(List<InvoiceInfoDTO.PagingViewDTO> records) {
+    private void fillList(List<InvoiceInfoDTO.PagingViewDTO> records, Boolean isExport) {
         if (CollUtil.isEmpty(records)){
             return;
         }
@@ -486,6 +491,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             pagingViewDTO.setTemplateTypeName(InvoiceInfoTemplateTypeEnum.getName(pagingViewDTO.getTemplateType()));
             pagingViewDTO.setStatusName(InvoiceInfoStatusEnum.getName(pagingViewDTO.getStatus()));
             pagingViewDTO.setUploadStatusName(InvoiceInfoUploadStatusEnum.getName(pagingViewDTO.getUploadStatus()));
+            if(isExport && StringUtils.isNotBlank(pagingViewDTO.getFileUrl())){
+                pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
+            }
         });
     }
 
