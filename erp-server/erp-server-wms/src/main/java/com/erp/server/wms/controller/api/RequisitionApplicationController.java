@@ -15,6 +15,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -649,5 +650,18 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/printFnskuBillConfirm")
     public void printFnskuBillConfirm(@RequestBody @Validated RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto , HttpServletResponse response) {
         requisitionApplicationService.printFnskuBillConfirm(dto,response);
+    }
+
+    /**
+     * 关联发货计划添加产品
+     * @param
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/pagingSkuByDeliveryPlan")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO>> pagingSkuByDeliveryPlan(@RequestBody @Validated PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto) {
+        return success(requisitionApplicationService.pagingSkuByDeliveryPlan(dto));
     }
 }
