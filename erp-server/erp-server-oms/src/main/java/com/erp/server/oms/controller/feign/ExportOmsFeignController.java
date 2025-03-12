@@ -165,9 +165,9 @@ public class ExportOmsFeignController {
         return soB2cReturnService.paging(dto);
     }
 
-    @PostMapping("/feign/export/exportInvoice")
+    @PostMapping("/exportInvoice")
     @WebAdvanceQuery
     public PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
-        return invoiceInfoService.paging(dto);
+        return invoiceInfoService.paging(dto, true);
     }
 }

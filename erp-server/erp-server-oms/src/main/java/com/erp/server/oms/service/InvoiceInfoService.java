@@ -8,9 +8,6 @@ import com.erp.model.oms.dto.InvoiceInfoDTO;
 
 import java.util.List;
 
-import javax.servlet.http.HttpServletResponse;
-import java.util.List;
-
 /**
  * <p>
  * 上传记录 服务类
@@ -41,10 +38,12 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
 
     /**
      * 分页查询
+     *
      * @param dto
+     * @param isExport
      * @return
      */
-    PagingVO<InvoiceInfoDTO.PagingViewDTO> paging(PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto);
+    PagingVO<InvoiceInfoDTO.PagingViewDTO> paging(PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto, Boolean isExport);
 
     String downloadInvoice(String id);
 
