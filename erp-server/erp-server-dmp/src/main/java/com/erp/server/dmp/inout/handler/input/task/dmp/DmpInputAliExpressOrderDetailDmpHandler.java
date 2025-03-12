@@ -61,7 +61,7 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 							Map<String , Object> product_price = (Map)product_price_obj;
 							Object amount_obj = product_price.get("amount");
 							if(amount_obj != null) {
-								c.put("sellPriceOrigin", new BigDecimal(product_count_obj.toString()).multiply(new BigDecimal(amount_obj.toString())));
+								c.put("sellPriceOrigin", new BigDecimal(amount_obj.toString()));
 							}
 							Object currency_code_obj = product_price.get("currency_code");
 							if(currency_code_obj != null) {
