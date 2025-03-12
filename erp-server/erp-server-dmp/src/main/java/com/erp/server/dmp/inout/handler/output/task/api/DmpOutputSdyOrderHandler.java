@@ -147,7 +147,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
             return result;
         }
-        if (!dmpSoInfoEntity.getPayStatus()) {
+        if (dmpSoInfoEntity.getPayStatus() == null || !dmpSoInfoEntity.getPayStatus()) {
             return result;
         }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());

@@ -75,7 +75,7 @@
             FROM
             virtual_trans_flow_detail
             WHERE
-            is_deleted = false and #{date} > trade_time
+            is_deleted = false and #{oldTransFlowEntity.billDate} > trade_time
             group by virtual_inventory_detail_id
         )
         select
@@ -89,6 +89,15 @@
         inner join virtualTransFlowDetail vtfd on vid.id = vtfd.virtual_inventory_detail_id
         left join  virtual_trans_flow vtf on vid.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
         where vid.is_deleted = false
+            <if test="oldTransFlowEntity.skuId != null and oldTransFlowEntity.skuId != ''">
+                and vid.sku_id = #{oldTransFlowEntity.skuId}
+            </if>
+            <if test="oldTransFlowEntity.warehouseId != null and oldTransFlowEntity.warehouseId != ''">
+                and vid.warehouse_id = #{oldTransFlowEntity.warehouseId}
+            </if>
+            <if test="oldTransFlowEntity.virtualWarehouseId != null and oldTransFlowEntity.virtualWarehouseId != ''">
+                and vid.virtual_warehouse_id = #{oldTransFlowEntity.virtualWarehouseId}
+            </if>
         order by vid.id asc
     </select>
 

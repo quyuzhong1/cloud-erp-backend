@@ -2,7 +2,6 @@ package com.erp.server.dmp.inout.job;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -10,7 +9,6 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
-import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -20,14 +18,19 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
+import com.erp.model.dmp.enums.OutputTaskRecordMergeStatusEnum;
 import com.erp.server.dmp.controller.api.DmpInoutController;
 import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputTaskFactory;
+import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.service.DmpCfgOutputService;
+import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
+import com.google.common.collect.Lists;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -55,14 +58,13 @@ public class DmpOutputTaskJob {
     @Autowired
 	@Qualifier("dmpDoOutputErrorTask")
 	private ExecutorService dmpDoOutputErrorTask;
-	
-    private List<String> systemIds = new ArrayList<>();
+    
+    @Autowired
+    private DmpHandlerCache dmpHandlerCache;
 	
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
-		if(CollUtil.isEmpty(systemIds)) {
-			systemIds = dmpCfgOutputService.list().stream().map(DmpCfgOutputEntity::getSystemId).distinct().collect(Collectors.toList());
-		}
+		List<String> systemIds = dmpHandlerCache.getDmpCfgOutputEntityList(d -> true).stream().map(DmpCfgOutputEntity::getSystemId).distinct().collect(Collectors.toList());
 		String jobParam = XxlJobHelper.getJobParam();
 		String size = "150";
 		if(StringUtils.isNotBlank(jobParam)) {
@@ -74,13 +76,15 @@ public class DmpOutputTaskJob {
 		}
 		
 		String finalSize = size;
-		for(String systemId : systemIds) {
-			dmpDoOutputErrorTask.execute(() -> {
-				List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.getOutputErrorTask(systemId, finalSize);
-				if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
-					dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordEntityList);
-				}
-			});
+		if(CollUtil.isNotEmpty(systemIds)) {
+			for(String systemId : systemIds) {
+				dmpDoOutputErrorTask.execute(() -> {
+					List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.getOutputErrorTask(systemId, finalSize);
+					if(CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+						dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordEntityList);
+					}
+				});
+			}
 		}
 		
         return ReturnT.SUCCESS;
@@ -198,11 +202,31 @@ public class DmpOutputTaskJob {
 
 	@XxlJob("sdyMergePush")
 	public ReturnT sdyMergePush(){
+		String jobParam = XxlJobHelper.getJobParam();
+		Integer size = 60000;
+		if(StringUtils.isNotBlank(jobParam)) {
+			size = Integer.valueOf(jobParam);
+		}
+		if(size < 1000) {
+			size = 1000;
+		}
+		if(size > 60000) {
+			size = 60000;
+		}
 		try {
-			dmpOutputTaskRecordMergeService.sdyMergePush();
+			List<DmpOutputTaskRecordMergeEntity> list = dmpOutputTaskRecordMergeService.lambdaQuery()
+	                .eq(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.WAIT_MERGE.getCode())
+	                .last(" order by create_time asc LIMIT " + size)
+	                .list();
+			if(CollUtil.isNotEmpty(list)) {
+				List<List<DmpOutputTaskRecordMergeEntity>> partition = Lists.partition(list, 1000);
+				for(List<DmpOutputTaskRecordMergeEntity> p : partition) {
+					dmpOutputTaskRecordMergeService.sdyMergePush(p);
+				}
+			}
 		} catch (Exception e) {
-			log.error("组合数据推送数帝云失败：" , e);
-			DmpHandlerUtils.sendFeiShuMsg("组合数据推送数帝云失败：" + "【" + e.getMessage() + "】");
+			log.error(size + "组合数据推送数帝云失败：" , e);
+			DmpHandlerUtils.sendFeiShuMsg(size + "组合数据推送数帝云失败：" + "【" + e.getMessage() + "】");
 		}
 		return ReturnT.SUCCESS;
 	}
