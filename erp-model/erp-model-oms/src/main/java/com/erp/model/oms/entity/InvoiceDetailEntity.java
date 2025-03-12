@@ -29,6 +29,11 @@ public class InvoiceDetailEntity extends BaseEntity<InvoiceDetailEntity> {
     @TableField("main_id")
     private String mainId;
     /**
+    * 来源明细id
+    */
+    @TableField("source_detail_id")
+    private String sourceDetailId;
+    /**
     * skuId
     */
     @TableField("sku_id")
@@ -38,6 +43,11 @@ public class InvoiceDetailEntity extends BaseEntity<InvoiceDetailEntity> {
     */
     @TableField("sku_no")
     private String skuNo;
+    /**
+    * 产品名称
+    */
+    @TableField("product_name")
+    private String productName;
     /**
     * 平台sku
     */

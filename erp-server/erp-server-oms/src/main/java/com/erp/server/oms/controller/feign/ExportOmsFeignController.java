@@ -48,6 +48,8 @@ public class ExportOmsFeignController {
     private SoB2cReturnService soB2cReturnService;
     @Resource
     private ReportManagerService reportManagerService;
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
 
 
     @PostMapping("/customerB2BSellerChange")
@@ -151,5 +153,11 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery
     public PagingVO<SoB2cReturnDTO.PagingViewDTO> exportSoB2cReturn(@RequestBody PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
         return soB2cReturnService.paging(dto);
+    }
+
+    @PostMapping("/exportInvoice")
+    @WebAdvanceQuery
+    public PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
+        return invoiceInfoService.paging(dto, true);
     }
 }

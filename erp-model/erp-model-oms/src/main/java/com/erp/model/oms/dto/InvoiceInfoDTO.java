@@ -254,6 +254,7 @@ public class InvoiceInfoDTO implements Serializable {
          */
         private String shopId;
 
+        private String shopName;
         /**
          * 销售订单id
          */

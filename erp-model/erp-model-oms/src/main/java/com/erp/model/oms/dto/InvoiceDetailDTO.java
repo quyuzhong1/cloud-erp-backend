@@ -105,6 +105,7 @@ public class InvoiceDetailDTO implements Serializable {
         @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
+        private String productName;
 
         /**
         * 平台sku

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -83,7 +84,7 @@ public class InvoiceInfoController extends BaseController {
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<InvoiceInfoDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
-        PagingVO<InvoiceInfoDTO.PagingViewDTO> pagingVO = invoiceInfoService.paging(dto);
+        PagingVO<InvoiceInfoDTO.PagingViewDTO> pagingVO = invoiceInfoService.paging(dto, false);
         return success(pagingVO);
     }
 
@@ -92,15 +93,39 @@ public class InvoiceInfoController extends BaseController {
      * 下载发票
      * 返回下载地址
      */
+    @PostMapping("/downloadInvoice")
     public ApiResult<String> downloadInvoice(@RequestBody @Validated BaseIdDTO dto) {
         return success(invoiceInfoService.downloadInvoice(dto.getId()));
     }
 
     /**
      * 生成发票
+     * 传参销售订单ids
      */
+    @PostMapping("/generateInvoice")
     public ApiResult<List<BatchResultDTO>> generateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(invoiceInfoService.batchGenerateInvoice(dto.getIds()));
+        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchGenerateInvoice(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 上传发票
+     */
+    @PostMapping("/uploadInvoice")
+    public ApiResult<List<BatchResultDTO>> uploadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchUploadInvoice(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/export")
+    public ApiResult<Object> export(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        Boolean result = invoiceInfoService.export(dto);
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
 }
