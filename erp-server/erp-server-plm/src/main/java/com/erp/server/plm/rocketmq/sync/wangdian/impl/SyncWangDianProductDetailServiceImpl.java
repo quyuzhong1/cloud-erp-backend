@@ -61,6 +61,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     private ProductLogisticsService productLogisticsService;
     @Resource
     private BasicDictService basicDictService;
+    @Resource
+    private BasicCategoryService basicCategoryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -86,6 +88,9 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         dto.setGoodsNo(entity.getSkuNo());
         dto.setGoodsName(entity.getName());
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
+        if(StringUtils.isNotBlank(info.getCategoryId())){
+            dto.setClassName(basicCategoryService.getParentName(info.getCategoryId()));
+        }
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
         specList.setSpecName(entity.getName());
