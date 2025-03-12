@@ -78,25 +78,15 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 		String typeId = dmpCfgOutputEntity.getTypeId();
 		String id = dmpOutputTaskRecordEntity.getId();
 		
-		Integer count = dmpOutputTaskRecordService.lambdaQuery()
+		dmpOutputTaskRecordService.lambdaUpdate()
 			.eq(DmpOutputTaskRecordEntity::getDataId, dmpOutputTaskRecordEntity.getDataId())
-			.ne(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+			.ne(DmpOutputTaskRecordEntity::getId, id)
 			.le(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
 			.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-			.count();
-		if(count != null && count > 0) {
-			dmpOutputTaskRecordService.lambdaUpdate()
-				.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一dataId")
-				.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-				.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-				.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-				.update();
-			return;
-		}
-		
-		if("DmpOutputErpPushTaskHandler".equals(dmpCfgOutputEntity.getOutputClass())) {
-			
-		}
+			.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+			.setSql(" response_data = concat('同一dataid，推送最新的记录id="+ id +"' , response_data) ")
+			.update();
 		
 		try {
 			String requestData = dmpOutputTaskRecordEntity.getRequestData();
