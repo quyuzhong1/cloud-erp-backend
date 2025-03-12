@@ -530,4 +530,16 @@
         </if>
         order by so.actual_delivery_date desc
     </select>
+
+    <select id="listHistory" resultType="com.erp.model.wms.dto.SoOutstockDTO$HistoryDTO">
+        SELECT
+            so.id soOutId , so.so_id soId, sod.id soOutDetailId, sod.source_detail_id sourceDetailId, sod.so_detail_id soDetailId,  so.source_id sourceId
+        FROM
+            so_outstock_detail sod
+                INNER JOIN so_outstock so ON so.ID = sod.main_id
+                AND so.is_deleted = FALSE
+        WHERE
+            sod.is_deleted = FALSE
+          AND so.source_type = 'soDeliveryNotice' and  sod.source_detail_id = sod.so_detail_id and so.create_time &lt; '2024-12-31'
+    </select>
 </mapper>
