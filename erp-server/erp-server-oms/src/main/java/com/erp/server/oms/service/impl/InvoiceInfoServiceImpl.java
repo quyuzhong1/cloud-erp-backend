@@ -346,6 +346,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<InvoiceInfoEntity> listBySoIds(List<String> soIds) {
+        if(CollectionUtils.isEmpty(soIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(InvoiceInfoEntity::getSoId,soIds).list();
+    }
+
     private List<InvoiceDetailEntity> buildInvoiceDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, InvoiceInfoEntity invoiceInfoEntity) {
         List<InvoiceDetailEntity> detailEntityList = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
