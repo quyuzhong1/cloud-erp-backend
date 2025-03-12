@@ -8,14 +8,11 @@ import com.common.business.dto.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.utils.StringUtil;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
-import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
+import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderItemsBean;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
@@ -25,7 +22,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -109,7 +105,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         orderDTO.setCurrency(orderBean.getCurrencyId());
 
         //买家备注
-        orderDTO.setBuyerRemark(orderBean.getFeedback().getPurchase());
+//        orderDTO.setBuyerRemark(orderBean.getFeedback().getPurchase());
 
         // 是否拦截
         orderDTO.setIsIntercept(false);
@@ -165,7 +161,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
             JSONObject extendDataJson = new JSONObject();
             extendDataJson.put("mode", shipmentViewDTO.getLogistic().getMode());
             extendDataJson.put("logisticType", shipmentViewDTO.getLogistic().getType());
-            extendDataJson.put("shipmentId", orderBean.getShipping().getFid());
+            extendDataJson.put("shipmentId", orderBean.getShipping().getId());
             orderDTO.setExtendData(extendDataJson.toString());
         }
 
@@ -284,7 +280,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         detailDTO.setPlatformSkuNo(orderItemsBean.getItem().getSellerSku());
 
         //平台产品id
-        detailDTO.setPlatformSpuNo(orderItemsBean.getItem().getParentItemId());
+        detailDTO.setPlatformSpuNo(orderItemsBean.getItem().getCategoryId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
@@ -307,7 +303,7 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
         // 来源明细id
-        detailDTO.setSourceDetailId(orderItemsBean.getItem().getFid());
+        detailDTO.setSourceDetailId(orderItemsBean.getItem().getId());
         // 标签json
         detailDTO.setLabelJson("");
         // 库存组织id
@@ -334,9 +330,9 @@ public class MercadoOrderDTO extends CleanBaseDTO {
         }
         ShippingAddressBeanX shippingAddress = orderViewDTO.getShipmentViewDTO().getDestination().getShippingAddress();
         return PlatformOrderReceiverDTO.builder()
-                .loginId(String.valueOf(orderViewDTO.getBuyer().getFid()))
-                .customerId(String.valueOf(orderViewDTO.getBuyer().getFid()))
-                .name(orderViewDTO.getBuyer().getFirstName() + " " + orderViewDTO.getBuyer().getLastName())
+                .loginId(String.valueOf(orderViewDTO.getBuyer().getId()))
+                .customerId(String.valueOf(orderViewDTO.getBuyer().getId()))
+                .name(orderViewDTO.getBuyer().getNickname())
                 .receiverName(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverName())
                 .telNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())
                 .receiverTelNumber(orderViewDTO.getShipmentViewDTO().getDestination().getReceiverPhone())

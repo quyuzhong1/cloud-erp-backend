@@ -19,18 +19,10 @@ import com.erp.server.dmp.inout.handler.input.task.init.DmpInputInitHandler;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Lists;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
-import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
-import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
-import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
-import com.sdk.oms.mercado.service.MercadoSdkClientService;
-import com.sdk.oms.tiktok.constant.TikTokConstant;
-import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.sdk.oms.tiktok.util.EncryptionUtils;
-import jodd.util.StringUtil;
+import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
+import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -39,7 +31,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -51,7 +42,7 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 	@Resource
-	private MercadoSdkClientService mercadoSdkClientService;
+	private MercadoLocalSdkClientService mercadoLocalSdkClientService;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -81,7 +72,7 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 			}
 		}
 
-		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
+		MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(findMongoData.get(0).get("nextLevelId").toString());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
 			throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}
@@ -129,7 +120,7 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 			}
 
 			//解析数据
-			com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO orderViewDTO = null;
+			OrderDTO orderViewDTO = null;
 			ObjectMapper objectMapperBase = new ObjectMapper();
 			try {
 				orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);

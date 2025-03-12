@@ -3,11 +3,12 @@ package com.sdk.oms.mercado.dto.mercado.order;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AvailableSortsBean {
+public class ValuesBean {
     /**
-     * id : date_desc
-     * name : Date descending
+     * id : cancelled
+     * name : Order Cancelled
      */
 
     @JsonProperty("id")

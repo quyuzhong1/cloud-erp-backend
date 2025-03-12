@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.ParamData;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.PannoEnum;
@@ -24,11 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
-import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
-import com.sdk.oms.mercado.service.MercadoSdkClientService;
-import com.sdk.oms.tiktok.constant.TikTokConstant;
-import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
+import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -48,7 +43,7 @@ import java.util.*;
 @Scope("prototype")
 public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 	@Resource
-    private MercadoSdkClientService mercadoSdkClientService;
+    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
 
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -73,7 +68,7 @@ public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 		}
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(parentTaskEntityList.get(0).getNextLevelId());
+		MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(parentTaskEntityList.get(0).getNextLevelId());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
 			throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}

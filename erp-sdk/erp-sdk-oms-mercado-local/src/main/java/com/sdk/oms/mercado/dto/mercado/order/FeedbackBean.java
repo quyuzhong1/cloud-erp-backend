@@ -2,32 +2,32 @@ package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
+import com.google.gson.annotations.SerializedName;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class FeedbackBean {
     /**
-     * purchase : null
-     * sale : null
+     * buyer : null
+     * seller : null
      */
 
-    @JsonProperty("purchase")
-    private Object purchase;
-    @JsonProperty("sale")
-    private Object sale;
+    @JsonProperty("buyer")
+    private Object buyer;
+    @JsonProperty("seller")
+    private Object seller;
 
-    public Object getPurchase() {
-        return purchase;
+    public Object getBuyer() {
+        return buyer;
     }
 
-    public void setPurchase(Object purchase) {
-        this.purchase = purchase;
+    public void setBuyer(Object buyer) {
+        this.buyer = buyer;
     }
 
-    public Object getSale() {
-        return sale;
+    public Object getSeller() {
+        return seller;
     }
 
-    public void setSale(Object sale) {
-        this.sale = sale;
+    public void setSeller(Object seller) {
+        this.seller = seller;
     }
 }

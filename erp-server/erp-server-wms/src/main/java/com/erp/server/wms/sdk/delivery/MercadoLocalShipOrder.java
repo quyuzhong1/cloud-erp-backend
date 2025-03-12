@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@PlatformShipOrderAnno(method = PlatformDictEnum.MERCADOLIBRE)
-public class MercadoShipOrder extends AbstractShipOrder {
+@PlatformShipOrderAnno(method = PlatformDictEnum.MERCADOLIBRE_LOCAL)
+public class MercadoLocalShipOrder extends AbstractShipOrder {
     @Resource
     private SoB2cFeign soB2cFeign;
 

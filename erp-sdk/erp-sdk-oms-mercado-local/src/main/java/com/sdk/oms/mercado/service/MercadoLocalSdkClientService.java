@@ -2,7 +2,6 @@ package com.sdk.oms.mercado.service;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -37,7 +36,6 @@ import com.sdk.oms.mercado.dto.mercado.listing.ListingDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
-import com.sdk.oms.mercado.dto.mercado.order.ResultsBean;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +51,6 @@ import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 美客多平台SDK
@@ -63,7 +60,7 @@ import java.util.stream.Collectors;
  **/
 @Slf4j
 @Component
-public class MercadoSdkClientService {
+public class MercadoLocalSdkClientService {
 //    public static void main(String[] args) {
 //
 //        String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
@@ -134,7 +131,7 @@ public class MercadoSdkClientService {
 
     @Resource
     public void setRedisUtil(RedisUtil redisUtil) {
-        MercadoSdkClientService.redisUtil = redisUtil;
+        MercadoLocalSdkClientService.redisUtil = redisUtil;
     }
 
     /**
@@ -373,14 +370,32 @@ public class MercadoSdkClientService {
     }
 
     public static void main(String[] args) {
-        MercadoSdkClientService sdkClientService = new MercadoSdkClientService();
+        MercadoLocalSdkClientService sdkClientService = new MercadoLocalSdkClientService();
         MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
         JobTaskDTO task = new JobTaskDTO();
         shopInfoDTO.setUserId(2119968271L);
         shopInfoDTO.setAccessToken("APP_USR-5344160433223219-031022-1a5190634d7aba85c9b279a5ffb4af4d-2119968271");
         task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        task.setNextTime(LocalDateTime.parse("2025-02-24 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        task.setNextTime(LocalDateTime.parse("2025-03-11 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
+    }
+
+
+    private String dateToStr(LocalDateTime dateTime) {
+
+        // 转换为UTC时区的OffsetDateTime
+        OffsetDateTime utcTime = dateTime
+                .atZone(ZoneId.systemDefault())
+                .toOffsetDateTime()
+                .withOffsetSameInstant(ZoneOffset.UTC);
+
+        // 自定义格式化
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+        String formatted = utcTime.format(formatter);
+
+        // 字符串替换
+        String target = formatted.replace("+00:00", "-00");
+        return target;
     }
 
     /**
@@ -398,16 +413,6 @@ public class MercadoSdkClientService {
         Integer pageNo = 0;
         //总页数
         Integer pageCount = 1;
-// 获取原始时间
-        LocalDateTime localDateTime = task.getLastTime();
-
-        OffsetDateTime utcTime = localDateTime.atZone(ZoneId.systemDefault())
-                .toOffsetDateTime()
-                .withOffsetSameInstant(ZoneOffset.UTC);
-// 定义格式化器
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-        String resultt = utcTime.format(formatter);
-
 
         List<OrderViewDTO> resultList = new ArrayList<>();
         Boolean nexflag = true;
@@ -424,9 +429,9 @@ public class MercadoSdkClientService {
             sb.append("&offset=");
             sb.append(offset);
             sb.append("&order.date_last_updated.from=");
-            sb.append(task.getLastTime());
+            sb.append(this.dateToStr(task.getLastTime()));
             sb.append("&order.date_last_updated.to=");
-            sb.append(task.getNextTime());
+            sb.append(this.dateToStr(task.getNextTime()));
             sb.append("&order.status=");
             sb.append("cancelled,paid,invalid");
 
@@ -460,76 +465,22 @@ public class MercadoSdkClientService {
                 nexflag = false;
                 break;
             }
-            pageNo++;
 
-
-            for (ResultsBean result : orderDTO.getResults()) {
-                List<Long> orderIdList = result.getOrders().stream().map(req -> req.getFid()).collect(Collectors.toList());
-
-                for (Long id : orderIdList) {
-                    String orderUrl = "https://api.mercadolibre.com/marketplace/orders/" + id + "";
-
-                    //入参
-                    HashMap<String, Object> orderParams = new HashMap<>(1);
-
-                    //设置请求头
-                    Map<String, String> orderHeaderMap = new HashMap<>(1);
-                    orderHeaderMap.put("Authorization", "Bearer " + shopInfoDTO.getAccessToken());
-
-                    //拉取数据
-                    ApiResult orderDetailApiResult = new ApiResult();
-                    Object data = null;
-                    long sleepTime = 1000;
-                    int count = 0;
-                    while (ObjectUtil.isEmpty(data)) {
-                        orderDetailApiResult = HttpCommonUtil.sendOkHttpApiResult(orderUrl, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-                        if (orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out")) {
-                            if (count == 10) {
-                                throw new ServiceException("调用美客多" + url + path + "接口重试" + count + "失败");
-                            }
-                            try {
-                                Thread.sleep(sleepTime);
-                            } catch (InterruptedException e) {
-                                Thread.currentThread().interrupt();
-                            }
-                            sleepTime = sleepTime + 1000;
-                            count = count + 1;
-                        }
-                        data = orderDetailApiResult.getData();
-                    }
-
-                    if (!Objects.equals(orderDetailApiResult.getCode(), 200) && !Objects.equals(orderDetailApiResult.getCode(), 201)) {
-                        boolean b = orderDetailApiResult.getMsg().equalsIgnoreCase("Read timed out");
-                        log.error("调用url={},入参params={}, 美客多marketplace/orders数据失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult));
-                        throw new RuntimeException(CharSequenceUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                                orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult)));
-                    }
-
-                    //解析数据
-                    OrderViewDTO orderViewDTO = null;
-                    ObjectMapper objectMapperBase = new ObjectMapper();
-                    try {
-                        orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(orderDetailApiResult.getData()), OrderViewDTO.class);
-                    } catch (JsonProcessingException e) {
-                        log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult.getData()));
-                        throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-                                orderUrl, orderParams.toString(), JSONUtil.toJsonStr(orderDetailApiResult.getData())));
-                    }
-
-                    //根据发货id查询发货详情
-                    ShipmentViewDTO shippingRecords = getShippingRecords(shopInfoDTO, orderViewDTO.getShipping().getFid());
-                    if (ObjectUtil.isNotEmpty(shippingRecords)) {
-                        orderViewDTO.setShipmentViewDTO(shippingRecords);
-                    }
-
-                    //根据发货id查询费用信息
-                    CostDTO shippingCost = getShippingCost(shopInfoDTO, orderViewDTO.getShipping().getFid());
-                    if (ObjectUtil.isNotEmpty(shippingCost)) {
-                        orderViewDTO.setCostDTO(shippingCost);
-                    }
-                    resultList.add(orderViewDTO);
+            for (OrderViewDTO orderViewDTO : orderDTO.getResults()) {
+                //根据发货id查询发货详情
+                ShipmentViewDTO shippingRecords = getShippingRecords(shopInfoDTO, orderViewDTO.getShipping().getId());
+                if (ObjectUtil.isNotEmpty(shippingRecords)) {
+                    orderViewDTO.setShipmentViewDTO(shippingRecords);
                 }
+
+                //根据发货id查询费用信息
+                CostDTO shippingCost = getShippingCost(shopInfoDTO, orderViewDTO.getShipping().getId());
+                if (ObjectUtil.isNotEmpty(shippingCost)) {
+                    orderViewDTO.setCostDTO(shippingCost);
+                }
+                resultList.add(orderViewDTO);
             }
+            pageNo++;
         }
         return resultList;
     }
@@ -542,7 +493,7 @@ public class MercadoSdkClientService {
      * @return
      */
     public ShipmentViewDTO getShippingRecords(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
-        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "";
+        String orderUrl = "https://api.mercadolibre.com/shipments/" + shippingId + "";
 
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);
@@ -602,7 +553,7 @@ public class MercadoSdkClientService {
      * @return
      */
     private CostDTO getShippingCost(MercadoShopInfoDTO shopInfoDTO, Long shippingId) {
-        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/" + shippingId + "/costs";
+        String orderUrl = "https://api.mercadolibre.com/shipments/" + shippingId + "/costs";
 
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);

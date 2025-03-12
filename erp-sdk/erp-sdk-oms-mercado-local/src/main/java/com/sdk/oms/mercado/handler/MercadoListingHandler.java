@@ -20,7 +20,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.mercado.dto.MercadoListingDTO;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
-import com.sdk.oms.mercado.service.MercadoSdkClientService;
+import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -47,7 +47,7 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
     @Resource
     private ShopInfoFeign shopInfoFeign;
     @Resource
-    private MercadoSdkClientService mercadoSdkClientService;
+    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
 
     public static void main(String[] args) {
         String baseUrl = "https://api.mercadolibre.com/items";
@@ -73,14 +73,14 @@ public class MercadoListingHandler extends AbstractProductHandler<MercadoListing
     @Override
     public List<MercadoListingDTO> download(JobTaskDTO data) {
         //  根据店铺ID获取授权
-        MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(data.getShopId());
+        MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(data.getShopId());
         if (null == shopInfoDTO) {
 //            log.error("[美客多商品下载]  获取 token 失败: shopId={}", data.getShopId());
             return Collections.emptyList();
         }
 
         //发送请求
-        List<ListingViewDTO> resultsBeanList = mercadoSdkClientService.sendMercadoGetListing(shopInfoDTO);
+        List<ListingViewDTO> resultsBeanList = mercadoLocalSdkClientService.sendMercadoGetListing(shopInfoDTO);
 
         // 返回下载源数据
         return resultsBeanList.stream()

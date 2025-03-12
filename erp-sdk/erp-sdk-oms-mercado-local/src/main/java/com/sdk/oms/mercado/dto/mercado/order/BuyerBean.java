@@ -2,16 +2,32 @@ package com.sdk.oms.mercado.dto.mercado.order;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-
-@Data
+import com.google.gson.annotations.SerializedName;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class BuyerBean {
     /**
-     * id : 139133205
+     * id : 627939296
+     * nickname : ATAKDEDETIZAOELIMPEZAATAK
      */
 
     @JsonProperty("id")
-    private long fid;
+    private Long id;
+    @JsonProperty("nickname")
+    private String nickname;
 
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getNickname() {
+        return nickname;
+    }
+
+    public void setNickname(String nickname) {
+        this.nickname = nickname;
+    }
 }

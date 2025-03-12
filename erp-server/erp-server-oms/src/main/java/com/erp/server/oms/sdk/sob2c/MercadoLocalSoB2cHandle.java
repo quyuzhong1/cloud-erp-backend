@@ -1,9 +1,7 @@
 package com.erp.server.oms.sdk.sob2c;
 
-import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -13,7 +11,6 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.oms.service.ISoB2cHandleService;
 import com.erp.server.oms.service.PlatformOrderConsumerHandleService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
@@ -21,18 +18,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 美客多-全球
+ * 美客多-本土
  */
 @Slf4j
 @Component
-@PlatformSoB2cAnnotate(method = PlatformDictEnum.MERCADOLIBRE)
-public class MercadoSoB2cHandle  extends AbstractSoB2cHandle {
+@PlatformSoB2cAnnotate(method = PlatformDictEnum.MERCADOLIBRE_LOCAL)
+public class MercadoLocalSoB2cHandle extends AbstractSoB2cHandle {
 
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;

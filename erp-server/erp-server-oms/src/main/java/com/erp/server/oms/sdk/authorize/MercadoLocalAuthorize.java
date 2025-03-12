@@ -42,12 +42,12 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * 美客多授权-全球
+ * 美客多授权-本土
  */
 @Slf4j
 @Component
-@PlatformAnnotate(method = PlatformDictEnum.MERCADOLIBRE)
-public class MercadoAuthorize implements IShopAuthorizeService<T> {
+@PlatformAnnotate(method = PlatformDictEnum.MERCADOLIBRE_LOCAL)
+public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
 
     @Resource
     private ShopInfoService shopInfoService;
@@ -85,12 +85,9 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException("店铺不存在");
         }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
-            AppClientEnum appClient = AppClientEnum.MERCADO_AUTHORIZE;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        } else {
+
+        //如果是巴西站用巴西站配置
+        if (MercadolibreBusinessModelEnum.BR.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_AUTHORIZE;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
@@ -107,7 +104,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         // 进行 Base64 编码
         String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         // 缓存state
-        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_MERCADO_STATE, PlatformDictEnum.MERCADOLIBRE.getCode()+state);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_MERCADO_STATE, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode()+state);
 
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 
@@ -115,7 +112,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
             //https://global-selling.mercadolibre.com/authorization?response_type=code&client_id=%s&redirect_uri=%s&state=%s
-            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), PlatformDictEnum.MERCADOLIBRE.getCode()+state);
+            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode()+state);
         }
         return shopAuthorizeUrl;
     }
@@ -149,17 +146,15 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
 
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
-            AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        } else {
+
+        //如果是巴西站用巴西站配置
+        if (MercadolibreBusinessModelEnum.BR.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
             findDTO.setPlatformType(appClient.getPlatformType());
         }
+
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("该类型店铺尚未配置开发者账号");
@@ -210,7 +205,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setName(shopInfo.getName());
         shopInfoDTO.setAccessToken(platformMercadoTokenDTO.getAccessToken());
         shopInfoDTO.setUserId(platformMercadoTokenDTO.getUserId());
-        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopId);
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, platformMercadoTokenDTO.getExpiresIn());
 
         redisUtil.del(stateKey);
@@ -245,7 +240,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
         // 移除缓存
         // platform-token:平台名称:店铺ID
-        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopInfo.getId());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), shopInfo.getId());
         Object shopInfoObj = redisUtil.get(tokenKey);
         if (null != shopInfoObj) {
             redisUtil.del(tokenKey);
@@ -272,17 +267,15 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
 
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
-            AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        } else {
+
+        //如果是巴西站用巴西站配置
+        if (MercadolibreBusinessModelEnum.BR.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
             findDTO.setPlatformType(appClient.getPlatformType());
         }
+
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         if (Objects.isNull(cfgAppClient)) {
             return Boolean.FALSE;
@@ -330,7 +323,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setAccessToken(accessToken);
 
         //设置缓存
-        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), dto.getShopId());
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), dto.getShopId());
         redisUtil.set(tokenKey, shopInfoDTO, expiresIn);
 
         return Boolean.TRUE;
@@ -338,7 +331,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
 
     private void refreshErrorWarn(ShopAuthEntity shopAuthEntity, Exception e) {
         //记录错误次数
-        String refreshTokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE.getCode(), shopAuthEntity.getShopId());
+        String refreshTokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), shopAuthEntity.getShopId());
         redisUtil.incr(refreshTokenKey, 1);
 
         //获取错误次数
@@ -351,9 +344,9 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
 
                 //预警通知
                 WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
-                warnMsgInfo.setBizName(PlatformDictEnum.MERCADOLIBRE.getName());
+                warnMsgInfo.setBizName(PlatformDictEnum.MERCADOLIBRE_LOCAL.getName());
                 warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-                warnMsgInfo.setTitle( CharSequenceUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.MERCADOLIBRE.getName(),shopAuthEntity.getShopId()));
+                warnMsgInfo.setTitle( CharSequenceUtil.format("平台【{}】店铺id{}刷新token失败",PlatformDictEnum.MERCADOLIBRE_LOCAL.getName(),shopAuthEntity.getShopId()));
                 warnMsgInfo.setTableName("shop_auth");
                 warnMsgInfo.setTableId(shopAuthEntity.getId());
                 warnMsgInfo.setKeyInfo(e.getMessage());

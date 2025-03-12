@@ -8,7 +8,6 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.FileUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
@@ -30,13 +29,12 @@ import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
-import com.sdk.oms.mercado.service.MercadoSdkClientService;
+import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.util.*;
 
 /**
@@ -47,7 +45,7 @@ import java.util.*;
 @LogisticsPlatformType(LogisticsPlatformEnum.MERCADOLIBRE)
 public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
-    private MercadoSdkClientService mercadoSdkClientService;
+    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
     @Resource
     private LogisticsOperateService logisticsOperateService;
     @Resource
@@ -103,7 +101,7 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO().setAccessToken(token);
         Long shipmentId = logisticsOrderVO.getShipmentId();
         try {
-            ShipmentViewDTO shipmentViewDTO = mercadoSdkClientService.getShippingRecords(shopInfoDTO, shipmentId);
+            ShipmentViewDTO shipmentViewDTO = mercadoLocalSdkClientService.getShippingRecords(shopInfoDTO, shipmentId);
             if (Objects.isNull(shipmentViewDTO) || CharSequenceUtil.isBlank(shipmentViewDTO.getTrackingNumber())){
                 throw new ServiceException(JSONUtil.toJsonStr(shipmentViewDTO));
             }
@@ -140,7 +138,7 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<String> errorList = new ArrayList<>();
         for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
             try {
-                String labelUrl = mercadoSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
+                String labelUrl = mercadoLocalSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
                 String prefix = "data:application/pdf;base64,";
                 String base64 = prefix + labelUrl;
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()

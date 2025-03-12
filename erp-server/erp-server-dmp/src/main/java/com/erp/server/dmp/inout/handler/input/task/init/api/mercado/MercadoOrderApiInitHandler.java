@@ -11,12 +11,11 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
 import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
-import com.sdk.oms.mercado.service.MercadoSdkClientService;
+import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -24,9 +23,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
-import java.time.ZoneOffset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 @Service
@@ -34,7 +31,7 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
     @Resource
-    private MercadoSdkClientService mercadoSdkClientService;
+    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
 
 
     @Override
@@ -45,7 +42,7 @@ public class MercadoOrderApiInitHandler implements DmpInputApiInitHandler {
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
 
-        MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(nextLevelId);
+        MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(nextLevelId);
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
             throw new ServiceException("美客多店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }

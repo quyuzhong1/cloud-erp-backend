@@ -311,7 +311,8 @@ public class SoB2cLogisticsServiceImpl extends SuperServiceImpl<SoB2cLogisticsMa
                     entity2.setTrackNo(entity.getTrackNo());
                 }
                 //如果美客多平台订单不是平台仓发货，不更新物流单号
-                if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getDictPlatform())
+                        || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                     if (!mainEntity.hasPlatformWarehouseOrder()) {
                         entity.setCode(oldEntity.getCode());
                     }

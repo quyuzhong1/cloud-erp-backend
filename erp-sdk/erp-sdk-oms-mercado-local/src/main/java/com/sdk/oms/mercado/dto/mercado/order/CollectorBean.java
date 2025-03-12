@@ -3,19 +3,20 @@ package com.sdk.oms.mercado.dto.mercado.order;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
-
-import java.util.List;
-
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ConfigBean {
-    @JsonProperty("items")
-    private List<ItemsBean> items;
+public class CollectorBean {
+    /**
+     * id : 2119968271
+     */
 
-    public List<ItemsBean> getItems() {
-        return items;
+    @JsonProperty("id")
+    private Long id;
+
+    public Long getId() {
+        return id;
     }
 
-    public void setItems(List<ItemsBean> items) {
-        this.items = items;
+    public void setId(Long id) {
+        this.id = id;
     }
 }
