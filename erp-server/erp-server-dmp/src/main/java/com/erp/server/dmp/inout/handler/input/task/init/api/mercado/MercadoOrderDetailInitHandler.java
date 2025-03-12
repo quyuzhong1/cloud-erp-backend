@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
+import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -123,7 +124,7 @@ public class MercadoOrderDetailInitHandler extends DmpInputInitHandler {
 			OrderDTO orderViewDTO = null;
 			ObjectMapper objectMapperBase = new ObjectMapper();
 			try {
-				orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);
+				orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderDTO.class);
 			} catch (JsonProcessingException e) {
 				log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData()));
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
