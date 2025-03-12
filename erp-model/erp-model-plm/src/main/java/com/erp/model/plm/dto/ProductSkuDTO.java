@@ -185,16 +185,6 @@ public class ProductSkuDTO extends PermissionsDTO {
     private List<String> supplierNameList;
 
     /**
-     * 页面高级查询
-     */
-    private List<AdvanceQueryDTO> advanceQueryDTOList;
-
-    /**
-     * sqlMap 默认key default
-     */
-    private Map<String, String> sqlMap;
-
-    /**
      * 应用分类id
      */
     private List<String> applicationCategoryIds;

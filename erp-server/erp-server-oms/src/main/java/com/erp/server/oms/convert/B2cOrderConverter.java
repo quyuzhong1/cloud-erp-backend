@@ -1,8 +1,5 @@
 package com.erp.server.oms.convert;
 
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.mapper.BigDecimalMapperWork;
-import com.common.business.mapper.BooleanMapperWork;
 import com.common.business.mapper.NumberMapperWork;
 import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.dto.*;

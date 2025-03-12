@@ -16,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -99,8 +100,11 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
-        //生成任务
-       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    	    return saveTask(entity,operate,DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
 
@@ -339,7 +343,11 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		plmPushMsgEntity.setSourceId(id);
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(operate);
-        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), operate)));
+        if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	plmPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        }else {
+        	plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), operate)));
+        }
         
         plmPushMsgService.save(plmPushMsgEntity);
 	}
