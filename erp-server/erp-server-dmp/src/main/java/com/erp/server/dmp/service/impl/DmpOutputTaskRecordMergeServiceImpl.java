@@ -307,7 +307,8 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
     		if(CollUtil.isNotEmpty(mergeList)) {
     			Map<String, DmpOutputTaskRecordEntity> mergeRecordIdMaps = dmpOutputTaskRecordService.lambdaQuery()
 	    			.in(DmpOutputTaskRecordEntity::getId, mergeList.stream().map(DmpOutputTaskRecordMergeEntity::getMergeId).collect(Collectors.toList()))
-	    			.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+	    			.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.INIT.getCode() , 
+	    					DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() , DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
 	    			.list().stream().collect(Collectors.toMap(DmpOutputTaskRecordEntity::getId, d -> d));
     			
     			Map<String, DmpOutputTaskRecordEntity> mainIdEntityMaps = dmpOutputTaskRecordEntityList.stream().collect(Collectors.toMap(DmpOutputTaskRecordEntity::getId, d -> d));
@@ -315,10 +316,13 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
     			Set<DmpOutputTaskRecordEntity> needAddEntity = new HashSet<>();
     			Set<String> needDeleteId = new HashSet<>();
     			for(DmpOutputTaskRecordMergeEntity merge : mergeList) {
-    				DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = mergeRecordIdMaps.get(merge.getMergeId());
     				String mainId = merge.getMainId();
     				needDeleteId.add(mainId);
     				log.warn("被合并数据查询同步无需推送" + mainId);
+    				DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = mergeRecordIdMaps.get(merge.getMergeId());
+    				if(dmpOutputTaskRecordEntity == null) {
+    					continue;
+    				}
     				DmpOutputTaskRecordEntity mainIdEntity = mainIdEntityMaps.get(mainId);
     				String requestData = dmpOutputTaskRecordEntity.getRequestData();
     				List<JSONObject> parseArray = JSON.parseArray(requestData , JSONObject.class);
