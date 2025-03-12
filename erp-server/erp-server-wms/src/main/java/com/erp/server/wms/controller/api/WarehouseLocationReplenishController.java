@@ -1,9 +1,11 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -12,12 +14,9 @@ import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
 import com.erp.server.wms.query.WarehouseLocationReplenishQueryHandler;
 import com.erp.server.wms.service.WarehouseLocationReplenishService;
 import com.erp.server.wms.service.WarehouseLocationService;
-import com.sdk.wangdian.sdk.impl.Api;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotEmpty;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,6 +42,10 @@ public class WarehouseLocationReplenishController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "warehouse_id",
+            menuCode = "wms:warehouseLocationReplenish:paging"
+    )
     @WebAdvanceQuery(handler = WarehouseLocationReplenishQueryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationReplenishDTO.ViewDTO>> paging(@RequestBody PagingDTO<WarehouseLocationReplenishDTO.SearchParamDTO> pagingDTO){
         PagingVO<WarehouseLocationReplenishDTO.ViewDTO> pagingResult = replenishService.paging(pagingDTO);

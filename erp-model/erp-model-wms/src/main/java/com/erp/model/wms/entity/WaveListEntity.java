@@ -113,4 +113,14 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
      */
     @TableField("is_out_stock")
     private Boolean isOutStock;
+    /**
+     * 仓库id
+     */
+    @TableField(exist = false)
+    private String warehouseId;
+    /**
+     * 仓库名称
+     */
+    @TableField(exist = false)
+    private String warehouseName;
 }

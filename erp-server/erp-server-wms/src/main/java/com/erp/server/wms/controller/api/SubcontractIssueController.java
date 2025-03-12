@@ -79,6 +79,7 @@ public class SubcontractIssueController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sid.warehouse_id",
             menuCode = "wms:subcontractIssue:paging",
             tableAlias = "si"
     )
@@ -96,6 +97,7 @@ public class SubcontractIssueController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sid.warehouse_id",
             menuCode = "wms:subcontractIssue:paging",
             tableAlias = "si"
     )

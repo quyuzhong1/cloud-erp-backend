@@ -82,15 +82,12 @@
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from subcontract_return where is_deleted = false group by approve_status
     </select>
-
-    <select id="listExport" resultType="com.erp.model.wms.dto.SubcontractReturnDTO$ListDTO">
-
-    </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SubcontractReturnDTO$TabListDTO">
         SELECT
         sr.approve_status AS tabFlag,
-        count(sr.*)  AS count
+        count(distinct sr.id)  AS count
         FROM  subcontract_return sr
+        inner join subcontract_return_detail srd on sr.id = srd.main_id and srd.is_deleted = false
         WHERE sr.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}

@@ -38,6 +38,10 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
@@ -57,22 +61,30 @@
         from 
 		(
 		select t.receipt_status,t.is_print,count(*) count from delivery_order t where t.is_deleted = FALSE 
-		<if test="supplierIdList != null and supplierIdList.size > 0">
+		<if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         AND t.supplier_id IN
-        <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
+        <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
 		group by t.receipt_status,t.is_print
 		) t1
 		left join 
 		(
 		select t.receipt_status,t.is_print,count(*) qtyDifferences from delivery_order t where t.is_deleted = false 
-		<if test="supplierIdList != null and supplierIdList.size > 0">
+		<if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         AND t.supplier_id IN
-        <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
+        <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
             #{item}
         </foreach>
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
 		and exists (select * from delivery_order_detail g where t.id = g.main_id and g.is_deleted = false and g.delivery_qty != g.receive_qty) 
 		group by t.receipt_status,t.is_print
@@ -114,6 +126,10 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">
@@ -164,7 +180,10 @@
         where
         ${params.sqlMap.default}
         and do2.is_deleted = false
-
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         <if test="params.supplierIdList != null and params.supplierIdList.size > 0">
         and do2.supplier_id in
         <foreach collection="params.supplierIdList" item="item" open="(" separator="," close=")">

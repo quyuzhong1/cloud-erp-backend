@@ -1189,18 +1189,18 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     }
 
     @Override
-    public long countByWarehouse() {
-        return inventoryMapper.countByWarehouse();
+    public long countByWarehouse(InventoryDTO.SearchParamDTO searchParamDTO) {
+        return inventoryMapper.countByWarehouse(searchParamDTO);
     }
 
     @Override
-    public long countByArea() {
-        return inventoryMapper.countByArea();
+    public long countByArea(InventoryDTO.SearchParamDTO searchParamDTO) {
+        return inventoryMapper.countByArea(searchParamDTO);
     }
 
     @Override
-    public long countByLocation() {
-        return inventoryMapper.countByLocation();
+    public long countByLocation(InventoryDTO.SearchParamDTO searchParamDTO) {
+        return inventoryMapper.countByLocation(searchParamDTO);
     }
     /**
      * PDA:库存查询（仓库）
@@ -1333,6 +1333,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         // 如果是否选导出处理
         dealExportParams(dto.getParams());
         AdvanceQueryDTO advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
@@ -1418,6 +1419,7 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
 
     @Override
     public PagingVO<DynamicExcelDTO> exportWmsInventoryAge(PagingDTO<InventoryReportDTO.ExportInventoryAgeSearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         // 勾选导出处理
         if (CollUtil.isNotEmpty(dto.getParams().getItems())) {
             List<InventoryReportDTO.ExportInventoryAgeItem> checkData = dto.getParams().getItems();

@@ -2,11 +2,13 @@ package com.erp.server.srm.controller.api;
 
 
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -60,8 +62,13 @@ public class DeliveryOrderController extends BaseController {
      * @return
      */
     @GetMapping("/tabList")
-    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList() {
-        List<DeliveryOrderDTO.TabListDTO> tabList = deliveryOrderService.tabList(Collections.singletonList(commonService.getSupplierEntity().getId()));
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "t.to_warehouse_id",
+            menuCode = "wms:deliveryOrder:paging"
+    )
+    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList(@RequestBody(required = false)DeliveryOrderDTO.ParamDTO paramDTO) {
+        paramDTO.setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
+        List<DeliveryOrderDTO.TabListDTO> tabList = deliveryOrderService.tabList(paramDTO);
         return success(tabList);
     }
 
@@ -97,6 +104,10 @@ public class DeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "do2.to_warehouse_id",
+            menuCode = "wms:deliveryOrder:paging"
+    )
     @WebAdvanceQuery(handler = DeliveryOrderQueryHandler.class)
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         dto.getParams().setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
@@ -110,6 +121,10 @@ public class DeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "do2.to_warehouse_id",
+            menuCode = "wms:deliveryOrder:paging"
+    )
     @WebAdvanceQuery(handler = DeliveryOrderQueryHandler.class)
     public ApiResult<DeliveryOrderDTO.TotalInfo> pagingTotal(@RequestBody @Validated DeliveryOrderDTO.ParamDTO dto) {
         dto.setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));

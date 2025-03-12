@@ -348,6 +348,14 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          */
         private String warehouseName;
         /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
          * 物流渠道id
          */
         private String logisticsChannelId;

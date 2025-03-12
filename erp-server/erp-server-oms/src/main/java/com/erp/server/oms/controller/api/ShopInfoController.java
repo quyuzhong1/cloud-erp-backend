@@ -204,8 +204,11 @@ public class ShopInfoController extends BaseController {
      * 获取店铺列表(树状级联)
      */
     @GetMapping("/listTree")
-    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree() {
-        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree();
+    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree(showByAuth);
         return success(list);
     }
 
