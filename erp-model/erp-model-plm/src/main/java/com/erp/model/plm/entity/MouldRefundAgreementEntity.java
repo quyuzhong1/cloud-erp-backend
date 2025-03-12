@@ -1,14 +1,14 @@
 package com.erp.model.plm.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -55,6 +55,12 @@ public class MouldRefundAgreementEntity extends BaseEntity<MouldRefundAgreementE
     */
     @TableField("refund_status")
     private String refundStatus;
+
+    /**
+     * 返还金额
+     */
+    @TableField("real_refund_amount")
+    private BigDecimal realRefundAmount;
 
 
     public static final String MOULD_DETAIL_ID = "mould_detail_id";

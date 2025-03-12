@@ -111,6 +111,7 @@
     <select id="orderTrackingTotal" resultType="com.erp.model.plm.dto.MouldInfoDTO$OrderTrackingTotalDTO">
         select COALESCE(SUM(mra.refund_order_qty), 0) AS refundOrderQty,
                COALESCE(SUM(mra.refund_amount), 0)    AS refundAmount,
+               COALESCE(SUM(mra.real_refund_amount), 0)    AS realRefundAmount,
                COALESCE(SUM(mrcq.purchase_qty), 0)    AS purchaseQty,
                COALESCE(SUM(mrcq.receive_qty), 0)     AS receiveQty,
                COALESCE(SUM(mrcq.stock_in_qty), 0)    AS stockInQty
