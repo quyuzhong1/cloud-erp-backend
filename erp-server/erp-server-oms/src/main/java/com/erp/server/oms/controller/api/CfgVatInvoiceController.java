@@ -1,11 +1,13 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -13,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.entity.CfgVatInvoiceEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.server.oms.service.CfgVatInvoiceService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -134,17 +137,27 @@ public class CfgVatInvoiceController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         List<String> ids = updateDTO.getIds().stream().distinct().collect(Collectors.toList());
         List<CfgVatInvoiceEntity> entityList = cfgVatInvoiceService.listByIds(ids);
+        List<String> shopIds = entityList.stream().map(CfgVatInvoiceEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
         for (String id : ids){
             CfgVatInvoiceEntity entity = entityList.stream().filter(e -> id.equals(e.getId())).findFirst().orElse(null);
             if (Objects.isNull(entity)){
                 resultDTOS.add(BatchResultDTO.fail(id,id,"发票配置不存在"));
                 continue;
             }
+            ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(e -> e.getId().equals(entity.getShopId())).findFirst().orElse(null);
+            if (Objects.isNull(shopInfoEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"店铺信息不存在"));
+                continue;
+            }
             try {
+                if (updateDTO.getDisabled().equals(entity.getDisabled())){
+                    resultDTOS.add(BatchResultDTO.fail(id,shopInfoEntity.getName(),"状态未发生变化"));
+                }
                 cfgVatInvoiceService.updateState(entity, updateDTO.getDisabled());
-                resultDTOS.add(BatchResultDTO.success(id,id));
+                resultDTOS.add(BatchResultDTO.success(id,shopInfoEntity.getName()));
             }catch (Exception e){
-                resultDTOS.add(BatchResultDTO.fail(id,id,e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(id,shopInfoEntity.getName(),e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

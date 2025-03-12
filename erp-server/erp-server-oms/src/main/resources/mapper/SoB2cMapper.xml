@@ -1173,11 +1173,8 @@
     <update id="updateFbaNotVatInvoice">
         UPDATE so_b2c sb2c
         SET vat_invoice_status = #{vatInvoiceStatus},update_time = NOW(),version = sb2c.version + 1
-        from so_b2c_delivery sbd
-        WHERE sb2c.id = sbd.source_id
-          and sb2c.is_deleted = FALSE
-          and sbd.is_deleted = FALSE
-          and sbd.status = 'shipped'
+        WHERE sb2c.is_deleted = FALSE
+          and sb2c.bill_status = 'shipped'
           and sb2c.label_json ~ 'AFN'
           and sb2c.vat_invoice_status = ''
           and sb2c.shop_id = #{shopId} and sb2c.create_time >= #{enableTime}
