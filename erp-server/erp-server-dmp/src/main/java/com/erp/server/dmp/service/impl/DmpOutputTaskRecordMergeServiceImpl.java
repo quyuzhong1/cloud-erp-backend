@@ -246,6 +246,9 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 
     @Override
 	public boolean validateMerge(List<String> leMergeList , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	if(CollUtil.isEmpty(leMergeList)) {
+    		return false;
+    	}
     	List<DmpOutputTaskRecordMergeEntity> leMergeEntityList = this.lambdaQuery()
     			.in(DmpOutputTaskRecordMergeEntity::getMainId, leMergeList)
     			.list();
