@@ -57,6 +57,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -133,6 +134,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private UserInfoFeign userInfoFeign;
 
     @Resource
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
@@ -614,7 +618,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
         if(CharSequenceUtil.isNotBlank(view.getSellerId())){
-            SysUserDTO user = sysUserFeign.getSysUserById(view.getSellerId());
+            SysUserInfoEntity user = userInfoFeign.info(view.getSellerId());
             view.setSellerName(Objects.nonNull(user) ? user.getRealName() : CharSequenceUtil.EMPTY);
         }
         if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){

@@ -507,4 +507,11 @@ public class SoOutstockController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    @GetMapping("/dealHistory")
+    public ApiResult<String> dealHistory() {
+        soOutstockService.dealHistory();
+        return success();
+    }
+
 }

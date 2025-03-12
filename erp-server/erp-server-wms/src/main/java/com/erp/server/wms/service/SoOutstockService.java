@@ -543,8 +543,6 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
 
 
     List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
-
-    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
     /**
      * 修复旺店通数据
      * @author will
@@ -553,4 +551,9 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO handleWdtData(String id);
+
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
+
+
+    void dealHistory();
 }
