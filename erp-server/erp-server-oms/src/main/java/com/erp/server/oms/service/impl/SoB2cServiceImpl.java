@@ -9559,7 +9559,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus) {
-        if (CharSequenceUtil.isAllNotBlank(shopId, vatInvoiceStatus) || Objects.isNull(enableTime)){
+        if (CharSequenceUtil.isBlank(shopId) || CharSequenceUtil.isBlank(vatInvoiceStatus) || Objects.isNull(enableTime)){
             return;
         }
         baseMapper.updateFbaNotVatInvoice(shopId, enableTime, vatInvoiceStatus);
