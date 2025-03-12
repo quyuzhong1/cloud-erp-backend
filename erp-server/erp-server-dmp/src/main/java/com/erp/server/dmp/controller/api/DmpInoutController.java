@@ -1,30 +1,25 @@
 package com.erp.server.dmp.controller.api;
 
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.time.LocalDate;
-import java.util.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
-import cn.hutool.json.JSONUtil;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.web.client.RestTemplate;
-
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,9 +32,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.dto.DmpSyncMqDTO.SyncParamDetailDTO;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -50,6 +44,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.WdtInsufficientInventoryDTO;
+import com.erp.model.dmp.dto.SdyPushDTO;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
@@ -58,15 +53,14 @@ import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
-import com.erp.model.dmp.entity.DmpPushMsgEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO.LocationListDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
-import com.erp.model.wms.dto.WarehouseLocationDTO.LocationListDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
@@ -81,13 +75,11 @@ import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
-import com.erp.server.dmp.service.DmpPushMsgService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.RestTemplate;
 
 
 /**
@@ -132,6 +124,10 @@ public class DmpInoutController extends BaseController {
 
     @Resource
     protected RedisTemplate<String, Object> redisTemplate;
+    
+    @Autowired
+	@Qualifier("dmpSdyOutputPushExecutorPool")
+	private ExecutorService dmpSdyOutputPushExecutorPool;
 
     @PostMapping("doInputTask")
     public ApiResult<?> doInputTask(@RequestBody DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest) {
@@ -445,4 +441,140 @@ public class DmpInoutController extends BaseController {
     	}
 		return success(values);
     }
+    
+    @PostMapping("querySyncSdy")
+    public ApiResult<?> querySyncSdy(@RequestBody SdyPushDTO dto) {
+    	LocalDateTime startTime = dto.getStartTime();
+    	LocalDateTime endTime = dto.getEndTime();
+    	if(startTime == null) {
+    		throw new ServiceException("startTime不能为空");
+    	}
+    	if(endTime == null) {
+    		throw new ServiceException("endTime不能为空");
+    	}
+    	
+    	Map<String, Map<String, String>> bizTypeSourceSystemMaps = new HashMap<>();
+    	
+    	Map<String, String> sourceSystemMaps = new HashMap<>();
+    	sourceSystemMaps.put("1859426032948370202", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
+    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
+    	sourceSystemMaps.put("1859425168586201876", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
+    	sourceSystemMaps.put("1859425336446442262", DmpBasicSystemCodeEnum.TIKTOK.getCode());
+    	sourceSystemMaps.put("1861317267527064372", DmpBasicSystemCodeEnum.WDT.getCode());
+    	sourceSystemMaps.put("1859426447974751005", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
+    	sourceSystemMaps.put("1859425468411829017", DmpBasicSystemCodeEnum.AMAZON.getCode());
+    	bizTypeSourceSystemMaps.put("soInfo", sourceSystemMaps);
+    	
+    	sourceSystemMaps = new HashMap<>();
+    	sourceSystemMaps.put("1858832992047225575", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
+//    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
+    	sourceSystemMaps.put("1858832584453151459", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
+    	sourceSystemMaps.put("1858832825793403621", DmpBasicSystemCodeEnum.TIKTOK.getCode());
+    	sourceSystemMaps.put("1858830998851050201", "WDT");
+    	sourceSystemMaps.put("1858832384133192417", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
+    	sourceSystemMaps.put("1858832015038634719", DmpBasicSystemCodeEnum.AMAZON.getCode());
+    	bizTypeSourceSystemMaps.put("soReturn", sourceSystemMaps);
+    	
+    	sourceSystemMaps = new HashMap<>();
+    	sourceSystemMaps.put("1858834023460133611", DmpBasicSystemCodeEnum.WDT.getCode());
+    	sourceSystemMaps.put("1858834187159624429", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
+    	bizTypeSourceSystemMaps.put("soRefund", sourceSystemMaps);
+    	
+    	sourceSystemMaps = new HashMap<>();
+    	sourceSystemMaps.put("1859427581292469023", DmpBasicSystemCodeEnum.WDT.getCode());
+    	bizTypeSourceSystemMaps.put("soDeliver", sourceSystemMaps);
+    	
+    	Set<String> cfgOutputIds = dto.getCfgOutputIds();
+    	if(CollUtil.isEmpty(cfgOutputIds)) {
+    		String bizType = dto.getBizType();
+    		if(StringUtils.isNotBlank(bizType)) {
+    			cfgOutputIds = bizTypeSourceSystemMaps.get(bizType).keySet();
+    		}else {
+    			if(dto.isAllFlag()) {
+    				for(Map.Entry<String, Map<String, String>> bizTypeSourceSystemMap : bizTypeSourceSystemMaps.entrySet()) {
+    					cfgOutputIds.addAll(bizTypeSourceSystemMap.getValue().keySet());
+    				}
+    			}
+    		}
+    	}
+    	
+    	for(Map.Entry<String, Map<String, String>> bizTypeSourceSystemMap : bizTypeSourceSystemMaps.entrySet()) {
+    		String key = bizTypeSourceSystemMap.getKey();
+    		Map<String, String> value = bizTypeSourceSystemMap.getValue();
+    		for(Map.Entry<String, String> v : value.entrySet()) {
+    			String cfgOutputId = v.getKey();
+    			String sourceSystem = v.getValue();
+				if(cfgOutputIds.contains(cfgOutputId)) {
+					dmpSdyOutputPushExecutorPool.execute(() -> {
+						if(key.equals("soInfo") || key.equals("soDeliver")) {
+	    					sdySoInfo(cfgOutputId, sourceSystem, startTime, endTime);
+	    				}else if(key.equals("soReturn")) {
+	    					sdyReturnInfo(cfgOutputId, sourceSystem, startTime, endTime);
+	    				}else if(key.equals("soRefund")) {
+	    					sdyRefundInfo(cfgOutputId, sourceSystem, startTime, endTime);
+	    				}
+					});
+    			}
+    		}
+		}
+    	
+        return success();
+    }
+    
+    private void sdySoInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
+    	log.warn("开始重推数帝云线上订单，系统：" + sourceSystem);
+    	DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    	dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    	List<QueryParam> queryParams = new ArrayList<>();
+    	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+    	if("1861317267527064372".equals(cfgOutputId)) {
+    		queryParams.add(new QueryParam(QueryTypeEnum.IN, "pay_status", Arrays.asList("1" , "2")));
+    	}else {
+    		queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
+    	}
+    	queryParams.add(new QueryParam(QueryTypeEnum.GE, "pay_time", startTime));
+    	queryParams.add(new QueryParam(QueryTypeEnum.LT, "pay_time", endTime));
+    	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    	log.warn("完成重推数帝云有时间的线上订单，系统：" + sourceSystem);
+    	
+    	if(!"1861317267527064372".equals(cfgOutputId)) {
+    		queryParams = new ArrayList<>();
+        	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+        	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
+        	queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "pay_time"));
+        	queryParams.add(new QueryParam(QueryTypeEnum.GE, "platform_create_time", startTime));
+        	queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));
+        	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+        	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+        	log.warn("完成重推数帝云没有时间的线上订单，系统：" + sourceSystem);
+    	}
+    }
+    
+    private void sdyReturnInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
+    	log.warn("开始重推数帝云退货单，系统：" + sourceSystem);
+    	DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    	dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    	List<QueryParam> queryParams = new ArrayList<>();
+    	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+    	queryParams.add(new QueryParam(QueryTypeEnum.GE, "return_time", startTime));
+    	queryParams.add(new QueryParam(QueryTypeEnum.LT, "return_time", endTime));
+    	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    	log.warn("完成重推数帝云有时间的退货单，系统：" + sourceSystem);
+    }
+    
+    private void sdyRefundInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
+    	log.warn("开始重推数帝云退款单，系统：" + sourceSystem);
+    	DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    	dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    	List<QueryParam> queryParams = new ArrayList<>();
+    	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+    	queryParams.add(new QueryParam(QueryTypeEnum.GE, "refund_time", startTime));
+    	queryParams.add(new QueryParam(QueryTypeEnum.LT, "refund_time", endTime));
+    	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    	log.warn("完成重推数帝云有时间的退款单，系统：" + sourceSystem);
+    }
+    
 }
