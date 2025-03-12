@@ -57,6 +57,7 @@ import com.erp.model.dmp.entity.DmpCfgMqEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
 import com.erp.model.dmp.entity.DmpPushMsgEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
@@ -77,6 +78,7 @@ import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
 import com.erp.server.dmp.service.DmpCfgInputConvertService;
 import com.erp.server.dmp.service.DmpCfgMqService;
 import com.erp.server.dmp.service.DmpCfgOutputService;
+import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
 import com.erp.server.dmp.service.DmpPushMsgService;
@@ -124,6 +126,9 @@ public class DmpInoutController extends BaseController {
 
     @Autowired
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+    
+    @Autowired
+    private DmpOutputTaskRecordMergeService dmpOutputTaskRecordMergeService;
 
     @Resource
     protected RedisTemplate<String, Object> redisTemplate;
@@ -215,6 +220,15 @@ public class DmpInoutController extends BaseController {
         ServiceImpl serviceImpl = ApplicationContextUtils.getBean("dmpOutputTaskRecordServiceImpl", ServiceImpl.class);
         List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = (List<DmpOutputTaskRecordEntity>) serviceImpl.list(queryWrapper);
         if (CollUtil.isNotEmpty(dmpOutputTaskRecordEntityList)) {
+        	List<DmpOutputTaskRecordMergeEntity> mergeList = dmpOutputTaskRecordMergeService.lambdaQuery()
+	        	.in(DmpOutputTaskRecordMergeEntity::getMergeId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()))
+	        	.list();
+        	if(CollUtil.isNotEmpty(mergeList)) {
+        		Set<String> mergeIdSet = mergeList.stream().map(DmpOutputTaskRecordMergeEntity::getMergeId).collect(Collectors.toSet());
+        		mergeIdSet.forEach(m -> log.warn(m + "合并数据不允许查询同步"));
+        		dmpOutputTaskRecordEntityList.removeIf(d -> mergeIdSet.contains(d.getId()));
+        	}
+        	
             Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
                     .in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
                     .select(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId)
@@ -247,7 +261,7 @@ public class DmpInoutController extends BaseController {
                 if (DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
                     List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, list);
                     if (CollUtil.isNotEmpty(erpQuerySync)) {
-                        dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordService.listByIds(erpQuerySync.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList())));
+                    	dmpOutputTaskRecordMergeService.querySyncMergeDeal(dmpCfgOutputEntity , dmpOutputTaskRecordService.listByIds(erpQuerySync.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList())));
                     }
                 } else {
                     List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
@@ -270,7 +284,7 @@ public class DmpInoutController extends BaseController {
                                         q.setIsNeedSync(Boolean.TRUE);
                                     }
                                     dmpOutputTaskRecordService.updateBatchById(queryDataList);
-                                    dmpOutputTaskRecordService.batchSync(queryDataList);
+                                    dmpOutputTaskRecordMergeService.querySyncMergeDeal(dmpCfgOutputEntity , queryDataList);
                                 }
                             }
                         }
@@ -283,7 +297,7 @@ public class DmpInoutController extends BaseController {
         }
         return success(dmpOutputTaskRecordEntityList);
     }
-
+    
     /**
      * 获取旺店通库存不足单据
      * @return
