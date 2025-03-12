@@ -24,7 +24,7 @@ public class ExportWmsVirtualWarehouseReportHandler extends AbstractPageFileEven
 
     @Override
     public String getExcelPath() {
-        return "excel/wms/fbaTransitReportExport.xlsx";
+        return "excel/wms/virtualWarehouseExport.xlsx";
     }
 
     @Override
@@ -41,6 +41,6 @@ public class ExportWmsVirtualWarehouseReportHandler extends AbstractPageFileEven
 
     @Override
     protected PagingVO<VirtualWarehouseDTO.ExportDTO> getPageData(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto) {
-        return null;
+        return exportWmsFeign.exportVirtualWarehouse(dto);
     }
 }

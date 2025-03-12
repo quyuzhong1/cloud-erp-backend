@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,6 +19,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -26,8 +28,11 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
@@ -559,5 +564,63 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
     public Boolean exportExcel(VirtualWarehouseDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("虚拟仓库设置导出", EXPORT_WMS_VIRTUAL_WAREHOUSE_REPORT.getCode(), dto);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<VirtualWarehouseDTO.ExportDTO> pageData = this.baseMapper.exportVirtualWarehouse(query, dto.getParams());
+        handleExport(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 导出数据处理
+     * @param list
+     */
+    private void handleExport (List<VirtualWarehouseDTO.ExportDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        //店铺信息
+        List<String> shopIdList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getShopId())).map(VirtualWarehouseDTO.ExportDTO::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+
+        //平台信息
+        List<String> platformList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getDictPlatform())).map(VirtualWarehouseDTO.ExportDTO::getDictPlatform).distinct().collect(Collectors.toList());
+        List<DictBasicEntity> dictPlatformList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getValue,platformList).list();
+
+        //区域信息
+        List<String> partitionIdList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPartitionId())).map(VirtualWarehouseDTO.ExportDTO::getPartitionId).distinct().collect(Collectors.toList());
+        List<DictPartitionEntity> partitionList = FeignQuery.getByIds(DictPartitionEntity.class,partitionIdList);
+
+        //虚拟仓关联第三方信息
+        List<String> virtualWarehouseIdList = list.stream().map(VirtualWarehouseDTO.ExportDTO::getId).distinct().collect(Collectors.toList());
+        List<ThirdMappingEntity> thirdMappingList = dmpThirdMappingFeign.getListBySysIds(virtualWarehouseIdList);
+
+        for (VirtualWarehouseDTO.ExportDTO exportDTO : list) {
+            exportDTO.setDisabledStr(exportDTO.getDisabled() ? "禁用" : "启用");
+
+            //店铺名称
+            String shopName = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            exportDTO.setShopName(shopName);
+
+            //平台名称
+            DictBasicEntity dictPlatform = dictPlatformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), exportDTO.getDictPlatform())).findFirst().orElse(new DictBasicEntity());
+            if (ObjUtil.isEmpty(dictPlatform)) {
+                exportDTO.setDictPlatformName(dictPlatform.getName());
+                exportDTO.setTypeName(DictBasicTypeEnum.getName(dictPlatform.getSubType()));
+            }
+
+            //区域名称
+            String partitionName = partitionList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getPartitionId())).map(DictPartitionEntity::getName).findFirst().orElse("");
+            exportDTO.setPartitionName(partitionName);
+
+            //虚拟仓关联仓库名称
+            ThirdMappingEntity thirdMappingEntity = thirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).findFirst().orElse(new ThirdMappingEntity());
+            exportDTO.setOutSideVirtualWarehouseName(thirdMappingEntity.getThirdName());
+            exportDTO.setOutSidePlatformName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
+        }
     }
 }

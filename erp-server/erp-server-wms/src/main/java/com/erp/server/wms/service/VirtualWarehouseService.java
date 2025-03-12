@@ -93,4 +93,11 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      * @return
      */
     Boolean exportExcel(VirtualWarehouseDTO.PagingParamDTO dto);
+
+    /**
+     * 导出虚拟仓设置
+     * @param dto
+     * @return
+     */
+    PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto);
 }
