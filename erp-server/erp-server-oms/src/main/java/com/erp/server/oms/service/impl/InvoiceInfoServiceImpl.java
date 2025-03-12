@@ -27,6 +27,7 @@ import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -343,10 +344,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             try {
                 amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
-                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADSUCCESS.getCode());
+                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode());
                 entity.setUploadTime(LocalDateTime.now());
             }catch (Exception e){
-                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADFAILED.getCode());
+                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
                 log.error("亚马逊上传发票失败",e);
                 resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("亚马逊上传发票失败,{}",e.getMessage())));
@@ -410,7 +411,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         soB2cService.updateBatchById(soB2cEntityList);
     }
 
-    private List<InvoiceDetailEntity> buildInvoiceDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, InvoiceInfoEntity invoiceInfoEntity) {
     private List<InvoiceDetailEntity> buildInvoiceDetail(List<SoB2cDetailEntity> soB2cDetailEntityList, InvoiceInfoEntity invoiceInfoEntity, Map<String, String> skuNameMap) {
         List<InvoiceDetailEntity> detailEntityList = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
