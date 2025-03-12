@@ -234,7 +234,11 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (isShipped  && hasPlatformWarehouse && PlatformDictEnum.AMAZON.getCode().equals(mainEntity.getDictPlatform())) {
             List<InvoiceInfoEntity> invoiceInfoEntities = invoiceInfoService.listBySoIds(Collections.singletonList(mainEntity.getId()));
             if (CollectionUtils.isEmpty(invoiceInfoEntities)){
-                invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                try {
+                    invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                }catch (Exception e){
+                    log.error("亚马逊订单已发货生成发票异常：{}",e.getMessage());
+                }
             }
         }
     }
