@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import com.erp.server.dmp.inout.handler.input.task.dmp.eccang.EccangReturnInventoryAgeDmpHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -16,7 +17,7 @@ import java.util.TreeMap;
 @Slf4j
 @Service
 @Scope("prototype")
-public class AntuReturnInventoryAgeDmpHandler extends DmpInputDoNextDmpHandler {
+public class AntuReturnInventoryAgeDmpHandler extends EccangReturnInventoryAgeDmpHandler {
 
 
     @Override
