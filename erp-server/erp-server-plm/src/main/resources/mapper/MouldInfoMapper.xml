@@ -72,6 +72,7 @@
         mrcq.receive_qty as receiveQty,
         mrcq.stock_in_qty as stockInQty,
         mrcq.calc_qty - mra.refund_order_qty AS diffQty,
+        mra.real_refund_amount  AS realRefundAmount,
         md.update_time as updateTime
         from mould_info mi
         inner join mould_detail md on mi.id = md.main_id and md.is_deleted = false
