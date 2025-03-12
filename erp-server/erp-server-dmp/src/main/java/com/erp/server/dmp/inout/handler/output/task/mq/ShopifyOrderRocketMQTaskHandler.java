@@ -598,7 +598,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             BeanUtils.copyProperties(dmpEntity, dto);
             dto.setUniqueId(dmpEntity.getThirdCode());
             dto.setPlatformReturnNo(dmpEntity.getThirdCode());
-            dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
+            dto.setPlatformOrderNo(dmpEntity.getPlatformOrderCode());
             dto.setReason(dmpEntity.getRemark());
             dto.setDictPlatform(dmpEntity.getSourceSystem());
             dto.setPlatform(dmpEntity.getSourceSystem());
@@ -643,7 +643,6 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             BeanUtils.copyProperties(dmpEntity, dto);
             dto.setUniqueId(dmpEntity.getThirdCode());
             dto.setPlatformRefundNo(dmpEntity.getThirdCode());
-            dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
             dto.setRemark(dmpEntity.getRemark());
             dto.setDictPlatform(dmpEntity.getSourceSystem());
             dto.setPlatform(dmpEntity.getSourceSystem());
