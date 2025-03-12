@@ -15,8 +15,8 @@ import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CfgRuleOutDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.MeasureSourceEnum;
 import com.erp.model.wms.enums.PickingSourceTypeEnum;
@@ -26,8 +26,6 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -329,6 +327,7 @@ public class WmsCartonSpecServiceImpl extends SuperServiceImpl<WmsCartonSpecMapp
      * @param isAddCarton 增量标识
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void checkAndRemoveCartonInfo(WmsCartonSpecDTO.WmsCartonAdd dto,  Boolean isAddCarton) {
         String taskId = dto.getTaskId();
         if (CharSequenceUtil.isBlank(taskId)){
