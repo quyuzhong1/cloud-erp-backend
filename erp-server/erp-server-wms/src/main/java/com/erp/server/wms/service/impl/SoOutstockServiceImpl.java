@@ -65,11 +65,16 @@ import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.*;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
@@ -121,7 +126,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
 
@@ -3719,5 +3723,33 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return Collections.emptyList();
         }
         return this.baseMapper.listAmountBySkuIds(params);
+    }
+
+    @Override
+    public void dealHistory() {
+        List<SoOutstockDTO.HistoryDTO> historyDTOS = baseMapper.listHistory();
+        List<String> sourceIdList = historyDTOS.stream().map(SoOutstockDTO.HistoryDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeList = soDeliveryNoticeService.listByIds(sourceIdList);
+        List<String> soDeliveryNoticeIdList = soDeliveryNoticeList.stream().map(SoDeliveryNoticeEntity::getId).collect(Collectors.toList());
+        List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntities = soDeliveryNoticeDetailService.listDetailByMainIds(soDeliveryNoticeIdList);
+        List<SoOutstockDetailEntity> soOutStockDetailList = new ArrayList<>();
+
+        for (SoOutstockDTO.HistoryDTO dto : historyDTOS) {
+            SoOutstockDetailEntity outStockDetail = new SoOutstockDetailEntity();
+            outStockDetail.setId(dto.getSoOutDetailId());
+
+            List<SoDeliveryNoticeDetailEntity> collect = soDeliveryNoticeDetailEntities.stream()
+                    .filter(v -> v.getMainId().equals(dto.getSourceId()))
+                    .filter(v -> v.getSourceDetailId().equals(dto.getSoDetailId()))
+                    .collect(Collectors.toList());
+            if (collect.size() != 1) {
+                throw new ServiceException("数据异常，请排查" + dto.getSoOutDetailId());
+            }
+            SoDeliveryNoticeDetailEntity deliveryNoticeDetailEntity = collect.get(0);
+            outStockDetail.setSourceDetailId(deliveryNoticeDetailEntity.getId());
+            soOutStockDetailList.add(outStockDetail);
+        }
+
+        soOutstockDetailService.updateBatchById(soOutStockDetailList);
     }
 }
