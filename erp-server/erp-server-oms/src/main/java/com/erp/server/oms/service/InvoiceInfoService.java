@@ -57,4 +57,6 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     Boolean export(InvoiceInfoDTO.PagingParamDTO dto);
 
     List<InvoiceInfoEntity> listBySoIds(List<String> soIds);
+
+    void retryInvoice();
 }
