@@ -140,7 +140,7 @@ public class CfgRuleExpireTimeServiceImpl extends SuperServiceImpl<CfgRuleExpire
         if (ObjectUtil.isEmpty(cfgRuleExpireTime)) {
             return;
         }
-        ApplicationContextUtils.getBean(CfgRuleStockUpServiceImpl.class).removeById(cfgRuleExpireTime.getId());
+        ApplicationContextUtils.getBean(CfgRuleExpireTimeServiceImpl.class).removeById(cfgRuleExpireTime.getId());
         //删除物流信息配置
         cfgRuleLogisticsService.deleteByExpireTimeId(cfgRuleExpireTime.getId());
     }
