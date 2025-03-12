@@ -150,12 +150,6 @@ public class ExportWmsFeignController {
     private FbaTransitCalculateReportService fbaTransitCalculateReportService;
 
     @Resource
-    private VirtualInventoryDetailService virtualInventoryDetailService;
-
-    @Resource
-    private VirtualTransFlowDetailService virtualTransFlowDetailService;
-
-    @Resource
     private SoB2bProcessingService soB2bProcessingService;
 
     @Resource
@@ -163,6 +157,15 @@ public class ExportWmsFeignController {
 
     @Resource
     private FirstMileProcessingService firstMileProcessingService;
+
+    @Resource
+    private VirtualInventoryDetailService virtualInventoryDetailService;
+
+    @Resource
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
+
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
