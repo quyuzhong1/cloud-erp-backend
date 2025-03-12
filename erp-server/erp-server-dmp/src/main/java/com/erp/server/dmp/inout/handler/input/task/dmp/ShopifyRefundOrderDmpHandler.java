@@ -65,6 +65,17 @@ public class ShopifyRefundOrderDmpHandler extends DmpInputDoNextDmpHandler{
             dmpMap.put("remark", shopifyRefund.getNote());
             dmpMap.put("reason", shopifyRefund.getNote());
 
+            // 退款状态：0退款中 1、成功 2、失败 3、作废'
+            String status = "";
+            String sourceStatus = transactions.get(0).getStatus();
+            if ("success".equalsIgnoreCase(sourceStatus)){
+                status = "1";
+            } else if ("failure".equalsIgnoreCase(sourceStatus)) {
+                status = "2";
+            }
+            dmpMap.put("status", status);
+
+
             dmpMap.put("currencyCode", currency);
             // 记录所有金额
             if (CollectionUtils.isNotEmpty(transactions)){
