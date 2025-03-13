@@ -3,8 +3,11 @@ package com.erp.model.oms.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
 
 /**
  * @author Lambda
@@ -64,12 +67,18 @@ public class SkuMappingImportExcelDTO {
     @ExcelProperty(value = "产品sku", index = 5)
     @FieldValid(fieldName = "产品sku", isNotBlank = true)
     private String productSkuNo;
-
+    /**
+     * 产品sku
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "启用时间", index = 6)
+    @FieldValid(fieldName = "启用时间", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    private String enabledTime;
     /**
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 6)
+    @ExcelProperty(value = "错误数据", index = 7)
     private String errorMsg;
 
 
