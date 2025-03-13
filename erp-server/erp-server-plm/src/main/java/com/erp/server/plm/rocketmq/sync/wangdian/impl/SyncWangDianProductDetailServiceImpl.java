@@ -90,6 +90,8 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
         if(StringUtils.isNotBlank(info.getCategoryId())){
             dto.setClassName(basicCategoryService.getParentName(info.getCategoryId()));
+            //自动创建分类
+            dto.setAutoCreateBc(Boolean.TRUE);
         }
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
