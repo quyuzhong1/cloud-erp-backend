@@ -18,11 +18,16 @@ import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictCostCategoryEnum;
+import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.service.*;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -41,6 +46,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
     private final FirstMileEstimatedBillService firstMileEstimatedBillService = SpringUtil.getBean(FirstMileEstimatedBillService.class);
     private final TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService = SpringUtil.getBean(TmsFirstMileReconciliationDetailService.class);
     private final TmsCfgCostService tmsCfgCostService = SpringUtil.getBean(TmsCfgCostService.class);
+    private final DmpTaskFeign dmpTaskFeign = SpringUtil.getBean(DmpTaskFeign.class);
 
     @Getter
     private List<FmLogisticsBillCostExcelDTO> dataList = new ArrayList<>();
@@ -136,6 +142,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
                 errorList.add(excelDTO);
                 continue;
             }
+            excelDTO.setLogisticsBillId(entity.getId());
             if(StringUtils.isNotBlank(excelDTO.getTransportNo()) && StringUtils.isNotBlank(excelDTO.getOutstockCode())
                 &&(!entity.getTransportNo().equals(excelDTO.getTransportNo()) || !entity.getOutstockCode().equals(excelDTO.getOutstockCode()))){
                 excelDTO.setErrorMsg("来源单号与运单号不匹配");
@@ -156,6 +163,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
                 errorList.add(excelDTO);
                 continue;
             }
+            excelDTO.setCostId(costEntity.getId());
             if(!(costEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.INVALID.getCode()) ||costEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode()))){
                 excelDTO.setErrorMsg("已生成对账单，不能更新信息");
                 errorList.add(excelDTO);
@@ -242,8 +250,19 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         		TmsCostDetailEntity updateCostDetailEntity = new TmsCostDetailEntity();
         		TmsCostDetailDTO.CostViewDTO costViewDTO = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(mainId) && v.getCostName().equals(dto.getCostName())).findFirst().orElse(null);
                 updateCostDetailEntity.setId(Objects.nonNull(costViewDTO) ? costViewDTO.getId() : null);
+                updateCostDetailEntity.setMainId(dto.getCostId());
+                updateCostDetailEntity.setCfgCostId(tmsCfgCostEntity.getId());
                 updateCostDetailEntity.setCostValue(dto.getCost());
                 updateCostDetailEntity.setCurrency(dto.getCurrency());
+                updateCostDetailEntity.setType(LogisticsBillCostTypeEnum.ESTIMATED.getCode());
+                updateCostDetailEntity.setSourceType(tmsCfgCostEntity.getDictCostCategory());
+                BigDecimal exchangeRate = BigDecimal.ZERO;
+                try {
+                    exchangeRate = dmpTaskFeign.getRate(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), dto.getCurrency());
+                }catch (Exception e){
+
+                }
+                updateCostDetailEntity.setExchangeRate(exchangeRate);
                 updateCostDetailList.add(updateCostDetailEntity);
         	}
         }

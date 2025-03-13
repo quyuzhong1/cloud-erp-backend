@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto.excel;
 
+import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.CurrencyEnum;
@@ -39,4 +40,14 @@ public class FmLogisticsBillCostExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "错误信息")
     private String errorMsg;
+    /**
+     * 物流单id
+     */
+    @ExcelIgnore
+    private String logisticsBillId;
+    /**
+     * 费用id
+     */
+    @ExcelIgnore
+    private String costId;
 }
