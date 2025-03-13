@@ -245,31 +245,38 @@ public class TmsFirstMileLogisticController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "头程物流单生成对账单")
     public ApiResult<List<BatchResultDTO>> generateReconciliation(@RequestBody @Valid TmsFirstMileLogisticDTO.GenerateReconciliationDTO dto) {
         List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByIds(ids);
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // 当前添加的主账单记录
-        Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
-        for (String id : ids) {
-            BatchResultDTO updateResult;
-            LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(id, e.getId())).findFirst().orElse(null);
-            if (Objects.isNull(entity)){
-                updateResult = BatchResultDTO.fail(id, id, "物流单记录不存在");
-                resultDTOS.add(updateResult);
-                continue;
-            }
-            try {
-                updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.ACTUAL.getCode());
-            } catch (Exception e) {
-                log.error("头程对账生成失败", e);
-                if (ObjectUtil.isEmpty(entity)) {
-                    updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByIds(ids);
+        
+        Map<String, List<LogisticsBillEntity>> supplierIdMaps = logisticsBillEntityList.stream().collect(Collectors.groupingBy(LogisticsBillEntity::getLogisticsSupplierId));
+        
+        for(Map.Entry<String, List<LogisticsBillEntity>> supplierIdMap : supplierIdMaps.entrySet()) {
+        	ids = supplierIdMap.getValue().stream().map(LogisticsBillEntity::getId).collect(Collectors.toList());
+        	// 当前添加的主账单记录
+            Map<String, TmsFirstMileReconciliationEntity> currentMainEntityMap = new HashMap<>();
+            for (String id : ids) {
+                BatchResultDTO updateResult;
+                LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(id, e.getId())).findFirst().orElse(null);
+                if (Objects.isNull(entity)){
+                    updateResult = BatchResultDTO.fail(id, id, "物流单记录不存在");
                     resultDTOS.add(updateResult);
                     continue;
                 }
-                updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
+                try {
+                    updateResult = tmsFirstMileLogisticService.singleGenerateReconciliation(id, dto.getReconciliationId(), dto.getDateList(), currentMainEntityMap, ReconciliationTypeEnum.ACTUAL.getCode());
+                } catch (Exception e) {
+                    log.error("头程对账生成失败", e);
+                    if (ObjectUtil.isEmpty(entity)) {
+                        updateResult = BatchResultDTO.fail(id, id, "B物流单不存在, 头程对账生成失败");
+                        resultDTOS.add(updateResult);
+                        continue;
+                    }
+                    updateResult = BatchResultDTO.fail(id, entity.getTransportNo(), e.getMessage());
+                }
+                resultDTOS.add(updateResult);
             }
-            resultDTOS.add(updateResult);
         }
+        
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
