@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.excel.SkuMappingCustomerImportExcelDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ListingInfoEntity;
@@ -140,6 +141,8 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 skuMapping.setProductSkuId(skuVO.getSkuId());
                 skuMapping.setProductSkuNo(skuVO.getSkuNo());
                 skuMapping.setProductName(skuVO.getSkuName());
+                skuMapping.setEffectiveTime(LocalDateUtil.parseStrToLocalTime(excelDTO.getEnabledTime()));
+                skuMapping.setExpireTime(skuMapping.getEffectiveTime().plusYears(MathUtil.NUMBER_100));
                 updateSkuMappingList.add(skuMapping);
             }
         }
@@ -178,10 +181,9 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
         skuMappingEntity.setProductName(skuVO.getSkuName());
         skuMappingEntity.setListingId(listingInfoEntity.getId());
-        LocalDateTime now = LocalDateTime.now();
         //生效时间
-        skuMappingEntity.setEffectiveTime(now);
-        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        skuMappingEntity.setEffectiveTime(LocalDateUtil.parseStrToLocalTime(excelDTO.getEnabledTime()));
+        skuMappingEntity.setExpireTime(skuMappingEntity.getEffectiveTime().plusYears(MathUtil.NUMBER_100));
         addSkuMappingList.add(skuMappingEntity);
         operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO("通过导入新增客户sku",ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "导入新增"));
     }
