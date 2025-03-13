@@ -80,9 +80,9 @@ public class AmazonUploadInvoiceService {
             createFeedSpecification.setInputFeedDocumentId(documentId);
             createFeedSpecification.setMarketplaceIds(new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet()));
             FeedOptions feedOptions = new FeedOptions();
-            feedOptions.put("OrderId",soB2cEntity.getPlatformCode());
-            feedOptions.put("InvoiceNumber",invoiceCode);
-            feedOptions.put("DocumentType","Invoice");
+            feedOptions.put("metadata:OrderId",soB2cEntity.getPlatformCode());
+            feedOptions.put("metadata:InvoiceNumber",invoiceCode);
+            feedOptions.put("metadata:DocumentType","Invoice");
             createFeedSpecification.setFeedOptions(feedOptions);
             CreateFeedResponse createFeedResponse = feedsApi.createFeed(createFeedSpecification);
             if (null != createFeedResponse) {
