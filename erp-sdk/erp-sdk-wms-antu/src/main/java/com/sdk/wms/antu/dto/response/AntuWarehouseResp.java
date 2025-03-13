@@ -56,4 +56,8 @@ public class AntuWarehouseResp extends CleanBaseDTO implements Serializable {
     //编号
     @JSONField(name = "street_number")
     private String streetNumber;
+
+    //	仓库状态 0:不可用;1:可用;2:停用
+    @JSONField(name = "warehouse_status")
+    private String warehouseStatus;
 }

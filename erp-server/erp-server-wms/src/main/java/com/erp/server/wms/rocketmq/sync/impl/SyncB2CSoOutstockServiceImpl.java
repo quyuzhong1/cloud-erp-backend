@@ -60,6 +60,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -205,6 +206,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
         //单据已经存在
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+                //旺店通已作废，ERP反审核删除并同步金蝶
+                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+                    soOutstockService.disApprove(soOutstockEntity,true);
+                }
+                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
+            }
+            return;
+        }
+        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
             return;
         }
         //不需要管的sku

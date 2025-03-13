@@ -42,7 +42,6 @@ import com.erp.server.tms.service.ShippingTemplateCostSettingService;
 import com.erp.server.tms.service.ShippingTemplateOtherCostService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -248,11 +247,17 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             dto.setChannelId(channelWarehouseDTO.getChannelId());
             dto.setChannelName(channelWarehouseDTO.getChannelName());
             dto.setLogisticsName(channelWarehouseDTO.getSupplierName());
+            //其他费用
+            dto.setOtherCostStr(ObjectUtil.isNotEmpty(dto.getOtherCost()) ? MathUtil.setScale(dto.getOtherCost(),4).toPlainString() : MathUtil.ZERO.toString());
             //时效
-            String effectiveTime = channelWarehouseDTO.getEffectiveTime();
-            String effectiveTimeUnit = channelWarehouseDTO.getEffectiveTimeUnit();
-            String effectiveTimeStr = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, effectiveTimeUnit);
-            dto.setEffectiveTimeStr(effectiveTime.concat(effectiveTimeStr));
+            if (CharSequenceUtil.isBlank(dto.getEffectiveTime())) {
+                String effectiveTime = channelWarehouseDTO.getEffectiveTime();
+                String effectiveTimeUnit = channelWarehouseDTO.getEffectiveTimeUnit();
+                String effectiveTimeStr = EnumMessage.getNameByCode(UnitEnum.TimeUnitEnum.class, effectiveTimeUnit);
+                if (effectiveTimeStr != null) {
+                    dto.setEffectiveTimeStr(effectiveTime.concat(effectiveTimeStr));
+                }
+            }
             //币种符号
             String currencySymbol = currencyList.stream().filter(obj -> obj.getId().equals(dto.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             dto.setCurrencySymbol(currencySymbol);

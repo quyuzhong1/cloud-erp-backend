@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -12,7 +11,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -137,7 +135,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -2452,8 +2449,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //转化收货人
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
         receiverInfo.setAddress2(address2);
+        //速派通地址3赋值
+        if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+            receiverInfo.setAddress2(receiver.getSecondAddress());
+            receiverInfo.setAddress3(receiver.getFullAddress());
+        }
         createOutboundReq.setReceiverInfo(receiverInfo);
-
 
         List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
@@ -2506,6 +2507,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 throw new ServiceException("上传面单失败{}",uploadFileResponse.getMsg());
             }
             ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
+            attach.setFileType(FileTypeEnum.PDF.getCode());
             attach.setAttachId(uploadFileResponse.getData().getAttachId());
             createOutboundReq.setAttach(Collections.singletonList(attach));
             createOutboundReq.setDistributorType(DistributorTypeEnum.SELF_LOGISTICS.getCode());
@@ -2760,12 +2762,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             soB2cEntity.setAbnormalType(SoB2cAbnormalTypeEnum.INTERCEPT_SUCCESS_REJECT.getCode());
             this.updateById(soB2cEntity);
-            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截成功,备注：{}", UserContext.getDefaultLoginUser().getUserName(), remark);
+            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截成功,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截成功");
         } else {
             //自动拦截结果确认，拦截失败
-            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截失败，备注：", UserContext.getDefaultLoginUser().getUserName(), remark);
+            String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截失败，备注：【{}】,原因：【{}】", UserContext.getDefaultLoginUser().getUserName(),remark, stringApiResult.getMsg());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截失败：" + stringApiResult.getMsg());
         }
@@ -4027,10 +4029,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     /**
      * @param inventoryList
      * @param waitDeliveryQtyList
-     * @param skuId
+     * @param ignoreInventorySkuIds
      * @param warehouseId
      * @param qty
-     * @param ignoreInventorySkuIds
+     * @param skuMappingDTOList
+     * @param warehouseList
+     * @param bomChildrenSkuDTOList
      * @return Boolean
      * @description: 明细子件是否缺货
      * @author Will
@@ -4039,22 +4043,63 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
                                    List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
-                                   String skuId, String warehouseId, Integer qty) {
+                                   SoB2cDetailEntity soB2cDetailEntity, String warehouseId, Integer qty, List<ListingInfoWithSkuMappingDTO> skuMappingDTOList, List<WarehouseDTO.UpdateDTO> warehouseList, List<BomChildrenSkuDTO> bomChildrenSkuDTOList) {
+        String skuId = soB2cDetailEntity.getSkuId();
         if (CollectionUtils.isEmpty(inventoryList)) {
             return Boolean.TRUE;
         }
-        //费销售套装bom判断父级SKU是否够使用
-        //可用库存
-        Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
-                && obj.getWarehouseId().equals(warehouseId)
-                && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
-                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
-                .orElse(MathUtil.ZERO);
-        //待发货数量
-        Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuId)
-                && CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId))
-                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
-        return (qty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(skuId);
+        //通过仓库类型判断校验子件还是父件
+        Boolean isCheckParent = true;
+        WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(v->v.getId().equals(warehouseId)).findFirst().orElse(null);
+        ListingInfoWithSkuMappingDTO skuMappingDTO = skuMappingDTOList.stream().filter(s -> skuId.equals(s.getProductSkuId()) && soB2cDetailEntity.getPlatformSkuNo().equals(s.getPlatformSkuNo()) && (soB2cDetailEntity.getPlatformSpuNo().isEmpty() || soB2cDetailEntity.getPlatformSpuNo().equals(s.getPlatformSpuNo()))).findFirst().orElse(null);
+
+        if(Objects.nonNull(warehouseDTO)&&Objects.nonNull(skuMappingDTO)&&Objects.nonNull(skuMappingDTO.getExtendMap()) && skuMappingDTO.getExtendMap().containsKey(warehouseDTO.getWarehouseManageType())){
+            String manageType = warehouseDTO.getWarehouseManageType();
+            String deliveryType = skuMappingDTO.getExtendMap().get(manageType);
+            if(deliveryType.equals(WarehouseDeliveryTypeEnum.SINGLE.getCode())){
+                isCheckParent = false;
+            }
+        }
+        //要校验的子件
+        List<BomChildrenSkuDTO> childList = bomChildrenSkuDTOList.stream().filter(e -> e.getParentSkuId().equals(skuId)
+                        && BomTypeEnum.COMBINATION.getType().equals(e.getType()))
+                .collect(Collectors.toList());
+        //没有子件，校验父件
+        if (CollectionUtils.isEmpty(childList)) {
+            isCheckParent = true;
+        }
+        if(isCheckParent){
+            //可用库存
+            Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(skuId)
+                            && obj.getWarehouseId().equals(warehouseId)
+                            && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                    .orElse(MathUtil.ZERO);
+            //待发货数量
+            Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuId)
+                            && CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId))
+                    .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
+            return (qty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(skuId);
+        }else{
+            for (BomChildrenSkuDTO childrenSkuDTO : childList) {
+                //可用库存
+                Integer useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(childrenSkuDTO.getSkuId())
+                                && obj.getWarehouseId().equals(warehouseId)
+                                && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal()))
+                        .orElse(MathUtil.ZERO);
+                //待发货数量
+                Integer waitDeliveryQty = waitDeliveryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuId)
+                                && CharSequenceUtil.equals(obj.getWarehouseId(), warehouseId))
+                        .findFirst().flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(MathUtil.ZERO);
+                waitDeliveryQty = waitDeliveryQty*childrenSkuDTO.getQuantity();
+                int childQty = qty*childrenSkuDTO.getQuantity();
+                if((childQty > (useableQty - waitDeliveryQty)) && !ignoreInventorySkuIds.contains(childrenSkuDTO.getSkuId())){
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /**
@@ -4392,8 +4437,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         List<String> skuIdList = detailList.stream().map(SoB2cDetailEntity::getSkuId).filter(StrUtil::isNotBlank)
                 .collect(Collectors.toList());
+        //根据SKU查询BOM判断是否是组合SKU
+        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        String combination = BomTypeEnum.COMBINATION.getType();
+        bomChildrenList = bomChildrenList.stream().filter(b -> combination.equals(b.getType())).collect(Collectors.toList());
+        //汇总子sku 和父级sku全量ids
+        List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        //汇总skuIds
+        if (CollectionUtils.isNotEmpty(childSkuIds) && CollectionUtils.isNotEmpty(skuIdList)){
+            skuIdList.addAll(childSkuIds);
+        }
         List<ProductDetailDTO.ProductDTO> productList = plmTaskFeign.listProductBySkuIds(skuIdList);
         List<String> warehouseIdList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+        //获取仓库信息
+        List<WarehouseDTO.UpdateDTO> deliveryWarehouseList = wmsTaskFeign.listWarehouseByIds(warehouseIdList);
+        List<String> platformNos = detailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+        ListingInfoParamDTO param = new ListingInfoParamDTO();
+        param.setPlatform(soB2cEntity.getDictPlatform());
+        param.setSkuIdList(skuIdList);
+        param.setPlatformSkuNoList(platformNos);
+        param.setShopIdList(Arrays.asList(soB2cEntity.getShopId()));
+        param.setIsExpire(false);
+        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingService.findListDto(param);
         // 忽略库存计算SKU
         List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
         List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
@@ -4411,8 +4476,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BigDecimal totalTaxCost = detailList.stream().filter(obj -> MathUtil.compareTo(obj.getTaxCost(), MathUtil.ZERO) > MathUtil.ZERO)
                 .map(e -> MathUtil.multiply(e.getTaxCost(), e.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        //根据SKU查询BOM判断是否是组合SKU
-        List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
         //即时库存数据
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = null;
         if (CollectionUtils.isNotEmpty(warehouseIdList) && CollectionUtils.isNotEmpty(skuIdList)) {
@@ -4525,7 +4588,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //是否缺货
             if (CharSequenceUtil.isNotBlank(detailEntity.getWarehouseId())) {
                 Boolean isOutStock = isChildOutStock(inventoryList, waitDeliveryQtyList, ignoreInventorySkuIds,
-                        detailEntity.getSkuId(), detailEntity.getWarehouseId(), detailEntity.getQty());
+                        detailEntity, detailEntity.getWarehouseId(), detailEntity.getQty(), skuMappingList, deliveryWarehouseList, bomChildrenList);
                 detailMap.put("isOutStock", isOutStock);
             } else {
                 detailMap.put("isOutStock", Boolean.TRUE);
@@ -6149,13 +6212,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             dto.setTrackNo(trackNo);
             dto.setTransportNo(soB2cLogistics.getCode());
         }
+
+        //根据主表id 查询出库的信息
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+        }
+
         String sourceType;
         if (entity.hasPlatformWarehouseOrder()) {
             // 平台仓订单(平台销售出库单)(扣可用库存)
             sourceType = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode();
         } else {
-            LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(soB2cLogistics.getLogisticsChannelId());
-            if (Objects.nonNull(auth) && OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
+            List<String> warehouseIds = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
+            if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
                 // 海外仓出库单 (扣可用库存)
                 sourceType = SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode();
             } else {
@@ -6165,11 +6236,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         dto.setSourceType(sourceType);
 
-        //根据主表id 查询出库的信息
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
-        if (CollectionUtils.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
-        }
         //是否中转
         Boolean isTransit = false;
         List<String> transferWarehouseIdList = null;
