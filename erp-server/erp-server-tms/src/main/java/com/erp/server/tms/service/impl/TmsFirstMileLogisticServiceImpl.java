@@ -74,6 +74,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.Odd;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
@@ -417,6 +418,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 throw new ServiceException("发货单不存在或者未装箱或已生成物流单");
             }
         }
+        //校验物流单对账单状态
+        checkLogisticsBillStatus(old);
         LogisticsBillEntity updateFirstMileLogisticEntity = FmLogisticsConverter.INSTANCE.addLogisticsBill(generateLogisticDTO,updateDTO);
         BeanUtil.copyProperties(updateFirstMileLogisticEntity,old, CopyOptions.create().setIgnoreNullValue(true));
         //校验运单号是否重复
@@ -488,6 +491,23 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         attachmentService.batchSave(updateDTO.getAttachmentUrlList(), updateDTO.getAttachmentNameList(), type, old.getId());
 
         return Boolean.TRUE;
+    }
+
+    /**
+     * 校验物流单对账单状态
+     * @param old
+     */
+    private void checkLogisticsBillStatus(LogisticsBillEntity old) {
+        List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(Collections.singletonList(old.getId()), null, DetailReconciliationTypeEnum.ACTUAL.getCode());
+        if (CollUtil.isNotEmpty(reconciliationDetailEntityList)){
+            reconciliationDetailEntityList.stream().filter(e -> !e.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).findFirst().ifPresent(e -> {
+                throw new ServiceException("已生成实际对账单，不能修改");
+            });
+        }
+        List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(Collections.singletonList(old.getId()), ConfirmStatusEnum.CONFIRM.getCode());
+        if (CollUtil.isNotEmpty(estimatedBillList)){
+            throw new ServiceException("已确认暂估账单，不能修改");
+        }
     }
 
     @Override
