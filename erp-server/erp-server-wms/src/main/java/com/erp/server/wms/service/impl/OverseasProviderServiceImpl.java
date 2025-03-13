@@ -149,8 +149,8 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 v.setMainId(id);
                 v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.TRANSIT.getName());
                 v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
-                v.setPlatformWarehouseCode(overseasTransferWarehouseEntitiy.getPlatformWarehouseCode());
-                v.setPlatformWarehouseName(overseasTransferWarehouseEntitiy.getName());
+                v.setPlatformWarehouseCode(overseasTransferWarehouseEntitiy.getPlatformToWarehouseCode());
+                v.setPlatformWarehouseName(overseasTransferWarehouseEntitiy.getPlatformToWarehouseName());
                 v.setCountry(overseasTransferWarehouseEntitiy.getCountry());
                 v.setCountryName(overseasTransferWarehouseEntitiy.getCountryName());
                 warehouseList.add(v);
