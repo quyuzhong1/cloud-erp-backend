@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.ListingDTO;
-import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -30,7 +30,7 @@ import java.util.*;
 public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
 
     @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+    private MercadoSdkClientService mercadoSdkClientService;
 
     @Override
     public List<DmpInputTaskInitDTO> getApiData(DmpInputApiInitRequest dmpInputApiInitRequest) {
@@ -39,7 +39,7 @@ public class MercadoProductApiInitHandler implements DmpInputApiInitHandler {
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
         //  根据店铺ID获取授权
-        MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(nextLevelId);
+        MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(nextLevelId);
         if (null == shopInfoDTO) {
             log.error("[美客多产品下载]从缓存中获取美客多 token 失败: shopId={}", nextLevelId);
             return Collections.emptyList();

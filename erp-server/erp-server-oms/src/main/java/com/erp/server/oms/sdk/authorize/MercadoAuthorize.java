@@ -28,7 +28,7 @@ import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.PlatformMercadoRefreshTokenDTO;
 import com.sdk.oms.mercado.dto.mercado.PlatformMercadoTokenDTO;
-import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
@@ -62,7 +62,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
     private RedisUtil redisUtil;
 
     @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+    private MercadoSdkClientService mercadoSdkClientService;
 
     @Resource
     private MQProducerService mqProducerService;
@@ -171,7 +171,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         paramMap.put("baseUrl", cfgAppClient.getUrl());
         paramMap.put("code", dto.getCode());
 
-        PlatformMercadoTokenDTO platformMercadoTokenDTO = mercadoLocalSdkClientService.sendMercadoPostToken(paramMap);
+        PlatformMercadoTokenDTO platformMercadoTokenDTO = mercadoSdkClientService.sendMercadoPostToken(paramMap);
         if (ObjectUtil.isEmpty(platformMercadoTokenDTO)) {
             return Boolean.FALSE;
         }
@@ -302,7 +302,7 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         PlatformMercadoRefreshTokenDTO platformMercadoRefreshTokenDTO = null;
 
         try {
-            platformMercadoRefreshTokenDTO = mercadoLocalSdkClientService.refreshToken(refreshTokenDTO);
+            platformMercadoRefreshTokenDTO = mercadoSdkClientService.refreshToken(refreshTokenDTO);
         } catch (Exception e) {
             log.info("::::: 美客多刷新token失败 ::::: 错误信息：" + e.getMessage());
             //错误3次记录错误信息，不在重试，并且发送预警通知

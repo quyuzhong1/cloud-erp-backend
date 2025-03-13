@@ -12,7 +12,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.sdk.oms.mercado.dto.MercadoShipOrderDTO;
-import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +28,7 @@ public class MercadoShipOrder extends AbstractShipOrder {
     private SoB2cFeign soB2cFeign;
 
     @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+    private MercadoSdkClientService mercadoSdkClientService;
 
     @Override
     public List<String> shipOrder(PlatformShipOrderDTO dto) {
@@ -51,7 +51,7 @@ public class MercadoShipOrder extends AbstractShipOrder {
             shipOrderDTO.setTrackingUrl("https://www.17track.net/en");
 
             //标记发货
-            mercadoLocalSdkClientService.shipOrder(shipOrderDTO);
+            mercadoSdkClientService.shipOrder(shipOrderDTO);
         }
         List<String> detailIdList = soB2cDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         return detailIdList;

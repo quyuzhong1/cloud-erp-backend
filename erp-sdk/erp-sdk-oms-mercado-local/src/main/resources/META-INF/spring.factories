@@ -1,4 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.oms.mercado.service.MercadoLocalSdkClientService,\
-   com.sdk.oms.mercado.handler.MercadoOrderHandler,\
-   com.sdk.oms.mercado.handler.MercadoListingHandler
+   com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService,\
+   com.sdk.oms.mercadolocal.handler.MercadoOrderHandler,\
+   com.sdk.oms.mercadolocal.handler.MercadoListingHandler

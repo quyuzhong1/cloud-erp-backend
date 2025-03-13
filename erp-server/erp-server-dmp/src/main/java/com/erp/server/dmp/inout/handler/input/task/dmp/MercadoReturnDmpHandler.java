@@ -11,8 +11,8 @@ import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.service.DmpSoReturnDetailService;
 import com.erp.server.dmp.service.DmpSoReturnInfoService;
-import com.sdk.oms.mercado.constant.MercadoConstant;
-import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
+import com.sdk.oms.mercadolocal.constant.MercadoConstant;
+import com.sdk.oms.mercadolocal.dto.mercadolocal.order.OrderViewDTO;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -117,7 +117,7 @@ public class MercadoReturnDmpHandler extends DmpInputDbConvertDmpHandler {
                     OrderViewDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(JSONUtil.toJsonStr(map)), OrderViewDTO.class);
                     dmpDataMap.put("allAmount", orderDTO.getPaidAmount());
                     dmpDataMap.put("currencyCode", orderDTO.getCurrencyId());
-                    dmpDataMap.put("buyerName", orderDTO.getBuyer().getFirstName()+" "+orderDTO.getBuyer().getLastName());
+                    dmpDataMap.put("buyerName", orderDTO.getBuyer().getNickname());
                     dmpDataMap.put("exchangeRate", orderDTO.getOrderItems().get(0).getBaseExchangeRate());
                 }
             }

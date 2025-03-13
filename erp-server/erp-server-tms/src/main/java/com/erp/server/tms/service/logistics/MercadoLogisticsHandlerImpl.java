@@ -29,7 +29,7 @@ import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
-import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -45,7 +45,7 @@ import java.util.*;
 @LogisticsPlatformType(LogisticsPlatformEnum.MERCADOLIBRE)
 public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+    private MercadoSdkClientService mercadoSdkClientService;
     @Resource
     private LogisticsOperateService logisticsOperateService;
     @Resource
@@ -101,7 +101,7 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO().setAccessToken(token);
         Long shipmentId = logisticsOrderVO.getShipmentId();
         try {
-            ShipmentViewDTO shipmentViewDTO = mercadoLocalSdkClientService.getShippingRecords(shopInfoDTO, shipmentId);
+            ShipmentViewDTO shipmentViewDTO = mercadoSdkClientService.getShippingRecords(shopInfoDTO, shipmentId);
             if (Objects.isNull(shipmentViewDTO) || CharSequenceUtil.isBlank(shipmentViewDTO.getTrackingNumber())){
                 throw new ServiceException(JSONUtil.toJsonStr(shipmentViewDTO));
             }
@@ -138,7 +138,7 @@ public class MercadoLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<String> errorList = new ArrayList<>();
         for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
             try {
-                String labelUrl = mercadoLocalSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
+                String labelUrl = mercadoSdkClientService.printShippingLabel(authMap, Long.valueOf(vo.getDeliveryNo()));
                 String prefix = "data:application/pdf;base64,";
                 String base64 = prefix + labelUrl;
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()

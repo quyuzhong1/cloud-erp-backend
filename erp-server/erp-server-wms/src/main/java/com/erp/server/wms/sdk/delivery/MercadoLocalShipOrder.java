@@ -11,8 +11,8 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.sdk.oms.mercado.dto.MercadoShipOrderDTO;
-import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercadolocal.dto.MercadoShipOrderDTO;
+import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

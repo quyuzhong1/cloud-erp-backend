@@ -12,7 +12,7 @@ import com.erp.server.dmp.inout.handler.input.task.init.api.DmpInputApiInitHandl
 import com.erp.server.dmp.pull.mongo.MongoService;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
-import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -27,7 +27,7 @@ import java.util.*;
 @Scope("prototype")
 public class MercadoMarketplaceApiInitHandler implements DmpInputApiInitHandler {
     @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+    private MercadoSdkClientService mercadoLocalSdkClientService;
     @Resource
     protected MongoService mongoService;
 

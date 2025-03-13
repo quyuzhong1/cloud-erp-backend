@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
-import com.sdk.oms.mercado.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -43,7 +43,7 @@ import java.util.*;
 @Scope("prototype")
 public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 	@Resource
-	private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+	private MercadoSdkClientService mercadoSdkClientService;
 	
 	@Override
 	public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -69,7 +69,7 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 
 		List<DmpInputTaskInitDTO> dmpInputTaskInitDTOList = new ArrayList<>();
 
-		MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(parentTaskEntityList.get(0).getNextLevelId());
+		MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(parentTaskEntityList.get(0).getNextLevelId());
 		if (ObjectUtil.isEmpty(shopInfoDTO)) {
 			throw new ServiceException("美客多店铺id：" + this.nextLevelId + "未找到对应的店铺信息");
 		}
