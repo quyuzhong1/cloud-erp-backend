@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -486,6 +487,7 @@ public class DmpInoutController extends BaseController {
     	
     	Set<String> cfgOutputIds = dto.getCfgOutputIds();
     	if(CollUtil.isEmpty(cfgOutputIds)) {
+    		cfgOutputIds = new HashSet<>();
     		String bizType = dto.getBizType();
     		if(StringUtils.isNotBlank(bizType)) {
     			cfgOutputIds = bizTypeSourceSystemMaps.get(bizType).keySet();
@@ -523,57 +525,72 @@ public class DmpInoutController extends BaseController {
     
     private void sdySoInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
     	log.warn("开始重推数帝云线上订单，系统：" + sourceSystem);
-    	DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
-    	dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
-    	List<QueryParam> queryParams = new ArrayList<>();
-    	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
-    	if("1861317267527064372".equals(cfgOutputId)) {
-    		queryParams.add(new QueryParam(QueryTypeEnum.IN, "pay_status", Arrays.asList("1" , "2")));
-    	}else {
-    		queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
-    	}
-    	queryParams.add(new QueryParam(QueryTypeEnum.GE, "pay_time", startTime));
-    	queryParams.add(new QueryParam(QueryTypeEnum.LT, "pay_time", endTime));
-    	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
-    	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
-    	log.warn("完成重推数帝云有时间的线上订单，系统：" + sourceSystem);
-    	
-    	if(!"1861317267527064372".equals(cfgOutputId)) {
-    		queryParams = new ArrayList<>();
-        	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
-        	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
-        	queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "pay_time"));
-        	queryParams.add(new QueryParam(QueryTypeEnum.GE, "platform_create_time", startTime));
-        	queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));
-        	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
-        	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
-        	log.warn("完成重推数帝云没有时间的线上订单，系统：" + sourceSystem);
-    	}
+    	try {
+			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+			List<QueryParam> queryParams = new ArrayList<>();
+			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+			if("1861317267527064372".equals(cfgOutputId)) {
+				queryParams.add(new QueryParam(QueryTypeEnum.IN, "pay_status", Arrays.asList("1" , "2")));
+			}else {
+				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
+			}
+			queryParams.add(new QueryParam(QueryTypeEnum.GE, "pay_time", startTime));
+			queryParams.add(new QueryParam(QueryTypeEnum.LT, "pay_time", endTime));
+			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+			log.warn("完成重推数帝云有时间的线上订单，系统：" + sourceSystem);
+			
+			if(!"1861317267527064372".equals(cfgOutputId)) {
+				queryParams = new ArrayList<>();
+				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "pay_status", true));
+				queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "pay_time"));
+				queryParams.add(new QueryParam(QueryTypeEnum.GE, "platform_create_time", startTime));
+				queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));
+				dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+				dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+			}
+		} catch (Exception e) {
+			log.error("失败重推数帝云没有时间的线上订单，系统：" + sourceSystem , e);
+			throw e;
+		}
+    	log.warn("完成重推数帝云没有时间的线上订单，系统：" + sourceSystem);
     }
     
     private void sdyReturnInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
     	log.warn("开始重推数帝云退货单，系统：" + sourceSystem);
-    	DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
-    	dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
-    	List<QueryParam> queryParams = new ArrayList<>();
-    	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
-    	queryParams.add(new QueryParam(QueryTypeEnum.GE, "return_time", startTime));
-    	queryParams.add(new QueryParam(QueryTypeEnum.LT, "return_time", endTime));
-    	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
-    	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    	try {
+			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+			List<QueryParam> queryParams = new ArrayList<>();
+			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+			queryParams.add(new QueryParam(QueryTypeEnum.GE, "return_time", startTime));
+			queryParams.add(new QueryParam(QueryTypeEnum.LT, "return_time", endTime));
+			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+		} catch (Exception e) {
+			log.warn("失败重推数帝云有时间的退货单，系统：" + sourceSystem);
+			throw e;
+		}
     	log.warn("完成重推数帝云有时间的退货单，系统：" + sourceSystem);
     }
     
     private void sdyRefundInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
     	log.warn("开始重推数帝云退款单，系统：" + sourceSystem);
-    	DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
-    	dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
-    	List<QueryParam> queryParams = new ArrayList<>();
-    	queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
-    	queryParams.add(new QueryParam(QueryTypeEnum.GE, "refund_time", startTime));
-    	queryParams.add(new QueryParam(QueryTypeEnum.LT, "refund_time", endTime));
-    	dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
-    	dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    	try {
+			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+			List<QueryParam> queryParams = new ArrayList<>();
+			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+			queryParams.add(new QueryParam(QueryTypeEnum.GE, "refund_time", startTime));
+			queryParams.add(new QueryParam(QueryTypeEnum.LT, "refund_time", endTime));
+			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+		} catch (Exception e) {
+			log.warn("失败重推数帝云有时间的退款单，系统：" + sourceSystem);
+			throw e;
+		}
     	log.warn("完成重推数帝云有时间的退款单，系统：" + sourceSystem);
     }
     
