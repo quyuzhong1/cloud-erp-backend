@@ -14,6 +14,7 @@
 package com.erp.server.dmp.amz;
 
 
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FeedsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
@@ -40,6 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -95,26 +97,31 @@ public class FeedsApiTest {
         shopInfoDTO.setSecretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B");
         shopInfoDTO.setAccessKeyId("AKIARVXX3YJGDV2NGA4L");
         shopInfoDTO.setRefreshToken("Atzr|IwEBIGMAY2S_GKCS6zsuZzJzKkh8FxQO0Ox_e2rGDsMcc5edGjctvjXjC-TtSWg2M3XGaNisFQqg2z_KwROD8xVOazVQkZBc4f4VIgTsIDPSlZ2fIHaONs_HA6J7hToolnOgbcli2M_CX1vXkPPxCRbW1JrQQlIDfdiHkMakJ5VAAnFPokQf3vcLv0P1gngOfbCL1KdhKyDBLGQLfEkwdKQ1r0jaeU6jkT6XB8iyDYvo_f-Ms87R-Xv6J4XMFhOtY_Z9BhixpGkNhbjz_ns0I-ejfcpLnDgHer02Syqi2ZTPIsF_pSOHtVs1yZj-OGdB0V0f66EOopfvV_53HnkmMNNS6Em7");
-        shopInfoDTO.setAccessToken("Atza|IwEBIM9f4smxHNb26lLYf2FnST99jUcyepdw67K9U0XsK3fQDHFjw_7jD-Tt49olnkWsKf0TMHeyFkOsvSuPoEy8ADUX9az6nJmWXC6TabsuZ5Pyc5SsD4MEAtQyzgHm76KkEuiID5yMQKc2DUrmIcwVRx6WZ_bBTK8lYgqM9oUlteUL2cjaXN_KbUsu0igoE0w3qZC_h5Ua9r7xKAozP4qba6z6CNxCpuxIdxThwmKRXKLplvEoHT_CthoU6lOG3zN7gnCKieC6CjxM2urRL8KtL564eG_Z7YSSfzQbitIy8mWdodsxqN4N5BGWqDLtYn-5plV6m1b_LR8NZQzUDnh_I2mBYehl1_IeAhr5Ptc2A2g8Yw");
+        shopInfoDTO.setAccessToken("Atza|IwEBIK9LyKAEEYdGAePuK6Y8ZME6mHObx3vOOgvvV1HdrAXcC0JKIujGUBe8VdQ761aj2wkLjjUBywtENwbluHqkcDCHtn50U4vAFAv9lzlS6xoAy6s8Lz0YzLMO8HHe8hn4I59bUITqz2Iilzmt_br55Ho0S6KVMqm_Jw6AK9qtpqHpgraXnSIdOybTUlwaGR-VOpJsY-qvYkned1UG1pXtJxpXM-CAOP-2LB-pX9p5Sr68S2TbaHE4wvM8WM6_ahhFA7XMv_wNNbbVRgGRbQvrEX_xzxF7E9B9Zj0qhsXo7H1XqMP9jNzqtxcfA__qlBUb6HxpJhksqe6M5wj4Are-b4_NNxuSLr8Tq24hjA3IijJweQ");
         shopInfoDTO.setAuthUrl("https://api.amazon.com/auth/o2/token");
         shopInfoDTO.setRoleStr("arn:aws:iam::115410190924:role/DehouRole");
         shopInfoDTO.setClientSecret("amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988");
-        FeedsApi api = FeedsApi.initApi(AmazonEndpointsEnum.US_WAST_2,shopInfoDTO);
+        FeedsApi api = FeedsApi.initApi(AmazonEndpointsEnum.EN_WAST_1,shopInfoDTO);
         CreateFeedDocumentResponse response = api.createFeedDocument(body);
         String url = response.getUrl();
         System.out.println(url);
+        OkHttpClient client = new OkHttpClient();
         File fileToUpload = new File("C:\\Users\\Administrator\\Desktop\\testamz\\invoice-Abed.pdf");
-        InputStream inputStream = Files.newInputStream(fileToUpload.toPath());
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPut putRequest = new HttpPut(url);
-            putRequest.setHeader("Content-Type", "application/pdf");
-            putRequest.setEntity(new InputStreamEntity(inputStream));
+        Path path = fileToUpload.toPath();
+        byte[] a = Files.readAllBytes(path);
+        try {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type","application/pdf")
+                    .put(RequestBody.create(MediaType.parse("application/pdf"),  a))
+                    .build();
 
-            // 执行请求
-            HttpResponse httpResponse = httpClient.execute(putRequest);
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode == 200 || statusCode == 201) {
-                System.out.println("文件上传成功");
+            Response response2 = client.newCall(request).execute();
+            if (!response2.isSuccessful()) {
+                System.out.println(
+                        String.format("Call to upload document failed with response code: %d and message: %s",
+                                response2.code(), response2.message()));
+            }else{
                 CreateFeedSpecification createFeedSpecification = new CreateFeedSpecification();
                 createFeedSpecification.setFeedType("UPLOAD_VAT_INVOICE");
                 createFeedSpecification.setInputFeedDocumentId(response.getFeedDocumentId());
@@ -126,11 +133,9 @@ public class FeedsApiTest {
                 createFeedSpecification.setFeedOptions(feedOptions);
                 CreateFeedResponse createFeedResponse = api.createFeed(createFeedSpecification);
                 System.out.println(createFeedResponse);
-            } else {
-                System.out.println("上传失败，状态码：" + statusCode);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
         }
 
     }

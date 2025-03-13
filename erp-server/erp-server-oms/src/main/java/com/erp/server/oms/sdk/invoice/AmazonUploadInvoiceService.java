@@ -11,6 +11,7 @@ import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.feeds.*;
 import io.seata.common.util.StringUtils;
+import okhttp3.*;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.InputStreamEntity;
@@ -57,40 +58,39 @@ public class AmazonUploadInvoiceService {
         if(StringUtils.isBlank(url)|| StringUtils.isBlank(documentId)){
             throw new ServiceException("获取亚马逊上传文档失败");
         }
-        InputStream inputStream = FastDFSClientUtil.getInputStream(fileUrl);
-        if(Objects.isNull(inputStream)){
+        byte[] fileByte = FastDFSClientUtil.getFileByte(fileUrl);
+        if(Objects.isNull(fileByte)){
             throw new ServiceException("获取发票文件流失败");
         }
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpPut putRequest = new HttpPut(url);
-            putRequest.setHeader("Content-Type", "application/pdf");
-            putRequest.setEntity(new InputStreamEntity(inputStream));
-            // 执行请求
-            HttpResponse httpResponse = httpClient.execute(putRequest);
-            int statusCode = httpResponse.getStatusLine().getStatusCode();
-            if (statusCode == 200 || statusCode == 201) {
-                CreateFeedSpecification createFeedSpecification = new CreateFeedSpecification();
-                createFeedSpecification.setFeedType("UPLOAD_VAT_INVOICE");
-                createFeedSpecification.setInputFeedDocumentId(documentId);
-                createFeedSpecification.setMarketplaceIds(new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet()));
-                FeedOptions feedOptions = new FeedOptions();
-                feedOptions.put("OrderId",soB2cEntity.getPlatformCode());
-                feedOptions.put("InvoiceNumber",invoiceCode);
-                feedOptions.put("DocumentType","Invoice");
-                createFeedSpecification.setFeedOptions(feedOptions);
-                CreateFeedResponse createFeedResponse = feedsApi.createFeed(createFeedSpecification);
-                if (null != createFeedResponse) {
-                    log.error("亚马逊上传发票成功,feedId:{}", createFeedResponse.getFeedId());
-                } else {
-                    log.error("亚马逊上传发票,feed失败,传参:{}", JSONUtil.toJsonStr(createFeedSpecification));
-                    throw new ServiceException("上传发票失败");
-                }
+
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("Content-Type","application/pdf")
+                .put(RequestBody.create(MediaType.parse("application/pdf"), fileByte))
+                .build();
+
+        Response preSignResponse = client.newCall(request).execute();
+        if (!preSignResponse.isSuccessful()) {
+            log.error("亚马逊预签名上传发票失败,{}", preSignResponse.code() + preSignResponse.message());
+            throw new ServiceException("亚马逊预签名上传发票失败,code:{},msg:{}",preSignResponse.code(),preSignResponse.message());
+        }else{
+            CreateFeedSpecification createFeedSpecification = new CreateFeedSpecification();
+            createFeedSpecification.setFeedType("UPLOAD_VAT_INVOICE");
+            createFeedSpecification.setInputFeedDocumentId(documentId);
+            createFeedSpecification.setMarketplaceIds(new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet()));
+            FeedOptions feedOptions = new FeedOptions();
+            feedOptions.put("OrderId",soB2cEntity.getPlatformCode());
+            feedOptions.put("InvoiceNumber",invoiceCode);
+            feedOptions.put("DocumentType","Invoice");
+            createFeedSpecification.setFeedOptions(feedOptions);
+            CreateFeedResponse createFeedResponse = feedsApi.createFeed(createFeedSpecification);
+            if (null != createFeedResponse) {
+                log.error("亚马逊上传发票成功,feedId:{}", createFeedResponse.getFeedId());
             } else {
-                throw new ServiceException("预签名url上传发票失败");
+                log.error("亚马逊上传发票,feed失败,传参:{}", JSONUtil.toJsonStr(createFeedSpecification));
+                throw new ServiceException("上传发票失败");
             }
-        } catch (Exception e) {
-            log.error("亚马逊上传发票失败", e);
-            throw new ServiceException("亚马逊上传发票失败",e);
         }
     }
 }
