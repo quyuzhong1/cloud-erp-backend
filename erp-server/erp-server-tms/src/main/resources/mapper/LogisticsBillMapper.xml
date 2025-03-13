@@ -262,7 +262,7 @@
         logistics_bill lb
         inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
         left join first_mile_estimated_bill fmb on fmb.logistics_bill_id = lb.id and fmb.is_deleted = false
-        left join foreign_packing_task fpt on fpt.source_id = lb.outstock_id and fpt.is_deleted = false
+        left join foreign_packing_task fpt on (fpt.source_id = lb.outstock_id or fpt.source_id = lb.source_id) and fpt.is_deleted = false
         where ${params.sqlMap.default}
         and lb.order_type = #{params.orderType}
         and lb.is_deleted =false
