@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2024-06-11 09:37:12
  */
 public enum DmpBasicSystemCodeEnum implements EnumMessage {
-	AMAZON("amazon", "亚马逊"),
+	AMAZON("Amazon", "亚马逊"),
 	KINGDEE("kingdee", "金蝶"),
 	WDT("wdt", "旺店通"),
 	MABANG("mabang", "马帮"),
