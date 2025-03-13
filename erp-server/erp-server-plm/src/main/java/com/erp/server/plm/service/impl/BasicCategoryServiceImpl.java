@@ -694,12 +694,10 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
         if(CollUtil.isEmpty(pidList)){
             return "";
         }
-        BasicCategoryEntity first = this.getById(pidList.get(0));
-        if(pidList.size() == 1){
-            return first.getName();
-        }else {
-            BasicCategoryEntity second = this.getById(pidList.get(1));
-            return first.getName() + "/" + second.getName();
+        BasicCategoryEntity basicCategoryEntity = this.getById(pidList.get(0));
+        if(Objects.isNull(basicCategoryEntity)){
+            return "";
         }
+        return basicCategoryEntity.getName();
     }
 }
