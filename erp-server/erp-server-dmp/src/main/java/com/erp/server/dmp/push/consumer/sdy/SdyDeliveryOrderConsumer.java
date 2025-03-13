@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.erp.server.dmp.push.service.sdy.SdyPushCommonService;
+
+import cn.hutool.core.exceptions.ExceptionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +32,12 @@ public class SdyDeliveryOrderConsumer {
             ShudiyunB2cOrderDTO dto = JSON.parseObject(ext.toString(), ShudiyunB2cOrderDTO.class);
             shudiyunB2cOrderDTOList.add(dto);
         }
-
-        return sdyPushCommonService.executeConsumer(shudiyunB2cOrderDTOList);
+        ApiResult result = null;
+        try {
+			result = sdyPushCommonService.executeConsumer(shudiyunB2cOrderDTOList);
+		} catch (Exception e) {
+			return ApiResult.error("" , "调用数帝云接口异常" + ExceptionUtil.stacktraceToOneLineString(e));
+		}
+		return result;
     }
 }

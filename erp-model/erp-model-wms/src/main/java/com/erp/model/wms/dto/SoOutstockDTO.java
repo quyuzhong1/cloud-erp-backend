@@ -7,7 +7,9 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -1798,24 +1800,5 @@ public class SoOutstockDTO implements Serializable {
          *币种符号
          */
         private String currencySymbol;
-    }
-
-
-    @Getter
-    @Setter
-    public static class HistoryDTO {
-
-        private String soOutId;
-
-        private String soId;
-
-        private String soOutDetailId;
-
-        private String sourceId;
-
-        private String soDetailId;
-
-        private String sourceDetailId;
-
     }
 }

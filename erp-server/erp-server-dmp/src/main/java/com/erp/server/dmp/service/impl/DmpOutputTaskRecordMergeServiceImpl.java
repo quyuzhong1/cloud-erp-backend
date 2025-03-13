@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -27,6 +29,7 @@ import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.transaction.annotation.Transactional;
@@ -145,7 +148,17 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
         if (CollUtil.isEmpty(recordEntityList)) {
             return;
         }
-        List<String> dataList = recordEntityList.stream().map(DmpOutputTaskRecordEntity::getRequestData).collect(Collectors.toList());
+        List<String> dataList = new ArrayList<>();
+        int i = 1;
+        for(DmpOutputTaskRecordEntity recordEntity : recordEntityList) {
+        	String requestData = recordEntity.getRequestData();
+        	JSONObject parseObject = JSON.parseObject(requestData);
+        	parseObject.put("dmpOutputTaskRecordId", recordEntity.getId());
+			parseObject.put("dmpOutputTaskRecordDataId", recordEntity.getDataId());
+			parseObject.put("dmpOutputTaskRecordIndex", "i" + i);
+			dataList.add(parseObject.toJSONString());
+			i = i + 1;
+        }
         DmpOutputTaskRecordEntity entity = new DmpOutputTaskRecordEntity();
         entity.setMainId(recordEntityList.get(0).getMainId());
         entity.setDataId(recordEntityList.get(0).getDataId());
@@ -246,6 +259,9 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 
     @Override
 	public boolean validateMerge(List<String> leMergeList , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	if(CollUtil.isEmpty(leMergeList)) {
+    		return false;
+    	}
     	List<DmpOutputTaskRecordMergeEntity> leMergeEntityList = this.lambdaQuery()
     			.in(DmpOutputTaskRecordMergeEntity::getMainId, leMergeList)
     			.list();
@@ -279,5 +295,62 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 			}
 		}
 		return false;
+	}
+
+	@Override
+	public void querySyncMergeDeal(DmpCfgOutputEntity dmpCfgOutputEntity,
+			List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList) {
+    	if ("1801574477567165866".equals(dmpCfgOutputEntity.getSystemId())) {
+    		List<DmpOutputTaskRecordMergeEntity> mergeList = lambdaQuery()
+    	        	.in(DmpOutputTaskRecordMergeEntity::getMainId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()))
+    	        	.list();
+    		if(CollUtil.isNotEmpty(mergeList)) {
+    			Map<String, DmpOutputTaskRecordEntity> mergeRecordIdMaps = dmpOutputTaskRecordService.lambdaQuery()
+	    			.in(DmpOutputTaskRecordEntity::getId, mergeList.stream().map(DmpOutputTaskRecordMergeEntity::getMergeId).collect(Collectors.toList()))
+	    			.in(DmpOutputTaskRecordEntity::getStatus, Arrays.asList(DmpOutputTaskRecordStatusEnum.INIT.getCode() , 
+	    					DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode() , DmpOutputTaskRecordStatusEnum.ERROR.getCode()))
+	    			.list().stream().collect(Collectors.toMap(DmpOutputTaskRecordEntity::getId, d -> d));
+    			
+    			Map<String, DmpOutputTaskRecordEntity> mainIdEntityMaps = dmpOutputTaskRecordEntityList.stream().collect(Collectors.toMap(DmpOutputTaskRecordEntity::getId, d -> d));
+    			
+    			Set<DmpOutputTaskRecordEntity> needAddEntity = new HashSet<>();
+    			Set<String> needDeleteId = new HashSet<>();
+    			for(DmpOutputTaskRecordMergeEntity merge : mergeList) {
+    				String mainId = merge.getMainId();
+    				needDeleteId.add(mainId);
+    				log.warn("被合并数据查询同步无需推送" + mainId);
+    				DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = mergeRecordIdMaps.get(merge.getMergeId());
+    				if(dmpOutputTaskRecordEntity == null) {
+    					continue;
+    				}
+    				DmpOutputTaskRecordEntity mainIdEntity = mainIdEntityMaps.get(mainId);
+    				String requestData = dmpOutputTaskRecordEntity.getRequestData();
+    				List<JSONObject> parseArray = JSON.parseArray(requestData , JSONObject.class);
+    				parseArray = parseArray.stream().map(p -> {
+    					String dmpOutputTaskRecordDataId = p.getString("dmpOutputTaskRecordId");
+    					if(StringUtils.isNotBlank(dmpOutputTaskRecordDataId) && mainId.equals(dmpOutputTaskRecordDataId)) {
+    						return JSON.parseObject(mainIdEntity.getRequestData());
+    					}else {
+    						return p;
+    					}
+    				}).collect(Collectors.toList());
+    				dmpOutputTaskRecordEntity.setRequestData(JSON.toJSONString(parseArray));
+    				needAddEntity.add(dmpOutputTaskRecordEntity);
+    			}
+    			
+    			if(CollUtil.isNotEmpty(needAddEntity)) {
+    				dmpOutputTaskRecordEntityList.addAll(needAddEntity);
+    				dmpOutputTaskRecordService.saveOrUpdateBatch(needAddEntity);
+    			}
+    			if(CollUtil.isNotEmpty(needDeleteId)) {
+    				dmpOutputTaskRecordEntityList.removeIf(d -> needDeleteId.contains(d.getId()));
+    				dmpOutputTaskRecordService.lambdaUpdate().in(DmpOutputTaskRecordEntity::getId, needDeleteId)
+	    				.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+	    				.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+	    				.update();
+    			}
+    		}
+    	}
+    	dmpOutputTaskRecordService.batchSync(dmpOutputTaskRecordEntityList);
 	}
 }
