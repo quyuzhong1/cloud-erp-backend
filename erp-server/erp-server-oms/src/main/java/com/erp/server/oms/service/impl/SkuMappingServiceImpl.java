@@ -164,9 +164,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!typeList.contains(type)) {
             throw new ServiceException("下载模板类型有误");
         }
-        String path = "classpath:excel/skuMappingTemplate.xlsx";
+        String path = "excel/skuMappingTemplate.xlsx";
         if (warehouse.equals(type)) {
-            path = "classpath:excel/skuMappingWarehouseTemplate.xlsx";
+            path = "excel/skuMappingWarehouseTemplate.xlsx";
         }
         if (customer.equals(type)) {
             path = "excel/skuMappingCustomerTemplate.xlsx";
