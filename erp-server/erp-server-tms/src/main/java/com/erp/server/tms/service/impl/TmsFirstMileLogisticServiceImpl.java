@@ -1252,7 +1252,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 .distinct()
                 .collect(Collectors.toList());
         if (logisticsSupperIds.size() > 1){
-            throw new ServiceException("物流单的物流商不一致");
+        	return new ArrayList<>();
         }
         // 显示对应物流商对账单
         return list.stream()

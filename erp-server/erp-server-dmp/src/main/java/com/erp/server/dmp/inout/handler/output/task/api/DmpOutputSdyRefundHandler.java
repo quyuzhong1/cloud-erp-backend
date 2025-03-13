@@ -150,6 +150,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 sdyDTO.setPrice(dmpSoRefundDetailEntity.getAmount());
             }
 
+            sdyDTO.setGoods_transaction_quantity(dmpSoRefundDetailEntity.getQty());
             sdyDTO.setGoods_transaction_amount(dmpSoRefundDetailEntity.getAmount());
 
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoRefundEntity.getSourceSystem())) {
