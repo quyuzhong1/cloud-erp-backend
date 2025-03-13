@@ -22,11 +22,9 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.dmp.kingdee.KingdeeDeliveryDetailEntity;
 import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
-import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
@@ -39,7 +37,6 @@ import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -63,6 +60,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -208,6 +206,16 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
         //单据已经存在
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+                //旺店通已作废，ERP反审核删除并同步金蝶
+                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+                    soOutstockService.disApprove(soOutstockEntity,true);
+                }
+                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
+            }
+            return;
+        }
+        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
             return;
         }
         //不需要管的sku
@@ -600,7 +608,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         platformDTO.setWarehouseIdList(warehouseIdList);
         if(StringUtils.isNotBlank(customerId)){
             CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class,customerId);
-            if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.GL.getCode())){
+            if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.ALL.getCode())){
                 country = customerInfo.getCountryId();
             }
         }

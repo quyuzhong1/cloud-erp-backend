@@ -141,7 +141,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 	            		if(rate == null){
 	            			rate = dmpTaskFeign.getRate(date, currency);
 	            			if(rate == null) {
-	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            				rate = BigDecimal.ONE;
+//	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
 	            			}
 	    	            }
 	            		rateMap.put(key, rate);
@@ -164,7 +165,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 	            		if(rate == null){
 	            			rate = dmpTaskFeign.getRate(date, currency);
 	            			if(rate == null) {
-	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            				rate = BigDecimal.ONE;
+//	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
 	            			}
 	    	            }
 	            		rateMap.put(key, rate);
@@ -187,7 +189,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 	            		if(rate == null){
 	            			rate = dmpTaskFeign.getRate(date, currency);
 	            			if(rate == null) {
-	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            				rate = BigDecimal.ONE;
+//	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
 	            			}
 	    	            }
 	            		rateMap.put(key, rate);
@@ -210,7 +213,8 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 	            		if(rate == null){
 	            			rate = dmpTaskFeign.getRate(date, currency);
 	            			if(rate == null) {
-	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+	            				rate = BigDecimal.ONE;
+//	            				throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
 	            			}
 	    	            }
 	            		rateMap.put(key, rate);

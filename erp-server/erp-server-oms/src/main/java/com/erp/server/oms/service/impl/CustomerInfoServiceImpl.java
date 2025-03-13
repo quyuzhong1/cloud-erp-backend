@@ -55,7 +55,9 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
+import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.UserInfoFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -105,6 +107,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private CommonService commonService;
 
     @Resource
+    private SysDictFeign sysDictFeign;
+
+    @Resource
     private CustomerContactService customerContactService;
 
     @Resource
@@ -129,6 +134,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private UserInfoFeign userInfoFeign;
 
     @Resource
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
@@ -519,7 +527,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
+        //销售部门id
+        List<String> salesDeptIdList = list.stream().map(CustomerDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
         for (CustomerDTO.PagingViewDTO item : list) {
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String groupId = item.getGroupId();
@@ -604,7 +618,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
         if(CharSequenceUtil.isNotBlank(view.getSellerId())){
-            SysUserDTO user = sysUserFeign.getSysUserById(view.getSellerId());
+            SysUserInfoEntity user = userInfoFeign.info(view.getSellerId());
             view.setSellerName(Objects.nonNull(user) ? user.getRealName() : CharSequenceUtil.EMPTY);
         }
         if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){
@@ -679,6 +693,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         String code = customer.getCode();
 
+        if(!customer.getCountryId().equals(dto.getCountryId()) &&
+                (customer.getPlatformType().equals(PlatformDictEnum.AMAZON.getCode()) ||customer.getPlatformType().equals(PlatformDictEnum.SHOPEE.getCode()) )){
+            throw new ServiceException("B2B客户平台归属为shopee和亚马逊时，国家字段不允许修改");
+        }
         //旧的
         CustomerInfoEntity old = new CustomerInfoEntity();
 
@@ -730,7 +748,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         
         shopInfoService.lambdaUpdate()
 	        .eq(ShopInfoEntity::getCustomerId, id)
-	        .set(ShopInfoEntity::getDictCountryCode, customer.getCountryId())
+//	        .set(ShopInfoEntity::getDictCountryCode, customer.getCountryId())
 	        .set(ShopInfoEntity::getDictAreaCode, FeignQuery.getById(DictCountryEntity.class, customer.getCountryId()).getRegionCode())
 	        .set(ShopInfoEntity::getSettlementCurrency, customer.getCurrency())
 	        .set(ShopInfoEntity::getTradeCurrency, customer.getTradeCurrency())
@@ -854,6 +872,20 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerSellerService.batchSellerHistory(list, LocalDate.now());
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            List<String> countryIdList = list.stream().map(CustomerInfoEntity::getCountryId).collect(Collectors.toList());
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+            list.forEach(customer->{
+                DictCountryEntity dictCountryEntity = countryList.stream().filter(d -> d.getId().equals(customer.getCountryId())).findFirst().orElse(null);
+                if(Objects.nonNull(dictCountryEntity)){
+                    shopInfoService.lambdaUpdate()
+                            .eq(ShopInfoEntity::getCustomerId, customer.getId())
+                            .set(ShopInfoEntity::getDictCountryCode, customer.getCountryId())
+                            .set(ShopInfoEntity::getCountryName, dictCountryEntity.getNameCn())
+                            .update();
+                }
+
+            });
+
         }
 
         return Boolean.TRUE;
@@ -2211,8 +2243,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(customerCategoryList)){
             customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
         }
+        //销售部门id
+        List<String> salesDeptIdList = records.stream().map(CustomerDTO.PagingExportDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
 
         for (CustomerDTO.PagingExportDTO item : records) {
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
             item.setDisabledName(disabledName);

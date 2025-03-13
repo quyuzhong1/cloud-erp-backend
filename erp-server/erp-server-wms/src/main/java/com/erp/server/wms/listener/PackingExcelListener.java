@@ -16,6 +16,8 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.*;
 import lombok.Getter;

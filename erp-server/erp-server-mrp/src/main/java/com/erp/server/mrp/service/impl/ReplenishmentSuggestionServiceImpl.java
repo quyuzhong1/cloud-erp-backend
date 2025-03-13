@@ -5,6 +5,9 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -55,6 +58,7 @@ import com.erp.server.mrp.es.service.OrderHistorySalesEsService;
 import com.erp.server.mrp.es.service.OutStockHistorySalesEsService;
 import com.erp.server.mrp.mapper.ReplenishmentSuggestionMapper;
 import com.erp.server.mrp.service.*;
+import com.erp.server.mrp.utils.DataDifferenceCalculator;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
@@ -66,8 +70,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -176,6 +184,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
     @Resource
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    @Resource
+    private ReplenishmentSuggestionDetailHistoryService replenishmentSuggestionDetailHistoryService;
+    @Resource
+    private SalesEstimateHistoryService salesEstimateHistoryService;
 
 
     @Override
@@ -1231,6 +1243,113 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                .in(ReplenishmentSuggestionEntity::getShopId, shopIdList)
                .in(ReplenishmentSuggestionEntity::getSkuId, skuIdList)
        );
+    }
+
+    @Override
+    public void exportSales(ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response) {
+        List<ProductDetailEntity> productDetailList = FeignQuery.list(ProductDetailEntity.class);
+        Map<String, String> productMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getSkuNo, ProductDetailEntity::getId, (o1,o2) -> o1));
+        List<ShopInfoEntity> shopInfoList = FeignQuery.list(ShopInfoEntity.class);
+        Map<String, ShopInfoEntity> shopMap = shopInfoList.stream().collect(Collectors.toMap(ShopInfoEntity::getName, v -> v, (o1,o2) -> o1));
+        exportSalesDTO.getSkuShopList()
+                .forEach(v -> {
+                    v.setSkuId(productMap.get(v.getSkuNo()));
+                    v.setShopId(shopMap.get(v.getShopName()).getId());
+                });
+        List<ReplenishmentSuggestionEntity> replenishmentSuggestionList = list();
+        List<String> suggestIds = replenishmentSuggestionList.stream()
+                .filter(v -> exportSalesDTO.getSkuShopList().stream().anyMatch(e -> e.getShopId().equals(v.getShopId()) && e.getSkuId().equals(v.getSkuId())))
+                .map(ReplenishmentSuggestionEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<ReplenishmentSuggestionDetailHistoryEntity> detailList = replenishmentSuggestionDetailHistoryService.list(Wrappers.<ReplenishmentSuggestionDetailHistoryEntity>lambdaQuery()
+                .eq(ReplenishmentSuggestionDetailHistoryEntity::getCalcDate, exportSalesDTO.getStartDate().format(DateTimeFormatter.BASIC_ISO_DATE))
+                .in(ReplenishmentSuggestionDetailHistoryEntity::getMainId, suggestIds)
+        );
+        Map<String, String> detailMap = detailList.stream()
+                .collect(Collectors.toMap(ReplenishmentSuggestionDetailHistoryEntity::getMainId, ReplenishmentSuggestionDetailHistoryEntity::getId, (o1, o2) -> o1));
+        List<SalesEstimateHistoryEntity> saleEstimateList = salesEstimateHistoryService.list(Wrappers.<SalesEstimateHistoryEntity>lambdaQuery()
+                .in(SalesEstimateHistoryEntity::getReplenishmentDetailId, detailMap.values())
+                .between(SalesEstimateHistoryEntity::getDate, exportSalesDTO.getStartDate(), exportSalesDTO.getEndDate())
+        );
+        List<String> shopSkuIds = exportSalesDTO.getSkuShopList().stream()
+                .map(v -> v.getShopId() + "-" + v.getSkuId())
+                .collect(Collectors.toList());
+        List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistoryDTOS = orderHistorySalesEsService.listByShopSkuIdsAndDate(shopSkuIds, null, exportSalesDTO.getStartDate(), exportSalesDTO.getEndDate());
+        Map<String, String> platformMap = getPlatformMap();
+
+        List<ReplenishmentSuggestionDTO.HistorySaleExportDTO> historySaleExportDTOS = new ArrayList<>();
+        List<List<ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO>> detailExports = new ArrayList<>();
+        for (ReplenishmentSuggestionDTO.SkuShopDTO shopDTO : exportSalesDTO.getSkuShopList()) {
+            String platformName = platformMap.get(shopMap.get(shopDTO.getShopName()).getDictPlatform());
+            ReplenishmentSuggestionDTO.HistorySaleExportDTO exportDTO = ReplenishmentSuggestionDTO.HistorySaleExportDTO.bulidHistorySaleExportDTO(shopDTO, platformName, exportSalesDTO);
+            //获取建议明细id
+            ReplenishmentSuggestionEntity entity = replenishmentSuggestionList.stream().filter(v -> v.getSkuId().equals(shopDTO.getSkuId()))
+                    .filter(v -> v.getShopId().equals(shopDTO.getShopId()))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            String detailId = detailMap.get(entity.getId());
+            if (ObjectUtils.isEmpty(detailId)) {
+                continue;
+            }
+            List<BigDecimal> basicData = new ArrayList<>();
+            List<BigDecimal> calcList = new ArrayList<>();
+            Map<String, BigDecimal> monthlySales = salesHistoryDTOS.stream()
+                    .filter(v -> v.getShopSkuIds().equals(shopDTO.getShopId() + "-" + shopDTO.getSkuId()))
+                    .collect(Collectors.groupingBy(
+                            entry -> entry.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM")),
+                            Collectors.mapping(
+                                    entry -> BigDecimal.valueOf(Optional.ofNullable(entry.getOriginalSalesQty()).orElse(0)),
+                                    Collectors.reducing(BigDecimal.ZERO, BigDecimal::add)
+                            )
+                    ));
+            LocalDate temp = exportSalesDTO.getStartDate();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+            while (!temp.isAfter(exportSalesDTO.getEndDate())) {
+                String month = temp.format(formatter);
+                BigDecimal qty = saleEstimateList.stream()
+                        .filter(v -> v.getReplenishmentDetailId().equals(detailId))
+                        .filter(v -> v.getMonth().equals(month))
+                        .map(SalesEstimateHistoryEntity::getSalesQty)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                calcList.add(qty);
+                basicData.add(Optional.ofNullable(monthlySales.get(month)).orElse(BigDecimal.ZERO));
+                temp = temp.plusMonths(1);
+            }
+            DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, "");
+            exportDTO.setMaeScore(metricsResult.getMAEScore().toPlainString());
+            exportDTO.setMseScore(metricsResult.getMSEScore().toPlainString());
+            exportDTO.setRmseScore(metricsResult.getRMSEScore().toPlainString());
+            exportDTO.setMapeScore(metricsResult.getMAPEScore().toPlainString());
+            exportDTO.setR2Score(metricsResult.getR2Score().toPlainString());
+            historySaleExportDTOS.add(exportDTO);
+            List<ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO> detailExportList = ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO
+                    .buildHistorySaleDetailExportDTO(shopDTO, platformName, exportSalesDTO, salesHistoryDTOS, saleEstimateList, detailId);
+            detailExports.add(detailExportList);
+        }
+        try {
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + URLEncoder.encode("销量预测.xlsx", StandardCharsets.UTF_8.name()));
+            response.setContentType("application/vnd.ms-excel");
+            ExcelWriter writer = EasyExcel.write(response.getOutputStream()).build();
+            WriteSheet sheet1 = EasyExcel.writerSheet(0, "汇总").head(ReplenishmentSuggestionDTO.HistorySaleExportDTO.class).build();
+            writer.write(historySaleExportDTOS, sheet1);
+            int i = 1;
+            for (List<ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO> detailExport : detailExports) {
+                WriteSheet sheet2 = EasyExcel.writerSheet(i, "销量明细" + i).head(ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO.class).build();
+                writer.write(detailExport, sheet2);
+                i++;
+            }
+            writer.finish();
+        } catch (IOException e) {
+            throw new ServiceException(e.getMessage(), e);
+        }
+
     }
 
     @Override

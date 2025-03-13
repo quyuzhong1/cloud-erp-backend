@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -76,6 +77,17 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 	public void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
 		String typeId = dmpCfgOutputEntity.getTypeId();
 		String id = dmpOutputTaskRecordEntity.getId();
+		
+		dmpOutputTaskRecordService.lambdaUpdate()
+			.eq(DmpOutputTaskRecordEntity::getDataId, dmpOutputTaskRecordEntity.getDataId())
+			.ne(DmpOutputTaskRecordEntity::getId, id)
+			.le(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
+			.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+			.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+			.setSql(" response_data = concat('同一dataid，推送最新的记录id="+ id +"' , response_data) ")
+			.update();
+		
 		try {
 			String requestData = dmpOutputTaskRecordEntity.getRequestData();
 			DmpCfgMqEntity dmpCfgMqEntity = dmpHandlerCache.getRocketMQDmpCfgMqCache(typeId);

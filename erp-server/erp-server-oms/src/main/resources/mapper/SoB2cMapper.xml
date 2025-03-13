@@ -1171,13 +1171,21 @@
     </update>
 
     <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">
-        SELECT DISTINCT so.* FROM so_b2c so
+        select * from (
+SELECT DISTINCT so.* FROM so_b2c so
         LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
-        WHERE so.bill_date >= #{startDate}
-        AND so.bill_date &lt;= #{endDate}
-        AND so.approve_status = 'approve'
+        WHERE so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
+        AND (so.pay_time >= #{startDate} AND so.pay_time &lt; #{endDate})
+union all 
+SELECT DISTINCT so.* FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        AND so.pay_time is null and so.platform_order_create_time >= #{startDate} AND so.platform_order_create_time &lt; #{endDate}) t
+				
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

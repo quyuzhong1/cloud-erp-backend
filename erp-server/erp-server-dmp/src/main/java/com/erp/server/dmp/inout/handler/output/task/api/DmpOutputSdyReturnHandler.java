@@ -90,7 +90,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
         if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
-            status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
         }
 
         dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
@@ -109,7 +109,14 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
         for (DmpSoReturnDetailEntity dmpSoReturnDetailEntity : dmpSoReturnDetailEntityList) {
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
             sdyDTO.setBiz_uni_key(dmpSoReturnEntity.getId() + dmpSoReturnDetailEntity.getId());
-            sdyDTO.setBiz_no(dmpSoReturnEntity.getThirdCode());
+
+            sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
+
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(dmpSoReturnEntity.getSourceSystem())) {
+                if (CharSequenceUtil.isNotBlank(dmpSoReturnDetailEntity.getPlatformDetailId())) {
+                    sdyDTO.setBiz_no(dmpSoReturnDetailEntity.getPlatformDetailId());
+                }
+            }
 
             if (dmpSoReturnEntity.getReturnTime() != null) {
                 sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
@@ -142,9 +149,10 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setStatus("已创建");
 
             sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
+            sdyDTO.setGoods_transaction_quantity(dmpSoReturnDetailEntity.getQty());
             sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
 
-            int qtyTotal = dmpSoReturnDetailEntityList.stream().mapToInt(DmpSoReturnDetailEntity::getQty).sum();
+            int qtyTotal = dmpSoReturnDetailEntityList.stream().filter(d -> d.getQty() != null).mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
             sdyDTO.setCustomer_refundable_quantity(qtyTotal);
             sdyDTO.setQuantity_buyer_returned(qtyTotal);

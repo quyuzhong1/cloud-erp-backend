@@ -3,6 +3,7 @@ package com.sdk.wms.antu.dto.response;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.common.business.dto.CleanBaseDTO;
 import lombok.*;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 
@@ -11,6 +12,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @ToString
 @AllArgsConstructor
+@Accessors(chain = true)
 public class AntuLogisticsProductsResp extends CleanBaseDTO implements Serializable {
 
     //运输方式代码
@@ -32,4 +34,6 @@ public class AntuLogisticsProductsResp extends CleanBaseDTO implements Serializa
     //erp仓库id
     private String ErpWarehouseId;
 
+    //物流平台
+    private String logisticsPlatform;
 }

@@ -95,7 +95,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
         if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
-            status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
         }
 
         dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()), handle.getMsg());
@@ -117,7 +117,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
         	}
             ShudiyunB2cOrderDTO sdyDTO = new ShudiyunB2cOrderDTO();
             sdyDTO.setBiz_uni_key(dmpSoRefundEntity.getId() + dmpSoRefundDetailEntity.getId());
-            sdyDTO.setBiz_no(dmpSoRefundEntity.getThirdCode());
+            sdyDTO.setBiz_no(dmpSoRefundEntity.getPlatformCode());
             sdyDTO.setBiz_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
 
             //仅退款
@@ -150,6 +150,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 sdyDTO.setPrice(dmpSoRefundDetailEntity.getAmount());
             }
 
+            sdyDTO.setGoods_transaction_quantity(dmpSoRefundDetailEntity.getQty());
             sdyDTO.setGoods_transaction_amount(dmpSoRefundDetailEntity.getAmount());
 
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoRefundEntity.getSourceSystem())) {
@@ -265,7 +266,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             }
             sdyDTO.setReason(dmpSoRefundEntity.getReason());
             sdyDTO.setSource_system("SDC");
-            sdyDTO.setRoot_node_no_initial(dmpSoRefundEntity.getThirdCode());
+            sdyDTO.setRoot_node_no_initial(dmpSoRefundEntity.getPlatformCode());
             result.put(dmpSoRefundDetailEntity.getId(), sdyDTO);
         }
 

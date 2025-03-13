@@ -340,7 +340,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      * 枚举：OrderSubTypeEnum
      */
     @TableField("transaction_sub_type")
-    private String transactionSubType = "onlineOrder";
+    private String transactionSubType;
 
     /**
      * 是否超范围派送，是：true  否：false

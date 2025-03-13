@@ -163,6 +163,7 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     String status = String.valueOf(statusObj);
 
                     dmpDataMap.put("invalidStatus", this.convertCancel(status));
+                    dmpDataMap.put("isCancel", this.convertCancel(status));
                     dmpDataMap.put("orderStatus", this.convertOrderStatus(status, logisticType));
                     dmpDataMap.put("deliveryStatus", this.convertBillStatus(status, logisticType));
 
@@ -171,8 +172,10 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     dmpDataMap.put("platformOriginalStatus", orderStatus);
                     if ("invalid".equalsIgnoreCase(orderStatus)) {
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                     } else if ("cancelled".equalsIgnoreCase(orderStatus)) {
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                     }
 
                     //买家备注
@@ -221,6 +224,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         List<Map<String, Object>> orderItemsList = (List<Map<String, Object>>) orderItemsObj;
                         if (CollectionUtil.isNotEmpty(orderItemsList)) {
                             dmpDataMap.put("exchangeRate", orderItemsList.get(0).get("baseExchangeRate"));
+                            BigDecimal allAmount = orderItemsList.stream().map(req -> MathUtil.valueOf(req.get("fullUnitPrice")).multiply(MathUtil.valueOf(req.get("quantity")))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                            dmpDataMap.put("allAmount", allAmount);
                         }
                     }
 

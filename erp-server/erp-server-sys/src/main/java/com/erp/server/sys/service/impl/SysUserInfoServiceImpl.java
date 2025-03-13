@@ -357,6 +357,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         vo.setBindingPlatform(bindingPlatform);
         vo.setBindingState(bindingState);
+        // 当前用户所属部门
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(uid);
+        vo.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
+        vo.setDeptName(sysDepartmentUserNumberDTO.getDepartmentName());
         return vo;
     }
 
