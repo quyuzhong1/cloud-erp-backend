@@ -164,7 +164,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!typeList.contains(type)) {
             throw new ServiceException("下载模板类型有误");
         }
-        String path = "classpath:excel/skuMappingTemplate.xlsx";
+        String path = "excel/skuMappingTemplate.xlsx";
         if (warehouse.equals(type)) {
             path = "excel/skuMappingWarehouseTemplate.xlsx";
         }
@@ -1750,6 +1750,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public String addCustomer(SkuMappingDTO.AddCustomerRequest request) {
         SkuMappingDTO.AddCustomerDTO dto = request.getDto();
+        LocalDateTime effectiveTime = dto.getEffectiveTime();
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(dto.getSkuId()));
         if(CollectionUtils.isEmpty(skuList)){
             throw new ServiceException("未查询到sku信息");
@@ -1783,10 +1784,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
         skuMappingEntity.setProductName(skuVO.getSkuName());
         skuMappingEntity.setListingId(listingInfoEntity.getId());
-        LocalDateTime now = LocalDateTime.now();
         //生效时间
-        skuMappingEntity.setEffectiveTime(now);
-        skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        skuMappingEntity.setEffectiveTime(effectiveTime);
+        skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
             // 操作日志
             String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getId());

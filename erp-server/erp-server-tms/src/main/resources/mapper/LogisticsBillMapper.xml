@@ -253,11 +253,16 @@
         lb.ship_time as  shipTime,
         lb.remark,
 		lb.create_time as createTime,
+        fpt.packing_status as packingStatus,
+        fmb.status as estimatedStatus,
+        case when (exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id limit 1)) then 'done' else 'toDo' end as weightAllocationStatus,
         case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
         else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
         logistics_bill lb
         inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
+        left join first_mile_estimated_bill fmb on fmb.logistics_bill_id = lb.id and fmb.is_deleted = false
+        left join foreign_packing_task fpt on (fpt.source_id = lb.outstock_id or fpt.source_id = lb.source_id) and fpt.is_deleted = false
         where ${params.sqlMap.default}
         and lb.order_type = #{params.orderType}
         and lb.is_deleted =false
@@ -668,5 +673,19 @@
         LEFT JOIN logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
         where lb.is_deleted = false and lbd.id is null
         ORDER BY lb.create_time desc
+    </select>
+    <select id="countTotalWeight" resultType="com.common.business.dto.TabListDTO">
+        SELECT
+            CASE WHEN fmwa.logistics_bill_id IS NULL THEN 'toDo' ELSE 'done' END AS tabFlag,
+            COUNT(lb.id) AS count
+        FROM
+        logistics_bill lb
+        LEFT JOIN (SELECT DISTINCT logistics_bill_id FROM first_mile_weight_allocation where is_deleted = false) fmwa ON lb.id = fmwa.logistics_bill_id
+        where lb.is_deleted = false and lb.order_type = #{orderType}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY tabFlag
     </select>
 </mapper>

@@ -464,12 +464,32 @@ public class LocalDateUtil {
             if (StringUtils.isBlank(dateStr)) {
                 return null;
             }
+
+            // 判断是否包含时间部分（HH:mm:ss）
+            boolean hasTime = dateStr.contains(" ");
+            DateTimeFormatter formatter;
+
             if (dateStr.contains("/")) {
-                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
-                return LocalDateTime.parse(dateStr, dateTimeFormatter);
+                if (hasTime) {
+                    formatter = DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
+                } else {
+                    // 没有时间部分，补上 00:00:00 并解析
+                    formatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+                    LocalDate date = LocalDate.parse(dateStr, formatter);
+                    return date.atStartOfDay(); // 返回当天 0 点
+                }
             } else {
-                return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                if (hasTime) {
+                    formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                } else {
+                    // 没有时间部分，补上 00:00:00 并解析
+                    formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    LocalDate date = LocalDate.parse(dateStr, formatter);
+                    return date.atStartOfDay(); // 返回当天 0 点
+                }
             }
+
+            return LocalDateTime.parse(dateStr, formatter);
         } catch (Exception e) {
             log.error("parseStrToLocalTime 出错了>>>{}", e);
         }

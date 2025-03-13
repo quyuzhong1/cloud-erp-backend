@@ -1,5 +1,6 @@
 package com.erp.server.tms.listener;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
@@ -61,6 +62,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        if (CharSequenceUtil.isAllBlank(excelDTO.getBusinessCode(),excelDTO.getOutstockCode())){
+            errorMsgList.add("来源单号和业务单号不能同时为空");
+        }
         //校验状态时间
         if(StringUtils.isNotBlank(excelDTO.getLogisticStatusName()) && !excelDTO.getLogisticStatusName().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getName()) && Objects.isNull(excelDTO.getStatusTime())){
             errorMsgList.add("状态时间不能为空");
@@ -80,11 +84,10 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             return;
         }
         List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getOutstockCode).collect(Collectors.toList());
+        List<String> businessCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getBusinessCode).collect(Collectors.toList());
         List<String> supplierNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getSupplierName).distinct().collect(Collectors.toList());
         List<String> channelNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getChannelName).distinct().collect(Collectors.toList());
-        List<String> transportNoList = dataList.stream().map(FmLogisticsBillExcelDTO::getTransportNo).distinct().collect(Collectors.toList());
-        List<LogisticsBillEntity> existWithTransportList = tmsFirstMileLogisticService.listByTransportNo(transportNoList);
-        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listByOutstcockCode(outstockCodeList);
+        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listBySourceCodeList(businessCodeList, outstockCodeList, null);
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(mainIdList);
         List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByName(supplierNameList);
@@ -101,7 +104,28 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
         for (FmLogisticsBillExcelDTO excelDTO : dataList) {
             //校验数据
-            LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(excelDTO.getOutstockCode())).findFirst().orElse(null);
+            List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> {
+                //同时不为空时，匹配来源单号和业务单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                }
+                //来源单号不为空时，匹配来源单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) && v.getOutstockCode().equals(excelDTO.getOutstockCode())) {return true;}
+                //业务单号不为空时，匹配业务单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                return false;
+            }).collect(Collectors.toList());
+            if (CollUtil.isEmpty(entityList)) {
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】未匹配到物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode() ));
+                errorList.add(excelDTO);
+                continue;
+            }
+            if (entityList.size() > 1) {
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】存在多条物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode() ));
+                errorList.add(excelDTO);
+                continue;
+            }
+            LogisticsBillEntity entity = entityList.get(0);
             if(Objects.isNull(entity)){
                 excelDTO.setErrorMsg("来源单号不存在或未生成物流单");
                 errorList.add(excelDTO);
