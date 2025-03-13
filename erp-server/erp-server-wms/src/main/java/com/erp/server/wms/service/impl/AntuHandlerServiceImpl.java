@@ -24,23 +24,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
-import javax.annotation.Resource;
-import javax.validation.Valid;
-import java.util.List;
-import java.util.Objects;
-
 /**
  * @author liuruipeng
  * @date 2023年11月17日 10:51
+ *
+
  */
 @Slf4j
 @Service
 @Validated
-public class AntuHandlerServiceImpl extends AbstractThirdWarehouseHandler {
-
-    @Resource
-    private AntuService antuService;
-
+public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
     @Override
     public OmsPlatformEnum getPlatForm() {
         return OmsPlatformEnum.OMS_ANTU;

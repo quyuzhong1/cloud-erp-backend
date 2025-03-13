@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -105,6 +106,7 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
         dto.setPutawayTime(dmpMainEntity.getPutAwayTime());
         // 固定退货退款
         dto.setReturnType(ReturnTypeEnum.DEDUCTION.getCode());
+        dto.setUniqueId(CharSequenceUtil.format("{}_{}", dmpMainEntity.getPlatformOrderNo(), dmpMainEntity.getAuthId()));
         // 明细
         List<PlatformReturnInstockDTO.Detail> detailList = dmpDetailList.stream().map(this::convertDetail).collect(Collectors.toList());
         dto.setProductDetailList(detailList);
@@ -120,7 +122,7 @@ public class DmpOutputAmzReturnInstockRocketMQTaskHandler extends DmpOutputRocke
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("sourcePlatform","platformOrderNo","authId");
+        return Collections.singletonList("uniqueId");
     }
 
     @Override

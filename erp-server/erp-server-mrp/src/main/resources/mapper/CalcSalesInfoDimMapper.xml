@@ -253,7 +253,27 @@
     <select id="dataIdPage" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$DataIdPageDTO">
 
         select crc.id as cfgRuleCalcId,
-        csic.id
+        csic.id,
+        crc.code as code,
+        crc.name as name,
+        crc.start_calc_date as startCalcDate,
+        crc.end_calc_date as endCalcDate,
+        csic.sku_id as skuId,
+        csic.shop_id as shopId,
+        crc.sale_type as saleType,
+        csic.r2_score as r2Score,
+        csic.mape_score as mapeScore,
+        csic.mae_score as maeScore,
+        csic.mse_score as mseScore,
+        csic.rmse_score as rmseScore,
+        crc.create_time as createTime,
+        csic.update_time as updateTime,
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore
         from calc_sales_info_dim csic
         inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
         where ${params.sqlMap.default}

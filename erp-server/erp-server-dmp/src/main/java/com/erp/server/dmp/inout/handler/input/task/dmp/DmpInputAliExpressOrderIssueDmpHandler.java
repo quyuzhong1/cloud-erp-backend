@@ -13,9 +13,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoInfoService;
 
 import cn.hutool.core.collection.CollUtil;
@@ -31,14 +34,18 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 	@Autowired
 	private DmpSoInfoService dmpSoInfoService;
 	
+	public static final String ALIEXPRESS_ISSUEDETAIL_DATA = "aliexpress_issueDetail_data";
+	
 	@Override
 	protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
 		if(!dmpInputDataDmpRelationMaps.isEmpty()) {
 			Collection<List<TreeMap<String, Object>>> values = dmpInputDataDmpRelationMaps.values();
 			if(CollUtil.isNotEmpty(values)) {
 				List<String> orders = new ArrayList<>();
+				List<Long> issueIds = new ArrayList<>();
 				for(List<TreeMap<String, Object>> v : values) {
 					orders.addAll(v.stream().map(a -> a.get("parent_order_id").toString()).collect(Collectors.toList()));
+					issueIds.addAll(v.stream().filter(a -> a.get("thirdCode") != null).map(a -> Long.valueOf(a.get("thirdCode").toString())).collect(Collectors.toList()));
 				}
 				Map<String, String> orderIdMaps = new HashMap<>();
 				if(CollUtil.isNotEmpty(orders)) {
@@ -52,6 +59,15 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 					}
 					orderIdMaps = list.stream().collect(Collectors.toMap(DmpSoInfoEntity::getThirdCode, DmpSoInfoEntity::getId , (v1 , v2) -> v1));
 				}
+				
+				Map<Long, Object> issueIdOrderMap = new HashMap<>();
+				if(CollUtil.isNotEmpty(issueIds)) {
+//					List<ParamData> paramDataList = new ArrayList<>();
+//					paramDataList.add(new ParamData("id", "id", PannoEnum.IN, issueIds));
+//					paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
+//					issueIdOrderMap = mongoService.findMongoData(paramDataList, ALIEXPRESS_ISSUEDETAIL_DATA).stream().collect(Collectors.toMap(a -> Long.valueOf(a.get("id").toString()), a -> a.get("buyer_return_no")));
+				}
+				
 				for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 					List<TreeMap<String, Object>> value = dmpInputDataDmpRelationMap.getValue();
 					for(TreeMap<String, Object> v : value) {
@@ -61,13 +77,19 @@ public class DmpInputAliExpressOrderIssueDmpHandler extends DmpInputDbConvertDmp
 							throw new ServiceException("退货订单"+ parent_order_id +"未查询到订单数据");
 						}
 						v.put("sourceId", sourceId);
-						Object issue_status = v.get("issue_status");
+						Object issue_status = v.get("status");
 						if(issue_status != null) {
 							if("finish".equals(issue_status.toString())) {
 								v.put("status", "4");
 							}else {
 								v.put("status", "1");
 							}
+						}
+						
+						Long issueId = Long.valueOf(v.get("thirdCode").toString());
+						Object buyer_return_no = issueIdOrderMap.get(issueId);
+						if(buyer_return_no != null && StringUtils.isNotBlank(buyer_return_no.toString())) {
+//							v.put("platformCode", buyer_return_no);
 						}
 					}
 				}

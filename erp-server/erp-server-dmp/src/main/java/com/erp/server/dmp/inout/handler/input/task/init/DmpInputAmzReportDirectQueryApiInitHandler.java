@@ -188,7 +188,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
                 dmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
-            throw new ServiceException("[Amazon SP-APi] 查询最新listing失败:body=" + JSONUtil.toJsonStr(e));
+            throw new ServiceException("[Amazon SP-APi] 查询最新报告失败:body=" + JSONUtil.toJsonStr(e));
         }
 
         // 校验中台是否已存在

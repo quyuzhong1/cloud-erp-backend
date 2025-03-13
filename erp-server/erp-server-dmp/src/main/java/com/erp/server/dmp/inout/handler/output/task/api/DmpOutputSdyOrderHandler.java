@@ -107,7 +107,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
-            status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
         }
 
         dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
@@ -147,7 +147,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         if (CollUtil.isEmpty(dmpSoDetailEntityList1)) {
             return result;
         }
-        if (!dmpSoInfoEntity.getPayStatus()) {
+        if (dmpSoInfoEntity.getPayStatus() == null || !dmpSoInfoEntity.getPayStatus()) {
             return result;
         }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
@@ -175,7 +175,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
             shudiyunB2cOrderDTO.setBiz_uni_key(dmpSoInfoEntity.getId() + dmpSoDetailEntity.getId());
 
-            shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
             if (dmpSoInfoEntity.getPayTime() != null) {
                 shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(dmpSoInfoEntity.getPayTime()));
             } else {
@@ -186,12 +185,15 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
+
+                shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
 
             } else {
+                shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getPlatformCode());
                 //线上订单
                 shudiyunB2cOrderDTO.setTransaction_type("线上订单");
                 if (CharSequenceUtil.isBlank(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()))) {
@@ -199,11 +201,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 } else {
                     shudiyunB2cOrderDTO.setBiz_status(ApproveStatusEnum.getName(dmpSoInfoEntity.getOrderStatus()));
                 }
-                if (PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
-                } else {
-                    shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPrice());
-                }
+                shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
             }
             shudiyunB2cOrderDTO.setStatus("已创建");
 
@@ -377,7 +375,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     }
                 } else {
                     if (dmpSoInfoEntity.getIsCancel()) {
-                        shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getAllAmount());
+                        BigDecimal amount = dmpSoDetailEntities.stream().map(req -> req.getSellPriceOrigin().multiply(MathUtil.valueOf(req.getQty()))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                        shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(amount);
                         // 取消商品数量（合计）
                         shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
                     }

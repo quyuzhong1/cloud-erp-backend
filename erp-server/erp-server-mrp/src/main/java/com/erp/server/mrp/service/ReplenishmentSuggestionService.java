@@ -12,6 +12,7 @@ import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -450,4 +451,11 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param skuIdList  skuid
      */
     List<ReplenishmentSuggestionEntity> listByShopIdAndSkuId(List<String> shopIdList, List<String> skuIdList);
+
+    /**
+     * 临时导出
+     * @param exportSalesDTO 导出
+     * @param response 响应
+     */
+    void exportSales(ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response);
 }

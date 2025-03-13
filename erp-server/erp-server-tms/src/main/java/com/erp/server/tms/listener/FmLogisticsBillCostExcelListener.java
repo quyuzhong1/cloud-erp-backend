@@ -1,29 +1,25 @@
 package com.erp.server.tms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ConfirmStatusEnum;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.FieldValidUtil;
+import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
-import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
-import com.erp.model.tms.dto.excel.FirstMileEstimatedBillExcelDTO;
 import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
-import com.erp.model.tms.entity.LogisticsBillCostEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.TmsCfgCostEntity;
-import com.erp.model.tms.entity.TmsCostDetailEntity;
-import com.erp.model.tms.enums.DictCostAttributionEnum;
+import com.erp.model.tms.entity.*;
+import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.DictCostCategoryEnum;
-import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.server.tms.service.LogisticsBillCostService;
-import com.erp.server.tms.service.TmsCostDetailService;
-import com.erp.server.tms.service.TmsFirstMileLogisticService;
+import com.erp.server.tms.service.*;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +38,9 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
     private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
 
     private final TmsCostDetailService logisticsBillCostDetailService = SpringUtil.getBean(TmsCostDetailService.class);
+    private final FirstMileEstimatedBillService firstMileEstimatedBillService = SpringUtil.getBean(FirstMileEstimatedBillService.class);
+    private final TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService = SpringUtil.getBean(TmsFirstMileReconciliationDetailService.class);
+    private final TmsCfgCostService tmsCfgCostService = SpringUtil.getBean(TmsCfgCostService.class);
 
     @Getter
     private List<FmLogisticsBillCostExcelDTO> dataList = new ArrayList<>();
@@ -52,13 +51,21 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void invoke(FmLogisticsBillCostExcelDTO excelDTO, AnalysisContext analysisContext) {
-        if(StringUtils.isBlank(excelDTO.getOutstockCode()) && StringUtils.isBlank(excelDTO.getTransportNo())){
-            excelDTO.setErrorMsg("发货单号和运单号不能都为空");
-            errorList.add(excelDTO);
-            return;
+        List<String> errorMsgList = new ArrayList<>();
+        //基础验证
+        List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
+        if (CollectionUtils.isNotEmpty(msgList)) {
+            errorMsgList.addAll(msgList);
+        }
+        if(CharSequenceUtil.isAllBlank(excelDTO.getOutstockCode(),excelDTO.getTransportNo(),excelDTO.getBusinessCode())){
+            errorMsgList.add("发货单号和业务单号和运单号不能都为空");
         }
         if(StringUtils.isBlank(excelDTO.getCurrency())) {
-        	excelDTO.setErrorMsg("币种不能都为空");
+            errorMsgList.add("币种不能都为空");
+        }
+        //存在错误数据则直接返回
+        if (!errorMsgList.isEmpty()) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
         }
@@ -70,19 +77,60 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         if(CollectionUtils.isEmpty(dataList)){
             return;
         }
-        List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillCostExcelDTO::getOutstockCode).distinct().collect(Collectors.toList());
-        List<String> transportNoList = dataList.stream().map(FmLogisticsBillCostExcelDTO::getTransportNo).distinct().collect(Collectors.toList());
-        List<LogisticsBillEntity> logisticsBillEntityList = new ArrayList<>();
-        logisticsBillEntityList.addAll(tmsFirstMileLogisticService.listByOutstcockCode(outstockCodeList));
-        logisticsBillEntityList.addAll(tmsFirstMileLogisticService.listByTransportNo(transportNoList));
+        List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillCostExcelDTO::getOutstockCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> businessCodeList = dataList.stream().map(FmLogisticsBillCostExcelDTO::getBusinessCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> transportNoList = dataList.stream().map(FmLogisticsBillCostExcelDTO::getTransportNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listBySourceCodeList(businessCodeList, outstockCodeList, transportNoList);
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostEntitieList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
         List<String> costIdList = logisticsBillCostEntitieList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<TmsCostDetailDTO.CostViewDTO> allCostDetailEntityList = logisticsBillCostDetailService.listCostByMainIdList(costIdList);
+        List<TmsCfgCostEntity> tmsCfgCostEntityList = tmsCfgCostService.list();
+        //暂估账单
+        List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(mainIdList, ConfirmStatusEnum.CONFIRM.getCode());
+        //对账单明细
+        List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(mainIdList, null, DetailReconciliationTypeEnum.ACTUAL.getCode());
         List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
         List<TmsCostDetailEntity> updateCostDetailList = new ArrayList<>();
         for (FmLogisticsBillCostExcelDTO excelDTO : dataList) {
-            LogisticsBillEntity entity = logisticsBillEntityList.stream().filter(v->v.getOutstockCode().equals(excelDTO.getOutstockCode()) || v.getTransportNo().equals(excelDTO.getTransportNo())).findFirst().orElse(null);
+            //校验数据
+            List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> {
+                //同时不为空时，匹配来源单号和业务单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                //运单号不为空时，匹配运单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                }
+                //同时不为空时，匹配来源单号和运单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(),excelDTO.getTransportNo())) {
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                //同时不为空时，匹配来源单号和业务单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                //来源单号不为空时，匹配来源单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) && v.getOutstockCode().equals(excelDTO.getOutstockCode())) {return true;}
+                //业务单号不为空时，匹配业务单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                //运单号不为空时，匹配运单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                return false;
+            }).collect(Collectors.toList());
+            if (CollUtil.isEmpty(entityList)) {
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】未匹配到物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                errorList.add(excelDTO);
+                continue;
+            }
+            if (entityList.size() > 1) {
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】存在多条物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                errorList.add(excelDTO);
+                continue;
+            }
+            LogisticsBillEntity entity = entityList.get(0);
             if(Objects.isNull(entity)){
                 excelDTO.setErrorMsg("未找到物流单");
                 errorList.add(excelDTO);
@@ -94,7 +142,14 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
                 errorList.add(excelDTO);
                 continue;
             }
-            
+            estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
+                excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
+                errorList.add(excelDTO);
+            });
+            reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId())).findFirst().ifPresent(v->{
+                excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
+                errorList.add(excelDTO);
+            });
             LogisticsBillCostEntity costEntity = logisticsBillCostEntitieList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);
             if(Objects.isNull(costEntity)){
                 excelDTO.setErrorMsg("未找到物流费用");
@@ -106,20 +161,12 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
                 errorList.add(excelDTO);
                 continue;
             }
-            if(Objects.nonNull(excelDTO.getWeightLogistics())){
-                costEntity.setWeightLogistics(excelDTO.getWeightLogistics());
-            }
-            if(Objects.nonNull(excelDTO.getVolumeWeightLogistics())){
-                costEntity.setVolumeWeightLogistics(excelDTO.getVolumeWeightLogistics());
-            }
             updateCostList.add(costEntity);
-            if(Objects.nonNull(excelDTO.getCostName()) && Objects.nonNull(excelDTO.getCost())){
-                TmsCostDetailDTO.CostViewDTO costViewDTO = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(costEntity.getId()) && v.getCostName().equals(excelDTO.getCostName())).findFirst().orElse(null);
-                if(Objects.isNull(costViewDTO)){
-                    excelDTO.setErrorMsg("未找到物流明细费用");
-                    errorList.add(excelDTO);
-                    continue;
-                }
+            TmsCfgCostEntity cfgCostEntity = tmsCfgCostEntityList.stream().filter(v->v.getCostName().equals(excelDTO.getCostName())).findFirst().orElse(null);
+            if(Objects.isNull(cfgCostEntity)){
+                excelDTO.setErrorMsg(CharSequenceUtil.format("未找到【{}】物流费用配置",excelDTO.getCostName()));
+                errorList.add(excelDTO);
+                continue;
             }
             excelDTO.setTransportNo(entity.getTransportNo());
         }
@@ -129,6 +176,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
     	Map<String, String> transportNoInfoMap = logisticsBillCostEntitieList.stream().collect(Collectors.toMap(LogisticsBillCostEntity::getTransportNo, LogisticsBillCostEntity::getId , (v1 , v2) -> v1));
     	Map<String, List<CostViewDTO>> mainCostMaps = allCostDetailEntityList.stream().collect(Collectors.groupingBy(CostViewDTO::getMainId));
     	Map<String, CostViewDTO> costNameIdMap = allCostDetailEntityList.stream().collect(Collectors.toMap(TmsCostDetailDTO.CostViewDTO::getCostName, t -> t , (v1 , v2) -> v1));
+        Map<String, TmsCfgCostEntity> costNameMap = tmsCfgCostEntityList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getCostName, t -> t, (v1, v2) -> v1));
         if(CollUtil.isNotEmpty(lastSuccessList)) {
         	Map<String, List<String>> errorTransportNoDictMap = new HashMap<>();
         	for(Map.Entry<String, List<FmLogisticsBillCostExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {
@@ -141,8 +189,14 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         			errorDictList = new ArrayList<>();
         		}
         		for(FmLogisticsBillCostExcelDTO v : value) {
-        			CostViewDTO tmsCfgCostEntity = costNameIdMap.get(v.getCostName());
-        			String dictCostCategory = tmsCfgCostEntity.getDictCostCategory();
+        			CostViewDTO costViewDTO = costNameIdMap.get(v.getCostName());
+                    String dictCostCategory = "";
+                    if (Objects.isNull(costViewDTO)) {
+                        TmsCfgCostEntity tmsCfgCostEntity = costNameMap.get(v.getCostName());
+                        dictCostCategory = Objects.nonNull(tmsCfgCostEntity) ? tmsCfgCostEntity.getDictCostCategory() : CharSequenceUtil.EMPTY;
+                    }else {
+                        dictCostCategory = costViewDTO.getDictCostCategory();
+                    }
         			if(errorDictList.contains(dictCostCategory)) {
         				continue;
         			}
@@ -176,8 +230,8 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         	for (FmLogisticsBillCostExcelDTO dto : lastSuccessList) {
         		String transportNo = dto.getTransportNo();
         		List<String> errorDictList = errorTransportNoDictMap.get(transportNo);
-        		CostViewDTO tmsCfgCostEntity = costNameIdMap.get(dto.getCostName());
-        		String dictCostCategory = tmsCfgCostEntity.getDictCostCategory();
+                TmsCfgCostEntity tmsCfgCostEntity = costNameMap.get(dto.getCostName());
+                String dictCostCategory = tmsCfgCostEntity.getDictCostCategory();
 				if(CollUtil.isNotEmpty(errorDictList) && errorDictList.contains(dictCostCategory)) {
 					dto.setErrorMsg("物流单【" + transportNo + "】"+ DictCostCategoryEnum.getName(dictCostCategory) +"费用分类下的币别不一致");
 	                errorList.add(dto);
@@ -187,7 +241,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         		String mainId = transportNoInfoMap.get(transportNo);
         		TmsCostDetailEntity updateCostDetailEntity = new TmsCostDetailEntity();
         		TmsCostDetailDTO.CostViewDTO costViewDTO = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(mainId) && v.getCostName().equals(dto.getCostName())).findFirst().orElse(null);
-                updateCostDetailEntity.setId(costViewDTO.getId());
+                updateCostDetailEntity.setId(Objects.nonNull(costViewDTO) ? costViewDTO.getId() : null);
                 updateCostDetailEntity.setCostValue(dto.getCost());
                 updateCostDetailEntity.setCurrency(dto.getCurrency());
                 updateCostDetailList.add(updateCostDetailEntity);

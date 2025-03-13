@@ -228,11 +228,10 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 country = shopInfoEntity.getDictCountryCode();
             }else if (StringUtils.isNotBlank(shopInfoEntity.getCustomerId())){
                 CustomerInfoEntity customerInfo = customerInfoService.getById(shopInfoEntity.getCustomerId());
-                if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.GL.getCode())){
+                if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.ALL.getCode())){
                     country = customerInfo.getCountryId();
                 }
             }
-
         }
         if(StringUtils.isBlank(country)){
             return;

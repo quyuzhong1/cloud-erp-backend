@@ -103,7 +103,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 } else if ("dmp_so_return_info".equals(storageName)) {
                     for (BaseEntity v : value) {
                         DmpSoReturnInfoEntity dmpEntity = (DmpSoReturnInfoEntity) v;
-                        String platformOrderId = dmpEntity.getPlatformCode();
+                        String platformOrderId = dmpEntity.getPlatformOrderCode();
                         List<DmpSoReturnInfoEntity> list = dmpSoReturnInfoEntityMap.get(platformOrderId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
@@ -127,7 +127,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
                 } else if ("dmp_so_refund_info".equals(storageName)) {
                     for (BaseEntity v : value) {
                         DmpSoRefundInfoEntity dmpEntity = (DmpSoRefundInfoEntity) v;
-                        String platformOrderId = dmpEntity.getPlatformCode();
+                        String platformOrderId = dmpEntity.getPlatformOrderCode();
                         List<DmpSoRefundInfoEntity> list = dmpSoRefundInfoEntityMap.get(platformOrderId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
@@ -598,7 +598,7 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             BeanUtils.copyProperties(dmpEntity, dto);
             dto.setUniqueId(dmpEntity.getThirdCode());
             dto.setPlatformReturnNo(dmpEntity.getThirdCode());
-            dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
+            dto.setPlatformOrderNo(dmpEntity.getPlatformOrderCode());
             dto.setReason(dmpEntity.getRemark());
             dto.setDictPlatform(dmpEntity.getSourceSystem());
             dto.setPlatform(dmpEntity.getSourceSystem());
@@ -643,8 +643,8 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
             BeanUtils.copyProperties(dmpEntity, dto);
             dto.setUniqueId(dmpEntity.getThirdCode());
             dto.setPlatformRefundNo(dmpEntity.getThirdCode());
-            dto.setPlatformOrderNo(dmpEntity.getPlatformCode());
             dto.setRemark(dmpEntity.getRemark());
+            dto.setPlatformOrderNo(dmpEntity.getPlatformOrderCode());
             dto.setDictPlatform(dmpEntity.getSourceSystem());
             dto.setPlatform(dmpEntity.getSourceSystem());
             dto.setRefundAmount(dmpEntity.getAmount());

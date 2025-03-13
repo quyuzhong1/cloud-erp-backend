@@ -46,8 +46,10 @@ public interface OutStockHistorySalesEsService {
 
     /**
      * 删除历史数据
-     * @param startDate 开始日期
-     * @param endDate 结束日期
+     *
+     * @param shopSkuIds 店铺skuid
+     * @param startDate  开始日期
+     * @param endDate    结束日期
      */
-    void deleteByDateBetween(LocalDate startDate, LocalDate endDate);
+    void deleteByDateBetween(List<String> shopSkuIds, LocalDate startDate, LocalDate endDate);
 }

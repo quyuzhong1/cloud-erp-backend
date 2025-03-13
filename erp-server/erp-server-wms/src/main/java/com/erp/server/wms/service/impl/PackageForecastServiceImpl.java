@@ -738,7 +738,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                     String prefix = "data:application/pdf;base64,";
                     base64 = prefix + base64;
                 }else{
-                    throw new ServiceException("未上传标签");
+                    return "";
                 }
             }
         } catch (Exception e) {
@@ -1208,9 +1208,19 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Override
     public void batchPrint(List<String> ids, HttpServletResponse response) {
+        List<PackageForecastEntity> packageForecastEntityList = this.listByIds(ids);
+        List<String> errorCodeList = new ArrayList<>();
         List<String> base64List = new ArrayList<>();
-        for (String id : ids) {
-            base64List.add(this.print(id));
+        for (PackageForecastEntity entity : packageForecastEntityList) {
+            String base64 = this.print(entity.getId());
+            if(StringUtils.isEmpty(base64)){
+                errorCodeList.add(entity.getCode());
+            }else{
+                base64List.add(base64);
+            }
+        }
+        if(CollectionUtils.isNotEmpty(errorCodeList)){
+            throw new ServiceException("组包预报批量打印失败,单号:{},未上传标签",errorCodeList);
         }
         if(CollectionUtils.isNotEmpty(base64List)){
             try {
