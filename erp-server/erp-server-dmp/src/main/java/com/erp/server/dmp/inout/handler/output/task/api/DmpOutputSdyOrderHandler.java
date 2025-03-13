@@ -152,7 +152,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
         if (CollUtil.isEmpty(dmpSoDetailEntities)) {
-            return result;
+//            return result;
         }
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
