@@ -150,10 +150,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         if (dmpSoInfoEntity.getPayStatus() == null || !dmpSoInfoEntity.getPayStatus()) {
             return result;
         }
-        List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1.stream().filter(req -> CharSequenceUtil.isNotBlank(req.getPlatformSku())).collect(Collectors.toList());
-        if (CollUtil.isEmpty(dmpSoDetailEntities)) {
-//            return result;
-        }
+        List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1;
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         //优惠额
@@ -185,7 +182,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
-
+            	if(StringUtils.isBlank(dmpSoDetailEntity.getPlatformSku())) {
+            		continue;
+            	}
                 shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getThirdCode());
                 //配货单
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
