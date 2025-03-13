@@ -317,6 +317,6 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
             cfgVatInvoiceEntity.setTemplateType(CfgVatInvoiceTemplateTypeEnum.ERP.getCode());
         }
         //详细地址+城市+州/省+邮编+国家
-        cfgVatInvoiceEntity.setCompanyAddress(cfgVatInvoiceEntity.getAddress() + cfgVatInvoiceEntity.getCity() + cfgVatInvoiceEntity.getProvince() + cfgVatInvoiceEntity.getPostCode() + cfgVatInvoiceEntity.getCountryId());
+        cfgVatInvoiceEntity.setCompanyAddress(cfgVatInvoiceEntity.getAddress() + "," + cfgVatInvoiceEntity.getCity() + "," + cfgVatInvoiceEntity.getProvince() + "," + cfgVatInvoiceEntity.getPostCode() + "," + cfgVatInvoiceEntity.getCountryId());
     }
 }

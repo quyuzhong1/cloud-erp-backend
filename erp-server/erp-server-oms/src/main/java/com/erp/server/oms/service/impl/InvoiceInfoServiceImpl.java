@@ -256,6 +256,13 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     private void generateInvoicePdf(InvoiceInfoEntity invoiceInfoEntity, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> allSoB2cDetailEntityList, List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList, List<ListingInfoEntity> listingInfoEntityList) {
         CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e ->  !e.getDisabled() && invoiceInfoEntity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票配置"));
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+        //增加发票模板对接校验
+        if (!CfgVatInvoiceTemplateTypeEnum.ERP.getCode().equals(cfgVatInvoiceEntity.getTemplateType())){
+            invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            invoiceInfoEntity.setRemark(StrUtil.format("生成发票失败,未对接{}",CfgVatInvoiceTemplateTypeEnum.getName(cfgVatInvoiceEntity.getTemplateType())));
+            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
+            return;
+        }
         List<SoB2cDetailEntity> soB2cDetailEntityList = allSoB2cDetailEntityList.stream().filter(e ->  e.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
         List<DmpSoBillDetailEntity> dmpSoBillDetailEntityList = allDmpSoBillDetailEntityList.stream().filter(e ->e.getShopId().equals(soB2cEntity.getShopId())&& e.getPlatformCode().equals(soB2cEntity.getPlatformCode())).collect(Collectors.toList());
         DmpSoBillDetailEntity dmpSoBillDetailEntity = dmpSoBillDetailEntityList.get(0);
