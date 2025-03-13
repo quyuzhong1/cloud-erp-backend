@@ -6776,26 +6776,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
+        if (CharSequenceUtil.isBlank(viewDTO.getSkuId())) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         checkSizeAndWeight(viewDTO);
         ProductPackEntity entity = new ProductPackEntity();
         BeanUtils.copyProperties(viewDTO, entity);
         productPackService.saveOrUpdate(entity);
 
-        if(StringUtils.isNotBlank(entity.getSkuId())){
-            ProductDetailEntity productDetailEntity = getById(entity.getSkuId());
-            //只同步审核通过的
-            if(Objects.nonNull(productDetailEntity) && productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
-                //发送金蝶
-                sendPushTask(Arrays.asList(productDetailEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //产品推送金蝶
+        ProductDetailEntity productDetailEntity = getById(entity.getSkuId());
+        //只同步审核通过的
+        if(Objects.nonNull(productDetailEntity) && productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+            //发送金蝶
+            sendPushTask(Collections.singletonList(productDetailEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
 
-                syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
 
-                syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
-                //增加缓存清除
-                redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
-            }
+            syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
+            //增加缓存清除
+            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
         }
+
+        //新增操作日志
+        String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【毛重】为【{}】、【净重】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getGrossWeight(),entity.getNetWeight());
+        sysLogService.addSysLogByOther(new SysLogEntity().setBusinessId(entity.getSkuId()).setPid(productDetailEntity.getProductId())
+                .setOperation("更新包装信息").setContent(content));
         return BatchResultDTO.success(viewDTO.getSkuId(), viewDTO.getSkuNo(), "操作成功");
     }
 
