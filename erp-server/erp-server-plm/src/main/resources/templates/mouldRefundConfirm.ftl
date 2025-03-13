@@ -2,6 +2,7 @@
 项目名称：${name}
 模具编码：${mouldNo}
 模具供应商：${supplierName}
-返还金额：${refundAmount}
+应还金额：${refundAmount}
+实际返还金额：${realRefundAmount}
 确认人：${userName}
 确认时间：${updateTime}

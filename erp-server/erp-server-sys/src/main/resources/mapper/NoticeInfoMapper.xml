@@ -22,6 +22,13 @@
        ON cnm.node_key=ni.node_key AND cnm.is_deleted=FALSE
        LEFT JOIN dict_node dn ON dn.node_key=ni.node_key
        WHERE ni.is_deleted=False
+       <if test="params.system != null and params.system.size > 0">
+          AND ni.system IN
+          <foreach item="systemItem" index="index" collection="params.system" open="(" separator="," close=")">
+             #{systemItem}
+          </foreach>
+       </if>
+
        <if test="params.module !=null and params.module!=''">
          AND ni.module=#{params.module}
        </if>
