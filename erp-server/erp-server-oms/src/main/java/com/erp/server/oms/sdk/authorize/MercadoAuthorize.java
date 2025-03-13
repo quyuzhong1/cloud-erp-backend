@@ -85,17 +85,10 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException("店铺不存在");
         }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
-            AppClientEnum appClient = AppClientEnum.MERCADO_AUTHORIZE;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        } else {
-            AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_AUTHORIZE;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        }
+        AppClientEnum appClient = AppClientEnum.MERCADO_AUTHORIZE;
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
 
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
 
@@ -149,17 +142,11 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
 
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
-            AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        } else {
-            AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        }
+        AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("该类型店铺尚未配置开发者账号");
@@ -272,17 +259,11 @@ public class MercadoAuthorize implements IShopAuthorizeService<T> {
         }
 
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
-        if (MercadolibreBusinessModelEnum.CBT.getCode().equals(shopInfo.getBusinessModel())) {
-            AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        } else {
-            AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
-            findDTO.setBusinessType(appClient.getBusinessType());
-            findDTO.setDictPlatform(appClient.getPlatform());
-            findDTO.setPlatformType(appClient.getPlatformType());
-        }
+        AppClientEnum appClient = AppClientEnum.MERCADO_ACCESS_TOKEN;
+        findDTO.setBusinessType(appClient.getBusinessType());
+        findDTO.setDictPlatform(appClient.getPlatform());
+        findDTO.setPlatformType(appClient.getPlatformType());
+
         CfgAppClientEntity cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
         if (Objects.isNull(cfgAppClient)) {
             return Boolean.FALSE;
