@@ -16,10 +16,7 @@ import com.erp.model.tms.dto.TmsCostDetailDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
 import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
-import com.erp.model.tms.enums.DictCostCategoryEnum;
-import com.erp.model.tms.enums.LogisticsBillCostTypeEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.service.*;
 import lombok.Getter;
@@ -91,7 +88,7 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         List<LogisticsBillCostEntity> logisticsBillCostEntitieList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
         List<String> costIdList = logisticsBillCostEntitieList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<TmsCostDetailDTO.CostViewDTO> allCostDetailEntityList = logisticsBillCostDetailService.listCostByMainIdList(costIdList);
-        List<TmsCfgCostEntity> tmsCfgCostEntityList = tmsCfgCostService.list();
+        List<TmsCfgCostEntity> tmsCfgCostEntityList = tmsCfgCostService.lambdaQuery().eq(TmsCfgCostEntity::getDictCostAttribution, DictCostAttributionEnum.FIRST_MILE.getCode()).list();
         //暂估账单
         List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(mainIdList, ConfirmStatusEnum.CONFIRM.getCode());
         //对账单明细
