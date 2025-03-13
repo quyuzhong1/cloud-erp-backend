@@ -235,6 +235,11 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotBlank(message = "客户sku不能为空",groups = {UpdateGroup.class, AddGroup.class})
         private String platformSkuNo;
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private LocalDateTime effectiveTime;
 
         /**
          * 客户产品名称
