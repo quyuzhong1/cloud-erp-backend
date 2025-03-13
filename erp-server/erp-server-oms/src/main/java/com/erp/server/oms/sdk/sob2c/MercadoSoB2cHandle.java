@@ -26,6 +26,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 美客多-全球
+ */
 @Slf4j
 @Component
 @PlatformSoB2cAnnotate(method = PlatformDictEnum.MERCADOLIBRE)

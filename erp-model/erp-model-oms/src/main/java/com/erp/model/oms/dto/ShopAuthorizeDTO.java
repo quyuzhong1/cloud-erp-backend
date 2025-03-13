@@ -120,6 +120,12 @@ public class ShopAuthorizeDTO implements Serializable {
             return this;
         }
 
+        // 美客多-本土站
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
+            this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode());
+            return this;
+        }
+
         // TikTok
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.TIK_TOK.getCode())){
             this.setPlatformCode(PlatformDictEnum.TIK_TOK.getCode());
