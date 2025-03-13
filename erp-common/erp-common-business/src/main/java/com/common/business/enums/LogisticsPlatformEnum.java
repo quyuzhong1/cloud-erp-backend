@@ -16,7 +16,8 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     AMAZON("Amazon", "Amazon", "亚马逊", "100","Y","N"),
     SHOPIFY("Shopify", "Shopify", "Shopify", "004","Y","N"),
     WALMART("Walmart", "Walmart", "沃尔玛", "018","Y","N"),
-    MERCADOLIBRE("mercadolibre", "美客多", "美客多", "","Y","N"),
+    MERCADOLIBRE("mercadolibre", "美客多-全球站", "美客多-全球站", "","Y","N"),
+    MERCADOLIBRE_LOCAL("mercadolibreLocal", "美客多-本土站", "美客多-本土站", "","Y","N"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "","Y","N"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "","Y","Y"),

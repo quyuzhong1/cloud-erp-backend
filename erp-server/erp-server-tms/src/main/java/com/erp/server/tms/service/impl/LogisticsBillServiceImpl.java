@@ -61,7 +61,6 @@ import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
-import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -75,7 +74,6 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -135,9 +133,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
     @Resource
     private LogisticsBillService logisticsBillService;
-
-    @Resource
-    private MercadoSdkClientService mercadoSdkClientService;
 
     @Resource
     private CfgRuleFeign cfgRuleFeign;

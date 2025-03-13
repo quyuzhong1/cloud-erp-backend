@@ -1,6 +1,5 @@
 package com.erp.server.wms.sdk.delivery;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.lang.Tuple;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.PlatformShipOrderAnno;
@@ -8,9 +7,6 @@ import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.service.IPlatformService;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -21,10 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 public enum MercadolibreBusinessModelEnum {
-    CBT("CBT", "全球站"),
     BR("BR", "巴西（本土）"),
             ;
     /**
