@@ -608,7 +608,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
 
             //平台名称
             DictBasicEntity dictPlatform = dictPlatformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), exportDTO.getDictPlatform())).findFirst().orElse(new DictBasicEntity());
-            if (ObjUtil.isEmpty(dictPlatform)) {
+            if (ObjUtil.isNotEmpty(dictPlatform)) {
                 exportDTO.setDictPlatformName(dictPlatform.getName());
                 exportDTO.setTypeName(DictBasicTypeEnum.getName(dictPlatform.getSubType()));
             }
@@ -618,7 +618,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             exportDTO.setPartitionName(partitionName);
 
             //虚拟仓关联仓库名称
-            ThirdMappingEntity thirdMappingEntity = thirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).findFirst().orElse(new ThirdMappingEntity());
+            ThirdMappingEntity thirdMappingEntity = thirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getThirdId(), exportDTO.getShopId())).findFirst().orElse(new ThirdMappingEntity());
             exportDTO.setOutSideVirtualWarehouseName(thirdMappingEntity.getThirdName());
             exportDTO.setOutSidePlatformName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
         }

@@ -2263,7 +2263,7 @@
     </select>
     <select id="listProductPackBySkuIds" resultType="com.erp.model.plm.dto.ProductPackViewDTO">
         select pp.id,
-        pp.sku_id,
+        pd.id as skuId,
         pd.sku_no,
         pd.name as productName,
         NULLIF(pp.gross_weight, 0) grossWeight,
