@@ -596,6 +596,16 @@ public class SubcontractOrderDTO implements Serializable {
          * 仓库库位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     @Data

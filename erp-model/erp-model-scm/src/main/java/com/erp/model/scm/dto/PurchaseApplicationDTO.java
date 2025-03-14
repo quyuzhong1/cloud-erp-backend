@@ -976,6 +976,17 @@ public class PurchaseApplicationDTO implements Serializable {
          * 付款条件
          */
         private String paymentCondition;
+
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
 

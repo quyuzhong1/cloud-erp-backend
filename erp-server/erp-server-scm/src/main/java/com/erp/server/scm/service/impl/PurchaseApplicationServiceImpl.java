@@ -832,6 +832,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setCurrency(null);
                 viewGenerateDTO.setCurrencySymbol(null);
                 viewGenerateDTO.setAmount(null);
+                viewGenerateDTO.setFirstMassProduct(viewDTO.getFirstMassProduct());
+                viewGenerateDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);
