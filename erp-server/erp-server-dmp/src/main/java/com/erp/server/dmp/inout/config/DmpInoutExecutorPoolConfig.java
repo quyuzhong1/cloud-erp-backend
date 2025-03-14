@@ -75,7 +75,7 @@ public class DmpInoutExecutorPoolConfig {
     
     @Bean(name = "dmpSdyOutputPushExecutorPool")
     public ExecutorService dmpSdyOutputPushExecutorPool() {
-    	ThreadPoolExecutor service = new ThreadPoolExecutor(10, 20,
+    	ThreadPoolExecutor service = new ThreadPoolExecutor(20, 20,
     			10L, TimeUnit.SECONDS,
     			new LinkedBlockingQueue<Runnable>(10000));
     	//设置线城池的饱和策略
