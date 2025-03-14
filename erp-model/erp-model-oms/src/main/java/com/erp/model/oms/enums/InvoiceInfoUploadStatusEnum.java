@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum InvoiceInfoUploadStatusEnum implements EnumMessage {
 	WAIT_UPLOAD("waitUpload", "待上传"),
+    UPLOADING("uploading", "上传中"),
 	UPLOAD_FAILED("uploadFailed", "上传失败"),
 	UPLOAD_SUCCESS("uploadSuccess", "上传成功"),
     ;

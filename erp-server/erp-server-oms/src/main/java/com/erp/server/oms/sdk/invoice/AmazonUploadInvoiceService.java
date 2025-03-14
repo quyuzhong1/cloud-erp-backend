@@ -41,7 +41,7 @@ public class AmazonUploadInvoiceService {
     @Resource
     private DmpAmazonFeign dmpAmazonFeign;
 
-    public void uploadInvoice(SoB2cEntity soB2cEntity,String fileUrl,String invoiceCode) throws Exception{
+    public String uploadInvoice(SoB2cEntity soB2cEntity,String fileUrl,String invoiceCode) throws Exception{
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(soB2cEntity.getShopId());
         if (null == shopInfoDTO) {
@@ -90,6 +90,7 @@ public class AmazonUploadInvoiceService {
             CreateFeedResponse createFeedResponse = feedsApi.createFeed(createFeedSpecification);
             if (null != createFeedResponse) {
                 log.error("亚马逊上传发票成功,feedId:{}", createFeedResponse.getFeedId());
+                return createFeedResponse.getFeedId();
             } else {
                 log.error("亚马逊上传发票,feed失败,传参:{}", JSONUtil.toJsonStr(createFeedSpecification));
                 throw new ServiceException("上传发票失败");
@@ -101,7 +102,8 @@ public class AmazonUploadInvoiceService {
     /**
      * 获取发票处理结果
      */
-    public ApiResult<Objects> getInvoiceResult(String feedId,AmazonShopInfoDTO shopInfoDTO) throws Exception{
+    public ApiResult<Object> getInvoiceResult(String feedId,String shopId) throws Exception{
+        AmazonShopInfoDTO shopInfoDTO = dmpAmazonFeign.getShopAuth(shopId);
         if (null == shopInfoDTO) {
             throw new ServiceException("亚马逊店铺授权为空");
         }
