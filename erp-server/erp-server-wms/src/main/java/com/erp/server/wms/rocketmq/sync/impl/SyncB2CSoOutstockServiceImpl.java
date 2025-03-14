@@ -196,19 +196,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
         //单据已经存在
-//        if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
-//            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
-//                //旺店通已作废，ERP反审核删除并同步金蝶
-//                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
-//                    soOutstockService.disApprove(soOutstockEntity,true);
-//                }
-//                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
-//            }
-//            return;
-//        }
-//        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
-//            return;
-//        }
+        if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+                //旺店通已作废，ERP反审核删除并同步金蝶
+                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+                    soOutstockService.disApprove(soOutstockEntity,true);
+                }
+                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
+            }
+            return;
+        }
+        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+            return;
+        }
         //不需要管的sku
         List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
         //对应不需要的验证的sku no list
