@@ -642,7 +642,8 @@
         sm.create_user_name as createUserName,
         sm.create_time as createTime,
         sm.update_user_name as updateUserName,
-        sm.update_time as updateTime
+        sm.update_time as updateTime,
+        sm.effective_time as effectiveTime
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE

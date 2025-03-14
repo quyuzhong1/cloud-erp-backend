@@ -755,10 +755,10 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         Duration duration = null;
         if (!FmLogisticTrackStatusEnum.SIGN.getCode().equals(logisticsStatus)){
             //当前时间-下单时间
-            duration = Duration.between(LocalDateTime.now(), orderTime);
+            duration = Duration.between(orderTime,LocalDateTime.now());
         }else {
             //已签收：签收时间-下单时间
-            duration = Duration.between(signTime, orderTime);
+            duration = Duration.between(orderTime,signTime);
         }
         if (Objects.nonNull(duration)){
             actualDesc = duration.toDays() + "天" + duration.toHours() % 24 + "小时";
