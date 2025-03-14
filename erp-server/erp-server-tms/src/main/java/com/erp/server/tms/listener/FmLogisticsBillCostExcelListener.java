@@ -154,6 +154,9 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
                 excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
                 errorList.add(excelDTO);
             });
+            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
+                continue;
+            }
             LogisticsBillCostEntity costEntity = logisticsBillCostEntitieList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);
             if(Objects.isNull(costEntity)){
                 excelDTO.setErrorMsg("未找到物流费用");

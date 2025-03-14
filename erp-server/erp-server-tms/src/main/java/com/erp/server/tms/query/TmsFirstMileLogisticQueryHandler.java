@@ -76,10 +76,32 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
             return " exists (SELECT 1 from  logistics_track lt where lt.is_deleted = false and lt.status = 'sign' and lt.track_no = lbd.track_no AND lt.track_time = (select max(track_time) from logistics_track b where b.track_no = lbd.track_no and b.is_deleted = false) and lt.track_time "+compareCodeSplicingValueSql+" ) ";
         }
         if(field.equals("weightAllocationStatus")){
-            if (WeightAllocationStatusEnum.TODO.equals(value)){
-                return "not exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id limit 1)";
+            if (isContain()){
+                if(value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryAllSql();
+                }
+                if(!value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && !value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryEmptySql();
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.TODO.getCode())){
+                    return " not exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())) {
+                    return " exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
             }else {
-                return "exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id limit 1)";
+                if(value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryEmptySql();
+                }
+                if(!value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && !value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryAllSql();
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return " not exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.TODO.getCode())) {
+                    return " exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
             }
         }
         if(field.equals("warn")){
