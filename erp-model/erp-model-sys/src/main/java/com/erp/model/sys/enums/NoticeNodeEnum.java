@@ -11,6 +11,10 @@ public enum NoticeNodeEnum {
     QC_NEW_PRODUCT("qcResultNewProduct", "质检通知-新品"),
     QC_OLD_PRODUCT("qcResultOldProduct", "质检通知-老品"),
     QC_BACK_FILL_SKU_PACK("qcBackFillSkuPack", "质检通知-首次质检-产品尺寸变更"),
+    PURCHASE_PRICE_CHANGE_WAIT("purchasePriceChangeWait", "采购调价--待审核"),
+    PURCHASE_PRICE_CHANGE_APPROVE("purchasePriceChangeApprove", "采购调价--审核通过"),
+    PURCHASE_PRICE_CHANGE_REJECT("purchasePriceChangeReject", "采购调价--审核不通过"),
+
     ;
 
 
