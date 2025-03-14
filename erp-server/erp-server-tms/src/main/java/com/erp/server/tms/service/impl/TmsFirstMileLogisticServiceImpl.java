@@ -820,8 +820,14 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 			Map<String, BigDecimal> rateMap = new HashMap<>();
             for(TmsCostDetailDTO.CostCompareDTO costCompareDTO : costCompareDTOList) {
             	BigDecimal actualFee = costCompareDTO.getActualFee();
+            	if(actualFee == null) {
+            		actualFee = BigDecimal.ZERO;
+            	}
             	String actualCurrency = costCompareDTO.getActualCurrency();
             	BigDecimal estimatedFee = costCompareDTO.getEstimatedFee();
+            	if(estimatedFee == null) {
+            		estimatedFee = BigDecimal.ZERO;
+            	}
             	String estimatedCurrency = costCompareDTO.getEstimatedCurrency();
             	if(actualFee != null && estimatedFee != null) {
             		BigDecimal rate = rateMap.get(actualCurrency);
