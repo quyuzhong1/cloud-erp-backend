@@ -18,10 +18,12 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
@@ -241,10 +243,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             return cfgVatInvoiceEntity.getIsAutoUpload();}).forEach(invoiceInfoEntity -> {
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
             try {
-                amazonUploadInvoiceService.uploadInvoice(soB2cEntity,invoiceInfoEntity.getFileUrl(),invoiceInfoEntity.getCode());
+                String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,invoiceInfoEntity.getFileUrl(),invoiceInfoEntity.getCode());
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
                 invoiceInfoEntity.setUploadTime(LocalDateTime.now());
-                invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                invoiceInfoEntity.setQueryId(feedId);
+                invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
             }catch (Exception e){
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
                 invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
@@ -261,6 +264,13 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     private void generateInvoicePdf(InvoiceInfoEntity invoiceInfoEntity, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<SoB2cDetailEntity> allSoB2cDetailEntityList, List<DmpSoBillDetailEntity> allDmpSoBillDetailEntityList, List<ListingInfoEntity> listingInfoEntityList) {
         CfgVatInvoiceEntity cfgVatInvoiceEntity = cfgVatInvoiceEntities.stream().filter(e ->  !e.getDisabled() && invoiceInfoEntity.getShopId().equals(e.getShopId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票配置"));
         SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+        //增加发票模板对接校验
+        if (!CfgVatInvoiceTemplateTypeEnum.ERP.getCode().equals(cfgVatInvoiceEntity.getTemplateType())){
+            invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            invoiceInfoEntity.setRemark(StrUtil.format("生成发票失败,未对接{}",CfgVatInvoiceTemplateTypeEnum.getName(cfgVatInvoiceEntity.getTemplateType())));
+            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
+            return;
+        }
         List<SoB2cDetailEntity> soB2cDetailEntityList = allSoB2cDetailEntityList.stream().filter(e ->  e.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
         List<DmpSoBillDetailEntity> dmpSoBillDetailEntityList = allDmpSoBillDetailEntityList.stream().filter(e ->e.getShopId().equals(soB2cEntity.getShopId())&& e.getPlatformCode().equals(soB2cEntity.getPlatformCode())).collect(Collectors.toList());
         DmpSoBillDetailEntity dmpSoBillDetailEntity = dmpSoBillDetailEntityList.get(0);
@@ -273,10 +283,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceTemplateDTO.setBillCreateTime(LocalDateTime.now().format(dateTimeFormatter));
         invoiceTemplateDTO.setInvoiceCode(invoiceInfoEntity.getCode());
         invoiceTemplateDTO.setPlatformCreateTime(soB2cEntity.getPlatformOrderCreateTime().format(dateTimeFormatter));
-        invoiceTemplateDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+        invoiceTemplateDTO.setPlatformCode("#" + soB2cEntity.getPlatformCode());
         invoiceTemplateDTO.setCurrencyCode(soB2cEntity.getCurrency());
         String symbol = CurrencyEnum.getSymbolByCode(soB2cEntity.getCurrency());
         invoiceTemplateDTO.setCurrencySymbol(symbol);
+        BigDecimal taxRate = cfgVatInvoiceEntity.getTaxRate().divide(MathUtil.BigDecimal_100, 4, BigDecimal.ROUND_DOWN);
         List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
             CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();
@@ -285,7 +296,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             detailDTO.setQty(soB2cDetailEntity.getQty());
             detailDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
             detailDTO.setTaxRateStr(detailDTO.getTaxRate().setScale(2,BigDecimal.ROUND_DOWN) + "%");
-            detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
+            detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(taxRate.add(BigDecimal.ONE),4, BigDecimal.ROUND_DOWN));
             detailDTO.setPriceStr(symbol + detailDTO.getPrice().setScale(2,BigDecimal.ROUND_DOWN));
             detailDTO.setTaxPrice(soB2cDetailEntity.getPrice());
             detailDTO.setTaxPriceStr(symbol + detailDTO.getTaxPrice().setScale(2,BigDecimal.ROUND_DOWN));
@@ -307,7 +318,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
         totalDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
         totalDTO.setTaxRateStr(totalDTO.getTaxRate().setScale(2,BigDecimal.ROUND_DOWN) + "%");
-        totalDTO.setItemTotal(SubtotalVatInclusive.divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
+        totalDTO.setItemTotal(invoiceTemplateDTO.getInvoiceTotal().divide(taxRate.add(BigDecimal.ONE),4, BigDecimal.ROUND_DOWN));
         totalDTO.setItemTotalStr(symbol + totalDTO.getItemTotal().setScale(2,BigDecimal.ROUND_DOWN));
         totalDTO.setVatTotal(invoiceTemplateDTO.getInvoiceTotal().subtract(totalDTO.getItemTotal()));
         totalDTO.setVatTotalStr(symbol +  totalDTO.getVatTotal().setScale(2,BigDecimal.ROUND_DOWN));
@@ -347,9 +358,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             }
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getSoId()) && entity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
             try {
-                amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
+                String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
-                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                entity.setQueryId(feedId);
+                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
                 entity.setUploadTime(LocalDateTime.now());
             }catch (Exception e){
                 entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
@@ -414,6 +426,33 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         soB2cService.updateBatchById(soB2cEntityList);
     }
 
+    /**
+     * 查询上传中的发票最新状态
+     */
+    @Override
+    public void queryUploadingInvoice() {
+        List<InvoiceInfoEntity> invoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getUploadStatus, InvoiceInfoUploadStatusEnum.UPLOADING.getCode()).list();
+        invoiceInfoEntityList = invoiceInfoEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getQueryId()) && CharSequenceUtil.isNotBlank(e.getShopId())).collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(invoiceInfoEntityList)){
+            return;
+        }
+        for (InvoiceInfoEntity invoiceInfoEntity : invoiceInfoEntityList) {
+            try {
+                ApiResult<Object> result = amazonUploadInvoiceService.getInvoiceResult(invoiceInfoEntity.getQueryId(),invoiceInfoEntity.getShopId());
+                if(result.isSuccess()){
+                    invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                }else{
+                    invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
+                    invoiceInfoEntity.setQueryResult(result.getMsg());
+                }
+            }catch (Exception e){
+                invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
+                invoiceInfoEntity.setQueryResult("系统异常"+e.getMessage());
+            }
+        }
+        service.updateBatchById(invoiceInfoEntityList);
+    }
+
     private List<InvoiceInfoEntity> autoUploadInvoice(List<InvoiceInfoEntity> waitCreateVoiceList, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<BatchResultDTO> resultDTOList) {
         List<InvoiceInfoEntity> uploadInvoiceList = waitCreateVoiceList.stream().filter(v->{
             boolean isCreatePdf = v.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode());
@@ -425,8 +464,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         for (InvoiceInfoEntity invoiceInfoEntity : uploadInvoiceList) {
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
             try {
-                amazonUploadInvoiceService.uploadInvoice(soB2cEntity,invoiceInfoEntity.getFileUrl(),invoiceInfoEntity.getCode());
+                String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,invoiceInfoEntity.getFileUrl(),invoiceInfoEntity.getCode());
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
+                invoiceInfoEntity.setQueryId(feedId);
+                invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
+                invoiceInfoEntity.setUploadTime(LocalDateTime.now());
             }catch (Exception e){
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
                 log.error("亚马逊上传发票失败,{}",e.getMessage());

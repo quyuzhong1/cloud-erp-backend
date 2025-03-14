@@ -95,6 +95,18 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
     @TableField("upload_status")
     private String uploadStatus;
 
+    /**
+     * 查询id，用来查询发票结果的Id
+     */
+    @TableField("query_id")
+    private String queryId;
+
+    /**
+     * 查询结果，当第三方失败时有值
+     */
+    @TableField("query_result")
+    private String queryResult;
+
 
     public static final String CODE = "code";
 

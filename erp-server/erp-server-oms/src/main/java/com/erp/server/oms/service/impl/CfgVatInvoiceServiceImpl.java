@@ -129,6 +129,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         if(!save) {
             throw new ServiceException("VAT发票设置保存失败");
         }
+        updateSoB2CState(cfgVatInvoiceEntity.getShopId(),cfgVatInvoiceEntity.getDisabled(),cfgVatInvoiceEntity.getEnableTime());
         // 记录主单操作日志
         log.info("编辑 开始记录VAT发票设置日志数据，id：【{}】", cfgVatInvoiceEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgVatInvoiceEntity.getId(), "VAT发票设置");
@@ -213,68 +214,6 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         return this.lambdaUpdate().in(CfgVatInvoiceEntity::getId, ids).remove();
     }
 
-    @Override
-    public CfgVatInvoiceDTO.InvoiceTemplateDTO createDefaultDTO() {
-        CfgVatInvoiceDTO.InvoiceTemplateDTO dto = new CfgVatInvoiceDTO.InvoiceTemplateDTO();
-        dto.setCustomerBillAddress("customerBillAddress");
-        dto.setCompanyName("companyName");
-        dto.setCompanyAddress("companyAddress");
-        dto.setVatNo("vatNo");
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-        dto.setBillCreateTime(LocalDateTime.now().format(dateTimeFormatter));
-        dto.setInvoiceCode("invoiceCode");
-        dto.setPlatformCreateTime(LocalDateTime.now().format(dateTimeFormatter));
-        dto.setPlatformCode("platformCode");
-        dto.setShippingCost(BigDecimal.ZERO);
-        dto.setShippingCostStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ZERO);
-        dto.setDiscount(BigDecimal.ONE);
-        dto.setDiscountStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ONE);
-        dto.setInvoiceTotal(BigDecimal.TEN);
-        dto.setInvoiceTotalStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
-        dto.setCurrencyCode(CurrencyEnum.CNY.getCurrencyCode());
-        dto.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        //明细
-        List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
-        CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();
-        detailDTO.setProductName("productName");
-        detailDTO.setQty(121);
-        detailDTO.setTaxRate(BigDecimal.TEN);
-        detailDTO.setTaxRateStr(BigDecimal.TEN + "%");
-        detailDTO.setPrice(BigDecimal.ONE);
-        detailDTO.setPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ONE);
-        detailDTO.setTaxPrice(BigDecimal.TEN);
-        detailDTO.setTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
-        detailDTO.setTotalTaxPrice(BigDecimal.TEN);
-        detailDTO.setTotalTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
-        detailDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        detailDTOS.add(detailDTO);
-        CfgVatInvoiceDTO.DetailDTO detailDTO1 = new CfgVatInvoiceDTO.DetailDTO();
-        detailDTO1.setProductName("productName");
-        detailDTO1.setQty(1212);
-        detailDTO1.setTaxRate(BigDecimal.TEN);
-        detailDTO1.setTaxRateStr(BigDecimal.TEN + "%");
-        detailDTO1.setPrice(BigDecimal.ONE);
-        detailDTO1.setPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.ONE);
-        detailDTO1.setTaxPrice(BigDecimal.TEN);
-        detailDTO1.setTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
-        detailDTO1.setTotalTaxPrice(BigDecimal.TEN);
-        detailDTO1.setTotalTaxPriceStr(CurrencyEnum.CNY.getCurrencySymbol() + BigDecimal.TEN);
-        detailDTO1.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        detailDTOS.add(detailDTO1);
-        dto.setDetailDTOS(detailDTOS);
-        //汇总
-        CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
-        totalDTO.setTaxRate(BigDecimal.TEN);
-        totalDTO.setTaxRateStr(BigDecimal.TEN + "%");
-        totalDTO.setItemTotal(new BigDecimal("100"));
-        totalDTO.setItemTotalStr(CurrencyEnum.CNY.getCurrencySymbol() + new BigDecimal("100"));
-        totalDTO.setVatTotal(new BigDecimal("99"));
-        totalDTO.setVatTotalStr(CurrencyEnum.CNY.getCurrencySymbol() + new BigDecimal("99"));
-        totalDTO.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
-        dto.setTotalDTOS(totalDTO);
-        return dto;
-    }
-
     private void fillList(List<CfgVatInvoiceDTO.PagingViewDTO> records) {
         if (CollUtil.isEmpty(records)){
             return;
@@ -317,6 +256,6 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
             cfgVatInvoiceEntity.setTemplateType(CfgVatInvoiceTemplateTypeEnum.ERP.getCode());
         }
         //详细地址+城市+州/省+邮编+国家
-        cfgVatInvoiceEntity.setCompanyAddress(cfgVatInvoiceEntity.getAddress() + cfgVatInvoiceEntity.getCity() + cfgVatInvoiceEntity.getProvince() + cfgVatInvoiceEntity.getPostCode() + cfgVatInvoiceEntity.getCountryId());
+        cfgVatInvoiceEntity.setCompanyAddress(cfgVatInvoiceEntity.getAddress() + "," + cfgVatInvoiceEntity.getCity() + "," + cfgVatInvoiceEntity.getProvince() + "," + cfgVatInvoiceEntity.getPostCode() + "," + cfgVatInvoiceEntity.getCountryId());
     }
 }

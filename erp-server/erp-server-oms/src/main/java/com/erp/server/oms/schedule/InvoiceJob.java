@@ -27,4 +27,10 @@ public class InvoiceJob {
         return ReturnT.SUCCESS;
     }
 
+    @XxlJob("QueryInvoiceJob")
+    public ReturnT<String> queryInvoiceJob() {
+        invoiceInfoService.queryUploadingInvoice();
+        return ReturnT.SUCCESS;
+    }
+
 }

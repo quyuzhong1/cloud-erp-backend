@@ -150,10 +150,11 @@ public class CfgVatInvoiceController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(id,id,"店铺信息不存在"));
                 continue;
             }
+            if (updateDTO.getDisabled().equals(entity.getDisabled())){
+                resultDTOS.add(BatchResultDTO.fail(id,shopInfoEntity.getName(),"状态未发生变化"));
+                continue;
+            }
             try {
-                if (updateDTO.getDisabled().equals(entity.getDisabled())){
-                    resultDTOS.add(BatchResultDTO.fail(id,shopInfoEntity.getName(),"状态未发生变化"));
-                }
                 cfgVatInvoiceService.updateState(entity, updateDTO.getDisabled());
                 resultDTOS.add(BatchResultDTO.success(id,shopInfoEntity.getName()));
             }catch (Exception e){
@@ -170,15 +171,5 @@ public class CfgVatInvoiceController extends BaseController {
     @PostMapping("/delete")
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(cfgVatInvoiceService.delete(idsDTO.getIds()));
-    }
-
-    /**
-     * 创建发票VAT文件
-     * @return
-     */
-    @PostMapping("/createVatInvoicePdf")
-    public ApiResult<String> createVatInvoicePdf() {
-        CfgVatInvoiceDTO.InvoiceTemplateDTO invoiceTemplateDTO = cfgVatInvoiceService.createDefaultDTO();
-        return success(cfgVatInvoiceService.createVatInvoicePdf(invoiceTemplateDTO));
     }
 }
