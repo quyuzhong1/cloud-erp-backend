@@ -28,6 +28,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.BiShopInfoDTO;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
@@ -118,6 +119,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             records.forEach(obj -> {
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+                obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             });
         }
         return new PagingVO(pageData);

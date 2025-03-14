@@ -29,6 +29,7 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
@@ -536,6 +537,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             obj.setWarehouseLocationName(warehouseLocationEntity.getName());
             //库存状态默认可用
             obj.setInventoryStatusName(InventoryStatusEnum.USABLE.getName());
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             //采购明细
             PurchaseOrderDetailEntity purchaseOrderDetailEntity = purchaseOrderDetailList.stream().
                     filter(p -> p.getId().equals(obj.getPurchaseOrderDetailId())).findFirst().orElse(null);

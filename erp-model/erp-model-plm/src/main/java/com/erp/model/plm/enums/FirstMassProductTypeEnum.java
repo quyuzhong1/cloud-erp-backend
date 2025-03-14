@@ -3,6 +3,7 @@ package com.erp.model.plm.enums;
 import com.common.core.constant.EnumMessage;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.springframework.util.ObjectUtils;
 
 @Getter
 @AllArgsConstructor
@@ -28,6 +29,9 @@ public enum FirstMassProductTypeEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
+        if (ObjectUtils.isEmpty(code)) {
+            return "";
+        }
         for (FirstMassProductTypeEnum item : FirstMassProductTypeEnum.values()) {
             if (code.equals(item.getCode())) {
                 return item.getName();
@@ -37,6 +41,9 @@ public enum FirstMassProductTypeEnum implements EnumMessage {
     }
 
     public static String getCode(String name) {
+        if (ObjectUtils.isEmpty(name)) {
+            return "";
+        }
         for (FirstMassProductTypeEnum item : FirstMassProductTypeEnum.values()) {
             if (name.equals(item.getName())) {
                 return item.getCode();

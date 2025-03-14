@@ -1,45 +1,14 @@
 package com.erp.server.dmp.controller.api;
 
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.Statement;
-import java.time.LocalDate;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
-import javax.annotation.Resource;
-
-import cn.hutool.json.JSONUtil;
-import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.web.client.RestTemplate;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.DmpSyncMqDTO;
-import com.common.business.dto.DmpSyncMqDTO.SyncParamDetailDTO;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -50,22 +19,15 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.WdtInsufficientInventoryDTO;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpCfgMqEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO.LocationListDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDetailDTO;
-import com.erp.model.wms.dto.WarehouseLocationDTO.LocationListDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.server.dmp.inout.dto.request.DmpInputHotfixCreateRequest;
@@ -73,19 +35,19 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpInputCreateFactory;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
-import com.erp.server.dmp.service.DmpCfgInputConvertMappingService;
-import com.erp.server.dmp.service.DmpCfgInputConvertService;
-import com.erp.server.dmp.service.DmpCfgMqService;
-import com.erp.server.dmp.service.DmpCfgOutputService;
-import com.erp.server.dmp.service.DmpOutputTaskRecordService;
-import com.erp.server.dmp.service.DmpOutputTaskService;
-import com.erp.server.dmp.service.DmpPushMsgService;
-
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 /**

@@ -981,7 +981,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                 req.setSupplierName(null);
                 return;
             }
-            String warehouseLocation = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(req.getPurchaseOrderDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getWarehouseLocation())).orElse("");
+            PurchaseOrderDetailEntity entity = purchaseOrderDetailList.stream().filter(obj -> obj.getId().equals(req.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+            String warehouseLocation = Optional.ofNullable(entity.getWarehouseLocation()).orElse("");
             req.setWarehouseLocation(warehouseLocation);
             //仓位信息填充
             WarehouseLocationEntity warehouseLocationEntity = warehouseLocationEntityList.stream().filter(e -> e.getCode().equals(warehouseLocation)
@@ -995,6 +996,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             req.setStockInDate(LocalDate.now());
             req.setStockInUserId(userInfo.getUid());
             req.setStockInUserName(userInfo.getUserName());
+            req.setFirstMassProduct(entity.getFirstMassProduct());
+            req.setFirstMassProductName(FirstMassProductTypeEnum.getName(entity.getFirstMassProduct()));
 
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(req.getPurchaseOrderDetailId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
 

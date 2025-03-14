@@ -987,7 +987,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateReceiveDTO.setBillDate(LocalDate.now());
             viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
-
+            viewGenerateReceiveDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewGenerateReceiveDTO.getFirstMassProduct()));
             Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             //补货数量
@@ -1136,6 +1136,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateStockInDTO.setPurchaseOrderCode(entity.getCode());
             viewGenerateStockInDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             viewGenerateStockInDTO.setDeliveryWarehouseName(entity.getDeliveryWarehouseName());
+            viewGenerateStockInDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+            viewGenerateStockInDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
             //供应商信息
             PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = supplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {

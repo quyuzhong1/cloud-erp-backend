@@ -882,6 +882,17 @@ public class PurchaseOrderDTO implements Serializable {
          * 备注
          */
         private Integer remark;
+
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     /**
@@ -1019,6 +1030,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     @Data

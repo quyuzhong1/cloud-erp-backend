@@ -1,10 +1,8 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.entity.BaseEntity;
-import jnr.ffi.annotations.In;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -745,6 +743,16 @@ public class WarehouseReceiveDTO implements Serializable {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     /**

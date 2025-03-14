@@ -376,6 +376,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             SkuPurchaseDTO.PurchaseInfo skuPurchase = skuPurchaseMap.getOrDefault(entity.getSkuId(), new SkuPurchaseDTO.PurchaseInfo());
             dto.setPurchaseUserId(skuPurchase.getPurchaseUserId());
             dto.setPurchaseUserName(skuPurchase.getPurchaseUserName());
+            dto.setFirstMassProduct(entity.getFirstMassProduct());
+            dto.setFirstMassProductName(FirstMassProductTypeEnum.getName(entity.getFirstMassProduct()));
             dto.setSupplierId(skuPurchase.getSupplierId());
             dto.setSupplierName(skuPurchase.getSupplierName());
             //预计交货日期
@@ -788,6 +790,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setQty(viewDTO.getToPushdownQty());
             viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
+            viewDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
             //报价信息
             PurchasePriceDTO.PriceDTO priceDTO = viewDTOList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())
                             && obj.getSupplierId().equals(supplierId)
@@ -1307,7 +1310,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     obj.setIsConstitute(Boolean.TRUE);
                 }
             }
-
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             if(obj.getCreatePoType().equals(CreatePoTypeEnum.CLOSED.getStatus())){
