@@ -14,12 +14,15 @@
 package com.erp.server.dmp.amz;
 
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import cn.hutool.json.ObjectMapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FeedsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.sdk.oms.amz.spapi.documents.DownloadHandler;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.feeds.*;
@@ -43,9 +46,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.rmi.ServerException;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * API tests for FeedsApi
@@ -98,7 +103,7 @@ public class FeedsApiTest {
         shopInfoDTO.setSecretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B");
         shopInfoDTO.setAccessKeyId("AKIARVXX3YJGDV2NGA4L");
         shopInfoDTO.setRefreshToken("Atzr|IwEBIGMAY2S_GKCS6zsuZzJzKkh8FxQO0Ox_e2rGDsMcc5edGjctvjXjC-TtSWg2M3XGaNisFQqg2z_KwROD8xVOazVQkZBc4f4VIgTsIDPSlZ2fIHaONs_HA6J7hToolnOgbcli2M_CX1vXkPPxCRbW1JrQQlIDfdiHkMakJ5VAAnFPokQf3vcLv0P1gngOfbCL1KdhKyDBLGQLfEkwdKQ1r0jaeU6jkT6XB8iyDYvo_f-Ms87R-Xv6J4XMFhOtY_Z9BhixpGkNhbjz_ns0I-ejfcpLnDgHer02Syqi2ZTPIsF_pSOHtVs1yZj-OGdB0V0f66EOopfvV_53HnkmMNNS6Em7");
-        shopInfoDTO.setAccessToken("Atza|IwEBIK9LyKAEEYdGAePuK6Y8ZME6mHObx3vOOgvvV1HdrAXcC0JKIujGUBe8VdQ761aj2wkLjjUBywtENwbluHqkcDCHtn50U4vAFAv9lzlS6xoAy6s8Lz0YzLMO8HHe8hn4I59bUITqz2Iilzmt_br55Ho0S6KVMqm_Jw6AK9qtpqHpgraXnSIdOybTUlwaGR-VOpJsY-qvYkned1UG1pXtJxpXM-CAOP-2LB-pX9p5Sr68S2TbaHE4wvM8WM6_ahhFA7XMv_wNNbbVRgGRbQvrEX_xzxF7E9B9Zj0qhsXo7H1XqMP9jNzqtxcfA__qlBUb6HxpJhksqe6M5wj4Are-b4_NNxuSLr8Tq24hjA3IijJweQ");
+        shopInfoDTO.setAccessToken("Atza|IwEBIPvZC_UzhQEW-S_bRoab-hRWrfhmG1aSSEX7REpelweuhz7eaioJg1tNg-1AvR5zn-tZTRTGNljOhvw4WK8WxnKW10qZgrSEgSnMTd0ElYKTaS_y22iJbDe1t8cEkgNRDfuWVeCn7uFgbpIaivwZR0jdJnx1lobxLjByP488zn99yG3FmHiR_9mtwxdDPJ00I_0OW80nYNZcbHEs-WnaFCMMdy-3y2y4Ni2ZcQE3u1N5_M88VxRyZob-1_GzE4CzKHOI-id0Icwwd5bmsj8OCvh0NqLxlwqc5jGImurjkyLbUnCWOXTANJorG7ttwJQw9bUApC_isOtV2miNjdQTQ_XVJkYUlu1m--dEPf1n200VoA");
         shopInfoDTO.setAuthUrl("https://api.amazon.com/auth/o2/token");
         shopInfoDTO.setRoleStr("arn:aws:iam::115410190924:role/DehouRole");
         shopInfoDTO.setClientSecret("amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988");
@@ -153,7 +158,7 @@ public class FeedsApiTest {
         shopInfoDTO.setSecretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B");
         shopInfoDTO.setAccessKeyId("AKIARVXX3YJGDV2NGA4L");
         shopInfoDTO.setRefreshToken("Atzr|IwEBIGMAY2S_GKCS6zsuZzJzKkh8FxQO0Ox_e2rGDsMcc5edGjctvjXjC-TtSWg2M3XGaNisFQqg2z_KwROD8xVOazVQkZBc4f4VIgTsIDPSlZ2fIHaONs_HA6J7hToolnOgbcli2M_CX1vXkPPxCRbW1JrQQlIDfdiHkMakJ5VAAnFPokQf3vcLv0P1gngOfbCL1KdhKyDBLGQLfEkwdKQ1r0jaeU6jkT6XB8iyDYvo_f-Ms87R-Xv6J4XMFhOtY_Z9BhixpGkNhbjz_ns0I-ejfcpLnDgHer02Syqi2ZTPIsF_pSOHtVs1yZj-OGdB0V0f66EOopfvV_53HnkmMNNS6Em7");
-        shopInfoDTO.setAccessToken("Atza|IwEBIK9LyKAEEYdGAePuK6Y8ZME6mHObx3vOOgvvV1HdrAXcC0JKIujGUBe8VdQ761aj2wkLjjUBywtENwbluHqkcDCHtn50U4vAFAv9lzlS6xoAy6s8Lz0YzLMO8HHe8hn4I59bUITqz2Iilzmt_br55Ho0S6KVMqm_Jw6AK9qtpqHpgraXnSIdOybTUlwaGR-VOpJsY-qvYkned1UG1pXtJxpXM-CAOP-2LB-pX9p5Sr68S2TbaHE4wvM8WM6_ahhFA7XMv_wNNbbVRgGRbQvrEX_xzxF7E9B9Zj0qhsXo7H1XqMP9jNzqtxcfA__qlBUb6HxpJhksqe6M5wj4Are-b4_NNxuSLr8Tq24hjA3IijJweQ");
+        shopInfoDTO.setAccessToken("Atza|IwEBIPvZC_UzhQEW-S_bRoab-hRWrfhmG1aSSEX7REpelweuhz7eaioJg1tNg-1AvR5zn-tZTRTGNljOhvw4WK8WxnKW10qZgrSEgSnMTd0ElYKTaS_y22iJbDe1t8cEkgNRDfuWVeCn7uFgbpIaivwZR0jdJnx1lobxLjByP488zn99yG3FmHiR_9mtwxdDPJ00I_0OW80nYNZcbHEs-WnaFCMMdy-3y2y4Ni2ZcQE3u1N5_M88VxRyZob-1_GzE4CzKHOI-id0Icwwd5bmsj8OCvh0NqLxlwqc5jGImurjkyLbUnCWOXTANJorG7ttwJQw9bUApC_isOtV2miNjdQTQ_XVJkYUlu1m--dEPf1n200VoA");
         shopInfoDTO.setAuthUrl("https://api.amazon.com/auth/o2/token");
         shopInfoDTO.setRoleStr("arn:aws:iam::115410190924:role/DehouRole");
         shopInfoDTO.setClientSecret("amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988");
@@ -167,19 +172,66 @@ public class FeedsApiTest {
      * @throws ApiException if the Api call fails
      */
     @Test
-    public void getFeedDocumentTest() throws ApiException {
+    public void getFeedDocumentTest() throws ApiException, IOException {
         AmazonShopInfoDTO shopInfoDTO = new AmazonShopInfoDTO();
         shopInfoDTO.setClientId("amzn1.application-oa2-client.aa03ca5c8fd741a49df6e35aac3c3287");
         shopInfoDTO.setSecretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B");
         shopInfoDTO.setAccessKeyId("AKIARVXX3YJGDV2NGA4L");
         shopInfoDTO.setRefreshToken("Atzr|IwEBIGMAY2S_GKCS6zsuZzJzKkh8FxQO0Ox_e2rGDsMcc5edGjctvjXjC-TtSWg2M3XGaNisFQqg2z_KwROD8xVOazVQkZBc4f4VIgTsIDPSlZ2fIHaONs_HA6J7hToolnOgbcli2M_CX1vXkPPxCRbW1JrQQlIDfdiHkMakJ5VAAnFPokQf3vcLv0P1gngOfbCL1KdhKyDBLGQLfEkwdKQ1r0jaeU6jkT6XB8iyDYvo_f-Ms87R-Xv6J4XMFhOtY_Z9BhixpGkNhbjz_ns0I-ejfcpLnDgHer02Syqi2ZTPIsF_pSOHtVs1yZj-OGdB0V0f66EOopfvV_53HnkmMNNS6Em7");
-        shopInfoDTO.setAccessToken("Atza|IwEBIK9LyKAEEYdGAePuK6Y8ZME6mHObx3vOOgvvV1HdrAXcC0JKIujGUBe8VdQ761aj2wkLjjUBywtENwbluHqkcDCHtn50U4vAFAv9lzlS6xoAy6s8Lz0YzLMO8HHe8hn4I59bUITqz2Iilzmt_br55Ho0S6KVMqm_Jw6AK9qtpqHpgraXnSIdOybTUlwaGR-VOpJsY-qvYkned1UG1pXtJxpXM-CAOP-2LB-pX9p5Sr68S2TbaHE4wvM8WM6_ahhFA7XMv_wNNbbVRgGRbQvrEX_xzxF7E9B9Zj0qhsXo7H1XqMP9jNzqtxcfA__qlBUb6HxpJhksqe6M5wj4Are-b4_NNxuSLr8Tq24hjA3IijJweQ");
+        shopInfoDTO.setAccessToken("Atza|IwEBIPvZC_UzhQEW-S_bRoab-hRWrfhmG1aSSEX7REpelweuhz7eaioJg1tNg-1AvR5zn-tZTRTGNljOhvw4WK8WxnKW10qZgrSEgSnMTd0ElYKTaS_y22iJbDe1t8cEkgNRDfuWVeCn7uFgbpIaivwZR0jdJnx1lobxLjByP488zn99yG3FmHiR_9mtwxdDPJ00I_0OW80nYNZcbHEs-WnaFCMMdy-3y2y4Ni2ZcQE3u1N5_M88VxRyZob-1_GzE4CzKHOI-id0Icwwd5bmsj8OCvh0NqLxlwqc5jGImurjkyLbUnCWOXTANJorG7ttwJQw9bUApC_isOtV2miNjdQTQ_XVJkYUlu1m--dEPf1n200VoA");
         shopInfoDTO.setAuthUrl("https://api.amazon.com/auth/o2/token");
         shopInfoDTO.setRoleStr("arn:aws:iam::115410190924:role/DehouRole");
         shopInfoDTO.setClientSecret("amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988");
         FeedsApi api = FeedsApi.initApi(AmazonEndpointsEnum.EN_WAST_1,shopInfoDTO);
         FeedDocument feed =  api.getFeedDocument("amzn1.tortuga.4.eu.48d151a4-8444-4221-bcf5-048121b9ac01.T3TFR4U62ISTT3");
         System.out.println(JSONUtil.toJsonStr(feed));
+        // 创建请求
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(feed.getUrl())
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected code: " + response);
+            }
+
+            ResponseBody responseBody = response.body();
+            if (responseBody != null) {
+                // 获取压缩内容
+                byte[] compressedContent = responseBody.bytes();
+
+                // 将解压缩的内容转换为字符串
+                String content = new String(compressedContent);
+                System.out.println("Downloaded content: " + content);
+                String key = "Number of records successful";
+                int keyIndex = content.indexOf(key);
+                if (keyIndex == -1) {
+                    throw new IllegalArgumentException("Key not found: " + key);
+                }
+
+                // 找到关键字后的值的位置
+                int valueStartIndex = keyIndex + key.length();
+                String remainingText = content.substring(valueStartIndex).trim();
+
+                // 提取值（假设值是一个整数）
+                StringBuilder valueBuilder = new StringBuilder();
+                for (char c : remainingText.toCharArray()) {
+                    if (Character.isDigit(c)) {
+                        valueBuilder.append(c);
+                    } else {
+                        break; // 遇到非数字字符时停止
+                    }
+                }
+
+                // 将提取的值转换为整数
+                Integer a = Integer.parseInt(valueBuilder.toString());
+                System.out.println(a);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
