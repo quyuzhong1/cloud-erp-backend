@@ -234,11 +234,17 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                 sdyDTO.setSales_company_code(salesOrgCode);
                 sdyDTO.setShop_no(customerInfo.getCode());
                 sdyDTO.setShop_name(customerInfo.getName());
-                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
+
+
+                if (CharSequenceUtil.isNotBlank(dmpSoRefundEntity.getCurrencyCode())) {
+                    sdyDTO.setTransaction_currency_code(dmpSoRefundEntity.getCurrencyCode());
+                } else {
+                    sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+                }
+                DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, sdyDTO.getTransaction_currency_code());
                 if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
                     sdyDTO.setTransaction_currency(dictCurrencyEntity.getName());
                 }
-                sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                 sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
                 String subPlatformType = customerInfo.getPlatformType();
                 if (StringUtils.isNotBlank(subPlatformType)) {
