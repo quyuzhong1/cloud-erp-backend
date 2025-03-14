@@ -887,8 +887,8 @@ public class SoB2cFeignController extends BaseController {
      * @param operateEnum
      */
     @GetMapping("/syncSdyOrderHandler")
-    public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum) {
-        soB2cService.syncSdyOrderHandler(soId, operateEnum);
+    public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum, @RequestParam("sourceType") String sourceType) {
+        soB2cService.syncSdyOrderHandler(soId, operateEnum, sourceType);
     }
 
     /**

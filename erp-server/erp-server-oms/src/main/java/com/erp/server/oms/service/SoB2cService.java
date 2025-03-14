@@ -1021,10 +1021,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 同步数帝云
+     *
      * @param soId
      * @param operateEnum
+     * @param sourceType
      */
-    void syncSdyOrderHandler(String soId, String operateEnum);
+    void syncSdyOrderHandler(String soId, String operateEnum, String sourceType);
 
     List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset);
     /**

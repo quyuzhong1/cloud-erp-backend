@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.math.BigDecimal;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -49,6 +51,49 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
      */
     @TableField("sku_id")
     private String skuId;
+
+    /**
+     * 单价
+     */
+    @TableField("price")
+    private BigDecimal price;
+
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 实际支付金额
+     */
+    @TableField("pay_amount")
+    private BigDecimal payAmount;
+
+    /**
+     * 实际支付币别
+     */
+    @TableField("pay_currency")
+    private BigDecimal payCurrency;
+
+    /**
+     * 折扣金额
+     */
+    @TableField("discount_amount")
+    private String discountAmount;
+
+    /**
+     * 折扣币别
+     */
+    @TableField("discount_currency")
+    private String discount_currency;
+
+    /**
+     * 货品id
+     */
+    @TableField("sc_item_id")
+    private String scItemId;
+
 
     public static final String MAIN_ID = "main_id";
 
