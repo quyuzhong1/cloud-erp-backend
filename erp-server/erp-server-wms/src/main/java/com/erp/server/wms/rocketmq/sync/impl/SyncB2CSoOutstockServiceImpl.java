@@ -33,29 +33,22 @@ import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockRuleDTO;
 import com.erp.model.wms.dto.inventory.TransactionRuleDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
-import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
-import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
-import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.WarehouseAreaTypeEnum;
+import com.erp.model.wms.enums.WarehouseLocationStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.SoB2cFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -66,6 +59,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -106,23 +100,15 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     private VirtualWarehouseChannelService VirtualWarehouseChannelService;
 
     @Resource
-    private WmsTaskFeign wmsTaskFeign;
-
-    @Resource
-    private SoInfoFeign soInfoFeign;
-
-
-    @Resource
-    private SoB2cFeign soB2cFeign;
-
-    @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
 
     @Resource
     private SysPartitionFeign sysPartitionFeign;
 
     @Resource
-    private CfgRulePickingService cfgRulePickingService;
+    private InventoryService inventoryService;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
 
     private static final List<String> WDT_NULL_LOCATION = new ArrayList<>();
 
@@ -304,31 +290,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
         }
         if (Boolean.TRUE.equals(warehouse.getIsEnableLocation())) {
-            CfgRulePickingDTO.CfgExecutionDataDTO dataDTO = getCfgExecutionDataDTO(detailList, warehouse, noInventorySkuNoList);
-            Pair<List<LocationInventoryResultDTO>, Map<String, Integer>> soB2CRuleOrderMatchResult = cfgRulePickingService.getSoB2CRuleOrderMatchResult(dataDTO);
-            Map<String, Integer> errorMap = soB2CRuleOrderMatchResult.getSecond();
-            if (!CollectionUtils.isEmpty(errorMap)) {
-                String errorMsg = errorMap.entrySet()
-                        .stream()
-                        .map(v -> v.getKey() + ":" + v.getValue() + "个")
-                        .collect(Collectors.joining(","));
-                throw new ServiceException("库存不足：" + errorMsg);
-            }
-            List<LocationInventoryResultDTO> first = soB2CRuleOrderMatchResult.getFirst();
-            List<SoOutstockDetailEntity> detailNewList = detailList.stream()
-                    .filter(v -> noInventorySkuNoList.contains(v.getSkuNo()))
-                    .collect(Collectors.toList());
-            for (LocationInventoryResultDTO resultDTO : first) {
-                SoOutstockDetailEntity detailEntity = detailList.stream()
-                        .filter(v -> resultDTO.getSourceDetailId().equals(v.getId()))
-                        .findFirst().orElseThrow(() -> new ServiceException("数据异常，请联系IT"));
-                detailEntity.setId(IdWorker.getIdStr());
-                detailEntity.setWarehouseLocation(resultDTO.getWarehouseLocation());
-                detailEntity.setPlanQty(resultDTO.getQuantity());
-                detailEntity.setActualQty(resultDTO.getQuantity());
-                detailNewList.add(detailEntity);
-            }
-            detailList = detailNewList;
+            detailList = dealPickingDetail(detailList, warehouse, noInventorySkuNoList);
         }
         for (SoOutstockDetailEntity detailEntity : detailList) {
             //是否扣减库存 true 就要
@@ -374,24 +336,89 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         this.syncToSdy(soOutstock, SyncOperateEnum.OPERATE_APPROVE.getCode());
     }
 
-    private static CfgRulePickingDTO.CfgExecutionDataDTO getCfgExecutionDataDTO(List<SoOutstockDetailEntity> detailList, WarehouseEntity warehouse, List<String> noInventorySkuNoList) {
-        CfgRulePickingDTO.CfgExecutionDataDTO dataDTO = new CfgRulePickingDTO.CfgExecutionDataDTO();
-        dataDTO.setBillType(OrderTypeEnum.B2C.getCode());
-        List<CfgRulePickingDTO.CfgExecutionDataDetailDTO> addDetailList = new ArrayList<>();
-        for (SoOutstockDetailEntity detailEntity : detailList) {
-            if (noInventorySkuNoList.contains(detailEntity.getSkuNo())) {
+    /**
+     * 处理拣货逻辑
+     * @param detailList 参数
+     * @param warehouse 仓库
+     * @param noInventorySkuNoList 无库存sku
+     */
+    private List<SoOutstockDetailEntity> dealPickingDetail(List<SoOutstockDetailEntity> detailList, WarehouseEntity warehouse, List<String> noInventorySkuNoList) {
+        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        // 获取拣货区配置
+        List<WarehouseLocationEntity> pickingAreaList = warehouseLocationService.list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouse.getId())
+                .eq(WarehouseLocationEntity::getDisabled, false)
+                .eq(WarehouseLocationEntity::getAreaType, WarehouseAreaTypeEnum.PICKING_AREA.getCode())
+        );
+        if (CollectionUtils.isEmpty(pickingAreaList)) {
+            throw new ServiceException("仓库" + warehouse.getName() + "不存在可用拣货区，请添加");
+        }
+        List<String> pickingAreaIdList = pickingAreaList.stream().map(WarehouseLocationEntity::getId).collect(Collectors.toList());
+        //获取拣货仓位
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouse.getId())
+                .eq(WarehouseLocationEntity::getDisabled, false)
+                .in(WarehouseLocationEntity::getParentId, pickingAreaIdList)
+                .ne(WarehouseLocationEntity::getStatus, WarehouseLocationStatusEnum.STOP.getCode())
+        );
+        if (CollectionUtils.isEmpty(warehouseLocationList)) {
+            throw new ServiceException("仓库" + warehouse.getName() + "不存在拣货区下可以仓位，请添加");
+        }
+        List<String> locationList = warehouseLocationList.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.toList());
+        List<InventoryEntity> inventoryList = inventoryService.list(Wrappers.<InventoryEntity>lambdaQuery()
+                .eq(InventoryEntity::getWarehouseId, warehouse.getId())
+                .in(InventoryEntity::getWarehouseLocation, locationList)
+                .in(InventoryEntity::getSkuId, skuIds)
+                .gt(InventoryEntity::getQty, 0)
+                .orderByDesc(InventoryEntity::getQty)
+        );
+        Map<String, Integer> stockSku = new HashMap<>();
+        List<SoOutstockDetailEntity> detailNewList = new ArrayList<>();
+        for (SoOutstockDetailEntity detail : detailList) {
+            if (noInventorySkuNoList.contains(detail.getSkuNo())) {
+                detailNewList.add(detail);
                 continue;
             }
-            CfgRulePickingDTO.CfgExecutionDataDetailDTO addDetail = new CfgRulePickingDTO.CfgExecutionDataDetailDTO();
-            addDetail.setWarehouseId(warehouse.getId());
-            addDetail.setSkuId(detailEntity.getSkuId());
-            addDetail.setSkuNo(detailEntity.getSkuNo());
-            addDetail.setQty(detailEntity.getActualQty());
-            addDetail.setSourceDetailId(detailEntity.getId());
-            addDetailList.add(addDetail);
+            AtomicInteger quantity = new AtomicInteger(detail.getActualQty());
+            List<InventoryEntity> inventoryEntityList = inventoryList.stream().filter(v -> v.getSkuId().equals(detail.getSkuId()))
+                    .collect(Collectors.toList());
+            for (InventoryEntity inventory : inventoryEntityList) {
+                if (inventory.getQty() >= quantity.get()) {
+                    inventory.setQty(inventory.getQty() - quantity.get());
+                    quantity.set(0);
+                    detail.setId(IdWorker.getIdStr());
+                    detail.setWarehouseLocation(inventory.getWarehouseLocation());
+                    detail.setPlanQty(quantity.get());
+                    detail.setActualQty(quantity.get());
+                    detailNewList.add(detail);
+                    break;
+                } else {
+                    quantity.set(quantity.get() - inventory.getQty());
+                    inventory.setQty(0);
+                    detail.setId(IdWorker.getIdStr());
+                    detail.setWarehouseLocation(inventory.getWarehouseLocation());
+                    detail.setPlanQty(inventory.getQty());
+                    detail.setActualQty(inventory.getQty());
+                    detailNewList.add(detail);
+                }
+            }
+            if (0 != quantity.get()) {
+                if (stockSku.containsKey(detail.getSkuNo())) {
+                    stockSku.put(detail.getSkuNo(), stockSku.get(detail.getSkuNo()) + quantity.get());
+                }else {
+                    stockSku.put(detail.getSkuNo(), quantity.get());
+                }
+            }
         }
-        dataDTO.setDetails(addDetailList);
-        return dataDTO;
+        if (!CollectionUtils.isEmpty(stockSku)) {
+            String errorMsg = stockSku.entrySet()
+                    .stream()
+                    .map(v -> v.getKey() + ":" + v.getValue() + "个")
+                    .collect(Collectors.joining(","));
+            throw new ServiceException("SKU库存不足" + errorMsg);
+        }
+        detailList = detailNewList;
+        return detailList;
     }
 
     private static String getSkuId(List<SkuVO> skuList, String skuNo) {
