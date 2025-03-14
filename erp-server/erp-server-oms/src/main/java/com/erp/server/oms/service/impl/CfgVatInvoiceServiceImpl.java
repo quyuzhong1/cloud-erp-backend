@@ -129,6 +129,7 @@ public class CfgVatInvoiceServiceImpl extends SuperServiceImpl<CfgVatInvoiceMapp
         if(!save) {
             throw new ServiceException("VAT发票设置保存失败");
         }
+        updateSoB2CState(cfgVatInvoiceEntity.getShopId(),cfgVatInvoiceEntity.getDisabled(),cfgVatInvoiceEntity.getEnableTime());
         // 记录主单操作日志
         log.info("编辑 开始记录VAT发票设置日志数据，id：【{}】", cfgVatInvoiceEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgVatInvoiceEntity.getId(), "VAT发票设置");
