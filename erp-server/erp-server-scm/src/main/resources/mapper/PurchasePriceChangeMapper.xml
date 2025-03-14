@@ -129,4 +129,43 @@
     </select>
 
 
+
+    <select id="listPurchasePriceChange" resultType="com.erp.model.scm.dto.PurchasePriceChangeDTO$NoticeMsgViewDTO">
+        SELECT
+        pp.id,
+        ppd.id AS changeDetailId,
+        pp.code,
+        pp.create_user_id AS createUserId,
+        pp.create_user_name AS createUserName,
+        pp.create_time AS createTime,
+        ppd.supplier_id AS supplierId,
+        s.name AS supplierName,
+        s.purchase_user_id,
+        s.purchase_user_name,
+        pp.approve_user_id,
+        pp.approve_user_name,
+        pp.approve_time,
+        pp.approve_status
+        FROM purchase_price_change_detail ppd
+        INNER JOIN purchase_price_change pp  ON ppd.purchase_price_change_id=PP.id
+        left join supplier s on s.id = ppd.supplier_id
+        WHERE
+        pp.is_deleted = false
+        AND ppd.is_deleted= false
+        <choose>
+            <when test="idList != null and idList.size > 0">
+                AND pp.id IN
+                <foreach item="id" index="index" collection="idList" open="(" separator="," close=")">
+                    #{id}
+                </foreach>
+            </when>
+            <otherwise>
+                AND pp.id = -1
+            </otherwise>
+        </choose>
+        ORDER BY
+        pp.create_time DESC,ppd.id DESC
+    </select>
+
+
 </mapper>

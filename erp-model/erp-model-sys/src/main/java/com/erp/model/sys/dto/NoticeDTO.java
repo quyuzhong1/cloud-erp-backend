@@ -160,11 +160,6 @@ public class NoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 系统模块
-         */
-        @NotEmpty(message = "系统模块不能为空")
-        private List<String> system;
-        /**
          * 业务模块
          */
 //        @NotBlank(message = "业务模块不能为空")

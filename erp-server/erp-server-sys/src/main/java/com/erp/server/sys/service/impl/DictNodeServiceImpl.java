@@ -55,7 +55,7 @@ public class DictNodeServiceImpl extends SuperServiceImpl<DictNodeMapper, DictNo
      */
     @Override
     public List<DictNodeDTO.ViewDTO> listByModule(String module) {
-        List<DictNodeEntity> list;
+        List<DictNodeEntity> list = null;
         if(StringUtils.isBlank(module)){
             list = this.list();
         }else {
