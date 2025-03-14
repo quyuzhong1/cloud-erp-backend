@@ -62,12 +62,12 @@ public class TmsCostDetailDTO implements Serializable {
         /**
          * 预估费用
          */
-        private BigDecimal estimatedFee;
+        private BigDecimal estimatedFee = BigDecimal.ZERO;
         
         /**
          * 预估转换人民币费用
          */
-        private BigDecimal estimatedFeeExchange;
+        private BigDecimal estimatedFeeExchange = BigDecimal.ZERO;
         
         /**
          * 预估费用币种
@@ -77,7 +77,7 @@ public class TmsCostDetailDTO implements Serializable {
         /**
          * 实际费用
          */
-        private BigDecimal actualFee;
+        private BigDecimal actualFee = BigDecimal.ZERO;
         
         /**
          * 实际费用币种
@@ -87,7 +87,7 @@ public class TmsCostDetailDTO implements Serializable {
         /**
          * 差异
          */
-        private BigDecimal feeDifference;
+        private BigDecimal feeDifference = BigDecimal.ZERO;
 
     }
 
