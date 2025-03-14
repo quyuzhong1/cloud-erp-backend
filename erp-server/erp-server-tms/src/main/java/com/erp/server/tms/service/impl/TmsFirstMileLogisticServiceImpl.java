@@ -824,11 +824,17 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             		actualFee = BigDecimal.ZERO;
             	}
             	String actualCurrency = costCompareDTO.getActualCurrency();
+            	if(StringUtils.isBlank(actualCurrency)) {
+            		actualCurrency = "CNY";
+            	}
             	BigDecimal estimatedFee = costCompareDTO.getEstimatedFee();
             	if(estimatedFee == null) {
             		estimatedFee = BigDecimal.ZERO;
             	}
             	String estimatedCurrency = costCompareDTO.getEstimatedCurrency();
+            	if(StringUtils.isBlank(estimatedCurrency)) {
+            		estimatedCurrency = "CNY";
+            	}
             	if(actualFee != null && estimatedFee != null) {
             		BigDecimal rate = rateMap.get(actualCurrency);
             		if(rate == null){
