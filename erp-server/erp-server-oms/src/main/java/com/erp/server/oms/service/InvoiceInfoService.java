@@ -58,4 +58,6 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     List<InvoiceInfoEntity> listBySoIds(List<String> soIds);
 
     void retryInvoice();
+
+    void queryUploadingInvoice();
 }
