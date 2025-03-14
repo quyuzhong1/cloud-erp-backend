@@ -1414,11 +1414,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
         TmsFirstMileReconciliationDetailDTO.ImportDTO importDTO = new TmsFirstMileReconciliationDetailDTO.ImportDTO();
 
-        //验证导入数据是否为空
-        List<FirstMileReconciliationStandardExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
+//        //验证导入数据是否为空
+//        List<FirstMileReconciliationStandardExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+//        if (CollectionUtils.isEmpty(excelDateList)) {
+//            throw new ServiceException(ApiError.ERROR_95123);
+//        }
         //导入数据处理
         List<FirstMileReconciliationStandardExcelDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
