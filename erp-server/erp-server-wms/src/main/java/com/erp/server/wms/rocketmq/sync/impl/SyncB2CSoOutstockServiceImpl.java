@@ -196,19 +196,19 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
         //单据已经存在
-        if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
-            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
-                //旺店通已作废，ERP反审核删除并同步金蝶
-                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
-                    soOutstockService.disApprove(soOutstockEntity,true);
-                }
-                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
-            }
-            return;
-        }
-        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
-            return;
-        }
+//        if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+//            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+//                //旺店通已作废，ERP反审核删除并同步金蝶
+//                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+//                    soOutstockService.disApprove(soOutstockEntity,true);
+//                }
+//                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
+//            }
+//            return;
+//        }
+//        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+//            return;
+//        }
         //不需要管的sku
         List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
         //对应不需要的验证的sku no list
@@ -384,22 +384,22 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     .collect(Collectors.toList());
             for (InventoryEntity inventory : inventoryEntityList) {
                 if (inventory.getQty() >= quantity.get()) {
-                    inventory.setQty(inventory.getQty() - quantity.get());
-                    quantity.set(0);
                     detail.setId(IdWorker.getIdStr());
                     detail.setWarehouseLocation(inventory.getWarehouseLocation());
                     detail.setPlanQty(quantity.get());
                     detail.setActualQty(quantity.get());
                     detailNewList.add(detail);
+                    inventory.setQty(inventory.getQty() - quantity.get());
+                    quantity.set(0);
                     break;
                 } else {
-                    quantity.set(quantity.get() - inventory.getQty());
-                    inventory.setQty(0);
                     detail.setId(IdWorker.getIdStr());
                     detail.setWarehouseLocation(inventory.getWarehouseLocation());
                     detail.setPlanQty(inventory.getQty());
                     detail.setActualQty(inventory.getQty());
                     detailNewList.add(detail);
+                    quantity.set(quantity.get() - inventory.getQty());
+                    inventory.setQty(0);
                 }
             }
             if (0 != quantity.get()) {
