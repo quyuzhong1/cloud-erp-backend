@@ -6,6 +6,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.core.entity.BaseEntity;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -73,7 +74,7 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
         //导入的数据不能存在相同客户，客户sku
         SkuMappingCustomerImportExcelDTO exist = allList.stream().filter(v->v.equals(data)).findFirst().orElse(null);
         if(exist != null){
-            data.setErrorMsg("导入文件中已存在相同客户，相同客户s的数据");
+            data.setErrorMsg("导入文件中已存在相同客户，相同客户sku的数据");
             errorList.add(data);
             return;
         }
@@ -138,12 +139,31 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
                 operateLogList.add(new OperateLogDTO.AddModuleOperateLogDTO(StrUtil.format("通过导入修改客户sku，客户sku名称从【{}】修改为【{}】，产品sku从【{}】修改为【{}】", existEntity.getPlatformSkuName(), excelDTO.getPlatformSkuName(), skuMapping.getProductSkuNo(), excelDTO.getPlatformSkuNo()),ModuleTypeEnum.LISTING_INFO.getCode(), existEntity.getId(), "导入更新"));
                 existEntity.setPlatformSkuName(excelDTO.getPlatformSkuName());
                 updateListingList.add(existEntity);
-                skuMapping.setProductSkuId(skuVO.getSkuId());
-                skuMapping.setProductSkuNo(skuVO.getSkuNo());
-                skuMapping.setProductName(skuVO.getSkuName());
-                skuMapping.setEffectiveTime(LocalDateUtil.parseStrToLocalTime(excelDTO.getEnabledTime()));
-                skuMapping.setExpireTime(skuMapping.getEffectiveTime().plusYears(MathUtil.NUMBER_100));
-                updateSkuMappingList.add(skuMapping);
+
+                LocalDateTime effectiveTime = LocalDateUtil.parseStrToLocalTime(excelDTO.getEnabledTime());
+                if(skuMapping.getProductSkuId().equals(skuVO.getSkuId())){
+                    skuMapping.setEffectiveTime(effectiveTime);
+                    skuMapping.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+                    updateSkuMappingList.add(skuMapping);
+                }else if (skuMapping.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMapping.getEffectiveTime())){
+                    excelDTO.setErrorMsg("已映射的生效时间晚于表格的生效时间，不能更新");
+                    errorList.add(excelDTO);
+                    continue;
+                }else{
+                    skuMapping.setIsExpire(true);
+                    updateSkuMappingList.add(skuMapping);
+
+                    SkuMappingEntity addSkuMapping = new SkuMappingEntity();
+                    addSkuMapping.setType(RuleTypeEnum.CUSTOMER);
+                    addSkuMapping.setProductSkuId(skuVO.getSkuId());
+                    addSkuMapping.setProductSkuNo(skuVO.getSkuNo());
+                    addSkuMapping.setProductName(skuVO.getSkuName());
+                    addSkuMapping.setListingId(existEntity.getId());
+                    //生效时间
+                    addSkuMapping.setEffectiveTime(effectiveTime);
+                    addSkuMapping.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+                    addSkuMappingList.add(addSkuMapping);
+                }
             }
         }
 
