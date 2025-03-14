@@ -124,12 +124,12 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】未匹配到物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】未匹配到物流单",CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) ? excelDTO.getOutstockCode():"", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())? excelDTO.getBusinessCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())?excelDTO.getTransportNo():""));
                 errorList.add(excelDTO);
                 continue;
             }
             if (entityList.size() > 1) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】存在多条物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】存在多条物流单",CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) ? excelDTO.getOutstockCode():"", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())? excelDTO.getBusinessCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())?excelDTO.getTransportNo():""));
                 errorList.add(excelDTO);
                 continue;
             }
@@ -180,19 +180,19 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
         }
         
         List<FmLogisticsBillCostExcelDTO> lastSuccessList = dataList.stream().filter(d -> StringUtils.isBlank(d.getErrorMsg())).collect(Collectors.toList());
-        Map<String, List<FmLogisticsBillCostExcelDTO>> transportNoMaps = lastSuccessList.stream().collect(Collectors.groupingBy(FmLogisticsBillCostExcelDTO::getTransportNo));
-    	Map<String, String> transportNoInfoMap = logisticsBillCostEntitieList.stream().collect(Collectors.toMap(LogisticsBillCostEntity::getTransportNo, LogisticsBillCostEntity::getId , (v1 , v2) -> v1));
+        Map<String, List<FmLogisticsBillCostExcelDTO>> billIdMap = lastSuccessList.stream().collect(Collectors.groupingBy(FmLogisticsBillCostExcelDTO::getLogisticsBillId));
+    	Map<String, String> billIdToCostIdMap = logisticsBillCostEntitieList.stream().collect(Collectors.toMap(LogisticsBillCostEntity::getLogisticsBillId, LogisticsBillCostEntity::getId , (v1 , v2) -> v1));
     	Map<String, List<CostViewDTO>> mainCostMaps = allCostDetailEntityList.stream().collect(Collectors.groupingBy(CostViewDTO::getMainId));
     	Map<String, CostViewDTO> costNameIdMap = allCostDetailEntityList.stream().collect(Collectors.toMap(TmsCostDetailDTO.CostViewDTO::getCostName, t -> t , (v1 , v2) -> v1));
         Map<String, TmsCfgCostEntity> costNameMap = tmsCfgCostEntityList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getCostName, t -> t, (v1, v2) -> v1));
         if(CollUtil.isNotEmpty(lastSuccessList)) {
-        	Map<String, List<String>> errorTransportNoDictMap = new HashMap<>();
-        	for(Map.Entry<String, List<FmLogisticsBillCostExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {
-        		String key = transportNoMap.getKey();
-        		String mainId = transportNoInfoMap.get(key);
+        	Map<String, List<String>> errorBillDictMap = new HashMap<>();
+        	for(Map.Entry<String, List<FmLogisticsBillCostExcelDTO>> billMap : billIdMap.entrySet()) {
+        		String key = billMap.getKey();
+        		String mainId = billIdToCostIdMap.get(key);
         		Map<String, String> dictCurrency = new HashMap<>();
-        		List<FmLogisticsBillCostExcelDTO> value = transportNoMap.getValue();
-        		List<String> errorDictList = errorTransportNoDictMap.get(key);
+        		List<FmLogisticsBillCostExcelDTO> value = billMap.getValue();
+        		List<String> errorDictList = errorBillDictMap.get(key);
         		if(errorDictList == null) {
         			errorDictList = new ArrayList<>();
         		}
@@ -232,24 +232,26 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
             			}
         			}
         		}
-        		errorTransportNoDictMap.put(key, errorDictList);
+        		errorBillDictMap.put(key, errorDictList);
         	}
         	
         	for (FmLogisticsBillCostExcelDTO dto : lastSuccessList) {
-        		String transportNo = dto.getTransportNo();
-        		List<String> errorDictList = errorTransportNoDictMap.get(transportNo);
+        		String billId = dto.getLogisticsBillId();
+        		List<String> errorDictList = errorBillDictMap.get(billId);
                 TmsCfgCostEntity tmsCfgCostEntity = costNameMap.get(dto.getCostName());
                 String dictCostCategory = tmsCfgCostEntity.getDictCostCategory();
 				if(CollUtil.isNotEmpty(errorDictList) && errorDictList.contains(dictCostCategory)) {
-					dto.setErrorMsg("物流单【" + transportNo + "】"+ DictCostCategoryEnum.getName(dictCostCategory) +"费用分类下的币别不一致");
+					dto.setErrorMsg("物流单【" + dto.getTransportNo() + "】"+ DictCostCategoryEnum.getName(dictCostCategory) +"费用分类下的币别不一致");
 	                errorList.add(dto);
 	                continue;
         		}
         		
-        		String mainId = transportNoInfoMap.get(transportNo);
+        		String mainId = billIdToCostIdMap.get(billId);
+                //根据mainId和配置id删除相同的费用项
+                if (CharSequenceUtil.isNotBlank(mainId)){
+                    logisticsBillCostDetailService.deleteByMainIdAndCfgCostId(mainId, tmsCfgCostEntity.getId());
+                }
         		TmsCostDetailEntity updateCostDetailEntity = new TmsCostDetailEntity();
-        		TmsCostDetailDTO.CostViewDTO costViewDTO = allCostDetailEntityList.stream().filter(v->v.getMainId().equals(mainId) && v.getCostName().equals(dto.getCostName())).findFirst().orElse(null);
-                updateCostDetailEntity.setId(Objects.nonNull(costViewDTO) ? costViewDTO.getId() : null);
                 updateCostDetailEntity.setMainId(dto.getCostId());
                 updateCostDetailEntity.setCfgCostId(tmsCfgCostEntity.getId());
                 updateCostDetailEntity.setCostValue(dto.getCost());

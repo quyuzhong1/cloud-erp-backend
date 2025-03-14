@@ -14,6 +14,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.sf.cglib.core.Local;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
@@ -239,6 +241,7 @@ public class SkuMappingDTO implements Serializable {
          * 生效时间
          */
         @NotNull(message = "生效时间不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime effectiveTime;
 
         /**

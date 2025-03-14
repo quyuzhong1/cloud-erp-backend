@@ -114,9 +114,9 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillCostEntity> logisticsBillCostEntitieList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
         //暂估账单
-//        List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(mainIdList, ConfirmStatusEnum.CONFIRM.getCode());
-//        //对账单明细
-//        List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(mainIdList, null, DetailReconciliationTypeEnum.ACTUAL.getCode());
+        List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(mainIdList, ConfirmStatusEnum.CONFIRM.getCode());
+        //对账单明细
+        List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(mainIdList, null, DetailReconciliationTypeEnum.ACTUAL.getCode());
 
         for (FirstMileReconciliationStandardExcelDTO excelDTO : dataList) {
             //校验数据
@@ -147,12 +147,12 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】未匹配到物流单",excelDTO.getSourceCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】未匹配到物流单",CharSequenceUtil.isNotBlank(excelDTO.getSourceCode()) ? excelDTO.getSourceCode():"", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())? excelDTO.getBusinessCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())?excelDTO.getTransportNo():""));
                 errorList.add(excelDTO);
                 continue;
             }
             if (entityList.size() > 1) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】存在多条物流单",excelDTO.getSourceCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】存在多条物流单",CharSequenceUtil.isNotBlank(excelDTO.getSourceCode()) ? excelDTO.getSourceCode():"", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())? excelDTO.getBusinessCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())?excelDTO.getTransportNo():""));
                 errorList.add(excelDTO);
                 continue;
             }
@@ -162,14 +162,14 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                 errorList.add(excelDTO);
                 continue;
             }
-//            estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
-//                excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
-//                errorList.add(excelDTO);
-//            });
-//            reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !v.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).findFirst().ifPresent(v->{
-//                excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
-//                errorList.add(excelDTO);
-//            });
+            estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
+                excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
+                errorList.add(excelDTO);
+            });
+            reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !v.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).findFirst().ifPresent(v->{
+                excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
+                errorList.add(excelDTO);
+            });
             excelDTO.setLogisticsBillId(entity.getId());
             LogisticsBillCostEntity costEntity = logisticsBillCostEntitieList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);
             if(Objects.isNull(costEntity)){

@@ -2143,8 +2143,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (CollUtil.isEmpty(businessCodeList) && CollUtil.isEmpty(outstockCodeList) && CollUtil.isEmpty(transportList)){
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(CollUtil.isNotEmpty(businessCodeList),LogisticsBillEntity::getBusinessCode,businessCodeList)
-                .in(CollUtil.isNotEmpty(outstockCodeList),LogisticsBillEntity::getOutstockCode,outstockCodeList)
-                .in(CollUtil.isNotEmpty(transportList),LogisticsBillEntity::getTransportNo,transportList).list();
+        return this.lambdaQuery().or().in(CollUtil.isNotEmpty(businessCodeList),LogisticsBillEntity::getBusinessCode,businessCodeList)
+                .or().in(CollUtil.isNotEmpty(outstockCodeList),LogisticsBillEntity::getOutstockCode,outstockCodeList)
+                .or().in(CollUtil.isNotEmpty(transportList),LogisticsBillEntity::getTransportNo,transportList).list();
     }
 }
