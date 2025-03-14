@@ -228,6 +228,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
         List<InvoiceInfoEntity> waitCreateVoiceList = addList.stream().filter(v->v.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(waitCreateVoiceList)){
+            if(CollectionUtils.isNotEmpty(addList)){
+                //保存数据
+                service.batchSave(addList,addDetailList);
+                soB2cService.updateBatchById(soB2cEntityList);
+            }
             return Collections.emptyList();
         }
         //生成PDF
