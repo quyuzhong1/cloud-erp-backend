@@ -257,11 +257,11 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(dmpSoInfoEntity.getOrderStatus());
+        orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
 
         // 审核状态状态
         // （ApproveStatus字典类型）
-        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getApproveStatus());
+        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）

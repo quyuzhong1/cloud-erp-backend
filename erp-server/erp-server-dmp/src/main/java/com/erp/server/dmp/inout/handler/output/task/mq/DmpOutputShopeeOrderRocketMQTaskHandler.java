@@ -278,7 +278,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
             // 数量
             detailDTO.setQty(item.getQty());
             // 单价
-            detailDTO.setPrice(item.getSellPrice());
+            detailDTO.setPrice(item.getSellPriceOrigin());
             // 金额
             detailDTO.setAmount(item.getAfterAmount());
 
