@@ -61,6 +61,7 @@ import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -472,14 +473,6 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (isStartProcess) {
             //提交流程
             startProcess(priceChangeList);
-            //异步发送通知
-            List<String> idList = priceChangeList.stream().map(PurchasePriceChangeEntity::getId).collect(Collectors.toList());
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    sendMsg(idList, ApproveStatusEnum.WAIT_SUBMIT);
-                }
-            });
         }
 
         List<Pair<String, String>> pairList = priceChangeList.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
@@ -505,7 +498,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * 发送消息
      * @param idList
      */
-    private void sendMsg(List<String> idList , ApproveStatusEnum approveStatus) {
+    @Override
+    public void sendMsg(List<String> idList, ApproveStatusEnum approveStatus,String comment ) {
         if(CollUtil.isEmpty(idList)){
             return ;
         }
@@ -541,29 +535,22 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         String msgHead = "";
         String msgContent = "";
-        String remark = "";
-        String approveUserId = "";
-        String approveUserName = "";
-        String approveTime = null;
-
+        String approveTime = LocalDateTime.now().format(formatter);
         for (String id : idList) {
             List<PurchasePriceChangeDTO.NoticeMsgViewDTO> collect = noticeMsgViewDTOS.stream().filter(obj -> obj.getId().equals(id)).collect(Collectors.toList());
             PurchasePriceChangeDTO.NoticeMsgViewDTO noticeMsgViewDTO = collect.get(0);
+            //这个是审核人
+            List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(id).stream().filter(item -> item.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())).collect(Collectors.toList());
+            List<String> approveUserIdList = approveHistoryList.stream().map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
+            String approveUserName = approveHistoryList.stream().map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveName).filter(StringUtil::isNotBlank).collect(Collectors.joining(","));;
+
             //当不为空
             if (CollUtil.isNotEmpty(itemRoles)) {
-                //这个是审核人
-                List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(id);
-                ProcessTaskManagementDTO.ApproveHistoryDTO approveHistoryDTO = approveHistoryList.get(approveHistoryList.size() - 1);
-                remark = approveHistoryDTO.getRemark();
-                approveUserId = approveHistoryDTO.getCurApproveId();
-                approveUserName = approveHistoryDTO.getCurApproveName();
-                approveTime = approveHistoryDTO.getApproveTime().format(formatter);
-
                 for (String role : itemRoles) {
                     if(role.equals(NoticePurItemRoleEnum.CREATE_USER.getCode())){
                         userIdList.add(noticeMsgViewDTO.getCreateUserId());
                     }else if(role.equals(NoticePurItemRoleEnum.APPROVE_USER.getCode())){
-                        userIdList.add(approveUserId);
+                        userIdList.addAll(approveUserIdList);
                     }else if(role.equals(NoticePurItemRoleEnum.PURCHASER.getCode())){
                         userIdList.addAll( collect.stream().map(PurchasePriceChangeDTO.NoticeMsgViewDTO::getPurchaseUserId).distinct().collect(Collectors.toList()));
                     }
@@ -588,10 +575,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime);
             }else if(ApproveStatusEnum.REJECT.equals(approveStatus)){//不通过
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_HEAD;
-                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_CONTENT,code,supplierNames,createUserName,createTime,remark,approveUserName,approveTime);
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_CONTENT,code,supplierNames,createUserName,createTime,comment,approveUserName,approveTime);
             }else if(ApproveStatusEnum.APPROVE.equals(approveStatus)){//通过
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_HEAD;
-                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT,code,supplierNames,createUserName,createTime,remark,approveUserName,approveTime);
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT,code,supplierNames,createUserName,createTime,comment,approveUserName,approveTime);
             }
             NoticeMsgInfoDTO noticeMsgInfo = new NoticeMsgInfoDTO();
             noticeMsgInfo.setReceiverUserIds(userIdList);
@@ -655,27 +642,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
-
-            //异步发送通知
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE);
-                }
-            });
-
         } else {
             //审核不通过
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
             result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(rejectStatus));
-
-            //异步发送通知
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT);
-                }
-            });
         }
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
@@ -994,7 +964,24 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
+        if (type.equals(ScmConstant.PASS)) {
+            //异步发送通知
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE, comment);
+                }
+            });
 
+        } else {
+            //异步发送通知
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT, comment);
+                }
+            });
+        }
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             return approveEnd(entity, type,comment,isNeedProcess);
         }
