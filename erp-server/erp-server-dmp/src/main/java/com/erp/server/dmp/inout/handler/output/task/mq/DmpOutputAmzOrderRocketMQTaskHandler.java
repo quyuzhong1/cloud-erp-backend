@@ -162,12 +162,12 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         orderDTO.setInvalidRemark("");
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(dmpSoInfoEntity.getOrderStatus());
+        orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         orderDTO.setPayStatus(dmpSoInfoEntity.getPayStatus() ? SoB2cPayStatusEnum.ENUM_PAID.getCode() : SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         // 审核状态
-        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getApproveStatus());
+        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
         // 订单金额
         orderDTO.setAmount(dmpSoInfoEntity.getAllAmount());
