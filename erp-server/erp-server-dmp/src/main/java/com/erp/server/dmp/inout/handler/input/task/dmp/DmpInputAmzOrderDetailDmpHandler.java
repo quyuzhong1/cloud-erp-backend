@@ -34,7 +34,6 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
                 // 金额
                 BigDecimal amount = new BigDecimal(null == itemPrice ? "0" : itemPrice.getAmount());
                 dmpInputMongoChild.put("amount", amount);
-                dmpInputMongoChild.put("afterAmount", amount);
 
                 Object quantityOrderedObj = dmpInputMongoChild.get("quantityOrdered");
                 if (null != quantityOrderedObj){
@@ -46,7 +45,7 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
                     }
                     // 单价
                     dmpInputMongoChild.put("price", price);
-                    dmpInputMongoChild.put("sellPrice", price);
+                    dmpInputMongoChild.put("sellPriceOrigin", price);
                 }
             }
 
