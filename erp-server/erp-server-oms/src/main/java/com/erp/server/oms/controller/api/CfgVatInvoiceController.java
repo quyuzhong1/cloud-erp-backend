@@ -172,14 +172,4 @@ public class CfgVatInvoiceController extends BaseController {
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
         return success(cfgVatInvoiceService.delete(idsDTO.getIds()));
     }
-
-    /**
-     * 创建发票VAT文件
-     * @return
-     */
-    @PostMapping("/createVatInvoicePdf")
-    public ApiResult<String> createVatInvoicePdf() {
-        CfgVatInvoiceDTO.InvoiceTemplateDTO invoiceTemplateDTO = cfgVatInvoiceService.createDefaultDTO();
-        return success(cfgVatInvoiceService.createVatInvoicePdf(invoiceTemplateDTO));
-    }
 }
