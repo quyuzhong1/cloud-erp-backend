@@ -575,10 +575,10 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime);
             }else if(ApproveStatusEnum.REJECT.equals(approveStatus)){//不通过
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_HEAD;
-                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_CONTENT,code,supplierNames,createUserName,createTime,comment,approveUserName,approveTime);
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime,comment);
             }else if(ApproveStatusEnum.APPROVE.equals(approveStatus)){//通过
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_HEAD;
-                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT,code,supplierNames,createUserName,createTime,comment,approveUserName,approveTime);
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime,comment);
             }
             NoticeMsgInfoDTO noticeMsgInfo = new NoticeMsgInfoDTO();
             noticeMsgInfo.setReceiverUserIds(userIdList);
