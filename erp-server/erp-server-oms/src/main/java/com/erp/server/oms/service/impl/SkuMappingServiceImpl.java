@@ -264,7 +264,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
         }
 
-        //仓库sku 对照
+        //客户sku 对照
         if (customer.equals(type)) {
             SkuMappingCustomerExcelListener excelListenerUtil = new SkuMappingCustomerExcelListener();
             try {
@@ -1702,6 +1702,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String addCustomer(SkuMappingDTO.AddCustomerRequest request) {
         SkuMappingDTO.AddCustomerDTO dto = request.getDto();
         LocalDateTime effectiveTime = dto.getEffectiveTime();
@@ -1714,45 +1715,84 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(Objects.isNull(customerInfo)){
             throw new ServiceException("未查询到客户信息");
         }
-        ListingInfoEntity existsEntity = listingInfoService.getByPlatformSkuNo("",dto.getPlatformSkuNo(),dto.getCustomerId());
-        if(Objects.nonNull(existsEntity)){
-            throw new ServiceException("已存在客户sku，不能重复新增");
-        }
         MultipartFile file = request.getFile();
         String url = "";
         if(Objects.nonNull(file) && StringUtils.isNotBlank(file.getOriginalFilename())){
             url = FastDFSClientUtil.uploadFile(file);
         }
-        ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
-        listingInfoEntity.setPlatformSkuNo(dto.getPlatformSkuNo());
-        listingInfoEntity.setPlatformSkuName(dto.getPlatformSkuName());
-        listingInfoEntity.setProductImageUrl(url);
-        listingInfoEntity.setType(RuleTypeEnum.CUSTOMER.getCode());
-        listingInfoEntity.setAuthId(dto.getCustomerId());
-        listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
-        listingInfoService.save(listingInfoEntity);
+        ListingInfoEntity existsEntity = listingInfoService.getByPlatformSkuNo("",dto.getPlatformSkuNo(),dto.getCustomerId());
+        if(Objects.nonNull(existsEntity)){
+            //存在客户sku，将历史映射关系失效，新增映射关系
+            List<SkuMappingEntity> skuMappingEntityList = this.listByListingIds(Collections.singletonList(existsEntity.getId()));
+            if(CollectionUtils.isNotEmpty(skuMappingEntityList)){
+                SkuMappingEntity skuMappingEntity = skuMappingEntityList.get(0);
+                if(skuMappingEntity.getProductSkuId().equals(dto.getSkuId())){
+                    skuMappingEntity.setEffectiveTime(effectiveTime);
+                    skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+                    this.updateById(skuMappingEntity);
+                    existsEntity.setProductImageUrl(url);
+                    existsEntity.setPlatformSkuName(dto.getPlatformSkuName());
+                    listingInfoService.updateById(existsEntity);
+                }else if (skuMappingEntity.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMappingEntity.getEffectiveTime())){
+                    throw new ServiceException("已存在客户sku并且生效时间晚于选择的生效时间，不能新增");
+                }else{
+                    skuMappingEntity.setIsExpire(true);
+                    this.updateById(skuMappingEntity);
+                    existsEntity.setProductImageUrl(url);
+                    existsEntity.setPlatformSkuName(dto.getPlatformSkuName());
+                    listingInfoService.updateById(existsEntity);
 
-        SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
-        skuMappingEntity.setType(RuleTypeEnum.CUSTOMER);
-        skuMappingEntity.setProductSkuId(dto.getSkuId());
-        skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
-        skuMappingEntity.setProductName(skuVO.getSkuName());
-        skuMappingEntity.setListingId(listingInfoEntity.getId());
-        //生效时间
-        skuMappingEntity.setEffectiveTime(effectiveTime);
-        skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
-        if (this.save(skuMappingEntity)) {
-            // 操作日志
-            String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getId());
-            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "新增操作");
-            return skuMappingEntity.getId();
+                    SkuMappingEntity addSkuMapping = new SkuMappingEntity();
+                    addSkuMapping.setType(RuleTypeEnum.CUSTOMER);
+                    addSkuMapping.setProductSkuId(dto.getSkuId());
+                    addSkuMapping.setProductSkuNo(skuVO.getSkuNo());
+                    addSkuMapping.setProductName(skuVO.getSkuName());
+                    addSkuMapping.setListingId(existsEntity.getId());
+                    //生效时间
+                    addSkuMapping.setEffectiveTime(effectiveTime);
+                    addSkuMapping.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+                    if (this.save(addSkuMapping)) {
+                        // 操作日志
+                        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getId());
+                        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "新增操作");
+                        return skuMappingEntity.getId();
+                    }
+                }
+            }
+        }else{
+            ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
+            listingInfoEntity.setPlatformSkuNo(dto.getPlatformSkuNo());
+            listingInfoEntity.setPlatformSkuName(dto.getPlatformSkuName());
+            listingInfoEntity.setProductImageUrl(url);
+            listingInfoEntity.setType(RuleTypeEnum.CUSTOMER.getCode());
+            listingInfoEntity.setAuthId(dto.getCustomerId());
+            listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+            listingInfoService.save(listingInfoEntity);
+
+            SkuMappingEntity skuMappingEntity = new SkuMappingEntity();
+            skuMappingEntity.setType(RuleTypeEnum.CUSTOMER);
+            skuMappingEntity.setProductSkuId(dto.getSkuId());
+            skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
+            skuMappingEntity.setProductName(skuVO.getSkuName());
+            skuMappingEntity.setListingId(listingInfoEntity.getId());
+            //生效时间
+            skuMappingEntity.setEffectiveTime(effectiveTime);
+            skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+            if (this.save(skuMappingEntity)) {
+                // 操作日志
+                String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getId());
+                operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "新增操作");
+                return skuMappingEntity.getId();
+            }
         }
         return "";
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public String updateCustomer(SkuMappingDTO.AddCustomerRequest request) {
         SkuMappingDTO.AddCustomerDTO dto = request.getDto();
+        LocalDateTime effectiveTime = dto.getEffectiveTime();
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(dto.getSkuId()));
         if(CollectionUtils.isEmpty(skuList)){
             throw new ServiceException("未查询到sku信息");
@@ -1770,6 +1810,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(Objects.isNull(existsEntity)){
             throw new ServiceException("listing为空");
         }
+        if(!dto.getPlatformSkuNo().equals(existsEntity.getPlatformSkuNo())){
+            ListingInfoEntity otherExistsEntity = listingInfoService.getByPlatformSkuNo("",dto.getPlatformSkuNo(),dto.getCustomerId());
+            if(Objects.nonNull(otherExistsEntity)){
+                throw new ServiceException("已存在相同客户sku");
+            }
+        }
+
         MultipartFile file = request.getFile();
         String url = "";
         if(StringUtils.isBlank(dto.getProductImageUrl())){
@@ -1785,10 +1832,30 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         existsEntity.setProductImageUrl(url);
         listingInfoService.updateById(existsEntity);
 
-        skuMappingEntity.setProductSkuId(dto.getSkuId());
-        skuMappingEntity.setProductSkuNo(skuVO.getSkuNo());
-        skuMappingEntity.setProductName(skuVO.getSkuName());
-        this.updateById(skuMappingEntity);
+        if(skuMappingEntity.getProductSkuId().equals(dto.getSkuId())){
+            skuMappingEntity.setEffectiveTime(effectiveTime);
+            skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+            this.updateById(skuMappingEntity);
+        }else if (skuMappingEntity.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMappingEntity.getEffectiveTime())){
+            throw new ServiceException("生效时间晚于选择的生效时间，不能更新");
+        }else{
+            skuMappingEntity.setIsExpire(true);
+            this.updateById(skuMappingEntity);
+
+            SkuMappingEntity addSkuMapping = new SkuMappingEntity();
+            addSkuMapping.setType(RuleTypeEnum.CUSTOMER);
+            addSkuMapping.setProductSkuId(dto.getSkuId());
+            addSkuMapping.setProductSkuNo(skuVO.getSkuNo());
+            addSkuMapping.setProductName(skuVO.getSkuName());
+            addSkuMapping.setListingId(existsEntity.getId());
+            //生效时间
+            addSkuMapping.setEffectiveTime(effectiveTime);
+            addSkuMapping.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
+            if (this.save(addSkuMapping)) {
+                // 操作日志
+                return skuMappingEntity.getId();
+            }
+        }
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "编辑操作");
         return "";
     }
