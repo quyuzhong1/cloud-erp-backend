@@ -127,12 +127,28 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】未匹配到物流单",CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) ? excelDTO.getOutstockCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) ? excelDTO.getBusinessCode() : "" ));
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
+                    msg.append("发货单号【").append(excelDTO.getOutstockCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                msg.append("未匹配到物流单");
+                excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
                 continue;
             }
             if (entityList.size() > 1) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】存在多条物流单",CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) ? excelDTO.getOutstockCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) ? excelDTO.getBusinessCode() : "" ));
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
+                    msg.append("发货单号【").append(excelDTO.getOutstockCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                msg.append("存在多条物流单");
+                excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
                 continue;
             }
