@@ -89,10 +89,10 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         if(CollectionUtils.isEmpty(dataList)){
             return;
         }
-        List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getOutstockCode).collect(Collectors.toList());
-        List<String> businessCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getBusinessCode).collect(Collectors.toList());
-        List<String> supplierNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getSupplierName).distinct().collect(Collectors.toList());
-        List<String> channelNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getChannelName).distinct().collect(Collectors.toList());
+        List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getOutstockCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> businessCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getBusinessCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> supplierNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> channelNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getChannelName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listBySourceCodeList(businessCodeList, outstockCodeList, null);
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(mainIdList);
@@ -127,12 +127,12 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】未匹配到物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode() ));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】未匹配到物流单",CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) ? excelDTO.getOutstockCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) ? excelDTO.getBusinessCode() : "" ));
                 errorList.add(excelDTO);
                 continue;
             }
             if (entityList.size() > 1) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】存在多条物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode() ));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】存在多条物流单",CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) ? excelDTO.getOutstockCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) ? excelDTO.getBusinessCode() : "" ));
                 errorList.add(excelDTO);
                 continue;
             }

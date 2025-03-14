@@ -120,12 +120,12 @@ public class FirstMileEstimatedBillExcelListener extends AnalysisEventListener<F
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】未匹配到物流单",excelDTO.getSourceCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】未匹配到物流单",CharSequenceUtil.isNotBlank(excelDTO.getSourceCode()) ? excelDTO.getSourceCode():"", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())? excelDTO.getBusinessCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())?excelDTO.getTransportNo():""));
                 errorList.add(excelDTO);
                 continue;
             }
             if (entityList.size() > 1) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】存在多条物流单",excelDTO.getSourceCode(), excelDTO.getBusinessCode(), excelDTO.getTransportNo()));
+                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】或物流运单号【{}】存在多条物流单",CharSequenceUtil.isNotBlank(excelDTO.getSourceCode()) ? excelDTO.getSourceCode():"", CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())? excelDTO.getBusinessCode() : "", CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())?excelDTO.getTransportNo():""));
                 errorList.add(excelDTO);
                 continue;
             }
