@@ -23,6 +23,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
@@ -282,10 +283,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceTemplateDTO.setBillCreateTime(LocalDateTime.now().format(dateTimeFormatter));
         invoiceTemplateDTO.setInvoiceCode(invoiceInfoEntity.getCode());
         invoiceTemplateDTO.setPlatformCreateTime(soB2cEntity.getPlatformOrderCreateTime().format(dateTimeFormatter));
-        invoiceTemplateDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+        invoiceTemplateDTO.setPlatformCode("#" + soB2cEntity.getPlatformCode());
         invoiceTemplateDTO.setCurrencyCode(soB2cEntity.getCurrency());
         String symbol = CurrencyEnum.getSymbolByCode(soB2cEntity.getCurrency());
         invoiceTemplateDTO.setCurrencySymbol(symbol);
+        BigDecimal taxRate = cfgVatInvoiceEntity.getTaxRate().divide(MathUtil.BigDecimal_100, 4, BigDecimal.ROUND_DOWN);
         List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
             CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();
@@ -294,7 +296,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             detailDTO.setQty(soB2cDetailEntity.getQty());
             detailDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
             detailDTO.setTaxRateStr(detailDTO.getTaxRate().setScale(2,BigDecimal.ROUND_DOWN) + "%");
-            detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
+            detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(taxRate.add(BigDecimal.ONE),4, BigDecimal.ROUND_DOWN));
             detailDTO.setPriceStr(symbol + detailDTO.getPrice().setScale(2,BigDecimal.ROUND_DOWN));
             detailDTO.setTaxPrice(soB2cDetailEntity.getPrice());
             detailDTO.setTaxPriceStr(symbol + detailDTO.getTaxPrice().setScale(2,BigDecimal.ROUND_DOWN));
@@ -316,7 +318,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
         totalDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
         totalDTO.setTaxRateStr(totalDTO.getTaxRate().setScale(2,BigDecimal.ROUND_DOWN) + "%");
-        totalDTO.setItemTotal(SubtotalVatInclusive.divide(cfgVatInvoiceEntity.getTaxRate().add(BigDecimal.ONE),4, RoundingMode.HALF_UP));
+        totalDTO.setItemTotal(invoiceTemplateDTO.getInvoiceTotal().divide(taxRate.add(BigDecimal.ONE),4, BigDecimal.ROUND_DOWN));
         totalDTO.setItemTotalStr(symbol + totalDTO.getItemTotal().setScale(2,BigDecimal.ROUND_DOWN));
         totalDTO.setVatTotal(invoiceTemplateDTO.getInvoiceTotal().subtract(totalDTO.getItemTotal()));
         totalDTO.setVatTotalStr(symbol +  totalDTO.getVatTotal().setScale(2,BigDecimal.ROUND_DOWN));
