@@ -165,6 +165,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         orderDTO.setExchangeRate(BigDecimal.ONE);
         // 运费收入
         orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
         // 付款金额
         orderDTO.setPayAmount(dmpSoInfoEntity.getPayAmount());
         // 付款方式
@@ -277,7 +278,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
             // 数量
             detailDTO.setQty(item.getQty());
             // 单价
-            detailDTO.setPrice(item.getSellPrice());
+            detailDTO.setPrice(item.getSellPriceOrigin());
             // 金额
             detailDTO.setAmount(item.getAfterAmount());
 

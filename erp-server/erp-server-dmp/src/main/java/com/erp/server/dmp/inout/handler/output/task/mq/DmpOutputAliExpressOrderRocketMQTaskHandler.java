@@ -257,11 +257,11 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(dmpSoInfoEntity.getOrderStatus());
+        orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
 
         // 审核状态状态
         // （ApproveStatus字典类型）
-        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getApproveStatus());
+        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
@@ -271,6 +271,10 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
+        
+        orderDTO.setTotalCancelGoodsAmount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
+        orderDTO.setCancelGoodsCurrency(dmpSoInfoEntity.getCancelGoodsCurrency());
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
         
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
         if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
