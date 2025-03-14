@@ -634,7 +634,6 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
         entity.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
         entity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgName());
-        entity.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
     }
     /**
      * @description: 格式化列表数据

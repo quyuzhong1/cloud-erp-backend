@@ -1225,7 +1225,6 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         entity.setPurchaseDeptName(purchaseOrderEntity.getPurchaseDeptName());
         entity.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         entity.setReceiveOrgName(purchaseOrderEntity.getReceiveOrgName());
-        entity.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
 
         //查询采购供应商
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = scmTaskFeign.getOrderSupplierByOrderId(purchaseOrderId);

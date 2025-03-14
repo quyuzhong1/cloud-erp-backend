@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
@@ -414,11 +413,6 @@ public class SubcontractOrderDTO implements Serializable {
         private String subcontractOrgId;
 
         /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
-
-        /**
         * 来源id
         */
         @Size(max = 19,message = "来源id最大长度不能超过19位")
@@ -767,7 +761,7 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * 新品首批（false否,true是）
          */
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
 
         /**
          * 备注

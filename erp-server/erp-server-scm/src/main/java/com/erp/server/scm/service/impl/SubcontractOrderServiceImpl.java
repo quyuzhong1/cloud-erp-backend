@@ -881,6 +881,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setPurchaseApplicationId(addDetailDTO.getPurchaseApplicationId());
                 poDetailAddDTO.setPurchaseApplicationDetailId(addDetailDTO.getPurchaseApplicationDetailId());
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
+                poDetailAddDTO.setFirstMassProduct(addDetailDTO.getFirstMassProduct());
                 poDetailList.add(poDetailAddDTO);
             }
             addDTO.setDetails(poDetailList);
@@ -955,7 +956,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //收料组织
             generatePoDTO.setReceiveOrgId(orgId);
             //新品首批暂时默认
-            generatePoDTO.setIsFirstMassProduct(ObjectUtils.isEmpty(generatePoDTO.getIsFirstMassProduct()) ? mainEntity.getIsFirstMassProduct() : generatePoDTO.getIsFirstMassProduct());
+            generatePoDTO.setFirstMassProduct(ObjectUtils.isEmpty(generatePoDTO.getFirstMassProduct()) ? detailEntity.getFirstMassProduct() : generatePoDTO.getFirstMassProduct());
             //备注
             generatePoDTO.setRemark(detailEntity.getRemark());
             //付款条件

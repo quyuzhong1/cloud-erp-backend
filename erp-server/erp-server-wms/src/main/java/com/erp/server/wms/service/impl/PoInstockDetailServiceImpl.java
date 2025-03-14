@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -26,7 +25,6 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -182,6 +180,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             entity.setTaxRate(detailEntity.getTaxRate());
             entity.setCurrency(detailEntity.getCurrency());
             entity.setCurrencySymbol(detailEntity.getCurrencySymbol());
+            entity.setFirstMassProduct(detailEntity.getFirstMassProduct());
             //修改操作日志
             if (CharSequenceUtil.isNotBlank(entity.getId())) {
                 PoInstockDetailEntity old = this.getById(entity.getId());

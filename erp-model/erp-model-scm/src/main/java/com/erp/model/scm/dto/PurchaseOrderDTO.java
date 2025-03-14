@@ -460,16 +460,6 @@ public class PurchaseOrderDTO implements Serializable {
          * 目的仓库/交货仓库
          */
         private String deliveryWarehouseName;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        @NotNull(message = "新品首批不能为空")
-        private Boolean isFirstMassProduct;
-        /**
-         * 新品首批 新品首批（false否,true是）
-         */
-        private String firstMassProductName;
         /**
          * 委外订单类型(child子级，parent父级)
          */
@@ -1582,11 +1572,6 @@ public class PurchaseOrderDTO implements Serializable {
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * 委外订单类型(child子级，parent父级)

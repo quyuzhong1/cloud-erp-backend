@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -89,6 +90,10 @@ public class PurchaseChangeDetailDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
 
         /**
          * 变更备注

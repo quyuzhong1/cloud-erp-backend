@@ -292,11 +292,6 @@ public class WarehouseReceiveDTO implements Serializable {
         private String deliveryWarehouseName;
 
         /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
-
-        /**
          * 采购员Id
          */
         private String purchaseUserId;

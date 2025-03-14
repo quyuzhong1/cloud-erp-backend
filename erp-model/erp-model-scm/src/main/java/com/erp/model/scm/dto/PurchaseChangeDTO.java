@@ -273,11 +273,6 @@ public class PurchaseChangeDTO implements Serializable {
         private String receiveOrgId;
 
         /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
-
-        /**
          * 交货仓库
          */
         private String deliveryWarehouseId;

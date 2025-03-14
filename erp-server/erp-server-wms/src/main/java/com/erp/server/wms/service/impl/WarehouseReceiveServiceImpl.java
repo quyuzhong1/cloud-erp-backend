@@ -25,6 +25,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
@@ -393,7 +394,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         viewDTO.setSupplierAddress(supplierEntity.getCompanyAddress());
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setSupplierContactId(orderSupplierByOrderId.getSupplierContactId());
-        viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
         viewDTO.setPurchaseDeptId(purchaseOrderEntity.getPurchaseDeptId());
@@ -451,6 +451,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             detailView.setPurchaseQty(purchaseOrderDetailEntity.getPurchaseQty());
             detailView.setPlanDeliveryDate(purchaseOrderDetailEntity.getPlanDeliveryDate());
             detailView.setProductName(productDetailEntity.getName());
+            detailView.setFirstMassProduct(purchaseOrderDetailEntity.getFirstMassProduct());
+            detailView.setFirstMassProductName(FirstMassProductTypeEnum.getName(purchaseOrderDetailEntity.getFirstMassProduct()));
             detailViewDTOS.add(detailView);
         }
         viewDTO.setWarehouseReceiveDetailList(detailViewDTOS);
@@ -602,11 +604,10 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         //获取到sku 信息
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIds);
         List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(purchaseOrderIds);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIds);
         String sourceType = SourceTypeEnum.PO_RECEIVE.getCode();
         for (QcInfoDTO.ReceiveToQcDTO item : qcList) {
             String skuId = item.getSkuId();
-            String purchaseOrderId = item.getPurchaseOrderId();
             ProductVO.ProductPackVO sku = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
                     findFirst().orElse(new ProductVO.ProductPackVO());
             SkuVO productDetailEntity = skuNoList.stream().filter(s -> s.getSkuId().equals(skuId)).
@@ -623,9 +624,9 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             item.setProductLength(sku.getProductLength());
             item.setProductWidth(sku.getProductWidth());
             item.setProductNetWeight(sku.getProductNetWeight());
-            Boolean isFirstMassProduct = purchaseOrderList.stream().filter(p -> p.getId().equals(purchaseOrderId)).
-                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(false);
-            item.setIsFirstMassProduct(isFirstMassProduct);
+            PurchaseOrderDetailEntity entity = purchaseOrderDetailEntities.stream().filter(p -> p.getId().equals(item.getPurchaseOrderDetailId())).
+                    findFirst().orElse(new PurchaseOrderDetailEntity());
+            item.setFirstMassProduct(entity.getFirstMassProduct());
 
         }
         //添加质检单的
@@ -649,7 +650,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         List<String> stockInSaleMethodList = qcRuleList.stream().filter(r -> r.getQcType().getCode().equals(stockIn)).map(QcRuleEntity::getSaleMethod).collect(Collectors.toList());
         String stockInSaleMethod = String.join(",", stockInSaleMethodList);
         //新品 并且符合等级的
-        List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> q.getIsFirstMassProduct()).collect(Collectors.toList());
+        List<QcInfoDTO.ReceiveToQcDTO> newProductList = qcList.stream().filter(q -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(q.getFirstMassProduct())).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO newItem : newProductList) {
             //为空所有的加，等级为空用销售方式，销售方式为空用等级
             if ((CharSequenceUtil.isNotBlank(newProductGrade) && CharSequenceUtil.isNotBlank(newSaleMethod))) {
@@ -694,7 +695,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
         }
         //旧品 并且符合等级的
-        List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> !q.getIsFirstMassProduct()).collect(Collectors.toList());
+        List<QcInfoDTO.ReceiveToQcDTO> stockInProductList = qcList.stream().filter(q -> FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(q.getFirstMassProduct())).collect(Collectors.toList());
         for (QcInfoDTO.ReceiveToQcDTO stockInItem : stockInProductList) {
             if ((CharSequenceUtil.isNotBlank(stockInProductGrade) && CharSequenceUtil.isNotBlank(stockInSaleMethod))) {
                 QcInfoDTO.ReceiveToQcDTO stockInQc = new QcInfoDTO.ReceiveToQcDTO();
@@ -1473,7 +1474,6 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
         if (ObjectUtils.isNotEmpty(supplierContactById)) {
             viewDTO.setSupplierContactName(supplierContactById.getPerson());
         }
-        viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setPurchaseUserId(purchaseOrderEntity.getPurchaseUserId());
         viewDTO.setPurchaseUserName(purchaseOrderEntity.getPurchaseUserName());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
@@ -1530,6 +1530,8 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             detailView.setWarehouseLocationName(warehouseLocationEntity.getName());
             Integer effectiveStockInQty = poInstockDetailList.stream().filter(e -> e.getSourceDetailId().equals(warehouseReceiveDetailEntity.getId())).map(PoInstockDetailEntity::getStockInQty).reduce(MathUtil.ZERO, Integer::sum);
             detailView.setEffectiveStockInQty(effectiveStockInQty);
+            detailView.setFirstMassProduct(purchaseOrderDetailEntity.getFirstMassProduct());
+            detailView.setFirstMassProductName(FirstMassProductTypeEnum.getName(purchaseOrderDetailEntity.getFirstMassProduct()));
             detailView.setUnStockInQty(detailView.getReceiveQty() - effectiveStockInQty + returnQty);
 
             detailViewDTOS.add(detailView);

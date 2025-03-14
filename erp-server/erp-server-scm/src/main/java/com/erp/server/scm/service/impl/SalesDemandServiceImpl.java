@@ -423,7 +423,6 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             List<SalesDemandDTO.GenerateSalesDemandDTO> value = entry.getValue();
             SalesDemandDTO.AddDTO addDTO = new SalesDemandDTO.AddDTO();
             addDTO.setApplyDate(value.get(0).getApplyDate());
-            addDTO.setIsFirstMassProduct(value.get(0).getIsFirstMassProduct());
             addDTO.setSourceId(value.get(0).getSourceId());
             addDTO.setSourceCode(value.get(0).getSourceCode());
             addDTO.setSourceType(value.get(0).getSourceType());
@@ -445,6 +444,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                 addDetailDTO.setPlanStockQty(dto.getPlanStockQty());
                 addDetailDTO.setDestWarehouseId(dto.getWarehouseId());
                 addDetailDTO.setRemark(dto.getRemark());
+                addDetailDTO.setFirstMassProduct(dto.getFirstMassProduct());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);

@@ -789,11 +789,6 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          */
         private String applyUserId;
         /**
-         * 是否新品首批，false否，true是
-         */
-        @NotNull(message = "是否新品首批不能为空")
-        private Boolean isFirstMassProduct;
-        /**
          * 申请部门
          */
         private String applyDeptId;

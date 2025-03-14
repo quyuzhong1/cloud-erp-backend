@@ -110,6 +110,12 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         private String purchaseOrgName;
 
         /**
+         * 新品首批（false否,true是）
+         */
+        @NotNull(message = "新品首批不能为空")
+        private String firstMassProduct;
+
+        /**
          * 备注
          */
         @Size(max = 255,message = "备注不能大于255字符")
