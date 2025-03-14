@@ -964,24 +964,19 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
+        ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.REJECT;
         if (type.equals(ScmConstant.PASS)) {
-            //异步发送通知
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE, comment);
-                }
-            });
-
-        } else {
-            //异步发送通知
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.REJECT, comment);
-                }
-            });
+            approveStatusEnum = ApproveStatusEnum.APPROVE;
         }
+        //异步发送通知
+        ApproveStatusEnum finalApproveStatusEnum = approveStatusEnum;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                sendMsg(Collections.singletonList(entity.getId()), finalApproveStatusEnum, comment);
+            }
+        });
+
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             return approveEnd(entity, type,comment,isNeedProcess);
         }
