@@ -394,6 +394,16 @@ public class SoOutstockDTO implements Serializable {
          * 销售平台名称
          */
         private String dictPlatformName;
+
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
     }
 
     /**·

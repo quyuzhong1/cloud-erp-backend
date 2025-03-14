@@ -923,24 +923,24 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         private String endDate;
 
 
-        @ExcelProperty(value = "MAE", index = 5)
-        private BigDecimal mAEScore;
+        @ExcelProperty(value = "maeScore", index = 5)
+        private String maeScore;
 
 
-        @ExcelProperty(value = "MSE", index = 6)
-        private BigDecimal mSEScore;
+        @ExcelProperty(value = "mseScore", index = 6)
+        private String mseScore;
 
 
-        @ExcelProperty(value = "RMSE", index = 7)
-        private BigDecimal rMSEScore;
+        @ExcelProperty(value = "rmseScore", index = 7)
+        private String rmseScore;
 
 
-        @ExcelProperty(value = "MAPE", index = 8)
-        private BigDecimal mAPEScore;
+        @ExcelProperty(value = "mapeScore", index = 8)
+        private String mapeScore;
 
 
-        @ExcelProperty(value = "R2Score", index = 9)
-        private BigDecimal r2Score;
+        @ExcelProperty(value = "r2Score", index = 9)
+        private String r2Score;
 
         public static HistorySaleExportDTO bulidHistorySaleExportDTO(ReplenishmentSuggestionDTO.SkuShopDTO shopDTO, String platformName,
                                                                      ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO) {

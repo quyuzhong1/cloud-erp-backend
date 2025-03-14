@@ -264,6 +264,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
 
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
+
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
         return lambdaQuery().eq(SoOutstockEntity::getInvalidStatus, Boolean.FALSE)
@@ -545,7 +548,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setCountryName(countryName);
         }
 
-        if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(soOutstock.getSourceType())) {
+        if ("qimen".equals(soOutstock.getCreateUserName()) || "wangdiantong".equals(soOutstock.getCreateUserName())){
             String countryName = countryList.stream().filter(e -> e.getId().equals(soOutstock.getCountry())).map(DictCountryDTO.ListDTO::getNameCn).findFirst().orElse("");
             result.setCountryId(soOutstock.getCountry());
             result.setCountryName(countryName);
@@ -1559,11 +1562,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
         Map<String, String> customerPlatformTypeMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType));
 
+        //查询虚拟仓信息
+        List<String> virtualWarehouseIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseEntities = CollectionUtils.isNotEmpty(virtualWarehouseIds)?virtualWarehouseService.listByIds(virtualWarehouseIds):new ArrayList<>();
         for (SoOutstockDTO.PagingViewDTO item : list) {
             //设置跟踪单号
 //            if(trackNoMAp.containsKey(item.getId())){
 //                item.setTrackNo(trackNoMAp.get(item.getId()));
 //            }
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntities.stream().filter(obj -> obj.getId().equals(item.getVirtualWarehouseId())).findFirst().orElse(null);
+            if (Objects.nonNull(virtualWarehouseEntity)) {
+                item.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+            }
             if (StringUtils.isNotEmpty(item.getTrackNos())){
                 String[] split = item.getTrackNos().split(",");
                 item.setTrackNo(Arrays.stream(split).collect(Collectors.toList()));
@@ -3411,7 +3421,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (!isB2c) {
                 pushTaskEntity = syncKingdeeSoOutstockService.syncDataToKingdee(obj, operate);
             } else {
-                if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(obj.getSourceType())){
+                if ("qimen".equals(obj.getCreateUserName()) || "wangdiantong".equals(obj.getCreateUserName())){
                     pushTaskEntity = syncKingdeeSoOutstockService.syncWdtDataToKingdee(obj, operate);
                 }else {
                     pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, operate);

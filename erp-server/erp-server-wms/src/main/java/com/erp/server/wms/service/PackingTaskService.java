@@ -78,10 +78,10 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     /**
      * 装箱保存
      * @param dto
-     * @param isDeleteCarton 是否需要删除装箱数据
+     * @param isAddCarton 是否需要删除装箱数据
      * @return
      */
-    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isDeleteCarton);
+    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isAddCarton);
 
     void sendNoticeMsg(String taskId, String operation, String content);
 

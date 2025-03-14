@@ -388,7 +388,11 @@ public class CfgRuleCalcServiceImpl extends SuperServiceImpl<CfgRuleCalcMapper, 
 
     @Override
     public List<String> hasSalesShopBySku(List<String> params) {
-        return orderHistorySalesEsService.hasSalesShopBySku(params);
+        List<String> shopIdList = orderHistorySalesEsService.hasSalesShopBySku(params);
+        List<ShopInfoEntity> list = FeignQuery.list(ShopInfoEntity.class);
+        return list.stream().map(ShopInfoEntity::getId)
+                .filter(shopIdList::contains)
+                .collect(Collectors.toList());
     }
 
     @Override

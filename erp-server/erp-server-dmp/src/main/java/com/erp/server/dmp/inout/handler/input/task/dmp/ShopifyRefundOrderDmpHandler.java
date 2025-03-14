@@ -55,7 +55,8 @@ public class ShopifyRefundOrderDmpHandler extends DmpInputDoNextDmpHandler{
             dmpMap.put("shopId", shopId);
             // 主单信息
             dmpMap.put("thirdCode", shopifyRefund.getId());
-            dmpMap.put("platformCode", shopifyRefund.getOrderId());
+            dmpMap.put("platformCode", shopifyRefund.getId());
+            dmpMap.put("platformOrderCode", shopifyRefund.getOrderId());
             dmpMap.put("platformCreateTime", shopifyRefund.getCreatedAt());
             dmpMap.put("platformUpdateTime", shopifyRefund.getProcessedAt());
 
@@ -63,6 +64,17 @@ public class ShopifyRefundOrderDmpHandler extends DmpInputDoNextDmpHandler{
             dmpMap.put("buyerUserId", shopifyRefund.getUserId());
             dmpMap.put("remark", shopifyRefund.getNote());
             dmpMap.put("reason", shopifyRefund.getNote());
+
+            // 退款状态：0退款中 1、成功 2、失败 3、作废'
+            String status = "";
+            String sourceStatus = transactions.get(0).getStatus();
+            if ("success".equalsIgnoreCase(sourceStatus)){
+                status = "1";
+            } else if ("failure".equalsIgnoreCase(sourceStatus)) {
+                status = "2";
+            }
+            dmpMap.put("status", status);
+
 
             dmpMap.put("currencyCode", currency);
             // 记录所有金额

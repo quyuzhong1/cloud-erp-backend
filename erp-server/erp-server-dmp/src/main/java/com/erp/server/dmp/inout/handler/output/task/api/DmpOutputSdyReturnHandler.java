@@ -90,7 +90,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
         if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
-            status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
         }
 
         dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
@@ -149,6 +149,7 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setStatus("已创建");
 
             sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
+            sdyDTO.setGoods_transaction_quantity(dmpSoReturnDetailEntity.getQty());
             sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
 
             int qtyTotal = dmpSoReturnDetailEntityList.stream().filter(d -> d.getQty() != null).mapToInt(DmpSoReturnDetailEntity::getQty).sum();

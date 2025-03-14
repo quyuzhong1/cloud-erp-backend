@@ -1032,6 +1032,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                     detailEntity.setWarehouseOrgName(companyDTO.getName());
                 }
             }
+            if(StringUtils.isBlank(detailEntity.getWarehouseId())){
+                detailEntity.setWarehouseName("");
+            }
             //操作日志
             if (StringUtils.isNotBlank(detailEntity.getId())) {
                 SoB2cDetailEntity old = this.getById(detailEntity.getId());

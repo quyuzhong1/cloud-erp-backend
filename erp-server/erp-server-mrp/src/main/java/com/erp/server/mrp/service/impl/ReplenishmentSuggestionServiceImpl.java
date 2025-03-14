@@ -1320,11 +1320,11 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 temp = temp.plusMonths(1);
             }
             DataDifferenceCalculator.MetricsResult metricsResult = DataDifferenceCalculator.computeMetrics(calcList, basicData, "");
-            exportDTO.setMAEScore(metricsResult.getMAEScore());
-            exportDTO.setMSEScore(metricsResult.getMSEScore());
-            exportDTO.setRMSEScore(metricsResult.getRMSEScore());
-            exportDTO.setMAPEScore(metricsResult.getMAPEScore());
-            exportDTO.setR2Score(metricsResult.getR2Score());
+            exportDTO.setMaeScore(metricsResult.getMAEScore().toPlainString());
+            exportDTO.setMseScore(metricsResult.getMSEScore().toPlainString());
+            exportDTO.setRmseScore(metricsResult.getRMSEScore().toPlainString());
+            exportDTO.setMapeScore(metricsResult.getMAPEScore().toPlainString());
+            exportDTO.setR2Score(metricsResult.getR2Score().toPlainString());
             historySaleExportDTOS.add(exportDTO);
             List<ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO> detailExportList = ReplenishmentSuggestionDTO.HistorySaleDetailExportDTO
                     .buildHistorySaleDetailExportDTO(shopDTO, platformName, exportSalesDTO, salesHistoryDTOS, saleEstimateList, detailId);
