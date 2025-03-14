@@ -139,6 +139,27 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 errorList.add(excelDTO);
                 continue;
             }
+            //校验两个参数及以上都存在时。是否存在关联的多条物流单
+            List<LogisticsBillEntity> logisticsBillEntityList1 = logisticsBillEntityList.stream().filter(v -> {
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
+                    return v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode());
+                }
+                return false;
+            }).collect(Collectors.toList());
+            if (CollUtil.isEmpty(logisticsBillEntityList1)) {
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
+                    msg.append("来源单号【").append(excelDTO.getOutstockCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                msg.append("不存在关联的物流单");
+                excelDTO.setErrorMsg(msg.toString());
+                errorList.add(excelDTO);
+                continue;
+
+            }
             if (entityList.size() > 1) {
                 StringBuilder msg = new StringBuilder();
                 if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
