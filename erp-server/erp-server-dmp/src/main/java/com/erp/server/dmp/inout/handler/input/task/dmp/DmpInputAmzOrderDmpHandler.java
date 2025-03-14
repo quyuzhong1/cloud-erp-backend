@@ -109,7 +109,7 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 dmpDataMap.put("platformOrderStatus", sourceOrder.getOrderStatus());
 
-                dmpDataMap.put("orderStatus", sourceOrder.convertBillStatus());
+                dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus());
                 dmpDataMap.put("payStatus", SoB2cPayStatusEnum.ENUM_PAID.getCode().equalsIgnoreCase(sourceOrder.convertPayStatus()));
 
                 // 订单日期
@@ -121,7 +121,7 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 // 审核状态状态
                 // （ApproveStatus字典类型）
-                dmpDataMap.put("approveStatus", sourceOrder.convertApproveStatusStr());
+                dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatusStr());
             }
         }
         log.debug("DmpInputAmzOrderDmpHandler 处理完成: taskId={}", dmpInputTaskEntity.getId());
