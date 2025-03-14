@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -77,6 +78,8 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return java.lang.Boolean
      */
     Boolean submitApprove(List<String> ids,Boolean isStartProcess);
+
+    void sendMsg(List<String> idList, ApproveStatusEnum approveStatus,String comment);
 
     /**
      * 采购价目变更 审核
