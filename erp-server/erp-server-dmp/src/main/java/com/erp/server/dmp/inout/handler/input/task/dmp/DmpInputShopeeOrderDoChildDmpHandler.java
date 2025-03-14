@@ -67,6 +67,11 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 						if (StringUtils.isBlank(targetSku)){
 							targetSku = item.getOrDefault("item_sku", "").toString();
 						}
+						String skuName = item.getOrDefault("model_name", "").toString();
+						if (StringUtils.isBlank(targetSku)){
+							skuName = item.getOrDefault("item_name", "").toString();
+						}
+						copyProperties.put("skuName", skuName);
 						String targetId = item.getOrDefault("model_id", "").toString();
 						if (StringUtils.isBlank(targetId) || "0".equalsIgnoreCase(targetId)){
 							targetId = item.getOrDefault("item_id", "").toString();
@@ -82,6 +87,7 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 						}
 						copyProperties.put("thirdDetailId", item.get("model_id"));
 						copyProperties.put("platformDetailId", item.get("order_item_id"));
+						copyProperties.put("nextLevelId", nextLevelId);
 						resultList.add(copyProperties);
 					}
 				}
