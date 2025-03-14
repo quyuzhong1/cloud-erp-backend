@@ -116,12 +116,6 @@ public class PoInstockEntity extends BaseEntity<PoInstockEntity> {
     private String purchaseDeptName;
 
     /**
-     * 新品首批（false否,true是）
-     */
-    @TableField("is_first_mass_product")
-    private Boolean isFirstMassProduct;
-
-    /**
      * 供应商id
      */
     @TableField("supplier_id")

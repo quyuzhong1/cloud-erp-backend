@@ -247,8 +247,6 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
         }
         //供应商联系人
         resultMap.put("contactName",purchaseOrderSupplierEntity.getContactName());
-        //是否是新品首批
-        resultMap.put("isFirstMassProduct",entity.getIsFirstMassProduct());
 
         if (ObjectUtils.isNotEmpty(purchaseOrderSupplierEntity.getPaymentCondition())) {
             //付款条件
@@ -281,6 +279,8 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")) );
             jsonObject.set("price", MathUtil.divide(detailEntity.getTaxPrice(),MathUtil.add(MathUtil.BigDecimal_1,detailEntity.getTaxRate())) );
             jsonObject.set("taxPrice",detailEntity.getTaxPrice());
+            //新品首批
+            jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
             //部门编码
             if (CollectionUtils.isNotEmpty(warehouseList)) {
                 String kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();

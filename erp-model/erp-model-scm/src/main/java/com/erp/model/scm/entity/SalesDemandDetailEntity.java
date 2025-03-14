@@ -86,6 +86,12 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
     private String destWarehouseName;
 
     /**
+     * 新品首批
+     */
+    @TableField("first_mass_product")
+    private String firstMassProduct;
+
+    /**
      * 备注
      */
     @TableField("remark")

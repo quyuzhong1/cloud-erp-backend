@@ -31,7 +31,6 @@
             pa.code,
             pad.is_urgent as isUrgent,
             pa.approve_status as approveStatus,
-            pa.is_first_mass_product as isFirstMassProduct,
             pad.create_po_type as createPoType,
             pad.sku_id as skuId,
             pad.sku_no as skuNo,
@@ -53,7 +52,8 @@
             pa.source_id,
             pa.source_code,
             pa.source_type,
-            pad.source_json
+            pad.source_json,
+            pad.first_mass_product as firstMassProduct
         from purchase_application pa
         inner join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         left join supplier s on pad.supplier_id = s.id and s.is_deleted = false
@@ -93,7 +93,6 @@
             pa.code,
             pad.is_urgent as isUrgent,
             pa.approve_status as approveStatus,
-            pa.is_first_mass_product as isFirstMassProduct,
             pad.create_po_type as createPoType,
             pad.sku_id as skuId,
             pad.sku_no as skuNo,
@@ -115,7 +114,8 @@
             pa.source_id,
             pa.source_code,
             pa.source_type,
-            pad.source_json as sourceJson
+            pad.source_json as sourceJson,
+            pad.first_mass_product as firstMassProduct
         from purchase_application pa
         inner join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         left join supplier s on pad.supplier_id = s.id and s.is_deleted = false
@@ -178,7 +178,8 @@
             pad.dest_warehouse_name as warehouseName,
             pad.apply_qty as qty,
             pad.plan_delivery_date as planDeliveryDate,
-            pad.remark
+            pad.remark,
+            pad.first_mass_product as firstMassProduct
         from purchase_application pa
         left join purchase_application_detail pad on pa.id = pad.purchase_application_id and pad.is_deleted = false
         <where>
