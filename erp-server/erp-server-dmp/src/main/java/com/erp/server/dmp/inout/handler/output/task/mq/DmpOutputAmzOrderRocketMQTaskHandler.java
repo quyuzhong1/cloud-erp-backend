@@ -300,10 +300,10 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         detailDTO.setQty(item.getQty());
         // item总价
         // 金额
-        detailDTO.setAmount(item.getAfterAmount());
+        detailDTO.setAmount(item.getSellPriceOrigin().multiply(BigDecimal.valueOf(item.getQty())));
 
         // 单价
-        detailDTO.setPrice(item.getSellPrice());
+        detailDTO.setPrice(item.getSellPriceOrigin());
 
         // 币别（原币）
         detailDTO.setCurrency(item.getCurrencyCode());
