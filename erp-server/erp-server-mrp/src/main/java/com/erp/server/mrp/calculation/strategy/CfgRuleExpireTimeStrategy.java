@@ -7,6 +7,7 @@ import com.erp.model.mrp.dto.CfgRuleLogisticsDTO;
 import com.erp.model.mrp.entity.CfgRuleExpireTimeEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+import com.erp.model.mrp.entity.CfgRuleOverseasInstockDaysEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleSettingEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
@@ -52,9 +53,23 @@ public class CfgRuleExpireTimeStrategy implements CfgRuleSettingStrategy<CfgRule
         CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult = ruleLogisticsList.stream()
                 .max(Comparator.comparing(v -> v.getLogisticsDays() + v.getLogisticsCycleDays()))
                 .map(CfgRuleLogisticsDTO.LogisticsResultDTO::buildLogisticsResult).orElse(getMaxLogistics(dto, defaultCfgRuleExpireTime.getId()));
+        int instockDays;
+        if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {
+            instockDays = CfgRuleExpireTimeDTO.getOrDefault(cfgRuleExpireTime, CfgRuleExpireTimeEntity::getPlatformInstockDays, defaultCfgRuleExpireTime.getPlatformInstockDays());
+        } else {
+            instockDays = CfgRuleExpireTimeDTO.getOrDefault(cfgRuleExpireTime, CfgRuleExpireTimeEntity::getOverseasInstockDays, getDefaultInStockDays(dto.getCfgRuleOverseasInStockDaysList(), dto.getWarehouseId(),defaultCfgRuleExpireTime.getOverseasInstockDays()));
+        }
         CfgRuleExpireTimeDTO.StrategyResultDTO result = new CfgRuleExpireTimeDTO.StrategyResultDTO();
-        result.buildStrategyResultDTO(dto.getPlatformType(), cfgRuleExpireTime, defaultCfgRuleExpireTime,  logisticsResult, logisticsMaxResult, logisticsMinResult);
+        result.buildStrategyResultDTO(cfgRuleExpireTime, defaultCfgRuleExpireTime,  logisticsResult, logisticsMaxResult, logisticsMinResult, instockDays);
         return result;
+    }
+
+    private Integer getDefaultInStockDays(List<CfgRuleOverseasInstockDaysEntity> cfgRuleOverseasInStockDaysList, List<String> warehouseIdList, Integer overseasInstockDays) {
+        return cfgRuleOverseasInStockDaysList.stream()
+                .filter(v -> warehouseIdList.contains(v.getWarehouseId()))
+                .map(CfgRuleOverseasInstockDaysEntity::getInstockDays)
+                .max(Integer::compareTo)
+                .orElse(overseasInstockDays);
     }
 
     private CfgRuleLogisticsDTO.LogisticsResultDTO getMaxLogistics(CfgRuleExpireTimeDTO.StrategyDTO dto, String expireTimeId) {
