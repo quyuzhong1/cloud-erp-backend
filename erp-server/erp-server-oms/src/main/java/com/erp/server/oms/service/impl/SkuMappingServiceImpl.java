@@ -44,17 +44,18 @@ import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
+import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
@@ -149,6 +150,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private BomSkuFeign bomSkuFeign;
     @Resource
     private SoInfoService soInfoService;
+
+    @Resource
+    private VirtualInventoryFeign virtualInventoryFeign;
+    @Resource
+    private InventoryFeign inventoryFeign;
+
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -1877,6 +1884,57 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("客户id不能为空");
         }
         return this.baseMapper.listSkuBySkuNos(skuParamDTO);
+    }
+
+    @Override
+    public List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO) {
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByAuth(RuleTypeEnum.CUSTOMER.getCode(), Collections.singletonList(skuParamDTO.getPlatformSkuNo()),Collections.singletonList(skuParamDTO.getCustomerId()));
+        if(CollectionUtils.isEmpty(listingInfoEntityList)){
+            return Collections.emptyList();
+        }
+        ListingInfoEntity listingInfoEntity = listingInfoEntityList.get(0);
+        List<SkuMappingEntity> skuMappingEntityList = this.lambdaQuery()
+                .eq(SkuMappingEntity::getListingId, listingInfoEntity.getId())
+                .orderByDesc(SkuMappingEntity::getEffectiveTime)
+                .list();
+
+        if(CollectionUtils.isEmpty(skuMappingEntityList)){
+            return Collections.emptyList();
+        }
+
+        List<String> skuIdList = skuMappingEntityList.stream().map(SkuMappingEntity::getProductSkuId).collect(Collectors.toList());
+        //虚拟库存
+        VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
+        paramDTO.setWarehouseIdList(Collections.singletonList(skuParamDTO.getWarehouseId()));
+        paramDTO.setVirtualWarehouseIdList(Collections.singletonList(skuParamDTO.getVirtualWarehouseId()));
+        paramDTO.setDictInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        paramDTO.setSkuIdList(skuIdList);
+        List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyDTOList = virtualInventoryFeign.listInventoryQty(paramDTO);
+        //实体库存
+        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
+        skuInventoryDTO.setWarehouseIdList(Collections.singletonList(skuParamDTO.getWarehouseId()));
+        skuInventoryDTO.setSkuIdList(skuIdList);
+        List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
+        List<SkuMappingDTO.CustomerInventorySkuInfoDTO> customerInventorySkuInfoDTOS = new ArrayList<>();
+        for (SkuMappingEntity skuMappingEntity : skuMappingEntityList) {
+            SkuMappingDTO.CustomerInventorySkuInfoDTO customerInventorySkuInfoDTO = new SkuMappingDTO.CustomerInventorySkuInfoDTO();
+            customerInventorySkuInfoDTO.setId(skuMappingEntity.getId());
+            customerInventorySkuInfoDTO.setSkuNo(skuMappingEntity.getProductSkuNo());
+            customerInventorySkuInfoDTO.setSkuId(skuMappingEntity.getProductSkuId());
+            customerInventorySkuInfoDTO.setEffectiveTime(skuMappingEntity.getEffectiveTime());
+            customerInventorySkuInfoDTO.setIsEffective(!skuMappingEntity.getIsExpire());
+            List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryStatusTotalDTOList = inventoryList.stream().filter(v->v.getSkuId().equals(skuMappingEntity.getProductSkuId())).collect(Collectors.toList());
+            Integer totalQty = skuInventoryStatusTotalDTOList.stream().map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(0,Integer::sum);
+            customerInventorySkuInfoDTO.setActualQty(totalQty);
+            List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyDTOList1 = virtualInventoryQtyDTOList.stream().filter(v->v.getDictInventoryStatus().equals(InventoryStatusEnum.FROZEN.getCode()) && v.getSkuId().equals(skuMappingEntity.getProductSkuId())).collect(Collectors.toList());
+            Integer frozenQty = virtualInventoryQtyDTOList1.stream().map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(0,Integer::sum);
+            customerInventorySkuInfoDTO.setVirtualFrozenQty(frozenQty);
+            customerInventorySkuInfoDTO.setStock(totalQty - frozenQty);
+            customerInventorySkuInfoDTOS.add(customerInventorySkuInfoDTO);
+        }
+
+        return customerInventorySkuInfoDTOS;
     }
 
 //    @Override
