@@ -92,6 +92,10 @@ public class FirstMileEstimatedBillExcelListener extends AnalysisEventListener<F
         List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(mainIdList, null, DetailReconciliationTypeEnum.ACTUAL.getCode());
 
         for (FirstMileEstimatedBillExcelDTO excelDTO : dataList) {
+            int notEmptyCount = 0;
+            if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())) {notEmptyCount++;}
+            if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {notEmptyCount++;}
+            if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())) {notEmptyCount++;}
             //校验数据
             List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> {
                 //同时不为空时，匹配来源单号和业务单号
@@ -153,7 +157,7 @@ public class FirstMileEstimatedBillExcelListener extends AnalysisEventListener<F
                 }
                 return false;
             }).collect(Collectors.toList());
-            if (CollUtil.isEmpty(logisticsBillEntityList1)) {
+            if (CollUtil.isEmpty(logisticsBillEntityList1) && notEmptyCount > 1) {
                 StringBuilder msg = new StringBuilder();
                 if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
                     msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
@@ -164,7 +168,7 @@ public class FirstMileEstimatedBillExcelListener extends AnalysisEventListener<F
                 if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
                     msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
                 }
-                msg.append("不存在关联的物流单");
+                msg.append("匹配不到物流单");
                 excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
                 continue;

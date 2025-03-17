@@ -114,6 +114,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
         List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
         for (FmLogisticsBillExcelDTO excelDTO : dataList) {
+            int notEmptyCount = 0;
+            if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())) {notEmptyCount++;}
+            if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {notEmptyCount++;}
             //校验数据
             List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> {
                 //同时不为空时，匹配来源单号和业务单号
@@ -146,7 +149,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 }
                 return false;
             }).collect(Collectors.toList());
-            if (CollUtil.isEmpty(logisticsBillEntityList1)) {
+            if (CollUtil.isEmpty(logisticsBillEntityList1) && notEmptyCount > 1) {
                 StringBuilder msg = new StringBuilder();
                 if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
                     msg.append("来源单号【").append(excelDTO.getOutstockCode()).append("】");
@@ -154,7 +157,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
                     msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
                 }
-                msg.append("不存在关联的物流单");
+                msg.append("匹配不到物流单");
                 excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
                 continue;
