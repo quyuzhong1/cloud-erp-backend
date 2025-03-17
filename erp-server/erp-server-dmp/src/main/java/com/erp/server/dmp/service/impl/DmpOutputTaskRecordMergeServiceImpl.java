@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
+import com.erp.model.dmp.entity.DmpPushMsgEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.OutputTaskRecordMergeStatusEnum;
 import com.erp.server.dmp.inout.handler.output.task.api.DmpOutputErpPushTaskHandler;
@@ -26,6 +27,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
+import com.erp.server.dmp.service.DmpPushMsgService;
 import com.erp.server.dmp.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
@@ -69,6 +71,9 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
     
     @Resource
     private CfgSettingService cfgSettingService;
+    
+    @Resource
+    private DmpPushMsgService dmpPushMsgService;
     
     @Autowired
 	@Qualifier("dmpSdyOutputExecutorPool")
@@ -232,13 +237,39 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 				
 				String requestData = dmpOutputTaskRecordEntity.getRequestData();
 				Boolean isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+				String newRequestData = "";
 				if (isQuerySync != null && isQuerySync) {
 					List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
 					if(CollUtil.isNotEmpty(erpQuerySync)) {
 						requestData = erpQuerySync.get(0).getRequestData();
 						isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
 						if (isQuerySync != null && isQuerySync) {
-							return true;
+							DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dmpOutputTaskRecordEntity.getDataId());
+							if(dmpPushMsgEntity == null) {
+								return true;
+							}
+							List<DmpPushMsgEntity> dmpPushMsgList = dmpPushMsgService.lambdaQuery()
+								.eq(DmpPushMsgEntity::getSourceId, dmpPushMsgEntity.getSourceId())
+								.ne(DmpPushMsgEntity::getId, dmpPushMsgEntity.getId())
+								.eq(DmpPushMsgEntity::getSourcePlatform, dmpPushMsgEntity.getSourcePlatform())
+								.eq(DmpPushMsgEntity::getTargetPlatform, dmpPushMsgEntity.getTargetPlatform())
+								.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+								.list();
+							if(CollUtil.isEmpty(dmpPushMsgList)) {
+								return true;
+							}
+							List<DmpOutputTaskRecordEntity> sourceIdList = dmpOutputTaskRecordService.lambdaQuery()
+								.eq(DmpOutputTaskRecordEntity::getDataId, dmpPushMsgList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+								.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+								.likeRight(DmpOutputTaskRecordEntity::getRequestData, "{")
+								.orderByDesc(DmpOutputTaskRecordEntity::getCreateTime)
+								.list();
+							if(CollUtil.isEmpty(sourceIdList)) {
+								return true;
+							}
+							JSONObject parseObject = JSON.parseObject(sourceIdList.get(0).getRequestData());
+							parseObject.put("status", "已删除");
+							newRequestData = parseObject.toJSONString();
 						}
 					}
 				}
@@ -250,6 +281,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 					.eq(DmpOutputTaskRecordEntity::getId, id)
 					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 					.set(DmpOutputTaskRecordEntity::getResponseData, "待合并id=" + entity.getId())
+					.set(StringUtils.isNotBlank(newRequestData) ,  DmpOutputTaskRecordEntity::getRequestData, newRequestData)
 					.update();
 				return false;
 			}
