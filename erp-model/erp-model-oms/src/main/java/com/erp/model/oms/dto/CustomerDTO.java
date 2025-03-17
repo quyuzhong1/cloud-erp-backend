@@ -251,6 +251,16 @@ public class CustomerDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class VirtualDTO {
+
+        @NotBlank(message = "客户id不能为空")
+        private String customerId;
+
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+    }
+    @Data
+    @NoArgsConstructor
     public static class PageSelectDTO {
         /**
          * 主键id

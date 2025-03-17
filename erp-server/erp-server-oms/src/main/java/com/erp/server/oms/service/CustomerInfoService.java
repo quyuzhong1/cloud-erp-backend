@@ -7,6 +7,7 @@ import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.vo.CustomerInfoVO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -388,4 +389,6 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * 初始化处理客户销售部门数据
      */
     void initHistoryCustomerDeptId();
+
+    VirtualWarehouseDTO.VwDTO getVirtualWarehouseByCustomerId(CustomerDTO.VirtualDTO dto);
 }

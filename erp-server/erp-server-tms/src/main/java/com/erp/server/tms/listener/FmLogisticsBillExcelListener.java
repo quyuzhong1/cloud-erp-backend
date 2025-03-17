@@ -121,12 +121,12 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> {
                 //同时不为空时，匹配来源单号和业务单号
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
-                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}else {return false;}
                 }
                 //来源单号不为空时，匹配来源单号
-                if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode()) && v.getOutstockCode().equals(excelDTO.getOutstockCode())) {return true;}
+                if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())) {if (v.getOutstockCode().equals(excelDTO.getOutstockCode())) return true;else {return false;}}
                 //业务单号不为空时，匹配业务单号
-                if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {if (v.getBusinessCode().equals(excelDTO.getBusinessCode())) return true;else {return false;}}
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {

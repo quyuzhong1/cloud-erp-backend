@@ -66,5 +66,21 @@
             and sm.warehouse_id = #{params.warehouseId}
         </if>
     </select>
+    <select id="searchByKey" resultType="com.erp.model.oms.dto.ListingInfoDTO$SearchResultDTO">
+        select li.id as listingId,
+               li.platform_sku_no as platformSkuNo
+        from listing_info li
+        where li.is_deleted = false
+        and li.type = #{params.type};
+        <if test="params.authId != null and params.authId != ''">
+            and li.auth_id = #{params.authId}
+        </if>
+        and li.platform_sku_no ILIKE concat('%',#{params.searchKey}::text,'%')
+        order by
+        case when li.platform_sku_no ILIKE concat(#{params.searchKey}::text,'%') THEN 1
+        when li.platform_sku_no ILIKE concat('%',#{params.searchKey}::text) THEN 2
+        when li.platform_sku_no ILIKE concat('%',#{params.searchKey}::text,'%') THEN 3
+        end , li.platform_sku_no
+    </select>
 
 </mapper>
