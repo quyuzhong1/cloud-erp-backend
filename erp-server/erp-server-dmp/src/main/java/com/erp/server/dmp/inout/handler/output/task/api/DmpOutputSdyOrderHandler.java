@@ -556,7 +556,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
                 //取消金额、数量
                 if (dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
-                        || dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.SHOPEE.getCode())
                 ) {
                     shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
                     if (dmpSoInfoEntity.getIsCancel()) {

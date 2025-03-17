@@ -121,7 +121,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         //取消金额、数量
         if (soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
-                || soB2cEntity.getDictPlatform().equals(PlatformDictEnum.SHOPEE.getCode())
         ) {
             shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(soB2cEntity.getTotalCancelGoodsAmount());
         } else {

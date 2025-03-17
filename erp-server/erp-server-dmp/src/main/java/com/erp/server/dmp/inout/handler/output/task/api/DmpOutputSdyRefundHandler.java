@@ -327,6 +327,9 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             	dictCurrencyMap = new HashMap<>();
             }
             String tradeCurrency = shopInfo.getTradeCurrency();
+            if (CharSequenceUtil.isNotBlank(dmpSoRefundEntity.getCurrencyCode())) {
+            	tradeCurrency = dmpSoRefundEntity.getCurrencyCode();
+            }
             Object dictCurrencybject = dictCurrencyMap.get(tradeCurrency);
             DictCurrencyEntity dictCurrency = null;
             if(dictCurrencybject == null) {
