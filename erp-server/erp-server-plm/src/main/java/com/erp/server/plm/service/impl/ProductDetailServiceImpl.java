@@ -19,6 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -36,10 +37,8 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
@@ -112,6 +111,7 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -4488,7 +4488,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+    public ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         if(importType == 1){//导入新增
             return importAdd(excelFile, importType, response);
         }else if(importType == 2){//导入更新（待审核）
@@ -4496,7 +4496,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }else if(importType == 3){//导入更新（已审核）
             return importUpdateApprove(excelFile, response);
         }
-        return false;
+        return new ExcelImportFsDTO.UrlDTO();
     }
 
     private String getInsurancePropertyList(String insurancePropertyName, Map<String, BasicDictEntity> mapById, List<String> errorMsgList) {
@@ -4545,7 +4545,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
     //导入更新（已审核）
-    private Boolean importUpdateApprove(MultipartFile excelFile, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importUpdateApprove(MultipartFile excelFile, HttpServletResponse response) {
         ProductDetailUpdateApproveExcelListener excelListenerUtil = new ProductDetailUpdateApproveExcelListener();
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateApproveExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -4566,23 +4566,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //处理验证成功数据
         handleApproveSuccessList(successList, errorList);
+        successList.removeAll(errorList);
 
-        if (errorList.size() > 0) {
-            StringBuilder sb = new StringBuilder();
+        String errorUrl = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String excelPath = "excel/productNoSpecApproveDetail.xlsx";
-            String name = "productNoSpecApproveDetail";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productNoSpecApproveDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
-
-            return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productNoSpecApproveDetail.xlsx";
+            String fileName = "productNoSpecApproveDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
 
@@ -5006,7 +5010,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     //导入更新（待审核）
-    private Boolean importUpdateNotApprove(MultipartFile excelFile, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importUpdateNotApprove(MultipartFile excelFile, HttpServletResponse response) {
         ProductDetailUpdateNotApproveExcelListener excelListenerUtil = new ProductDetailUpdateNotApproveExcelListener();
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateNotApproveExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -5027,23 +5031,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //处理验证成功数据
         handleNotApproveSuccessList(successList, errorList);
+        successList.removeAll(errorList);
 
-        if (errorList.size() > 0) {
-            StringBuilder sb = new StringBuilder();
+        String errorUrl = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String excelPath = "excel/productNoSpecDetail.xlsx";
-            String name = "productNoSpecDetail";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
-
-            return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productNoSpecDetail.xlsx";
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
     private void handleNotApproveSuccessList(List<ProductDetailUpdateNotApproveExcelDTO> successList, List<ProductDetailUpdateNotApproveExcelDTO> errorList) {
@@ -5788,7 +5796,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     //导入新增
-    private Boolean importAdd(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importAdd(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener();
         try {
             read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -5809,23 +5817,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //处理验证成功数据
         handleImportSuccessList(successList, errorList, importType);
+        successList.removeAll(errorList);
 
-        if (errorList.size() > 0) {
-            StringBuilder sb = new StringBuilder();
+        String errorUrl = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String excelPath = "excel/productNoSpecDetail.xlsx";
-            String name = "productNoSpecDetail";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
-
-            return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productNoSpecDetail.xlsx";
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
     private void handleImportSuccessList(List<ProductDetailExcelDTO> successList, List<ProductDetailExcelDTO> errorList, Integer importType) {
@@ -6876,7 +6888,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public void importProductUpdate(MultipartFile excelFile, HttpServletResponse response) {
+    public ExcelImportFsDTO.UrlDTO importProductUpdate(MultipartFile excelFile, HttpServletResponse response) {
         List<BasicCategoryEntity> categoryList = basicCategoryService.list();
         List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
@@ -6893,23 +6905,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
+        successList.removeAll(errorList);
+
         for (ProductInfoDTO productInfoDTO : successList) {
             productInfoService.updateSpec(productInfoDTO);
         }
+        String errorUrl = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            StringBuilder sb = new StringBuilder();
             String excelPath = "excel/productUpdateError.xlsx";
-            String name = "导入更新";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productUpdateError.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productUpdateError.xlsx";
+            String fileName = "productUpdateError.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
     /**
