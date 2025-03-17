@@ -130,7 +130,8 @@ public class CfgRuleExpireTimeStrategy implements CfgRuleSettingStrategy<CfgRule
             //先获取海外仓 再获取不到则取外层数据
             detail = cfgRuleLogisticsDetails.stream()
                     .filter(v -> dto.getWarehouseId().contains(v.getWarehouseId()))
-                    .findFirst().orElse(null);
+                    .max(Comparator.comparing(CfgRuleLogisticsDetailEntity::getLogisticsDays))
+                    .orElse(null);
         }
         if (ObjectUtils.isEmpty(detail)) {
             return CfgRuleLogisticsDTO.LogisticsResultDTO.buildLogisticsResult(entity);
