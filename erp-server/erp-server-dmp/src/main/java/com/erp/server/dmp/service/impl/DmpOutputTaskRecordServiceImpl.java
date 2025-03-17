@@ -46,6 +46,8 @@ import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
 import com.erp.server.dmp.mapper.DmpOutputTaskRecordMapper;
 import com.erp.server.dmp.service.*;
+import com.google.common.collect.Lists;
+
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -106,7 +108,16 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Autowired
 	@Qualifier("dmpTabListExecutorPool")
 	private ExecutorService dmpTabListExecutorPool;
-
+    
+    @Resource
+    private DmpInputTaskService dmpInputTaskService;
+    
+    @Resource
+    private DmpInputFileMongoRelationService dmpInputFileMongoRelationService;
+    
+    @Resource
+    private DmpInputMongoDmpRelationService dmpInputMongoDmpRelationService;
+    
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -681,25 +692,77 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void dmpInputMoveToHistoryTable(String beforeUpdateTime, String size) {
-		this.getBaseMapper().dmpInputMoveToHistoryTable(beforeUpdateTime, size);
+		List<String> list = dmpInputTaskService.lambdaQuery()
+			.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
+			.lt(DmpInputTaskEntity::getUpdateTime, beforeUpdateTime)
+			.last(" limit " + size + " ")
+			.select(DmpInputTaskEntity::getId)
+			.list().stream().map(DmpInputTaskEntity::getId).collect(Collectors.toList());
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<String>> partition = Lists.partition(list, 50000);
+		for(List<String> p : partition) {
+			this.getBaseMapper().dmpInputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
 	}
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void dmpRelationMoveToHistoryTable(String beforeUpdateTime, String size) {
-		this.getBaseMapper().dmpRelationMoveToHistoryTable(beforeUpdateTime, size);
+		List<String> dmpInputFileMongoRelationList = dmpInputFileMongoRelationService.lambdaQuery()
+				.lt(DmpInputFileMongoRelationEntity::getUpdateTime, beforeUpdateTime)
+				.last(" limit " + size + " ")
+				.select(DmpInputFileMongoRelationEntity::getId)
+				.list().stream().map(DmpInputFileMongoRelationEntity::getId).collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(dmpInputFileMongoRelationList)) {
+			List<List<String>> filePartition = Lists.partition(dmpInputFileMongoRelationList, 50000);
+			for(List<String> fileP : filePartition) {
+				this.getBaseMapper().dmpRelationMoveToHistoryTable(fileP.stream().collect(Collectors.joining("','", "'", "'")), null);
+			}
+		}
+		
+		List<String> dmpInputMongoDmpRelationList = dmpInputMongoDmpRelationService.lambdaQuery()
+				.lt(DmpInputMongoDmpRelationEntity::getUpdateTime, beforeUpdateTime)
+				.last(" limit " + size + " ")
+				.select(DmpInputMongoDmpRelationEntity::getId)
+				.list().stream().map(DmpInputMongoDmpRelationEntity::getId).collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(dmpInputMongoDmpRelationList)) {
+			List<List<String>> dmpPartition = Lists.partition(dmpInputMongoDmpRelationList, 50000);
+			for(List<String> dmpP : dmpPartition) {
+				this.getBaseMapper().dmpRelationMoveToHistoryTable(null , dmpP.stream().collect(Collectors.joining("','", "'", "'")));
+			}
+		}
 	}
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void dmpOutputMoveToHistoryTable(String beforeUpdateTime, String size) {
-		this.getBaseMapper().dmpOutputMoveToHistoryTable(beforeUpdateTime, size);
+		List<String> list = this.getBaseMapper().getDmpOutputMoveToHistoryTable(beforeUpdateTime, size);
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<String>> partition = Lists.partition(list, 50000);
+		for(List<String> p : partition) {
+			this.getBaseMapper().dmpOutputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
+		
 		redisUtil.del(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
 	}
 
 	@Transactional(rollbackFor = Exception.class)
 	@Override
 	public void dmpOutputNoRecordMoveToHistoryTable() {
-		this.getBaseMapper().dmpOutputNoRecordMoveToHistoryTable();
+		List<String> list = this.getBaseMapper().getDmpOutputNoRecordMoveToHistoryTable();
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<String>> partition = Lists.partition(list, 50000);
+		for(List<String> p : partition) {
+			this.getBaseMapper().dmpOutputNoRecordMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
 	}
 }

@@ -55,9 +55,12 @@ public class PartitionJob {
             List<SoB2cReceiverEntity> list = pageData.getRecords();
             List<SoB2cReceiverEntity> updateList = new ArrayList<>();
             for (SoB2cReceiverEntity soB2cReceiverEntity : list) {
-                String country = soB2cReceiverEntity.getCountry();
-                if(StringUtils.isNotBlank(soB2cReceiverEntity.getCustomerCountry()) && !soB2cReceiverEntity.getCustomerCountry().equals(DictValueEnum.ALL.getCode())){
+                String country = soB2cReceiverEntity.getShopCountry();
+                if(StringUtils.isBlank(country) || country.equals(DictValueEnum.ALL.getCode())){
                     country = soB2cReceiverEntity.getCustomerCountry();
+                }
+                if(StringUtils.isBlank(country) || country.equals(DictValueEnum.ALL.getCode())){
+                    country = soB2cReceiverEntity.getCountry();
                 }
                 if(StringUtils.isBlank(country)){
                     continue;
