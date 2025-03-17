@@ -261,7 +261,9 @@ public interface B2cOrderConverter {
             @Mapping(target = "sourceCargo", source = "productDTO.sourceCargo"),
             @Mapping(target = "sourceCountry", source = "productDTO.sourceCountry"),
             @Mapping(target = "combinationDeclareType", source = "productDTO.combinationDeclareType"),
-            @Mapping(target = "url", source = "soB2cDetail.imageUrl")
+            @Mapping(target = "url", source = "soB2cDetail.imageUrl"),
+            @Mapping(target = "price", source = "soB2cDetail.price"),
+            @Mapping(target = "currency", source = "soB2cDetail.currency")
     })
     LogisticsProductVO convertDeclareProductVOByEntity(SoB2cDeclareProductEntity soB2cDeclareProductEntity, SoB2cDetailEntity soB2cDetail, LogisticsProductDTO.ProductDTO productDTO);
 
