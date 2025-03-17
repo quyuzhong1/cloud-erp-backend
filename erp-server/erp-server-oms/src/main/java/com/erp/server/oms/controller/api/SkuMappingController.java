@@ -456,6 +456,14 @@ public class SkuMappingController extends BaseController {
         return this.success(skuMappingService.listSkuBySkuNos(skuParamDTO));
     }
 
+    /**
+     * 填写客户sku返回匹配的erp sku 和对应的实体仓实际库存-虚拟仓冻结库存
+     */
+    @PostMapping("/getErpSkuByCustomerSku")
+    public ApiResult<List<SkuMappingDTO.ProductSkuInfoDTO>> getErpSkuByCustomerSku(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
+        return this.success(skuMappingService.listSkuBySkuNos(skuParamDTO));
+    }
+
 //    /**
 //     * 根据customerId和平台sku 查询是否存在套装bom
 //     * @author jack
