@@ -259,7 +259,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 								return true;
 							}
 							List<DmpOutputTaskRecordEntity> sourceIdList = dmpOutputTaskRecordService.lambdaQuery()
-								.eq(DmpOutputTaskRecordEntity::getDataId, dmpPushMsgList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+								.in(DmpOutputTaskRecordEntity::getDataId, dmpPushMsgList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
 								.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 								.likeRight(DmpOutputTaskRecordEntity::getRequestData, "{")
 								.orderByDesc(DmpOutputTaskRecordEntity::getCreateTime)
