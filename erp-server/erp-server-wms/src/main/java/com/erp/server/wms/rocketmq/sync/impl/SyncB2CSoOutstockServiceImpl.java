@@ -383,21 +383,20 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             List<InventoryEntity> inventoryEntityList = inventoryList.stream().filter(v -> v.getSkuId().equals(detail.getSkuId()))
                     .collect(Collectors.toList());
             for (InventoryEntity inventory : inventoryEntityList) {
+                SoOutstockDetailEntity newDetail = BeanMapperUtils.map(SoOutstockDetailEntity.class, detail);
+                newDetail.setId(IdWorker.getIdStr());
+                newDetail.setWarehouseLocation(inventory.getWarehouseLocation());
                 if (inventory.getQty() >= quantity.get()) {
-                    detail.setId(IdWorker.getIdStr());
-                    detail.setWarehouseLocation(inventory.getWarehouseLocation());
-                    detail.setPlanQty(quantity.get());
-                    detail.setActualQty(quantity.get());
-                    detailNewList.add(detail);
+                    newDetail.setPlanQty(quantity.get());
+                    newDetail.setActualQty(quantity.get());
+                    detailNewList.add(newDetail);
                     inventory.setQty(inventory.getQty() - quantity.get());
                     quantity.set(0);
                     break;
                 } else {
-                    detail.setId(IdWorker.getIdStr());
-                    detail.setWarehouseLocation(inventory.getWarehouseLocation());
-                    detail.setPlanQty(inventory.getQty());
-                    detail.setActualQty(inventory.getQty());
-                    detailNewList.add(detail);
+                    newDetail.setPlanQty(inventory.getQty());
+                    newDetail.setActualQty(inventory.getQty());
+                    detailNewList.add(newDetail);
                     quantity.set(quantity.get() - inventory.getQty());
                     inventory.setQty(0);
                 }
