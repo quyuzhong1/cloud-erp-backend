@@ -1670,15 +1670,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> taskIds = list.stream().map(req -> req.getTaskId()).collect(Collectors.toList());
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(ids);
         //查询库存sku
-        List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
         List<DictCountryEntity> dictCountryEntityList = FeignQuery.list(DictCountryEntity.class);
-        for (FirstMileDeliveryDTO.ListDTO detailEntity : list) {
-            SkuMappingDTO.ListSkuParamDTO paramDTO = new SkuMappingDTO.ListSkuParamDTO();
-            paramDTO.setSkuNo(detailEntity.getSkuNo());
-            paramDTO.setWarehouseId(detailEntity.getDeliveryWarehouseId());
-            skuParamDTOList.add(paramDTO);
-        }
-        List<SkuMappingDTO.ListSkuDTO> listSkuDTOS = skuMappingFeign.listBySkuNoList(skuParamDTOList);
 
         //查询已下推的海外入库单
         List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntities = overseasWarehouseInboundService.listBySourceIds(ids);
@@ -1711,12 +1703,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuNo().equals(data.getSkuNo())).findFirst().orElse(new SkuVO());
 
             //库存sku
-            String stockSku = listSkuDTOS.stream()
-                    .filter(req -> data.getSkuId().equals(req.getProductSkuId())
-                            && data.getDeliveryWarehouseId().equals(req.getWarehouseId()))
-                    .distinct().findFirst()
-                    .flatMap(obj -> Optional.ofNullable(obj.getWarehouseSkuNo())).orElse("");
-            data.setStockSku(stockSku);
+            if(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(data.getDemandType())){
+                data.setStockSku(data.getPlatformSkuNo());
+            }
 
             long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(data.getSkuId())&& bomType.equals(e.getType())).count();
 

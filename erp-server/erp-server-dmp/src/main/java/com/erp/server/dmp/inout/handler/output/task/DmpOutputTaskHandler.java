@@ -55,6 +55,7 @@ import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.erp.server.dmp.service.DmpOutputTaskService;
+import com.google.common.collect.Lists;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
@@ -255,9 +256,13 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				continue;
 			}
 			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(entityName + "ServiceImpl" , ServiceImpl.class);
-			QueryWrapper<?> wrapper = new QueryWrapper<>();
-			wrapper.in("main_id", mainIds);
-			List<BaseEntity> childEntityList = serviceImpl.list(wrapper);
+			List<List<String>> partition = Lists.partition(mainIds, 50000);
+			List<BaseEntity> childEntityList = new ArrayList<>();
+			for(List<String> p : partition) {
+				QueryWrapper<?> wrapper = new QueryWrapper<>();
+				wrapper.in("main_id", p);
+				childEntityList.addAll(serviceImpl.list(wrapper));
+			}
 			dmpOutputTaskRequest.getConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
 			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
 		}
