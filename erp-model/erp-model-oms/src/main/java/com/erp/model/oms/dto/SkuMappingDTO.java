@@ -830,6 +830,50 @@ public class SkuMappingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class CustomerInventorySkuInfoDTO {
+
+        /**
+         * skumapping Id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuId
+         */
+        private String skuNo;
+        /**
+         * 是否有效
+         */
+        private Boolean isEffective;
+
+        /**
+         * 启用时间
+         */
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 实体仓实际库存
+         */
+        private Integer actualQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
+
+        /**
+         * 实体仓实际库存 - 虚拟仓冻结库存
+         */
+        private Integer stock;
+
+    }
+    @Data
+    @NoArgsConstructor
     public static class ProductSkuInfoDTO {
 
         /**
@@ -1341,6 +1385,34 @@ public class SkuMappingDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class CustomerInventorySkuParamDTO {
+
+
+        /**
+         * 客户id
+         */
+        @NotBlank(message = "客户id不能为空")
+        private String customerId;
+
+        /**
+         * 客户Sku
+         */
+        @NotBlank(message = "平台sku不能为空")
+        private String platformSkuNo;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+    }
 
     @Data
     @NoArgsConstructor
