@@ -1,7 +1,6 @@
 package com.erp.server.oms.kingdee;
 
 import com.common.business.dto.base.BaseIdDTO;
-import com.erp.model.bi.dto.BiBatchShareDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -103,5 +102,18 @@ public interface SyncSoB2cService {
                                                             List<BaseIdDTO.CodeDTO> companyEntities,
                                                             List<DictBasicEntity> dictBasicEntityList,
                                                             List<DictBasicEntity> dictList);
+
+    /**
+     * 同步数帝云
+     *
+     * @param soId
+     * @param operateEnum
+     * @param sourceType
+     */
+    void syncSdyOrderHandler(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operateEnum, String sourceType);
+
+
+    void syncSdyCancelOrder(SoB2cEntity mainEntity, List<SoB2cDetailEntity> detailList, String code);
+
 
 }

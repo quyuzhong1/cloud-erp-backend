@@ -9556,33 +9556,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.lambdaUpdate().eq(SoB2cEntity::getId, b2cSoId).set(SoB2cEntity::getIsOverEstimatedShipCost, isOverEstimatedShipCost).update();
     }
 
-    @Override
-    public void syncSdyOrderHandler(String soId, String operateEnum, String sourceType) {
-        SoB2cEntity soB2cEntity = this.getById(soId);
-        if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
-            // 海外仓推送
-            // B2C销售订单作为配货单
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
-            syncSoB2cService.syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
-        } else if (soB2cEntity.hasPlatformWarehouseOrder()) {
-            // 平台仓推送
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
-                // 速卖通发货单作为配货单
-                syncSoB2cService.syncAliExpressDataToSdy(soB2cEntity, operateEnum);
-            } else {
-                // 其他平台仓B2C销售订单作为配货单
-                List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
-                syncSoB2cService.syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
-            }
-        } else if (SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
-            // 非海外仓自发货订单按B2C发货单推送
-            syncSoB2cService.syncSelfAddDataToSdy(soB2cEntity, operateEnum);
-        } else {
-            // 其他推送
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
-            syncSoB2cService.syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
-        }
-    }
 
     @Override
     public List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {

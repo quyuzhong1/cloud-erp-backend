@@ -10,7 +10,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
-import com.common.business.enums.*;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -389,7 +388,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
 //            syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
 //        }
-
+        // 已支付订单在出库时推送
+        // 已取消订单推送?
+        if (mainEntity.getIsCancel()) {
+            //同步数帝云
+            syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+        }
         return resultDTO;
     }
 

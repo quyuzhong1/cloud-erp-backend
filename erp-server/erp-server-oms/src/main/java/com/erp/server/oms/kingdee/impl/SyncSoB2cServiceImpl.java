@@ -3,19 +3,15 @@ package com.erp.server.oms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.business.utils.RedisUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
-import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
@@ -26,6 +22,7 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -34,6 +31,7 @@ import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OmsPushMsgService;
@@ -61,6 +59,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
     private DictBasicService dictBasicService;
     @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     private final static DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -635,6 +635,51 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shudiyunB2cOrderDTO
         );
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
+    }
+
+    @Override
+    public void syncSdyOrderHandler(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operateEnum, String sourceType) {
+        if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
+            // 海外仓推送
+            // B2C销售订单作为配货单
+            syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
+        } else if (soB2cEntity.hasPlatformWarehouseOrder()) {
+            // 平台仓推送
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
+                // 速卖通发货单作为配货单
+                syncAliExpressDataToSdy(soB2cEntity, operateEnum);
+            } else {
+                // 其他平台仓B2C销售订单作为配货单
+                syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
+            }
+        } else if (SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
+            // 非海外仓自发货订单按B2C发货单推送
+            syncSelfAddDataToSdy(soB2cEntity, operateEnum);
+        } else {
+            // 其他推送
+            syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
+        }
+    }
+
+    @Override
+    public void syncSdyCancelOrder(SoB2cEntity mainEntity, List<SoB2cDetailEntity> detailList, String operateCode) {
+        String sourceType;
+        if (mainEntity.hasPlatformWarehouseOrder()) {
+            // 平台仓订单(平台销售出库单)(扣可用库存)
+            sourceType = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode();
+        } else {
+            List<String> warehouseIds = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
+            if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
+                // 海外仓出库单 (扣可用库存)
+                sourceType = SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode();
+            } else {
+                // B2C发货单-取消不需要推送
+                log.warn("B2C销售订单自发订单取消状态：不推送：{}", mainEntity.getCode());
+                return;
+            }
+        }
+        syncSdyOrderHandler(mainEntity, detailList, operateCode, sourceType);
     }
 
 }

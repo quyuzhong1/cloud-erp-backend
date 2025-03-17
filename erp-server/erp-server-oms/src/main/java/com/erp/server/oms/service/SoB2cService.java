@@ -1019,15 +1019,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void updateOverEstimatedShipCost(String b2cSoId, Boolean isOverEstimatedShipCost);
 
-    /**
-     * 同步数帝云
-     *
-     * @param soId
-     * @param operateEnum
-     * @param sourceType
-     */
-    void syncSdyOrderHandler(String soId, String operateEnum, String sourceType);
-
     List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset);
     /**
      * 同步销售出库单的单据日期
