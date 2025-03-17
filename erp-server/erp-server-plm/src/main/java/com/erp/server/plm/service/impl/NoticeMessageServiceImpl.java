@@ -156,6 +156,12 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 String itemPeople = item.getItemPeople();
                 item.setItemPeopleList(Arrays.asList(itemPeople.split(",")));
                 item.setItemPeopleName(NoticeItemPeopleEnum.getNameByFlags(itemPeople, ","));
+
+                if(StringUtils.isNotBlank(item.getDataJson())){
+                    NoticeMessageDTO.ProductDetailChangeDTO productDetailChangeDTO = JSONUtil.toBean(item.getDataJson(), NoticeMessageDTO.ProductDetailChangeDTO.class);
+                    item.setProductDetailChangeDTO(productDetailChangeDTO);
+                }
+
             }
         }
         return new PagingVO<>(pageData);
@@ -192,8 +198,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
             throw new ServiceException(ApiError.ERROR_95055);
         }
-        if(Objects.nonNull(dto.getProductDetailChangeDTO())){
+        if(Objects.nonNull(dto.getProductDetailChangeDTO())
+                && (CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductBasicList()) || CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductPackList()))){
             messageEntity.setDataJson(JSONUtil.toJsonStr(dto.getProductDetailChangeDTO()));
+        }else{
+            throw new ServiceException(ApiError.ERROR_95287);
         }
         boolean flag = this.save(messageEntity);
         if (flag) {
@@ -239,8 +248,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
             throw new ServiceException(ApiError.ERROR_95055);
         }
-        if(Objects.nonNull(dto.getProductDetailChangeDTO())){
+        if(Objects.nonNull(dto.getProductDetailChangeDTO())
+                && (CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductBasicList()) || CollUtil.isNotEmpty(dto.getProductDetailChangeDTO().getProductPackList()))){
             messageEntity.setDataJson(JSONUtil.toJsonStr(dto.getProductDetailChangeDTO()));
+        }else{
+            throw new ServiceException(ApiError.ERROR_95287);
         }
         messageEntity.setId(dto.getId());
         return this.updateById(messageEntity);
@@ -1325,15 +1337,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     }
 
     @Override
-    public NoticeMessageDTO view(String id) {
+    public NoticeMessageEntity view(String id) {
         NoticeMessageEntity entity = this.getById(id);
-        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
-
-        NoticeMessageDTO resultEntity = new NoticeMessageDTO();
-        BeanMapper.copy(entity, resultEntity);
-        NoticeMessageDTO.ProductDetailChangeDTO productDetailChangeDTO = JSONUtil.toBean(entity.getDataJson(), NoticeMessageDTO.ProductDetailChangeDTO.class);
-        resultEntity.setProductDetailChangeDTO(productDetailChangeDTO);
-        return resultEntity;
+        NoticeMessageEntity oldEntity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
+        return oldEntity;
     }
 
 
