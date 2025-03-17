@@ -908,7 +908,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         inventoryParamDTO.setWarehouseIdList(warehouseIdList);
         inventoryParamDTO.setSkuIdList(skuIdList);
         inventoryParamDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
-        inventoryParamDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        inventoryParamDTO.setDictInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = CollectionUtils.isEmpty(virtualWarehouseIdList) ?
                 new ArrayList<>() : virtualInventoryService.listInventoryQty(inventoryParamDTO);
 

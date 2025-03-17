@@ -322,5 +322,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
 
     Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
+    List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO);
+
 //    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 }

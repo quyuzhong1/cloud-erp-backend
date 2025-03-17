@@ -89,10 +89,10 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         if(CollectionUtils.isEmpty(dataList)){
             return;
         }
-        List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getOutstockCode).collect(Collectors.toList());
-        List<String> businessCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getBusinessCode).collect(Collectors.toList());
-        List<String> supplierNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getSupplierName).distinct().collect(Collectors.toList());
-        List<String> channelNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getChannelName).distinct().collect(Collectors.toList());
+        List<String> outstockCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getOutstockCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> businessCodeList = dataList.stream().map(FmLogisticsBillExcelDTO::getBusinessCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> supplierNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<String> channelNameList = dataList.stream().map(FmLogisticsBillExcelDTO::getChannelName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listBySourceCodeList(businessCodeList, outstockCodeList, null);
         List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(mainIdList);
@@ -114,6 +114,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
         List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
         for (FmLogisticsBillExcelDTO excelDTO : dataList) {
+            int notEmptyCount = 0;
+            if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())) {notEmptyCount++;}
+            if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {notEmptyCount++;}
             //校验数据
             List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> {
                 //同时不为空时，匹配来源单号和业务单号
@@ -127,12 +130,49 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】未匹配到物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode() ));
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
+                    msg.append("发货单号【").append(excelDTO.getOutstockCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                msg.append("未匹配到物流单");
+                excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
                 continue;
             }
+            //校验两个参数及以上都存在时。是否存在关联的多条物流单
+            List<LogisticsBillEntity> logisticsBillEntityList1 = logisticsBillEntityList.stream().filter(v -> {
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
+                    return v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode());
+                }
+                return false;
+            }).collect(Collectors.toList());
+            if (CollUtil.isEmpty(logisticsBillEntityList1) && notEmptyCount > 1) {
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
+                    msg.append("来源单号【").append(excelDTO.getOutstockCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                msg.append("匹配不到物流单");
+                excelDTO.setErrorMsg(msg.toString());
+                errorList.add(excelDTO);
+                continue;
+
+            }
             if (entityList.size() > 1) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("来源单号【{}】或业务单号【{}】存在多条物流单",excelDTO.getOutstockCode(), excelDTO.getBusinessCode() ));
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
+                    msg.append("发货单号【").append(excelDTO.getOutstockCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                msg.append("存在多条物流单");
+                excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
                 continue;
             }
@@ -146,6 +186,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
                 errorList.add(excelDTO);
             });
+            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
+                continue;
+            }
             reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !v.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).findFirst().ifPresent(v->{
                 excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
                 errorList.add(excelDTO);
@@ -157,9 +200,6 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             if(Objects.isNull(detailEntity)){
                 excelDTO.setErrorMsg("物流单明细不存在");
                 errorList.add(excelDTO);
-                continue;
-            }
-            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
                 continue;
             }
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);

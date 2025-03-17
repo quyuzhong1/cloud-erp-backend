@@ -177,4 +177,12 @@ public class LogisticsProductVO  implements Serializable {
      * sku名称
      */
     private String skuName;
+    /**
+     * 真实售价
+     */
+    private BigDecimal price;
+    /**
+     * 售价原币种
+     */
+    private String currency;
 }
