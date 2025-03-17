@@ -138,7 +138,6 @@
             ta.approve_status as approveStatus,
             tad.sku_id as skuId,
             tad.sku_no as skuNo,
-            tad.warehouse_location as outWarehouseLocation,
             tad.qty as qty,
             ta.bill_date as billDate,
             ta.out_warehouse_id as outWarehouseId,

@@ -38,11 +38,6 @@ public class TransferApplicationDetailEntity extends BaseEntity<TransferApplicat
      */
     @TableField("sku_no")
     private String skuNo;
-    /**
-     * 库位
-     */
-    @TableField(value = "warehouse_location")
-    private String warehouseLocation;
 
     /**
      * 数量
