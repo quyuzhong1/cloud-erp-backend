@@ -429,7 +429,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         }
         List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<AliexpressDeliveryDetailEntity> detailEntityList = FeignQuery.create(AliexpressDeliveryDetailEntity.class)
-                .eq(AliexpressDeliveryDetailEntity::getMainId, mainIds)
+                .in(AliexpressDeliveryDetailEntity::getMainId, mainIds)
                 .list();
 
         if (CollUtil.isNotEmpty(detailEntityList)) {
@@ -643,22 +643,21 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             // 海外仓推送
             // B2C销售订单作为配货单
             syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
-        } else if (soB2cEntity.hasPlatformWarehouseOrder()) {
-            // 平台仓推送
-            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
-                // 速卖通发货单作为配货单
-                syncAliExpressDataToSdy(soB2cEntity, operateEnum);
-            } else {
-                // 其他平台仓B2C销售订单作为配货单
-                syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
-            }
-        } else if (SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
+            return;
+        }
+        if (soB2cEntity.hasPlatformWarehouseOrder() && PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())) {
+            // 速卖通发货单作为配货单
+            syncAliExpressDataToSdy(soB2cEntity, operateEnum);
+            return;
+        }
+        // 手工和自发货订单
+       if (SourceTypeEnum.SELF_ADD.getCode().equalsIgnoreCase(soB2cEntity.getSourceType()) || !soB2cEntity.hasPlatformWarehouseOrder()) {
             // 非海外仓自发货订单按B2C发货单推送
             syncSelfAddDataToSdy(soB2cEntity, operateEnum);
-        } else {
-            // 其他推送
-            syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
+            return;
         }
+        // 其他推送
+        syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
     }
 
     @Override

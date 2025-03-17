@@ -696,15 +696,19 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         // 订单同步数帝云是详情级别同步，所以查询详情
         // 查询发货单明细
-        List<SoB2cDeliveryDetailEntity> deliveryDetailList = FeignQuery.create(SoB2cDeliveryDetailEntity.class)
+        List<SoB2cDeliveryDetailEntity> curDeliveryDetail = FeignQuery.create(SoB2cDeliveryDetailEntity.class)
                 .in(SoB2cDeliveryDetailEntity::getId, sourceIdList)
                 .list();
 
         //根据详情获取主表
-        List<String> mainIdList = deliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<String> mainIdList = curDeliveryDetail.stream().map(SoB2cDeliveryDetailEntity::getMainId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(mainIdList)) {
             return resultList;
         }
+        // 发货单所有
+        List<SoB2cDeliveryDetailEntity> allDeliveryDetail = FeignQuery.create(SoB2cDeliveryDetailEntity.class)
+                .in(SoB2cDeliveryDetailEntity::getMainId, mainIdList)
+                .list();
 
         List<SoB2cDeliveryEntity> deliveryList = FeignQuery.create(SoB2cDeliveryEntity.class)
                 .in(SoB2cDeliveryEntity::getId, mainIdList)
@@ -729,9 +733,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         }
 
         //产品信息
-        List<String> skuNos = deliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNos = allDeliveryDetail.stream().map(SoB2cDeliveryDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-        List<String> skuIds = deliveryDetailList.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<String> skuIds = allDeliveryDetail.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        skuIds.addAll(soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList()));
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
@@ -786,11 +791,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
 
         // 计算自发货明细单价
-        Map<String, BigDecimal> deliveryDetailPriceMap = convertAllDeliveryDetailPrice(deliveryDetailList, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
+        Map<String, BigDecimal> deliveryDetailPriceMap = convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
-            SoB2cDeliveryDetailEntity deliveryDetailEntity = deliveryDetailList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
+            SoB2cDeliveryDetailEntity deliveryDetailEntity = curDeliveryDetail.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(deliveryDetailEntity)) {
                 continue;
             }
@@ -810,7 +815,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     soB2cEntity,
                     detailEntities,
                     deliveryEntity,
-                    deliveryDetailList,
+                    allDeliveryDetail,
                     deliveryDetailEntity,
                     syncParamDetailDTO.getSyncOperate(),
                     skuVOList,
@@ -1029,14 +1034,14 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 if (null == skuVO){
                     ServiceException.runError("未找sku信息:skuId={}", bomChildrenSkuDTO.getSkuId());
                 }
-                BigDecimal actualTaxCost = skuVO.getActualTaxCost();
-                if (null == actualTaxCost){
+                BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
+                if (null == costPrice){
                     ServiceException.runError("未找到成本信息:skuId={}", bomChildrenSkuDTO.getSkuId());
                 }
-                if (0 == actualTaxCost.compareTo(BigDecimal.ZERO)){
+                if (0 == costPrice.compareTo(BigDecimal.ZERO)){
                     ServiceException.runError("成本信息为0:skuId={}", bomChildrenSkuDTO.getSkuId());
                 }
-                BigDecimal allItemPrice = actualTaxCost.multiply(BigDecimal.valueOf(bomChildrenSkuDTO.getQuantity()));
+                BigDecimal allItemPrice = costPrice.multiply(BigDecimal.valueOf(bomChildrenSkuDTO.getQuantity()));
                 totalCostAmount = totalCostAmount.add(allItemPrice);
             }
 

@@ -74,13 +74,13 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
      * 实际支付币别
      */
     @TableField("pay_currency")
-    private BigDecimal payCurrency;
+    private String payCurrency;
 
     /**
      * 折扣金额
      */
     @TableField("discount_amount")
-    private String discountAmount;
+    private BigDecimal discountAmount;
 
     /**
      * 折扣币别
