@@ -263,6 +263,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
 								.in(DmpOutputTaskRecordEntity::getDataId, dmpPushMsgList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
 								.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 								.likeRight(DmpOutputTaskRecordEntity::getRequestData, "{")
+								.notLike(DmpOutputTaskRecordEntity::getRequestData, "isQuerySync")
 								.orderByDesc(DmpOutputTaskRecordEntity::getCreateTime)
 								.list();
 							if(CollUtil.isEmpty(sourceIdList)) {
