@@ -158,7 +158,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         orderDTO.setPayTime(dmpSoInfoEntity.getPayTime());
         
         // 订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getAllAmount());
+        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
         // 币别（原币）
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
