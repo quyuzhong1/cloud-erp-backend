@@ -191,6 +191,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
             throw new ServiceException(ApiError.ERROR_95055);
         }
+        if(Objects.nonNull(dto.getProductDetailChangeDTO())){
+            messageEntity.setDataJson(JSONUtil.toJsonStr(dto.getProductDetailChangeDTO()));
+        }
         boolean flag = this.save(messageEntity);
         if (flag) {
             //更改节点
@@ -234,6 +237,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         }
         if (CollectionUtils.isEmpty(otherPeopleList) && CollectionUtils.isEmpty(itemPeopleList)) {
             throw new ServiceException(ApiError.ERROR_95055);
+        }
+        if(Objects.nonNull(dto.getProductDetailChangeDTO())){
+            messageEntity.setDataJson(JSONUtil.toJsonStr(dto.getProductDetailChangeDTO()));
         }
         messageEntity.setId(dto.getId());
         return this.updateById(messageEntity);
