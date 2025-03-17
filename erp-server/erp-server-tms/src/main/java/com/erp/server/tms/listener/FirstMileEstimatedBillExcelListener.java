@@ -135,6 +135,41 @@ public class FirstMileEstimatedBillExcelListener extends AnalysisEventListener<F
                 errorList.add(excelDTO);
                 continue;
             }
+            //校验两个参数及以上都存在时。是否存在关联的多条物流单
+            List<LogisticsBillEntity> logisticsBillEntityList1 = logisticsBillEntityList.stream().filter(v -> {
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getOutstockCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode())) {
+                    if (v.getOutstockCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                }
+                //同时不为空时，匹配来源单号和运单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(),excelDTO.getTransportNo())) {
+                    if (v.getOutstockCode().equals(excelDTO.getSourceCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                //同时不为空时，匹配来源单号和业务单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                return false;
+            }).collect(Collectors.toList());
+            if (CollUtil.isEmpty(logisticsBillEntityList1)) {
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
+                    msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
+                    msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
+                }
+                msg.append("不存在关联的物流单");
+                excelDTO.setErrorMsg(msg.toString());
+                errorList.add(excelDTO);
+                continue;
+
+            }
             if (entityList.size() > 1) {
                 StringBuilder msg = new StringBuilder();
                 if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
