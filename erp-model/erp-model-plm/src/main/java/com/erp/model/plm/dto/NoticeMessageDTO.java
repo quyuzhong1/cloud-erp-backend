@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -96,6 +97,12 @@ public class NoticeMessageDTO implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * json数据
+     */
+    @JsonIgnore
+    private String dataJson;
 
     /**
      * json数据 转实体类

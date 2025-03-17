@@ -297,7 +297,7 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
     /**
      * 通过ID获取通知详情
      */
-    NoticeMessageDTO view(String id);
+    NoticeMessageEntity view(String id);
 
     /**
      * 试产量产审核/试产量产审核完毕 发送通知
