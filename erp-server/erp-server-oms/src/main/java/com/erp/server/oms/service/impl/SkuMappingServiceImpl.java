@@ -56,7 +56,6 @@ import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.*;
-import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
 import com.erp.server.oms.listener.SkuMappingWarehouseExcelListener;
@@ -67,8 +66,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.checkerframework.checker.units.qual.C;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -81,7 +78,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -1888,21 +1884,21 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO) {
-        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByAuth(RuleTypeEnum.CUSTOMER.getCode(), Collections.singletonList(skuParamDTO.getPlatformSkuNo()),Collections.singletonList(skuParamDTO.getCustomerId()));
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByAuth(RuleTypeEnum.CUSTOMER.getCode(), skuParamDTO.getPlatformSkuNoList(),Collections.singletonList(skuParamDTO.getCustomerId()));
         if(CollectionUtils.isEmpty(listingInfoEntityList)){
             return Collections.emptyList();
         }
-        ListingInfoEntity listingInfoEntity = listingInfoEntityList.get(0);
-        List<SkuMappingEntity> skuMappingEntityList = this.lambdaQuery()
-                .eq(SkuMappingEntity::getListingId, listingInfoEntity.getId())
+        List<String> listingIdList = listingInfoEntityList.stream().map(ListingInfoEntity::getId).collect(Collectors.toList());
+        List<SkuMappingEntity> allSkuMappingEntityList = this.lambdaQuery()
+                .in(SkuMappingEntity::getListingId, listingIdList)
                 .orderByDesc(SkuMappingEntity::getEffectiveTime)
                 .list();
 
-        if(CollectionUtils.isEmpty(skuMappingEntityList)){
+        if(CollectionUtils.isEmpty(allSkuMappingEntityList)){
             return Collections.emptyList();
         }
 
-        List<String> skuIdList = skuMappingEntityList.stream().map(SkuMappingEntity::getProductSkuId).collect(Collectors.toList());
+        List<String> skuIdList = allSkuMappingEntityList.stream().map(SkuMappingEntity::getProductSkuId).collect(Collectors.toList());
         //虚拟库存
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
         paramDTO.setWarehouseIdList(Collections.singletonList(skuParamDTO.getWarehouseId()));
@@ -1916,25 +1912,39 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuInventoryDTO.setWarehouseIdList(Collections.singletonList(skuParamDTO.getWarehouseId()));
         skuInventoryDTO.setSkuIdList(skuIdList);
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
-        List<SkuMappingDTO.CustomerInventorySkuInfoDTO> customerInventorySkuInfoDTOS = new ArrayList<>();
-        for (SkuMappingEntity skuMappingEntity : skuMappingEntityList) {
+        List<SkuMappingDTO.CustomerInventorySkuInfoDTO> innerCustomerInventorySkuInfoDTOS = new ArrayList<>();
+        for (String platformSkuNo : skuParamDTO.getPlatformSkuNoList()) {
             SkuMappingDTO.CustomerInventorySkuInfoDTO customerInventorySkuInfoDTO = new SkuMappingDTO.CustomerInventorySkuInfoDTO();
-            customerInventorySkuInfoDTO.setId(skuMappingEntity.getId());
-            customerInventorySkuInfoDTO.setSkuNo(skuMappingEntity.getProductSkuNo());
-            customerInventorySkuInfoDTO.setSkuId(skuMappingEntity.getProductSkuId());
-            customerInventorySkuInfoDTO.setEffectiveTime(skuMappingEntity.getEffectiveTime());
-            customerInventorySkuInfoDTO.setIsEffective(!skuMappingEntity.getIsExpire());
-            List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryStatusTotalDTOList = inventoryList.stream().filter(v->v.getSkuId().equals(skuMappingEntity.getProductSkuId())).collect(Collectors.toList());
-            Integer totalQty = skuInventoryStatusTotalDTOList.stream().map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(0,Integer::sum);
-            customerInventorySkuInfoDTO.setActualQty(totalQty);
-            List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyDTOList1 = virtualInventoryQtyDTOList.stream().filter(v->v.getDictInventoryStatus().equals(InventoryStatusEnum.FROZEN.getCode()) && v.getSkuId().equals(skuMappingEntity.getProductSkuId())).collect(Collectors.toList());
-            Integer frozenQty = virtualInventoryQtyDTOList1.stream().map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(0,Integer::sum);
-            customerInventorySkuInfoDTO.setVirtualFrozenQty(frozenQty);
-            customerInventorySkuInfoDTO.setStock(totalQty - frozenQty);
-            customerInventorySkuInfoDTOS.add(customerInventorySkuInfoDTO);
+            customerInventorySkuInfoDTO.setPlatformSkuNo(platformSkuNo);
+            innerCustomerInventorySkuInfoDTOS.add(customerInventorySkuInfoDTO);
+            ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(v->v.getPlatformSkuNo().equals(platformSkuNo)).findFirst().orElse(null);
+            if(Objects.isNull(listingInfoEntity)){
+                continue;
+            }
+            List<SkuMappingEntity> skuMappingEntityList = allSkuMappingEntityList.stream().filter(v->v.getListingId().equals(listingInfoEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(skuMappingEntityList)){
+                continue;
+            }
+            List<SkuMappingDTO.InnerCustomerInventorySkuInfoDTO> innerCustomerInventorySkuInfoDTOSList = new ArrayList<>();
+            for (SkuMappingEntity skuMappingEntity : skuMappingEntityList) {
+                SkuMappingDTO.InnerCustomerInventorySkuInfoDTO innerCustomerInventorySkuInfoDTO = new SkuMappingDTO.InnerCustomerInventorySkuInfoDTO();
+                innerCustomerInventorySkuInfoDTO.setId(skuMappingEntity.getId());
+                innerCustomerInventorySkuInfoDTO.setSkuNo(skuMappingEntity.getProductSkuNo());
+                innerCustomerInventorySkuInfoDTO.setSkuId(skuMappingEntity.getProductSkuId());
+                innerCustomerInventorySkuInfoDTO.setEffectiveTime(skuMappingEntity.getEffectiveTime());
+                innerCustomerInventorySkuInfoDTO.setIsEffective(!skuMappingEntity.getIsExpire());
+                List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> skuInventoryStatusTotalDTOList = inventoryList.stream().filter(v->v.getSkuId().equals(skuMappingEntity.getProductSkuId())).collect(Collectors.toList());
+                Integer totalQty = skuInventoryStatusTotalDTOList.stream().map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(0,Integer::sum);
+                innerCustomerInventorySkuInfoDTO.setActualQty(totalQty);
+                List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyDTOList1 = virtualInventoryQtyDTOList.stream().filter(v->v.getDictInventoryStatus().equals(InventoryStatusEnum.FROZEN.getCode()) && v.getSkuId().equals(skuMappingEntity.getProductSkuId())).collect(Collectors.toList());
+                Integer frozenQty = virtualInventoryQtyDTOList1.stream().map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(0,Integer::sum);
+                innerCustomerInventorySkuInfoDTO.setVirtualFrozenQty(frozenQty);
+                innerCustomerInventorySkuInfoDTO.setStock(totalQty - frozenQty);
+                innerCustomerInventorySkuInfoDTOSList.add(innerCustomerInventorySkuInfoDTO);
+            }
+            customerInventorySkuInfoDTO.setInnerCustomerInventorySkuInfoDTOS(innerCustomerInventorySkuInfoDTOSList);
         }
-
-        return customerInventorySkuInfoDTOS;
+        return innerCustomerInventorySkuInfoDTOS;
     }
 
 //    @Override

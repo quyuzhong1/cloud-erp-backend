@@ -1,8 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.common.business.annotation.MenuCode;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -14,7 +11,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.sf.cglib.core.Local;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -828,9 +824,25 @@ public class SkuMappingDTO implements Serializable {
         private LocalDateTime expireTime;
     }
 
+
     @Data
     @NoArgsConstructor
     public static class CustomerInventorySkuInfoDTO {
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 对应库存信息
+         */
+        private List<InnerCustomerInventorySkuInfoDTO> innerCustomerInventorySkuInfoDTOS;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InnerCustomerInventorySkuInfoDTO {
 
         /**
          * skumapping Id
@@ -1399,8 +1411,8 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 客户Sku
          */
-        @NotBlank(message = "平台sku不能为空")
-        private String platformSkuNo;
+        @NotEmpty(message = "平台sku不能为空")
+        private List<String> platformSkuNoList;
 
         /**
          * 仓库id
