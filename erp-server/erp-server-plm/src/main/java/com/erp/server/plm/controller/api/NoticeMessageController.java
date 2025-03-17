@@ -1,17 +1,16 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.business.dto.base.BaseSearchDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.dto.base.BaseSearchDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
-import com.common.business.vo.PagingVO;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.NoticeMessageDTO;
-import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.enums.NoticeItemPeopleEnum;
 import com.erp.server.plm.service.NoticeMessageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -109,8 +108,8 @@ public class NoticeMessageController extends BaseController {
      */
     @LogViewService
     @GetMapping("/view")
-    public ApiResult<NoticeMessageEntity> view(@RequestParam(value = "id") String id) {
-        NoticeMessageEntity view = noticeMessageService.view(id);
+    public ApiResult<NoticeMessageDTO> view(@RequestParam(value = "id") String id) {
+        NoticeMessageDTO view = noticeMessageService.view(id);
         return success(view);
     }
 

@@ -7,7 +7,7 @@
     <select id="paging" resultType="com.erp.model.plm.dto.NoticeMessageDTO">
         SELECT nm.id,nm.item_people,nm.other_people,(nm.state=${state}) AS state,
         nm.create_user_id,nm.create_time,nm.update_user_id,nm.update_time,
-        nd.id AS nodeId,nd.node_name
+        nd.id AS nodeId,nd.node_name,nm.data_json
         FROM notice_message nm LEFT JOIN notice_node nd
         ON nm.node_id=nd.id AND nd.is_deleted = FALSE
         WHERE nm.is_deleted = FALSE

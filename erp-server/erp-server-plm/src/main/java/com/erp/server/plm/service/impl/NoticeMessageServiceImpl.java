@@ -2,6 +2,7 @@ package com.erp.server.plm.service.impl;
 
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -19,6 +20,7 @@ import com.common.business.enums.BaseStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
@@ -1311,10 +1313,15 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     }
 
     @Override
-    public NoticeMessageEntity view(String id) {
+    public NoticeMessageDTO view(String id) {
         NoticeMessageEntity entity = this.getById(id);
-        NoticeMessageEntity oldEntity = Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
-        return oldEntity;
+        Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "未找到通知详情id=" + id));
+
+        NoticeMessageDTO resultEntity = new NoticeMessageDTO();
+        BeanMapper.copy(entity, resultEntity);
+        NoticeMessageDTO.ProductDetailChangeDTO productDetailChangeDTO = JSONUtil.toBean(entity.getDataJson(), NoticeMessageDTO.ProductDetailChangeDTO.class);
+        resultEntity.setProductDetailChangeDTO(productDetailChangeDTO);
+        return resultEntity;
     }
 
 
