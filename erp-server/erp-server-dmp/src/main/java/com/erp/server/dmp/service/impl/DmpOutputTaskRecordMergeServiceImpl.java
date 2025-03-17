@@ -177,6 +177,7 @@ public class DmpOutputTaskRecordMergeServiceImpl extends SuperServiceImpl<DmpOut
                 .set(DmpOutputTaskRecordMergeEntity::getMergeStatus, OutputTaskRecordMergeStatusEnum.MERGE.getCode())
                 .in(DmpOutputTaskRecordMergeEntity::getId, list.stream().map(DmpOutputTaskRecordMergeEntity::getId).collect(Collectors.toList()))
                 .update();
+        dmpOutputTaskRecordService.lambdaUpdate().in(DmpOutputTaskRecordEntity::getId, ids).setSql(" response_data = concat('合并记录id="+ id +";;' , response_data) ").update();
         
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
 		    @Override
