@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -664,7 +665,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param response
      * @return java.lang.Boolean
      **/
-    Boolean importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+    ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
 
 
     /**
@@ -858,7 +859,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param excelFile 文件
      * @param response 响应
      */
-    void importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
+    ExcelImportFsDTO.UrlDTO importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * @description: 推送金蝶
