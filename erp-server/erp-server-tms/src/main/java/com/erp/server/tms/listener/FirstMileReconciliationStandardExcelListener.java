@@ -235,7 +235,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
             statusList.add(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
             statusList.add(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
             reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !statusList.contains(v.getStatus())).findFirst().ifPresent(v->{
-                excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
+                excelDTO.setErrorMsg("实际账单状态{已确认/已对账/差异确认}，不能更新信息");
                 errorList.add(excelDTO);
             });
             if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
