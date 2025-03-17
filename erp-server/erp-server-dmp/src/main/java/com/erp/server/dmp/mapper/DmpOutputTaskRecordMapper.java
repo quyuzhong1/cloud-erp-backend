@@ -76,11 +76,15 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     
     List<DmpOutputTaskRecordEntity> getOutputErrorTask(@Param("systemId") String systemId , @Param("size") String size);
     
-    void dmpOutputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    void dmpOutputMoveToHistoryTable(@Param("conditionSql") String conditionSql);
     
-    void dmpOutputNoRecordMoveToHistoryTable();
+    List<String> getDmpOutputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
     
-    void dmpRelationMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    void dmpOutputNoRecordMoveToHistoryTable(@Param("conditionSql") String conditionSql);
     
-    void dmpInputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    List<String> getDmpOutputNoRecordMoveToHistoryTable();
+    
+    void dmpRelationMoveToHistoryTable(@Param("fileConditionSql") String fileConditionSql , @Param("dmpConditionSql") String dmpConditionSql);
+    
+    void dmpInputMoveToHistoryTable(@Param("conditionSql") String conditionSql);
 }
