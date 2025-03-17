@@ -211,6 +211,9 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
                 excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
                 errorList.add(excelDTO);
             });
+            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
+                continue;
+            }
             reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !v.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).findFirst().ifPresent(v->{
                 excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
                 errorList.add(excelDTO);

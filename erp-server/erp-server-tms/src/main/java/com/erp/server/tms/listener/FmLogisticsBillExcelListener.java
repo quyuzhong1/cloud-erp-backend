@@ -186,6 +186,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
                 errorList.add(excelDTO);
             });
+            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
+                continue;
+            }
             reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !v.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).findFirst().ifPresent(v->{
                 excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
                 errorList.add(excelDTO);
@@ -197,9 +200,6 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             if(Objects.isNull(detailEntity)){
                 excelDTO.setErrorMsg("物流单明细不存在");
                 errorList.add(excelDTO);
-                continue;
-            }
-            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
                 continue;
             }
             LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);
