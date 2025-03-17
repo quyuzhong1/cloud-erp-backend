@@ -644,8 +644,8 @@
     <select id="queryToSdy" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
         SELECT DISTINCT so.* FROM logistics_bill so
         LEFT JOIN logistics_bill_detail sod ON so.id = sod.main_id
-        WHERE so.create_time >= #{startTime}
-        AND so.create_time &lt;= #{endTime}
+        WHERE so.delivery_time >= #{startTime}
+        AND so.delivery_time &lt;= #{endTime}
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
         LIMIT #{pageSize} OFFSET #{offset}
