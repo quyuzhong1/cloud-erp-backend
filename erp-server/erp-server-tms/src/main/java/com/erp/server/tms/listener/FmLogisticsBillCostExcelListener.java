@@ -146,18 +146,18 @@ public class FmLogisticsBillCostExcelListener extends AnalysisEventListener<FmLo
             //校验两个参数及以上都存在时。是否存在关联的多条物流单
             List<LogisticsBillEntity> logisticsBillEntityList1 = logisticsBillEntityList.stream().filter(v -> {
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
-                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
                 }
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
-                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}else {return false;}
                 }
                 //同时不为空时，匹配来源单号和运单号
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(),excelDTO.getTransportNo())) {
-                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
                 }
                 //同时不为空时，匹配来源单号和业务单号
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
-                    if (v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                    if (v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
                 }
                 return false;
             }).collect(Collectors.toList());

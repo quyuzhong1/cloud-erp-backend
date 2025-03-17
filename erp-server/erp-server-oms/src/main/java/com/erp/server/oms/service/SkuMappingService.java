@@ -299,9 +299,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     void syncPlatformProduct(List<String> ids);
 
     void syncWarehouseProduct(List<String> ids);
-
-    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
-
     /**
      * 根据参数获取映射列表
      * @param queryDTO
@@ -322,6 +319,10 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return
      */
     List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(ListingInfoDTO.QueryPlatformDTO params);
+
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
+
+    List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO);
 
 //    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 
