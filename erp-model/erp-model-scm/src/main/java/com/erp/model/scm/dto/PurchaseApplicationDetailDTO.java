@@ -236,5 +236,13 @@ public class PurchaseApplicationDetailDTO implements Serializable {
          * 采购建议数据id
          */
         private JSONArray sourceJson;
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProductName;
     }
 }
