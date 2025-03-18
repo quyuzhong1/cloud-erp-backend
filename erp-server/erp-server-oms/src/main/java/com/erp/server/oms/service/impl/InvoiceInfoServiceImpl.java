@@ -381,7 +381,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getSoId()) && entity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
             try {
                 String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
-                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
                 entity.setQueryId(feedId);
                 entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
                 entity.setUploadTime(LocalDateTime.now());
@@ -389,9 +388,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
                 soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
                 log.error("亚马逊上传发票失败",e);
+                updateSoB2cEntityList.add(soB2cEntity);
                 resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("亚马逊上传发票失败,{}",e.getMessage())));
             }
-            updateSoB2cEntityList.add(soB2cEntity);
         }
         service.updateBatchById(entities);
         if (CollUtil.isNotEmpty(updateSoB2cEntityList)){
