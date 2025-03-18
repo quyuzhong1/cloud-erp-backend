@@ -228,7 +228,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     public OverseasProviderEntity getByPlatformCode(String code) {
-        return lambdaQuery().eq(OverseasProviderEntity::getCode,code).one();
+        return lambdaQuery().eq(OverseasProviderEntity::getCode,code).last("LIMIT 1").one();
     }
 
     @Override
