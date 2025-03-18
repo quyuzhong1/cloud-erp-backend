@@ -69,11 +69,6 @@ public class CfgVatInvoiceController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "VAT发票设置修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:cfgVatInvoice:update",
-        serviceClass = CfgVatInvoiceService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgVatInvoiceDTO.UpdateDTO dto) {
         cfgVatInvoiceService.update(dto);
         return success();
@@ -88,11 +83,6 @@ public class CfgVatInvoiceController extends BaseController {
      */
     @PostMapping("/batchUpdate")
     @LogAction(value = LogActionEnum.UPDATE, desc = "VAT发票设置批量修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "oms:cfgVatInvoice:update",
-            serviceClass = CfgVatInvoiceService.class,
-            keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> batchUpdate(@RequestBody @Validated List<CfgVatInvoiceDTO.UpdateDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (CfgVatInvoiceDTO.UpdateDTO dto : dtoList){
@@ -117,11 +107,6 @@ public class CfgVatInvoiceController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:cfgVatInvoice:paging",
-            tableAlias = "cvi"
-    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<CfgVatInvoiceDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgVatInvoiceDTO.PagingParamDTO> dto) {
         PagingVO<CfgVatInvoiceDTO.PagingViewDTO> pagingVO = cfgVatInvoiceService.paging(dto);
