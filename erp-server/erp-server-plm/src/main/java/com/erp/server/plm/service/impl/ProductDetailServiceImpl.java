@@ -115,6 +115,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -1013,6 +1014,154 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.saveOrUpdateBatch(list);
     }
 
+
+    /**
+     * 比较两个对象中指定字段的值是否相同
+     *
+     * @param obj1 第一个对象，用于比较
+     * @param obj2 第二个对象，用于比较
+     * @return 返回一个包含不同字段名称的列表如果字段值相同，则列表为空
+     * @throws IllegalArgumentException 如果任何一个对象为null，则抛出此异常
+     */
+    private List<ProductDetailDTO.SkuChangeInfoDTO> compareFields(Object obj1, Object obj2,Set<String> fieldsToCompare) {
+        List<ProductDetailDTO.SkuChangeInfoDTO> differentFields = new ArrayList<>();
+
+        if (obj1 == null || obj2 == null ) {
+            throw new IllegalArgumentException("Objects cannot be null");
+        }
+
+        Class<?> class1 = obj1.getClass();
+        Class<?> class2 = obj2.getClass();
+
+        // 获取类1的所有字段
+        Field[] fields1 = class1.getDeclaredFields();
+        for (Field field1 : fields1) {
+            String fieldName = field1.getName();
+            if (fieldsToCompare.contains(fieldName)) {
+                try {
+                    // 查找类2是否有相同字段
+                    Field field2 = class2.getDeclaredField(fieldName);
+
+                    // 确保两个字段类型相同
+                    if (field1.getType().equals(field2.getType())) {
+                        field1.setAccessible(true);
+                        field2.setAccessible(true);
+                        Object value1 = field1.get(obj1);
+                        Object value2 = field2.get(obj2);
+
+                        // 判断字段是否为数字类型
+                        boolean isNumberType = Number.class.isAssignableFrom(field1.getType());
+                        // 如果值不同，则记录差异
+                        if (isNumberType) {
+                            // 如果是数字类型，直接比较值是否相等
+                            BigDecimal bigDecimal1 = new BigDecimal(value1.toString()).setScale(2);
+                            BigDecimal bigDecimal2 = new BigDecimal(value2.toString()).setScale(2);
+                            if (!Objects.equals(bigDecimal1, bigDecimal2)) {
+                                ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
+                                skuChangeInfoDTO.setOldValue(bigDecimal1.toString());
+                                skuChangeInfoDTO.setNewValue(bigDecimal2.toString());
+                                skuChangeInfoDTO.setFieldName(fieldName);
+                                differentFields.add(skuChangeInfoDTO);
+                            }
+                        } else {
+                            // 非数字类型，考虑 null 情况
+                            if ((value1 == null && value2 != null) || (value1 != null && !value1.equals(value2))) {
+                                ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
+                                skuChangeInfoDTO.setOldValue((String)value1);
+                                skuChangeInfoDTO.setNewValue((String)value2);
+                                skuChangeInfoDTO.setFieldName(fieldName);
+                                differentFields.add(skuChangeInfoDTO);
+                            }
+                        }
+                    }
+                } catch (NoSuchFieldException e) {
+                    // 该字段在类2中不存在，跳过
+                    log.debug("Field {} does not exist in class {}", fieldName, class2.getName());
+                } catch (IllegalAccessException e) {
+                    // 无法访问字段，跳过
+                    log.debug("Cannot access field {} in class {}", fieldName, class1.getName());
+                }
+            }
+        }
+        return differentFields;
+    }
+
+    private List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO) {
+        if(StringUtils.isBlank(productInfoDTO.getId())){
+            return Collections.emptyList();
+        }
+
+        ProductInfoEntity oldEntity = productInfoService.lambdaQuery()
+                .select(ProductInfoEntity::getId, ProductInfoEntity::getCategory, ProductInfoEntity::getChargeId)
+                .eq(ProductInfoEntity::getId, productInfoDTO.getId())
+                .one();
+
+        if(Objects.isNull(oldEntity)){
+            return Collections.emptyList();
+        }
+        // 定义需要比较的字段名称集合
+        Set<String> fieldsToCompare = new HashSet<>(Arrays.asList(
+                "category", "chargeId"
+        ));
+        return compareFields(oldEntity, productInfoDTO,fieldsToCompare);
+    }
+
+        private List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO ) {
+        if(StringUtils.isBlank(productPackDTO.getId())){
+            return Collections.emptyList();
+        }
+
+        ProductPackEntity oldEntity = productPackService.getById(productPackDTO.getId());
+        if(Objects.isNull(oldEntity)){
+            return Collections.emptyList();
+        }
+        // 定义需要比较的字段名称集合
+        Set<String> fieldsToCompare = new HashSet<>(Arrays.asList(
+                "productLength", "productWidth", "productHeight",
+                "grossWeight", "netWeight", "boxLength", "boxWidth", "boxHeight",
+                "boxWeight", "boxQty"
+        ));
+        return compareFields(oldEntity, productPackDTO,fieldsToCompare);
+    }
+
+
+    /**
+     * 处理产品变更通知
+     * 当产品基本信息或包装信息发生变化时，发送通知
+     */
+    private void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList ) {
+        // 检查是否有产品基本信息或包装信息变更
+        if(CollUtil.isNotEmpty(noticeDTOList)){
+            // 创建通知列表并添加变更信息
+            List<ProductDetailDTO.SkuChangeFieldsDTO> noticeList = new ArrayList<>();
+            for (ProductDetailDTO.NoticeDTO noticeDTO : noticeDTOList) {
+                if(CollUtil.isNotEmpty(noticeDTO.getProductBasicChangeField()) || CollUtil.isNotEmpty(noticeDTO.getProductPackChangeField())){
+                    // 有变动情况下才去推送消息
+                    ProductDetailDTO.SkuChangeFieldsDTO skuChangeFieldsDTO = new ProductDetailDTO.SkuChangeFieldsDTO();
+                    skuChangeFieldsDTO.setProductId(noticeDTO.getProductId());
+                    skuChangeFieldsDTO.setName(noticeDTO.getName());
+                    skuChangeFieldsDTO.setChargeId(noticeDTO.getChargeId());
+                    skuChangeFieldsDTO.setChargeName(noticeDTO.getChargeName());
+                    skuChangeFieldsDTO.setSkuNo(noticeDTO.getSkuNo());
+                    skuChangeFieldsDTO.setProductBasicChangeField(noticeDTO.getProductBasicChangeField());
+                    skuChangeFieldsDTO.setProductPackChangeField(noticeDTO.getProductPackChangeField());
+                    noticeList.add(skuChangeFieldsDTO);
+                }
+            }
+            if(noticeList.size() > 0){
+                // 注册事务同步监听器，在事务提交后发送变更通知
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        // 调用消息推送方法
+                        noticeMessageService.productChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
+                    }
+                });
+            }
+        }
+    }
+
+
     /**
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
      * @return java.lang.Boolean
@@ -1221,6 +1370,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //增加默认记录
         productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
+
+        //获取产品基本信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productSpuBaseInfoDTO);
+        //获取产品包装信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
+        //发送通知
+        ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+        noticeDTO.setProductId(id);
+        noticeDTO.setName(productSpuBaseInfoDTO.getName());
+        noticeDTO.setChargeId(productSpuBaseInfoDTO.getChargeId());
+        noticeDTO.setChargeName(productSpuBaseInfoDTO.getChargeName());
+        noticeDTO.setSkuNo(productSkuBaseInfoDTO.getSkuNo());
+        noticeDTO.setProductBasicChangeField(productBasicChangeField);
+        noticeDTO.setProductPackChangeField(productPackChangeField);
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
+        handleProductChangeNotification(noticeDTOList);
         return true;
     }
 
@@ -1375,6 +1540,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         //SKU操作日志-产品信息
+        String id = productInfoDTO.getId();
         ProductInfoEntity productInfoEntity = productInfoService.getById(productInfoDTO.getId());
         if (ObjectUtils.isNotEmpty(productInfoDTO)) {
             if (StringUtils.isNotBlank(productInfoDTO.getId()) && ObjectUtils.isNotEmpty(productInfoEntity)) {
@@ -1500,6 +1666,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //增加默认记录
         productCustomsService.addDefaultCustoms(productDetailLists.stream().map(ProductDetailDTO::getId).collect(Collectors.toList()));
+
+        //获取产品基本信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productManySpecDTO.getProductInfoDTO());
+        //获取产品包装信息修改的字段
+        Map<String,List<ProductDetailDTO.SkuChangeInfoDTO>> productPackChangeFieldMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(productManySpecDTO.getProductPackList())){
+            for (ProductPackDTO productPackDTO : productManySpecDTO.getProductPackList()) {
+                String skuNo = productPackDTO.getSkuNo();
+                List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
+                productPackChangeFieldMap.put(skuNo,productPackChangeField);
+            }
+        }
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
+        for (ProductDetailDTO productDetailDTO : productDetailLists) {
+            //发送通知
+            ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+            noticeDTO.setProductId(id);
+            noticeDTO.setName(productInfoDTO.getName());
+            noticeDTO.setChargeId(productInfoDTO.getChargeId());
+            noticeDTO.setChargeName(productInfoDTO.getChargeName());
+            noticeDTO.setSkuNo(productDetailDTO.getSkuNo());
+            noticeDTO.setProductBasicChangeField(productBasicChangeField);
+            noticeDTO.setProductPackChangeField(productPackChangeFieldMap.get(productDetailDTO.getSkuNo()));
+            noticeDTOList.add(noticeDTO);
+        }
+        //发送通知
+        handleProductChangeNotification(noticeDTOList);
         return true;
     }
 

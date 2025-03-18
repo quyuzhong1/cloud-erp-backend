@@ -22,6 +22,8 @@ public interface NoticeMessageMapper extends BaseMapper<NoticeMessageEntity> {
     List<UserNoticeNodeDTO> getUserNoticeNode(@Param("state") Integer state);
 
     NoticeMessageEntity getByNodeFlag(@Param("nodeFlag") String nodeFlag);
+
+    List<NoticeMessageEntity> listByNodeFlag(@Param("nodeFlag") String nodeFlag);
 }
 
 
