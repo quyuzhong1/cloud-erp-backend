@@ -282,6 +282,14 @@ public class SoB2cDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * vat发票状态
+         */
+        private String vatInvoiceStatus;
+        /**
+         * vat发票状态名称
+         */
+        private String vatInvoiceStatusName;
 
         /**
          * 单据编码
