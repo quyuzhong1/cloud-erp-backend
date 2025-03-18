@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import javax.validation.constraints.NotBlank;
 
 /**
@@ -100,7 +101,6 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
         */
         private Integer orderLineQty;
 
-
         /**
          * erp sku编号
          */
@@ -117,6 +117,35 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
          * AliexpressDeliveryOrderStatusEnum
          */
         private String platformDeliveryStatus;
+
+        /**
+         * 明细单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 币别(速卖通发货单明细来源单价币种)
+         */
+        private String currency;
+        /**
+         * 实际支付金额
+         */
+        private BigDecimal payAmount;
+
+        /**
+         * 实际支付币别
+         */
+        private String payCurrency;
+
+        /**
+         * 折扣金额
+         */
+        private BigDecimal discountAmount;
+
+        /**
+         * 折扣币别
+         */
+        private String discountCurrency;
     }
 
 
