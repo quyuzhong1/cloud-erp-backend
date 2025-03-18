@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -73,4 +74,29 @@ public class PlatformDeliveryDetailDTO {
      *来源平台
      */
     private String sourcePlatform = "thirdPlatform";
+
+    // 速卖通发货单明细信息
+    /**
+     * 币别(速卖通发货单明细来源单价币种)
+     */
+    private String currency;
+    /**
+     * 实际支付金额
+     */
+    private BigDecimal payAmount;
+
+    /**
+     * 实际支付币别
+     */
+    private String payCurrency;
+
+    /**
+     * 折扣金额
+     */
+    private BigDecimal discountAmount;
+
+    /**
+     * 折扣币别
+     */
+    private String discountCurrency;
 }

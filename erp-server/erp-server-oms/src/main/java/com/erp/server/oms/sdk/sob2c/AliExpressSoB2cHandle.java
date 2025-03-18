@@ -37,6 +37,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -191,6 +192,18 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                     detailAddDTO.setPlatformSku(detailDTO.getPlatformSkuNo());
                     detailAddDTO.setSkuId(detailDTO.getSkuId());
                     detailAddDTO.setSkuNo(detailDTO.getSkuNo());
+                    // 明细单价
+                    detailAddDTO.setPrice(detailDTO.getPrice());
+                    // 币别(速卖通发货单明细来源单价币种)
+                    detailAddDTO.setCurrency(detailDTO.getCurrency());
+                    // 实际支付金额
+                    detailAddDTO.setPayAmount(detailDTO.getPayAmount());
+                    // 实际支付币别
+                    detailAddDTO.setPayCurrency(detailDTO.getPayCurrency());
+                    // 折扣金额
+                    detailAddDTO.setDiscountAmount(detailDTO.getDiscountAmount());
+                    // 折扣币别
+                    detailAddDTO.setDiscountCurrency(detailDTO.getDiscountCurrency());
                     detailAddList.add(detailAddDTO);
                 }
             }

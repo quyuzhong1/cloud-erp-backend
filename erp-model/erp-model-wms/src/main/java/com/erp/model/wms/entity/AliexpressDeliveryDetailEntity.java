@@ -86,7 +86,7 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
      * 折扣币别
      */
     @TableField("discount_currency")
-    private String discount_currency;
+    private String discountCurrency;
 
     /**
      * 货品id

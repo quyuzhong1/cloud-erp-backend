@@ -192,6 +192,29 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
      */
     @TableField("currency")
     private String currency;
+    /**
+     * 实际支付金额
+     */
+    @TableField("pay_amount")
+    private BigDecimal payAmount;
+
+    /**
+     * 实际支付币别
+     */
+    @TableField("pay_currency")
+    private String payCurrency;
+
+    /**
+     * 折扣金额
+     */
+    @TableField("discount_amount")
+    private BigDecimal discountAmount;
+
+    /**
+     * 折扣币别
+     */
+    @TableField("discount_currency")
+    private String discountCurrency;
 
 
     public static final String MAIN_ID = "main_id";
