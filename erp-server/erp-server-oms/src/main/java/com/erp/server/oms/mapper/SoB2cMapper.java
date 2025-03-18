@@ -242,4 +242,12 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 根据店铺和启用时间更新订单vat发票状态
+     * @param shopId
+     * @param enableTime
+     * @param vatInvoiceStatus
+     */
+    void updateFbaNotVatInvoice(@Param("shopId") String shopId, @Param("enableTime") LocalDateTime enableTime, @Param("vatInvoiceStatus") String vatInvoiceStatus);
 }

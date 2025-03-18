@@ -42,6 +42,11 @@ public class DropDownListController extends BaseController {
      *  soB2cLable  b2c销售订单标签
      *  logisticsMethod b2c销售订单物流方式
      *  shopAuthType 店铺授权类型
+     *  invoiceTemplateType 发票模板类型
+     *  invoiceType 发票类型
+     *  invoiceStatus 发票状态
+     *  uploadStatus 上传状态
+     *  cfgInvoiceType 发票配置类型
      * @return
      */
     @GetMapping("/dict/list")
