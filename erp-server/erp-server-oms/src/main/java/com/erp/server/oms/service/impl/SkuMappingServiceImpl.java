@@ -1940,6 +1940,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 Integer frozenQty = virtualInventoryQtyDTOList1.stream().map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).reduce(0,Integer::sum);
                 innerCustomerInventorySkuInfoDTO.setVirtualFrozenQty(frozenQty);
                 innerCustomerInventorySkuInfoDTO.setStock(totalQty - frozenQty);
+                innerCustomerInventorySkuInfoDTO.setProductName(skuMappingEntity.getProductName());
                 innerCustomerInventorySkuInfoDTOSList.add(innerCustomerInventorySkuInfoDTO);
             }
             customerInventorySkuInfoDTO.setInnerCustomerInventorySkuInfoDTOS(innerCustomerInventorySkuInfoDTOSList);

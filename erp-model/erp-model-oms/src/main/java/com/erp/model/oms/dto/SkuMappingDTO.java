@@ -859,6 +859,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 产品名称
+         */
+        private String productName;
+        /**
          * 是否有效
          */
         private Boolean isEffective;
