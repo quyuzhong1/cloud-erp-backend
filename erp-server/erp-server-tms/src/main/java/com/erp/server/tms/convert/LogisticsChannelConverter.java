@@ -193,6 +193,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "logisticsPlatform", constant = "goodcang"),
             @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
             @Mapping(target = "platformWarehouseCode", source = "warehouseCode"),
+            @Mapping(target = "carrierType", source = "distributorType"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByGoodCang(GoodCangLogisticsProductsResp data);
