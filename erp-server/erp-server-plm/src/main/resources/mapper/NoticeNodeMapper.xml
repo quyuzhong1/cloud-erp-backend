@@ -3,6 +3,14 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.plm.mapper.NoticeNodeMapper">
-
-
+    <select id="list" resultType="com.erp.model.plm.entity.NoticeNodeEntity">
+        SELECT ID,
+               node_name
+        FROM
+            notice_node
+        WHERE
+            is_deleted = FALSE
+            AND (ID NOT IN ( SELECT node_id FROM notice_message where is_deleted = false)
+           OR node_flag = 'productDetailChange')
+    </select>
 </mapper>
