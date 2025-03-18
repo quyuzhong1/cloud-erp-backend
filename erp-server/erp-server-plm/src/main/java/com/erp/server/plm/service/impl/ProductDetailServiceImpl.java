@@ -5524,7 +5524,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
                 this.inportExcel(productNoSpecDTO);
             }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
-                ProductDetailServiceImplCopy bean = ApplicationContextUtils.getBean(ProductDetailServiceImplCopy.class);
+                ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
                 bean.inportExcelAndSync(productNoSpecDTO,productBy);
             }
         }
