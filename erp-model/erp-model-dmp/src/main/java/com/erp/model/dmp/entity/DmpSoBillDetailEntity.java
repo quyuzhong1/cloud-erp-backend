@@ -211,6 +211,11 @@ public class DmpSoBillDetailEntity extends BaseEntity<DmpSoBillDetailEntity> {
     */
     @TableField("tracking_number")
     private String trackingNumber;
+    /**
+     * 运费折扣
+     */
+    @TableField("shipping_discount")
+    private BigDecimal shippingDiscount;
 
 
     public static final String INPUT_TASK_ID = "input_task_id";
