@@ -170,7 +170,7 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
         // 订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getAllAmount());
+        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
         // 币别（原币）
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
