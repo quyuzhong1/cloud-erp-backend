@@ -29,6 +29,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -45,15 +47,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.DmpCfgInputConvertValueDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.WdtInsufficientInventoryDTO;
-import com.erp.model.dmp.dto.SdyPushDTO;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpCfgInputConvertMappingEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpCfgMqEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.dmp.entity.DmpOutputTaskRecordMergeEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgMqMqTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -79,8 +73,19 @@ import com.erp.server.dmp.service.DmpOutputTaskService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateUtil;
+import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+
+import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 
 /**
@@ -119,13 +124,13 @@ public class DmpInoutController extends BaseController {
 
     @Autowired
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
-    
+
     @Autowired
     private DmpOutputTaskRecordMergeService dmpOutputTaskRecordMergeService;
 
     @Resource
     protected RedisTemplate<String, Object> redisTemplate;
-    
+
     @Autowired
 	@Qualifier("dmpSdyOutputPushExecutorPool")
 	private ExecutorService dmpSdyOutputPushExecutorPool;
@@ -225,7 +230,7 @@ public class DmpInoutController extends BaseController {
         		mergeIdSet.forEach(m -> log.warn(m + "合并数据不允许查询同步"));
         		dmpOutputTaskRecordEntityList.removeIf(d -> mergeIdSet.contains(d.getId()));
         	}
-        	
+
             Map<String, String> cfgOutputIdEntityMaps = dmpOutputTaskService.lambdaQuery()
                     .in(DmpOutputTaskEntity::getId, dmpOutputTaskRecordEntityList.stream().map(DmpOutputTaskRecordEntity::getMainId).collect(Collectors.toSet()))
                     .select(DmpOutputTaskEntity::getId, DmpOutputTaskEntity::getCfgOutputId)
@@ -294,7 +299,7 @@ public class DmpInoutController extends BaseController {
         }
         return success(dmpOutputTaskRecordEntityList);
     }
-    
+
     /**
      * 获取旺店通库存不足单据
      * @return
@@ -442,7 +447,7 @@ public class DmpInoutController extends BaseController {
     	}
 		return success(values);
     }
-    
+
     @PostMapping("querySyncSdy")
     public ApiResult<?> querySyncSdy(@RequestBody SdyPushDTO dto) {
     	LocalDateTime startTime = dto.getStartTime();
@@ -453,9 +458,9 @@ public class DmpInoutController extends BaseController {
     	if(endTime == null) {
     		throw new ServiceException("endTime不能为空");
     	}
-    	
+
     	Map<String, Map<String, String>> bizTypeSourceSystemMaps = new HashMap<>();
-    	
+
     	Map<String, String> sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1859426032948370202", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
     	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
@@ -465,7 +470,7 @@ public class DmpInoutController extends BaseController {
     	sourceSystemMaps.put("1859426447974751005", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
     	sourceSystemMaps.put("1859425468411829017", DmpBasicSystemCodeEnum.AMAZON.getCode());
     	bizTypeSourceSystemMaps.put("soInfo", sourceSystemMaps);
-    	
+
     	sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1858832992047225575", DmpBasicSystemCodeEnum.MERCADOLIBRE.getCode());
 //    	sourceSystemMaps.put("1859424811332164370", DmpBasicSystemCodeEnum.SHOPEE.getCode());
@@ -475,16 +480,16 @@ public class DmpInoutController extends BaseController {
     	sourceSystemMaps.put("1858832384133192417", DmpBasicSystemCodeEnum.ALI_EXPRESS.getCode());
     	sourceSystemMaps.put("1858832015038634719", DmpBasicSystemCodeEnum.AMAZON.getCode());
     	bizTypeSourceSystemMaps.put("soReturn", sourceSystemMaps);
-    	
+
     	sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1858834023460133611", DmpBasicSystemCodeEnum.WDT.getCode());
     	sourceSystemMaps.put("1858834187159624429", DmpBasicSystemCodeEnum.SHOPIFY.getCode());
     	bizTypeSourceSystemMaps.put("soRefund", sourceSystemMaps);
-    	
+
     	sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1859427581292469023", DmpBasicSystemCodeEnum.WDT.getCode());
     	bizTypeSourceSystemMaps.put("soDeliver", sourceSystemMaps);
-    	
+
     	Set<String> cfgOutputIds = dto.getCfgOutputIds();
     	if(CollUtil.isEmpty(cfgOutputIds)) {
     		cfgOutputIds = new HashSet<>();
@@ -499,7 +504,7 @@ public class DmpInoutController extends BaseController {
     			}
     		}
     	}
-    	
+
     	for(Map.Entry<String, Map<String, String>> bizTypeSourceSystemMap : bizTypeSourceSystemMaps.entrySet()) {
     		String key = bizTypeSourceSystemMap.getKey();
     		Map<String, String> value = bizTypeSourceSystemMap.getValue();
@@ -519,10 +524,10 @@ public class DmpInoutController extends BaseController {
     			}
     		}
 		}
-    	
+
         return success();
     }
-    
+
     private void sdySoInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
     	log.warn("开始重推数帝云线上订单，系统：" + sourceSystem);
     	try {
@@ -540,7 +545,7 @@ public class DmpInoutController extends BaseController {
 			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
 			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
 			log.warn("完成重推数帝云有时间的线上订单，系统：" + sourceSystem);
-			
+
 			if(!"1861317267527064372".equals(cfgOutputId)) {
 				queryParams = new ArrayList<>();
 				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
@@ -557,7 +562,7 @@ public class DmpInoutController extends BaseController {
 		}
     	log.warn("完成重推数帝云没有时间的线上订单，系统：" + sourceSystem);
     }
-    
+
     private void sdyReturnInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
     	log.warn("开始重推数帝云退货单，系统：" + sourceSystem);
     	try {
@@ -575,7 +580,7 @@ public class DmpInoutController extends BaseController {
 		}
     	log.warn("完成重推数帝云有时间的退货单，系统：" + sourceSystem);
     }
-    
+
     private void sdyRefundInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
     	log.warn("开始重推数帝云退款单，系统：" + sourceSystem);
     	try {
@@ -593,5 +598,5 @@ public class DmpInoutController extends BaseController {
 		}
     	log.warn("完成重推数帝云有时间的退款单，系统：" + sourceSystem);
     }
-    
+
 }

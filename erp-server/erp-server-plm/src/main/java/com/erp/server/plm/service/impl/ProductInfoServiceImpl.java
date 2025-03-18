@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -403,6 +404,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         List<ProductInfoEntity> list = new ArrayList<>();
 
+        //查所有父级类及本身
+        List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(dto.getCategoryId());
+        String categoryNames = CollUtil.isEmpty(basicCategoryList) ? "" : basicCategoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.joining("/"));
+
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
             productInfoEntity.setCategory(category.getName());
@@ -418,7 +423,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
-                    .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
+                    .setOperation("更新产品分类").setContent(CharSequenceUtil.format("对SPU【{}】更新产品分类为【{}】",productInfoEntity.getSpuNo(),categoryNames)));
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
@@ -2562,7 +2567,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
-                    .setOperation("应用分类变更").setContent("转移应用分类[应用分类]由[" + oldName+ "]改为[" + applicationMap.get(dto.getApplicationCategoryId()) + "]"));
+                    .setOperation("更新应用分类").setContent(CharSequenceUtil.format("对SPU【{}】更新应用分类为【{}】",productInfoEntity.getSpuNo(),applicationMap.get(dto.getApplicationCategoryId()))));
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);

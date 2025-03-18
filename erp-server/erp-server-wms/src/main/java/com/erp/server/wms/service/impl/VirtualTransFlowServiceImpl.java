@@ -188,6 +188,16 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
+    public List<VirtualTransFlowEntity> listBySourceIdList(List<String> deliveryIdList) {
+        if (CollUtil.isEmpty(deliveryIdList)) {
+            throw new ServiceException("B2C发货单明细不能为空");
+        }
+        return  lambdaQuery().in(VirtualTransFlowEntity::getSourceId,deliveryIdList)
+                .eq(VirtualTransFlowEntity::getDictBizType,VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())
+                .list();
+    }
+
+    @Override
     public List<String> listVirtualInventoryId(String virtualInventoryId, String virtualWarehouseId, String warehouseId, String skuId, Boolean fromTable) {
         return baseMapper.listVirtualInventoryId(virtualInventoryId,virtualWarehouseId,warehouseId,skuId,fromTable);
     }
@@ -282,16 +292,6 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             virtualQty = afterQty;
         }
         updateBatchById(updateList);
-    }
-
-    @Override
-    public List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList) {
-        if (CollUtil.isEmpty(deliveryDetailIdList)) {
-            throw new ServiceException("B2C发货单明细id不能为空");
-        }
-        return  lambdaQuery().in(VirtualTransFlowEntity::getSourceDetailId,deliveryDetailIdList)
-                .eq(VirtualTransFlowEntity::getDictBizType,VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())
-                .list();
     }
 
     /**

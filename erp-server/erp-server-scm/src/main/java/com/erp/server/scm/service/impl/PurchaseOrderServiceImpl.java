@@ -37,6 +37,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -330,10 +331,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 dto.setPurchaseUserName(purchaseUser.getUserName());
             }
         }
-        //新品首批
-        if (Objects.nonNull(dto.getIsFirstMassProduct())){
-            dto.setFirstMassProductName(dto.getIsFirstMassProduct() ? "是":"否");
-        }
         //供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         PurchaseOrderSupplierDTO.UpdateDTO supplierUpdateDTO = new PurchaseOrderSupplierDTO.UpdateDTO();
@@ -376,6 +373,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
         details.forEach(obj -> {
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             obj.setTaxRate(MathUtil.multiply(obj.getTaxRate(), MathUtil.BigDecimal_100));
             obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
         });
@@ -989,7 +987,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateReceiveDTO.setBillDate(LocalDate.now());
             viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
-
+            viewGenerateReceiveDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewGenerateReceiveDTO.getFirstMassProduct()));
             Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             //补货数量
@@ -1026,7 +1024,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         viewDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
         viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
-        viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
         //采购供应商信息
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderEntity.getId());
@@ -1071,6 +1068,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     detailDTO.setOldPrice(detailEntity.getTaxPrice());
                     detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
                     detailDTO.setPrice(detailEntity.getTaxPrice());//退货单下推单采购订单-这里可以直接取采购订单含税单价
+                    detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
                     detailDTOList.add(detailDTO);
                 }
             }else {
@@ -1083,6 +1081,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detailDTO.setOldQty(detailEntity.getPurchaseQty());
                 detailDTO.setOldPrice(detailEntity.getTaxPrice());
                 detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
+                detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
                 detailDTOList.add(detailDTO);
             }
 
@@ -1137,6 +1136,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateStockInDTO.setPurchaseOrderCode(entity.getCode());
             viewGenerateStockInDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             viewGenerateStockInDTO.setDeliveryWarehouseName(entity.getDeliveryWarehouseName());
+            viewGenerateStockInDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+            viewGenerateStockInDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
             //供应商信息
             PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = supplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
@@ -1231,6 +1232,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId) {
         PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
         PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(purchaseOrderId);
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
@@ -1239,7 +1241,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         result.setWarehouseId(entity.getDeliveryWarehouseId());
         result.setWarehouseName(entity.getWarehouseName());
         //是否新品首批
-        Boolean isFirstMassProduct = entity.getIsFirstMassProduct();
+        boolean isFirstMassProduct = detailList.stream().anyMatch(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct()));
         //入库质检
         String qcType = QcTypeEnum.STOCK_IN.getCode();
         //是

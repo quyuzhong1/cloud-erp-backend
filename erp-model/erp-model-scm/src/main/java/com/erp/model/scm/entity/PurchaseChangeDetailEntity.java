@@ -109,6 +109,12 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
     private String remark;
 
     /**
+     * 新品首批
+     */
+    @TableField("first_mass_product")
+    private String firstMassProduct;
+
+    /**
      * 汇率
      */
     @TableField(exist = false)

@@ -1,9 +1,11 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -17,6 +19,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -34,10 +37,8 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
-import com.common.core.utils.date.DateUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
@@ -110,9 +111,11 @@ import org.thymeleaf.util.ListUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
@@ -287,6 +290,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
 
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
@@ -1010,6 +1014,154 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return this.saveOrUpdateBatch(list);
     }
 
+
+    /**
+     * 比较两个对象中指定字段的值是否相同
+     *
+     * @param obj1 第一个对象，用于比较
+     * @param obj2 第二个对象，用于比较
+     * @return 返回一个包含不同字段名称的列表如果字段值相同，则列表为空
+     * @throws IllegalArgumentException 如果任何一个对象为null，则抛出此异常
+     */
+    private List<ProductDetailDTO.SkuChangeInfoDTO> compareFields(Object obj1, Object obj2,Set<String> fieldsToCompare) {
+        List<ProductDetailDTO.SkuChangeInfoDTO> differentFields = new ArrayList<>();
+
+        if (obj1 == null || obj2 == null ) {
+            throw new IllegalArgumentException("Objects cannot be null");
+        }
+
+        Class<?> class1 = obj1.getClass();
+        Class<?> class2 = obj2.getClass();
+
+        // 获取类1的所有字段
+        Field[] fields1 = class1.getDeclaredFields();
+        for (Field field1 : fields1) {
+            String fieldName = field1.getName();
+            if (fieldsToCompare.contains(fieldName)) {
+                try {
+                    // 查找类2是否有相同字段
+                    Field field2 = class2.getDeclaredField(fieldName);
+
+                    // 确保两个字段类型相同
+                    if (field1.getType().equals(field2.getType())) {
+                        field1.setAccessible(true);
+                        field2.setAccessible(true);
+                        Object value1 = field1.get(obj1);
+                        Object value2 = field2.get(obj2);
+
+                        // 判断字段是否为数字类型
+                        boolean isNumberType = Number.class.isAssignableFrom(field1.getType());
+                        // 如果值不同，则记录差异
+                        if (isNumberType) {
+                            // 如果是数字类型，直接比较值是否相等
+                            BigDecimal bigDecimal1 = new BigDecimal(value1.toString()).setScale(2);
+                            BigDecimal bigDecimal2 = new BigDecimal(value2.toString()).setScale(2);
+                            if (!Objects.equals(bigDecimal1, bigDecimal2)) {
+                                ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
+                                skuChangeInfoDTO.setOldValue(bigDecimal1.toString());
+                                skuChangeInfoDTO.setNewValue(bigDecimal2.toString());
+                                skuChangeInfoDTO.setFieldName(fieldName);
+                                differentFields.add(skuChangeInfoDTO);
+                            }
+                        } else {
+                            // 非数字类型，考虑 null 情况
+                            if ((value1 == null && value2 != null) || (value1 != null && !value1.equals(value2))) {
+                                ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
+                                skuChangeInfoDTO.setOldValue((String)value1);
+                                skuChangeInfoDTO.setNewValue((String)value2);
+                                skuChangeInfoDTO.setFieldName(fieldName);
+                                differentFields.add(skuChangeInfoDTO);
+                            }
+                        }
+                    }
+                } catch (NoSuchFieldException e) {
+                    // 该字段在类2中不存在，跳过
+                    log.debug("Field {} does not exist in class {}", fieldName, class2.getName());
+                } catch (IllegalAccessException e) {
+                    // 无法访问字段，跳过
+                    log.debug("Cannot access field {} in class {}", fieldName, class1.getName());
+                }
+            }
+        }
+        return differentFields;
+    }
+
+    private List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO) {
+        if(StringUtils.isBlank(productInfoDTO.getId())){
+            return Collections.emptyList();
+        }
+
+        ProductInfoEntity oldEntity = productInfoService.lambdaQuery()
+                .select(ProductInfoEntity::getId, ProductInfoEntity::getCategory, ProductInfoEntity::getChargeId)
+                .eq(ProductInfoEntity::getId, productInfoDTO.getId())
+                .one();
+
+        if(Objects.isNull(oldEntity)){
+            return Collections.emptyList();
+        }
+        // 定义需要比较的字段名称集合
+        Set<String> fieldsToCompare = new HashSet<>(Arrays.asList(
+                "category", "chargeId"
+        ));
+        return compareFields(oldEntity, productInfoDTO,fieldsToCompare);
+    }
+
+        private List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO ) {
+        if(StringUtils.isBlank(productPackDTO.getId())){
+            return Collections.emptyList();
+        }
+
+        ProductPackEntity oldEntity = productPackService.getById(productPackDTO.getId());
+        if(Objects.isNull(oldEntity)){
+            return Collections.emptyList();
+        }
+        // 定义需要比较的字段名称集合
+        Set<String> fieldsToCompare = new HashSet<>(Arrays.asList(
+                "productLength", "productWidth", "productHeight",
+                "grossWeight", "netWeight", "boxLength", "boxWidth", "boxHeight",
+                "boxWeight", "boxQty"
+        ));
+        return compareFields(oldEntity, productPackDTO,fieldsToCompare);
+    }
+
+
+    /**
+     * 处理产品变更通知
+     * 当产品基本信息或包装信息发生变化时，发送通知
+     */
+    private void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList ) {
+        // 检查是否有产品基本信息或包装信息变更
+        if(CollUtil.isNotEmpty(noticeDTOList)){
+            // 创建通知列表并添加变更信息
+            List<ProductDetailDTO.SkuChangeFieldsDTO> noticeList = new ArrayList<>();
+            for (ProductDetailDTO.NoticeDTO noticeDTO : noticeDTOList) {
+                if(CollUtil.isNotEmpty(noticeDTO.getProductBasicChangeField()) || CollUtil.isNotEmpty(noticeDTO.getProductPackChangeField())){
+                    // 有变动情况下才去推送消息
+                    ProductDetailDTO.SkuChangeFieldsDTO skuChangeFieldsDTO = new ProductDetailDTO.SkuChangeFieldsDTO();
+                    skuChangeFieldsDTO.setProductId(noticeDTO.getProductId());
+                    skuChangeFieldsDTO.setName(noticeDTO.getName());
+                    skuChangeFieldsDTO.setChargeId(noticeDTO.getChargeId());
+                    skuChangeFieldsDTO.setChargeName(noticeDTO.getChargeName());
+                    skuChangeFieldsDTO.setSkuNo(noticeDTO.getSkuNo());
+                    skuChangeFieldsDTO.setProductBasicChangeField(noticeDTO.getProductBasicChangeField());
+                    skuChangeFieldsDTO.setProductPackChangeField(noticeDTO.getProductPackChangeField());
+                    noticeList.add(skuChangeFieldsDTO);
+                }
+            }
+            if(noticeList.size() > 0){
+                // 注册事务同步监听器，在事务提交后发送变更通知
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        // 调用消息推送方法
+                        noticeMessageService.productChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
+                    }
+                });
+            }
+        }
+    }
+
+
     /**
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
      * @return java.lang.Boolean
@@ -1069,12 +1221,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productSkuBaseInfoDTO.setProductId(id);
 
         //SKU修改操作日志
-        Boolean isAdd = false;
+        Boolean isAdd = Boolean.TRUE;
         if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
             ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
             addProductSkuBaseInfoLog(productSkuBaseInfoDTO, oldEntity, productSkuBaseInfoDTO.getId(), id);
-        } else {
-            isAdd = true;
+            isAdd = Boolean.FALSE;
         }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
         //给对象赋值
@@ -1219,6 +1370,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //增加默认记录
         productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
+
+        //获取产品基本信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productSpuBaseInfoDTO);
+        //获取产品包装信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
+        //发送通知
+        ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+        noticeDTO.setProductId(id);
+        noticeDTO.setName(productSpuBaseInfoDTO.getName());
+        noticeDTO.setChargeId(productSpuBaseInfoDTO.getChargeId());
+        noticeDTO.setChargeName(productSpuBaseInfoDTO.getChargeName());
+        noticeDTO.setSkuNo(productSkuBaseInfoDTO.getSkuNo());
+        noticeDTO.setProductBasicChangeField(productBasicChangeField);
+        noticeDTO.setProductPackChangeField(productPackChangeField);
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
+        handleProductChangeNotification(noticeDTOList);
         return true;
     }
 
@@ -1373,6 +1540,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
         }
         //SKU操作日志-产品信息
+        String id = productInfoDTO.getId();
         ProductInfoEntity productInfoEntity = productInfoService.getById(productInfoDTO.getId());
         if (ObjectUtils.isNotEmpty(productInfoDTO)) {
             if (StringUtils.isNotBlank(productInfoDTO.getId()) && ObjectUtils.isNotEmpty(productInfoEntity)) {
@@ -1498,6 +1666,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         //增加默认记录
         productCustomsService.addDefaultCustoms(productDetailLists.stream().map(ProductDetailDTO::getId).collect(Collectors.toList()));
+
+        //获取产品基本信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productManySpecDTO.getProductInfoDTO());
+        //获取产品包装信息修改的字段
+        Map<String,List<ProductDetailDTO.SkuChangeInfoDTO>> productPackChangeFieldMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(productManySpecDTO.getProductPackList())){
+            for (ProductPackDTO productPackDTO : productManySpecDTO.getProductPackList()) {
+                String skuNo = productPackDTO.getSkuNo();
+                List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
+                productPackChangeFieldMap.put(skuNo,productPackChangeField);
+            }
+        }
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
+        for (ProductDetailDTO productDetailDTO : productDetailLists) {
+            //发送通知
+            ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+            noticeDTO.setProductId(id);
+            noticeDTO.setName(productInfoDTO.getName());
+            noticeDTO.setChargeId(productInfoDTO.getChargeId());
+            noticeDTO.setChargeName(productInfoDTO.getChargeName());
+            noticeDTO.setSkuNo(productDetailDTO.getSkuNo());
+            noticeDTO.setProductBasicChangeField(productBasicChangeField);
+            noticeDTO.setProductPackChangeField(productPackChangeFieldMap.get(productDetailDTO.getSkuNo()));
+            noticeDTOList.add(noticeDTO);
+        }
+        //发送通知
+        handleProductChangeNotification(noticeDTOList);
         return true;
     }
 
@@ -1988,6 +2183,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 byId.setIterateRefSkuId("");
                 byId.setIterateRefSkuNo("");
             }
+            //产品操作日志
+            addProductInfoLog(productSpuBaseInfoDTO, byId, byId.getId(), byId.getId());
             productInfoService.saveOrUpdate(byId);
         }
 
@@ -2003,10 +2200,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
             productImagesService.updateProductImage(productImagesDTO);
         }
+        //SKU修改操作日志
+        Boolean isAdd = Boolean.TRUE;
+        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
+            ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
+            addProductSkuBaseInfoLog(productSkuBaseInfoDTO, oldEntity, productSkuBaseInfoDTO.getId(), id);
+            isAdd = Boolean.FALSE;
+        }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-        if (StringUtils.isBlank(productSkuBaseInfoDTO.getId())) {
-            ProductDetailEntity productIdBySku = this.getProductIdBySku(productSkuBaseInfoDTO.getSkuNo());
-            skuId = productIdBySku.getId();
+        //SKU新增操作日志
+        if (isAdd) {
+            sysLogService.addSysLogBySave("生成了一个SKU：[" + productSkuBaseInfoDTO.getSkuNo() + "]", SKUCLASSPATH, skuId, id);
         }
 
         ProductKeyDTO productKey = productDetailMapper.getProductKey(skuId);
@@ -2014,55 +2218,34 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //3.修改/新增 成本信息
         if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductCostDTO())) {
             ProductCostDTO productCostDTO = productNoSpecDTO.getProductCostDTO();
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productCostDTO.setId(productKey.getCostId());
-
-                ProductCostEntity byId = productCostService.getById(productCostDTO.getId());
-                if(Objects.nonNull(byId)){
-                    BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
-                    byId.setSkuId(skuId);
-                    LoginUser loginUser = UserContext.getLoginUser();
-                    if (ObjectUtils.isNotEmpty(loginUser)) {
-                        byId.setUpdateUserId(loginUser.getUid());
-                        byId.setUpdateUserName(loginUser.getUserName());
-                    }
-                    productCostService.saveOrUpdate(byId);
-                }else{
-                    productCostDTO.setSkuId(skuId);
-                    productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
-                }
-            }else{
-                productCostDTO.setSkuId(skuId);
-                productCostService.saveOrUpdate(productNoSpecDTO.getProductCostDTO());
+            ProductCostEntity byId = productCostService.getById(productCostDTO.getId());
+            if(Objects.nonNull(byId)){
+                BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
+                BeanUtil.copyProperties(byId,productCostDTO);
             }
+            //成本信息主键id赋值
+            productCostDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getCostId());
+            productCostDTO.setSkuId(skuId);
+
+            //操作日志
+            addProductCostLog(productCostDTO, id);
+            productCostService.saveOrUpdate(productCostDTO);
         }
 
         //4.修改/新增 采购信息
         if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
             ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productPurchaseDTO.setId(productKey.getPurchaseId());
-                ProductPurchaseEntity byId = productPurchaseService.getById(productPurchaseDTO.getId());
-                if(Objects.nonNull(byId)){
-                    BeanMapper.copyNonNull(productNoSpecDTO.getProductPurchaseDTO(),byId);
-                    byId.setSkuId(skuId);
-                    LoginUser loginUser = UserContext.getLoginUser();
-                    if (ObjectUtils.isNotEmpty(loginUser)) {
-                        byId.setUpdateUserId(loginUser.getUid());
-                        byId.setUpdateUserName(loginUser.getUserName());
-                    }
-                    //验证数据
-                    productPurchaseService.checkProductPurchase(byId);
-                    productPurchaseService.saveOrUpdate(byId);
-                }else{
-                    productPurchaseDTO.setSkuId(skuId);
-                    productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
-                }
-            }else{
-                productPurchaseDTO.setSkuId(skuId);
-                productPurchaseService.saveOrUpdate(productNoSpecDTO.getProductPurchaseDTO());
+            ProductPurchaseEntity byId = productPurchaseService.getById(productPurchaseDTO.getId());
+            if(Objects.nonNull(byId)){
+                BeanMapper.copyNonNull(productNoSpecDTO.getProductPurchaseDTO(),byId);
+                BeanUtil.copyProperties(byId,productPurchaseDTO);
             }
+            productPurchaseDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getPurchaseId());
+            productPurchaseDTO.setSkuId(skuId);
 
+            //操作日志
+            addProductPurchaseLog(productPurchaseDTO, id);
+            productPurchaseService.saveOrUpdate(productPurchaseDTO);
         }
         //新增/修改采购备注信息
         if (!ListUtils.isEmpty(productNoSpecDTO.getProductPurchaseRemarkList())) {
@@ -2073,54 +2256,34 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPurchaseRemarkService.saveOrUpdateBatch(productPurchaseRemarkList);
         }
         //5.修改/新增 销售信息
-        ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
-        if (!ObjectUtils.isEmpty(productSaleDTO)) {
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productSaleDTO.setId(productKey.getSaleId());
-                ProductSaleEntity byId = productSaleService.getById(productSaleDTO.getId());
-                if(Objects.nonNull(byId)){
-                    BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
-                    byId.setSkuId(skuId);
-                    LoginUser loginUser = UserContext.getLoginUser();
-                    if (ObjectUtils.isNotEmpty(loginUser)) {
-                        byId.setUpdateUserId(loginUser.getUid());
-                        byId.setUpdateUserName(loginUser.getUserName());
-                    }
-                    productSaleService.saveOrUpdate(byId);
-                }else {
-                    productSaleDTO.setSkuId(skuId);
-                    productSaleService.saveOrUpdate(productSaleDTO);
-                }
-            }else {
-                productSaleDTO.setSkuId(skuId);
-                productSaleService.saveOrUpdate(productSaleDTO);
+        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductSaleDTO())) {
+            ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
+            ProductSaleEntity byId = productSaleService.getById(productSaleDTO.getId());
+            if(Objects.nonNull(byId)){
+                BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
+                BeanUtil.copyProperties(byId,productSaleDTO);
             }
+            productSaleDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getSaleId());
+            productSaleDTO.setSkuId(skuId);
+
+            //操作日志
+            addProductSaleLog(productSaleDTO, id);
+            productSaleService.saveOrUpdate(productSaleDTO);
         }
         //6.修改/新增 物流信息
-        ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
-        if (!ObjectUtils.isEmpty(productLogisticsDTO)) {
-            if (ObjectUtils.isNotEmpty(productKey)) {
-                productLogisticsDTO.setId(productKey.getLogisticsId());
-                ProductLogisticsEntity byId = productLogisticsService.getById(productLogisticsDTO.getId());
-                if(Objects.nonNull(byId)){
-                    BeanMapper.copyNonNull(productLogisticsDTO, byId);
-                    byId.setSkuId(skuId);
-                    LoginUser loginUser = UserContext.getLoginUser();
-                    if (ObjectUtils.isNotEmpty(loginUser)) {
-                        byId.setUpdateUserId(loginUser.getUid());
-                        byId.setUpdateUserName(loginUser.getUserName());
-                    }
-
-                    productLogisticsService.saveOrUpdate(byId);
-                    productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(Arrays.asList(byId.getSkuId()));
-                }else {
-                    productLogisticsDTO.setSkuId(skuId);
-                    productLogisticsService.saveOrUpdate(productLogisticsDTO);
-                }
-            }else {
-                productLogisticsDTO.setSkuId(skuId);
-                productLogisticsService.saveOrUpdate(productLogisticsDTO);
+        if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductLogisticsDTO())) {
+            ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
+            ProductLogisticsEntity byId = productLogisticsService.getById(productLogisticsDTO.getId());
+            if(Objects.nonNull(byId)){
+                BeanMapper.copyNonNull(productLogisticsDTO, byId);
+                BeanUtil.copyProperties(byId,productLogisticsDTO);
             }
+            productLogisticsDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getLogisticsId());
+            productLogisticsDTO.setSkuId(skuId);
+
+            //操作日志
+            addProductLogisticsLog(productLogisticsDTO, id);
+            productLogisticsService.saveOrUpdate(productLogisticsDTO);
         }
 
         //7.修改/新增 包装信息
@@ -2159,8 +2322,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             lambdaUpdateWrapper.set(ProductPackEntity::getSkuId,skuId);
             lambdaUpdateWrapper.eq(ProductPackEntity::getId,productKey.getPackId());
-            productPackService.update(lambdaUpdateWrapper);
 
+            //操作日志
+            addProductPackLog(productPackDTO, id);
+            productPackService.update(lambdaUpdateWrapper);
         }
         return true;
     }
@@ -4161,6 +4326,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+
         Boolean flag = Boolean.TRUE;
         //如果是产品经理需要查询name
         if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode()) || ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
@@ -4213,7 +4379,47 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             throw new ServiceException(ApiError.ERROR_95243);
         }
         productLogisticsService.saveOrUpdateParentPropertyIdByChildSkuId(dto.getIds());
+
+        //添加日志
+        String fieldValue = getFieldValue(dto);
+        entityList.forEach(obj -> {
+            String content = CharSequenceUtil.format("操作了【{}】，修改字段【{}】为【{}】",obj.getSkuNo(),ProductBatchFieldEnum.getName(dto.getUpdateFiledCode()),fieldValue);
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
+                    .setBusinessId(obj.getId()).setOperation("批量更新").setContent(content));
+        });
         return flag;
+    }
+
+    /**
+     * 字段值
+     * @param dto
+     * @return
+     */
+    private String getFieldValue (ProductDetailBatchUpdateDTO dto) {
+        if (ProductBatchFieldEnum.PRODUCT_STATE.getCode().equals(dto.getUpdateFiledCode())) {
+            return ProductDetailStateEnum.getNameByCode(Integer.valueOf(dto.getValues().toString()));
+        }
+        if (ProductBatchFieldEnum.SALE_STATE.getCode().equals(dto.getUpdateFiledCode())) {
+            return SaleStateEnum.getNameByCode(Integer.valueOf(dto.getValues().toString()));
+        }
+        if (ProductBatchFieldEnum.IS_MARKETABLE.getCode().equals(dto.getUpdateFiledCode())) {
+            return MathUtil.compareTo(MathUtil.ONE,Integer.valueOf(dto.getValues().toString())) == MathUtil.ZERO ? "是":"否";
+        }
+        if (ProductBatchFieldEnum.PRODUCT_PROPERTY_ID.getCode().equals(dto.getUpdateFiledCode())) {
+            List<BasicDictEntity> basicDictList = basicDictService.listByIds(Arrays.asList(dto.getValues().toString().split(",")));
+            return CollUtil.isEmpty(basicDictList) ? "" :basicDictList.stream().map(BasicDictEntity::getName).collect(Collectors.joining(","));
+        }
+        if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())) {
+            return commonService.getNameByIds(Arrays.asList(dto.getValues().toString().split(",")));
+        }
+        if (ProductBatchFieldEnum.PURCHASE_USER_ID.getCode().equals(dto.getUpdateFiledCode())) {
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(dto.getValues().toString());
+            return ObjUtil.isEmpty(findUserDTO) ? "" : findUserDTO.getUserName();
+        }
+        if (ProductBatchFieldEnum.SALE_METHOD.getCode().equals(dto.getUpdateFiledCode())) {
+            return SaleMethodEnum.getNameByCode(Integer.valueOf(dto.getValues().toString()));
+        }
+        return "";
     }
 
     @Override
@@ -4475,7 +4681,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public Boolean importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+    public ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         if(importType == 1){//导入新增
             return importAdd(excelFile, importType, response);
         }else if(importType == 2){//导入更新（待审核）
@@ -4483,7 +4689,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }else if(importType == 3){//导入更新（已审核）
             return importUpdateApprove(excelFile, response);
         }
-        return false;
+        return new ExcelImportFsDTO.UrlDTO();
     }
 
     private String getInsurancePropertyList(String insurancePropertyName, Map<String, BasicDictEntity> mapById, List<String> errorMsgList) {
@@ -4532,7 +4738,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
     //导入更新（已审核）
-    private Boolean importUpdateApprove(MultipartFile excelFile, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importUpdateApprove(MultipartFile excelFile, HttpServletResponse response) {
         ProductDetailUpdateApproveExcelListener excelListenerUtil = new ProductDetailUpdateApproveExcelListener();
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateApproveExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -4553,23 +4759,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //处理验证成功数据
         handleApproveSuccessList(successList, errorList);
+        successList.removeAll(errorList);
 
-        if (errorList.size() > 0) {
-            StringBuilder sb = new StringBuilder();
+        String errorUrl = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String excelPath = "excel/productNoSpecApproveDetail.xlsx";
-            String name = "productNoSpecApproveDetail";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productNoSpecApproveDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
-
-            return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productNoSpecApproveDetail.xlsx";
+            String fileName = "productNoSpecApproveDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
 
@@ -4993,7 +5203,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     //导入更新（待审核）
-    private Boolean importUpdateNotApprove(MultipartFile excelFile, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importUpdateNotApprove(MultipartFile excelFile, HttpServletResponse response) {
         ProductDetailUpdateNotApproveExcelListener excelListenerUtil = new ProductDetailUpdateNotApproveExcelListener();
         try {
             read(excelFile.getInputStream(), ProductDetailUpdateNotApproveExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -5014,23 +5224,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //处理验证成功数据
         handleNotApproveSuccessList(successList, errorList);
+        successList.removeAll(errorList);
 
-        if (errorList.size() > 0) {
-            StringBuilder sb = new StringBuilder();
+        String errorUrl = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String excelPath = "excel/productNoSpecDetail.xlsx";
-            String name = "productNoSpecDetail";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
-
-            return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productNoSpecDetail.xlsx";
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
     private void handleNotApproveSuccessList(List<ProductDetailUpdateNotApproveExcelDTO> successList, List<ProductDetailUpdateNotApproveExcelDTO> errorList) {
@@ -5775,7 +5989,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     //导入新增
-    private Boolean importAdd(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
+    private ExcelImportFsDTO.UrlDTO importAdd(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         ProductDetailExcelListener excelListenerUtil = new ProductDetailExcelListener();
         try {
             read(excelFile.getInputStream(), ProductDetailExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -5796,23 +6010,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //处理验证成功数据
         handleImportSuccessList(successList, errorList, importType);
+        successList.removeAll(errorList);
 
-        if (errorList.size() > 0) {
-            StringBuilder sb = new StringBuilder();
+        String errorUrl = "";
+        if (CollectionUtils.isNotEmpty(errorList)) {
             String excelPath = "excel/productNoSpecDetail.xlsx";
-            String name = "productNoSpecDetail";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
-
-            return Boolean.FALSE;
         }
-        return Boolean.TRUE;
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productNoSpecDetail.xlsx";
+            String fileName = "productNoSpecDetail.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
     private void handleImportSuccessList(List<ProductDetailExcelDTO> successList, List<ProductDetailExcelDTO> errorList, Integer importType) {
@@ -6776,26 +6994,33 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional
     public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
+        if (CharSequenceUtil.isBlank(viewDTO.getSkuId())) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         checkSizeAndWeight(viewDTO);
         ProductPackEntity entity = new ProductPackEntity();
         BeanUtils.copyProperties(viewDTO, entity);
         productPackService.saveOrUpdate(entity);
 
-        if(StringUtils.isNotBlank(entity.getSkuId())){
-            ProductDetailEntity productDetailEntity = getById(entity.getSkuId());
-            //只同步审核通过的
-            if(Objects.nonNull(productDetailEntity) && productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
-                //发送金蝶
-                sendPushTask(Arrays.asList(productDetailEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
+        //产品推送金蝶
+        ProductDetailEntity productDetailEntity = getById(entity.getSkuId());
+        //只同步审核通过的
+        if(Objects.nonNull(productDetailEntity) && productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
+            //发送金蝶
+            sendPushTask(Collections.singletonList(productDetailEntity), SyncOperateEnum.OPERATE_APPROVE.getCode());
 
-                syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntity);
 
-                syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
-                //增加缓存清除
-                redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
-            }
+            syncLingXingProductDetailService.syncDataToLingxing(productDetailEntity);
+            //增加缓存清除
+            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
         }
+
+        //新增操作日志
+        String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【毛重】为【{}】、【净重】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getGrossWeight(),entity.getNetWeight());
+        sysLogService.addSysLogByOther(new SysLogEntity().setBusinessId(entity.getSkuId()).setPid(productDetailEntity.getProductId())
+                .setOperation("更新包装信息").setContent(content));
         return BatchResultDTO.success(viewDTO.getSkuId(), viewDTO.getSkuNo(), "操作成功");
     }
 
@@ -6856,7 +7081,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    public void importProductUpdate(MultipartFile excelFile, HttpServletResponse response) {
+    public ExcelImportFsDTO.UrlDTO importProductUpdate(MultipartFile excelFile, HttpServletResponse response) {
         List<BasicCategoryEntity> categoryList = basicCategoryService.list();
         List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.list();
         Map<String, String> applicationCategoryMap = categoryEntityList.stream().collect(Collectors.toMap(ApplicationCategoryEntity::getName, ApplicationCategoryEntity::getId));
@@ -6873,23 +7098,30 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         List<ProductDetailUpdateExcelDTO> errorList = excelListenerUtil.getErrorList();
         List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
+        successList.removeAll(errorList);
+
         for (ProductInfoDTO productInfoDTO : successList) {
             productInfoService.updateSpec(productInfoDTO);
         }
+        String errorUrl = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            StringBuilder sb = new StringBuilder();
             String excelPath = "excel/productUpdateError.xlsx";
-            String name = "导入更新";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                throw new ServiceException(ApiError.ERROR_95125);
+            String fileName = "productUpdateError.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
+            if (file != null && !file.isDirectory()) {
+                errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
-
+        String successUrl = "";
+        if (CollectionUtils.isNotEmpty(successList)) {
+            String excelPath = "excel/productUpdateError.xlsx";
+            String fileName = "productUpdateError.xlsx";
+            File file = ExcelUtil.exportFile(excelPath, fileName, successList);
+            if (file != null && !file.isDirectory()) {
+                successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
     /**

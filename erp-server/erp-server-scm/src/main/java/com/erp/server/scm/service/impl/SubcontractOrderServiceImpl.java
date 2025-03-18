@@ -33,6 +33,7 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
@@ -710,6 +711,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 }
                 dto.setQuantity(bomChildrenSkuDTO.getQuantity());
             }
+            dto.setFirstMassProductName(FirstMassProductTypeEnum.getName(dto.getFirstMassProduct()));
             //报价信息查询
             if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId())) {
                 //采购单价赋值
@@ -881,6 +883,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 poDetailAddDTO.setPurchaseApplicationId(addDetailDTO.getPurchaseApplicationId());
                 poDetailAddDTO.setPurchaseApplicationDetailId(addDetailDTO.getPurchaseApplicationDetailId());
                 poDetailAddDTO.setPlanDeliveryDate(addDetailDTO.getPlanDeliveryDate());
+                poDetailAddDTO.setFirstMassProduct(addDetailDTO.getFirstMassProduct());
                 poDetailList.add(poDetailAddDTO);
             }
             addDTO.setDetails(poDetailList);
@@ -955,7 +958,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //收料组织
             generatePoDTO.setReceiveOrgId(orgId);
             //新品首批暂时默认
-            generatePoDTO.setIsFirstMassProduct(ObjectUtils.isEmpty(generatePoDTO.getIsFirstMassProduct()) ? mainEntity.getIsFirstMassProduct() : generatePoDTO.getIsFirstMassProduct());
+            generatePoDTO.setFirstMassProduct(ObjectUtils.isEmpty(generatePoDTO.getFirstMassProduct()) ? detailEntity.getFirstMassProduct() : generatePoDTO.getFirstMassProduct());
             //备注
             generatePoDTO.setRemark(detailEntity.getRemark());
             //付款条件
