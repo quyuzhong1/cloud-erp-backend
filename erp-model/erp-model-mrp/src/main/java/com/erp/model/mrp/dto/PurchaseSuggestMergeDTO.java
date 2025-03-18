@@ -747,6 +747,16 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 来源信息
          */
         private List<PushSourceDTO> sourceList;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProductName;
+
     }
 
     /**
@@ -847,6 +857,15 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          * 来源信息
          */
         private List<PushSourceDTO> sourceList;
+        /**
+         * 新品首批（false否,true是）
+         */
+        @NotNull(message = "新品首批不能为空")
+        private String firstMassProduct;
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProductName;
     }
 
 
