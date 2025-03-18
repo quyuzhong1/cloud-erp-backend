@@ -102,6 +102,13 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
     BatchResultDTO approve(PoReturnEntity entity, String type, String comment, Boolean isNeedProcess,List<PoReturnDetailEntity> poReturnDetailList);
 
     /**
+     * 审核添加分步式事物代码处理
+     * @param purchaseDetailIdList
+     * @param poReturnEntityList1
+     */
+    void approveTransactional (List<String> purchaseDetailIdList,List<PoReturnEntity> poReturnEntityList1);
+
+    /**
      * 批量反审核
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
