@@ -2761,7 +2761,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             map.put("name",entity.getSpuName());
             map.put("chargeId",entity.getChargeId());
             map.put("chargeName",entity.getChargeName());
-            sendNoticeMessage(title,flag, map, notice, noticeUserIds, message, notice.getId());
+            sendNoticeMessage(title,flag, map, notice, noticeUserIds, message);
         }
         return true;
     }
@@ -2831,7 +2831,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             map.put("name",noticeDTO.getName());
             map.put("chargeId",noticeDTO.getChargeId());
             map.put("chargeName",noticeDTO.getChargeName());
-            sendNoticeMessage(noticeEnum.getName(),noticeEnum.getFlag(), map, notice, noticeUserIds, message, notice.getId());
+            sendNoticeMessage(noticeEnum.getName(),noticeEnum.getFlag(), map, notice, noticeUserIds, message);
         }
     }
 
@@ -2935,7 +2935,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         map.put("chargeName",skuChangeFieldsDTO.getChargeName());
 
                         // 发送通知消息
-                        sendNoticeMessage(noticeEnum.getName(),noticeEnum.getFlag(), map, notice, noticeUserIds, sb.toString(), notice.getId());
+                        sendNoticeMessage(noticeEnum.getName(),noticeEnum.getFlag(), map, notice, noticeUserIds, sb.toString());
                     }
                 }
             }
@@ -2952,9 +2952,8 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @param notice 通知消息实体
      * @param noticeUserIds 需要通知的用户ID列表
      * @param message 消息内容
-     * @param noticeMessageId 通知消息ID
      */
-    private void sendNoticeMessage( String title, String flag, Map<String,String> map, NoticeMessageEntity notice, List<String> noticeUserIds, String message, String noticeMessageId) {
+    private void sendNoticeMessage( String title, String flag, Map<String,String> map, NoticeMessageEntity notice, List<String> noticeUserIds, String message) {
         //获取飞书的unionid 与用户关系
         List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
         //消息通知记录
@@ -2997,7 +2996,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 NoticeMessageRecordEntity recordEntity = new NoticeMessageRecordEntity();
                 recordEntity.setChargeId(map.get("chargeId"));
                 recordEntity.setMessageContent(message);
-                recordEntity.setNoticeMessageId(noticeMessageId);
+                recordEntity.setNoticeMessageId(notice.getId());
                 recordEntity.setNoticeNode(flag);
                 recordEntity.setNoticeUserId(userId);
                 recordEntity.setProductId(map.get("productId"));

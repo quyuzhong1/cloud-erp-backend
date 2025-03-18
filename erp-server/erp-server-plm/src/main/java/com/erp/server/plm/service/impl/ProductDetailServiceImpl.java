@@ -1384,6 +1384,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         noticeDTO.setProductBasicChangeField(productBasicChangeField);
         noticeDTO.setProductPackChangeField(productPackChangeField);
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
+        //发送消息
         handleProductChangeNotification(noticeDTOList);
         return true;
     }
@@ -4811,6 +4812,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
                 .collect(Collectors.toMap(BasicDictEntity::getName, entity -> entity));
 
+        //消息推送
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
+
         for (ProductDetailImprotUpdateExcelDTO dto : successList) {
             List<String> errorMsgList = new ArrayList<>();
 
@@ -5527,7 +5531,24 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
                 bean.inportExcelAndSync(productNoSpecDTO,productBy);
             }
+
+            //获取产品基本信息修改的字段
+            List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productInfoDTO);
+            //获取产品包装信息修改的字段
+            List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
+            //发送通知
+            ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+            noticeDTO.setProductId(productInfoDTO.getId());
+            noticeDTO.setName(productInfoDTO.getName());
+            noticeDTO.setChargeId(productInfoDTO.getChargeId());
+            noticeDTO.setChargeName(productInfoDTO.getChargeName());
+            noticeDTO.setSkuNo(productSkuBaseInfoDTO.getSkuNo());
+            noticeDTO.setProductBasicChangeField(productBasicChangeField);
+            noticeDTO.setProductPackChangeField(productPackChangeField);
+            noticeDTOList.add(noticeDTO);
         }
+        //发送消息
+        handleProductChangeNotification(noticeDTOList);
     }
 
     //导入新增
@@ -5554,10 +5575,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         handleImportSuccessList(successList, errorList, importType);
         successList.removeAll(errorList);
 
+        String excelPath = "excel/productNoSpecDetail.xlsx";
+        String fileName = "productNoSpecDetail.xlsx";
         String errorUrl = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String excelPath = "excel/productNoSpecDetail.xlsx";
-            String fileName = "productNoSpecDetail.xlsx";
             File file = ExcelUtil.exportFile(excelPath, fileName, errorList);
             if (file != null && !file.isDirectory()) {
                 errorUrl = FastDFSClientUtil.uploadFile(file, fileName);
@@ -5565,8 +5586,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         String successUrl = "";
         if (CollectionUtils.isNotEmpty(successList)) {
-            String excelPath = "excel/productNoSpecDetail.xlsx";
-            String fileName = "productNoSpecDetail.xlsx";
             File file = ExcelUtil.exportFile(excelPath, fileName, successList);
             if (file != null && !file.isDirectory()) {
                 successUrl = FastDFSClientUtil.uploadFile(file, fileName);
@@ -6160,9 +6179,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
              * 净重
              */
             productPackDTO.setNetWeight(MathUtil.valueOf(dto.getNetWeight()));
-            //箱规尺寸>=包装尺寸，毛重>=净重
-
-
             /**
              * 单箱重量
              */
