@@ -1177,7 +1177,7 @@
           and sb2c.bill_status = 'shipped'
           and sb2c.label_json ~ 'AFN'
           and sb2c.vat_invoice_status = ''
-          and sb2c.shop_id = #{shopId} and sb2c.create_time >= #{enableTime}
+          and sb2c.shop_id = #{shopId} and sb2c.platform_order_create_time >= #{enableTime}
     </update>
 
     <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">
