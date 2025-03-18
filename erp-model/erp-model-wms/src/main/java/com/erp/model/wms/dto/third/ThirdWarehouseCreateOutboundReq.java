@@ -43,7 +43,7 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private Integer verify;
 
     //配送商
-    private Integer distributorType;
+    private String carrierType;
 
     //收件人信息
     private ReceiverInfo receiverInfo;
