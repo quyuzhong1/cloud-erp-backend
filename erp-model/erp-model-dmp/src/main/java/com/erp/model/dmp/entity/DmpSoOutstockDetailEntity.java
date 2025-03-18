@@ -187,6 +187,11 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
      */
     @TableField("all_amount_local_currency")
     private BigDecimal allAmountLocalCurrency;
+    /**
+     * 币别(速卖通发货单明细来源单价币种)
+     */
+    @TableField("currency")
+    private String currency;
 
 
     public static final String MAIN_ID = "main_id";
