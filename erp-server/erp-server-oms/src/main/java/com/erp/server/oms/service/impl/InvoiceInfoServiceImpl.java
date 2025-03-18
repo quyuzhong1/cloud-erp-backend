@@ -225,6 +225,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"已存在开票中的发票"));
                 continue;
             }
+
+            InvoiceInfoEntity existInvoiceUploadingInfoEntity = existList.stream().filter(e -> e.getSoId().equals(soB2cEntity.getId()) && e.getUploadStatus().equals(InvoiceInfoUploadStatusEnum.UPLOADING.getCode())).findFirst().orElse(null);
+            if(Objects.nonNull(existInvoiceUploadingInfoEntity)){
+                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"已存在上传中的发票"));
+                continue;
+            }
             List<SoB2cDetailEntity> soB2cDetailEntityList = allSoB2cDetailEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getMainId()) && e.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
             DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.stream().filter(e ->e.getShopId().equals(soB2cEntity.getShopId())&& e.getPlatformCode().equals(soB2cEntity.getPlatformCode())).findFirst().orElse(null);
             InvoiceInfoEntity invoiceInfoEntity = buildInvoiceEntity(cfgVatInvoiceEntity, soB2cEntity, dmpSoBillDetailEntity);
