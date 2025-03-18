@@ -3,24 +3,24 @@ package com.erp.server.plm.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.plm.dto.ProductDetailUpdateNotApproveExcelDTO;
+import com.erp.model.plm.dto.ProductDetailImprotUpdateExcelDTO;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventListener<ProductDetailUpdateNotApproveExcelDTO> {
+public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventListener<ProductDetailImprotUpdateExcelDTO> {
     /**
      * 错误信息
      */
-    private List<ProductDetailUpdateNotApproveExcelDTO> errorList = new ArrayList<>();
+    private List<ProductDetailImprotUpdateExcelDTO> errorList = new ArrayList<>();
     /**
      * 全部数据（用于判断导入是否为空）
      */
-    private List<ProductDetailUpdateNotApproveExcelDTO> dataList = new ArrayList<>();
+    private List<ProductDetailImprotUpdateExcelDTO> dataList = new ArrayList<>();
     /**
      * 成功信息
      */
-    private List<ProductDetailUpdateNotApproveExcelDTO> successList = new ArrayList<>();
+    private List<ProductDetailImprotUpdateExcelDTO> successList = new ArrayList<>();
     /**
      * @Description 每解析一行数据回调一遍
      * @Author jack
@@ -29,7 +29,7 @@ public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventLis
      * @param2 analysisContext: 解析器上下文
      **/
     @Override
-    public void invoke(ProductDetailUpdateNotApproveExcelDTO dto, AnalysisContext analysisContext) {
+    public void invoke(ProductDetailImprotUpdateExcelDTO dto, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
         //添加数据用于判断是否为空
         dataList.add(dto);
@@ -53,15 +53,15 @@ public class ProductDetailUpdateNotApproveExcelListener extends AnalysisEventLis
         return;
     }
 
-    public List<ProductDetailUpdateNotApproveExcelDTO> getErrorList(){
+    public List<ProductDetailImprotUpdateExcelDTO> getErrorList(){
         return errorList;
     }
 
-    public List<ProductDetailUpdateNotApproveExcelDTO> getSuccessList(){
+    public List<ProductDetailImprotUpdateExcelDTO> getSuccessList(){
         return successList;
     }
 
-    public List<ProductDetailUpdateNotApproveExcelDTO> getExcelDateList() {
+    public List<ProductDetailImprotUpdateExcelDTO> getExcelDateList() {
         return dataList;
     }
 
