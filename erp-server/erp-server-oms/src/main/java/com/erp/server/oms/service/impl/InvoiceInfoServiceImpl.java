@@ -237,7 +237,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 service.batchSave(addList,addDetailList);
                 soB2cService.updateBatchById(soB2cEntityList);
             }
-            return Collections.emptyList();
+            return resultDTOList;
         }
         //生成PDF
         addList.stream().filter(v->v.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())).forEach(invoiceInfoEntity -> {
