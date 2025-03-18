@@ -187,6 +187,11 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
 
         private String sourceSkuId;
 
+        /**
+         * 海关编码
+         */
+        private String hsCode;
+
         public Item(String productSku, Integer quantity) {
             this.productSku = productSku;
             this.quantity = quantity;
