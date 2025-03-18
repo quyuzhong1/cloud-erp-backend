@@ -182,6 +182,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
+        }
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<CfgVatInvoiceEntity> cfgVatInvoiceEntities = cfgVatInvoiceService.listCfgByShopIds(shopIds);
         List<SoB2cDetailEntity> allSoB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
@@ -317,7 +320,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         BigDecimal shippingCost = dmpSoBillDetailEntityList.stream().map(DmpSoBillDetailEntity::getShippingPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceTemplateDTO.setShippingCost(shippingCost);
         invoiceTemplateDTO.setShippingCostStr(symbol + invoiceTemplateDTO.getShippingCost().setScale(2,BigDecimal.ROUND_DOWN));
-        BigDecimal discountAmount = dmpSoBillDetailEntityList.stream().map(DmpSoBillDetailEntity::getDiscountAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal discountAmount = dmpSoBillDetailEntityList.stream().map(v->v.getDiscountAmount().add(v.getShippingDiscount())).reduce(BigDecimal.ZERO, BigDecimal::add);
         invoiceTemplateDTO.setDiscount(discountAmount);
         invoiceTemplateDTO.setDiscountStr(symbol + invoiceTemplateDTO.getDiscount().setScale(2,BigDecimal.ROUND_DOWN));
         BigDecimal SubtotalVatInclusive = detailDTOS.stream().map(CfgVatInvoiceDTO.DetailDTO::getTotalTaxPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
