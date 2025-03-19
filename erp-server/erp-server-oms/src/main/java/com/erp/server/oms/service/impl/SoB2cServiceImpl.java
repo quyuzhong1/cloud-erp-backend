@@ -2561,8 +2561,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             attach.setFileType(FileTypeEnum.PDF.getCode());
             attach.setAttachId(uploadFileResponse.getData().getAttachId());
             createOutboundReq.setAttach(Collections.singletonList(attach));
-            createOutboundReq.setCarrierType(channelEntity.getCarrierType());
         }
+        createOutboundReq.setCarrierType(channelEntity.getCarrierType());
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
         log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));
         String type = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();

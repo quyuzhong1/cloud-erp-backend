@@ -564,6 +564,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 view.setCountryName(countryName);
             }
         }
+        String virtualWarehouseId = view.getVirtualWarehouseId();
+        if(StringUtils.isNotBlank(virtualWarehouseId)){
+            List<VirtualWarehouseEntity> virtualWarehouseEntities = wmsVirtualWarehouseFeign.listByIds(Collections.singletonList(virtualWarehouseId));
+            if(CollectionUtils.isNotEmpty(virtualWarehouseEntities)){
+                view.setVirtualWarehouseName(virtualWarehouseEntities.get(0).getName());
+            }
+        }
         List<ProcessTaskManagementEntity> processTaskManagementEntities = workflowFeign.listProcessByBusinessId(Arrays.asList(soInfo.getId()));
 
         List<ProcessTaskManagementEntity> collect = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(soInfo.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE)).collect(Collectors.toList());
