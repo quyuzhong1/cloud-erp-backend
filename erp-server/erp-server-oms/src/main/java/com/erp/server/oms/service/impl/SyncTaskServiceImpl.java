@@ -734,10 +734,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         //产品信息
         List<String> skuNos = allDeliveryDetail.stream().map(SoB2cDeliveryDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        skuNos.addAll(soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList()));
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         List<String> skuIds = allDeliveryDetail.stream().map(SoB2cDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         skuIds.addAll(soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList()));
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> parentSkuList = new ArrayList<>();
@@ -877,8 +879,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         //产品信息
         List<String> skuNos = deliveryDetailList.stream().map(AliexpressDeliveryDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
+        skuNos.addAll(soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList()));
         List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         List<String> skuIds = deliveryDetailList.stream().map(AliexpressDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        skuIds.addAll(soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList()));
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
         //父类产品
         List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());

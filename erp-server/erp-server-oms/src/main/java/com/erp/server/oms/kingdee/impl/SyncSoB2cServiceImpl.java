@@ -510,7 +510,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setGoods_transaction_amount(price.multiply(BigDecimal.valueOf(soB2cDeliveryDetailEntity.getDeliveryQty())));
         }
 
-        shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, soB2cDetailEntity.getVersion(), soB2cDeliveryDetailEntity.getVersion()));
+        shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, soB2cDeliveryEntity.getVersion(), soB2cDeliveryDetailEntity.getVersion()));
 
         String targetPlatformSkuNo = soB2cDetailEntity.getPlatformSkuNo();
         if (StringUtils.isBlank(targetPlatformSkuNo)) {
@@ -547,8 +547,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 companyEntities,
                 dictBasicEntityList,
                 dictList,
-                soB2cDetailEntity.getSkuId(),
-                soB2cDetailEntity.getSkuNo(),
+                soB2cDeliveryDetailEntity.getSkuId(),
+                soB2cDeliveryDetailEntity.getSkuNo(),
                 setBlankMskuName,
                 soB2cDetailEntity.getCurrency(),
                 shudiyunB2cOrderDTO
