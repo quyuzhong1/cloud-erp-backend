@@ -116,6 +116,10 @@ public class TransferOutDetailDTO implements Serializable {
          * 调出仓位
          */
         private String outWarehouseLocation;
+        /**
+         * 调出仓位名称
+         */
+        private String outWarehouseLocationName;
 
         /**
          * 来源明细id
