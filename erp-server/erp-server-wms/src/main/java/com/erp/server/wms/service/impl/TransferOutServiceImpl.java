@@ -35,10 +35,7 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
-import com.erp.model.wms.entity.TransferInDetailEntity;
-import com.erp.model.wms.entity.TransferInEntity;
-import com.erp.model.wms.entity.TransferOutDetailEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
@@ -119,6 +116,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
         return lambdaQuery()
@@ -421,7 +420,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> skuIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
         Map<String,ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
-
+        //所有调出仓库id
+        List<String> outWarehouseIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getOutWarehouseId).distinct().collect(Collectors.toList());
+        //所有调出仓位列表
+        List<String> warehouseLocationCodeList = dataList.stream().map(r-> StrUtils.null2EmptyWithTrim(r.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(outWarehouseIds, warehouseLocationCodeList);
         // 调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
@@ -451,6 +454,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             } else {
                 data.setPlanQty(data.getQty() - pushedQty);
             }
+            String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), data.getOutWarehouseId())
+                    && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(data.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
+            data.setOutWarehouseLocationName(outWarehouseLocationName);
         });
         return dataList;
     }
@@ -675,6 +681,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> skuIds = viewDetailList.stream().map(TransferOutDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        String outWarehouseId = data.getOutWarehouseId();
+        List<String> warehouseLocationCodeList = viewDetailList.stream().map(r-> StrUtils.null2EmptyWithTrim(r.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(Collections.singletonList(outWarehouseId), warehouseLocationCodeList);
         viewDetailList.stream().forEach(member->{
             //产品名称
             if(skuMap.containsKey(member.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(member.getSkuId()))) {
@@ -685,6 +694,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             //根据组织、仓库、仓位、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(data.getOutWarehouseId(), member.getSkuId(), member.getOutWarehouseLocation());
             member.setCurInventoryQty(curInventoryQty);
+            String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), data.getOutWarehouseId())
+                    && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(member.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
+            member.setOutWarehouseLocationName(outWarehouseLocationName);
         });
         data.setDetailList(viewDetailList);
     }
