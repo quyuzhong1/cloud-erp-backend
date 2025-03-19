@@ -157,6 +157,7 @@ public class MercadoLocalSdkClientService {
 
         //入参（无）
         Map<String, Object> param = new HashMap<>();
+        param.put("code", code);
 
         //请求头
         Map<String, String> headerMap = new HashMap<>();
