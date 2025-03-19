@@ -71,7 +71,7 @@
                li.platform_sku_no as platformSkuNo
         from listing_info li
         where li.is_deleted = false
-        and li.type = #{params.type};
+        and li.type = #{params.type}
         <if test="params.authId != null and params.authId != ''">
             and li.auth_id = #{params.authId}
         </if>
