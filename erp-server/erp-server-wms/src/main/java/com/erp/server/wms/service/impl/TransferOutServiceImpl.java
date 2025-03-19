@@ -747,6 +747,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         transferInDTO.setOutWarehouseId(pushData.getOutWarehouseId());
         transferInDTO.setOutWarehouseLocation(pushData.getOutWarehouseLocation());
         transferInDTO.setInWarehouseId(pushData.getInWarehouseId());
+        transferInDTO.setInWarehouseLocation(pushData.getInWarehouseLocation());
         transferInDTO.setSkuId(pushData.getSkuId());
         transferInDTO.setSkuNo(pushData.getSkuNo());
         transferInDTO.setOutQty(transferOutDetailEntity.getQty());
