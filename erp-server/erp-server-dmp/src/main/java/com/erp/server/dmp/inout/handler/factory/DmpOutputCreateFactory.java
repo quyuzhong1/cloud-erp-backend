@@ -270,25 +270,27 @@ public class DmpOutputCreateFactory{
 			if(StringUtils.isNotBlank(extendJson)) {
 				JSONObject parseObject = JSON.parseObject(extendJson);
 				String tableName = parseObject.getString("tableName");
-				ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(tableName, true) + "ServiceImpl" , ServiceImpl.class);
-				list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));
-				if(CollUtil.isEmpty(list)) {
-					return null;
+				if(StringUtils.isNotBlank(tableName)) {
+					ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(tableName, true) + "ServiceImpl" , ServiceImpl.class);
+					list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));
+					if(CollUtil.isEmpty(list)) {
+						return null;
+					}
+					String parentPropertie = parseObject.getString("parentPropertie");
+					if(StringUtils.isBlank(parentPropertie)) {
+						parentPropertie = "id";
+					}
+					String childPropertie = parseObject.getString("childPropertie");
+					if(StringUtils.isBlank(childPropertie)) {
+						childPropertie = "mainId";
+					}
+					queryParams = new ArrayList<>();
+					List<Object> values = new ArrayList<>();
+					for(BaseEntity l : list) {
+						values.add(BeanUtil.beanToMap(l, childPropertie).get(childPropertie));
+					}
+					queryParams.add(new QueryParam(QueryTypeEnum.IN, parentPropertie, values));
 				}
-				String parentPropertie = parseObject.getString("parentPropertie");
-				if(StringUtils.isBlank(parentPropertie)) {
-					parentPropertie = "id";
-				}
-				String childPropertie = parseObject.getString("childPropertie");
-				if(StringUtils.isBlank(childPropertie)) {
-					childPropertie = "mainId";
-				}
-				queryParams = new ArrayList<>();
-				List<Object> values = new ArrayList<>();
-				for(BaseEntity l : list) {
-					values.add(BeanUtil.beanToMap(l, childPropertie).get(childPropertie));
-				}
-				queryParams.add(new QueryParam(QueryTypeEnum.IN, parentPropertie, values));
 			}
 			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(mainDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
 			list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));

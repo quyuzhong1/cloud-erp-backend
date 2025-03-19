@@ -14,12 +14,26 @@
 package com.erp.server.dmp.amz;
 
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import cn.hutool.json.ObjectMapper;
+import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.FeedsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.JSON;
+import com.erp.sdk.oms.amz.spapi.documents.DownloadHandler;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonEndpointsEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.feeds.*;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import okhttp3.*;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.entity.FileEntity;
+import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,8 +41,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.rmi.ServerException;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 /**
  * API tests for FeedsApi
@@ -46,9 +68,9 @@ public class FeedsApiTest {
      */
     @Test
     public void cancelFeedTest() throws ApiException {
-        String feedId = null;
-        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
-        api.cancelFeed(feedId);
+//        String feedId = null;
+//        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
+//        api.cancelFeed(feedId);
 
         // TODO: test validations
     }
@@ -61,8 +83,8 @@ public class FeedsApiTest {
     @Test
     public void createFeedTest() throws ApiException {
         CreateFeedSpecification body = null;
-        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
-        CreateFeedResponse response = api.createFeed(body);
+////        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
+//        CreateFeedResponse response = api.createFeed(body);
 
         // TODO: test validations
     }
@@ -73,16 +95,55 @@ public class FeedsApiTest {
      * @throws ApiException if the Api call fails
      */
     @Test
-    public void createFeedDocumentTest() throws ApiException {
+    public void createFeedDocumentTest() throws ApiException, IOException {
         CreateFeedDocumentSpecification body = new CreateFeedDocumentSpecification();
-        body.setContentType("text/tab-separated-values; charset=UTF-8");
-        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
+        body.setContentType("application/pdf");
+        AmazonShopInfoDTO shopInfoDTO = new AmazonShopInfoDTO();
+        shopInfoDTO.setClientId("amzn1.application-oa2-client.aa03ca5c8fd741a49df6e35aac3c3287");
+        shopInfoDTO.setSecretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B");
+        shopInfoDTO.setAccessKeyId("AKIARVXX3YJGDV2NGA4L");
+        shopInfoDTO.setRefreshToken("Atzr|IwEBIGMAY2S_GKCS6zsuZzJzKkh8FxQO0Ox_e2rGDsMcc5edGjctvjXjC-TtSWg2M3XGaNisFQqg2z_KwROD8xVOazVQkZBc4f4VIgTsIDPSlZ2fIHaONs_HA6J7hToolnOgbcli2M_CX1vXkPPxCRbW1JrQQlIDfdiHkMakJ5VAAnFPokQf3vcLv0P1gngOfbCL1KdhKyDBLGQLfEkwdKQ1r0jaeU6jkT6XB8iyDYvo_f-Ms87R-Xv6J4XMFhOtY_Z9BhixpGkNhbjz_ns0I-ejfcpLnDgHer02Syqi2ZTPIsF_pSOHtVs1yZj-OGdB0V0f66EOopfvV_53HnkmMNNS6Em7");
+        shopInfoDTO.setAccessToken("Atza|IwEBIPvZC_UzhQEW-S_bRoab-hRWrfhmG1aSSEX7REpelweuhz7eaioJg1tNg-1AvR5zn-tZTRTGNljOhvw4WK8WxnKW10qZgrSEgSnMTd0ElYKTaS_y22iJbDe1t8cEkgNRDfuWVeCn7uFgbpIaivwZR0jdJnx1lobxLjByP488zn99yG3FmHiR_9mtwxdDPJ00I_0OW80nYNZcbHEs-WnaFCMMdy-3y2y4Ni2ZcQE3u1N5_M88VxRyZob-1_GzE4CzKHOI-id0Icwwd5bmsj8OCvh0NqLxlwqc5jGImurjkyLbUnCWOXTANJorG7ttwJQw9bUApC_isOtV2miNjdQTQ_XVJkYUlu1m--dEPf1n200VoA");
+        shopInfoDTO.setAuthUrl("https://api.amazon.com/auth/o2/token");
+        shopInfoDTO.setRoleStr("arn:aws:iam::115410190924:role/DehouRole");
+        shopInfoDTO.setClientSecret("amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988");
+        FeedsApi api = FeedsApi.initApi(AmazonEndpointsEnum.EN_WAST_1,shopInfoDTO);
         CreateFeedDocumentResponse response = api.createFeedDocument(body);
-        System.out.println("createFeedDocumentTest");
-        System.out.println(JSON.toJsonStr(response));
-        // {"feedDocumentId":"3d4e42b5-1d6e-44e8-a89c-2abfca0625bb","url":"https://d34o8swod1owfl.cloudfront.net/Feed_101__POST_PRODUCT_DATA_.xml"}
-        // {"feedDocumentId":"amzn1.tortuga.4.na.81d5c9e1-e2f4-488a-9eaf-de24c6e56559.T1BGO9BZMAJLAG","url":"https://tortuga-prod-na.s3-external-1.amazonaws.com/%2FNinetyDays/amzn1.tortuga.4.na.81d5c9e1-e2f4-488a-9eaf-de24c6e56559.T1BGO9BZMAJLAG?X-Amz-Algorithm\u003dAWS4-HMAC-SHA256\u0026X-Amz-Date\u003d20231019T062321Z\u0026X-Amz-SignedHeaders\u003dcontent-type%3Bhost\u0026X-Amz-Expires\u003d300\u0026X-Amz-Credential\u003dAKIA5U6MO6RAETTDXOQT%2F20231019%2Fus-east-1%2Fs3%2Faws4_request\u0026X-Amz-Signature\u003dbcf387eb7e85a7f96bc220d408ba026140e725d34d759374aafedb392aa5678e"}
-        // TODO: test validations
+        String url = response.getUrl();
+        System.out.println(url);
+        OkHttpClient client = new OkHttpClient();
+        File fileToUpload = new File("C:\\Users\\Administrator\\Desktop\\testamz\\invoice-Abed.pdf");
+        Path path = fileToUpload.toPath();
+        byte[] a = Files.readAllBytes(path);
+        try {
+            Request request = new Request.Builder()
+                    .url(url)
+                    .addHeader("Content-Type","application/pdf")
+                    .put(RequestBody.create(MediaType.parse("application/pdf"),  a))
+                    .build();
+
+            Response response2 = client.newCall(request).execute();
+            if (!response2.isSuccessful()) {
+                System.out.println(
+                        String.format("Call to upload document failed with response code: %d and message: %s",
+                                response2.code(), response2.message()));
+            }else{
+                CreateFeedSpecification createFeedSpecification = new CreateFeedSpecification();
+                createFeedSpecification.setFeedType("UPLOAD_VAT_INVOICE");
+                createFeedSpecification.setInputFeedDocumentId(response.getFeedDocumentId());
+                createFeedSpecification.setMarketplaceIds(Arrays.asList("A17E79C6D8DWNP"));
+                FeedOptions feedOptions = new FeedOptions();
+                feedOptions.put("metadata:OrderId","404-7019951-2767504");
+                feedOptions.put("metadata:InvoiceNumber","InvoiceNumberWJ123456");
+                feedOptions.put("metadata:DocumentType","Invoice");
+                createFeedSpecification.setFeedOptions(feedOptions);
+                CreateFeedResponse createFeedResponse = api.createFeed(createFeedSpecification);
+                System.out.println(createFeedResponse);
+            }
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
     }
 
     /**
@@ -92,25 +153,85 @@ public class FeedsApiTest {
      */
     @Test
     public void getFeedTest() throws ApiException {
-        String feedId = null;
-        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
-        Feed response = api.getFeed(feedId);
-
-        // TODO: test validations
+        AmazonShopInfoDTO shopInfoDTO = new AmazonShopInfoDTO();
+        shopInfoDTO.setClientId("amzn1.application-oa2-client.aa03ca5c8fd741a49df6e35aac3c3287");
+        shopInfoDTO.setSecretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B");
+        shopInfoDTO.setAccessKeyId("AKIARVXX3YJGDV2NGA4L");
+        shopInfoDTO.setRefreshToken("Atzr|IwEBIGMAY2S_GKCS6zsuZzJzKkh8FxQO0Ox_e2rGDsMcc5edGjctvjXjC-TtSWg2M3XGaNisFQqg2z_KwROD8xVOazVQkZBc4f4VIgTsIDPSlZ2fIHaONs_HA6J7hToolnOgbcli2M_CX1vXkPPxCRbW1JrQQlIDfdiHkMakJ5VAAnFPokQf3vcLv0P1gngOfbCL1KdhKyDBLGQLfEkwdKQ1r0jaeU6jkT6XB8iyDYvo_f-Ms87R-Xv6J4XMFhOtY_Z9BhixpGkNhbjz_ns0I-ejfcpLnDgHer02Syqi2ZTPIsF_pSOHtVs1yZj-OGdB0V0f66EOopfvV_53HnkmMNNS6Em7");
+        shopInfoDTO.setAccessToken("Atza|IwEBIPvZC_UzhQEW-S_bRoab-hRWrfhmG1aSSEX7REpelweuhz7eaioJg1tNg-1AvR5zn-tZTRTGNljOhvw4WK8WxnKW10qZgrSEgSnMTd0ElYKTaS_y22iJbDe1t8cEkgNRDfuWVeCn7uFgbpIaivwZR0jdJnx1lobxLjByP488zn99yG3FmHiR_9mtwxdDPJ00I_0OW80nYNZcbHEs-WnaFCMMdy-3y2y4Ni2ZcQE3u1N5_M88VxRyZob-1_GzE4CzKHOI-id0Icwwd5bmsj8OCvh0NqLxlwqc5jGImurjkyLbUnCWOXTANJorG7ttwJQw9bUApC_isOtV2miNjdQTQ_XVJkYUlu1m--dEPf1n200VoA");
+        shopInfoDTO.setAuthUrl("https://api.amazon.com/auth/o2/token");
+        shopInfoDTO.setRoleStr("arn:aws:iam::115410190924:role/DehouRole");
+        shopInfoDTO.setClientSecret("amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988");
+        FeedsApi api = FeedsApi.initApi(AmazonEndpointsEnum.EN_WAST_1,shopInfoDTO);
+        Feed feed =  api.getFeed("185791020160");
+        System.out.println(feed);
     }
-
     /**
      * Returns the information required for retrieving a feed document&#39;s contents.  **Usage Plan:**  | Rate (requests per second) | Burst | | ---- | ---- | | 0.0222 | 10 |  For more information, see \&quot;Usage Plans and Rate Limits\&quot; in the Selling Partner API documentation.
      *
      * @throws ApiException if the Api call fails
      */
     @Test
-    public void getFeedDocumentTest() throws ApiException {
-        String feedDocumentId = null;
-        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
-        FeedDocument response = api.getFeedDocument(feedDocumentId);
+    public void getFeedDocumentTest() throws ApiException, IOException {
+        AmazonShopInfoDTO shopInfoDTO = new AmazonShopInfoDTO();
+        shopInfoDTO.setClientId("amzn1.application-oa2-client.aa03ca5c8fd741a49df6e35aac3c3287");
+        shopInfoDTO.setSecretKey("t6CqSJE9o5OSONJiW+pCz7EFRHwJFtX3RIJSRP4B");
+        shopInfoDTO.setAccessKeyId("AKIARVXX3YJGDV2NGA4L");
+        shopInfoDTO.setRefreshToken("Atzr|IwEBIGMAY2S_GKCS6zsuZzJzKkh8FxQO0Ox_e2rGDsMcc5edGjctvjXjC-TtSWg2M3XGaNisFQqg2z_KwROD8xVOazVQkZBc4f4VIgTsIDPSlZ2fIHaONs_HA6J7hToolnOgbcli2M_CX1vXkPPxCRbW1JrQQlIDfdiHkMakJ5VAAnFPokQf3vcLv0P1gngOfbCL1KdhKyDBLGQLfEkwdKQ1r0jaeU6jkT6XB8iyDYvo_f-Ms87R-Xv6J4XMFhOtY_Z9BhixpGkNhbjz_ns0I-ejfcpLnDgHer02Syqi2ZTPIsF_pSOHtVs1yZj-OGdB0V0f66EOopfvV_53HnkmMNNS6Em7");
+        shopInfoDTO.setAccessToken("Atza|IwEBIPvZC_UzhQEW-S_bRoab-hRWrfhmG1aSSEX7REpelweuhz7eaioJg1tNg-1AvR5zn-tZTRTGNljOhvw4WK8WxnKW10qZgrSEgSnMTd0ElYKTaS_y22iJbDe1t8cEkgNRDfuWVeCn7uFgbpIaivwZR0jdJnx1lobxLjByP488zn99yG3FmHiR_9mtwxdDPJ00I_0OW80nYNZcbHEs-WnaFCMMdy-3y2y4Ni2ZcQE3u1N5_M88VxRyZob-1_GzE4CzKHOI-id0Icwwd5bmsj8OCvh0NqLxlwqc5jGImurjkyLbUnCWOXTANJorG7ttwJQw9bUApC_isOtV2miNjdQTQ_XVJkYUlu1m--dEPf1n200VoA");
+        shopInfoDTO.setAuthUrl("https://api.amazon.com/auth/o2/token");
+        shopInfoDTO.setRoleStr("arn:aws:iam::115410190924:role/DehouRole");
+        shopInfoDTO.setClientSecret("amzn1.oa2-cs.v1.fbb86fa8cb4ef1d12371197a1637e6429f3876d7b5520d39054519a82b05e988");
+        FeedsApi api = FeedsApi.initApi(AmazonEndpointsEnum.EN_WAST_1,shopInfoDTO);
+        FeedDocument feed =  api.getFeedDocument("amzn1.tortuga.4.eu.48d151a4-8444-4221-bcf5-048121b9ac01.T3TFR4U62ISTT3");
+        System.out.println(JSONUtil.toJsonStr(feed));
+        // 创建请求
+        OkHttpClient client = new OkHttpClient();
+        Request request = new Request.Builder()
+                .url(feed.getUrl())
+                .build();
 
-        // TODO: test validations
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                throw new IOException("Unexpected code: " + response);
+            }
+
+            ResponseBody responseBody = response.body();
+            if (responseBody != null) {
+                // 获取压缩内容
+                byte[] compressedContent = responseBody.bytes();
+
+                // 将解压缩的内容转换为字符串
+                String content = new String(compressedContent);
+                System.out.println("Downloaded content: " + content);
+                String key = "Number of records successful";
+                int keyIndex = content.indexOf(key);
+                if (keyIndex == -1) {
+                    throw new IllegalArgumentException("Key not found: " + key);
+                }
+
+                // 找到关键字后的值的位置
+                int valueStartIndex = keyIndex + key.length();
+                String remainingText = content.substring(valueStartIndex).trim();
+
+                // 提取值（假设值是一个整数）
+                StringBuilder valueBuilder = new StringBuilder();
+                for (char c : remainingText.toCharArray()) {
+                    if (Character.isDigit(c)) {
+                        valueBuilder.append(c);
+                    } else {
+                        break; // 遇到非数字字符时停止
+                    }
+                }
+
+                // 将提取的值转换为整数
+                Integer a = Integer.parseInt(valueBuilder.toString());
+                System.out.println(a);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
@@ -120,15 +241,15 @@ public class FeedsApiTest {
      */
     @Test
     public void getFeedsTest() throws ApiException {
-        List<String> feedTypes = null;
-        List<String> marketplaceIds = null;
-        Integer pageSize = null;
-        List<String> processingStatuses = null;
-        OffsetDateTime createdSince = null;
-        OffsetDateTime createdUntil = null;
-        String nextToken = null;
-        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
-        GetFeedsResponse response = api.getFeeds(feedTypes, marketplaceIds, pageSize, processingStatuses, createdSince, createdUntil, nextToken);
+//        List<String> feedTypes = null;
+//        List<String> marketplaceIds = null;
+//        Integer pageSize = null;
+//        List<String> processingStatuses = null;
+//        OffsetDateTime createdSince = null;
+//        OffsetDateTime createdUntil = null;
+//        String nextToken = null;
+//        FeedsApi api = FeedsApi.initApi(AmazonMarketplaceEnum.US);
+//        GetFeedsResponse response = api.getFeeds(feedTypes, marketplaceIds, pageSize, processingStatuses, createdSince, createdUntil, nextToken);
 
         // TODO: test validations
     }

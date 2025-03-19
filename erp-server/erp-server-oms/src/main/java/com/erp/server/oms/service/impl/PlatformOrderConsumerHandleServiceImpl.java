@@ -108,6 +108,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private SoB2cSplitService soB2cSplitService;
 
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -226,6 +228,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             dto.getRefundDTOList().forEach(e->{
                 newPlatformRefundOrderConsumerService.handle(JSON.toJSONString(e));
             });
+        }
+        //亚马逊平台仓订单已发货生成发票
+        if (isShipped  && hasPlatformWarehouse && PlatformDictEnum.AMAZON.getCode().equals(mainEntity.getDictPlatform())) {
+            List<InvoiceInfoEntity> invoiceInfoEntities = invoiceInfoService.listBySoIds(Collections.singletonList(mainEntity.getId()));
+            if (CollectionUtils.isEmpty(invoiceInfoEntities)){
+                try {
+                    invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                }catch (Exception e){
+                    log.error("亚马逊订单已发货生成发票异常：{}",e.getMessage());
+                }
+            }
         }
     }
 

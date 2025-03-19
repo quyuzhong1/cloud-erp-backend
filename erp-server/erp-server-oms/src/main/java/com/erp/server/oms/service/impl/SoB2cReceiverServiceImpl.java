@@ -224,7 +224,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     public void buildPartitionId(SoB2cReceiverEntity receiverEntity, ShopInfoEntity shopInfoEntity) {
         String country = receiverEntity.getCountry();
         if(Objects.nonNull(shopInfoEntity)){
-            if(StringUtils.isNotBlank(shopInfoEntity.getDictCountryCode())){
+            if(StringUtils.isNotBlank(shopInfoEntity.getDictCountryCode())&& !shopInfoEntity.getDictCountryCode().equals(DictValueEnum.ALL.getCode())){
                 country = shopInfoEntity.getDictCountryCode();
             }else if (StringUtils.isNotBlank(shopInfoEntity.getCustomerId())){
                 CustomerInfoEntity customerInfo = customerInfoService.getById(shopInfoEntity.getCustomerId());
