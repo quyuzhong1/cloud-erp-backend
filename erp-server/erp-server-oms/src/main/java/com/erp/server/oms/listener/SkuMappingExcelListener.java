@@ -133,6 +133,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         List<String> msgList = FieldValidUtil.fieldValid(skuMappingImportExcelDTO);
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
+        LocalDateTime effectiveTime = LocalDateUtil.parseStrToLocalTime(skuMappingImportExcelDTO.getEnabledTime());
+        if(Objects.isNull(effectiveTime)){
+            errorMsgList.add("启用时间[时间]格式不正确");
+        }
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
