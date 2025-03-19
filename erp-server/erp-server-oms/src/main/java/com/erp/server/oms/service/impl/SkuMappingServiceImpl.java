@@ -1733,6 +1733,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if(CollectionUtils.isNotEmpty(skuMappingEntityList)){
                 SkuMappingEntity skuMappingEntity = skuMappingEntityList.get(0);
                 if(skuMappingEntity.getProductSkuId().equals(dto.getSkuId())){
+                    List<SkuMappingEntity> historyList = this.listExpiredByListing(existsEntity.getId());
+                    if(CollectionUtils.isNotEmpty(historyList)){
+                        SkuMappingEntity skuMapping = historyList.get(0);
+                        if (skuMapping.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMapping.getEffectiveTime())){
+                            throw new ServiceException("启用时间不可早于历史启用启用时间【{}】",skuMapping.getEffectiveTime());
+                        }
+                    }
                     skuMappingEntity.setEffectiveTime(effectiveTime);
                     skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
                     this.updateById(skuMappingEntity);
@@ -1740,7 +1747,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     existsEntity.setPlatformSkuName(dto.getPlatformSkuName());
                     listingInfoService.updateById(existsEntity);
                 }else if (skuMappingEntity.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMappingEntity.getEffectiveTime())){
-                    throw new ServiceException("已存在客户sku并且生效时间晚于选择的生效时间，不能新增");
+                    throw new ServiceException("启用日期不能早于上个映射关系的开始时间【{}】",skuMappingEntity.getEffectiveTime());
                 }else{
                     skuMappingEntity.setIsExpire(true);
                     this.updateById(skuMappingEntity);
@@ -1839,11 +1846,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         listingInfoService.updateById(existsEntity);
 
         if(skuMappingEntity.getProductSkuId().equals(dto.getSkuId())){
+            List<SkuMappingEntity> historyList = this.listExpiredByListing(existsEntity.getId());
+            if(CollectionUtils.isNotEmpty(historyList)){
+                SkuMappingEntity skuMapping = historyList.get(0);
+                if (skuMapping.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMapping.getEffectiveTime())){
+                    throw new ServiceException("启用时间不可早于历史启用启用时间【{}】",skuMapping.getEffectiveTime());
+                }
+            }
             skuMappingEntity.setEffectiveTime(effectiveTime);
             skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
             this.updateById(skuMappingEntity);
         }else if (skuMappingEntity.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMappingEntity.getEffectiveTime())){
-            throw new ServiceException("生效时间晚于选择的生效时间，不能更新");
+            throw new ServiceException("启用日期不能早于上个映射关系的开始时间【{}",skuMappingEntity.getEffectiveTime());
         }else{
             skuMappingEntity.setIsExpire(true);
             this.updateById(skuMappingEntity);
@@ -1965,4 +1979,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 //        //系统sku 获取子件
 //        return bomSkuFeign.checkExistAndListCombinationSku(skuNos);
 //    }
+
+    private List<SkuMappingEntity> listExpiredByListing(String listingId) {
+        return this.lambdaQuery()
+                .in(SkuMappingEntity::getListingId, listingId)
+                .eq(SkuMappingEntity::getIsExpire,true)
+                .orderByDesc(SkuMappingEntity::getEffectiveTime)
+                .list();
+    }
 }
