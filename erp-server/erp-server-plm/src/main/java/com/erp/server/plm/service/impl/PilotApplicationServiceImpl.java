@@ -977,17 +977,21 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 error.append(priceSearchDTO.getPurchaseQty());
                 error.append(";");
             }else {
+                Boolean flag = false;
                 for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
                     if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
+                        flag = true;
                         break;
                     }
                 }
-                ruleError.append("sku：");
-                ruleError.append(priceSearchDTO.getSkuNo());
-                ruleError.append(",");
-                ruleError.append("数量：");
-                ruleError.append(priceSearchDTO.getPurchaseQty());
-                ruleError.append(";");
+                if(!flag){
+                    ruleError.append("sku：");
+                    ruleError.append(priceSearchDTO.getSkuNo());
+                    ruleError.append(",");
+                    ruleError.append("数量：");
+                    ruleError.append(priceSearchDTO.getPurchaseQty());
+                    ruleError.append(";");
+                }
             }
         }
         if(StringUtils.isNotBlank(error.toString())){
