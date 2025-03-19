@@ -351,6 +351,9 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
     @Override
     public List<DeliverySuggestDTO.ListDTO> list(DeliverySuggestDTO.ListParamDTO params) {
         List<DeliverySuggestDTO.ListDTO> list = baseMapper.list(params);
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
         handleList(list,list.get(0).getPlatformType());
         return list;
     }
