@@ -337,9 +337,11 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getCode());
             }
         } else if (!soB2cEntity.hasPlatformWarehouseOrder()){
-//            自发货平台：msku_code为空的时候：取产品id，产品id在为空，再取的我们的
+//            自发货平台：msku_code为空的时候：取产品id，产品id在为空，再取的ERP
 //            自发货平台：msku_name为空的时候：取对照表的名称，取不到取系统sku_name名称
-
+            if (StringUtils.isBlank(shudiyunB2cOrderDTO.getMsku_code())) {
+                shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
+            }
         }
     }
 
