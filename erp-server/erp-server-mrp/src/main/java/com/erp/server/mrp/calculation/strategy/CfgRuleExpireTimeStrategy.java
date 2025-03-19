@@ -57,6 +57,9 @@ public class CfgRuleExpireTimeStrategy implements CfgRuleSettingStrategy<CfgRule
         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {
             instockDays = CfgRuleExpireTimeDTO.getOrDefault(cfgRuleExpireTime, CfgRuleExpireTimeEntity::getPlatformInstockDays, defaultCfgRuleExpireTime.getPlatformInstockDays());
         } else {
+            if (dto.getRefId().equals("1876099794825076745")) {
+                System.out.println("1876099794825076745");
+            }
             instockDays = CfgRuleExpireTimeDTO.getOrDefault(cfgRuleExpireTime, CfgRuleExpireTimeEntity::getOverseasInstockDays, getDefaultInStockDays(dto.getCfgRuleOverseasInStockDaysList(), dto.getWarehouseId(),defaultCfgRuleExpireTime.getOverseasInstockDays()));
         }
         CfgRuleExpireTimeDTO.StrategyResultDTO result = new CfgRuleExpireTimeDTO.StrategyResultDTO();

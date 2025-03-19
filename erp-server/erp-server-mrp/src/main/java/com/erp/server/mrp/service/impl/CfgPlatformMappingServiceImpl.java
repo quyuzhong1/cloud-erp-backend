@@ -1,6 +1,7 @@
 package com.erp.server.mrp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -207,6 +208,14 @@ public class CfgPlatformMappingServiceImpl extends SuperServiceImpl<CfgPlatformM
         return list.stream()
                 .map(CfgPlatformMappingEntity::getPlatform)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CfgPlatformMappingEntity> listByPlatformList(List<String> platformList) {
+        if (CollUtil.isEmpty(platformList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(CfgPlatformMappingEntity::getPlatform,platformList).list();
     }
 
 

@@ -205,7 +205,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     @Override
     public Boolean getIsEnableOverseas(String platformType) {
         //FBA默认关闭
-        return CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType);
+        return !CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType);
     }
 
     @Override
