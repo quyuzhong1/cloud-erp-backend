@@ -203,6 +203,15 @@ public class SoDetailDTO implements Serializable {
          * 虚拟仓缺货数量
          */
         private Integer virtualScarceQty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
 
         /**
          * 可出数量
