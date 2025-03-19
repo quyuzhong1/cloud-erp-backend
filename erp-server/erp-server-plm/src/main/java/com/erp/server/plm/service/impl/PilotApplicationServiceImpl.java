@@ -973,7 +973,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 error.append("sku：");
                 error.append(priceSearchDTO.getSkuNo());
                 error.append(",");
-                error.append("数量：：");
+                error.append("数量：");
                 error.append(priceSearchDTO.getPurchaseQty());
                 error.append(";");
             }else {
@@ -985,7 +985,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
                 ruleError.append("sku：");
                 ruleError.append(priceSearchDTO.getSkuNo());
                 ruleError.append(",");
-                ruleError.append("数量：：");
+                ruleError.append("数量：");
                 ruleError.append(priceSearchDTO.getPurchaseQty());
                 ruleError.append(";");
             }
