@@ -31,9 +31,9 @@ public class DmpInoutExecutorPoolConfig {
     
     @Bean(name = "dmpOutputExecutorPool")
     public ExecutorService dmpOutputExecutorPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(30, 90,
+        ThreadPoolExecutor service = new ThreadPoolExecutor(50, 100,
                 60L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>(300000));
+                new LinkedBlockingQueue<Runnable>(100000));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
