@@ -587,7 +587,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
         if (this.save(skuMappingEntity)) {
             // 操作日志
-            String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getId());
+            String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), "sku映射表", skuMappingEntity.getProductSkuNo());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingId, "新增操作");
             return skuMappingEntity.getId();
         }
@@ -1269,6 +1269,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!listingInfoService.removeById(listingInfoEntity.getId())) {
             throw new ServiceException("删除listing失败");
         }
+
+        String msg =  CharSequenceUtil.format("用户【{}】删除客户sku【{}】", UserContext.getDefaultLoginUser().getUserName(), listingInfoEntity.getPlatformSkuNo());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "删除操作");
     }
 
     @Override
@@ -1766,6 +1769,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if(CollectionUtils.isNotEmpty(skuMappingEntityList)){
                 SkuMappingEntity skuMappingEntity = skuMappingEntityList.get(0);
                 if(skuMappingEntity.getProductSkuId().equals(dto.getSkuId())){
+                    List<SkuMappingEntity> historyList = this.listExpiredByListing(existsEntity.getId());
+                    if(CollectionUtils.isNotEmpty(historyList)){
+                        SkuMappingEntity skuMapping = historyList.get(0);
+                        if (skuMapping.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMapping.getEffectiveTime())){
+                            throw new ServiceException("启用时间不可早于历史启用启用时间【{}】",skuMapping.getEffectiveTime());
+                        }
+                    }
                     skuMappingEntity.setEffectiveTime(effectiveTime);
                     skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
                     this.updateById(skuMappingEntity);
@@ -1773,7 +1783,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     existsEntity.setPlatformSkuName(dto.getPlatformSkuName());
                     listingInfoService.updateById(existsEntity);
                 }else if (skuMappingEntity.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMappingEntity.getEffectiveTime())){
-                    throw new ServiceException("已存在客户sku并且生效时间晚于选择的生效时间，不能新增");
+                    throw new ServiceException("启用日期不能早于上个映射关系的开始时间【{}】",skuMappingEntity.getEffectiveTime());
                 }else{
                     skuMappingEntity.setIsExpire(true);
                     this.updateById(skuMappingEntity);
@@ -1792,7 +1802,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                     addSkuMapping.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
                     if (this.save(addSkuMapping)) {
                         // 操作日志
-                        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getId());
+                        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", existsEntity.getPlatformSkuNo());
                         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "新增操作");
                         return skuMappingEntity.getId();
                     }
@@ -1819,7 +1829,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
             if (this.save(skuMappingEntity)) {
                 // 操作日志
-                String msg =  CharSequenceUtil.format("用户【{}】新增【{}】id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getId());
+                String msg =  CharSequenceUtil.format("用户【{}】新增【{}】为【{}】", UserContext.getDefaultLoginUser().getUserName(), "客户sku", listingInfoEntity.getPlatformSkuNo());
                 operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), listingInfoEntity.getId(), "新增操作");
                 return skuMappingEntity.getId();
             }
@@ -1872,11 +1882,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         listingInfoService.updateById(existsEntity);
 
         if(skuMappingEntity.getProductSkuId().equals(dto.getSkuId())){
+            List<SkuMappingEntity> historyList = this.listExpiredByListing(existsEntity.getId());
+            if(CollectionUtils.isNotEmpty(historyList)){
+                SkuMappingEntity skuMapping = historyList.get(0);
+                if (skuMapping.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMapping.getEffectiveTime())){
+                    throw new ServiceException("启用时间不可早于历史启用启用时间【{}】",skuMapping.getEffectiveTime());
+                }
+            }
             skuMappingEntity.setEffectiveTime(effectiveTime);
             skuMappingEntity.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
             this.updateById(skuMappingEntity);
         }else if (skuMappingEntity.getEffectiveTime().equals(effectiveTime) || effectiveTime.isBefore(skuMappingEntity.getEffectiveTime())){
-            throw new ServiceException("生效时间晚于选择的生效时间，不能更新");
+            throw new ServiceException("启用日期不能早于上个映射关系的开始时间【{}",skuMappingEntity.getEffectiveTime());
         }else{
             skuMappingEntity.setIsExpire(true);
             this.updateById(skuMappingEntity);
@@ -1998,4 +2015,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 //        //系统sku 获取子件
 //        return bomSkuFeign.checkExistAndListCombinationSku(skuNos);
 //    }
+
+    private List<SkuMappingEntity> listExpiredByListing(String listingId) {
+        return this.lambdaQuery()
+                .in(SkuMappingEntity::getListingId, listingId)
+                .eq(SkuMappingEntity::getIsExpire,true)
+                .orderByDesc(SkuMappingEntity::getEffectiveTime)
+                .list();
+    }
 }

@@ -600,6 +600,12 @@ public class TransferOutDTO implements Serializable {
         @NotNull(message = "调入仓库不能为空")
         private String  inWarehouseId;
 
+
+        /**
+         * 调入仓位
+         */
+        private String inWarehouseLocation;
+
         /**
          * skuId
          */

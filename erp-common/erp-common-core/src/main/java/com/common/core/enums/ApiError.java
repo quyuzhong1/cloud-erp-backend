@@ -1420,7 +1420,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
     ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL(92150,"B2C销售订单【{}】物流下单平台不能为空"),
     ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
-    ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
+    ERROR_92151(92151,"启用日期不能早于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
     ERROR_92154(92154,"销售订单【{}】只能在待提交和审核不通过状态更换发货SKU"),
