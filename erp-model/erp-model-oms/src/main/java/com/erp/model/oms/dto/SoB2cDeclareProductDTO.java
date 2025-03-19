@@ -235,6 +235,8 @@ public class SoB2cDeclareProductDTO implements Serializable {
         /**
          * 真实售价
          */
+        @NotNull(message = "申报重真实售价不能为空")
+        @Digits(integer = 12, fraction = 4, message = "申报重真实售价整数位不能超过12位，小数位不能超过4位")
         private BigDecimal price;
         /**
          * 售价币种
