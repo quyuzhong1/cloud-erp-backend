@@ -329,12 +329,18 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         }
 
         // 手工单逻辑查询同步处理
-//        if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
-//            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
-//            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSkuName());
-//            shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getCode());
-//            shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getCode());
-//        }
+        if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType())) {
+            shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
+            shudiyunB2cOrderDTO.setMsku_name(skuVO.getSkuName());
+            if (StringUtils.isBlank(soB2cEntity.getPlatformCode())){
+                shudiyunB2cOrderDTO.setRoot_node_no_initial(soB2cEntity.getCode());
+                shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getCode());
+            }
+        } else if (!soB2cEntity.hasPlatformWarehouseOrder()){
+//            自发货平台：msku_code为空的时候：取产品id，产品id在为空，再取的我们的
+//            自发货平台：msku_name为空的时候：取对照表的名称，取不到取系统sku_name名称
+
+        }
     }
 
     @Override
@@ -553,6 +559,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 soB2cDetailEntity.getCurrency(),
                 shudiyunB2cOrderDTO
         );
+
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
     }
 
