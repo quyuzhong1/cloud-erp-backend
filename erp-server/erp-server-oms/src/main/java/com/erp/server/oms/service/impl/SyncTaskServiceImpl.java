@@ -1063,7 +1063,6 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 } else {
                     // 当前单价 = 明细单价 * (bom成本 * bom数量 / bom总成本)
                     BigDecimal curPrice = price.multiply(skuVO.getActualTaxCost())
-                            .multiply(BigDecimal.valueOf(curBom.getQuantity()))
                             .divide(totalCostAmount, 4, RoundingMode.DOWN);
                     resultMap.put(b2cDeliveryDetailEntity.getId(), curPrice);
                     price = price.subtract(curPrice);
