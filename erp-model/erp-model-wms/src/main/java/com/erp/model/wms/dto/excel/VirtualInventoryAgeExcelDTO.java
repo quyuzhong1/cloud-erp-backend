@@ -1,11 +1,13 @@
 package com.erp.model.wms.dto.excel;
 
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 
 /**
@@ -49,13 +51,33 @@ public class VirtualInventoryAgeExcelDTO {
      */
     private Integer virtualFrozenQty;
     /**
-     * 平均库存
+     * 平均库龄(天)
      */
     private BigDecimal backAvgInventoryAge;
     /**
      * 统计日期
      */
     private LocalDate date;
+
+    /**
+     * 单据冻结数
+     */
+    private Integer frozenQty;
+
+    /**
+     * 平均库龄(正)
+     */
+    private BigDecimal avgInventoryAge;
+    /**
+     * 库龄计算差异
+     */
+    private Boolean isDiff;
+
+    /**
+     * 冻结库存差异
+     */
+    private Boolean frozenIsDiff;
+
     /**
      * 区间信息
      */
