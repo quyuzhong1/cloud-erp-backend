@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -81,7 +82,7 @@ public class AmazonUploadInvoiceService {
             CreateFeedSpecification createFeedSpecification = new CreateFeedSpecification();
             createFeedSpecification.setFeedType("UPLOAD_VAT_INVOICE");
             createFeedSpecification.setInputFeedDocumentId(documentId);
-            createFeedSpecification.setMarketplaceIds(new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet()));
+            createFeedSpecification.setMarketplaceIds(Collections.singletonList(marketplaceEnum.getMarketplaceId()));
             FeedOptions feedOptions = new FeedOptions();
             feedOptions.put("metadata:OrderId",soB2cEntity.getPlatformCode());
             feedOptions.put("metadata:InvoiceNumber",invoiceCode);
