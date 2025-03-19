@@ -975,10 +975,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             if (CollUtil.isEmpty(taxPriceList)) {
                 throw new ServiceException(ApiError.ERROR_95289, detailEntity.getSkuNo(), detailEntity.getApplyQty(), priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
             }
+            boolean flag = false;
             for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
                 if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
-                    throw new ServiceException(ApiError.ERROR_95288, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+                    flag = true;
+                    break;
                 }
+            }
+            if (!flag) {
+                throw new ServiceException(ApiError.ERROR_95288, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
             }
         }
     }
@@ -998,10 +1003,15 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         if (CollUtil.isEmpty(taxPriceList)) {
             throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
         }
+        boolean flag = false;
         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
             if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
-                throw new ServiceException(ApiError.ERROR_95288, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+                flag = true;
+                break;
             }
+        }
+        if (!flag) {
+            throw new ServiceException(ApiError.ERROR_95288, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
         }
     }
 
