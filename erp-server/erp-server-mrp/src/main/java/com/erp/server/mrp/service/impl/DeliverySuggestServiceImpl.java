@@ -543,10 +543,14 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             BeanMapperUtils.copy(suggestEntity,detailDTO);
 
             //店铺信息
-            ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getShopId())).findFirst().orElse(new ShopInfoEntity());
-            detailDTO.setShopId(shopInfoEntity.getId());
-            detailDTO.setShopName(shopInfoEntity.getName());
-
+            List<String> thisShopIdList = value.stream().map(DeliverySuggestEntity::getShopId).distinct().collect(Collectors.toList());
+            List<ShopInfoEntity> shopInfoEntityList = shopInfoList.stream().filter(obj -> thisShopIdList.contains(obj.getId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(shopInfoEntityList)) {
+                String shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).distinct().collect(Collectors.joining(","));
+                String shopNames = shopInfoEntityList.stream().map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
+                detailDTO.setShopId(shopIds);
+                detailDTO.setShopName(shopNames);
+            }
             Integer deliveryStockUpQty = value.stream().map(DeliverySuggestEntity::getDeliveryStockUpQty).reduce(MathUtil.ZERO, Integer::sum);
             detailDTO.setDeliveryStockUpQty(deliveryStockUpQty);
             detailDTO.setPlanDeliveryQty(deliveryStockUpQty);

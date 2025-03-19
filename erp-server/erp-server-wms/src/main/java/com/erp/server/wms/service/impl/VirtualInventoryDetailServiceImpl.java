@@ -353,8 +353,11 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                         }
                         return;
                     }
+                    Object camelValue = record.get(camelKey);
+                    //判断是否是Boolean值
+                    camelValue = Boolean.TRUE.equals(camelValue) ? "是" : Boolean.FALSE.equals(camelValue) ? "否" : camelValue;
                     //固定表头值
-                    convertMap.put(fieldKey.toString(),record.get(camelKey));
+                    convertMap.put(fieldKey.toString(),camelValue);
                 });
                 convertDataList.add(convertMap);
             });
@@ -447,10 +450,10 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             //区间字段
             if (ObjectUtil.isNull(inventoryAgeDateTO.getEndDays())) {
                 pagingInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
-                ageDateInterval = CharSequenceUtil.format("D >= {}，数量", inventoryAgeDateTO.getStartDays());
+                ageDateInterval = CharSequenceUtil.format("D > {}，数量", inventoryAgeDateTO.getStartDays());
             } else {
                 pagingInterval = CharSequenceUtil.format("({},{}]天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
-                ageDateInterval = CharSequenceUtil.format("{} <= D < {}，数量", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                ageDateInterval = CharSequenceUtil.format("{} < D <= {}，数量", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
             }
             headList.add(new Pair<>(pagingInterval,ageDateInterval));
         }
@@ -461,10 +464,10 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             //区间字段
             if (ObjectUtil.isNull(inventoryAgeDateTO.getEndDays())) {
                 pagingInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
-                ageDateInterval = CharSequenceUtil.format("D >= {}，占比", inventoryAgeDateTO.getStartDays());
+                ageDateInterval = CharSequenceUtil.format("D > {}，占比", inventoryAgeDateTO.getStartDays());
             } else {
                 pagingInterval = CharSequenceUtil.format("({},{}]天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
-                ageDateInterval = CharSequenceUtil.format("{} <= D < {}，占比", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                ageDateInterval = CharSequenceUtil.format("{} < D <= {}，占比", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
             }
             headList.add(new Pair<>(pagingInterval,ageDateInterval));
         }
