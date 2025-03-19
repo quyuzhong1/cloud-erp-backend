@@ -61,11 +61,6 @@ public class InvoiceInfoController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "上传记录修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "oms:invoiceInfo:update",
-        serviceClass = InvoiceInfoService.class,
-        keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated InvoiceInfoDTO.UpdateDTO dto) {
         invoiceInfoService.update(dto);
         return success();
@@ -77,11 +72,6 @@ public class InvoiceInfoController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "oms:invoiceInfo:paging",
-            tableAlias = "i"
-    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<InvoiceInfoDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
         PagingVO<InvoiceInfoDTO.PagingViewDTO> pagingVO = invoiceInfoService.paging(dto, false);
