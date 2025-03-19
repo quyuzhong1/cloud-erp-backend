@@ -2,11 +2,11 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.60:30848
-        namespace: k8s-test
+        server-addr: 172.16.100.60:30084
+        namespace: test
       config:
-        server-addr: 172.16.100.60:30848
-        namespace: k8s-test
+        server-addr: 172.16.100.60:30084
+        namespace: test
         shared-configs: common.yml,db-dmp.yml,druid-common.yml,erp-third-party.yml
 
   #显示日期的
@@ -18,11 +18,11 @@ fdfs:
   connect-timeout: 600
   so-timeout: 1500
   tracker-list:
-    - 172.16.100.12:22122
+    - 172.16.100.60:32122
 sfs:
   nacos:
     application: seata-server
-    server-addr: 172.16.100.12:8848
+    server-addr: 172.16.100.60:30084
     namespace: seata-server
     group: SEATA_GROUP
 
