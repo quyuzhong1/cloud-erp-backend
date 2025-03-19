@@ -944,7 +944,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private void validatePurchasePriceDetail(String id) {
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, id).list();
         if (CollUtil.isEmpty(detailList)) {
-            throw new ServiceException(ApiError.ERROR_95286);
+            throw new ServiceException(ApiError.ERROR_95281);
         }
         List<String> skuIdList = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
         Map<String, List<BomDTO.BomSku>> singleBomMap = bomSkuService.getSingleBomInfo(skuIdList).stream()
@@ -995,10 +995,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         try {
             taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_95287, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
         }
         if (CollUtil.isEmpty(taxPriceList)) {
-            throw new ServiceException(ApiError.ERROR_95287, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
         }
         for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
             if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
