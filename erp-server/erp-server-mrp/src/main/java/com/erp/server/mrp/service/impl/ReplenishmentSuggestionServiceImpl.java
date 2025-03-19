@@ -2,6 +2,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
@@ -194,6 +195,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Autowired
     private SkuMappingFeign skuMappingFeign;
 
+    @Resource
+    private CfgPlatformMappingService cfgPlatformMappingService;
 
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
@@ -423,6 +426,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         ReplenishmentSuggestionEntity entity = getByIdOpt(detail.getMainId()).orElseThrow(() -> new ServiceException("建议不存在"));
 
         CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(detail.getCfgRule(), CfgRuleStrategyDTO.class);
+        if (ObjUtil.isEmpty(cfgRuleStrategyDTO)) {
+            throw new ServiceException("预估销量计算未取到销量配置信息");
+        }
         CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
 
         LocalDate startDate = dto.getStartDate().minusDays(1);
@@ -948,6 +954,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             date = date.plusDays(1);
         }
 
+        //查询平台映射数据
+        List<String> platformList = list.stream().map(ReplenishmentSuggestionVO.PagingView::getPlatform).distinct().collect(Collectors.toList());
+        List<CfgPlatformMappingEntity> cfgPlatformMappingList = cfgPlatformMappingService.listByPlatformList(platformList);
+
         for (ReplenishmentSuggestionVO.PagingView pagingView : list) {
             LinkedHashMap<String, Object> convertMap = new LinkedHashMap<>();
             //店铺名称
@@ -967,9 +977,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             convertMap.put("skuNo", pagingView.getSkuNo());
             convertMap.put("productName", productName);
 
+            //平台映射关系
+            String platformType = cfgPlatformMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getPlatform(),pagingView.getPlatform())).map(CfgPlatformMappingEntity::getType).findFirst().orElse("");
+
             CfgRuleStrategyDTO cfgRuleStrategyDTO = JSON.parseObject(pagingView.getCfgRule(), CfgRuleStrategyDTO.class);
             CfgRuleSalesQtyDTO.StrategyResultDTO salesQtyResult = cfgRuleStrategyDTO.getSalesQtyResult();
-            convertMap.put("typeName", CharSequenceUtil.equals(salesQtyResult.getPlatform(), CfgRulePlatformTypeEnum.OVERSEAS.getCode()) ? OverseasOrderTypeEnum.getStringByCode(salesQtyResult.getOrderType()) : FbaOrderTypeEnum.getStringByCode(salesQtyResult.getOrderType()));
+            convertMap.put("typeName", CharSequenceUtil.equals(platformType, PlatformMappingTypeEnum.OVERSEAS_PLATFORM.getCode()) ? OverseasOrderTypeEnum.getStringByCode(salesQtyResult.getOrderType()) : FbaOrderTypeEnum.getStringByCode(salesQtyResult.getOrderType()));
             //历史销量
             dyHeadMap.keySet().forEach(obj -> {
                 ReplenishmentResultDTO.SalesHistoryDTO salesInfoEntity = historyDTOS.stream().filter(e -> CharSequenceUtil.equals(e.getDate().toString(), obj.toString())).findFirst().orElse(null);
@@ -1756,6 +1769,9 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         EstimationResultDTO resultDTO = new EstimationResultDTO();
         Integer days = TimePeriodEstimateEnum.of(dto.getTimePeriodEstimate()).getDays();
         ReplenishmentSuggestionDetailEntity detail = replenishmentSuggestionDetailService.getById(dto.getDetailId());
+        if (ObjectUtil.isEmpty(detail)) {
+            return resultDTO;
+        }
         ReplenishmentSuggestionEntity suggestion = getById(detail.getMainId());
         //获取销量预估
         List<SalesEstimateEntity> salesEstimateList = salesEstimateService.listByReplenishmentIdAndDay(dto.getDetailId(), LocalDate.now().plusDays(days));
