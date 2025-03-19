@@ -102,6 +102,14 @@ public class SoB2cDeclareProductDTO implements Serializable {
          * 申报标签名称
          */
         private String declareLabelName;
+        /**
+         * 真实售价
+         */
+        private BigDecimal price;
+        /**
+         * 售价币种
+         */
+        private String currency;
     }
 
     /**
@@ -224,6 +232,14 @@ public class SoB2cDeclareProductDTO implements Serializable {
          * 申报标签(正常申报normal，高申报high，低申报low)
          */
         private String declareLabel;
+        /**
+         * 真实售价
+         */
+        private BigDecimal price;
+        /**
+         * 售价币种
+         */
+        private String currency;
     }
 
     @Data
