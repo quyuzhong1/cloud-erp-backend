@@ -1558,6 +1558,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 ProductDetailEntity oldEntity = this.getById(obj.getId());
                 //产品款名和产品品名关系处理
                 handleProductNames(obj, productInfoDTO);
+                //单品或者Bom都需要检查库存是否大于零
+                productChangeService.checkInventoryGreaterThanZero(productInfoEntity,productManySpecDTO.getProductInfoDTO().getPropertyId(),obj.getId());
                 //sku操作日志
                 addProductDetailLog(obj, oldEntity, obj.getId(), productInfoDTO.getId());
             });
