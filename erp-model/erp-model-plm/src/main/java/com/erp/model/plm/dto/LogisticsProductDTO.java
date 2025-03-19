@@ -1250,6 +1250,16 @@ public class LogisticsProductDTO implements Serializable {
          */
         private String combinationDeclareType;
 
+        /**
+         * 不含税成本
+         */
+        private BigDecimal actualNoTaxCost;
+
+        /**
+         * 含税成本
+         */
+        private BigDecimal actualTaxCost;
+
     }
 
 

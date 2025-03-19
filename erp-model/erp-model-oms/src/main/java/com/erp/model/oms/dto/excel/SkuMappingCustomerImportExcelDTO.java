@@ -37,7 +37,7 @@ public class SkuMappingCustomerImportExcelDTO {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "启用时间", index = 4)
-    @FieldValid(fieldName = "启用时间", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "启用时间")
     private String enabledTime;
 
     @ColumnWidth(100)

@@ -484,6 +484,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return Collections.emptyList();
         }
         List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList,skuNoList);
+        List<String> skuNoList1 = list.stream().map(LogisticsProductDTO.ProductDTO::getSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList1);
         //属性
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         for (LogisticsProductDTO.ProductDTO item : list) {
@@ -505,6 +507,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             //是否纯电
             BasicDictEntity batteryDict = dictEntityList.stream().filter(e -> Objects.nonNull(e) && e.getValue().contains("纯电")).findFirst().orElse(null);
             item.setOnlyBattery(Objects.nonNull(batteryDict) ? Boolean.TRUE : Boolean.FALSE);
+
+            Map<String, BigDecimal> map = getSkuCost(skuCostList, item.getSkuId());
+            item.setActualTaxCost(map.get("actualTaxCost"));
+            item.setActualNoTaxCost(map.get("actualNoTaxCost"));
         }
         return list;
     }

@@ -63,7 +63,10 @@ public class SkuMappingCustomerExcelListener extends AnalysisEventListener<SkuMa
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-
+        LocalDateTime effectiveTime = LocalDateUtil.parseStrToLocalTime(data.getEnabledTime());
+        if(Objects.isNull(effectiveTime)){
+            errorMsgList.add("启用时间[时间]格式不正确");
+        }
         //存在错误数据则直接返回
         if (!errorMsgList.isEmpty()) {
             data.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
