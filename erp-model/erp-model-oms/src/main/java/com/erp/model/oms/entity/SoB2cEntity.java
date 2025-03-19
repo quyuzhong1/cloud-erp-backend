@@ -443,6 +443,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", payAmount=" + payAmount +
                 ", dictPayMethod='" + dictPayMethod + '\'' +
                 ", buyerRemark='" + buyerRemark + '\'' +
+                ", isCancel=" + isCancel +
                 '}';
     }
 
