@@ -193,7 +193,7 @@ public class MercadoLocalOrderDmpHandler extends MercadoDmpHandler {
                             // 转换为 LocalDateTime
                             dmpDataMap.put("payTime", offsetDateTime.toLocalDateTime());
                             dmpDataMap.put("payStatus", Boolean.TRUE);
-
+                            dmpDataMap.put("payMethod", feedbackList.get(0).get("paymentMethodId"));
                             dmpDataMap.put("currencyCode", feedbackList.get(0).get("currencyId"));
                             BigDecimal totalPaidAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("totalPaidAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("payAmount", totalPaidAmount);

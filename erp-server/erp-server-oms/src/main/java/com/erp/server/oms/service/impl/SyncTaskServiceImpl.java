@@ -1061,12 +1061,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 if (i == curDetailList.size() - 1){
                     resultMap.put(b2cDeliveryDetailEntity.getId(), price);
                 } else {
-                    // 当前单价 = 明细单价 * (bom成本 * bom数量 / bom总成本)
+                    // 当前单价 = 明细单价 * (bom成本 * bom数量 / bom总成本) / bom数量
                     BigDecimal curPrice = price.multiply(skuVO.getActualTaxCost())
-                            .multiply(BigDecimal.valueOf(curBom.getQuantity()))
                             .divide(totalCostAmount, 4, RoundingMode.DOWN);
                     resultMap.put(b2cDeliveryDetailEntity.getId(), curPrice);
-                    price = price.subtract(curPrice);
+                    // 剩余单价 = 当前单价 * bom数量
+                    price = price.subtract(curPrice.multiply(BigDecimal.valueOf(curBom.getQuantity())));
                 }
             }
         }
