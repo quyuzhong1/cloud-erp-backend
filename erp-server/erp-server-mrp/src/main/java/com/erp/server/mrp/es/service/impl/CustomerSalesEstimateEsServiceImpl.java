@@ -58,7 +58,7 @@ public class CustomerSalesEstimateEsServiceImpl implements CustomerSalesEstimate
     public List<CustomerSalesEstimateEsEntity> listByShopSkuIdAndDate(List<String> shopSkuIds, LocalDate startDate, LocalDate endDate) {
         BoolQueryBuilder queryBuilder = QueryBuilders.boolQuery()
                 .must(QueryBuilders.termsQuery("shopSkuId", shopSkuIds))
-                .must(QueryBuilders.rangeQuery("date").gte(startDate.format(DateTimeFormatter.BASIC_ISO_DATE)).lte(endDate.format(DateTimeFormatter.BASIC_ISO_DATE)));
+                .must(QueryBuilders.rangeQuery("date").gte(startDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"))).lte(endDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"))));
         NativeSearchQuery searchQuery = new NativeSearchQueryBuilder()
                 .withQuery(queryBuilder)
                 .withPageable(PageRequest.of(0, 10000))
