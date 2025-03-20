@@ -59,6 +59,12 @@
                  left join wms_carton_spec wcs
                            on wc.packing_task_id = wcs.main_id and wc.spec_id = wcs.id and wcs.is_deleted = false
         where wc.is_deleted = false and wc.packing_task_id = #{packingTaskId}
+        <if test="cartonIds!=null and cartonIds.size>0">
+            AND wc.id IN
+            <foreach collection="cartonIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
         order by wc.box_no desc
     </select>
 
