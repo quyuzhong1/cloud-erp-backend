@@ -3,8 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -16,20 +14,17 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.server.wms.convert.CartonConverter;
 import com.erp.server.wms.mapper.WmsCartonMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WmsCartonDetailService;
-import com.erp.server.wms.service.WmsCartonService;
-import com.erp.server.wms.service.WmsCartonSpecService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +49,8 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     private WmsCartonDetailService wmsCartonDetailService;
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -231,8 +228,13 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     }
 
     @Override
-    public List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId) {
-        return baseMapper.listByPackingTaskId(packingTaskId);
+    public List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId, List<String> fbaShipmentCodes) {
+        List<String> cartonIds = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(fbaShipmentCodes)){
+            List<FbaShipmentPackingEntity> allFbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(fbaShipmentCodes);
+            cartonIds = allFbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).collect(Collectors.toList());
+        }
+        return baseMapper.listByPackingTaskId(packingTaskId,cartonIds);
     }
 
     /**
