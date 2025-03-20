@@ -11,7 +11,6 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
-import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
@@ -30,7 +29,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.codehaus.groovy.runtime.DefaultGroovyMethods.collect;
 
 
 /**
@@ -164,6 +162,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                     msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
                 }
                 msg.append("未匹配到物流单");
+                excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
                 continue;
             }
