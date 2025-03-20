@@ -1,5 +1,6 @@
 package com.erp.server.mrp.es.service.impl;
 
+import com.common.core.exception.ServiceException;
 import com.erp.server.mrp.es.entity.CustomerSalesEstimateEsEntity;
 import com.erp.server.mrp.es.repository.CustomerSalesEstimateEsRepository;
 import com.erp.server.mrp.es.service.CustomerSalesEstimateEsService;
@@ -65,35 +66,64 @@ public class CustomerSalesEstimateEsServiceImpl implements CustomerSalesEstimate
         return getCustomerSales(searchQuery);
     }
 
-
+    /**
+     * 查询自定义销售数据
+     * @param searchQuery
+     * @return
+     */
     private List<CustomerSalesEstimateEsEntity> getCustomerSales(NativeSearchQuery searchQuery) {
         List<String> scrollIdList = new ArrayList<>();
         List<CustomerSalesEstimateEsEntity> result = new ArrayList<>();
-        SearchScrollHits<CustomerSalesEstimateEsEntity> customerSales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("customer_sales_estimate"));
-        String scrollId = customerSales.getScrollId();
-        scrollIdList.add(scrollId);
-        if (!CollectionUtils.isEmpty(customerSales.getSearchHits())) {
-            result.addAll(customerSales.getSearchHits().stream()
-                    .map(SearchHit::getContent)
-                    .collect(Collectors.toList()));
-        }
-        while (true) {
-            SearchScrollHits<CustomerSalesEstimateEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("customer_sales_estimate"));
-            // 获取查询结果并收集到列表中
-            List<CustomerSalesEstimateEsEntity> products = searchScrollHits.getSearchHits().stream()
-                    .map(SearchHit::getContent)
-                    .collect(Collectors.toList());
+        try {
+            // 1. 初始化滚动查询
+            SearchScrollHits<CustomerSalesEstimateEsEntity> scrollHits = elasticsearchRestTemplate.searchScrollStart(
+                    60_000, searchQuery, CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("customer_sales_estimate"));
+            String scrollId = scrollHits.getScrollId();
+            scrollIdList.add(scrollId);
 
-            if (products.isEmpty()) {
-                // 如果当前批次没有数据，表示所有数据已被检索完毕，退出循环
-                break;
+            // 2. 处理第一批数据
+            processScrollHits(scrollHits, result);
+
+            // 3. 循环处理后续批次
+            while (true) {
+                scrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60_000,
+                        CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("customer_sales_estimate"));
+
+                // 更新滚动ID并记录
+                String newScrollId = scrollHits.getScrollId();
+                scrollIdList.add(newScrollId);
+                scrollId = newScrollId;
+
+                // 处理数据并判断终止条件
+                if (!processScrollHits(scrollHits, result)) {
+                    break;
+                }
             }
-            // 将当前批次的结果添加到全部结果列表中
-            result.addAll(products);
-            // 更新 scrollId 为当前批次的 scrollId
-            scrollId = searchScrollHits.getScrollId();
+        } catch (Exception e) {
+            // 异常处理（可添加日志或重试逻辑）
+            throw new ServiceException("查询ES数据异常", e);
+        } finally {
+            // 4. 强制清理滚动上下文（确保资源释放）
+            if (!scrollIdList.isEmpty()) {
+                elasticsearchRestTemplate.searchScrollClear(scrollIdList);
+            }
         }
-        elasticsearchRestTemplate.searchScrollClear(scrollIdList);
         return result;
+    }
+
+    // 提取公共逻辑：处理结果集并返回是否继续
+    private boolean processScrollHits(SearchScrollHits<CustomerSalesEstimateEsEntity> scrollHits,
+                                      List<CustomerSalesEstimateEsEntity> result) {
+        if (scrollHits == null || scrollHits.isEmpty()) {
+            return false;
+        }
+        List<CustomerSalesEstimateEsEntity> batch = scrollHits.getSearchHits().stream()
+                .map(SearchHit::getContent)
+                .collect(Collectors.toList());
+        if (!batch.isEmpty()) {
+            result.addAll(batch);
+            return true;
+        }
+        return false;
     }
 }
