@@ -1128,7 +1128,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * 处理产品变更通知
      * 当产品基本信息或包装信息发生变化时，发送通知
      */
-    private void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList ) {
+    private void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList , Boolean isTransaction) {
         // 检查是否有产品基本信息或包装信息变更
         if(CollUtil.isNotEmpty(noticeDTOList)){
             // 创建通知列表并添加变更信息
@@ -1148,14 +1148,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 }
             }
             if(noticeList.size() > 0){
-                // 注册事务同步监听器，在事务提交后发送变更通知
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                    @Override
-                    public void afterCommit() {
-                        // 调用消息推送方法
-                        noticeMessageService.productChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
-                    }
-                });
+                if(isTransaction){
+                    // 注册事务同步监听器，在事务提交后发送变更通知
+                    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                        @Override
+                        public void afterCommit() {
+                            // 调用消息推送方法
+                            noticeMessageService.productChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
+                        }
+                    });
+                }else{
+                    // 调用消息推送方法
+                    noticeMessageService.productChangeNotice(NoticeEnum.PRODUCT_DETAIL_CHANGE,noticeList);
+                }
             }
         }
     }
@@ -1385,9 +1390,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         noticeDTO.setProductPackChangeField(productPackChangeField);
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
         //发送消息
-        handleProductChangeNotification(noticeDTOList);
+        handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
         return true;
     }
+
 
     //处理产品品名和产品款名关系
     private void handleProductNames(ProductNoSpecDTO productNoSpecDTO) {
@@ -1694,7 +1700,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noticeDTOList.add(noticeDTO);
         }
         //发送通知
-        handleProductChangeNotification(noticeDTOList);
+        handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
         return true;
     }
 
@@ -2220,15 +2226,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //3.修改/新增 成本信息
         if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductCostDTO())) {
             ProductCostDTO productCostDTO = productNoSpecDTO.getProductCostDTO();
+            //成本信息主键id赋值
+            productCostDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getCostId());
+            productCostDTO.setSkuId(skuId);
             ProductCostEntity byId = productCostService.getById(productCostDTO.getId());
             if(Objects.nonNull(byId)){
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
                 BeanUtil.copyProperties(byId,productCostDTO);
             }
-            //成本信息主键id赋值
-            productCostDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getCostId());
-            productCostDTO.setSkuId(skuId);
-
             //操作日志
             addProductCostLog(productCostDTO, id);
             productCostService.saveOrUpdate(productCostDTO);
@@ -2237,13 +2242,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //4.修改/新增 采购信息
         if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductPurchaseDTO())) {
             ProductPurchaseDTO productPurchaseDTO = productNoSpecDTO.getProductPurchaseDTO();
+            productPurchaseDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getPurchaseId());
+            productPurchaseDTO.setSkuId(skuId);
             ProductPurchaseEntity byId = productPurchaseService.getById(productPurchaseDTO.getId());
             if(Objects.nonNull(byId)){
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductPurchaseDTO(),byId);
                 BeanUtil.copyProperties(byId,productPurchaseDTO);
             }
-            productPurchaseDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getPurchaseId());
-            productPurchaseDTO.setSkuId(skuId);
 
             //操作日志
             addProductPurchaseLog(productPurchaseDTO, id);
@@ -2260,14 +2265,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //5.修改/新增 销售信息
         if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductSaleDTO())) {
             ProductSaleDTO productSaleDTO = productNoSpecDTO.getProductSaleDTO();
+            productSaleDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getSaleId());
+            productSaleDTO.setSkuId(skuId);
             ProductSaleEntity byId = productSaleService.getById(productSaleDTO.getId());
             if(Objects.nonNull(byId)){
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
                 BeanUtil.copyProperties(byId,productSaleDTO);
             }
-            productSaleDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getSaleId());
-            productSaleDTO.setSkuId(skuId);
-
             //操作日志
             addProductSaleLog(productSaleDTO, id);
             productSaleService.saveOrUpdate(productSaleDTO);
@@ -2275,14 +2279,13 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //6.修改/新增 物流信息
         if (!ObjectUtils.isEmpty(productNoSpecDTO.getProductLogisticsDTO())) {
             ProductLogisticsDTO productLogisticsDTO = productNoSpecDTO.getProductLogisticsDTO();
+            productLogisticsDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getLogisticsId());
+            productLogisticsDTO.setSkuId(skuId);
             ProductLogisticsEntity byId = productLogisticsService.getById(productLogisticsDTO.getId());
             if(Objects.nonNull(byId)){
                 BeanMapper.copyNonNull(productLogisticsDTO, byId);
                 BeanUtil.copyProperties(byId,productLogisticsDTO);
             }
-            productLogisticsDTO.setId(ObjectUtil.isEmpty(productKey) ? "" : productKey.getLogisticsId());
-            productLogisticsDTO.setSkuId(skuId);
-
             //操作日志
             addProductLogisticsLog(productLogisticsDTO, id);
             productLogisticsService.saveOrUpdate(productLogisticsDTO);
@@ -4686,7 +4689,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     public ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response) {
         if(importType.equals(ImportTypeEnum.IMPORT_ADD.getCode())){//导入新增
             return importAdd(excelFile, importType, response);
-        }else{//导入更新（待审核）
+        }else{//导入更新
             return importUpdate(excelFile,importType, response);
         }
     }
@@ -4695,6 +4698,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (StringUtils.isBlank(insurancePropertyName)) {
             errorMsgList.add("保险属性不能为空");
             return "";
+        }
+
+        if(InsurancePropertyEnum.NOT.getName().equals(insurancePropertyName)){
+            BasicDictEntity entity = mapById.get(insurancePropertyName);
+            if (Objects.isNull(entity)) {
+                errorMsgList.add("保险属性【" + insurancePropertyName + "】在系统中未找到");
+                return "";
+            }
+            return entity.getValue();
         }
 
         // 处理空字符串和仅包含逗号的情况
@@ -4719,7 +4731,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             BasicDictEntity entity = mapById.get(property);
-            if (entity == null) {
+            if (Objects.isNull(entity)) {
                 errorMsgList.add("保险属性【" + property + "】在系统中未找到");
                 continue;
             }
@@ -5550,7 +5562,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noticeDTOList.add(noticeDTO);
         }
         //发送消息
-        handleProductChangeNotification(noticeDTOList);
+        handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
     }
 
     //导入新增
