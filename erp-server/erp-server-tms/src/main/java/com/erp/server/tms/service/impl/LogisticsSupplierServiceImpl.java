@@ -32,6 +32,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
+import com.erp.server.tms.convert.LogisticsServiceConverter;
 import com.erp.server.tms.convert.LogisticsSupplierConverter;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
@@ -370,7 +371,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listAllShort(Boolean filterDisabled) {
         List<LogisticsSupplierEntity> list = this.list();
-        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsSupplierConverter.INSTANCE.convertBySupplierShortDown(list);
+        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsServiceConverter.INSTANCE.convertBySupplierShortDown(list);
         if(filterDisabled){
             resultList = resultList.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
         }
