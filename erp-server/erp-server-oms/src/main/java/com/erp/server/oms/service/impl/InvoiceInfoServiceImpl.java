@@ -304,7 +304,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceTemplateDTO.setCurrencyCode(soB2cEntity.getCurrency());
         String symbol = CurrencyEnum.getSymbolByCode(soB2cEntity.getCurrency());
         invoiceTemplateDTO.setCurrencySymbol(symbol);
-        BigDecimal taxRate = cfgVatInvoiceEntity.getTaxRate().divide(MathUtil.BigDecimal_100, 4, BigDecimal.ROUND_DOWN);
+        BigDecimal taxRate = cfgVatInvoiceEntity.getTaxRate().divide(MathUtil.BigDecimal_100, 2, BigDecimal.ROUND_DOWN);
         List<CfgVatInvoiceDTO.DetailDTO> detailDTOS = new ArrayList<>();
         for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
             CfgVatInvoiceDTO.DetailDTO detailDTO = new CfgVatInvoiceDTO.DetailDTO();
@@ -313,7 +313,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             detailDTO.setQty(soB2cDetailEntity.getQty());
             detailDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
             detailDTO.setTaxRateStr(detailDTO.getTaxRate().setScale(2,BigDecimal.ROUND_DOWN) + "%");
-            detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(taxRate.add(BigDecimal.ONE),4, BigDecimal.ROUND_DOWN));
+            detailDTO.setPrice(soB2cDetailEntity.getPrice().divide(taxRate.add(BigDecimal.ONE),2, BigDecimal.ROUND_DOWN));
             detailDTO.setPriceStr(symbol + detailDTO.getPrice().setScale(2,BigDecimal.ROUND_DOWN));
             detailDTO.setTaxPrice(soB2cDetailEntity.getPrice());
             detailDTO.setTaxPriceStr(symbol + detailDTO.getTaxPrice().setScale(2,BigDecimal.ROUND_DOWN));
@@ -335,7 +335,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         CfgVatInvoiceDTO.TotalDTO totalDTO = new CfgVatInvoiceDTO.TotalDTO();
         totalDTO.setTaxRate(cfgVatInvoiceEntity.getTaxRate());
         totalDTO.setTaxRateStr(totalDTO.getTaxRate().setScale(2,BigDecimal.ROUND_DOWN) + "%");
-        totalDTO.setItemTotal(invoiceTemplateDTO.getInvoiceTotal().divide(taxRate.add(BigDecimal.ONE),4, BigDecimal.ROUND_DOWN));
+        totalDTO.setItemTotal(invoiceTemplateDTO.getInvoiceTotal().divide(taxRate.add(BigDecimal.ONE),2, BigDecimal.ROUND_DOWN));
         totalDTO.setItemTotalStr(symbol + totalDTO.getItemTotal().setScale(2,BigDecimal.ROUND_DOWN));
         totalDTO.setVatTotal(invoiceTemplateDTO.getInvoiceTotal().subtract(totalDTO.getItemTotal()));
         totalDTO.setVatTotalStr(symbol +  totalDTO.getVatTotal().setScale(2,BigDecimal.ROUND_DOWN));
