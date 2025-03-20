@@ -5935,6 +5935,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //spu/sku基础信息
             ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
+            productInfoDTO.setName(productSkuBaseInfoDTO.getName());
+            productInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
             productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
             productBaseInfoDTO.setProductSkuBaseInfoDTO(productSkuBaseInfoDTO);
             productNoSpecDTO.setProductBaseInfoDTO(productBaseInfoDTO);
