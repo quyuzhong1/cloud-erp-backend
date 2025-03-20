@@ -41,7 +41,8 @@ public class MercadoLocalShipOrder extends AbstractShipOrder {
         List<String> ids = sourceOrderList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByIds(ids);
 
-        for (SoB2cEntity entity : sourceOrderList) {
+        //本土站不用标记发货
+     /*   for (SoB2cEntity entity : sourceOrderList) {
             //组装数据
             MercadoShipOrderDTO shipOrderDTO = new MercadoShipOrderDTO();
             shipOrderDTO.setShopId(entity.getShopId());
@@ -50,9 +51,9 @@ public class MercadoLocalShipOrder extends AbstractShipOrder {
             shipOrderDTO.setCarrier(logisticsEntity.getLogisticsChannelName());
             shipOrderDTO.setTrackingUrl("https://www.17track.net/en");
 
-            //标记发货
-            mercadoLocalSdkClientService.shipOrder(shipOrderDTO);
-        }
+
+//            mercadoLocalSdkClientService.shipOrder(shipOrderDTO);
+        }*/
         List<String> detailIdList = soB2cDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         return detailIdList;
     }
