@@ -618,7 +618,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             exportDTO.setPartitionName(partitionName);
 
             //虚拟仓关联仓库名称
-            ThirdMappingEntity thirdMappingEntity = thirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getThirdId(), exportDTO.getShopId())).findFirst().orElse(new ThirdMappingEntity());
+            ThirdMappingEntity thirdMappingEntity = thirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSysId(), exportDTO.getId())).findFirst().orElse(new ThirdMappingEntity());
             exportDTO.setOutSideVirtualWarehouseName(thirdMappingEntity.getThirdName());
             exportDTO.setOutSidePlatformName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
         }
