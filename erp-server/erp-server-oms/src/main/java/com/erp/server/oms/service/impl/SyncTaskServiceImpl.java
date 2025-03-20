@@ -1163,7 +1163,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             Map<String, List<AliexpressDeliveryDetailEntity>> groupMap = entry.getValue()
                     .stream()
                     .collect(Collectors.groupingBy(AliexpressDeliveryDetailEntity::getSkuId));
-            List<Map.Entry<String, List<AliexpressDeliveryDetailEntity>>> entryList = new ArrayList<>(groupMap.entrySet());
+            List<Map.Entry<String, List<AliexpressDeliveryDetailEntity>>> entryList = groupMap.entrySet()
+                    .stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .collect(Collectors.toList());
 
             // 剩余价格
             BigDecimal lastPrice = price;
