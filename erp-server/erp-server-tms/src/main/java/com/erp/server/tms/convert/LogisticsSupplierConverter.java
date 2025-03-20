@@ -32,16 +32,6 @@ public interface LogisticsSupplierConverter {
     List<BaseDropDownDTO.DisabledDTO> convertBySupplierDown(List<LogisticsSupplierEntity> list);
 
     @Mappings({
-            @Mapping(target = "code", source = "id"),
-            @Mapping(target = "value", source = "shortName"),
-            @Mapping(target = "disabled", source = "disabled"),
-            @Mapping(target = "type", source = "type.code"),
-
-    })
-    BaseDropDownDTO.DisabledDTO convertBySupplierShortDown(LogisticsSupplierEntity logisticsChannel);
-    List<BaseDropDownDTO.DisabledDTO> convertBySupplierShortDown(List<LogisticsSupplierEntity> list);
-
-    @Mappings({
             @Mapping(target = "id", source = "id"),
             @Mapping(target = "name", source = "supplierName"),
             @Mapping(target = "disabled", source = "disabled"),
