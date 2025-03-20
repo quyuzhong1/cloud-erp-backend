@@ -121,6 +121,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Autowired
     private PurchaseSuggestionMergeQueryHandler purchaseSuggestionMergeQueryHandler;
 
+    @Autowired
+    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -566,6 +568,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         viewPushDTO.setApplyUserId(loginUser.getUid());
 
+        //查询配置是否拆分
+        CfgRuleOrderStrategyDTO.ViewDTO view = cfgRuleOrderStrategyService.view();
+        purchaseSuggestMergeList = splitPurchaseSuggest(purchaseSuggestMergeList, view);
+
         //产品信息
         List<String> skuIdList = purchaseSuggestMergeList.stream().map(PurchaseSuggestMergeEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuPackByIds(skuIdList);
@@ -606,6 +612,51 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         }
         viewPushDTO.setDetailList(detailList);
         return viewPushDTO;
+    }
+
+    /**
+     * 按bom查询
+     * @param purchaseSuggestMergeList
+     * @param view
+     * @return
+     */
+    private List<PurchaseSuggestMergeEntity> splitPurchaseSuggest (List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList,CfgRuleOrderStrategyDTO.ViewDTO view) {
+        if (CollUtil.isEmpty(purchaseSuggestMergeList)) {
+            return Collections.emptyList();
+        }
+        //拆分并且无需集中采购则下推时拆分
+        if (!view.getIsSplit() || view.getIsMergeSku()) {
+            return purchaseSuggestMergeList;
+        }
+       //查询bom信息
+        List<String> skuIdList = purchaseSuggestMergeList.stream().map(PurchaseSuggestMergeEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            return purchaseSuggestMergeList;
+        }
+        List<PurchaseSuggestMergeEntity> addList = new ArrayList<>();
+        for (PurchaseSuggestMergeEntity purchaseSuggestMergeEntity : purchaseSuggestMergeList) {
+            //bom信息
+            List<BomChildrenSkuDTO> childSkuList = bomChildrenSkuList.stream().filter(obj ->
+                    StrUtil.equals(obj.getParentSkuId(), purchaseSuggestMergeEntity.getSkuId())
+                            && StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())
+            ).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childSkuList)) {
+                addList.add(purchaseSuggestMergeEntity);
+                continue;
+            }
+            //拆分数据
+            for (BomChildrenSkuDTO childrenSkuDTO : childSkuList) {
+                PurchaseSuggestMergeEntity addEntity = new PurchaseSuggestMergeEntity();
+                BeanMapperUtils.copy(purchaseSuggestMergeEntity, addEntity);
+                addEntity.setSkuId(childrenSkuDTO.getSkuId());
+                addEntity.setSuggestPurchaseQty(addEntity.getSuggestPurchaseQty() * childrenSkuDTO.getQuantity());
+                addEntity.setPurchaseStockUpQty(addEntity.getPurchaseStockUpQty() * childrenSkuDTO.getQuantity());
+                addEntity.setPlanPurchaseQty(addEntity.getPlanPurchaseQty() * childrenSkuDTO.getQuantity());
+                addList.add(addEntity);
+            }
+        }
+        return addList;
     }
 
     @Override
