@@ -99,4 +99,10 @@ public class PlatformDeliveryDetailDTO {
      * 折扣币别
      */
     private String discountCurrency;
+
+    /**
+     * 唯一ID:
+     * 速卖通=中台明细ID
+     */
+    private String uniqueId;
 }
