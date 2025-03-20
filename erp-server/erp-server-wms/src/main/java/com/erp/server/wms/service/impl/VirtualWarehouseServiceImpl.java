@@ -607,7 +607,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
             exportDTO.setShopName(shopName);
 
             //平台名称
-            DictBasicEntity dictPlatform = dictPlatformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), exportDTO.getDictPlatform())).findFirst().orElse(new DictBasicEntity());
+            DictBasicEntity dictPlatform = dictPlatformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), exportDTO.getDictPlatform())).findFirst().orElse(null);
             if (ObjUtil.isNotEmpty(dictPlatform)) {
                 exportDTO.setDictPlatformName(dictPlatform.getName());
                 exportDTO.setTypeName(DictBasicTypeEnum.getName(dictPlatform.getSubType()));
