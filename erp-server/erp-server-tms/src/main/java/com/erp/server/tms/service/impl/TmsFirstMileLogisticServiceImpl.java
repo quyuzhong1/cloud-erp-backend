@@ -1174,7 +1174,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             String oldChannelId = logisticsBillEntity.getChannelId();
             LogisticsBillDetailEntity detailEntity = detailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
             if(Objects.nonNull(detailEntity) && !(detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode()) || detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()))){
-                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"只有待下单和已下单状态支持更改物流信息"));
+                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"只有待下单和已下单状态支持更改物流信息"));
                 continue;
             }
             LogisticsBillCostEntity logisticsBillCostEntity = costList.stream().filter(v->v.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
@@ -2082,7 +2082,7 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             String oldChannelId = logisticsBillEntity.getChannelId();
             LogisticsBillDetailEntity detailEntity = detailList.stream().filter(v->v.getMainId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
             if(Objects.nonNull(detailEntity) && !(detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.WAIT_ORDER.getCode()) || detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()))){
-                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getCounterNo(),"只有待下单和已下单状态支持更改物流信息"));
+                resultDTOList.add(BatchResultDTO.fail(logisticsBillEntity.getId(),logisticsBillEntity.getOutstockCode(),"只有待下单和已下单状态支持更改物流信息"));
                 continue;
             }
             LogisticsBillCostEntity logisticsBillCostEntity = costList.stream().filter(v->v.getLogisticsBillId().equals(logisticsBillEntity.getId())).findFirst().orElse(null);
