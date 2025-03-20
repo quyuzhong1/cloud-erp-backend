@@ -106,7 +106,7 @@ public class MercadoLocalLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 throw new ServiceException(JSONUtil.toJsonStr(shipmentViewDTO));
             }
             logisticsOperateService.pullOperateLog(logisticsOrderVO.getSourceId(),
-                    String.valueOf(shipmentId), BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.MERCADOLIBRE.getCode(),
+                    String.valueOf(shipmentId), BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode(),
                     RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(shipmentViewDTO));
             LogisticsOrderResponseVO vo = LogisticsOrderResponseVO.builder()
                     .deliveryNo(logisticsOrderVO.getDeliveryNo())
@@ -117,7 +117,7 @@ public class MercadoLocalLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }catch (Exception e){
             //获取跟踪号异常
             logisticsOperateService.pullOperateLog(logisticsOrderVO.getSourceId(),
-                    String.valueOf(shipmentId), BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.MERCADOLIBRE.getCode(),
+                    String.valueOf(shipmentId), BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), e.getMessage());
             throw new ServiceException(CharSequenceUtil.format("美客多【{}】获取物流单信息异常请求异常:{}",shipmentId,e.getMessage()));
         }
@@ -175,7 +175,7 @@ public class MercadoLocalLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public LogisticsPlatformEnum getPlatForm() {
-        return LogisticsPlatformEnum.MERCADOLIBRE;
+        return LogisticsPlatformEnum.MERCADOLIBRE_LOCAL;
     }
 
     @Override
