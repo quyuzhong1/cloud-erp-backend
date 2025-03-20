@@ -155,6 +155,16 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
          * 货品id
          */
         private String scItemId;
+
+        /**
+         * 平台skuId
+         */
+        private String platformSkuId;
+
+        /**
+         * 平台产品ID
+         */
+        private String platformSpuNo;
     }
 
 

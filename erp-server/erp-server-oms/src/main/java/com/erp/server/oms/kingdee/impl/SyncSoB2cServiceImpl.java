@@ -583,7 +583,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                    List<CustomerInfoEntity> customerInfoList,
                                                                    List<BaseIdDTO.CodeDTO> companyEntities,
                                                                    List<DictBasicEntity> dictBasicEntityList,
-                                                                   List<DictBasicEntity> dictList) {
+                                                                   List<DictBasicEntity> dictList,
+                                                                   Map<String, BigDecimal> deliveryDetailPriceMap) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
         shudiyunB2cOrderDTO.setBiz_uni_key(aliexpressDeliveryEntity.getId() + aliexpressDeliveryDetailEntity.getId());
@@ -605,7 +606,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
 
         // 发货明细单价
-        BigDecimal price = aliexpressDeliveryDetailEntity.getPrice();
+        BigDecimal price = deliveryDetailPriceMap.get(aliexpressDeliveryDetailEntity.getId());
         // 单价
         shudiyunB2cOrderDTO.setPrice(price);
         // 明细总价

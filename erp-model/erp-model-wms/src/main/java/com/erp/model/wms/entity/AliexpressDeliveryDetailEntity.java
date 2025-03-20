@@ -101,6 +101,18 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
     @TableField("unique_id")
     private String uniqueId;
 
+    /**
+     * 平台skuId
+     */
+    @TableField("platform_sku_id")
+    private String platformSkuId;
+
+    /**
+     * 平台产品ID
+     */
+    @TableField("platform_spu_no")
+    private String platformSpuNo;
+
 
     public static final String MAIN_ID = "main_id";
 
