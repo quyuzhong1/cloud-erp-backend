@@ -174,13 +174,6 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
                 it.remove();
                 continue;
             }
-            //检查发货单是否已审核
-            if(Objects.nonNull(firstMileDeliveryEntity) && firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-                packingExcelDTO.setErrorMsg(" 发货单已审核，无法更改装箱");
-                errorList.add(packingExcelDTO);
-                it.remove();
-                continue;
-            }
             if(Objects.nonNull(soDeliveryNoticeEntity) && soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
                 packingExcelDTO.setErrorMsg(" 发货通知已审核，无法更改装箱");
                 errorList.add(packingExcelDTO);
