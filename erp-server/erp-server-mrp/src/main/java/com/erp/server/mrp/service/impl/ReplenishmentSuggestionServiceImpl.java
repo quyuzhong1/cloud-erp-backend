@@ -235,7 +235,10 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
         //oms信息
         List<SkuMappingDTO.ListSkuParamDTO> dataList = new ArrayList<>();
-        records.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(),obj.getFbaWarehouseId(),obj.getPlatform())).distinct().forEach(dataList::add);
+        records.stream().map(obj -> {
+            new SkuMappingDTO.ListSkuParamDTO();
+            return SkuMappingDTO.ListSkuParamDTO.builder().skuNo(obj.getSkuNo()).dictPlatform(obj.getPlatform()).shopId(obj.getShopId()).build();
+        }).distinct().forEach(dataList::add);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingFeign.listBySkuNoList(dataList);
 
         for (ReplenishmentSuggestionVO.PagingView view : records) {
