@@ -241,7 +241,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         for (ReplenishmentSuggestionVO.PagingView view : records) {
             //平台sku+仓库sku
              List<ReplenishmentSuggestionVO.FnMSkuDTO> fnMSKuList = new ArrayList<>();
-            skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuNo(), view.getSkuNo()) && CharSequenceUtil.equals(obj.getDictPlatform(), view.getPlatform()) && CharSequenceUtil.equals(obj.getWarehouseId(), view.getFbaWarehouseId())).findFirst().ifPresent(obj -> {
+            skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuNo(), view.getSkuNo()) && CharSequenceUtil.equals(obj.getDictPlatform(), view.getPlatform()) && CharSequenceUtil.equals(obj.getShopId(), view.getShopId())).findFirst().ifPresent(obj -> {
                 fnMSKuList.add(new ReplenishmentSuggestionVO.FnMSkuDTO(obj.getPlatformSkuNo(),obj.getWarehouseSkuNo()));
             });
             view.setFnMSKuList(fnMSKuList);
