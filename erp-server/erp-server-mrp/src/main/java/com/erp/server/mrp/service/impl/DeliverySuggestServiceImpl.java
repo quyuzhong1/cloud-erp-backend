@@ -593,7 +593,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                         CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && StrUtil.equals(obj.getProductSkuId(), suggestEntity.getSkuId()))
                         .collect(Collectors.toList());
             } else {
-                skuMappingList = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getShopId(),suggestEntity.getShopId())
+                skuMappingList = list.stream().filter(obj -> thisShopIdList.contains(obj.getShopId())
                         && StrUtil.equals(obj.getProductSkuId(), suggestEntity.getSkuId())).collect(Collectors.toList());
             }
             handleOverseasSkuMapping(detailList,skuMappingList, listingList, detailDTO, suggestEntity);

@@ -34,10 +34,12 @@ import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.*;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -234,18 +236,22 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
         }
 
         //oms信息
-        List<SkuMappingDTO.ListSkuParamDTO> dataList = new ArrayList<>();
-        records.stream().map(obj -> {
-            new SkuMappingDTO.ListSkuParamDTO();
-            return SkuMappingDTO.ListSkuParamDTO.builder().skuNo(obj.getSkuNo()).dictPlatform(obj.getPlatform()).shopId(obj.getShopId()).build();
-        }).distinct().forEach(dataList::add);
-        List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingFeign.listBySkuNoList(dataList);
+        List<String> platformList = records.stream().map(ReplenishmentSuggestionVO.PagingView::getPlatform).distinct().collect(Collectors.toList());
+
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatformList(platformList);
+        paramDTO.setShopIdList(shopIds);
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setSkuIdList(skuIds);
+        paramDTO.setIsExpire(false);
+        // 所有包含历史映射关系
+        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
 
         for (ReplenishmentSuggestionVO.PagingView view : records) {
             //平台sku+仓库sku
              List<ReplenishmentSuggestionVO.FnMSkuDTO> fnMSKuList = new ArrayList<>();
-            skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuNo(), view.getSkuNo()) && CharSequenceUtil.equals(obj.getDictPlatform(), view.getPlatform()) && CharSequenceUtil.equals(obj.getShopId(), view.getShopId())).findFirst().ifPresent(obj -> {
-                fnMSKuList.add(new ReplenishmentSuggestionVO.FnMSkuDTO(obj.getPlatformSkuNo(),obj.getWarehouseSkuNo()));
+            skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuNo(), view.getSkuNo()) && CharSequenceUtil.equals(obj.getDictPlatform(), view.getPlatform()) && CharSequenceUtil.equals(obj.getShopId(), view.getShopId())).forEach(obj -> {
+                fnMSKuList.add(new ReplenishmentSuggestionVO.FnMSkuDTO(obj.getPlatformSkuNo(),obj.getPlatformSpuNo()));
             });
             view.setFnMSKuList(fnMSKuList);
 
