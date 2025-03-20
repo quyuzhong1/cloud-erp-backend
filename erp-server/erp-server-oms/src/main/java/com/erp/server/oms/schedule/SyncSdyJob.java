@@ -7,6 +7,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OrderTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.erp.model.oms.entity.*;
@@ -16,8 +17,10 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.service.*;
@@ -25,6 +28,7 @@ import com.google.common.collect.Lists;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -66,6 +70,8 @@ public class SyncSdyJob {
     private SyncKingdeeSoService syncKingdeeSoService;
     @Resource
     private SoChangeDetailService soChangeDetailService;
+    @Resource
+    private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
 
 
@@ -97,88 +103,105 @@ public class SyncSdyJob {
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
             List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(ids);
 
-            //产品信息
-            List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-            List<SkuVO> skuVOList = new ArrayList<>();
-            if (CollUtil.isNotEmpty(skuNos)) {
-                skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
-            }
-            List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
-            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = new ArrayList<>();
-            if (CollUtil.isNotEmpty(skuIds)) {
-                bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-            }
-            //父类产品
-            List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
-            List<ProductDetailEntity> parentSkuList = new ArrayList<>();
-            if (CollUtil.isNotEmpty(parentSkuId)) {
-                parentSkuList = FeignQuery.create(ProductDetailEntity.class)
-                        .in(ProductDetailEntity::getId, parentSkuId)
-                        .list();
-            }
-            //平台sku映射信息
-            List<String> platformSkuNoList = soB2cDetailEntityList.stream().map(req -> req.getPlatformSkuNo()).distinct().collect(Collectors.toList());
-            List<ListingInfoEntity> listingInfoEntities = listingInfoService.lambdaQuery().in(ListingInfoEntity::getPlatformSkuNo, platformSkuNoList).list();
+            List<String> warehouseIds = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+            List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = wmsOverseasWarehouseFeign.listByWarehouseIdList(warehouseIds);
 
-            //币别
-            List<String> currency = list.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
-            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currency);
 
-            //店铺
-            List<String> shopIds = list.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
-            List<ShopInfoEntity> shopInfoList = new ArrayList<>();
-            if (CollUtil.isNotEmpty(shopIds)) {
-                shopInfoList = shopInfoService.lambdaQuery().in(ShopInfoEntity::getId, shopIds).list();
-            }
-
-            List<String> tradeCurrency = shopInfoList.stream().map(req -> req.getTradeCurrency()).distinct().collect(Collectors.toList());
-            List<DictCurrencyEntity> dictCurrencyEntities = new ArrayList<>();
-            if (CollUtil.isNotEmpty(tradeCurrency)) {
-                dictCurrencyEntities = FeignQuery.create(DictCurrencyEntity.class).in(DictCurrencyEntity::getId, tradeCurrency).list();
-            }
-
-            //客户
-            List<String> customerIdList = shopInfoList.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
-            List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
-            if (CollUtil.isNotEmpty(customerIdList)) {
-                customerInfoList = customerInfoService.lambdaQuery().in(CustomerInfoEntity::getId, customerIdList).list();
-            }
-
-            List<String> orgList = new ArrayList<>();
-            List<String> orgIds = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
-            orgList.addAll(orgIds);
-            List<String> salseOrgIds = shopInfoList.stream().map(req -> req.getSalesOrgId()).distinct().collect(Collectors.toList());
-            orgList.addAll(salseOrgIds);
-
-            List<BaseIdDTO.CodeDTO> companyEntities = new ArrayList<>();
-
-            if (CollUtil.isNotEmpty(orgList)) {
-                companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
-            }
-            List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-            List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-
-            List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-            List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
+//            //产品信息
+//            List<String> skuNos = soB2cDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+//            List<SkuVO> skuVOList = new ArrayList<>();
+//            if (CollUtil.isNotEmpty(skuNos)) {
+//                skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+//            }
+//            List<String> skuIds = soB2cDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+//            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = new ArrayList<>();
+//            if (CollUtil.isNotEmpty(skuIds)) {
+//                bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+//            }
+//            //父类产品
+//            List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+//            List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+//            if (CollUtil.isNotEmpty(parentSkuId)) {
+//                parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+//                        .in(ProductDetailEntity::getId, parentSkuId)
+//                        .list();
+//            }
+//            //平台sku映射信息
+//            List<String> platformSkuNoList = soB2cDetailEntityList.stream().map(req -> req.getPlatformSkuNo()).distinct().collect(Collectors.toList());
+//            List<ListingInfoEntity> listingInfoEntities = listingInfoService.lambdaQuery().in(ListingInfoEntity::getPlatformSkuNo, platformSkuNoList).list();
+//
+//            //币别
+//            List<String> currency = list.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+//            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currency);
+//
+//            //店铺
+//            List<String> shopIds = list.stream().map(req -> req.getShopId()).distinct().collect(Collectors.toList());
+//            List<ShopInfoEntity> shopInfoList = new ArrayList<>();
+//            if (CollUtil.isNotEmpty(shopIds)) {
+//                shopInfoList = shopInfoService.lambdaQuery().in(ShopInfoEntity::getId, shopIds).list();
+//            }
+//
+//            List<String> tradeCurrency = shopInfoList.stream().map(req -> req.getTradeCurrency()).distinct().collect(Collectors.toList());
+//            List<DictCurrencyEntity> dictCurrencyEntities = new ArrayList<>();
+//            if (CollUtil.isNotEmpty(tradeCurrency)) {
+//                dictCurrencyEntities = FeignQuery.create(DictCurrencyEntity.class).in(DictCurrencyEntity::getId, tradeCurrency).list();
+//            }
+//
+//            //客户
+//            List<String> customerIdList = shopInfoList.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+//            List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
+//            if (CollUtil.isNotEmpty(customerIdList)) {
+//                customerInfoList = customerInfoService.lambdaQuery().in(CustomerInfoEntity::getId, customerIdList).list();
+//            }
+//
+//            List<String> orgList = new ArrayList<>();
+//            List<String> orgIds = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+//            orgList.addAll(orgIds);
+//            List<String> salseOrgIds = shopInfoList.stream().map(req -> req.getSalesOrgId()).distinct().collect(Collectors.toList());
+//            orgList.addAll(salseOrgIds);
+//
+//            List<BaseIdDTO.CodeDTO> companyEntities = new ArrayList<>();
+//
+//            if (CollUtil.isNotEmpty(orgList)) {
+//                companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
+//            }
+//            List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+//            List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+//
+//            List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
+//            List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
 
             for (SoB2cEntity soB2cEntity : list) {
                 List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
-
-                syncSoB2cService.syncDataToSdy(soB2cEntity,
-                        detailEntityList,
-                        SyncOperateEnum.OPERATE_APPROVE.getCode(),
-                        skuVOList,
-                        bomChildrenSkuDTOS,
-                        parentSkuList,
-                        listingInfoEntities,
-                        currencyList,
-                        dictCurrencyEntities,
-                        shopInfoList,
-                        customerInfoList,
-                        companyEntities,
-                        dictBasicEntityList,
-                        dictList
-                );
+                String sourceType = "";
+                if (soB2cEntity.hasPlatformWarehouseOrder()) {
+                    // 平台仓订单(平台销售出库单)(扣可用库存)
+                    sourceType = SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode();
+                } else {
+                    List<String> cueWarehouseIds = detailEntityList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+                    List<OverseasProviderWarehouseDTO.ViewDTO> collect = overseasWarehouseList.stream().filter(e -> cueWarehouseIds.contains(e.getWarehouseId())).collect(Collectors.toList());
+                    if (CollectionUtils.isNotEmpty(collect)) {
+                        // 海外仓出库单 (扣可用库存)
+                        sourceType = SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode();
+                    }
+                }
+                //同步数帝云
+                syncSoB2cService.syncSdyOrderHandler(soB2cEntity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), sourceType);
+//                syncSoB2cService.syncDataToSdy(soB2cEntity,
+//                        detailEntityList,
+//                        SyncOperateEnum.OPERATE_APPROVE.getCode(),
+//                        skuVOList,
+//                        bomChildrenSkuDTOS,
+//                        parentSkuList,
+//                        listingInfoEntities,
+//                        currencyList,
+//                        dictCurrencyEntities,
+//                        shopInfoList,
+//                        customerInfoList,
+//                        companyEntities,
+//                        dictBasicEntityList,
+//                        dictList
+//                );
             }
             currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
