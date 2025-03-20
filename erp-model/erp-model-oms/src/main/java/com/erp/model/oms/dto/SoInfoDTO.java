@@ -1017,8 +1017,14 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
-
-
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
         /**
          * 审核状态code
          */

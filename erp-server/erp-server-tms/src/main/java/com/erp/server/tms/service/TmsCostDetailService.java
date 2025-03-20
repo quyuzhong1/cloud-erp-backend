@@ -95,4 +95,11 @@ public interface TmsCostDetailService extends SuperService<TmsCostDetailEntity> 
     void removeByMainIds(List<String> costIds);
     
     Set<String> validateCategoryCurrency(List<TmsCostDetailEntity> list);
+
+    /**
+     * 根据主表id和配置id删除
+     * @param mainId
+     * @param cfgId
+     */
+    void deleteByMainIdAndCfgCostId(String mainId, String cfgId);
 }

@@ -385,21 +385,21 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         }
         
         List<FirstMileEstimatedBillExcelDTO> lastSuccessList = successList.stream().filter(s -> StringUtils.isBlank(s.getErrorMsg())).collect(Collectors.toList());
-        
-        Map<String, List<FirstMileEstimatedBillExcelDTO>> transportNoMaps = lastSuccessList.stream().collect(Collectors.groupingBy(FirstMileEstimatedBillExcelDTO::getTransportNo));
-        Map<String, String> transportNoInfoMap = logisticsInfoList.stream().filter(l -> transportNoMaps.keySet().contains(l.getTransportNo()))
-    			.collect(Collectors.toMap(FirstMileEstimatedBillDTO.LogisticsInfoDTO::getTransportNo, FirstMileEstimatedBillDTO.LogisticsInfoDTO::getCostId , (v1 , v2) -> v1));
+        List<String> costIds = lastSuccessList.stream().map(FirstMileEstimatedBillExcelDTO::getCostId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, List<FirstMileEstimatedBillExcelDTO>> sourceCodeMap = lastSuccessList.stream().collect(Collectors.groupingBy(FirstMileEstimatedBillExcelDTO::getSourceCode));
+        Map<String, String> sourceCodeInfoMap = logisticsInfoList.stream().filter(l -> sourceCodeMap.keySet().contains(l.getSourceCode()))
+    			.collect(Collectors.toMap(FirstMileEstimatedBillDTO.LogisticsInfoDTO::getSourceCode, FirstMileEstimatedBillDTO.LogisticsInfoDTO::getCostId , (v1 , v2) -> v1));
         Map<String, TmsCfgCostEntity> costNameIdMap = tmsCfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getCostName, t -> t , (v1 , v2) -> v1));
         if(CollUtil.isNotEmpty(lastSuccessList)) {
-        	Map<String, List<String>> errorTransportNoDictMap = new HashMap<>();
-        	Map<String, List<CostViewDTO>> mainCostMaps = tmsCostDetailService.listCostByMainIdList(new ArrayList<>(transportNoInfoMap.values())).stream()
+        	Map<String, List<String>> errorSourceCodeDictMap = new HashMap<>();
+        	Map<String, List<CostViewDTO>> mainCostMaps = tmsCostDetailService.listCostByMainIdList(costIds).stream()
         			.collect(Collectors.groupingBy(CostViewDTO::getMainId));
-        	for(Map.Entry<String, List<FirstMileEstimatedBillExcelDTO>> transportNoMap : transportNoMaps.entrySet()) {
-        		String key = transportNoMap.getKey();
-        		String mainId = transportNoInfoMap.get(key);
+        	for(Map.Entry<String, List<FirstMileEstimatedBillExcelDTO>> sourceCodeMap1 : sourceCodeMap.entrySet()) {
+        		String key = sourceCodeMap1.getKey();
+        		String mainId = sourceCodeInfoMap.get(key);
         		Map<String, String> dictCurrency = new HashMap<>();
-        		List<FirstMileEstimatedBillExcelDTO> value = transportNoMap.getValue();
-        		List<String> errorDictList = errorTransportNoDictMap.get(key);
+        		List<FirstMileEstimatedBillExcelDTO> value = sourceCodeMap1.getValue();
+        		List<String> errorDictList = errorSourceCodeDictMap.get(key);
         		if(errorDictList == null) {
         			errorDictList = new ArrayList<>();
         		}
@@ -433,22 +433,22 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
             			}
         			}
         		}
-        		errorTransportNoDictMap.put(key, errorDictList);
+        		errorSourceCodeDictMap.put(key, errorDictList);
         	}
         	
         	Map<String, List<TmsCostDetailDTO.UpdateDTO>> updateMaps = new HashMap<>();
         	for (FirstMileEstimatedBillExcelDTO dto : lastSuccessList) {
-        		String transportNo = dto.getTransportNo();
-        		List<String> errorDictList = errorTransportNoDictMap.get(transportNo);
+        		String sourceCode = dto.getSourceCode();
+        		List<String> errorDictList = errorSourceCodeDictMap.get(sourceCode);
         		TmsCfgCostEntity tmsCfgCostEntity = costNameIdMap.get(dto.getCostName());
         		String dictCostCategory = tmsCfgCostEntity.getDictCostCategory();
 				if(CollUtil.isNotEmpty(errorDictList) && errorDictList.contains(dictCostCategory)) {
-					dto.setErrorMsg("物流单【" + transportNo + "】"+ DictCostCategoryEnum.getName(dictCostCategory) +"费用分类下的币别不一致");
+					dto.setErrorMsg("来源单号【" + sourceCode + "】"+ DictCostCategoryEnum.getName(dictCostCategory) +"费用分类下的币别不一致");
 	                errorList.add(dto);
 	                continue;
         		}
         		
-        		String mainId = transportNoInfoMap.get(transportNo);
+        		String mainId = sourceCodeInfoMap.get(sourceCode);
         		List<UpdateDTO> list = updateMaps.get(mainId);
         		if(CollUtil.isEmpty(list)) {
         			list = new ArrayList<>();

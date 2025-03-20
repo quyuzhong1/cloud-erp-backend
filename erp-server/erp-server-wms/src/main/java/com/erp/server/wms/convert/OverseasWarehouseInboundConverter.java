@@ -191,6 +191,7 @@ public interface OverseasWarehouseInboundConverter {
     @Mappings({
             @Mapping(target = "productSku",  source = "productSku"),
             @Mapping(target = "quantity",  source = "quantity"),
+            @Mapping(target = "hsCode",  source = "hsCode"),
     })
     GoodCangCreateOutboundReq.Item outboundDtoToGoodCang(ThirdWarehouseCreateOutboundReq.Item createOutboundReq);
 

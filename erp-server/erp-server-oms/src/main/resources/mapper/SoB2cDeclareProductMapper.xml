@@ -39,7 +39,7 @@
         update_time,
         version,
         is_deleted,
-        so_detail_id, so_id, so_code,sku_no, qty, declare_cn, declare_en, to_declare_price, to_currency, sku_id, to_currency_symbol, weight, to_customs_code,declare_label
+        so_detail_id, so_id, so_code,sku_no, qty, declare_cn, declare_en, to_declare_price, to_currency, sku_id, to_currency_symbol, weight, to_customs_code,declare_label,price,currency
     </sql>
     <select id="listViewBySoIds" resultType="com.erp.model.oms.dto.SoB2cDeclareProductDTO$ViewDTO">
         select

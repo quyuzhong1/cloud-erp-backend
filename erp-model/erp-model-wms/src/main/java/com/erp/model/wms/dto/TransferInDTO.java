@@ -269,6 +269,11 @@ public class TransferInDTO implements Serializable {
         private String inWarehouseId;
 
         /**
+         * 调入仓位
+         */
+        private String inWarehouseLocation;
+
+        /**
          * skuId
          */
         @NotBlank(message = "sku 不能为空")

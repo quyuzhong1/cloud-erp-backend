@@ -1,8 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.common.business.annotation.MenuCode;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -14,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
@@ -235,6 +233,12 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotBlank(message = "客户sku不能为空",groups = {UpdateGroup.class, AddGroup.class})
         private String platformSkuNo;
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime effectiveTime;
 
         /**
          * 客户产品名称
@@ -696,6 +700,7 @@ public class SkuMappingDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updateTime;
 
+        private LocalDateTime effectiveTime;
     }
 
 
@@ -819,6 +824,70 @@ public class SkuMappingDTO implements Serializable {
         private LocalDateTime expireTime;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class CustomerInventorySkuInfoDTO {
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 对应库存信息
+         */
+        private List<InnerCustomerInventorySkuInfoDTO> innerCustomerInventorySkuInfoDTOS;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InnerCustomerInventorySkuInfoDTO {
+
+        /**
+         * skumapping Id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuId
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 是否有效
+         */
+        private Boolean isEffective;
+
+        /**
+         * 启用时间
+         */
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 实体仓实际库存
+         */
+        private Integer actualQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
+
+        /**
+         * 实体仓实际库存 - 虚拟仓冻结库存
+         */
+        private Integer stock;
+
+    }
     @Data
     @NoArgsConstructor
     public static class ProductSkuInfoDTO {
@@ -1332,6 +1401,34 @@ public class SkuMappingDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class CustomerInventorySkuParamDTO {
+
+
+        /**
+         * 客户id
+         */
+        @NotBlank(message = "客户id不能为空")
+        private String customerId;
+
+        /**
+         * 客户Sku
+         */
+        @NotEmpty(message = "平台sku不能为空")
+        private List<String> platformSkuNoList;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+    }
 
     @Data
     @NoArgsConstructor

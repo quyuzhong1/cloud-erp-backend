@@ -43,7 +43,7 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private Integer verify;
 
     //配送商
-    private Integer distributorType;
+    private String carrierType;
 
     //收件人信息
     private ReceiverInfo receiverInfo;
@@ -187,9 +187,15 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
 
         private String sourceSkuId;
 
-        public Item(String productSku, Integer quantity) {
+        /**
+         * 海关编码
+         */
+        private String hsCode;
+
+        public Item(String productSku, Integer quantity,String hsCode) {
             this.productSku = productSku;
             this.quantity = quantity;
+            this.hsCode = hsCode;
         }
     }
 

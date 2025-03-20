@@ -89,6 +89,8 @@ public interface BaoHongConverter {
             @Mapping(target = "opQuantity", source = "qty"),
             @Mapping(target = "productTitleEn", source = "productTitleEn"),
             @Mapping(target = "purposeDeclaredValue", source = "purposeDeclaredValue"),
+            @Mapping(target = "salePrice", source = "price", qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "saleCurrencyCode", source = "currency"),
     })
     ProductDeatil productConvert(TransferLogisticsCreateOrderReq.ProductDetail productDetailList);
     List<ProductDeatil> productConvert(List<TransferLogisticsCreateOrderReq.ProductDetail> productDetailList);
