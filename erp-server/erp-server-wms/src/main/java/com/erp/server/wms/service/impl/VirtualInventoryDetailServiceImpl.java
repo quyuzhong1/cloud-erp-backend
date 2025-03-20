@@ -354,9 +354,6 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                         return;
                     }
                     Object camelValue = record.get(camelKey);
-                    //判断是否是Boolean值
-                    camelValue = Boolean.TRUE.equals(camelValue) ? "是" : Boolean.FALSE.equals(camelValue) ? "否" : camelValue;
-                    //固定表头值
                     convertMap.put(fieldKey.toString(),camelValue);
                 });
                 convertDataList.add(convertMap);
