@@ -185,9 +185,9 @@ public class InventoryServiceImpl implements InventoryService {
                     //根据配置类型获取店铺
                     Set<String> shopSet;
                     if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType())) {
-                        shopSet = Collections.emptySet();
                         List<String> dictPlatformList = v.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
                         if (dictPlatformList.contains("")) {
+                            shopSet = new HashSet<>();
                             // 全量平台：合并所有店铺ID（去重）
                             shopIdByPlatform.values().stream() // 非必要不用parallelStream
                                     .filter(Objects::nonNull)  // 过滤空List
@@ -195,10 +195,11 @@ public class InventoryServiceImpl implements InventoryService {
                                     .forEach(shopSet::add);    // 避免中间collect
                         } else {
                             // 指定平台：累加对应店铺ID
-                            dictPlatformList.stream()
-                                    .map(shopIdByPlatform::get) // 获取List<String>
-                                    .filter(Objects::nonNull)   // 过滤null值
-                                    .forEach(shopSet::addAll);  // 安全添加
+                            shopSet = dictPlatformList.stream()
+                                    .map(shopIdByPlatform::get)
+                                    .filter(Objects::nonNull)
+                                    .flatMap(List::stream)
+                                    .collect(Collectors.toSet());
                         }
                     } else {
                         shopSet = v.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toSet());
