@@ -69,7 +69,7 @@ public class CustomerSalesEstimateEsServiceImpl implements CustomerSalesEstimate
     private List<CustomerSalesEstimateEsEntity> getCustomerSales(NativeSearchQuery searchQuery) {
         List<String> scrollIdList = new ArrayList<>();
         List<CustomerSalesEstimateEsEntity> result = new ArrayList<>();
-        SearchScrollHits<CustomerSalesEstimateEsEntity> customerSales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("order_history_sales"));
+        SearchScrollHits<CustomerSalesEstimateEsEntity> customerSales = elasticsearchRestTemplate.searchScrollStart(60000, searchQuery, CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("customer_sales_estimate"));
         String scrollId = customerSales.getScrollId();
         scrollIdList.add(scrollId);
         if (!CollectionUtils.isEmpty(customerSales.getSearchHits())) {
@@ -78,7 +78,7 @@ public class CustomerSalesEstimateEsServiceImpl implements CustomerSalesEstimate
                     .collect(Collectors.toList()));
         }
         while (true) {
-            SearchScrollHits<CustomerSalesEstimateEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("order_history_sales"));
+            SearchScrollHits<CustomerSalesEstimateEsEntity> searchScrollHits = elasticsearchRestTemplate.searchScrollContinue(scrollId, 60000, CustomerSalesEstimateEsEntity.class, IndexCoordinates.of("customer_sales_estimate"));
             // 获取查询结果并收集到列表中
             List<CustomerSalesEstimateEsEntity> products = searchScrollHits.getSearchHits().stream()
                     .map(SearchHit::getContent)
