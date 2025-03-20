@@ -37,7 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -116,8 +115,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
         dto.setDeliveryDTOList(deliveryDTOList);
         try {
-            //创建速卖通发货单
-            this.createAliexpressDelivery(dto,mainEntity);
+            //创建或更新速卖通发货单
+            this.createOrUpdateAliexpressDelivery(dto,mainEntity);
             // 平台仓生成销售出库单
             this.createAliExpressOutStock(dto, mainEntity);
         } catch (Exception e) {
@@ -147,7 +146,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
     }
 
-    private void createAliexpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+    private void createOrUpdateAliexpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         if (Objects.isNull(dto) || CollUtil.isEmpty(dto.getDeliveryDTOList())){
             return;
         }
@@ -204,11 +203,15 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                     detailAddDTO.setDiscountAmount(detailDTO.getDiscountAmount());
                     // 折扣币别
                     detailAddDTO.setDiscountCurrency(detailDTO.getDiscountCurrency());
+                    // 货品ID
+                    detailAddDTO.setScItemId(detailDTO.getScItemId());
+                    // 唯一ID
+                    detailAddDTO.setUniqueId(detailDTO.getUniqueId());
                     detailAddList.add(detailAddDTO);
                 }
             }
             addDTO.setDetailList(detailAddList);
-            aliexpressDeliveryFeign.add(addDTO);
+            aliexpressDeliveryFeign.addOrUpdate(addDTO);
         }
 
     }

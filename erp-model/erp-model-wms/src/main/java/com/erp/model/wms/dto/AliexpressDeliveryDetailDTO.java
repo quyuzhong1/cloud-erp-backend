@@ -64,7 +64,11 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 唯一ID
+         * 速卖通=中台明细ID
+         */
+        private String uniqueId;
     }
 
     /**
@@ -146,6 +150,11 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
          * 折扣币别
          */
         private String discountCurrency;
+
+        /**
+         * 货品id
+         */
+        private String scItemId;
     }
 
 
