@@ -42,6 +42,9 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
         if (addDTO.stream().anyMatch(e-> StringUtils.isBlank(e.getUniqueId()))){
             ServiceException.runError("速卖通发货明细唯一ID为空,平台单号【{}】", platformCode);
         }
+        if (addDTO.stream().anyMatch(e-> StringUtils.isBlank(e.getPlatformSpuNo()))){
+            ServiceException.runError("速卖通发货明细产品ID为空,平台单号【{}】", platformCode);
+        }
 
         //先删除后新增
 //        this.removeByMainId(addDTO.get(0).getMainId());

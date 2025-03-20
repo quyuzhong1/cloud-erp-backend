@@ -101,7 +101,7 @@ public interface SyncSoB2cService {
                                                             List<CustomerInfoEntity> customerInfoList,
                                                             List<BaseIdDTO.CodeDTO> companyEntities,
                                                             List<DictBasicEntity> dictBasicEntityList,
-                                                            List<DictBasicEntity> dictList);
+                                                            List<DictBasicEntity> dictList, Map<String, BigDecimal> deliveryDetailPriceMap);
 
     /**
      * 同步数帝云
