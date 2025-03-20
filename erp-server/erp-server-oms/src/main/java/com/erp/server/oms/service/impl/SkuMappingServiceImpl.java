@@ -1871,13 +1871,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             //生效时间
             addSkuMapping.setEffectiveTime(effectiveTime);
             addSkuMapping.setExpireTime(effectiveTime.plusYears(MathUtil.NUMBER_100));
-            if (this.save(addSkuMapping)) {
-                // 操作日志
-                return skuMappingEntity.getId();
-            }
+            this.save(addSkuMapping);
         }
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), existsEntity.getId(), "编辑操作");
-        return "";
+        return skuMappingEntity.getId();
     }
 
     @Override
