@@ -367,6 +367,15 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
         }
         return resultList;
     }
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAllShort(Boolean filterDisabled) {
+        List<LogisticsSupplierEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsSupplierConverter.INSTANCE.convertBySupplierShortDown(list);
+        if(filterDisabled){
+            resultList = resultList.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
+        return resultList;
+    }
 
     @Override
     public Boolean updateDisabledBySupplierId(LogisticsSupplierDTO.UpdateDisabledDTO dto) {
