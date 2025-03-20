@@ -1,8 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.common.business.annotation.MenuCode;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -1046,6 +1043,10 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListSkuDTO {
+        /**
+         * 店铺id
+         */
+        private String shopId;
         /**
          * 产品skuId
          */
