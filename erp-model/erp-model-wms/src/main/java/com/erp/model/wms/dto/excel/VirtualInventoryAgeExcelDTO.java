@@ -1,13 +1,11 @@
 package com.erp.model.wms.dto.excel;
 
 import com.erp.model.wms.dto.VirtualInventoryAgeDTO;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
 
 /**
@@ -71,12 +69,12 @@ public class VirtualInventoryAgeExcelDTO {
     /**
      * 库龄计算差异
      */
-    private Boolean isDiff;
+    private String isDiff;
 
     /**
      * 冻结库存差异
      */
-    private Boolean frozenIsDiff;
+    private String frozenIsDiff;
 
     /**
      * 区间信息
