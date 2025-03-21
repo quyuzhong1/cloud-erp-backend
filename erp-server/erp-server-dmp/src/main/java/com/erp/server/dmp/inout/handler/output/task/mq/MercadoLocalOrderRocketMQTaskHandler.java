@@ -102,8 +102,14 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         List<DmpSoReceiverEntity> dmpSoReceiverEntityList = new ArrayList<>();
         for (String changeId : changeIds) {
             list.add(dmpSoInfoEntityMap.get(changeId));
-            dmpSoDetailEntityList.addAll(dmpSoDetailEntityMap.get(changeId));
-            dmpSoReceiverEntityList.addAll(dmpSoReceiverEntityMap.get(changeId));
+            List<DmpSoDetailEntity> detailList = dmpSoDetailEntityMap.get(changeId);
+            if(CollUtil.isNotEmpty(detailList)) {
+            	dmpSoDetailEntityList.addAll(detailList);
+            }
+            List<DmpSoReceiverEntity> receiverList = dmpSoReceiverEntityMap.get(changeId);
+            if(CollUtil.isNotEmpty(receiverList)) {
+            	dmpSoReceiverEntityList.addAll(receiverList);
+            }
         }
 
         Map<String, List<DmpSoInfoEntity>> sysReportMap = list.stream().collect(Collectors.groupingBy(DmpSoInfoEntity::getPlatformCode));
@@ -228,8 +234,10 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntityList, dmpSoDetailEntityList);
         orderDTO.setDetails(details);
-        //B2C销售订单买家信息表
-        orderDTO.setReceiver(parseReceiver(dmpSoReceiverEntityList.get(0)));
+        if(CollUtil.isNotEmpty(dmpSoReceiverEntityList)) {
+        	//B2C销售订单买家信息表
+            orderDTO.setReceiver(parseReceiver(dmpSoReceiverEntityList.get(0)));
+        }
         //B2C销售订单物流信息表
         orderDTO.setLogisticsList(parseLogistics(dmpSoInfoEntityList));
         //B2C销售订单财务信息表
