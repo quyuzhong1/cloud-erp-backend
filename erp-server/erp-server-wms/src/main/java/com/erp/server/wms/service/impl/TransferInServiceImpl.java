@@ -189,6 +189,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
                 for (TransferInDTO.ViewGenerateTransferInDTO item : generateInfoList) {
                     TransferInDetailDTO.AddDTO detail = new TransferInDetailDTO.AddDTO();
                     detail.setOutWarehouseLocation(item.getOutWarehouseLocation());
+                    detail.setInWarehouseLocation(item.getInWarehouseLocation());
                     detail.setSkuId(item.getSkuId());
                     detail.setSourceDetailId(item.getSourceDetailId());
                     detail.setSkuNo(item.getSkuNo());

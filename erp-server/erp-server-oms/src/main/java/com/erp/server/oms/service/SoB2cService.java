@@ -1054,4 +1054,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * 销售统计导出查询
      */
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    /**
+     * 根据店铺更新未配置vat的订单
+     *
+     * @param shopId
+     * @param enableTime
+     * @param vatInvoiceStatus
+     * @return
+     */
+    void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 }

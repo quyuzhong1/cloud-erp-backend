@@ -90,6 +90,10 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    @Lazy
+    private LogisticsBaseService logisticsBaseService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -208,6 +212,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
+        //同步第三方渠道
+        logisticsBaseService.syncSingleChannel(logisticsPlatform);
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"tms");
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         //这个是删除的同步来源ids
@@ -320,8 +326,11 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                     channelEntity.setMainId(logisticsSupplierId);
                     channelEntity.setSourceType(sourceType);
                     channelEntity.setSourceId(id);
-                    channelEntity.setName(saleChannel.getCnName());
+                    if (CharSequenceUtil.isBlank(channelEntity.getName())){
+                        channelEntity.setName(saleChannel.getCnName());
+                    }
                     channelEntity.setEffectiveTime(saleChannel.getAging());
+                    channelEntity.setCarrierType(saleChannel.getCarrierType());
                     String channelId = channelEntity.getId();
                     //表示新增
                     if (StringUtils.isBlank(channelId)) {

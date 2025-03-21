@@ -372,7 +372,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
         paramDTO.setWarehouseIdList(Collections.singletonList(bomParamDTO.getWarehouseId()));
         paramDTO.setVirtualWarehouseIdList(Collections.singletonList(bomParamDTO.getVirtualWarehouseId()));
-        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setDictInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
         paramDTO.setSkuIdList(skuIdList);
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = this.listInventoryQty(paramDTO);
 
@@ -419,7 +419,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
         VirtualInventoryDTO.VirtualInventoryParamDTO paramDTO = new VirtualInventoryDTO.VirtualInventoryParamDTO();
         paramDTO.setWarehouseIdList(warehouseIdList);
         paramDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
-        paramDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        paramDTO.setDictInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(),InventoryStatusEnum.FROZEN.getCode()));
         paramDTO.setSkuIdList(skuIdList);
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = this.listInventoryQty(paramDTO);
 
@@ -448,9 +448,14 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
             }
 
             //虚拟仓可用数量
-            Integer virtualWarehouseUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), bomParamDTO.getSkuId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId()))
+            Integer virtualWarehouseUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), bomParamDTO.getSkuId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId()) && obj.getDictInventoryStatus().equals(InventoryStatusEnum.USABLE.getCode()))
                     .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
             skuReturnDTO.setVirtualUsableQty(virtualWarehouseUsableQty);
+
+            //虚拟仓冻结数量
+            Integer virtualWarehouseFrozenQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId()) && CharSequenceUtil.equals(obj.getSkuId(), bomParamDTO.getSkuId()) && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId())&& obj.getDictInventoryStatus().equals(InventoryStatusEnum.FROZEN.getCode()))
+                    .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty).findFirst().orElse(MathUtil.ZERO);
+            skuReturnDTO.setVirtualFrozenQty(virtualWarehouseFrozenQty);
 
             //bom信息
             List<BomChildrenSkuDTO> bomList = bomChildrenList.stream().filter(obj -> CharSequenceUtil.equals(obj.getParentSkuId(), bomParamDTO.getSkuId()) && CharSequenceUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())).collect(Collectors.toList());
@@ -459,6 +464,7 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 continue;
             }
             List<Integer> parentUsableQtyList = new ArrayList<>();
+            List<Integer> parentFrozenQtyList = new ArrayList<>();
             for (BomChildrenSkuDTO skuDTO : bomList) {
                 //子件可用库存
                 Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuDTO.getSkuId())
@@ -472,10 +478,25 @@ public class VirtualInventoryServiceImpl extends SuperServiceImpl<VirtualInvento
                 BigDecimal divide = MathUtil.divide(new BigDecimal(childVirtualUsableQty), new BigDecimal(skuDTO.getQuantity()));
                 Integer parentUsableQty = divide.intValue();
                 parentUsableQtyList.add(parentUsableQty);
+
+                //子件冻结库存
+                Integer childVirtualFrozenQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuDTO.getSkuId())
+                                && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), bomParamDTO.getVirtualWarehouseId())
+                                && CharSequenceUtil.equals(obj.getWarehouseId(), bomParamDTO.getWarehouseId())
+                                && CharSequenceUtil.equals(obj.getDictInventoryStatus(), InventoryStatusEnum.FROZEN.getCode())
+                        )
+                        .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
+                        .findFirst().orElse(MathUtil.ZERO);
+                //针对父级可用数量
+                BigDecimal frozenDivide = MathUtil.divide(new BigDecimal(childVirtualFrozenQty), new BigDecimal(skuDTO.getQuantity()));
+                Integer parentFrozenQty = frozenDivide.intValue();
+                parentFrozenQtyList.add(parentFrozenQty);
             }
             //bom最小可用数
             Integer bomUsableQty = parentUsableQtyList.stream().min(Comparator.comparing(obj -> obj)).get();
+            Integer bomFrozenQty = parentFrozenQtyList.stream().min(Comparator.comparing(obj -> obj)).get();
             skuReturnDTO.setVirtualUsableQty(bomUsableQty);
+            skuReturnDTO.setVirtualFrozenQty(bomFrozenQty);
             resultList.add(skuReturnDTO);
         }
         return resultList;

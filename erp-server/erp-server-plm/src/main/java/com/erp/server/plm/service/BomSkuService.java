@@ -164,4 +164,6 @@ public interface BomSkuService extends IService<BomSkuEntity> {
     List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList);
 
     List<BomChildrenSkuDTO> checkExistAndListCombinationSku( List<String> parentSkuNos);
+
+    List<BomDTO.BomSku> getSingleBomInfo(List<String> skuIdList);
 }

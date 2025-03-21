@@ -152,8 +152,8 @@ public class ReportsApiTest {
         // 亚马逊物流销售报告
 //        body.setReportType("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
         // 亚马逊退货报告_根据退货时间
-        body.setReportType("GET_FLAT_FILE_RETURNS_DATA_BY_RETURN_DATE");
-        String shopId = "1736993864712982530";
+        body.setReportType("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
+        String shopId = "1735553314990329858";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -242,8 +242,8 @@ public class ReportsApiTest {
 //        String reportId = "724489019664";
 //        String shopId = "1735512178565320710";
 
-        String reportId = "1413181020045";
-        String shopId = "1736993864712982530";
+        String reportId = "";
+        String shopId = "1735553314990329858";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {
@@ -384,7 +384,8 @@ public class ReportsApiTest {
 //        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_GENERAL");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_MYI_UNSUPPRESSED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList("GET_FBA_FULFILLMENT_CUSTOMER_RETURNS_DATA");
-        List<String> reportTypes = Arrays.asList("GET_FLAT_FILE_OPEN_LISTINGS_DATA");
+//        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
+        List<String> reportTypes = Arrays.asList("GET_AMAZON_FULFILLED_SHIPMENTS_DATA_INVOICING");
 //        List<String> reportTypes = Arrays.asList("GET_RESERVED_INVENTORY_DATA");
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
 //        List<String> reportTypes = Arrays.asList(AmazonReportRecordTypeEnum.GET_RESERVED_INVENTORY_DATA.getRecordType());
@@ -408,7 +409,7 @@ public class ReportsApiTest {
 //        String shopId = "1739563826220634113";
 //        String shopId = "1736695621504471042";
 //        String shopId = "1735515751097307138";
-        String shopId = "1735512797405515786";
+        String shopId = "1735553314990329858";
         // 获取店铺授权信息
         AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
         if (null == shopInfoDTO) {

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.TabListDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
@@ -11,6 +12,7 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -145,4 +147,12 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      * @return
      */
     List<LogisticsBillEntity> selectNoLogisticsBillDetailByBill();
+
+    /**
+     *  根据订单类型查询物流单重量
+     * @param orderType
+     * @param permissionSql
+     * @return
+     */
+    List<TabListDTO> countTotalWeight(@Param("orderType") String orderType, @Param("permissionSql") String permissionSql);
 }

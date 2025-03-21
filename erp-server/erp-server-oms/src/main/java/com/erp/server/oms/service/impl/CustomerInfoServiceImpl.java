@@ -51,13 +51,15 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.sys.feign.KingdeeFeign;
-import com.erp.rpc.sys.feign.SysDictFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.sys.feign.UserInfoFeign;
+import com.erp.rpc.sys.feign.*;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -164,6 +166,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
+
+    @Resource
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     /**
      * 获取到分组的id 集合
      *
@@ -2366,5 +2373,33 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         }
 
+    }
+
+    @Override
+    public VirtualWarehouseDTO.VwDTO getVirtualWarehouseByCustomerId(CustomerDTO.VirtualDTO dto) {
+        CustomerInfoEntity customerInfoEntity = this.getById(dto.getCustomerId());
+        if (null == customerInfoEntity){
+            return new VirtualWarehouseDTO.VwDTO();
+        }
+        if(StringUtils.isNotBlank(customerInfoEntity.getCountryId()) ){
+            String country = customerInfoEntity.getCountryId();
+            String partitionId = sysPartitionFeign.getPartitionByCountry(country);
+            VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+            platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
+            platformDTO.setWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
+            platformDTO.setRelationId("");
+            platformDTO.setPartitionId(partitionId);
+            List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+            if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+                return new VirtualWarehouseDTO.VwDTO();
+            }
+            VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = virtualWarehouseList.get(0);
+            List<VirtualWarehouseEntity> virtualWarehouseEntities = wmsVirtualWarehouseFeign.listByIds(Arrays.asList(virtualWarehouseRelationEntity.getVirtualWarehouseId()));
+            if(CollectionUtils.isNotEmpty(virtualWarehouseEntities)){
+                VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntities.get(0);
+                return new VirtualWarehouseDTO.VwDTO(virtualWarehouseEntity.getId(),virtualWarehouseEntity.getDisabled(),virtualWarehouseEntity.getCode(),virtualWarehouseEntity.getName());
+            }
+        }
+        return new VirtualWarehouseDTO.VwDTO();
     }
 }
