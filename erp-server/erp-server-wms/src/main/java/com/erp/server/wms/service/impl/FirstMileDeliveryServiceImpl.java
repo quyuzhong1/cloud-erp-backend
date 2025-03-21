@@ -2201,7 +2201,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                 list = packingDetailMap.get(v.getSourceId());
             }
             //如果有装箱信息，过滤出对应的装箱信息
-            if(packingTaskMap.containsKey(v.getOutstockId())){
+            if(CollectionUtils.isNotEmpty(list) && packingTaskMap.containsKey(v.getOutstockId())){
                 List<String> cartonIds = packingTaskMap.get(v.getOutstockId());
                 list = list.stream().filter(e -> cartonIds.contains(e.getBoxId())).collect(Collectors.toList());
             }
