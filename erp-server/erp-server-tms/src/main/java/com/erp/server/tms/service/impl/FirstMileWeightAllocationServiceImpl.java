@@ -529,7 +529,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             //1.单SKU时：直接取值毛重和净重
             //2.组合SKU时：销售套装取值 优先毛重*用例【取值版本为最新版本，后续改为发货单版本】
             if(singleSkuIds.contains(cartonDetail.getSkuId())){
-                ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst().get();
+                ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst().orElseThrow(() -> new ServiceException("【{}】没有找到产品包装信息",cartonDetail.getSkuNo()));
                 productPackEntity.handleData();
                 BigDecimal productWeight = productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) != 0 ? productPackEntity.getGrossWeight() : productPackEntity.getNetWeight();
                 entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
