@@ -254,6 +254,14 @@ public class SoDeliveryNoticeDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 中转仓库集合
+         */
+        private String transferWarehouseIds;
+        /**
+         * 中转仓库名称
+         */
+        private String transferWarehouseNames;
     }
 
     /**

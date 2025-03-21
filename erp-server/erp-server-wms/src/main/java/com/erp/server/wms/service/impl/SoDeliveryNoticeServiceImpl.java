@@ -193,6 +193,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         Map<String,Integer> qtyMap = new HashMap<>();
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
@@ -235,6 +238,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         qtyMap.put(key,0);
                         obj.setPackingQty(obj.getPackingQty());
                     }
+                }
+                //中转仓名称
+                if (CharSequenceUtil.isNotBlank(obj.getTransferWarehouseIds())){
+                    StringBuffer sb = new StringBuffer();
+                    List<String> split = CharSequenceUtil.split(obj.getTransferWarehouseIds(), ",");
+                    for (String s : split) {
+                        sb.append(warehouseMap.get(s)).append(",");
+                    }
+                    obj.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
                 }
             });
         }
@@ -1718,6 +1730,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
         for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews.getRecords()) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
@@ -1734,6 +1749,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
             pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
+            //中转仓名称
+            if (CharSequenceUtil.isNotBlank(pagingView.getTransferWarehouseIds())){
+                StringBuffer sb = new StringBuffer();
+                List<String> split = CharSequenceUtil.split(pagingView.getTransferWarehouseIds(), ",");
+                for (String s : split) {
+                    sb.append(warehouseMap.get(s)).append(",");
+                }
+                pagingView.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
+            }
         }
         return new PagingVO<>(pagingViews);
     }
