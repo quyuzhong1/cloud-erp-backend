@@ -241,7 +241,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                 }
                 //中转仓名称
                 if (CharSequenceUtil.isNotBlank(obj.getTransferWarehouseIds())){
-                    StringBuffer sb = new StringBuffer();
+                    StringBuilder sb = new StringBuilder();
                     List<String> split = CharSequenceUtil.split(obj.getTransferWarehouseIds(), ",");
                     for (String s : split) {
                         sb.append(warehouseMap.get(s)).append(",");
@@ -1751,7 +1751,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
             //中转仓名称
             if (CharSequenceUtil.isNotBlank(pagingView.getTransferWarehouseIds())){
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 List<String> split = CharSequenceUtil.split(pagingView.getTransferWarehouseIds(), ",");
                 for (String s : split) {
                     sb.append(warehouseMap.get(s)).append(",");
