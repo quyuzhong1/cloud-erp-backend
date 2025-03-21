@@ -606,7 +606,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 detailSkuMappingList = skuMappingList.stream().filter(obj -> thisShopIdList.contains(obj.getShopId())
                         && StrUtil.equals(obj.getProductSkuId(), suggestEntity.getSkuId())).collect(Collectors.toList());
             }
-            handleOverseasSkuMapping(detailList,detailSkuMappingList, listingList, detailDTO, suggestEntity);
+            List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> viewPushList = handleOverseasSkuMapping(detailSkuMappingList, listingList, detailDTO, suggestEntity);
+            detailList.addAll(viewPushList);
         }
         viewPushDeliveryPlanDTO.setDetailList(detailList);
         return viewPushDeliveryPlanDTO;
@@ -622,12 +623,13 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
      * @param suggestEntity
      * @return List<ViewPushDeliveryPlanDetailDTO>
      */
-    private void  handleOverseasSkuMapping ( List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> detailList,List<ListingInfoWithSkuMappingDTO> skuMappingList,List<ListingInfoEntity> listingList,
-                                            DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO, DeliverySuggestEntity suggestEntity) {
+    private List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO>  handleOverseasSkuMapping (List<ListingInfoWithSkuMappingDTO> skuMappingList,List<ListingInfoEntity> listingList,
+                                                                                              DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO detailDTO, DeliverySuggestEntity suggestEntity) {
         if (CollectionUtils.isEmpty(skuMappingList)) {
-            detailList.add(detailDTO);
-            return;
+            return Collections.singletonList(detailDTO);
         }
+        List<DeliverySuggestDTO.ViewPushDeliveryPlanDetailDTO> newDetailList = new ArrayList<>();
+
         for (ListingInfoWithSkuMappingDTO skuMappingEntity : skuMappingList) {
             //listing信息
             List<ListingInfoEntity> detailListingList = listingList.stream().filter(obj -> StrUtil.equals(skuMappingEntity.getListingId(), obj.getId()))
@@ -642,12 +644,13 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
                 newDTO.setPlatformSkuName(listingInfoEntity.getPlatformSkuName());
                 //清空计划发货数量，前端填写
                 newDTO.setPlanDeliveryQty(null);
-                detailList.add(newDTO);
+                newDetailList.add(newDTO);
             }
         }
-        if (detailList.size() == MathUtil.ONE) {
-            detailList.stream().forEach(obj -> obj.setPlanDeliveryQty(detailDTO.getPlanDeliveryQty()));
+        if (newDetailList.size() == MathUtil.ONE) {
+            newDetailList.stream().forEach(obj -> obj.setPlanDeliveryQty(detailDTO.getPlanDeliveryQty()));
         }
+        return newDetailList;
     }
 
     /**
