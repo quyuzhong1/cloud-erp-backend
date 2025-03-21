@@ -220,6 +220,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.TIK_TOK.getCode());
             }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE.getCode());
+            }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode());
             }else{
                 throw new ServiceException("不支持的平台，请联系IT处理");
             }
@@ -230,7 +232,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             throw new ServiceException("请先完成店铺授权后再执行物流授权");
         }
         //美客多校验账号店铺是否存在授权
-        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
 
             String shopAccount = authMap.get("shopAccount");
             if(CharSequenceUtil.isBlank(shopAccount)){
@@ -259,6 +261,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             appClientEnum = AppClientEnum.TIKTOK_ACCESS_TOKEN;
         }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
             appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
         }else{
             throw new ServiceException("不支持的平台，请联系IT处理");
         }
@@ -281,7 +285,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             authMap.put("host",cfgAppClient.getUrl());
         }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
-        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
             authMap.put("token",shopAuthEntity.getAccessToken());
         }
