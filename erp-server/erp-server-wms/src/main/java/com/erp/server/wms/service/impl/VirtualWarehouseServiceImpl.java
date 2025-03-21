@@ -603,7 +603,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
 
             //店铺名称
             String shopName = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
-            shopName = CharSequenceUtil.equals(exportDTO.getType(), VitualWarehouseChannelTypeEnum.SHOP.getCode()) && CharSequenceUtil.isBlank(exportDTO.getShopId()) ? "全部" : shopName;
+            shopName = CharSequenceUtil.isNotBlank(exportDTO.getType()) && CharSequenceUtil.isBlank(exportDTO.getShopId()) ? "全部" : shopName;
             exportDTO.setShopName(shopName);
 
             //平台名称

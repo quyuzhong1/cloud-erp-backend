@@ -38,7 +38,8 @@
         fdd.fba_shipment_code fbaShipmentCode,
         pt.packing_status as packingStatus,
         pt.id as taskId,
-        fd.declare_status
+        fd.declare_status,
+        fd.transfer_warehouse_ids
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN packing_task pt on  (pt.source_id = fd.id  or pt.source_id = fd.source_id ) and pt.is_deleted = false
@@ -98,7 +99,8 @@
         fdd.fba_shipment_code fbaShipmentCode,
         pt.packing_status as packingStatus,
         pt.id as taskId,
-        fd.declare_status
+        fd.declare_status,
+        fd.transfer_warehouse_ids
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN packing_task pt on  (pt.source_id = fd.id  or pt.source_id = fd.source_id ) and pt.is_deleted = false

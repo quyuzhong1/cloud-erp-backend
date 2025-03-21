@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -160,7 +161,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         }
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
         //设置唯一值
-        newList.forEach(e-> {e.setMd5(getDataMd5(e,dto.getTrackNo()));e.setTrackNo(dto.getTrackNo());});
+        newList.forEach(e-> {e.setTrackNo(dto.getTrackNo());e.setMd5(getDataMd5(e));});
         //增量数据库记录
         this.saveIncrementTrackData(dto.getTrackNo(), newList);
         //获取最新记录
@@ -201,7 +202,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         //数据转换
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.convertWebHookToEntity(trackingDetails);
         //设置唯一值
-        newList.forEach(e-> {e.setMd5(getDataMd5(e,trackNo));e.setTrackNo(trackNo);});
+        newList.forEach(e-> {e.setTrackNo(trackNo);e.setMd5(getDataMd5(e));});
         //获取最新记录
         LogisticsTrackEntity maxTrack = newList.stream().max(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).orElse(null);
         //增量数据库记录
@@ -226,14 +227,12 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }
         }
     }
-
     /**
      * 获取唯一值
      * @param trackingDetail
-     * @param trackNo
      * @return
      */
-    private String getDataMd5(LogisticsTrackEntity trackingDetail, String trackNo) {
+    private String getDataMd5(LogisticsTrackEntity trackingDetail) {
         String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
         return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
     }
@@ -243,6 +242,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
      * 新增修改处理数据
      */
     private void handleData(LogisticsTrackEntity logisticsTrackEntity) {
-        
+        logisticsTrackEntity.setMd5(getDataMd5(logisticsTrackEntity));
     }
 }

@@ -34,6 +34,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -77,9 +78,6 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
             virtualWarehouseEntities = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
         }
 
-        //销售平台
-        List<DictBasicEntity> dictBasicList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
-
         for (InventoryDetailVO detailVO : page.getRecords()) {
             detailVO.setPlatformType(platformType);
             WarehouseEntity warehouse = warehouseEntities.stream()
@@ -90,13 +88,6 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-
-            //平台
-            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
-                List<String> platformList = detailVO.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
-                String platformNames = dictBasicList.stream().filter(obj -> platformList.contains(obj.getValue())).map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
-                detailVO.setDictPlatform(CollUtil.isNotEmpty(platformList) ? platformNames : "全部");
-            }
 
             if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(detailVO.getInventoryAllocateType())) {
                 if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
@@ -136,11 +127,18 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion) {
+    public void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion, Map<String, List<String>> shopIdByPlatform) {
         List<ReplenishmentInventoryDetailEntity> entities = new ArrayList<>();
         List<ShopInventoryDetailEntity> detailEntities = new ArrayList<>();
         for (ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO dto : inventoryDetail) {
             ReplenishmentInventoryDetailEntity entity = ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO.buildReplenishmentInventoryDetail(dto, replenishmentDetailId, calcVersion);
+            //平台取值
+            String platform = shopIdByPlatform.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && entry.getValue().contains(dto.getShopInventoryDetails().get(0).getShopId()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse("");
+            entity.setDictPlatform(platform);
             entity.setId(IdWorker.getIdStr());
             entities.add(entity);
             for (ReplenishmentResultDTO.ShopInventoryDetailDTO detail : dto.getShopInventoryDetails()) {

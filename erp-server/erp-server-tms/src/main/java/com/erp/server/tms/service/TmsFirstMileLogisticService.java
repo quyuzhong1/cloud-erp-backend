@@ -8,6 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
@@ -169,4 +170,11 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
      * @return
      */
     List<LogisticsBillEntity> listBySourceCodeList(List<String> businessCodeList, List<String> outstockCodeList, List<String> transportList);
+
+    /**
+     * 查询物流单轨迹
+     * @param logisticsBillId
+     * */
+
+    LogisticsTrackDTO.ViewDTO listTrack(String logisticsBillId);
 }

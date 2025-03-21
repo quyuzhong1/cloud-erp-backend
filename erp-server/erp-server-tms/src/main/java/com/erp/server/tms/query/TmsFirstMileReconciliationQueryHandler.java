@@ -15,6 +15,12 @@ public class TmsFirstMileReconciliationQueryHandler extends AbstractQueryHandler
         if ("tab".equals(field)) {
             return getTabSql(value);
         }
+        if("tfmrd.relation_code".equals(field)){
+            return " EXISTS (SELECT 1 from tms_first_mile_reconciliation_detail as detail where detail.is_deleted = false and detail.main_id = tfmr.id and detail.relation_code "+ compareCodeSplicingValueSql +" ) ";
+        }
+        if("tfmrd.transport_no".equals(field)){
+            return " EXISTS (SELECT 1 from tms_first_mile_reconciliation_detail as detail where detail.is_deleted = false and detail.main_id = tfmr.id and detail.transport_no "+ compareCodeSplicingValueSql +" ) ";
+        }
         return null;
     }
 

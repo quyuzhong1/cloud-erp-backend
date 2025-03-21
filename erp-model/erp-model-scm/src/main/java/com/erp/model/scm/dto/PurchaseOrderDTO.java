@@ -780,6 +780,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 付款方式名称
          */
         private String paymentConditionName;
+        /**
+         * 付款方式名称
+         */
+        private String logoUrl;
 
         /**
          * 明细信息
