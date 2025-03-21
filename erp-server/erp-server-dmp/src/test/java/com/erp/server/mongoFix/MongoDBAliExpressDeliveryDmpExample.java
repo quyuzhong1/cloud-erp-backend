@@ -8,10 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bson.Document;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class MongoDBAliExpressDeliveryDmpExample {
 	public static void main(String[] args) {
@@ -34,15 +31,22 @@ public class MongoDBAliExpressDeliveryDmpExample {
             // **查询主表所有数据**
             FindIterable<Document> outstockDocuments = outstockCollection.find();
 
+            // **Step 1: 一次性查询所有子表数据，并按 fulfillment_order_no 进行分组**
+            Map<String, List<Document>> detailMap = new HashMap<>();
+            FindIterable<Document> detailDocuments = detailCollection.find();
+
+            for (Document detail : detailDocuments) {
+                String fulfillmentOrderNo = detail.getString("fulfillment_order_no");
+                detailMap.computeIfAbsent(fulfillmentOrderNo, k -> new ArrayList<>()).add(detail);
+            }
+
             List<AliexpressSoOutstock.MergedOrderData> resultList = new ArrayList<>();
 
             for (Document outstock : outstockDocuments) {
                 String fulfillmentOrderNo = outstock.getString("fulfillment_order_no");
                 String tradeOrderNo = outstock.getString("trade_order_no");
 
-                // **查询子表数据**
-                FindIterable<Document> details = detailCollection.find(new Document("fulfillment_order_no", fulfillmentOrderNo));
-
+                List<Document> details = detailMap.getOrDefault(fulfillmentOrderNo, Collections.emptyList());
                 for (Document detail : details) {
                     AliexpressSoOutstock.MergedOrderData merged = new AliexpressSoOutstock.MergedOrderData();
                     merged.setFulfillmentOrderNo(fulfillmentOrderNo);
