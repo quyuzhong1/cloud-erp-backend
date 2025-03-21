@@ -261,7 +261,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, LogisticsChannelEntity> channelMap = logisticsChannelService.listByIds(channelIds)
                 .stream()
                 .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-
+        //发货单
+        List<String> deliveryCodes = list.stream().map(TmsFirstMileReconciliationDetailDTO.ExportDetailDTO::getRelationCode).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByCodes(deliveryCodes);
         Map<String, String> idSymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         for (TmsFirstMileReconciliationDetailDTO.ExportDetailDTO data : list) {
             //审核状态名称
@@ -295,6 +297,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     data.setReconciliationCountName(data.getReconciliationCount()+"次对账");
                 }
 
+            }
+            //业务单号查询逻辑修改 展示FBA发货单号和第三方货号-同期初展示逻辑
+            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(e.getCode(), data.getRelationCode())).findFirst().orElse(null);
+            if (Objects.nonNull(businessDTO)){
+                data.setBusinessCode(businessDTO.getBusinessCode());
+            }else {
+                data.setBusinessCode("");
             }
             data.setShippingCostStr(idSymbolMap.get(data.getShippingCostCurrency()) + data.getShippingCost());
             data.setDeclareCostStr(idSymbolMap.get(data.getDeclareCostCurrency()) + data.getDeclareCost());
