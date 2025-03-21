@@ -34,6 +34,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -136,11 +137,18 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion) {
+    public void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion, Map<String, List<String>> shopIdByPlatform) {
         List<ReplenishmentInventoryDetailEntity> entities = new ArrayList<>();
         List<ShopInventoryDetailEntity> detailEntities = new ArrayList<>();
         for (ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO dto : inventoryDetail) {
             ReplenishmentInventoryDetailEntity entity = ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO.buildReplenishmentInventoryDetail(dto, replenishmentDetailId, calcVersion);
+            //平台取值
+            String platform = shopIdByPlatform.entrySet().stream()
+                    .filter(entry -> entry.getValue() != null && entry.getValue().contains(dto.getShopInventoryDetails().get(0).getShopId()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse("");
+            entity.setDictPlatform(platform);
             entity.setId(IdWorker.getIdStr());
             entities.add(entity);
             for (ReplenishmentResultDTO.ShopInventoryDetailDTO detail : dto.getShopInventoryDetails()) {

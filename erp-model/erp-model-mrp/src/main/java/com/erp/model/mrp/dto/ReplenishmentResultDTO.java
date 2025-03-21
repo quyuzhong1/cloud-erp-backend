@@ -1708,7 +1708,6 @@ public class ReplenishmentResultDTO {
             entity.setPlatformQty(dto.getPlatformQty());
             entity.setCalcVersion(calcVersion);
             entity.setSourceType(dto.getSourceType());
-            entity.setDictPlatform(dto.getDictPlatform());
             return entity;
         }
 

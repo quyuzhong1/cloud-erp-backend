@@ -1002,7 +1002,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 estimatedDeliveryDetailService.saveBatch(fbaDeliveryDetails);
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasUsableDetail())) {
-                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion(), replenishmentResult.getShopIdByPlatform());
             }
 
             if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetails())) {
@@ -1013,7 +1013,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             }
 
             if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasInTransitDetail())) {
-                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion(), replenishmentResult.getShopIdByPlatform());
             }
 
             if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetails())) {
@@ -1024,14 +1024,14 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             }
 
             if (CollectionUtils.isNotEmpty(replenishmentResult.getOverseasDeliveryDetail())) {
-                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasDeliveryDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getOverseasDeliveryDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion(), replenishmentResult.getShopIdByPlatform());
             }
 
             if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalUsableDetail())) {
-                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalUsableDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion(), replenishmentResult.getShopIdByPlatform());
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalWaitQcDetail())) {
-                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalWaitQcDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalWaitQcDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion(), replenishmentResult.getShopIdByPlatform());
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetails())) {
                 List<LocalInTransitDetailEntity> localInTransitDetails = replenishmentResult.getLocalInTransitDetails().stream()
@@ -1040,7 +1040,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 localInTransitDetailService.saveBatch(localInTransitDetails);
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalInTransitDetail())) {
-                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalInTransitDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion(), replenishmentResult.getShopIdByPlatform());
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetails())) {
                 List<EstimatedPurchaseDetailEntity> localPurchaseDetails = replenishmentResult.getLocalPurchaseDetails().stream()
@@ -1049,7 +1049,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                 estimatedPurchaseDetailService.saveBatch(localPurchaseDetails);
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getLocalPurchaseDetail())) {
-                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalPurchaseDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion());
+                replenishmentInventoryDetailService.saveInventoryDetail(replenishmentResult.getLocalPurchaseDetail(), replenishmentResult.getReplenishmentDetail().getDetailId(), replenishmentResult.getReplenishmentDetail().getCalcVersion(), replenishmentResult.getShopIdByPlatform());
             }
             if (CollectionUtils.isNotEmpty(replenishmentResult.getRptOutOfStocks())) {
                 List<RptOutOfStockEntity> rptOutOfStocks = replenishmentResult.getRptOutOfStocks().stream()
