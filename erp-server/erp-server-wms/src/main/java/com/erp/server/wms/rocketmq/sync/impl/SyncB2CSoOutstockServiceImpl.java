@@ -343,6 +343,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
      * @param noInventorySkuNoList 无库存sku
      */
     private List<SoOutstockDetailEntity> dealPickingDetail(List<SoOutstockDetailEntity> detailList, WarehouseEntity warehouse, List<String> noInventorySkuNoList) {
+        List<String> skuIds = detailList.stream().map(SoOutstockDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         // 获取拣货区配置
         List<WarehouseLocationEntity> pickingAreaList = warehouseLocationService.list(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getWarehouseId, warehouse.getId())
@@ -363,7 +364,59 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (CollectionUtils.isEmpty(warehouseLocationList)) {
             throw new ServiceException("仓库" + warehouse.getName() + "不存在拣货区下可以仓位，请添加");
         }
-        
+        List<String> locationList = warehouseLocationList.stream().map(WarehouseLocationEntity::getCode).collect(Collectors.toList());
+        List<InventoryEntity> inventoryList = inventoryService.list(Wrappers.<InventoryEntity>lambdaQuery()
+                .eq(InventoryEntity::getWarehouseId, warehouse.getId())
+                .in(InventoryEntity::getWarehouseLocation, locationList)
+                .in(InventoryEntity::getSkuId, skuIds)
+                .gt(InventoryEntity::getQty, 0)
+                .orderByDesc(InventoryEntity::getQty)
+        );
+        Map<String, Integer> stockSku = new HashMap<>();
+        List<SoOutstockDetailEntity> detailNewList = new ArrayList<>();
+        for (SoOutstockDetailEntity detail : detailList) {
+            if (noInventorySkuNoList.contains(detail.getSkuNo())) {
+                detailNewList.add(detail);
+                continue;
+            }
+            AtomicInteger quantity = new AtomicInteger(detail.getActualQty());
+            List<InventoryEntity> inventoryEntityList = inventoryList.stream().filter(v -> v.getSkuId().equals(detail.getSkuId()))
+                    .collect(Collectors.toList());
+            for (InventoryEntity inventory : inventoryEntityList) {
+                SoOutstockDetailEntity newDetail = BeanMapperUtils.map(SoOutstockDetailEntity.class, detail);
+                newDetail.setId(IdWorker.getIdStr());
+                newDetail.setWarehouseLocation(inventory.getWarehouseLocation());
+                if (inventory.getQty() >= quantity.get()) {
+                    newDetail.setPlanQty(quantity.get());
+                    newDetail.setActualQty(quantity.get());
+                    detailNewList.add(newDetail);
+                    inventory.setQty(inventory.getQty() - quantity.get());
+                    quantity.set(0);
+                    break;
+                } else {
+                    newDetail.setPlanQty(inventory.getQty());
+                    newDetail.setActualQty(inventory.getQty());
+                    detailNewList.add(newDetail);
+                    quantity.set(quantity.get() - inventory.getQty());
+                    inventory.setQty(0);
+                }
+            }
+            if (0 != quantity.get()) {
+                if (stockSku.containsKey(detail.getSkuNo())) {
+                    stockSku.put(detail.getSkuNo(), stockSku.get(detail.getSkuNo()) + quantity.get());
+                }else {
+                    stockSku.put(detail.getSkuNo(), quantity.get());
+                }
+            }
+        }
+        if (!CollectionUtils.isEmpty(stockSku)) {
+            String errorMsg = stockSku.entrySet()
+                    .stream()
+                    .map(v -> v.getKey() + ":" + v.getValue() + "个")
+                    .collect(Collectors.joining(","));
+            throw new ServiceException("SKU库存不足" + errorMsg);
+        }
+        detailList = detailNewList;
         return detailList;
     }
 
