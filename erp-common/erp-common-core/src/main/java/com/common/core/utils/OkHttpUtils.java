@@ -328,7 +328,6 @@ public class OkHttpUtils {
         try {
             ResponseBody body = call.execute().body();
             if (body != null) {
-                body.contentType();
                 MediaType mediaType = body.contentType();
                 String subtype = Objects.nonNull(mediaType) ? mediaType.subtype() : "";
                 if ("json".equals(subtype)){
