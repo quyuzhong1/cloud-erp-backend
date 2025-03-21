@@ -19,19 +19,20 @@ public class MongoDBAliExpressDeliveryDmpExample {
         String connectionString = "mongodb://root:mongoDBulanzi@172.16.100.12:27017";
 
         try (MongoClient mongoClient = MongoClients.create(connectionString)) {
+            String dbName = "erp-dmp";
             // 连接到数据库
-            MongoDatabase database = mongoClient.getDatabase("erp-dmp");
+            MongoDatabase database = mongoClient.getDatabase(dbName);
 
             MongoCollection<Document> outstockCollection = database.getCollection("aliexpress_soOutstock_data");
             MongoCollection<Document> detailCollection = database.getCollection("aliexpress_soOutstockDetail_data");
 
-            String fulfillmentOrderNo1 = "WH3314510640832722";
-
-            // 查询主表
-            FindIterable<Document> outstockDocuments = outstockCollection.find(new Document("fulfillment_order_no", fulfillmentOrderNo1));
+//            String fulfillmentOrderNo1 = "WH3314510640832722";
+//
+//            // 查询主表
+//            FindIterable<Document> outstockDocuments = outstockCollection.find(new Document("fulfillment_order_no", fulfillmentOrderNo1));
 
             // **查询主表所有数据**
-//            FindIterable<Document> outstockDocuments = outstockCollection.find();
+            FindIterable<Document> outstockDocuments = outstockCollection.find();
 
             List<AliexpressSoOutstock.MergedOrderData> resultList = new ArrayList<>();
 
@@ -75,12 +76,12 @@ public class MongoDBAliExpressDeliveryDmpExample {
                 String itemId = mergedOrderData.getItemId();
                 String scItemId = mergedOrderData.getScItemId();
                 String tradeOrderNo = mergedOrderData.getTradeOrderNo();
-                set.add("update dmp_so_outstock_detail set currency = '" + currency + "',pay_amount = "+  pay_amount + ",pay_currency = '"+ pay_currency + "',discount_amount = "+  discount_amount +",discount_currency = '" + discount_currency + "'  where sku_id = '"+ skuId + "' and third_detail_id = '"+ itemId + "' and platform_detail_id = '"+ scItemId + "' and main_id in (select id from dmp_so_info where source_system = 'AliExpress' and third_code = '"+ tradeOrderNo +"' and is_deleted = false);");
+                set.add("update dmp_so_outstock_detail set update_time = now(), currency = '" + currency + "',pay_amount = "+  pay_amount + ",pay_currency = '"+ pay_currency + "',discount_amount = "+  discount_amount +",discount_currency = '" + discount_currency + "'  where sku_id = '"+ skuId + "' and third_detail_id = '"+ itemId + "' and platform_detail_id = '"+ scItemId + "' and main_id in (select id FROM dmp_so_outstock WHERE source_id in (select id from dmp_so_info where source_system = 'AliExpress' and third_code ='"+ tradeOrderNo +"' and is_deleted = false));");
             }
 
 
-
-            FileUtil.writeUtf8Lines(set, "C:\\Users\\Jim\\Desktop\\aliExpress_detail\\aliExpress_detail.sql");
+            String url = "C:\\Users\\Jim\\Desktop\\aliExpress_detail\\aliExpress_detail_"+ dbName +".sql";
+            FileUtil.writeUtf8Lines(set, url);
         } catch (Exception e) {
             e.printStackTrace();
         }
