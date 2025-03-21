@@ -78,9 +78,6 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
             virtualWarehouseEntities = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
         }
 
-        //销售平台
-        List<DictBasicEntity> dictBasicList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
-
         for (InventoryDetailVO detailVO : page.getRecords()) {
             detailVO.setPlatformType(platformType);
             WarehouseEntity warehouse = warehouseEntities.stream()
@@ -91,13 +88,6 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
-
-            //平台
-            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
-                List<String> platformList = detailVO.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
-                String platformNames = dictBasicList.stream().filter(obj -> platformList.contains(obj.getValue())).map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
-                detailVO.setDictPlatform(CollUtil.isNotEmpty(platformList) ? platformNames : "全部");
-            }
 
             if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(detailVO.getInventoryAllocateType())) {
                 if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
