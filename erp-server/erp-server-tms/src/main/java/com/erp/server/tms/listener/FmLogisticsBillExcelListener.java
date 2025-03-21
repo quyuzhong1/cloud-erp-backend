@@ -214,14 +214,6 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 errorList.add(excelDTO);
                 continue;
             }
-            if(StringUtils.isNotBlank(excelDTO.getTransportNo()) && !excelDTO.getTransportNo().equals(entity.getTransportNo())){
-                LogisticsBillEntity existTransportEntity = logisticsBillEntityList.stream().filter(v->v.getTransportNo().equals(excelDTO.getTransportNo())).findFirst().orElse(null);
-                if(Objects.nonNull(existTransportEntity)){
-                    excelDTO.setErrorMsg("运单号已存在，不能修改");
-                    errorList.add(excelDTO);
-                    continue;
-                }
-            }
             //校验供应商和渠道
             List<String> errorMsgList = new ArrayList<>();
             if(StringUtils.isNotBlank(excelDTO.getSupplierName())){

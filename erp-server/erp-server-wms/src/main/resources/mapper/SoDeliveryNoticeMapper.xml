@@ -56,7 +56,8 @@
         pt.packing_status as packingStatus,
             sdn.create_time AS createTime,
         sdnd.picking_qty as pickedQty,
-        g.generationPickStatus
+        g.generationPickStatus,
+        sdn.transfer_warehouse_ids
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         LEFT JOIN packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
@@ -119,7 +120,8 @@
         sdn.actual_delivery_date AS actualDeliveryDate,
         sdn.approve_user_name AS approveUserName,
         sdn.create_user_name AS createUserName,
-        sdn.create_time AS createTime
+        sdn.create_time AS createTime,
+        sdn.transfer_warehouse_ids
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         WHERE

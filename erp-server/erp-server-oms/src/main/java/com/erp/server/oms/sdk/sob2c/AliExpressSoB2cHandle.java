@@ -115,8 +115,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
         dto.setDeliveryDTOList(deliveryDTOList);
         try {
-            //创建速卖通发货单
-            this.createAliexpressDelivery(dto,mainEntity);
+            //创建或更新速卖通发货单
+            this.createOrUpdateAliexpressDelivery(dto,mainEntity);
             // 平台仓生成销售出库单
             this.createAliExpressOutStock(dto, mainEntity);
         } catch (Exception e) {
@@ -146,7 +146,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
     }
 
-    private void createAliexpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+    private void createOrUpdateAliexpressDelivery(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
         if (Objects.isNull(dto) || CollUtil.isEmpty(dto.getDeliveryDTOList())){
             return;
         }
@@ -191,11 +191,31 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                     detailAddDTO.setPlatformSku(detailDTO.getPlatformSkuNo());
                     detailAddDTO.setSkuId(detailDTO.getSkuId());
                     detailAddDTO.setSkuNo(detailDTO.getSkuNo());
+                    // 明细单价
+                    detailAddDTO.setPrice(detailDTO.getPrice());
+                    // 币别(速卖通发货单明细来源单价币种)
+                    detailAddDTO.setCurrency(detailDTO.getCurrency());
+                    // 实际支付金额
+                    detailAddDTO.setPayAmount(detailDTO.getPayAmount());
+                    // 实际支付币别
+                    detailAddDTO.setPayCurrency(detailDTO.getPayCurrency());
+                    // 折扣金额
+                    detailAddDTO.setDiscountAmount(detailDTO.getDiscountAmount());
+                    // 折扣币别
+                    detailAddDTO.setDiscountCurrency(detailDTO.getDiscountCurrency());
+                    // 货品ID
+                    detailAddDTO.setScItemId(detailDTO.getScItemId());
+                    // 唯一ID
+                    detailAddDTO.setUniqueId(detailDTO.getUniqueId());
+                    // 平台skuID
+                    detailAddDTO.setPlatformSkuId(detailDTO.getPlatformSkuId());
+                    // 平台产品ID
+                    detailAddDTO.setPlatformSpuNo(detailDTO.getPlatformSpuNo());
                     detailAddList.add(detailAddDTO);
                 }
             }
             addDTO.setDetailList(detailAddList);
-            aliexpressDeliveryFeign.add(addDTO);
+            aliexpressDeliveryFeign.addOrUpdate(addDTO);
         }
 
     }

@@ -1681,7 +1681,10 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         List<String> sourceCodeList = list.stream().map(v->v.getSourceCode()).distinct().collect(Collectors.toList());
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodeList);
         List<WmsCartonDetailEntity> wmsCartonDetailEntityList = wmsCartonDetailService.listByTaskIds(taskIds);
-       // 属性赋值
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
+        // 属性赋值
         for(FirstMileDeliveryDTO.ListDTO data : list) {
             if (CharSequenceUtil.isNotBlank(data.getPackingStatus())) {
                 data.setPackingStatusName(PackingTaskStatusEnum.getName(data.getPackingStatus()));
@@ -1765,6 +1768,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
                     qtyMap.put(key,data.getPackingQty() - data.getDeliveryQty());
                     data.setPackingQty(data.getDeliveryQty());
                 }
+            }
+            //中转仓名称
+            if (CharSequenceUtil.isNotBlank(data.getTransferWarehouseIds())){
+                StringBuilder sb = new StringBuilder();
+                List<String> split = CharSequenceUtil.split(data.getTransferWarehouseIds(), ",");
+                for (String s : split) {
+                    sb.append(warehouseMap.get(s)).append(",");
+                }
+                data.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
             }
         }
     }
@@ -2166,6 +2178,29 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         //会存在已要货申请id下推装箱任务
         List<String> sourceIds = result.stream().map(FirstMileDeliveryDTO.GenerateLogisticDTO::getSourceId).collect(Collectors.toList());
         List<String> ids = Stream.concat(outStockIds.stream(), sourceIds.stream()).distinct().collect(Collectors.toList());
+        //FBA来源的要货申请可能有多个发货单，需要根据货件中的装箱id做过滤
+        List<FirstMileDeliveryDetailEntity> allDetailEntityList = firstMileDeliveryDetailService.listByMainIds(ids);
+        List<String> allFbaShipmentCodes = allDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<FbaShipmentPackingEntity> allFbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(allFbaShipmentCodes);
+        //处理成map key:发货单id，value:装箱ids
+        Map<String,List<String>> packingTaskMap = new HashMap<>();
+        for (String id : ids) {
+            List<FirstMileDeliveryDetailEntity> detailEntityList = allDetailEntityList.stream().filter(entity -> entity.getMainId().equals(id)).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(detailEntityList)){
+                continue;
+            }
+            List<String> fbaShipmentCodes = allDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(fbaShipmentCodes)){
+                continue;
+            }
+            List<FbaShipmentPackingEntity> fbaShipmentPackingEntityList = allFbaShipmentPackingEntityList.stream().filter(entity -> fbaShipmentCodes.contains(entity.getFbaShipmenCode())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(fbaShipmentPackingEntityList)){
+                continue;
+            }
+            List<String> cartonIds = fbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).distinct().collect(Collectors.toList());
+            packingTaskMap.put(id,cartonIds);
+        }
+
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
         Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
@@ -2176,6 +2211,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.get(v.getOutstockId());
             if (CollectionUtils.isEmpty(list) && CharSequenceUtil.isNotBlank(v.getSourceId())){
                 list = packingDetailMap.get(v.getSourceId());
+            }
+            //如果有装箱信息，过滤出对应的装箱信息
+            if(CollectionUtils.isNotEmpty(list) && packingTaskMap.containsKey(v.getOutstockId())){
+                List<String> cartonIds = packingTaskMap.get(v.getOutstockId());
+                list = list.stream().filter(e -> cartonIds.contains(e.getBoxId())).collect(Collectors.toList());
             }
             v.setPackingDTOList(list);
             if (CharSequenceUtil.isNotBlank(v.getToCountry())){

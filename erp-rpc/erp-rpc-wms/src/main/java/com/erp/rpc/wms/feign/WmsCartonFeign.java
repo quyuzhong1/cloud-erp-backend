@@ -16,5 +16,5 @@ import java.util.List;
 public interface WmsCartonFeign {
 
     @GetMapping("/listByPackingTaskId")
-    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(@RequestParam String packingTaskId);
+    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(@RequestParam String packingTaskId,@RequestParam("fbaShipmentCodes") List<String> fbaShipmentCodes);
 }

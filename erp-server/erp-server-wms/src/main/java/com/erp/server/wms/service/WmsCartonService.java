@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -117,5 +116,5 @@ public interface WmsCartonService extends SuperService<WmsCartonEntity> {
     /**
      * 根据任务id获取箱子内容物详情
      */
-    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId);
+    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId, List<String> fbaShipmentCodes);
 }
