@@ -133,6 +133,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.*;
@@ -9710,5 +9711,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         dto.setTransportNo(soB2cLogisticsEntity.getCode());
         dto.setLogisticType(soB2cLogisticsEntity.getLogisticType());
         return logisticsBillFeign.getLogisticsLabel(dto);
+    }
+
+    @Override
+    public void importB2cFile(MultipartFile excelFile, HttpServletResponse response) {
+
     }
 }
