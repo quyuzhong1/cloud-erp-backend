@@ -6,6 +6,7 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
@@ -1042,10 +1043,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                     v.setSignTime(dto.getTime());
                 }
                 v.setTrackStatus(dto.getLogisticsStatus());
+                v.setTrackContent(dto.getLogisticsTrack());
             });
             updateDetailList.addAll(detailEntityList);
 
             LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
+            logisticsTrackEntity.setLogisticsBillId(logisticsBillEntity.getId());
             logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
             logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
             logisticsTrackEntity.setTrackTime(Objects.isNull(dto.getTime())?LocalDateTime.now():dto.getTime());
@@ -2133,5 +2136,18 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         return this.lambdaQuery().or().in(CollUtil.isNotEmpty(businessCodeList),LogisticsBillEntity::getBusinessCode,businessCodeList)
                 .or().in(CollUtil.isNotEmpty(outstockCodeList),LogisticsBillEntity::getOutstockCode,outstockCodeList)
                 .or().in(CollUtil.isNotEmpty(transportList),LogisticsBillEntity::getTransportNo,transportList).list();
+    }
+
+    @Override
+    public LogisticsTrackDTO.ViewDTO listTrack(String logisticsBillId) {
+        LogisticsBillEntity logisticsBill = logisticsBillService.getById(logisticsBillId);
+        if (ObjectUtil.isEmpty(logisticsBill)) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
+        }
+        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(logisticsBillId));
+        String transportNo = logisticsBill.getTransportNo();
+        List<String> trackNoList = logisticsBillDetailEntityList.stream().map(LogisticsBillDetailEntity::getTrackNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        String counterNo = logisticsBill.getCounterNo();
+        return logisticsTrackService.listByParam(transportNo,trackNoList,counterNo,logisticsBillId);
     }
 }

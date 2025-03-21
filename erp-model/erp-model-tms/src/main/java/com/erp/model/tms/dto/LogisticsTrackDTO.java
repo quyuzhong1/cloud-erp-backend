@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -173,6 +174,10 @@ public class LogisticsTrackDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
+        /**
+         * 物流单ID
+         */
+        private String logisticsBillId;
 
         /**
         * 运单号
