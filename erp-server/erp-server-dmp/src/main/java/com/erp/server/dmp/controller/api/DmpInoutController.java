@@ -264,7 +264,16 @@ public class DmpInoutController extends BaseController {
                     List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
                     DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
                     dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
-                    dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, "id", dataIds)));
+                    String propertie = "id";
+                    String extendJson = dmpCfgOutputEntity.getExtendJson();
+                    if(StringUtils.isNotBlank(extendJson)) {
+                    	JSONObject parseObject = JSON.parseObject(extendJson);
+                    	String cfgPropertie = parseObject.getString("propertie");
+                    	if(StringUtils.isNotBlank(cfgPropertie)) {
+                    		propertie = cfgPropertie;
+                    	}
+                    }
+                    dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, propertie, dataIds)));
                     try {
                         Map<String, String> queryPushData = dmpOutputCreateFactory.getQueryPushData(dmpOutputHotfixCreateRequest);
                         if (queryPushData != null) {
