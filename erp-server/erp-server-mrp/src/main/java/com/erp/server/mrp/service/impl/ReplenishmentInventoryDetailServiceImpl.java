@@ -1,5 +1,6 @@
 package com.erp.server.mrp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -15,7 +16,9 @@ import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.entity.ShopInventoryDetailEntity;
 import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import com.erp.model.mrp.vo.InventoryDetailVO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -73,6 +76,10 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
         if (!CollectionUtils.isEmpty(virtualWarehouseIdList)) {
             virtualWarehouseEntities = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
         }
+
+        //销售平台
+        List<DictBasicEntity> dictBasicList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+
         for (InventoryDetailVO detailVO : page.getRecords()) {
             detailVO.setPlatformType(platformType);
             WarehouseEntity warehouse = warehouseEntities.stream()
@@ -83,6 +90,14 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+
+            //平台
+            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
+                List<String> platformList = detailVO.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
+                String platformNames = dictBasicList.stream().filter(obj -> platformList.contains(obj.getValue())).map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+                detailVO.setDictPlatform(CollUtil.isNotEmpty(platformList) ? platformNames : "全部");
+            }
+
             if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(detailVO.getInventoryAllocateType())) {
                 if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
                     List<String> shopNames = allShopInfo.stream()
