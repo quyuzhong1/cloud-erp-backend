@@ -1889,18 +1889,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             result.setPackageNumber(jsonObject.getString("package_number"));
         }
         //物流id 美客多
-        if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform()) && Objects.nonNull(entity.getLabelJson())
-                && PlatformDictEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)) {
-            JSONObject jsonObject = JSONObject.parseObject(entity.getLabelJson());
-            Long shipmentId = jsonObject.getLong("shipmentId");
-            if (Objects.isNull(shipmentId)){
-                throw new ServiceException("美客多订单物流id不能为空");
-            }
-            result.setShipmentId(shipmentId);
-        }
-        //物流id 美客多
-        if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(entity.getDictPlatform()) && Objects.nonNull(entity.getLabelJson())
-                && PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)) {
+        if ((PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(entity.getDictPlatform()) || PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) && Objects.nonNull(entity.getLabelJson())
+                && (PlatformDictEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform))) {
             JSONObject jsonObject = JSONObject.parseObject(entity.getLabelJson());
             Long shipmentId = jsonObject.getLong("shipmentId");
             if (Objects.isNull(shipmentId)){
