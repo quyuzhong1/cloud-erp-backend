@@ -176,7 +176,16 @@ public class TmsCostDetailServiceImpl extends SuperServiceImpl<TmsCostDetailMapp
 		}
 		return set;
     }
-    
+
+    @Override
+    public void deleteByMainIdAndCfgCostId(String mainId, String cfgId) {
+        if (CharSequenceUtil.isAllBlank(mainId,cfgId)){
+            return;
+        }
+        this.lambdaUpdate().eq(CharSequenceUtil.isNotBlank(mainId),TmsCostDetailEntity::getMainId,mainId)
+                .eq(CharSequenceUtil.isNotBlank(cfgId),TmsCostDetailEntity::getCfgCostId,cfgId).remove();
+    }
+
     /**
      * @description: 查询需要删除的id
      * @author Will

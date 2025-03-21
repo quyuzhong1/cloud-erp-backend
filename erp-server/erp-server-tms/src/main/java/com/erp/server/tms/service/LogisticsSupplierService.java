@@ -88,6 +88,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @return List<DisabledDTO>
      */
     List<BaseDropDownDTO.DisabledDTO> listAll(Boolean filterDisabled);
+    List<BaseDropDownDTO.DisabledDTO> listAllShort(Boolean filterDisabled);
 
     /**
      * 更改启用禁用状态

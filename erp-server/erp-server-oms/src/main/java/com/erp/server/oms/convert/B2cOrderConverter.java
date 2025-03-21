@@ -183,7 +183,9 @@ public interface B2cOrderConverter {
             @Mapping(target = "declareCn", source = "declareCn", qualifiedByName = "objToString"),
             @Mapping(target = "declareEn", source = "declareEn", qualifiedByName = "objToString"),
             @Mapping(target = "toDeclarePrice", source = "toDeclarePrice", qualifiedByName = "objToBigDecimal"),
+            @Mapping(target = "price", source = "price", qualifiedByName = "objToBigDecimal"),
             @Mapping(target = "toCurrency", source = "toCurrency", qualifiedByName = "objToString"),
+            @Mapping(target = "currency", source = "currency", qualifiedByName = "objToString"),
             @Mapping(target = "toCurrencySymbol", source = "toCurrencySymbol", qualifiedByName = "objToString"),
             @Mapping(target = "weight", source = "grossWeight", qualifiedByName = "objToBigDecimal"),
             @Mapping(target = "toCustomsCode", source = "toCustomsCode", qualifiedByName = "objToString"),
@@ -261,7 +263,9 @@ public interface B2cOrderConverter {
             @Mapping(target = "sourceCargo", source = "productDTO.sourceCargo"),
             @Mapping(target = "sourceCountry", source = "productDTO.sourceCountry"),
             @Mapping(target = "combinationDeclareType", source = "productDTO.combinationDeclareType"),
-            @Mapping(target = "url", source = "soB2cDetail.imageUrl")
+            @Mapping(target = "url", source = "soB2cDetail.imageUrl"),
+            @Mapping(target = "price", source = "soB2cDeclareProductEntity.price"),
+            @Mapping(target = "currency", source = "soB2cDetail.currency")
     })
     LogisticsProductVO convertDeclareProductVOByEntity(SoB2cDeclareProductEntity soB2cDeclareProductEntity, SoB2cDetailEntity soB2cDetail, LogisticsProductDTO.ProductDTO productDTO);
 

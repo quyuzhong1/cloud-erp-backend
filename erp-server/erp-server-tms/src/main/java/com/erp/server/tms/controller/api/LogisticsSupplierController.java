@@ -208,6 +208,15 @@ public class LogisticsSupplierController extends BaseController {
         return success(logisticsSupplierService.listAll(filterDisabled));
     }
 
+    /**
+     * 所有物流商简称下拉
+     * @return
+     */
+    @GetMapping("/listAllShort")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listAllShort(@RequestParam(value = "filterDisabled",required = false, defaultValue = "false") Boolean filterDisabled){
+        return success(logisticsSupplierService.listAllShort(filterDisabled));
+    }
+
 
     /**
      * 物流商渠道树形结构

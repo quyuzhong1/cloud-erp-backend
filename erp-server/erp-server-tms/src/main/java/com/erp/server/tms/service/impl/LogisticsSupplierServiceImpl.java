@@ -32,6 +32,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.wms.feign.WmsFbaOverseasFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
+import com.erp.server.tms.convert.LogisticsServiceConverter;
 import com.erp.server.tms.convert.LogisticsSupplierConverter;
 import com.erp.server.tms.mapper.LogisticsSupplierMapper;
 import com.erp.server.tms.service.*;
@@ -89,6 +90,10 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     private LogisticsAuthService logisticsAuthService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    @Lazy
+    private LogisticsBaseService logisticsBaseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -208,6 +213,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
             throw new ServiceException(ApiError.NOT_SYNC_BY_NOT_AUTH);
         }
         String logisticsPlatform = authEntity.getLogisticsPlatform();
+        //同步第三方渠道
+        logisticsBaseService.syncSingleChannel(logisticsPlatform);
         List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByLogisticsPlatform(logisticsPlatform,"tms");
         List<String> syncSourceIdList = saleChannelList.stream().map(LogisticsSaleChannelEntity::getId).collect(Collectors.toList());
         //这个是删除的同步来源ids
@@ -324,6 +331,7 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                         channelEntity.setName(saleChannel.getCnName());
                     }
                     channelEntity.setEffectiveTime(saleChannel.getAging());
+                    channelEntity.setCarrierType(saleChannel.getCarrierType());
                     String channelId = channelEntity.getId();
                     //表示新增
                     if (StringUtils.isBlank(channelId)) {
@@ -355,6 +363,15 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     public List<BaseDropDownDTO.DisabledDTO> listAll(Boolean filterDisabled) {
         List<LogisticsSupplierEntity> list = this.list();
         List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsSupplierConverter.INSTANCE.convertBySupplierDown(list);
+        if(filterDisabled){
+            resultList = resultList.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
+        }
+        return resultList;
+    }
+    @Override
+    public List<BaseDropDownDTO.DisabledDTO> listAllShort(Boolean filterDisabled) {
+        List<LogisticsSupplierEntity> list = this.list();
+        List<BaseDropDownDTO.DisabledDTO> resultList = LogisticsServiceConverter.INSTANCE.convertBySupplierShortDown(list);
         if(filterDisabled){
             resultList = resultList.stream().filter(v->!v.getDisabled()).collect(Collectors.toList());
         }

@@ -10,6 +10,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -132,6 +133,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         List<String> msgList = FieldValidUtil.fieldValid(skuMappingImportExcelDTO);
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
+        LocalDateTime effectiveTime = LocalDateUtil.parseStrToLocalTime(skuMappingImportExcelDTO.getEnabledTime());
+        if(Objects.isNull(effectiveTime)){
+            errorMsgList.add("启用时间[时间]格式不正确");
+        }
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
@@ -277,8 +282,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 addSkuMapping.setDictPlatform(platform.getValue());
                 addSkuMapping.setPlatformName(platformName);
                 //生效时间
-                addSkuMapping.setEffectiveTime(LocalDateTime.now());
-                addSkuMapping.setExpireTime(LocalDateTime.now().plusYears(MathUtil.NUMBER_100));
+                addSkuMapping.setEffectiveTime(LocalDateUtil.parseStrToLocalTime(skuMappingImportExcelDTO.getEnabledTime()));
+                addSkuMapping.setExpireTime(addSkuMapping.getEffectiveTime().plusYears(MathUtil.NUMBER_100));
 
                 updateSkuMappingList.add(skuMappingEntity);
                 addSkuMappingList.add(addSkuMapping);
@@ -326,7 +331,6 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setSourceType(ListingSourceTypeEnum.SELF_ADD.getCode());
             addListingInfoEntityList.add(addListingInfoEntity);
         }
-        LocalDateTime now = LocalDateTime.now();
         SkuMappingEntity add = new SkuMappingEntity();
         add.setDictPlatform(dictPlatform);
         add.setPlatformName(platform.getName());
@@ -336,10 +340,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         add.setListingId(listingId);
         add.setType(platformType);
         //生效时间
-        add.setEffectiveTime(now);
-        add.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
+        add.setEffectiveTime(LocalDateUtil.parseStrToLocalTime(skuMappingImportExcelDTO.getEnabledTime()));
+        add.setExpireTime(add.getEffectiveTime().plusYears(MathUtil.NUMBER_100));
         addSkuMappingList.add(add);
         Pair<String, String> pair = new Pair<>(listingId,listingId);
+
         addLogPairList.add(pair);
     }
 

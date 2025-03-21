@@ -343,7 +343,7 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             if (ObjectUtil.isNotEmpty(dictCurrency)) {
                 sdyDTO.setTransaction_currency(dictCurrency.getName());
             }
-            sdyDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
+            sdyDTO.setTransaction_currency_code(tradeCurrency);
             sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
 
             sdyDTO.setUnit("PCS");
