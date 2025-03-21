@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.strategy.sales;
 
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.CfgSettingDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,7 +32,7 @@ public class CustomerStrategy implements SalesEstimateStrategy {
     @Override
     public void process(ReplenishmentResultDTO dto) {
         ReplenishmentResultDTO.BasicDTO replenishment = dto.getReplenishment();
-        LocalDate basicCalcDate = LocalDate.parse(dto.getReplenishmentDetail().getCalcDate(), DateTimeFormatter.BASIC_ISO_DATE);
+        LocalDate basicCalcDate = LocalDateUtil.parseStrToLocalDate(dto.getReplenishmentDetail().getCalcDate());
         CfgRuleStrategyDTO cfgRuleStrategyDTO = dto.getCfgRuleStrategy();
         List<ReplenishmentResultDTO.SalesEstimateDTO> salesEstimates = new ArrayList<>();
         //计算天数
