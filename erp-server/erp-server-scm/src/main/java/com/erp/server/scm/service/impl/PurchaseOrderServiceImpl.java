@@ -3130,15 +3130,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
             return;
         }
+
+        List<com.erp.model.sys.entity.DictBasicEntity> dictBasicEntity = FeignQuery.create(com.erp.model.sys.entity.DictBasicEntity.class)
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getType,"url")
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getName,"logo")
+                .list();
+        //logo url地址
+        result.setLogoUrl(FastDFSClientUtil.publicUrl+"/"+dictBasicEntity.get(0).getValue());
         Map<String, Object> map = BeanUtil.beanToMap(result);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
         map.put("detail", detail);
         //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
 
-       byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
         String base = Base64.getEncoder().encodeToString(bytes);
         base64List.add("data:application/pdf;base64," + base);
-        PdfUtil.exportBase64ForPdf(response,base64List);
+        PdfUtil.exportBase64ForPdf(response, base64List);
     }
 
     @Override
