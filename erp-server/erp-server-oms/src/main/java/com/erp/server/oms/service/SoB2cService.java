@@ -1019,7 +1019,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void updateOverEstimatedShipCost(String b2cSoId, Boolean isOverEstimatedShipCost);
 
-    List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset);
+    List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset, List<String> platformList);
     /**
      * 同步销售出库单的单据日期
      * @param soId
