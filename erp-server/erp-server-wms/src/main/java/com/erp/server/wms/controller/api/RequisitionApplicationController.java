@@ -3,6 +3,7 @@ package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -19,6 +20,7 @@ import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -59,6 +61,9 @@ public class RequisitionApplicationController extends BaseController {
 
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
+
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     /**
     * 新增
@@ -513,6 +518,11 @@ public class RequisitionApplicationController extends BaseController {
         List<RequisitionApplicationEntity> entityList = requisitionApplicationService.listByIds(dto.getIds());
         List<String> sourceCodes = entityList.stream().map(RequisitionApplicationEntity::getCode).distinct().collect(Collectors.toList());
         List<String> sourceIds = entityList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList =firstMileDeliveryService.listBySourceIds(sourceIds);
+        List<String> deliveryCodes = firstMileDeliveryEntityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(deliveryCodes)){
+            sourceCodes.addAll(deliveryCodes);
+        }
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
         List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(sourceIds);
         List<RequisitionApplicationChangeEntity> allChangeEntityList = requisitionApplicationChangeService.listNotHandleByBusinessIds(dto.getIds());
@@ -528,6 +538,14 @@ public class RequisitionApplicationController extends BaseController {
                 if(Objects.nonNull(packingTaskEntity)){
                     result.add(BatchResultDTO.fail(id,entity.getCode(),"已生成装箱任务不可重复生成"));
                     continue;
+                }
+                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(id)).findFirst().orElse(null);
+                if(Objects.nonNull(firstMileDeliveryEntity)){
+                    packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(firstMileDeliveryEntity.getCode())).findFirst().orElse(null);
+                    if(Objects.nonNull(packingTaskEntity)){
+                        result.add(BatchResultDTO.fail(id,entity.getCode(), StrUtil.format("关联的发货单{}已生成装箱任务不可重复生成",firstMileDeliveryEntity.getCode())));
+                        continue;
+                    }
                 }
                 PickingListsDTO.SourceView sourceView = pickingList.stream().filter(v->v.getSourceId().equals(id)).findFirst().orElse(null);
                 if(Objects.isNull(sourceView)){
