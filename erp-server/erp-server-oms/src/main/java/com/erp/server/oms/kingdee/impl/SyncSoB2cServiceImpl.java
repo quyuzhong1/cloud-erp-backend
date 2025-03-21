@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.PlatformDictEnum;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -691,4 +693,313 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         syncSdyOrderHandler(mainEntity, detailList, operateCode, sourceType);
     }
 
+    /**
+     * 计算自发发货单明细单价
+     *
+     * @param deliveryDetailList    速卖通发货单明细
+     * @param soB2cDetailEntityList
+     * @param skuVOList             sku列表
+     * @return Map<速卖通明细ID, 平分单价>
+     */
+    @Override
+    public Map<String, BigDecimal> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
+                                                                           List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                                                           List<SkuVO> skuVOList
+    ) {
+        // Map<速卖通明细ID, 平均采购含税成本>
+        Map<String, BigDecimal> resultMap = new HashMap<>();
+
+        Map<String, SkuVO> skuVoMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, e -> e));
+
+        // 平台产品ID 分组
+        Map<String, List<AliexpressDeliveryDetailEntity>> deliveryMap = deliveryDetailList
+                .stream()
+                .collect(Collectors.groupingBy(AliexpressDeliveryDetailEntity::getPlatformSpuNo));
+
+        for (Map.Entry<String, List<AliexpressDeliveryDetailEntity>> entry : deliveryMap.entrySet()) {
+            // 未拆分
+            if (1 == entry.getValue().size()){
+                for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
+                    resultMap.put(aliExpressDetailEntity.getId(), aliExpressDetailEntity.getPrice());
+                }
+                continue;
+            }
+            // 平台库存产品ID一样 = 未拆分
+            if (1 == entry.getValue().stream().map(AliexpressDeliveryDetailEntity::getScItemId).count()){
+                for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
+                    resultMap.put(aliExpressDetailEntity.getId(), aliExpressDetailEntity.getPrice());
+                }
+                continue;
+            }
+
+            // 总单价
+            BigDecimal price = entry.getValue().get(0).getPrice();
+
+            BigDecimal finalPrice = price;
+            // 根据产品ID匹配, 目前速卖通明细产品ID唯一
+            SoB2cDetailEntity detailEntity = soB2cDetailEntityList.stream().filter(
+                    e -> e.getPlatformSpuNo().equalsIgnoreCase(entry.getKey())).findFirst().orElse(null);
+            if (null == detailEntity){
+                ServiceException.runError("未找对应明细:产品ID={}", entry.getKey());
+            }
+
+            BigDecimal totalCostAmount = BigDecimal.ZERO;
+            // 计算总成本
+            // sku
+            for (AliexpressDeliveryDetailEntity deliveryDetailEntity : deliveryDetailList) {
+                SkuVO skuVO = skuVoMap.get(deliveryDetailEntity.getSkuId());
+                if (null == skuVO){
+                    ServiceException.runError("未找sku信息:skuId={}", deliveryDetailEntity.getSkuId());
+                }
+                BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
+                if (null == costPrice){
+                    ServiceException.runError("未找到成本信息:skuId={}", deliveryDetailEntity.getSkuId());
+                }
+                if (0 == costPrice.compareTo(BigDecimal.ZERO)){
+                    ServiceException.runError("成本信息为0:skuId={}", deliveryDetailEntity.getSkuId());
+                }
+                BigDecimal allItemPrice = costPrice.multiply(BigDecimal.valueOf(deliveryDetailEntity.getOrderLineQty()));
+                totalCostAmount = totalCostAmount.add(allItemPrice);
+            }
+            totalCostAmount = totalCostAmount.divide(BigDecimal.valueOf(detailEntity.getQty()), 4, RoundingMode.DOWN);
+
+            // 汇总
+            Map<String, List<AliexpressDeliveryDetailEntity>> groupMap = entry.getValue()
+                    .stream()
+                    .collect(Collectors.groupingBy(AliexpressDeliveryDetailEntity::getSkuId));
+            List<Map.Entry<String, List<AliexpressDeliveryDetailEntity>>> entryList = groupMap.entrySet()
+                    .stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .collect(Collectors.toList());
+
+            // 剩余价格
+            BigDecimal lastPrice = price;
+            for (int i = 0; i < entryList.size(); i++) {
+                Map.Entry<String, List<AliexpressDeliveryDetailEntity>> curEntry = entryList.get(i);
+
+                SkuVO skuVO = skuVoMap.get(curEntry.getKey());
+                List<AliexpressDeliveryDetailEntity> value = curEntry.getValue();
+                if (i == entryList.size() - 1){
+                    for (AliexpressDeliveryDetailEntity deliveryDetailEntity : value) {
+                        resultMap.put(deliveryDetailEntity.getId(), lastPrice);
+                    }
+                } else {
+                    // 当前单价 = 明细单价 * (成本 / 总成本)
+                    BigDecimal curPrice = price.multiply(skuVO.getActualTaxCost())
+                            .divide(totalCostAmount, 4, RoundingMode.DOWN);
+                    for (AliexpressDeliveryDetailEntity deliveryDetailEntity : value) {
+                        resultMap.put(deliveryDetailEntity.getId(), curPrice);
+                    }
+                    int sum = value.stream().mapToInt(AliexpressDeliveryDetailEntity::getOrderLineQty).sum();
+                    // 剩余单价 = 当前单价 * 发货明细数量 / 明细数量
+                    BigDecimal planBomPrice = curPrice.multiply(BigDecimal.valueOf(sum))
+                            .divide(BigDecimal.valueOf(detailEntity.getQty()), 4, RoundingMode.DOWN);
+                    lastPrice = lastPrice.subtract(planBomPrice);
+                }
+            }
+        }
+
+        return resultMap;
+    }
+
+    /**
+     * 计算自发发货单明细单价
+     *
+     * @param deliveryDetailList    自发货单明细
+     * @param soB2cDetailEntityList 销售订单明细
+     * @param skuVOList sku列表
+     * @param bomChildrenSkuDTOS bom信息
+     * @return Map<自发货明细ID, 平分单价>
+     */
+    @Override
+    public Map<String, BigDecimal> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
+                                                                 List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                                                 List<SkuVO> skuVOList,
+                                                                 List<BomChildrenSkuDTO> bomChildrenSkuDTOS
+    ) {
+        // Map<自发货明细ID, 平均采购含税成本>
+        Map<String, BigDecimal> resultMap = new HashMap<>();
+
+        Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+
+        Map<String, SkuVO> skuVoMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, e -> e));
+
+        // 按明细ID分组
+        Map<String, List<SoB2cDeliveryDetailEntity>> deliveryMap = deliveryDetailList
+                .stream()
+                .collect(Collectors.groupingBy(SoB2cDeliveryDetailEntity::getSourceDetailId));
+
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : deliveryMap.entrySet()) {
+            String soDetailId = entry.getKey();
+            SoB2cDetailEntity soDetailEntity = detailEntityMap.get(soDetailId);
+            if (null == soDetailEntity){
+                ServiceException.runError("未找到订单明细:明细ID={}", soDetailId);
+            }
+            // 未拆分
+            if (1 == entry.getValue().size()){
+                SoB2cDeliveryDetailEntity b2cDeliveryDetailEntity = entry.getValue().get(0);
+                if (b2cDeliveryDetailEntity.getSkuId().equalsIgnoreCase(soDetailEntity.getSkuId())){
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), soDetailEntity.getPrice());
+                    continue;
+                } else {
+                    ServiceException.runError("未拆分订单明细:发货单明细sku和销售订单明细不相同:delivery_sku={}, so_sku={}",
+                            b2cDeliveryDetailEntity.getSkuId(),
+                            soDetailEntity.getSkuId()
+                    );
+                }
+            }
+
+            // 总单价
+            BigDecimal price = soDetailEntity.getPrice();
+
+            // 存在bom
+            List<BomChildrenSkuDTO> bomList = bomChildrenSkuDTOS.stream().filter(e -> e.getParentSkuId().equalsIgnoreCase(soDetailEntity.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(bomList)){
+                ServiceException.runError("未找到BOM:sku={}", soDetailEntity.getSkuId());
+            }
+            // 计算bom总成本
+            BigDecimal totalCostAmount = BigDecimal.ZERO;
+            // sku
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : bomList) {
+                SkuVO skuVO = skuVoMap.get(bomChildrenSkuDTO.getSkuId());
+                if (null == skuVO){
+                    ServiceException.runError("未找sku信息:skuId={}", bomChildrenSkuDTO.getSkuId());
+                }
+                BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
+                if (null == costPrice){
+                    ServiceException.runError("未找到成本信息:skuId={}", bomChildrenSkuDTO.getSkuId());
+                }
+                if (0 == costPrice.compareTo(BigDecimal.ZERO)){
+                    ServiceException.runError("成本信息为0:skuId={}", bomChildrenSkuDTO.getSkuId());
+                }
+                BigDecimal allItemPrice = costPrice.multiply(BigDecimal.valueOf(bomChildrenSkuDTO.getQuantity()));
+                totalCostAmount = totalCostAmount.add(allItemPrice);
+            }
+
+            // 按明细创建时间排序
+            List<SoB2cDeliveryDetailEntity> curDetailList = entry.getValue().stream().sorted(Comparator.comparing(SoB2cDeliveryDetailEntity::getId)).collect(Collectors.toList());
+            for (int i = 0; i < curDetailList.size(); i++) {
+                SoB2cDeliveryDetailEntity b2cDeliveryDetailEntity = curDetailList.get(i);
+                BomChildrenSkuDTO curBom =  bomList.stream().filter(e -> e.getSkuId().equalsIgnoreCase(b2cDeliveryDetailEntity.getSkuId())).findFirst().orElse(null);
+                if (null == curBom){
+                    ServiceException.runError("未找到bom:skuId={},parentId={}", b2cDeliveryDetailEntity.getSkuId(), soDetailEntity.getSkuId());
+                }
+                SkuVO skuVO = skuVoMap.get(b2cDeliveryDetailEntity.getSkuId());
+                if (i == curDetailList.size() - 1){
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), price);
+                } else {
+                    // 当前单价 = 明细单价 * (bom成本 * bom数量 / bom总成本) / bom数量
+                    BigDecimal curPrice = price.multiply(skuVO.getActualTaxCost())
+                            .divide(totalCostAmount, 4, RoundingMode.DOWN);
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), curPrice);
+                    // 剩余单价 = 当前单价 * bom数量
+                    price = price.subtract(curPrice.multiply(BigDecimal.valueOf(curBom.getQuantity())));
+                }
+            }
+        }
+        return resultMap;
+    }
+
+
+    @Override
+    public void hisSyncSelfDataToSdy(
+            SoB2cEntity soB2cEntity,
+            List<SoB2cDetailEntity> soB2cDetailEntityList,
+            SoB2cDeliveryEntity soB2cDeliveryEntity,
+            List<SoB2cDeliveryDetailEntity> allDeliveryDetail,
+            SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity,
+            String operate,
+            List<SkuVO> skuVOList,
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+            List<ProductDetailEntity> parentSkuList,
+            List<ListingInfoEntity> listingInfoEntities,
+            List<CurrencyDTO.ViewDTO> currencyList,
+            List<DictCurrencyEntity> dictCurrencyEntities,
+            List<ShopInfoEntity> shopInfoList,
+            List<CustomerInfoEntity> customerInfoList,
+            List<BaseIdDTO.CodeDTO> companyEntities,
+            List<DictBasicEntity> dictBasicEntityList,
+            List<DictBasicEntity> dictList
+    ){
+        Map<String, BigDecimal> deliveryDetailPriceMap = convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
+            //同步配货单
+            OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+            omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SELF_DELIVERY_ORDER.getCode());
+            omsPushMsgEntity.setSourceId(soB2cDeliveryDetailEntity.getId());
+            omsPushMsgEntity.setSourceCode(soB2cEntity.getCode() + "_" + soB2cDeliveryDetailEntity.getSkuNo());
+            omsPushMsgEntity.setSyncOperate(operate);
+            omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncSelfAddDataToSdyFieldHandler(soB2cEntity,
+                    soB2cDetailEntityList,
+                    soB2cDeliveryEntity,
+                    allDeliveryDetail,
+                    soB2cDeliveryDetailEntity,
+                    operate,
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    parentSkuList,
+                    listingInfoEntities,
+                    currencyList,
+                    dictCurrencyEntities,
+                    shopInfoList,
+                    customerInfoList,
+                    companyEntities,
+                    dictBasicEntityList,
+                    dictList,
+                    deliveryDetailPriceMap
+            )));
+            omsPushMsgService.save(omsPushMsgEntity);
+    }
+
+
+    @Override
+    public void hisSyncAliExpressDataToSdyFieldHandler(
+            SoB2cEntity soB2cEntity,
+            List<SoB2cDetailEntity> soB2cDetailEntityList,
+            AliexpressDeliveryEntity aliexpressDeliveryEntity,
+            List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList,
+            AliexpressDeliveryDetailEntity aliexpressDeliveryDetailEntity,
+            String operate,
+            List<SkuVO> skuVOList,
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+            List<ProductDetailEntity> parentSkuList,
+            List<ListingInfoEntity> listingInfoEntities,
+            List<CurrencyDTO.ViewDTO> currencyList,
+            List<DictCurrencyEntity> dictCurrencyEntities,
+            List<ShopInfoEntity> shopInfoList,
+            List<CustomerInfoEntity> customerInfoList,
+            List<BaseIdDTO.CodeDTO> companyEntities,
+            List<DictBasicEntity> dictBasicEntityList,
+            List<DictBasicEntity> dictList
+    ) {
+        // 计算自发货明细单价
+        Map<String, BigDecimal> deliveryDetailPriceMap = convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList);
+        //同步配货单
+        OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_ALIEXPRESS_DELIVERY_ORDER.getCode());
+        omsPushMsgEntity.setSourceId(aliexpressDeliveryDetailEntity.getId());
+        omsPushMsgEntity.setSourceCode(soB2cEntity.getCode() + "_" + aliexpressDeliveryDetailEntity.getSkuNo());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncAliExpressDataToSdyFieldHandler(soB2cEntity,
+                soB2cDetailEntityList,
+                aliexpressDeliveryEntity,
+                aliexpressDeliveryDetailEntityList,
+                aliexpressDeliveryDetailEntity,
+                operate,
+                skuVOList,
+                bomChildrenSkuDTOS,
+                parentSkuList,
+                listingInfoEntities,
+                currencyList,
+                dictCurrencyEntities,
+                shopInfoList,
+                customerInfoList,
+                companyEntities,
+                dictBasicEntityList,
+                dictList,
+                deliveryDetailPriceMap
+        )));
+        omsPushMsgService.save(omsPushMsgEntity);
+    }
 }
