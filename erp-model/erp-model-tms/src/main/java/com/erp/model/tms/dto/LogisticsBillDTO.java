@@ -1030,7 +1030,7 @@ public class LogisticsBillDTO implements Serializable {
         /**
          * 轨迹描述
          */
-        private String logisticsTrack;
+        private String trackDesc;
 
     }
 

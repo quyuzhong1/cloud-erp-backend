@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -225,6 +226,36 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
                 this.saveBatch(noExistList);
             }
         }
+    }
+
+    @Override
+    public LogisticsTrackDTO.ViewDTO listByParam(String transportNo, List<String> trackNoList, String counterNo, String logisticsBillId) {
+        if(CharSequenceUtil.isAllBlank(transportNo,counterNo,logisticsBillId) && CollectionUtils.isEmpty(trackNoList)){
+            return new LogisticsTrackDTO.ViewDTO();
+        }
+        LogisticsTrackDTO.ViewDTO viewDTO = new LogisticsTrackDTO.ViewDTO();
+        viewDTO.setTrackNo(counterNo);
+
+        List<LogisticsTrackEntity> list = this.lambdaQuery().or().eq(CharSequenceUtil.isNotBlank(transportNo),LogisticsTrackEntity::getTrackNo,transportNo)
+                .or().eq(CharSequenceUtil.isNotBlank(counterNo),LogisticsTrackEntity::getTrackNo,counterNo)
+                .or().eq(CharSequenceUtil.isNotBlank(logisticsBillId),LogisticsTrackEntity::getLogisticsBillId,logisticsBillId)
+                .or().in(CollUtil.isNotEmpty(trackNoList),LogisticsTrackEntity::getTrackNo, trackNoList).orderByDesc(LogisticsTrackEntity::getTrackTime).list();
+        List<LogisticsTrackDTO.ListDTO> resultList = BeanMapperUtils.copyList(LogisticsTrackDTO.ListDTO.class, list);
+        int size = resultList.size();
+        for (int i = 0; i < size; i++) {
+            LogisticsTrackDTO.ListDTO item = resultList.get(i);
+            if (i == 0) {
+                item.setIsLatest(Boolean.TRUE);
+            } else {
+                item.setIsLatest(Boolean.FALSE);
+
+            }
+            String status = item.getStatus();
+            String statusName = LogisticTrackStatusEnum.getName(status);
+            item.setStatusName(statusName);
+        }
+        viewDTO.setList(resultList);
+        return viewDTO;
     }
 
     /**

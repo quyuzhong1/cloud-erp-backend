@@ -151,7 +151,7 @@ public class LogisticsBillController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO result;
             try {
-                result = logisticsBillDetailService.updateStatus(id,trackStatus,dto.getTrackTime(),dto.getLogisticsTrack());
+                result = logisticsBillDetailService.updateStatus(id,trackStatus,dto.getTrackTime(),dto.getTrackDesc());
             } catch (Exception e) {
                 log.error("物流商更改状态失败{}", e);
                 LogisticsBillDetailEntity entity = logisticsBillDetailService.getById(id);
