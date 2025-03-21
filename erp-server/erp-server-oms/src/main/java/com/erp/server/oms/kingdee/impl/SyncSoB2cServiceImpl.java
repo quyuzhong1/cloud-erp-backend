@@ -432,7 +432,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 .eq(AliexpressDeliveryEntity::getSoId, mainEntity.getId())
                 .list();
         if (CollectionUtils.isEmpty(list)) {
-            ServiceException.runError("未找到速卖通平台仓发货单:{}", mainEntity.getCode());
+            log.warn("未找到速卖通平台仓发货单:{}", mainEntity.getCode());
+            return;
         }
         List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
         List<AliexpressDeliveryDetailEntity> detailEntityList = FeignQuery.create(AliexpressDeliveryDetailEntity.class)
