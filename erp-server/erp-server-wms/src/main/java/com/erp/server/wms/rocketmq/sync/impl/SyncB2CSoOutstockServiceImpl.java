@@ -5,7 +5,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
-import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.WdtSoOutStockDTO;
@@ -207,22 +206,22 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
     @GlobalTransactional(rollbackFor = Exception.class , timeoutMills = 180000)
     @DistributeLocker(keyName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
-        SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
-                .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
-        //单据已经存在
-        if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
-            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
-                //旺店通已作废，ERP反审核删除并同步金蝶
-                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
-                    soOutstockService.disApprove(soOutstockEntity,true);
-                }
-                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
-            }
-            return;
-        }
-        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
-            return;
-        }
+//        SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
+//                .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
+//        //单据已经存在
+//        if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+//            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+//                //旺店通已作废，ERP反审核删除并同步金蝶
+//                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+//                    soOutstockService.disApprove(soOutstockEntity,true);
+//                }
+//                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
+//            }
+//            return;
+//        }
+//        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+//            return;
+//        }
         //不需要管的sku
         List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
         //对应不需要的验证的sku no list
@@ -312,7 +311,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                         .stream()
                         .map(v -> v.getKey() + ":" + v.getValue() + "个")
                         .collect(Collectors.joining(","));
-                throw new ServiceException("库存不足：" + errorMsg);
+                throw new ServiceException(errorMsg);
             }
             List<LocationInventoryResultDTO> first = soB2CRuleOrderMatchResult.getFirst();
             List<SoOutstockDetailEntity> detailNewList = detailList.stream()
