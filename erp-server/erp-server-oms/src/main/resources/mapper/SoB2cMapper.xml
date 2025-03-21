@@ -1188,14 +1188,25 @@ SELECT DISTINCT so.* FROM so_b2c so
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
         AND (so.pay_time >= #{startDate} AND so.pay_time &lt; #{endDate})
-union all 
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+union all
 SELECT DISTINCT so.* FROM so_b2c so
         LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
         WHERE so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
         AND so.pay_time is null and so.platform_order_create_time >= #{startDate} AND so.platform_order_create_time &lt; #{endDate}) t
-				
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>
