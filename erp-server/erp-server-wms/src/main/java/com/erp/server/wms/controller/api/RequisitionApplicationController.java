@@ -539,11 +539,12 @@ public class RequisitionApplicationController extends BaseController {
                     result.add(BatchResultDTO.fail(id,entity.getCode(),"已生成装箱任务不可重复生成"));
                     continue;
                 }
-                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(id)).findFirst().orElse(null);
-                if(Objects.nonNull(firstMileDeliveryEntity)){
-                    packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(firstMileDeliveryEntity.getCode())).findFirst().orElse(null);
+                List<FirstMileDeliveryEntity> firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(id)).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(firstMileDeliveryEntity)){
+                    List<String> deliveyCodeList = firstMileDeliveryEntity.stream().map(FirstMileDeliveryEntity::getCode).collect(Collectors.toList());
+                    packingTaskEntity = packingTaskEntityList.stream().filter(v->deliveyCodeList.contains(v.getSourceCode())).findFirst().orElse(null);
                     if(Objects.nonNull(packingTaskEntity)){
-                        result.add(BatchResultDTO.fail(id,entity.getCode(), StrUtil.format("关联的发货单{}已生成装箱任务不可重复生成",firstMileDeliveryEntity.getCode())));
+                        result.add(BatchResultDTO.fail(id,entity.getCode(), StrUtil.format("关联的发货单{}已生成装箱任务不可重复生成",deliveyCodeList)));
                         continue;
                     }
                 }
