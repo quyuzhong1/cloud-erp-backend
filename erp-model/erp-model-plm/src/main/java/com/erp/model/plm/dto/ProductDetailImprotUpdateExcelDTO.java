@@ -26,7 +26,7 @@ public class ProductDetailImprotUpdateExcelDTO {
      * sku编号
      */
     @FieldValid(fieldName = "sku编号", isNotBlank = true )
-    @ExcelProperty("*sku编号")
+    @ExcelProperty("sku编号")
     private String skuNo;
 
     /**
