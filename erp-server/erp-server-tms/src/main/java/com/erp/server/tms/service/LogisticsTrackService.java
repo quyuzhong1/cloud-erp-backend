@@ -71,12 +71,4 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
     void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto);
 
     void saveIncrementTrackData(String trackNo, List<LogisticsTrackEntity> newList);
-    /**
-     * 批量查询物流单轨迹-头程使用
-     * @param transportNo
-     * @param trackNoList
-     * @param counterNo
-     * @param logisticsBillId
-     */
-    LogisticsTrackDTO.ViewDTO listByParam(String transportNo, List<String> trackNoList, String counterNo, String logisticsBillId);
 }

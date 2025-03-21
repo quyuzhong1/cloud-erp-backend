@@ -1043,7 +1043,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             updateDetailList.addAll(detailEntityList);
 
             LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-            logisticsTrackEntity.setLogisticsBillId(logisticsBillEntity.getId());
             logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
             logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
             logisticsTrackEntity.setTrackTime(Objects.isNull(dto.getTime())?LocalDateTime.now():dto.getTime());
@@ -2146,10 +2145,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (ObjectUtil.isEmpty(logisticsBill)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
         }
-        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(logisticsBillId));
         String transportNo = logisticsBill.getTransportNo();
-        List<String> trackNoList = logisticsBillDetailEntityList.stream().map(LogisticsBillDetailEntity::getTrackNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        String counterNo = logisticsBill.getCounterNo();
-        return logisticsTrackService.listByParam(transportNo,trackNoList,counterNo,logisticsBillId);
+        String counterNo = CharSequenceUtil.isNotBlank(logisticsBill.getCounterNo()) ? logisticsBill.getCounterNo() : transportNo;
+
+        return logisticsTrackService.listByTrackNo(counterNo);
     }
 }
