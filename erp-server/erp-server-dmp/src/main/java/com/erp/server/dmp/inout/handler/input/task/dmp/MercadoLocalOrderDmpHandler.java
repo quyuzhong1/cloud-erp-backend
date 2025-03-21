@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @Scope("prototype")
-public class MercadoLocalOrderDmpHandler extends MercadoDmpHandler {
+public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
     @Resource
     private DmpSoInfoService dmpSoInfoService;
     @Resource
