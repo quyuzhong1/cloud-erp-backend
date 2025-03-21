@@ -234,7 +234,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      */
     List<SoB2cDTO.TabListDTO> listCountUnionAll(@Param("maps") List<Map<String, String>> maps, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
-    List<SoB2cEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("pageSize") Integer pageSize, @Param("offset") Integer offset);
+    List<SoB2cEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("pageSize") Integer pageSize, @Param("offset") Integer offset, @Param("platformList") List<String> platformList);
 
     /**
      * 根据销售订单id获取订单 渠道+仓库+重量 基础信息

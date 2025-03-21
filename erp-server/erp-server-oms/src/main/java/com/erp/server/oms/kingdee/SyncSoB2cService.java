@@ -116,4 +116,54 @@ public interface SyncSoB2cService {
     void syncSdyCancelOrder(SoB2cEntity mainEntity, List<SoB2cDetailEntity> detailList, String code);
 
 
+    Map<String, BigDecimal> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
+                                                                    List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                                                    List<SkuVO> skuVOList
+    );
+
+    Map<String, BigDecimal> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
+                                                          List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                                          List<SkuVO> skuVOList,
+                                                          List<BomChildrenSkuDTO> bomChildrenSkuDTOS
+    );
+
+    void hisSyncSelfDataToSdy(
+            SoB2cEntity soB2cEntity,
+            List<SoB2cDetailEntity> soB2cDetailEntityList,
+            SoB2cDeliveryEntity soB2cDeliveryEntity,
+            List<SoB2cDeliveryDetailEntity> allDeliveryDetail,
+            SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity,
+            String operate,
+            List<SkuVO> skuVOList,
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+            List<ProductDetailEntity> parentSkuList,
+            List<ListingInfoEntity> listingInfoEntities,
+            List<CurrencyDTO.ViewDTO> currencyList,
+            List<DictCurrencyEntity> dictCurrencyEntities,
+            List<ShopInfoEntity> shopInfoList,
+            List<CustomerInfoEntity> customerInfoList,
+            List<BaseIdDTO.CodeDTO> companyEntities,
+            List<DictBasicEntity> dictBasicEntityList,
+            List<DictBasicEntity> dictList
+    );
+
+    void hisSyncAliExpressDataToSdyFieldHandler(
+            SoB2cEntity soB2cEntity,
+            List<SoB2cDetailEntity> soB2cDetailEntityList,
+            AliexpressDeliveryEntity aliexpressDeliveryEntity,
+            List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList,
+            AliexpressDeliveryDetailEntity aliexpressDeliveryDetailEntity,
+            String operate,
+            List<SkuVO> skuVOList,
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+            List<ProductDetailEntity> parentSkuList,
+            List<ListingInfoEntity> listingInfoEntities,
+            List<CurrencyDTO.ViewDTO> currencyList,
+            List<DictCurrencyEntity> dictCurrencyEntities,
+            List<ShopInfoEntity> shopInfoList,
+            List<CustomerInfoEntity> customerInfoList,
+            List<BaseIdDTO.CodeDTO> companyEntities,
+            List<DictBasicEntity> dictBasicEntityList,
+            List<DictBasicEntity> dictList
+    );
 }
