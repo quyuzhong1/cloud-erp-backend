@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-msg
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9100
+  port: 7100
 
 logging:
   config: classpath:logback-spring.xml

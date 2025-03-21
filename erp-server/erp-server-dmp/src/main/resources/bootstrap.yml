@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-dmp
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9060
+  port: 7060
 
 logging:
   config: classpath:logback-spring.xml

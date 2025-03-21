@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-scm
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9080
+  port: 7080
 
 logging:
   config: classpath:logback-spring.xml

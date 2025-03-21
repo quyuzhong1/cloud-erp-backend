@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-gateway
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9000
+  port: 7000
 
 logging:
   config: classpath:logback-spring.xml

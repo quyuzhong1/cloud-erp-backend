@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-bi
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9070
+  port: 7070
 
 logging:
   config: classpath:logback-spring.xml

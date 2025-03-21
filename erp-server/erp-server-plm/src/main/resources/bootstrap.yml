@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-plm
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9050
+  port: 7050
 
 logging:
   config: classpath:logback-spring.xml
