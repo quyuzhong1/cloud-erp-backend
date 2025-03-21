@@ -4967,7 +4967,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     ProductInfoEntity productInfoEntity = productInfoMap.get(productBy.getProductId());
                     // 如果商品属性ID与实体中的属性ID不匹配,查sku库存
                     if(Objects.nonNull(productInfoEntity) && !productInfoEntity.getPropertyId().equals(productProperty.getId())){
-                        Integer qty = inventoryMap.get(dto.getSkuNo());
+                        Integer qty =  Objects.isNull(inventoryMap.get(dto.getSkuNo())) ? inventoryMap.get(dto.getSkuNo()) : 0;
                         if(qty > 0){
                             errorMsgList.add("SKU存在库存，产品属性不允许变更");
                         }
