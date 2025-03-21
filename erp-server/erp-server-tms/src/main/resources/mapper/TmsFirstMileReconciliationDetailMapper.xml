@@ -186,6 +186,7 @@
         tfmrd.logistics_channel_id,
         tfmrd.transport_no,
         tfmrd.reconciliation_count,
+        tfmrd.business_code,
         tfmr.reconciliation_month,
         to_char(tfmr.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr
         from tms_first_mile_reconciliation_detail tfmrd

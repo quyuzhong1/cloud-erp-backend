@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
@@ -477,5 +478,13 @@ public class TmsFirstMileLogisticController extends BaseController {
         }
         return result.stream().allMatch(BatchResultDTO::getSuccess) ? success(result) : failure(result);
     }
-
+    /**
+     * 获取物流轨迹明细
+     * @param logisticsBillId 物流单id
+     * @return
+     */
+    @GetMapping("/getTrackInfo")
+    public ApiResult<LogisticsTrackDTO.ViewDTO> listTrack(@RequestParam(value = "logisticsBillId") String logisticsBillId){
+        return success(tmsFirstMileLogisticService.listTrack(logisticsBillId));
+    }
 }
