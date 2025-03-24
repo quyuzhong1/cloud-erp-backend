@@ -7,6 +7,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -2166,7 +2167,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      **/
     @Override
     @Transactional
-    public Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO) {
+    public String inportExcel(ProductNoSpecDTO productNoSpecDTO) {
         ProductInfoDTO productSpuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSpuBaseInfoDTO();
         ProductSkuBaseInfoDTO productSkuBaseInfoDTO = productNoSpecDTO.getProductBaseInfoDTO().getProductSkuBaseInfoDTO();
         productSpuBaseInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
@@ -2191,8 +2192,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 byId.setIterateRefSkuId("");
                 byId.setIterateRefSkuNo("");
             }
-            //产品操作日志
-            addProductInfoLog(productSpuBaseInfoDTO, byId, byId.getId(), byId.getId());
             productInfoService.saveOrUpdate(byId);
         }
 
@@ -2208,18 +2207,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productImagesDTO.setImagesUrl(productSkuBaseInfoDTO.getImagesUrl());
             productImagesService.updateProductImage(productImagesDTO);
         }
-        //SKU修改操作日志
-        Boolean isAdd = Boolean.TRUE;
-        if (StringUtils.isNotBlank(productSkuBaseInfoDTO.getId())) {
-            ProductDetailEntity oldEntity = this.getById(productSkuBaseInfoDTO.getId());
-            addProductSkuBaseInfoLog(productSkuBaseInfoDTO, oldEntity, productSkuBaseInfoDTO.getId(), id);
-            isAdd = Boolean.FALSE;
-        }
         String skuId = this.saveOrUpdate(productSkuBaseInfoDTO);
-        //SKU新增操作日志
-        if (isAdd) {
-            sysLogService.addSysLogBySave("生成了一个SKU：[" + productSkuBaseInfoDTO.getSkuNo() + "]", SKUCLASSPATH, skuId, id);
-        }
 
         ProductKeyDTO productKey = productDetailMapper.getProductKey(skuId);
 
@@ -2234,8 +2222,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
                 BeanUtil.copyProperties(byId,productCostDTO);
             }
-            //操作日志
-            addProductCostLog(productCostDTO, id);
             productCostService.saveOrUpdate(productCostDTO);
         }
 
@@ -2250,8 +2236,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanUtil.copyProperties(byId,productPurchaseDTO);
             }
 
-            //操作日志
-            addProductPurchaseLog(productPurchaseDTO, id);
             productPurchaseService.saveOrUpdate(productPurchaseDTO);
         }
         //新增/修改采购备注信息
@@ -2272,8 +2256,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
                 BeanUtil.copyProperties(byId,productSaleDTO);
             }
-            //操作日志
-            addProductSaleLog(productSaleDTO, id);
             productSaleService.saveOrUpdate(productSaleDTO);
         }
         //6.修改/新增 物流信息
@@ -2286,8 +2268,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productLogisticsDTO, byId);
                 BeanUtil.copyProperties(byId,productLogisticsDTO);
             }
-            //操作日志
-            addProductLogisticsLog(productLogisticsDTO, id);
             productLogisticsService.saveOrUpdate(productLogisticsDTO);
         }
 
@@ -2328,11 +2308,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             lambdaUpdateWrapper.set(ProductPackEntity::getSkuId,skuId);
             lambdaUpdateWrapper.eq(ProductPackEntity::getId,productKey.getPackId());
 
-            //操作日志
-            addProductPackLog(productPackDTO, id);
             productPackService.update(lambdaUpdateWrapper);
         }
-        return true;
+        return id;
     }
 
     /**
@@ -4766,7 +4744,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailImprotUpdateExcelDTO> successList = excelListenerUtil.getSuccessList();
 
         //处理验证成功数据
-        handleUpdateSuccessList( importType,successList, errorList);
+        List<String> productIdList = handleUpdateSuccessList(importType, successList, errorList);
         successList.removeAll(errorList);
 
         String excelPath = "excel/productNoSpecDetail.xlsx";
@@ -4789,9 +4767,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 successUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        for (String productId : productIdList) {
+            //新增操作日志
+            SysLogEntity sysLogEntity = new SysLogEntity().setContent(StrUtil.format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
+                    .setBusinessId(productId)
+                    .setPid(productId)
+                    .setOperation("导入")
+                    .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
+            //添加日志
+            sysLogService.addSysLogByOther(sysLogEntity);
+        }
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
-    private void handleUpdateSuccessList(Integer importType, List<ProductDetailImprotUpdateExcelDTO> successList, List<ProductDetailImprotUpdateExcelDTO> errorList) {
+    private List<String> handleUpdateSuccessList(Integer importType, List<ProductDetailImprotUpdateExcelDTO> successList, List<ProductDetailImprotUpdateExcelDTO> errorList) {
+        List<String> productIdList = new ArrayList<>();
+        
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BasicDictEntity> basicDictList = basicDictService.list();
         List<ProductDetailEntity> productDetailEntityList = this.list();
@@ -5560,9 +5550,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noticeDTO.setProductBasicChangeField(productBasicChangeField);
             noticeDTO.setProductPackChangeField(productPackChangeField);
             noticeDTOList.add(noticeDTO);
+
+            productIdList.add(productInfoDTO.getId());
         }
         //发送消息
         handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
+        return productIdList;
     }
 
     //导入新增
@@ -5586,7 +5579,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductDetailExcelDTO> successList = excelListenerUtil.getSuccessList();
 
         //处理验证成功数据
-        handleImportSuccessList(successList, errorList, importType);
+        List<String> productIdList = handleImportSuccessList(successList, errorList, importType);
         successList.removeAll(errorList);
 
         String excelPath = "excel/productNoSpecDetail.xlsx";
@@ -5605,10 +5598,22 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 successUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+        for (String productId : productIdList) {
+            //新增操作日志
+            SysLogEntity sysLogEntity = new SysLogEntity().setContent(StrUtil.format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
+                    .setBusinessId(productId)
+                    .setPid(productId)
+                    .setOperation("导入")
+                    .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
+            //添加日志
+            sysLogService.addSysLogByOther(sysLogEntity);
+        }
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
-    private void handleImportSuccessList(List<ProductDetailExcelDTO> successList, List<ProductDetailExcelDTO> errorList, Integer importType) {
+    private List<String> handleImportSuccessList(List<ProductDetailExcelDTO> successList, List<ProductDetailExcelDTO> errorList, Integer importType) {
+        List<String> prodcutIdList = new ArrayList<>();
+
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BasicDictEntity> basicDictList = basicDictService.list();
         List<ProductDetailEntity> productDetailEntityList = this.list();
@@ -6205,8 +6210,10 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
-            this.inportExcel(productNoSpecDTO);
+            String productId = this.inportExcel(productNoSpecDTO);
+            prodcutIdList.add(productId);
         }
+        return prodcutIdList;
     }
 
     /**
@@ -6675,9 +6682,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         List<ProductInfoDTO> successList = excelListenerUtil.getSuccessList();
         successList.removeAll(errorList);
 
-        for (ProductInfoDTO productInfoDTO : successList) {
-            productInfoService.updateSpec(productInfoDTO);
-        }
         String errorUrl = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
             String excelPath = "excel/productUpdateError.xlsx";
@@ -6696,6 +6700,19 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 successUrl = FastDFSClientUtil.uploadFile(file, fileName);
             }
         }
+
+        for (ProductInfoDTO productInfoDTO : successList) {
+            productInfoService.updateSpec(productInfoDTO);
+            //新增操作日志
+            SysLogEntity sysLogEntity = new SysLogEntity().setContent(StrUtil.format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
+                    .setBusinessId(productInfoDTO.getId())
+                    .setPid(productInfoDTO.getId())
+                    .setOperation("导入")
+                    .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
+            //添加日志
+            sysLogService.addSysLogByOther(sysLogEntity);
+        }
+
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 

@@ -216,9 +216,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
+     * @return String
      **/
-    Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO);
+    String inportExcel(ProductNoSpecDTO productNoSpecDTO);
 
     /**
      * @Description 新增无规格sku信息 并推送金蝶
