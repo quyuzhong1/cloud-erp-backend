@@ -1,6 +1,5 @@
 package com.erp.server.mrp.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -16,9 +15,7 @@ import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.entity.ShopInventoryDetailEntity;
 import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
 import com.erp.model.mrp.vo.InventoryDetailVO;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
@@ -132,17 +129,19 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
         List<ShopInventoryDetailEntity> detailEntities = new ArrayList<>();
         for (ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO dto : inventoryDetail) {
             ReplenishmentInventoryDetailEntity entity = ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO.buildReplenishmentInventoryDetail(dto, replenishmentDetailId, calcVersion);
-            //平台取值
-            String platform = shopIdByPlatform.entrySet().stream()
-                    .filter(entry -> entry.getValue() != null && entry.getValue().contains(dto.getShopInventoryDetails().get(0).getShopId()))
-                    .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElse("");
-            entity.setDictPlatform(platform);
             entity.setId(IdWorker.getIdStr());
             entities.add(entity);
             for (ReplenishmentResultDTO.ShopInventoryDetailDTO detail : dto.getShopInventoryDetails()) {
-                detailEntities.add(ReplenishmentResultDTO.ShopInventoryDetailDTO.buildShopInventoryDetail(detail,entity.getId(), calcVersion));
+
+                ShopInventoryDetailEntity detailEntity = ReplenishmentResultDTO.ShopInventoryDetailDTO.buildShopInventoryDetail(detail, entity.getId(), calcVersion);
+                //平台取值
+                String platform = shopIdByPlatform.entrySet().stream()
+                        .filter(entry -> entry.getValue() != null && entry.getValue().contains(dto.getShopInventoryDetails().get(0).getShopId()))
+                        .map(Map.Entry::getKey)
+                        .findFirst()
+                        .orElse("");
+                detailEntity.setDictPlatform(platform);
+                detailEntities.add(detailEntity);
             }
         }
         SpringUtil.getBean(ReplenishmentInventoryDetailServiceImpl.class).saveBatch(entities);
