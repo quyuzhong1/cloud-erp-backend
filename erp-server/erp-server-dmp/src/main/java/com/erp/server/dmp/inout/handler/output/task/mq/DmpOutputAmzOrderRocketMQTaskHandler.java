@@ -298,12 +298,13 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         detailDTO.setWarehouseId("");
         // 数量
         detailDTO.setQty(item.getQty());
+        BigDecimal sellPriceOrigin = null == item.getSellPriceOrigin() ? BigDecimal.ZERO : item.getSellPriceOrigin();
         // item总价
         // 金额
-        detailDTO.setAmount(item.getSellPriceOrigin().multiply(BigDecimal.valueOf(item.getQty())));
+        detailDTO.setAmount(sellPriceOrigin.multiply(BigDecimal.valueOf(item.getQty())));
 
         // 单价
-        detailDTO.setPrice(item.getSellPriceOrigin());
+        detailDTO.setPrice(sellPriceOrigin);
 
         // 币别（原币）
         detailDTO.setCurrency(item.getCurrencyCode());
