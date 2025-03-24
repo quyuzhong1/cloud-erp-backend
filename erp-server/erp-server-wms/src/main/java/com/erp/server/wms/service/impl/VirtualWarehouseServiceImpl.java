@@ -601,16 +601,16 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         for (VirtualWarehouseDTO.ExportDTO exportDTO : list) {
             exportDTO.setDisabledStr(exportDTO.getDisabled() ? "禁用" : "启用");
 
-            //店铺名称
-            String shopName = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
-            shopName = CharSequenceUtil.isNotBlank(exportDTO.getType()) && CharSequenceUtil.isBlank(exportDTO.getShopId()) ? "全部" : shopName;
-            exportDTO.setShopName(shopName);
-
             //平台名称
             DictBasicEntity dictPlatform = dictPlatformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), exportDTO.getDictPlatform())).findFirst().orElse(new DictBasicEntity());
             String dictPlatformName = CharSequenceUtil.equals(exportDTO.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode()) && CharSequenceUtil.isBlank(exportDTO.getDictPlatform()) ? "全部" : dictPlatform.getName();
             exportDTO.setDictPlatformName(dictPlatformName);
             exportDTO.setTypeName(DictBasicTypeEnum.getName(dictPlatform.getSubType()));
+
+            //店铺名称
+            String shopName = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            shopName = CharSequenceUtil.isNotBlank(dictPlatformName) && CharSequenceUtil.isBlank(exportDTO.getShopId()) ? "全部" : shopName;
+            exportDTO.setShopName(shopName);
 
 
             //区域名称
