@@ -659,7 +659,7 @@ public class MercadoLocalSdkClientService {
      * @return
      */
     public String printShippingLabel(Map<String, String> authMap, Long shippingId) {
-        String orderUrl = "https://api.mercadolibre.com/shipments/"+shippingId+"/labels";
+        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shippingId+"/labels";
         String token = authMap.get("token");
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);
