@@ -43,14 +43,15 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -69,6 +70,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.SaleDemandFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
@@ -241,6 +243,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private CfgSettingFeign fgSettingFeign;
+    @Resource
+    private SaleDemandFeign saleDemandFeign;
+
     /**
      * 添加销售订单
      *
@@ -333,7 +338,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         this.buildPartition(addEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(addEntity);
-
+        //获取客户收货国家
+        CustomerDTO.BaseDTO base = customerInfoService.getBase(customerId);
+        if(Objects.nonNull(base)){
+            addEntity.setCountryId(base.getCountryId());
+            addEntity.setCountryName(base.getCountryName());
+        }
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -1286,7 +1296,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         this.buildPartition(soInfo);
         //获取虚拟仓库
         handleVirtualWarehouse(soInfo);
-
+        //获取客户收货国家
+        CustomerDTO.BaseDTO base = customerInfoService.getBase(customerId);
+        if(Objects.nonNull(base)){
+            soInfo.setCountryId(base.getCountryId());
+            soInfo.setCountryName(base.getCountryName());
+        }
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {
 
@@ -1709,6 +1724,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92019);
         }
+        //校验是否有下游单据
+        isExistDowmstream(ids);
 
         //作废释放冻结库存
         ids.stream().forEach(obj -> unLockVirtualInventory(obj));
@@ -1722,6 +1739,36 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //发送金蝶
         sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         return Boolean.TRUE;
+    }
+
+    private void isExistDowmstream(List<String> ids) {
+        //校验是否有下游单据
+        //订单变更 soChange oms
+        //发货通知单 soDeliveryNotice wms
+        //销售退货订单 soReturn oms
+        //备货申请单 salesDemand scm
+        //销售出库单 outstock wms
+        Integer count1 = soChangeService.lambdaQuery().in(SoChangeEntity::getSoId, ids).count();
+        if(count1 > 0){
+            throw new ServiceException(ApiError.ERROR_92175);
+        }
+        Integer count2 = soReturnService.lambdaQuery().in(SoReturnEntity::getSourceId, ids).count();
+        if(count2 > 0){
+            throw new ServiceException(ApiError.ERROR_92175);
+        }
+
+        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(ids);
+        if(!soDeliveryNoticeList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_92175);
+        }
+        List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(ids);
+        if(!soOutstockList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_92175);
+        }
+        List<SalesDemandEntity> salesDemandList = saleDemandFeign.listBySourceIds(ids);
+        if(!salesDemandList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_92175);
+        }
     }
 
 

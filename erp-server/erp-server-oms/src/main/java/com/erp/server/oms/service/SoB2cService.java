@@ -27,7 +27,9 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -1050,4 +1052,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 
     BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+
+    void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
 }
