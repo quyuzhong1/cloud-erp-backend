@@ -1416,6 +1416,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
             //明细信息
             viewDTO.setSkuId(soB2cDetailEntity.getSkuId());
+
             viewDTO.setSkuNo(soB2cDetailEntity.getSkuNo());
             viewDTO.setWarehouseId(soB2cDetailEntity.getWarehouseId());
             viewDTO.setWarehouseName(soB2cDetailEntity.getWarehouseName());
