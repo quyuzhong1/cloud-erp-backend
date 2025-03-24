@@ -167,4 +167,6 @@ public interface SalesDemandService extends SuperService<SalesDemandEntity> {
     Integer getPushDownBySourceIds(List<String> soIds);
 
     PagingVO<SalesDemandExportExcelDTO> exportSalesDemand(PagingDTO<SalesDemandDTO.SearchParamDTO> dto);
+
+    List<SalesDemandEntity> listBySourceIds(List<String> sourceIds);
 }
