@@ -14,7 +14,7 @@
             <if test="params.searchKeyword !=null and params.searchKeyword!='' ">
                 AND nd.node_name ILIKE concat('%',#{params.searchKeyword}::text,'%')
             </if>
-        ORDER BY nm.create_time ASC
+        ORDER BY nm.create_time DESC
     </select>
 
     <select id="getUserNoticeNode" resultType="com.erp.model.plm.dto.UserNoticeNodeDTO">
