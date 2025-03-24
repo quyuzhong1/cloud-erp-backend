@@ -4967,7 +4967,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     ProductInfoEntity productInfoEntity = productInfoMap.get(productBy.getProductId());
                     // 如果商品属性ID与实体中的属性ID不匹配,查sku库存
                     if(Objects.nonNull(productInfoEntity) && !productInfoEntity.getPropertyId().equals(productProperty.getId())){
-                        Integer qty = inventoryMap.get(dto.getSkuNo());
+                        Integer qty = null == inventoryMap.get(dto.getSkuNo()) ? 0 : inventoryMap.get(dto.getSkuNo());
                         if(qty > 0){
                             errorMsgList.add("SKU存在库存，产品属性不允许变更");
                         }
@@ -5935,6 +5935,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             //spu/sku基础信息
             ProductBaseInfoDTO productBaseInfoDTO = new ProductBaseInfoDTO();
+            productInfoDTO.setName(productSkuBaseInfoDTO.getName());
+            productInfoDTO.setNameEn(productSkuBaseInfoDTO.getNameEn());
             productBaseInfoDTO.setProductSpuBaseInfoDTO(productInfoDTO);
             productBaseInfoDTO.setProductSkuBaseInfoDTO(productSkuBaseInfoDTO);
             productNoSpecDTO.setProductBaseInfoDTO(productBaseInfoDTO);
@@ -6590,7 +6592,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //新增操作日志
-        String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【毛重】为【{}】、【净重】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getGrossWeight(),entity.getNetWeight());
+        String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【包装尺寸高】为【{}】、【毛重】为【{}】、【净重】为【{}】、【箱规长】为【{}】、【箱规宽】为【{}】、【箱规高】为【{}】、【单箱重量】为【{}】、【单箱数量】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getProductHeight()
+                ,entity.getGrossWeight(),entity.getNetWeight(),entity.getBoxLength(),entity.getBoxWidth(),entity.getBoxHeight(),entity.getBoxWeight(),entity.getBoxQty());
         sysLogService.addSysLogByOther(new SysLogEntity().setBusinessId(entity.getSkuId()).setPid(productDetailEntity.getProductId())
                 .setOperation("更新包装信息").setContent(content));
         return BatchResultDTO.success(viewDTO.getSkuId(), viewDTO.getSkuNo(), "操作成功");
