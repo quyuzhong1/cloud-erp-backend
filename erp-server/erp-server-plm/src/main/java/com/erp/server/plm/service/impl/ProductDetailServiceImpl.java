@@ -6592,7 +6592,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         //新增操作日志
-        String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【包装尺寸高】为【{}】、【毛重】为【{}】、【净重】为【{}】、【箱规长】为【{}】、【箱规宽】为【{}】、【箱规高】为【{}】、【单箱重量】为【{}】、【单相数量】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getProductHeight()
+        String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【包装尺寸高】为【{}】、【毛重】为【{}】、【净重】为【{}】、【箱规长】为【{}】、【箱规宽】为【{}】、【箱规高】为【{}】、【单箱重量】为【{}】、【单箱数量】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getProductHeight()
                 ,entity.getGrossWeight(),entity.getNetWeight(),entity.getBoxLength(),entity.getBoxWidth(),entity.getBoxHeight(),entity.getBoxWeight(),entity.getBoxQty());
         sysLogService.addSysLogByOther(new SysLogEntity().setBusinessId(entity.getSkuId()).setPid(productDetailEntity.getProductId())
                 .setOperation("更新包装信息").setContent(content));
