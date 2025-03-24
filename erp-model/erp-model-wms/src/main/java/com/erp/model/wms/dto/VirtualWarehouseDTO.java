@@ -94,6 +94,7 @@ public class VirtualWarehouseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class VwDTO {
 
         /**

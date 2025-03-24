@@ -27,7 +27,7 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(AliexpressDeliveryDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(AliexpressDeliveryDTO.AddDTO dto);
 
     /**
      * 列表查询

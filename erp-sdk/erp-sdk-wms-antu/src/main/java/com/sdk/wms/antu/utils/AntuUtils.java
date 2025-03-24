@@ -1,6 +1,7 @@
 package com.sdk.wms.antu.utils;
 
 import com.alibaba.fastjson.JSON;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.exception.ServiceException;
 import com.sdk.wms.antu.soap.Ec;
@@ -11,8 +12,15 @@ public class AntuUtils {
     private AntuUtils() {
         throw new IllegalStateException("Utility AntuUtils class");
     }
-    public static String callService(String service, Object obj){
-        Ec_Service ecService = new Ec_Service();
+    public static String callService(OmsPlatformEnum platformEnum , String service, Object obj){
+        Ec_Service ecService = null;
+        if(platformEnum.getCode().equals(OmsPlatformEnum.OMS_ANTU.getCode())){
+            ecService =new Ec_Service(Ec_Service.getAntuWsdlLocation());
+        }else if(platformEnum.getCode().equals(OmsPlatformEnum.OMS_SPT.getCode())){
+            ecService =new Ec_Service(Ec_Service.getSptWsdlLocation());
+        }else{
+            throw new ServiceException("暂不支持该平台");
+        }
         Ec ec = ecService.getEcSOAP();
         String appToken = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appToken"));
         String appKey = String.valueOf(ThirdWarehouseContext.getAuthMap().get("appKey"));

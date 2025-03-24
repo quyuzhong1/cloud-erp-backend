@@ -4,7 +4,6 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -47,7 +46,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -1057,6 +1055,11 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         }
         if (Objects.nonNull(mainEntity.getReceiveTime()) && dto.getDownloadTime().isBefore(mainEntity.getReceiveTime())) {
             return ApiResult.success();
+        }
+        //更新入库状态
+        String receivingStatus = dto.getReceivingStatus();
+        if(!receivingStatus.equals(mainEntity.getInstockStatus())){
+            this.lambdaUpdate().set(OverseasWarehouseInboundEntity::getInstockStatus, receivingStatus).eq(OverseasWarehouseInboundEntity::getId, mainEntity.getId()).update();
         }
         //查询明细数据
         List<OverseasWarehouseInboundDetailEntity> detailList = overseasWarehouseInboundDetailService.getByMainId(mainEntity.getId());

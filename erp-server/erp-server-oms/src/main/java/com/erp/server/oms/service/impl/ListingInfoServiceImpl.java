@@ -540,4 +540,12 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         return listingFilterDTO;
     }
+
+    @Override
+    public List<ListingInfoDTO.SearchResultDTO> searchByKey(ListingInfoDTO.SearchParamDTO dto) {
+        if(StringUtils.isBlank(dto.getAuthId()) && (dto.getType().equals(RuleTypeEnum.WAREHOUSE.getCode()) || dto.getType().equals(RuleTypeEnum.CUSTOMER.getCode()))){
+            throw new ServiceException("客户（仓库）不能为空");
+        }
+        return baseMapper.searchByKey(dto);
+    }
 }

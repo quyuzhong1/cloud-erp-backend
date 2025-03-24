@@ -334,4 +334,17 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         }
         return baseMapper.checkExistAndListCombinationSku(parentSkuNos);
     }
+
+    /**
+     * 获取单品BOM信息
+     * @param skuIdList SKU ID列表，用于查询BOM信息
+     * @return 包含BomSku对象的列表，每个对象代表一个SKU的BOM信息如果输入列表为空，则返回空列表
+     */
+    @Override
+    public List<BomDTO.BomSku> getSingleBomInfo(List<String> skuIdList) {
+        if(CollectionUtils.isEmpty(skuIdList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getSingleBomInfo(skuIdList);
+    }
 }

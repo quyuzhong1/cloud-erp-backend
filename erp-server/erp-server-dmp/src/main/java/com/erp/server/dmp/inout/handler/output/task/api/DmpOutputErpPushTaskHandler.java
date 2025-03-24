@@ -394,19 +394,21 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 					.in(DmpOutputTaskRecordEntity::getDataId, sourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
 					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
 					.list();
-			if(leDataIdList.stream().anyMatch(l -> !l.getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode()))) {
-				dmpOutputTaskRecordService.lambdaUpdate()
-					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一sourceId")
-					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.update();
-				return true;
-			}
-			
-			if(isMerge) {
-				DmpOutputTaskRecordMergeServiceImpl dmpOutputTaskRecordMergeServiceImpl = ApplicationContextUtils.getBean(DmpOutputTaskRecordMergeServiceImpl.class);
-				return dmpOutputTaskRecordMergeServiceImpl.validateMerge(leDataIdList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()), dmpOutputTaskRecordEntity);
+			if(CollUtil.isNotEmpty(leDataIdList)) {
+				if(leDataIdList.stream().anyMatch(l -> !l.getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode()))) {
+					dmpOutputTaskRecordService.lambdaUpdate()
+						.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一sourceId")
+						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
+					return true;
+				}
+				
+				if(isMerge) {
+					DmpOutputTaskRecordMergeServiceImpl dmpOutputTaskRecordMergeServiceImpl = ApplicationContextUtils.getBean(DmpOutputTaskRecordMergeServiceImpl.class);
+					return dmpOutputTaskRecordMergeServiceImpl.validateMerge(leDataIdList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()), dmpOutputTaskRecordEntity);
+				}
 			}
 		}
 		return false;
