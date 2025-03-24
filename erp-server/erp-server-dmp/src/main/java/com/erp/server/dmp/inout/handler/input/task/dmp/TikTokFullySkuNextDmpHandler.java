@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -36,7 +39,13 @@ public class TikTokFullySkuNextDmpHandler extends DmpInputDoNextDmpHandler {
 
 				dmpDataMap.put("skuNo", dmpDataMap.get("externalSkuCode"));
 				dmpDataMap.put("spuId", dmpDataMap.get("code"));
-
+				//修改时间
+				Object updateTimeObj = dmpDataMap.get("updateTime");
+				if (updateTimeObj != null) {
+					// 使用Instant类将Unix时间戳转换为LocalDateTime对象
+					LocalDateTime updateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj + "")), ZoneId.systemDefault());
+					dmpDataMap.put("platformUpdateTime", updateTime);
+				}
 				//状态
 				Object statusObj = dmpDataMap.get("status");
 				if (statusObj != null) {
