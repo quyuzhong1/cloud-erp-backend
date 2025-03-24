@@ -15,6 +15,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
@@ -146,6 +147,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }
             String status = item.getStatus();
             String statusName = LogisticTrackStatusEnum.getName(status);
+            if (CharSequenceUtil.isBlank(statusName)){
+                FmLogisticTrackStatusEnum fmLogisticTrackStatusEnum = FmLogisticTrackStatusEnum.getNameByCode(status);
+                statusName = Objects.nonNull(fmLogisticTrackStatusEnum) ?fmLogisticTrackStatusEnum.getName() :CharSequenceUtil.EMPTY;
+            }
             item.setStatusName(statusName);
         }
         viewDTO.setList(resultList);

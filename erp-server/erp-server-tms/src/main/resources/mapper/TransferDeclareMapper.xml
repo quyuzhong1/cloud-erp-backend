@@ -60,7 +60,7 @@
             td.create_time AS createTime
         FROM transfer_declare td
         LEFT JOIN transfer_declare_detail tdd ON tdd.main_id = td.id AND tdd.is_deleted = FALSE
-        LEFT JOIN so_b2c sb on sb.id = tdd.so_id and sb.is_deleted = false
+--         LEFT JOIN so_b2c sb on sb.id = tdd.so_id and sb.is_deleted = false
         WHERE td.is_deleted = FALSE
             <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
                 and ${params.sqlMap.default}
