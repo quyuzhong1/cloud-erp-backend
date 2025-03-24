@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoPriceMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoPriceEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="customer_id" property="customerId" />
+       <result column="quoted_date" property="quotedDate" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="pricing_user_id" property="pricingUserId" />
+       <result column="pricing_user_name" property="pricingUserName" />
+       <result column="so_org_id" property="soOrgId" />
+       <result column="so_org_name" property="soOrgName" />
+       <result column="currency" property="currency" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, customer_id, quoted_date, approve_status, pricing_user_id, pricing_user_name, so_org_id, so_org_name, currency, approve_time, approve_user_name, approve_user_id, remark
+    </sql>
+
+
+    <select id="paging" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
+        SELECT
+        pp.id,
+        pp.code,
+        pp.voucher_no as voucherNo,
+        pp.create_user_id AS createUserId,
+        pp.create_user_name AS createUserName,
+        pp.create_time AS createTime,
+        pp.supplier_id AS supplierId,
+        (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
+        ppd.sku_id AS skuId,
+        ppd.sku_no AS skuNo,
+        ppd.product_name AS productName,ppd.min_qty as minQty,ppd.max_qty as maxQty,
+        pp.approve_status as approveStatus,
+        ppd.tax_price as taxPrice,
+        ppd.currency,
+        ppd.tax_rate*100 AS taxRate ,
+        ppd.effective_date AS effectiveDate,
+        ppd.expire_date AS expireDate,
+        pp.purchase_org_id as purchase_Org_Id,
+        pp.purchase_org_name as purchaseOrgName,
+        ppd.id AS purchasePriceDetailId,
+        ppd.disabled,
+        ppd.remark as detailRemark,
+        pp.approve_time,
+        ppd.delivery_day
+        FROM purchase_price_detail ppd
+        INNER JOIN purchase_price pp
+        ON ppd.purchase_price_id=pp.id
+        WHERE
+        ${params.sqlMap.default}
+        and pp.is_deleted = false AND ppd.is_deleted= false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC,ppd.id DESC
+    </select>
+
+    <select id="getExport" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
+        SELECT
+        pp.id,
+        pp.code,
+        pp.voucher_no as voucherNo,
+        pp.create_user_id AS createUserId,
+        pp.create_user_name AS createUserName,
+        pp.create_time AS createTime,
+        pp.supplier_id AS supplierId,
+        (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
+        ppd.sku_id AS skuId,
+        ppd.sku_no AS skuNo,
+        ppd.product_name AS productName,ppd.min_qty AS minQty,ppd.max_qty AS maxQty,
+        pp.approve_status AS approveStatus,
+        ppd.tax_price AS taxPrice,
+        ppd.tax_rate*100 AS taxRate ,
+        ppd.effective_date AS effectiveDate,
+        ppd.expire_date AS expireDate,
+        ppd.currency,
+        pp.purchase_org_id AS purchaseOrgId,
+        pp.purchase_org_name AS purchaseOrgName,
+        PPd.disabled,
+        pp.approve_time
+        FROM purchase_price_detail ppd
+        LEFT JOIN purchase_price pp
+        ON ppd.purchase_price_id=pp.id
+        WHERE
+        ${params.sqlMap.default}
+        and pp.is_deleted=false AND ppd.is_deleted= false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        pp.create_time DESC,ppd.id DESC
+    </select>
+
+    <select id="listSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
+        SELECT
+        p.supplier_id,
+        p.sku_id,
+        p.sku_no,
+        p.tax_price,
+        p.tax_rate,
+        p.currency
+        from(
+        SELECT
+        pp.supplier_id,
+        ppd.sku_id,
+        ppd.sku_no,
+        ppd.tax_price,
+        ppd.tax_rate,
+        ppd.min_qty,
+        ppd.currency,
+        row_number() over(partition by pp.supplier_id,
+        ppd.sku_id,
+        ppd.sku_no order by ppd.min_qty ASC,ppd.update_time desc) as rank
+        FROM purchase_price pp
+        LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        WHERE pp.is_deleted = false and approve_status = 'approve' AND pp.supplier_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ) p
+        WHERE p.rank=1
+    </select>
+
+    <select id="listAllSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
+        SELECT
+        pp.supplier_id,
+        ppd.sku_id,
+        ppd.sku_no,
+        ppd.tax_price,
+        ppd.tax_rate,
+        ppd.min_qty,
+        ppd.max_qty,
+        ppd.currency,
+        pp.purchase_org_id as purchaseOrgId,
+        pp.purchase_org_name as purchaseOrgName
+        FROM purchase_price pp
+        LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        WHERE pp.is_deleted = false and ppd.disabled = false and approve_status = 'approve' AND pp.supplier_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="tabList" resultType="java.lang.Integer">
+        select
+        count(distinct pp.id)
+        from purchase_price pp
+        left join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and pp.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+</mapper>
