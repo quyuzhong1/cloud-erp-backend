@@ -219,10 +219,7 @@ public class SoPriceDTO implements Serializable {
          */
         @NotBlank(message = "币种不能为空")
         private String currency;
-        /**
-         * 外部平台单号
-         */
-        private String voucherNo;
+
         /**
          * 报价人id
          */
@@ -553,11 +550,6 @@ public class SoPriceDTO implements Serializable {
          * 明细备注
          */
         private String detailRemark;
-
-        /**
-         * 采购交期
-         */
-        private String deliveryDay;
     }
 
 
@@ -788,10 +780,6 @@ public class SoPriceDTO implements Serializable {
          */
         private String currencySymbol;
 
-        /**
-         * 采购交期（天）
-         */
-        private Integer deliveryDay;
 
         public PriceDTO(Integer soQty, String skuId, String customerId, String soOrgId) {
             this.qty = soQty;

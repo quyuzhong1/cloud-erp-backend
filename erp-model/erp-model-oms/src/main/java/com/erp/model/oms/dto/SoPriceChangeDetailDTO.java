@@ -14,7 +14,7 @@ import java.util.List;
 
 /**
  * <p>
- * 产品采购变更价 明细表请求响应实体
+ * 产品销售变更价 明细表请求响应实体
  * </p>
  *
  * @author will
@@ -40,10 +40,10 @@ public class SoPriceChangeDetailDTO implements Serializable {
         private String skuId;
 
         /**
-         * 供应商id
+         * 客户id
          */
-        @NotBlank(message = "供应商id能为空")
-        private String supplierId;
+        @NotBlank(message = "客户id能为空")
+        private String customerId;
 
         /**
          * 价目表编码
@@ -51,15 +51,11 @@ public class SoPriceChangeDetailDTO implements Serializable {
         private String priceCode;
 
         /**
-         * 采购价目详情表id
+         * 销售价目详情表id
          */
-        @NotBlank(message = "采购价目详情表id 不能为空")
+        @NotBlank(message = "销售价目详情表id 不能为空")
         private String soPriceDetailId;
 
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
         /**
          * 最小数量
          */
@@ -136,10 +132,10 @@ public class SoPriceChangeDetailDTO implements Serializable {
 
 
         /**
-         * 供应商表id
+         * 客户表id
          */
-        @NotBlank(message = "供应商不能为空")
-        private String supplierId;
+        @NotBlank(message = "客户不能为空")
+        private String customerId;
 
         /**
          * 价目表编码
@@ -152,13 +148,9 @@ public class SoPriceChangeDetailDTO implements Serializable {
         @NotBlank(message = "sku不能为空")
         private String skuId;
 
-        @NotBlank(message = "采购价目详情表id 不能为空")
+        @NotBlank(message = "销售价目详情表id 不能为空")
         private String soPriceDetailId;
 
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
         /**
          * 最小数量
          */
@@ -240,13 +232,13 @@ public class SoPriceChangeDetailDTO implements Serializable {
         private String priceCode;
 
         /**
-         * 供应商表id
+         * 客户表id
          */
-        private String supplierId;
+        private String customerId;
 
 
         /**
-         * 供应商名称
+         * 客户名称
          */
         private String supplierName;
 
@@ -271,10 +263,6 @@ public class SoPriceChangeDetailDTO implements Serializable {
          */
         private String soPriceDetailId;
 
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
         /**
          * 最小数量
          */
@@ -352,7 +340,7 @@ public class SoPriceChangeDetailDTO implements Serializable {
         private Boolean disabled=false;
 
         /**
-         * 采购组织名称
+         * 销售组织名称
          */
         private String soOrgName;
 

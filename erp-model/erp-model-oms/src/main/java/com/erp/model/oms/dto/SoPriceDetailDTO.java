@@ -29,9 +29,9 @@ public class SoPriceDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO implements Serializable{
         /**
-         * 供应商表id
+         * 客户表id
          */
-        private String supplierId;
+        private String customerId;
 
         /**
          * sku id
@@ -47,11 +47,6 @@ public class SoPriceDetailDTO implements Serializable {
 
 
         private String productName;
-
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
 
         /**
          * 最小数量
@@ -136,9 +131,9 @@ public class SoPriceDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 供应商id
+         * 客户id
          */
-        private String supplierId;
+        private String customerId;
 
         /**
          * 采购组织id
@@ -159,9 +154,9 @@ public class SoPriceDetailDTO implements Serializable {
         private List<String> skuIdList;
 
         /**
-         * 供应商id集合
+         * 客户id集合
          */
-        private List<String> supplierIdList;
+        private List<String> customerIdList;
 
         /**
          * 数量集合
@@ -209,14 +204,14 @@ public class SoPriceDetailDTO implements Serializable {
 
 
         /**
-         * 供应商表id
+         * 客户表id
          */
-        private String supplierId;
+        private String customerId;
 
         /**
-         * 供应商表名称
+         * 客户表名称
          */
-        private String supplierName;
+        private String customerName;
 
         /**
          * 最小数量
@@ -379,14 +374,14 @@ public class SoPriceDetailDTO implements Serializable {
         private String kingdeeDetailId;
 
         /**
-         * 供应商表id
+         * 客户表id
          */
-        private String supplierId;
+        private String customerId;
 
         /**
-         * 供应商表名称
+         * 客户表名称
          */
-        private String supplierName;
+        private String customerName;
 
         /**
          * 价目表编码
@@ -507,11 +502,6 @@ public class SoPriceDetailDTO implements Serializable {
         private String skuNo;
 
         private String productName;
-
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
 
         /**
          * 最小数量
