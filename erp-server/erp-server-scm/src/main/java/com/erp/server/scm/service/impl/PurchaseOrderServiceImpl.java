@@ -324,6 +324,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         BeanMapperUtils.copy(entity, dto);
 
+        //能否编辑
+        dto.setCanEdit(purchaseApplicationRefPoService.getPurchaseApplicationByPurchaseOrderId(id));
+
         // 采购员名称
         if(StrUtils.isNotEmpty(dto.getPurchaseUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
