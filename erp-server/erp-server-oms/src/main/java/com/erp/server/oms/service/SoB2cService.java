@@ -703,6 +703,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
+    boolean isFullyManagedOrder(String platform);
+
     /**
      * 根据订单拆分sku
      */
@@ -1061,4 +1063,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 
     void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 根据销售订单id和平台获取分区id
+     * @param soId
+     * @param platform
+     * @return
+     */
+    String getPartitionId(String soId, String platform);
 }

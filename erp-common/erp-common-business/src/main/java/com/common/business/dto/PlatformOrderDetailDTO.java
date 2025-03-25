@@ -91,6 +91,10 @@ public class PlatformOrderDetailDTO {
      */
     private String labelJson;
     /**
+     * 扩展字段数据
+     */
+    private String extendData;
+    /**
      * 库存组织id
      */
     private String warehouseOrgId;

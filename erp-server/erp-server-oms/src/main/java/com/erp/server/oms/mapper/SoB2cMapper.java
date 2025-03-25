@@ -89,7 +89,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param skuIdList
      * @return
      */
-    List<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(@Param("params") ReportDTO.ProductSalesPagingParamDTO params, @Param("skuIdList") List<String> skuIdList);
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(@Param("page")Page<ReportDTO.ProductSalesPagingViewDTO> page, @Param("params") ReportDTO.ProductSalesPagingParamDTO params, @Param("skuIdList") List<String> skuIdList);
 
     /**
@@ -165,7 +164,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2024/4/16 15:10
      */
-    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
     Page<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("page") Page<SoB2cDTO.ExcelExportDTO> page, @Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
 
     /**
@@ -178,8 +176,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @date: 2024/4/29 17:55
      */
     Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
-    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
-    Page<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("page") Page<SoB2cDTO.ExcelExportDTO> page, @Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
     /**
      * @description: 异常订单分页查询
      * @author Will
@@ -197,7 +193,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param shopAuthResultDTO
      * @return List<ListDTO>
      */
-    List<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
     Page<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("page") Page<SoB2cAbnormalDTO.ListDTO> page,@Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 
     /**
@@ -250,4 +245,20 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param vatInvoiceStatus
      */
     void updateFbaNotVatInvoice(@Param("shopId") String shopId, @Param("enableTime") LocalDateTime enableTime, @Param("vatInvoiceStatus") String vatInvoiceStatus);
+    /**
+     * 全托管分页查询
+     *
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<SoB2cDTO.ListDTO> fullyManagedPaging(@Param("query") Page query, @Param("params") SoB2cDTO.PagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+
+    /**
+     * 全托管数量查询
+     * @param params
+     * @param shopAuthResultDTO
+     * @return
+     */
+    Integer listFullManagedCount(@Param("params") SoB2cDTO.PagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
 }
