@@ -28,7 +28,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 添加销售价目表
-     * @author yl
+     * @author will
      * @date 2025-03-24 12:22
      * @param dto
      * @return com.erp.model.scm.entity.SoPriceEntity
@@ -38,7 +38,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 获取销售价目详情
-     * @author yl
+     * @author will
      * @date 2025-03-27 9:11
      * @param id
      * @return com.erp.model.scm.dto.SoPriceDTO.ViewDTO
@@ -47,7 +47,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 修改销售价目
-     * @author yl
+     * @author will
      * @date 2025-03-27 10:52
      * @param dto
      * @return com.erp.model.scm.entity.SoPriceEntity
@@ -56,7 +56,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 保存并提交审核 价目
-     * @author yl
+     * @author will
      * @date 2025-03-27 11:46
      * @param dto
      * @return java.lang.Boolean
@@ -65,7 +65,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 修改并审核销售价目
-     * @author yl
+     * @author will
      * @date 2025-03-27 11:58
      * @param dto
      * @return java.lang.Boolean
@@ -74,7 +74,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 批量删除销售价目信息
-     * @author yl
+     * @author will
      * @date 2025-03-27 12:04
      * @param entity
      * @return java.lang.Boolean
@@ -83,7 +83,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 销售价目表 提交审核
-     * @author yl
+     * @author will
      * @date 2025-03-27 12:11
      * @param entity
      * @return java.lang.Boolean
@@ -92,7 +92,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 审核
-     * @author yl
+     * @author will
      * @date 2025-03-27 12:29
      * @param entity
      * @param type
@@ -116,7 +116,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 取消流程
-     * @author yl
+     * @author will
      * @date 2025-03-27 14:04
      * @param entity
      * @return java.lang.Boolean
@@ -125,7 +125,7 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 销售信息分页
-     * @author yl
+     * @author will
      * @date 2025-03-27 14:40
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SoPriceDTO.PagingViewDTO>
@@ -134,17 +134,15 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
 
     /**
      * 销售价目表导出
-     *
      * @param dto
      * @return void
-     * @author yl
+     * @author will
      * @date 2025-03-27 17:55
      */
     void exportSoPrice(SoPriceDTO.PagingParamDTO dto);
 
     /**
      * 销售价目表导入
-     *
      * @param excelFile
      * @param response
      * @return java.lang.Boolean

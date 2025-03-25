@@ -31,8 +31,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * @CreateTime: 2023-08-03  18:07
- * @Author: zhangchunlin
+ * 销售价目
+ * @author will
+ * @date 2025/3/25 14:55
  */
 @Slf4j
 public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExcelDTO> {
