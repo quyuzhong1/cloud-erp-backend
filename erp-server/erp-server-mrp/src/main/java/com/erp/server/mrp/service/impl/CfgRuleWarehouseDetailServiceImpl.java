@@ -171,7 +171,7 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             String shopNames = CharSequenceUtil.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(),detailEntity.getChannelType()) ? "全部店铺":
                     shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
             //平台
-            String  dictPlatformName = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), detailEntity.getDictPlatform())).map(DictBasicEntity::getName).findFirst().orElse("");
+            String dictPlatformName =  dictBasicList.stream().filter(obj -> detailEntity.getChannelIdJson().contains(obj.getValue())).map(DictBasicEntity::getName).findFirst().orElse("全部");
             //本地日志
             if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
                 if (Boolean.TRUE.equals(ruleWarehouseEntity.getIsEnableVirtual())) {
