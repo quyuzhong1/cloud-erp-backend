@@ -2705,24 +2705,26 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
         fieldMapList.add(fieldMap);
         fieldAllMap.put("fields", fieldMapList);
         elements.add(fieldAllMap);
-        Map<String, Object> actionAllMap = new LinkedHashMap<>();
-        actionAllMap.put("tag", "action");
-        actionAllMap.put("layout", "bisected");
-        List<Map<String, Object>> actionList = new ArrayList<>();
-        Map<String, Object> actionMap = new LinkedHashMap<>();
-        actionMap.put("tag", "button");
-        actionMap.put("url", url);
-        actionMap.put("type", "primary");
-        Map<String, Object> actionTextMap = new HashMap<>();
-        actionTextMap.put("tag", "plain_text");
-        actionTextMap.put("content", "查看详情");
-        actionMap.put("text", actionTextMap);
-        Map<String, Object> actionValueMap = new HashMap<>();
-        actionValueMap.put("chosen", "approve");
-        actionMap.put("value", actionValueMap);
-        actionList.add(actionMap);
-        actionAllMap.put("actions", actionList);
-        elements.add(actionAllMap);
+        if(StringUtils.isNotBlank(url)){
+            Map<String, Object> actionAllMap = new LinkedHashMap<>();
+            actionAllMap.put("tag", "action");
+            actionAllMap.put("layout", "bisected");
+            List<Map<String, Object>> actionList = new ArrayList<>();
+            Map<String, Object> actionMap = new LinkedHashMap<>();
+            actionMap.put("tag", "button");
+            actionMap.put("url", url);
+            actionMap.put("type", "primary");
+            Map<String, Object> actionTextMap = new HashMap<>();
+            actionTextMap.put("tag", "plain_text");
+            actionTextMap.put("content", "查看详情");
+            actionMap.put("text", actionTextMap);
+            Map<String, Object> actionValueMap = new HashMap<>();
+            actionValueMap.put("chosen", "approve");
+            actionMap.put("value", actionValueMap);
+            actionList.add(actionMap);
+            actionAllMap.put("actions", actionList);
+            elements.add(actionAllMap);
+        }
         cardMap.put("elements", elements);
         return cardMap;
     }
@@ -2977,7 +2979,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
         }
         //构建消息内容的映射
-        Map<String,Object> contentMap = getCardMessageMap(title, message, "");
+        Map<String,Object> contentMap = getCardMessageMap(title, message, url);
         sendMessage.setContentMap(contentMap);
         //发送消息的结果
         Boolean sendResult = fsService.sendMessage(sendMessage);

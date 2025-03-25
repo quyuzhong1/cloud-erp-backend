@@ -192,6 +192,7 @@
         mra.refund_standard as refundStandard,
         mra.refund_order_qty as refundOrderQty,
         mra.refund_amount as refundAmount,
+        mra.real_refund_amount  AS realRefundAmount,
         mra.refund_status as refundStatus,
         mrcq.purchase_qty as purchaseQty,
         mrcq.receive_qty as receiveQty,
