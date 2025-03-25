@@ -3,6 +3,7 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -171,7 +172,8 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
             String shopNames = CharSequenceUtil.equals(VitualWarehouseChannelTypeEnum.PLATFORM.getCode(),detailEntity.getChannelType()) ? "全部店铺":
                     shopInfoList.stream().filter(obj -> detailEntity.getChannelIdList().contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.joining(","));
             //平台
-            String dictPlatformName =  dictBasicList.stream().filter(obj -> detailEntity.getChannelIdJson().contains(obj.getValue())).map(DictBasicEntity::getName).findFirst().orElse("全部");
+            String dictPlatformName =  dictBasicList.stream().filter(obj -> detailEntity.getChannelIdJson().contains(obj.getValue())).map(DictBasicEntity::getName).collect(Collectors.joining(","));
+            dictPlatformName = StrUtil.isBlank(dictPlatformName) ? "全部" : dictPlatformName;
             //本地日志
             if (CfgRuleWarehouseTypeEnum.LOCAL.getCode().equals(detailEntity.getWarehouseType())) {
                 if (Boolean.TRUE.equals(ruleWarehouseEntity.getIsEnableVirtual())) {
