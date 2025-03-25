@@ -128,7 +128,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         SoPriceChangeEntity changeEntity = new SoPriceChangeEntity();
         BeanMapper.copy(dto, changeEntity);
         //生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTJ);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSTJ);
         changeEntity.setCode(code);
         changeEntity.setId(IdWorker.getIdStr());
         String pricingUserId = dto.getAdjustUserId();

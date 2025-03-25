@@ -225,6 +225,7 @@ public class SoPriceDTO implements Serializable {
         /**
          * 销售组织id
          */
+        @NotBlank(message = "销售组织不能为空")
         private String soOrgId;
 
         /**
@@ -246,7 +247,8 @@ public class SoPriceDTO implements Serializable {
          * 报价明细
          */
         @Valid
-        private List<SoPriceDetailDTO.AddDTO> SoPriceDetailList;
+        @NotEmpty(message = "销售价目表明细不能为空")
+        private List<SoPriceDetailDTO.AddDTO> soPriceDetailList;
 
     }
 
@@ -322,7 +324,7 @@ public class SoPriceDTO implements Serializable {
          * 报价明细
          */
         @Valid
-        private List<SoPriceDetailDTO.ViewDTO> SoPriceDetailList;
+        private List<SoPriceDetailDTO.ViewDTO> soPriceDetailList;
 
     }
 
@@ -384,7 +386,7 @@ public class SoPriceDTO implements Serializable {
          * 报价明细
          */
         @Valid
-        private List<SoPriceDetailDTO.UpdateDTO> SoPriceDetailList;
+        private List<SoPriceDetailDTO.UpdateDTO> soPriceDetailList;
 
     }
 
@@ -407,7 +409,7 @@ public class SoPriceDTO implements Serializable {
         /**
          * 销售价目详情id
          */
-        private String SoPriceDetailId;
+        private String soPriceDetailId;
 
 
         /**

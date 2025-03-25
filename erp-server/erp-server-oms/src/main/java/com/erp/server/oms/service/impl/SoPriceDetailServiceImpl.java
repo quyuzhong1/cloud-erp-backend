@@ -51,6 +51,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -88,23 +89,23 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     /**
      * 添加明细
      *
-     * @param SoPriceId
-     * @param SoPriceDetailList
+     * @param soPriceId
+     * @param soPriceDetailList
      * @return void
      * @author yl
      * @date 2023-03-24 15:02
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void addPriceDetail(String SoPriceId, List<SoPriceDetailDTO.AddDTO> SoPriceDetailList) {
-        if (CollectionUtils.isEmpty(SoPriceDetailList)) {
+    public void addPriceDetail(String soPriceId, List<SoPriceDetailDTO.AddDTO> soPriceDetailList) {
+        if (CollectionUtils.isEmpty(soPriceDetailList)) {
             return;
         }
-        List<SoPriceDetailEntity> addList = BeanMapper.copyList(SoPriceDetailList, SoPriceDetailEntity.class);
+        List<SoPriceDetailEntity> addList = BeanMapper.copyList(soPriceDetailList, SoPriceDetailEntity.class);
         List<String> skuIds = addList.stream().map(SoPriceDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
 
-       SoPriceEntity soPriceEntity = priceService.getById(SoPriceId);
+       SoPriceEntity soPriceEntity = priceService.getById(soPriceId);
         if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(soPriceEntity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
@@ -113,14 +114,12 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         for (SoPriceDetailEntity item : addList) {
             String skuId = item.getSkuId();
             SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(new SkuVO());
-            if (skuVO != null) {
-                item.setSkuNo(skuVO.getSkuNo());
-            }
-            item.setMainId(SoPriceId);
+            item.setSkuNo(skuVO.getSkuNo());
+            item.setMainId(soPriceId);
             //税率
             BigDecimal taxRate = item.getTaxRate();
             if (taxRate != null) {
-                BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
+                BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
                 item.setTaxRate(rate);
             }
             item.setCurrency(soPriceEntity.getCurrency());
@@ -205,14 +204,14 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     /**
      * 根据价目表id 获取产品明细信息
      *
-     * @param SoPriceId
+     * @param soPriceId
      * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.UpdateDTO>
      * @author yl
      * @date 2023-03-27 9:48
      */
     @Override
-    public List<SoPriceDetailDTO.ViewDTO> getBySoPriceId(String SoPriceId) {
-        List<SoPriceDetailEntity> list = this.getListBySoPriceId(SoPriceId);
+    public List<SoPriceDetailDTO.ViewDTO> getBySoPriceId(String soPriceId) {
+        List<SoPriceDetailEntity> list = this.getListBySoPriceId(soPriceId);
         List<SoPriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, SoPriceDetailDTO.ViewDTO.class);
         //处理销售价目明细信息
         handleSoPriceDetail(viewList);
@@ -281,16 +280,16 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             result.setSkuNo(item.getSkuNo());
             result.setSkuId(item.getSkuId());
             //销售价目信息
-            SoPriceEntity SoPriceEntity = soPriceEntities.stream().filter(req -> item.getSoPriceId().equals(req.getId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(SoPriceEntity)) {
+            SoPriceEntity soPriceEntity = soPriceEntities.stream().filter(req -> item.getSoPriceId().equals(req.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soPriceEntity)) {
                 throw new ServiceException(ApiError.ERROR_98024);
             }
 
             //供应商名称
             CustomerInfoEntity customerEntity = customerEntities.stream().filter(req -> item.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
-            result.setCustomerId(SoPriceEntity.getCustomerId());
+            result.setCustomerId(soPriceEntity.getCustomerId());
             result.setCustomerName(customerEntity.getName());
-            result.setPriceCode(SoPriceEntity.getCode());
+            result.setPriceCode(soPriceEntity.getCode());
             resultList.add(result);
         }
         viewDTO.setSoPriceChangeDetailList(resultList);
@@ -359,8 +358,8 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     }
 
     @Override
-    public List<SoPriceDetailDTO.ViewDTO> listBySoPriceDetailIds(List<String> SoPriceDetailIds) {
-        List<SoPriceDetailEntity> list = baseMapper.listDetailByIds(SoPriceDetailIds);
+    public List<SoPriceDetailDTO.ViewDTO> listBySoPriceDetailIds(List<String> soPriceDetailIds) {
+        List<SoPriceDetailEntity> list = baseMapper.listDetailByIds(soPriceDetailIds);
         List<SoPriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, SoPriceDetailDTO.ViewDTO.class);
         //处理销售价目明细信息
         handleSoPriceDetail(viewList);
@@ -369,34 +368,34 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     /**
      * 修改产品明细
      *
-     * @param SoPriceId
-     * @param SoPriceDetailList
+     * @param soPriceId
+     * @param soPriceDetailList
      * @return void
      * @author yl
      * @date 2023-03-27 11:18
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void updatePriceDetail(String SoPriceId, List<SoPriceDetailDTO.UpdateDTO> SoPriceDetailList) {
-        if (CollectionUtils.isEmpty(SoPriceDetailList)) {
+    public void updatePriceDetail(String soPriceId, List<SoPriceDetailDTO.UpdateDTO> soPriceDetailList) {
+        if (CollectionUtils.isEmpty(soPriceDetailList)) {
             return;
         }
-        List<SoPriceDetailEntity> dbList = this.getListBySoPriceId(SoPriceId);
+        List<SoPriceDetailEntity> dbList = this.getListBySoPriceId(soPriceId);
         //获取到删除id集合
-        List<String> deleteIdList = getDeleteIds(SoPriceDetailList, dbList);
+        List<String> deleteIdList = getDeleteIds(soPriceDetailList, dbList);
         List<SoPriceDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
 
 
         this.removeByIds(deleteIdList);
-        List<String> skuIds = SoPriceDetailList.stream().map(SoPriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
+        List<String> skuIds = soPriceDetailList.stream().map(SoPriceDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<SoPriceDetailEntity> saveOrUpdateList = new ArrayList<>(SoPriceDetailList.size());
+        List<SoPriceDetailEntity> saveOrUpdateList = new ArrayList<>(soPriceDetailList.size());
 
-       SoPriceEntity soPriceEntity = priceService.getById(SoPriceId);
+       SoPriceEntity soPriceEntity = priceService.getById(soPriceId);
         if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(soPriceEntity)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        for (SoPriceDetailDTO.UpdateDTO item : SoPriceDetailList) {
+        for (SoPriceDetailDTO.UpdateDTO item : soPriceDetailList) {
             SoPriceDetailEntity entity = new SoPriceDetailEntity();
             BeanMapper.copy(item, entity);
             String skuId = item.getSkuId();
@@ -404,7 +403,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             if (skuVO != null) {
                 entity.setSkuNo(skuVO.getSkuNo());
             }
-            entity.setMainId(SoPriceId);
+            entity.setMainId(soPriceId);
             //税率
             BigDecimal taxRate = item.getTaxRate();
             if (taxRate != null) {
@@ -424,11 +423,11 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         //这是修改的
         List<SoPriceDetailEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         //这是删除
-        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(SoPriceId, obj.getSkuNo())).collect(Collectors.toList());
+        List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(soPriceId, obj.getSkuNo())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_PRICE.getCode(), removePairList, "编辑操作");
 
         //这是添加
-        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(SoPriceId, obj.getSkuNo())).collect(Collectors.toList());
+        List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(soPriceId, obj.getSkuNo())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_PRICE.getCode(), addPairList, "编辑操作");
 
         //修改的
@@ -436,7 +435,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             String id = update.getId();
             SoPriceDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
             if (old != null) {
-                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SO_PRICE.getCode(), SoPriceId, "", "");
+                moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SO_PRICE.getCode(), soPriceId, "", "");
             }
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
