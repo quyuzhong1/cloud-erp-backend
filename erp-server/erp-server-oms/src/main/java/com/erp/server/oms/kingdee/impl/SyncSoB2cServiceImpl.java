@@ -651,7 +651,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
     @Override
     public void syncSdyOrderHandler(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operateEnum, String sourceType) {
-        if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equalsIgnoreCase(soB2cEntity.getSourceType())) {
+        if (SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL.getCode().equalsIgnoreCase(sourceType)) {
             // 海外仓推送
             // B2C销售订单作为配货单
             syncDataToSdy(soB2cEntity, soB2cDetailEntityList, operateEnum);
