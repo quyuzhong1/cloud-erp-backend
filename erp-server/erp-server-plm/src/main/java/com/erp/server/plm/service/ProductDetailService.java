@@ -10,6 +10,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -866,4 +868,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param list
      */
     void sendPushTask (List<ProductDetailEntity> list, String operate);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO, ProductInfoEntity oldEntity);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO, ProductPackEntity oldEntity);
+
+    void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList, Boolean isTransaction);
 }

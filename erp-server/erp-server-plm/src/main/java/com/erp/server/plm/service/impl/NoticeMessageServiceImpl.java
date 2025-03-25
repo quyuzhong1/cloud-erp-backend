@@ -2977,7 +2977,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
         }
         //构建消息内容的映射
-        Map<String,Object> contentMap = getCardMessageMap(title, message, url);
+        Map<String,Object> contentMap = getCardMessageMap(title, message, "");
         sendMessage.setContentMap(contentMap);
         //发送消息的结果
         Boolean sendResult = fsService.sendMessage(sendMessage);
