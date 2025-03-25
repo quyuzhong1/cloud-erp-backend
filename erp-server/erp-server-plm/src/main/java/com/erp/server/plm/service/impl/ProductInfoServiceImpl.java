@@ -408,8 +408,27 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(dto.getCategoryId());
         String categoryNames = CollUtil.isEmpty(basicCategoryList) ? "" : basicCategoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.joining("/"));
 
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
+        Map<String, List<ProductDetailEntity>> detailMap = productDetailService.lambdaQuery().in(ProductDetailEntity::getProductId, dto.getProductIds()).list().stream().collect(Collectors.groupingBy(ProductDetailEntity::getProductId));
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
+            ProductInfoDTO productInfoDTO = new  ProductInfoDTO();
+            BeanMapper.copy(productInfoEntity, productInfoDTO);
+            productInfoDTO.setCategory(categoryNames);
+            productInfoDTO.setCategoryId(dto.getCategoryId());
+            List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = productDetailService.getProductBasicChangeField(productInfoDTO, productInfoEntity);
+            //发送通知
+            for (ProductDetailEntity productDetailEntity : detailMap.get(productInfoEntity.getId())) {
+                ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+                noticeDTO.setProductId(productInfoEntity.getId());
+                noticeDTO.setName(productInfoEntity.getName());
+                noticeDTO.setChargeId(productInfoEntity.getChargeId());
+                noticeDTO.setChargeName(productInfoEntity.getChargeName());
+                noticeDTO.setSkuNo(productDetailEntity.getSkuNo());
+                noticeDTO.setProductBasicChangeField(productBasicChangeField);
+                noticeDTOList.add(noticeDTO);
+            }
+
             productInfoEntity.setCategory(category.getName());
             productInfoEntity.setCategoryId(dto.getCategoryId());
             list.add(productInfoEntity);
@@ -427,6 +446,9 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            //发送通知
+            productDetailService.handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
 
             List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
             //推送至金蝶、旺店通、领星
