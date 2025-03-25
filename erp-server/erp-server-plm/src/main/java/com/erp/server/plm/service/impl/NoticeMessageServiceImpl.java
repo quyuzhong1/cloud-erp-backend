@@ -188,7 +188,9 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             throw new ServiceException(ApiError.ERROR_95054);
         }
         //检查节点是否存在
-        checkIfExist(nodeId, null);
+        if(!nodeEntity.getNodeFlag().equals(NoticeEnum.PRODUCT_DETAIL_CHANGE.getFlag())){
+            checkIfExist(nodeId, null);
+        }
         NoticeMessageEntity messageEntity = new NoticeMessageEntity();
         messageEntity.setNodeId(nodeId);
         List<String> itemPeopleList = dto.getItemPeopleList();
@@ -234,7 +236,10 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             throw new ServiceException(ApiError.ERROR_95054);
         }
         //检查节点是否存在
-        checkIfExist(nodeId, dto.getId());
+        //检查节点是否存在
+        if(!nodeEntity.getNodeFlag().equals(NoticeEnum.PRODUCT_DETAIL_CHANGE.getFlag())){
+            checkIfExist(nodeId, dto.getId());
+        }
         NoticeMessageEntity messageEntity = new NoticeMessageEntity();
         messageEntity.setNodeId(nodeId);
         List<String> itemPeopleList = dto.getItemPeopleList();
@@ -2886,7 +2891,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     public void productChangeNotice(NoticeEnum noticeEnum, List<ProductDetailDTO.SkuChangeFieldsDTO> skuChangeFieldsDTOs) {
         // 根据节点标示获取到通知消息实体
         List<NoticeMessageEntity> noticeMessageList = baseMapper.listByNodeFlag(noticeEnum.getFlag());
-        if (CollUtil.isNotEmpty(noticeMessageList) && CollUtil.isEmpty(skuChangeFieldsDTOs)) {
+        if (CollUtil.isNotEmpty(noticeMessageList) && CollUtil.isNotEmpty(skuChangeFieldsDTOs)) {
             // 获取当前登录用户信息
             LoginUser loginUser = UserContext.getLoginUser();
             // 获取当前时间并格式化为字符串
