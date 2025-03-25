@@ -573,6 +573,31 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean deleteByIds(List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return false;
+        }
+        List<SoPriceChangeEntity> priceChangeList = this.listByIds(ids);
+        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        long count = priceChangeList.stream().filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98009);
+        }
+        //删除价目表
+        Boolean result = this.removeByIds(ids);
+        if (!result) {
+          throw new ServiceException(ApiError.ERROR_1002);
+        }
+        //添加日志
+        String content = "删除价目表[%s]";
+        List<Pair<String, String>> pairList = priceChangeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), pairList, "删除");
+        attachmentService.deleteByBusinessIds(ids);
+        return result;
+    }
+    
+    @Override
     public Boolean updateDetailRemark(List<String> ids, String remark) {
         if (CollectionUtils.isEmpty(ids)) {
             return Boolean.TRUE;
@@ -803,5 +828,18 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             resultList.add(excelDTO);
         }
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    /**
+     * 根据销售价目表id  获取对应产品信息
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.scm.dto.SoPriceChangeDTO.ViewDTO>
+     * @author yl
+     * @date 2023-03-31 16:07
+     */
+    @Override
+    public List<SoPriceChangeDetailDTO.ViewDTO> getSkuChangeList(SoPriceChangeDetailDTO.SkuChangeParamDTO dto) {
+        return soPriceDetailService.listPriceChangeDetail(dto);
     }
 }

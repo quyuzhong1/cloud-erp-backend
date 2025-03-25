@@ -795,7 +795,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
         if (result) {
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
+            moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), entity.getId(), "状态变更");
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }

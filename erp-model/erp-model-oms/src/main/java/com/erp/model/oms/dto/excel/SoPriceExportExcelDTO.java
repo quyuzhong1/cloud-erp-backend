@@ -12,11 +12,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * @author Lambda
- * @Classname PurchasePriceExportExcelDTO
-
- * @Date 2023-03-27 18:00
- * @Created by yl
+ * 销售价目导出
+ * @author will
+ * @date 2025/3/25 14:58
  */
 @Data
 @NoArgsConstructor

@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
+import com.erp.model.oms.dto.SoPriceChangeDTO;
 import com.erp.model.oms.dto.SoPriceChangeDetailDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.entity.SoPriceDetailEntity;
@@ -76,6 +77,15 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
     List<SoPriceDetailDTO.ViewDTO> listBySoPriceIds(SoPriceChangeDetailDTO.SkuChangeParamDTO dto);
 
     /**
+     * 采购价目表 点击变更报价 获取到详情
+     * @author yl
+     * @date 2023-04-06 12:03
+     * @param ids
+     * @return com.erp.model.scm.dto.PurchasePriceChangeDTO.ViewDTO
+     */
+    SoPriceChangeDTO.ViewDTO priceChangeDetail(List<String> ids);
+
+    /**
      * @description: 根据价目表明细ids获取产品明细信息
      * @author Will
      * @date: 2023/7/17 12:10
@@ -83,6 +93,14 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
      * @return List<ViewDTO>
      */
     List<SoPriceDetailDTO.ViewDTO> listBySoPriceDetailIds(List<String> soPriceDetailIds);
+    /**
+     * 根据采购价目表id 获取到采购价目变更的明细
+     * @author yl
+     * @date 2023-04-06 18:54
+     * @param dto
+     * @return java.util.List<com.erp.model.scm.dto.PurchasePriceChangeDetailDTO.ViewDTO>
+     */
+    List<SoPriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(SoPriceChangeDetailDTO.SkuChangeParamDTO dto);
 
     /**
      * 修改产品明细

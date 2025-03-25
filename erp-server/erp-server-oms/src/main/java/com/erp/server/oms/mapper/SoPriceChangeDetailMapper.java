@@ -10,7 +10,7 @@ import java.util.List;
 
 /**
  * <p>
- * 产品采购变更价 明细表 Mapper 接口
+ * 产品销售变更价 明细表 Mapper 接口
  * </p>
  *
  * @author will
@@ -20,7 +20,7 @@ import java.util.List;
 public interface SoPriceChangeDetailMapper extends BaseMapper<SoPriceChangeDetailEntity> {
 
     /**
-     * 根据采购价目详情id查询变更详情
+     * 根据销售价目详情id查询变更详情
      * @Author Luo_WG
      * @Date 2024/1/9 15:04
      * @param soPriceDetailIds

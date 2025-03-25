@@ -35,7 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * 产品采购变更价 明细表 服务实现类
+ * 产品销售变更价 明细表 服务实现类
  *
  * @author will
  * @since 2025-03-24
@@ -74,7 +74,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         }
         List<SoPriceChangeDetailDTO.ViewDTO> resultList = BeanMapper.copyList(list, SoPriceChangeDetailDTO.ViewDTO.class);
         List<String> changeDetailIdList = list.stream().map(SoPriceChangeDetailEntity::getId).collect(Collectors.toList());
-        //采购价目详情表id
+        //销售价目详情表id
         List<String> SoPriceDetailIds = resultList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getSoPriceDetailId).collect(Collectors.toList());
         /**
          * 根据变更表id 获取到对应变更历史
@@ -136,7 +136,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
 
 
     /**
-     * 添加采购价目变更明细
+     * 添加销售价目变更明细
      * @param soPriceChangeId
      * @param soPriceChangeDetailList
      * @return void
@@ -170,7 +170,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
     }
 
     /**
-     * 审核通过后 需要修改采购价目详情表的数据
+     * 审核通过后 需要修改销售价目详情表的数据
      * @param soPriceChangeList
      * @return void
      * @author will
@@ -182,12 +182,12 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         //获取到对应数据
         List<SoPriceChangeDetailEntity> list = this.getEntityByPriceChangeIds(soPriceChangeIds);
         List<String> soPriceDetailIdList = list.stream().map(SoPriceChangeDetailEntity::getSoPriceDetailId).collect(Collectors.toList());
-        //获取采购价目详情集合
+        //获取销售价目详情集合
         List<SoPriceDetailEntity> soPriceDetailList = soPriceDetailService.listByIds(soPriceDetailIdList);
         List<SoPriceHistoryEntity> historyList = new ArrayList<>(soPriceDetailList.size());
         List<SoPriceDetailEntity> updateList = new ArrayList<>(soPriceDetailList.size());
         for (SoPriceDetailEntity item : soPriceDetailList) {
-            //采购详情表id
+            //销售详情表id
             String priceDetailId = item.getId();
             //更改的价目
             SoPriceChangeDetailEntity changeDetail = list.stream().filter(P -> P.getSoPriceDetailId().equals(priceDetailId)).findFirst().orElse(null);
@@ -267,16 +267,16 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         List<SoPriceChangeDetailEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
         //这是删除
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(SoPriceChangeId, obj.getSkuNo())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), removePairList, "编辑操作");
+        moduleOperateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), removePairList, "编辑操作");
 
         //这是添加
         List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(SoPriceChangeId, obj.getSkuNo())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), addPairList, "编辑操作");
+        moduleOperateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), addPairList, "编辑操作");
 
         //修改的
         for (SoPriceChangeDetailEntity update : updateList) {
             String id = update.getId();
-            dbList.stream().filter(d -> d.getId().equals(id)).findFirst().ifPresent(old -> moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.PURCHASE_PRICE.getCode(), SoPriceChangeId, "", ""));
+            dbList.stream().filter(d -> d.getId().equals(id)).findFirst().ifPresent(old -> moduleOperateLogService.addModuleOperateLogByObj(old, update, ModuleTypeEnum.SO_PRICE.getCode(), SoPriceChangeId, "", ""));
         }
         this.saveOrUpdateBatch(saveOrUpdateList);
     }
@@ -373,7 +373,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         for (SoPriceChangeDetailEntity entity : list) {
             //检验失效时间需要大于等于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
-                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
+                throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
             }
         }
     }

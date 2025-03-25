@@ -9,11 +9,9 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 /**
- * @author Lambda
- * @Classname PurchasePriceDetailImportExcelDTO
-
- * @Date 2023-03-27 16:59
- * @Created by yl
+ * 销售价目明细导入
+ * @author will
+ * @date 2025/3/25 14:58
  */
 @Data
 @NoArgsConstructor

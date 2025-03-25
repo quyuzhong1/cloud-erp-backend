@@ -4,6 +4,7 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -13,6 +14,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
+import com.erp.model.oms.dto.SoPriceChangeDTO;
 import com.erp.model.oms.dto.SoPriceChangeDetailDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.dto.excel.SoPriceDetailImportExcelDTO;
@@ -129,7 +131,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     }
 
     /**
-     * @description: 验证采购价目明细
+     * @description: 验证销售价目明细
      * @author Will
      * @date: 2024/1/15 9:35
      * @param list
@@ -195,7 +197,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             //区间不能重叠
             if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                     && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
-                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+                throw new ServiceException(ApiError.ERROR_INTERVAL_CUSTOMER_OVERLAP);
             }
         }
     }
@@ -212,17 +214,136 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     public List<SoPriceDetailDTO.ViewDTO> getBySoPriceId(String SoPriceId) {
         List<SoPriceDetailEntity> list = this.getListBySoPriceId(SoPriceId);
         List<SoPriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, SoPriceDetailDTO.ViewDTO.class);
-        //处理采购价目明细信息
+        //处理销售价目明细信息
         handleSoPriceDetail(viewList);
         return viewList;
     }
+
+
+    /**
+     * 销售价目表 点击变更报价 获取到详情
+     *
+     * @param soPriceDetailIds
+     * @return com.erp.model.scm.dto.SoPriceChangeDTO.ViewDTO
+     * @author yl
+     * @date 2023-04-06 12:03
+     */
+    @Override
+    public SoPriceChangeDTO.ViewDTO priceChangeDetail(List<String> soPriceDetailIds) {
+        SoPriceChangeDTO.ViewDTO viewDTO = new SoPriceChangeDTO.ViewDTO();
+        List<SoPriceDetailDTO.ViewDTO> viewList = this.listBySoPriceDetailIds(soPriceDetailIds);
+        if (CollectionUtils.isEmpty(viewList)) {
+            throw new ServiceException(ApiError.ERROR_NOT_FOUND_SO_PRICE_DETAIL);
+        }
+
+        //查询价目信息
+        List<String> soPriceIds = viewList.stream().map(SoPriceDetailDTO.ViewDTO::getSoPriceId).collect(Collectors.toList());
+        List<SoPriceEntity> soPriceEntities = priceService.listByIds(soPriceIds);
+
+        //校验审核状态才可以修改
+        for (SoPriceEntity SoPriceEntity : soPriceEntities) {
+            String approveStatus = SoPriceEntity.getApproveStatus().getStatus();
+            if (!approveStatus.equals(ApproveStatusEnum.APPROVE.getStatus())) {
+                throw new ServiceException(ApiError.ERROR_98029);
+            }
+        }
+
+        //只有相同的销售组织可以批量变更报价
+        long soOrgCount = soPriceEntities.stream().map(req -> req.getSoOrgId()).distinct().count();
+        if (soOrgCount > 1) {
+            throw new ServiceException(ApiError.SO_ORG_NOT_REPEAT);
+        }
+
+        viewDTO.setSoOrgId(soPriceEntities.get(0).getSoOrgId());
+        viewDTO.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        //查询产品信息
+        List<String> skuIds = viewList.stream().map(SoPriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+
+        //查询供应商
+        List<String> customerIds = viewList.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerEntities = customerInfoService.listByIds(customerIds);
+
+        List<SoPriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(viewList.size());
+        for (SoPriceDetailDTO.ViewDTO item : viewList) {
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+            SoPriceChangeDetailDTO.ViewDTO result = new SoPriceChangeDetailDTO.ViewDTO();
+            result.setOldCurrency(item.getCurrency());
+            result.setCurrency(item.getCurrency());
+            result.setCurrencySymbol(item.getCurrencySymbol());
+            result.setOldTaxPrice(item.getTaxPrice());
+            result.setOldTaxRate(item.getTaxRate());
+            result.setOldEffectiveDate(item.getEffectiveDate());
+            result.setSoPriceDetailId(item.getId());
+            result.setMinQty(item.getMinQty());
+            result.setMaxQty(item.getMaxQty());
+            result.setProductName(skuVO.getSkuName());
+            result.setSkuNo(item.getSkuNo());
+            result.setSkuId(item.getSkuId());
+            //销售价目信息
+            SoPriceEntity SoPriceEntity = soPriceEntities.stream().filter(req -> item.getSoPriceId().equals(req.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(SoPriceEntity)) {
+                throw new ServiceException(ApiError.ERROR_98024);
+            }
+
+            //供应商名称
+            CustomerInfoEntity customerEntity = customerEntities.stream().filter(req -> item.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
+            result.setCustomerId(SoPriceEntity.getCustomerId());
+            result.setCustomerName(customerEntity.getName());
+            result.setPriceCode(SoPriceEntity.getCode());
+            resultList.add(result);
+        }
+        viewDTO.setSoPriceChangeDetailList(resultList);
+        return viewDTO;
+    }
+
+    /**
+     * 根据销售价目表id 获取到销售价目变更的明细
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.scm.dto.SoPriceChangeDetailDTO.ViewDTO>
+     * @author yl
+     * @date 2023-04-06 18:54
+     */
+    @Override
+    public List<SoPriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(SoPriceChangeDetailDTO.SkuChangeParamDTO dto) {
+
+        List<SoPriceDetailDTO.ViewDTO> list = this.listBySoPriceIds(dto);
+
+        List<String> skuIds = list.stream().map(SoPriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
+
+        List<SoPriceChangeDetailDTO.ViewDTO> resultList = new ArrayList<>(list.size());
+        for (SoPriceDetailDTO.ViewDTO item : list) {
+            SkuVO skuVO = skuList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+            SoPriceChangeDetailDTO.ViewDTO result = new SoPriceChangeDetailDTO.ViewDTO();
+            result.setMaxQty(item.getMaxQty());
+            result.setMinQty(item.getMinQty());
+            result.setOldTaxRate(item.getTaxRate());
+            result.setOldTaxPrice(item.getTaxPrice());
+            result.setOldCurrency(item.getCurrency());
+            result.setSkuId(item.getSkuId());
+            result.setSkuNo(item.getSkuNo());
+            result.setProductName(skuVO.getSkuName());
+            result.setSoPriceDetailId(item.getId());
+            result.setCustomerId(item.getCustomerId());
+            result.setCustomerName(item.getCustomerName());
+            result.setPriceCode(item.getPriceCode());
+            result.setEffectiveDate(item.getEffectiveDate());
+            result.setDisabled(item.getDisabled());
+            result.setSoOrgName(item.getSoOrgName());
+            resultList.add(result);
+        }
+        return resultList;
+    }
+    
 
     @Override
     public List<SoPriceDetailDTO.ViewDTO> listBySoPriceIds(SoPriceChangeDetailDTO.SkuChangeParamDTO dto) {
         List<SoPriceDetailEntity> list = this.listGetListBySoPriceId(dto);
 
         List<SoPriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, SoPriceDetailDTO.ViewDTO.class);
-        //处理采购价目明细信息
+        //处理销售价目明细信息
         handleSoPriceDetail(viewList);
 
         //根据id查询客户
@@ -241,7 +362,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     public List<SoPriceDetailDTO.ViewDTO> listBySoPriceDetailIds(List<String> SoPriceDetailIds) {
         List<SoPriceDetailEntity> list = baseMapper.listDetailByIds(SoPriceDetailIds);
         List<SoPriceDetailDTO.ViewDTO> viewList = BeanMapper.copyList(list, SoPriceDetailDTO.ViewDTO.class);
-        //处理采购价目明细信息
+        //处理销售价目明细信息
         handleSoPriceDetail(viewList);
         return viewList;
     }
@@ -385,7 +506,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         result.setSuccessList(successList);
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "采购价目详情错误.xlsx";
+            String fileName = "销售价目详情错误.xlsx";
             File file = ExcelUtil.exportFile(fileName, "error", errorList, SoPriceDetailImportExcelDTO.class);
             if (file != null && !file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
@@ -568,7 +689,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             throw new ServiceException(ApiError.ERROR_95084);
         }
 
-        //采购价目表
+        //销售价目表
         List<SoPriceDetailDTO.SoTaxPriceViewDTO> list = baseMapper.getTaxPrice(dto);
         if (CollectionUtils.isNotEmpty(list)) {
             resultList.addAll(list);
@@ -599,7 +720,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
 
     /**
      * @param viewList
-     * @description: 处理采购价目明细信息
+     * @description: 处理销售价目明细信息
      * @author Will
      * @date: 2023/7/17 12:12
      */
