@@ -41,11 +41,11 @@ public class SoPriceChangeQueryHandler extends AbstractQueryHandler {
     public String getTabSql (Object value) {
         //待我审核
         if (SoPriceChangeTabFlagEnum.APPROVE_ING.getCode().equals(value)) {
-            super.buildDefaultDTO("sp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+            super.buildDefaultDTO("spc.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
             //需要审核的业务ids
             List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SO_PRICE_CHANGE.getCode());
             if (CollectionUtils.isNotEmpty(businessIds)) {
-                super.buildDefaultDTO("sp.id", businessIds);
+                super.buildDefaultDTO("spc.id", businessIds);
             }else{
                 //返回空结果
                 return this.getQueryEmptySql();
@@ -53,11 +53,11 @@ public class SoPriceChangeQueryHandler extends AbstractQueryHandler {
         }
         // 已审核
         if (SoPriceChangeTabFlagEnum.APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+            super.buildDefaultDTO("spc.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
         }
         //不通过
         if (SoPriceChangeTabFlagEnum.REJECT.getCode().equals(value)) {
-            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+            super.buildDefaultDTO("spc.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
         }
         return super.getSplicingSQL();
     }
