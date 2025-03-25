@@ -132,6 +132,8 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                             dmpDataMap.put(entry.getKey(), amount);
                             if ("order_total_amount".equalsIgnoreCase(entry.getKey())){
                                 dmpDataMap.put("payAmount", amount);
+                            }
+                            if ("order_item_amount".equalsIgnoreCase(entry.getKey())){
                                 dmpDataMap.put("allAmount", amount);
                             }
                             if ("customer_shipping_amount".equalsIgnoreCase(entry.getKey())){
