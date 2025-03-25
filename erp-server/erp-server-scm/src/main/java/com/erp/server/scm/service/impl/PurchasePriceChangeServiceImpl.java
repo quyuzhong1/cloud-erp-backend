@@ -581,7 +581,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     .collect(Collectors.joining(", "));
             if(ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)){ //待审核
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_HEAD;
-                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime);
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName);
             }else if(ApproveStatusEnum.REJECT.equals(approveStatus)){//不通过
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_HEAD;
                 msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime,comment);
