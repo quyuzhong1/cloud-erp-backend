@@ -58,12 +58,12 @@ public class SoPriceQueryHandler extends AbstractQueryHandler {
         //已审核启用
         if (PurchasePriceTabFlagEnum.APPROVE_ENABLE.getCode().equals(value)) {
             super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-            super.buildDefaultDTO("ppd.disabled",Collections.singletonList(Boolean.FALSE));
+            super.buildDefaultDTO("spd.disabled",Collections.singletonList(Boolean.FALSE));
         }
         //已审核停用
         if (PurchasePriceTabFlagEnum.APPROVE_DISABLED.getCode().equals(value)) {
             super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
-            super.buildDefaultDTO("ppd.disabled", Collections.singletonList(Boolean.TRUE));
+            super.buildDefaultDTO("spd.disabled", Collections.singletonList(Boolean.TRUE));
         }
         return super.getSplicingSQL();
     }
