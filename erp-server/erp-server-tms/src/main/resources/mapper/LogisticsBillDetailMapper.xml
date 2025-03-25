@@ -53,7 +53,6 @@
             </if>
             update_time = NOW()
         from logistics_bill lb
-                 LEFT JOIN logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
         where
             lb.id = logistics_bill_detail.main_id
           and logistics_bill_detail.is_deleted = false
@@ -74,7 +73,6 @@
         update_time = NOW(),
         track_time = NOW()
         from logistics_bill lb
-        LEFT JOIN logistics_channel lc on lc.id = lb.channel_id and lc.is_deleted = false
         where lb.id = logistics_bill_detail.main_id
         and logistics_bill_detail.is_deleted = false
         and logistics_bill_detail.register_status != #{status}

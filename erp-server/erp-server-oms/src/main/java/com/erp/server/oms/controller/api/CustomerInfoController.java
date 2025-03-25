@@ -18,6 +18,8 @@ import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
@@ -510,5 +512,14 @@ public class CustomerInfoController extends BaseController {
     public ApiResult initHistoryCustomerDeptId() {
         customerInfoService.initHistoryCustomerDeptId();
         return success();
+    }
+
+
+    /**
+     * 根据客户id查询虚拟仓
+     **/
+    @PostMapping("/getVirtualWarehouseByCustomerId")
+    public ApiResult<VirtualWarehouseDTO.VwDTO> getVirtualWarehouseByCustomerId(@RequestBody @Validated CustomerDTO.VirtualDTO dto) {
+        return success(customerInfoService.getVirtualWarehouseByCustomerId(dto));
     }
 }

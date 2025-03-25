@@ -52,7 +52,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(AliexpressDeliveryDTO.AddDTO addDTO) {
+    public BaseResultDTO.AddDTO addOrUpdate(AliexpressDeliveryDTO.AddDTO addDTO) {
         AliexpressDeliveryEntity aliexpressDeliveryEntity = new AliexpressDeliveryEntity();
         BeanMapperUtils.copy(addDTO, aliexpressDeliveryEntity);
         //检查记录是否已存在
@@ -76,7 +76,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
             throw new ServiceException("速卖通发货单保存失败");
         }
         addDTO.getDetailList().forEach(v->v.setMainId(aliexpressDeliveryEntity.getId()));
-        detailService.add(addDTO.getDetailList());
+        detailService.addOrUpdate(addDTO.getDetailList(), addDTO.getPlatformCode());
         return new BaseResultDTO.AddDTO(aliexpressDeliveryEntity.getId(), aliexpressDeliveryEntity.getPlatformCode());
     }
 

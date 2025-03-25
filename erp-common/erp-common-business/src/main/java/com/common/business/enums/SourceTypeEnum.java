@@ -98,6 +98,7 @@ public enum SourceTypeEnum {
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
     SDY_SKU_MAPPING( "sdy_skuMapping", "sku映射","sku_mapping"),
+    CFG_VAT_INVOICE( "cfgVatInvoice", "VAT发票设置","cfg_vat_invoice"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
@@ -240,6 +241,9 @@ public enum SourceTypeEnum {
     SDY_SO_OUTSTOCK("sdySoOutstock", "速帝云销售出库订单","so_outstock"),
     SDY_SO_RETURN_INSTOCK("sdySoReturnInstock", "速帝云退货入库单","so_return_instock"),
     SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
+    SDY_SELF_DELIVERY_ORDER("sdySelfDeliveryOrder", "速帝云自发货配货单","so_b2c_delivery"),
+    SDY_ALIEXPRESS_DELIVERY_ORDER("sdyAliExpressDeliveryOrder", "速帝云速卖通配货单","aliexpress_delivery"),
+
     ;
 
     /**

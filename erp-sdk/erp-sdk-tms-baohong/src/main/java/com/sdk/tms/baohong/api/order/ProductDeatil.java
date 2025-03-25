@@ -45,7 +45,9 @@ import javax.xml.bind.annotation.XmlType;
     "opQuantity",
     "purposeDeclaredValue",
     "productLink",
-    "currencyCode"
+    "currencyCode",
+    "salePrice",
+    "saleCurrencyCode"
 })
 @Data
 @AllArgsConstructor
@@ -85,6 +87,29 @@ public class ProductDeatil {
      */
     protected String currencyCode;
 
+    /**
+     * 订单销售单价
+     */
+    protected String salePrice;
+    /**
+     * 订单销售币制
+     */
+    protected String saleCurrencyCode;
+    public String getSalePrice() {
+        return salePrice;
+    }
+
+    public void setSalePrice(String salePrice) {
+        this.salePrice = salePrice;
+    }
+
+    public String getSaleCurrencyCode() {
+        return saleCurrencyCode;
+    }
+
+    public void setSaleCurrencyCode(String saleCurrencyCode) {
+        this.saleCurrencyCode = saleCurrencyCode;
+    }
     /**
      * 获取productSku属性的值。
      * 

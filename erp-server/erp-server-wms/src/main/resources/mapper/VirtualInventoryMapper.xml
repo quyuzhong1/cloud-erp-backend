@@ -509,8 +509,11 @@
             <foreach collection="params.virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-            <if test="params.dictInventoryStatus != null and params.dictInventoryStatus != ''">
-                and vi.dict_inventory_status = #{params.dictInventoryStatus}
+            <if test="params.dictInventoryStatusList != null and params.dictInventoryStatusList.size > 0">
+                and vi.dict_inventory_status in
+                <foreach collection="params.dictInventoryStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
             </if>
         </where>
         group by  vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id,vi.dict_inventory_status

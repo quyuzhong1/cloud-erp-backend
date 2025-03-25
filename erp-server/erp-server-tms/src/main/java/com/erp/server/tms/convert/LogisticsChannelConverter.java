@@ -193,6 +193,7 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "logisticsPlatform", constant = "goodcang"),
             @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
             @Mapping(target = "platformWarehouseCode", source = "warehouseCode"),
+            @Mapping(target = "carrierType", source = "distributorType"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByGoodCang(GoodCangLogisticsProductsResp data);
@@ -287,11 +288,12 @@ public interface LogisticsChannelConverter {
             @Mapping(target = "cnName", source = "name"),
             @Mapping(target = "enName", source = "nameEn"),
             @Mapping(target = "isTrack", constant = "true"),
-            @Mapping(target = "logisticsPlatform", constant = "antu"),
+            @Mapping(target = "logisticsPlatform", source = "logisticsPlatform"),
             @Mapping(target = "overseasWarehouseId", source = "erpWarehouseId"),
             @Mapping(target = "platformWarehouseCode", source = "warehouseCode"),
             @Mapping(target = "id", ignore = true)
     })
     LogisticsSaleChannelEntity channelConvertByAntu(AntuLogisticsProductsResp data);
     List<LogisticsSaleChannelEntity> channelConvertByAntu(List<AntuLogisticsProductsResp> data);
+
 }

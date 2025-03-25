@@ -261,7 +261,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         Map<String, LogisticsChannelEntity> channelMap = logisticsChannelService.listByIds(channelIds)
                 .stream()
                 .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-
+        //发货单
+        List<String> deliveryCodes = list.stream().map(TmsFirstMileReconciliationDetailDTO.ExportDetailDTO::getRelationCode).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDTO.BusinessDTO> businessDTOList = wmsFirstMileDeliveryFeign.getBusinessCodeByCodes(deliveryCodes);
         Map<String, String> idSymbolMap = FeignQuery.list(DictCurrencyEntity.class).stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getSymbol));
         for (TmsFirstMileReconciliationDetailDTO.ExportDetailDTO data : list) {
             //审核状态名称
@@ -295,6 +297,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     data.setReconciliationCountName(data.getReconciliationCount()+"次对账");
                 }
 
+            }
+            //业务单号查询逻辑修改 展示FBA发货单号和第三方货号-同期初展示逻辑
+            FirstMileDeliveryDTO.BusinessDTO businessDTO = businessDTOList.stream().filter(e -> Objects.equals(e.getCode(), data.getRelationCode())).findFirst().orElse(null);
+            if (Objects.nonNull(businessDTO)){
+                data.setBusinessCode(businessDTO.getBusinessCode());
+            }else {
+                data.setBusinessCode("");
             }
             data.setShippingCostStr(idSymbolMap.get(data.getShippingCostCurrency()) + data.getShippingCost());
             data.setDeclareCostStr(idSymbolMap.get(data.getDeclareCostCurrency()) + data.getDeclareCost());
@@ -1413,12 +1422,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             throw new ServiceException(ApiError.ERROR_1016);
         }
         TmsFirstMileReconciliationDetailDTO.ImportDTO importDTO = new TmsFirstMileReconciliationDetailDTO.ImportDTO();
-
-        //验证导入数据是否为空
-        List<FirstMileReconciliationStandardExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
-        if (CollectionUtils.isEmpty(excelDateList)) {
-            throw new ServiceException(ApiError.ERROR_95123);
-        }
         //导入数据处理
         List<FirstMileReconciliationStandardExcelDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
@@ -1464,10 +1467,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         sourceLogisticList = sourceLogisticList.stream().filter(e -> Objects.equals(mainEntity.getId(), e.getReconciliationId())).collect(Collectors.toList());
         // 补充来源信息
         this.fillWaitReconciliationData(sourceLogisticList);
-//        Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceLogisticMap = sourceLogisticList
-//                .stream()
-//                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTransportNo));
-
         // 物流跟踪单
         // 原对数据库账明细信息
         List<TmsFirstMileReconciliationDetailEntity> oldDetailList = this.listByMainIds(Collections.singletonList(mainEntity.getId()));
@@ -1475,12 +1474,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, oldDetailList);
         // 补充基础信息
         this.fillDetailList(viewDTOList, currency, currencyView);
-
-        // 按分组Map<物流运单号, Map<来源物流ID, 当前明细数组>>
-//        Map<String, Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>>> oldDbGroupMap = viewDTOList
-//                .stream()
-//                .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getTrackNo,
-//                        Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId)));
         // 按分组Map<物流运单号, 当前明细数组>
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> oldDbGroupMap = viewDTOList
                 .stream()
@@ -1617,14 +1610,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 errorList.add(excelDTO);
                 continue;
             }
-
-            //存在费用并且数量大于0
-            if (null != erpFieldDropDownDTO && MathUtil.compareTo(MathUtil.valueOf(excelDTO.getCostValue()), MathUtil.ZERO) <= MathUtil.ZERO) {
-                excelDTO.setErrorMsg(CharSequenceUtil.format("费用金额【{}】必须大于0", excelDTO.getCostValue()));
-                errorList.add(excelDTO);
-                continue;
-            }
-
             // 按sourceId分组
             Map<String, Map<String, TmsFirstMileReconciliationDetailDTO.ListDTO>> sourceListMap = currentTrackNoList.stream()
                     .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId,

@@ -18,6 +18,7 @@ public enum FieldFormatPatternTypeEnum  {
     ENUM_NUMBER_LETTER("number_letter", "数字和字母","^[a-z0-9A-Z]+$"),
     ENUM_NOT_CHINESE("not_chinese","非中文","[\\x00-\\xff]+"),
     ENUM_AMOUNT("amount", "金额","^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,4})?$"),
+    ENUM_AMOUNT_NORMAL("amountNormal", "金额","^-?(([1-9]\\d*)|([0]{1}))(\\.(\\d){0,4})?$"),
     ENUM_AMOUNT2("amount2", "金额(两位小数)","^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,2})?$"),
     ENUM_AMOUNT4("amount4", "金额(四位小数)","^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,4})?$"),
     ENUM_AMOUNT6("amount6", "金额(六位小数)","^(([1-9]{1}\\d*)|([0]{1}))(\\.(\\d){0,6})?$"),
@@ -51,6 +52,7 @@ public enum FieldFormatPatternTypeEnum  {
     public static final String NUMBER_LETTER = "number_letter";
     public static final String NOT_CHINESE = "not_chinese";
     public static final String AMOUNT = "amount";
+    public static final String AMOUNT_NORMAL = "amountNormal";
     public static final String AMOUNT2 = "amount2";
     public static final String AMOUNT4 = "amount4";
     public static final String AMOUNT6 = "amount6";

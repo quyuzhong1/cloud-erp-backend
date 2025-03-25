@@ -24,7 +24,6 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 @TableName("logistics_track")
 public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
-
     /**
     * 运单号
     */

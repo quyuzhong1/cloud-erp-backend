@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -159,4 +160,6 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     Boolean uploadFileDTO(List<PackageForecastDTO.UploadFileDTO> uploadFileDTO);
 
     List<PackageForecastDTO.UploadFileViewDTO> uploadLabelView(List<String> ids);
+
+    void batchPrint(List<String> ids, HttpServletResponse response);
 }

@@ -8,6 +8,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
@@ -149,9 +150,31 @@ public interface TmsFirstMileLogisticService extends SuperService<LogisticsBillE
 
     /**
      * 下推重量分摊
-     * @param id 物流单ID
+     * @param entity
      */
-    BatchResultDTO pushWeightAllocation(String id) throws InterruptedException;
+    BatchResultDTO pushWeightAllocation(LogisticsBillEntity entity) throws InterruptedException;
 
     BatchResultDTO generateLogisticsBill(FirstMileDeliveryEntity firstMileDeliveryEntity);
+
+    /**
+     * 批量更新渠道
+     * @param dtoList
+     * @return
+     */
+    List<BatchResultDTO> batchUpdateChannel(List<TmsFirstMileLogisticDTO.UpdateChannelDTO> dtoList);
+
+    /**
+     * 根据业务单号查询物流单
+     * @param businessCodeList
+     * @param outstockCodeList
+     * @return
+     */
+    List<LogisticsBillEntity> listBySourceCodeList(List<String> businessCodeList, List<String> outstockCodeList, List<String> transportList);
+
+    /**
+     * 查询物流单轨迹
+     * @param logisticsBillId
+     * */
+
+    LogisticsTrackDTO.ViewDTO listTrack(String logisticsBillId);
 }

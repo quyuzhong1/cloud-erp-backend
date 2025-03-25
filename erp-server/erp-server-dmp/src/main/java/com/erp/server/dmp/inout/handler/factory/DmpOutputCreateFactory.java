@@ -1,11 +1,13 @@
 package com.erp.server.dmp.inout.handler.factory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,6 +138,18 @@ public class DmpOutputCreateFactory{
 		String inputConvertId = dmpCfgOutputEntity.getInputConvertId();
 		DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpHandlerCache.getDmpCfgInputConvertEntityList(d -> d.getId().equals(inputConvertId)).get(0);
 		String inputStatus = dmpCfgInputConvertEntity.getInputStatus();
+		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache
+				.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(dmpCfgInputConvertEntity.getMainId()) && d.getInputStatus().equals(inputStatus));
+		String extendJson = dmpCfgOutputEntity.getExtendJson();
+		if(StringUtils.isNotBlank(extendJson)) {
+			JSONObject extendJsonObject = JSON.parseObject(extendJson);
+			String orders = extendJsonObject.getString("orders");
+			if(StringUtils.isNotBlank(orders)) {
+				List<Integer> orderList = Stream.of(orders.split(",")).map(Integer::valueOf).collect(Collectors.toList());
+				dmpCfgInputConvertEntityList.removeIf(d -> !orderList.contains(d.getOrder()));
+			}
+		}
+		dmpCfgInputConvertEntityList.sort((d1 , d2) -> d1.getOrder().compareTo(d2.getOrder()));
 		if(DmpInputTaskStatusEnum.FDS.getCode().equals(inputStatus)) {
 			throw new ServiceException("推送fds数据未实现");
 		}else if(DmpInputTaskStatusEnum.MONGO.getCode().equals(inputStatus)) {
@@ -143,9 +157,6 @@ public class DmpOutputCreateFactory{
 		}else if(DmpInputTaskStatusEnum.DMP.getCode().equals(inputStatus)) {
 			List<QueryParam> queryParams = dmpRequest.getQueryParams();
 			QueryWrapper<?> queryWrapper = QueryParam.getQueryWrapper(queryParams);
-			List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache
-					.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(dmpCfgInputConvertEntity.getMainId()) && d.getInputStatus().equals(inputStatus));
-			dmpCfgInputConvertEntityList.sort((d1 , d2) -> d1.getOrder().compareTo(d2.getOrder()));
 			
 			DmpCfgInputConvertEntity mainDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
 			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(mainDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
@@ -201,6 +212,15 @@ public class DmpOutputCreateFactory{
 		String inputStatus = dmpCfgInputConvertEntity.getInputStatus();
 		List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList = dmpHandlerCache
 				.getDmpCfgInputConvertEntityList(d -> d.getMainId().equals(dmpCfgInputConvertEntity.getMainId()) && d.getInputStatus().equals(inputStatus));
+		String extendJson = dmpCfgOutputEntity.getExtendJson();
+		if(StringUtils.isNotBlank(extendJson)) {
+			JSONObject extendJsonObject = JSON.parseObject(extendJson);
+			String orders = extendJsonObject.getString("orders");
+			if(StringUtils.isNotBlank(orders)) {
+				List<Integer> orderList = Stream.of(orders.split(",")).map(Integer::valueOf).collect(Collectors.toList());
+				dmpCfgInputConvertEntityList.removeIf(d -> !orderList.contains(d.getOrder()));
+			}
+		}
 		dmpCfgInputConvertEntityList.sort((d1 , d2) -> d1.getOrder().compareTo(d2.getOrder()));
 		List<QueryParam> queryParams = dmpRequest.getQueryParams();
 		DmpCfgInputConvertEntity mainDmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
@@ -246,30 +266,31 @@ public class DmpOutputCreateFactory{
 				dmpOutputTaskRequest.getChangeConvertInputMongoEntityListMaps().put(mainDmpCfgInputConvertEntity, findMongoData);
 			}
 		}else if(DmpInputTaskStatusEnum.DMP.getCode().equals(inputStatus)) {
-			String extendJson = dmpCfgOutputEntity.getExtendJson();
 			List<BaseEntity> list = null;
 			if(StringUtils.isNotBlank(extendJson)) {
 				JSONObject parseObject = JSON.parseObject(extendJson);
 				String tableName = parseObject.getString("tableName");
-				ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(tableName, true) + "ServiceImpl" , ServiceImpl.class);
-				list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));
-				if(CollUtil.isEmpty(list)) {
-					return null;
+				if(StringUtils.isNotBlank(tableName)) {
+					ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(tableName, true) + "ServiceImpl" , ServiceImpl.class);
+					list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));
+					if(CollUtil.isEmpty(list)) {
+						return null;
+					}
+					String parentPropertie = parseObject.getString("parentPropertie");
+					if(StringUtils.isBlank(parentPropertie)) {
+						parentPropertie = "id";
+					}
+					String childPropertie = parseObject.getString("childPropertie");
+					if(StringUtils.isBlank(childPropertie)) {
+						childPropertie = "mainId";
+					}
+					queryParams = new ArrayList<>();
+					List<Object> values = new ArrayList<>();
+					for(BaseEntity l : list) {
+						values.add(BeanUtil.beanToMap(l, childPropertie).get(childPropertie));
+					}
+					queryParams.add(new QueryParam(QueryTypeEnum.IN, parentPropertie, values));
 				}
-				String parentPropertie = parseObject.getString("parentPropertie");
-				if(StringUtils.isBlank(parentPropertie)) {
-					parentPropertie = "id";
-				}
-				String childPropertie = parseObject.getString("childPropertie");
-				if(StringUtils.isBlank(childPropertie)) {
-					childPropertie = "mainId";
-				}
-				queryParams = new ArrayList<>();
-				List<Object> values = new ArrayList<>();
-				for(BaseEntity l : list) {
-					values.add(BeanUtil.beanToMap(l, childPropertie).get(childPropertie));
-				}
-				queryParams.add(new QueryParam(QueryTypeEnum.IN, parentPropertie, values));
 			}
 			ServiceImpl serviceImpl = ApplicationContextUtils.getBean(StrUtils.underlineToCamel(mainDmpCfgInputConvertEntity.getStorageName(), true) + "ServiceImpl" , ServiceImpl.class);
 			list = serviceImpl.list(QueryParam.getQueryWrapper(queryParams));

@@ -38,7 +38,8 @@
         fdd.fba_shipment_code fbaShipmentCode,
         pt.packing_status as packingStatus,
         pt.id as taskId,
-        fd.declare_status
+        fd.declare_status,
+        fd.transfer_warehouse_ids
         FROM first_mile_delivery_detail fdd
         LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
         LEFT JOIN packing_task pt on  (pt.source_id = fd.id  or pt.source_id = fd.source_id ) and pt.is_deleted = false
@@ -65,6 +66,7 @@
     <select id="listExport" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$ListDTO">
         SELECT
         fd.id,
+        fdd.id as detailId,
         fd.code,
         fd.source_code AS sourceCode,
         fd.demand_type AS demandType,
@@ -92,15 +94,16 @@
         fd.create_time AS createTime,
         fd.approve_user_name AS approveUserName,
         fd.approve_time AS approveTime,
-        op.code as provideCode,
         fdd.platform_sku_no as thirdWarehouseSku,
         fd.logistics_status,
+        fdd.fba_shipment_code fbaShipmentCode,
+        pt.packing_status as packingStatus,
+        pt.id as taskId,
         fd.declare_status,
-        fdd.fba_shipment_code fbaShipmentCode
-        FROM first_mile_delivery fd
-        INNER JOIN first_mile_delivery_detail fdd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
-        LEFT JOIN overseas_provider_warehouse opw on opw.warehouse_id = fd.dest_warehouse_id and opw.is_deleted = false
-        LEFT JOIN overseas_provider op on op.id = opw.main_id and op.is_deleted = false
+        fd.transfer_warehouse_ids
+        FROM first_mile_delivery_detail fdd
+        LEFT JOIN first_mile_delivery fd ON fd.id = fdd.main_id AND fdd.is_deleted = FALSE
+        LEFT JOIN packing_task pt on  (pt.source_id = fd.id  or pt.source_id = fd.source_id ) and pt.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and fd.is_deleted = FALSE

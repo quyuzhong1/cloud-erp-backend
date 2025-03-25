@@ -340,7 +340,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      * 枚举：OrderSubTypeEnum
      */
     @TableField("transaction_sub_type")
-    private String transactionSubType = "onlineOrder";
+    private String transactionSubType;
 
     /**
      * 是否超范围派送，是：true  否：false
@@ -371,6 +371,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("third_system")
     private String thirdSystem;
+
+    /**
+     * 发票状态 VatInvoiceStatusEnum
+     */
+    @TableField("vat_invoice_status")
+    private String vatInvoiceStatus;
 
     public static final String CODE = "code";
 
@@ -443,6 +449,7 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", payAmount=" + payAmount +
                 ", dictPayMethod='" + dictPayMethod + '\'' +
                 ", buyerRemark='" + buyerRemark + '\'' +
+                ", isCancel=" + isCancel +
                 '}';
     }
 

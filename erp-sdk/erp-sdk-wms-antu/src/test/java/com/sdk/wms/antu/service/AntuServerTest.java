@@ -1,6 +1,7 @@
 package com.sdk.wms.antu.service;
 
 import cn.hutool.json.JSONUtil;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.antu.dto.request.*;
 import com.sdk.wms.antu.dto.response.*;
@@ -39,7 +40,7 @@ public class AntuServerTest {
     public void getWarehouseTest() {
         AntuGetProductReq antuProductReq = AntuGetProductReq.builder()
                 .build();
-        AntuResponse<List<AntuWarehouseResp>> response = antuService.getTransferWarehouse(antuProductReq);
+        AntuResponse<List<AntuWarehouseResp>> response = antuService.getTransferWarehouse(antuProductReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 
@@ -51,12 +52,12 @@ public class AntuServerTest {
                 .updateStartTime("2024-06-25 15:47:18")
                 .updateEndTime("2024-06-25 15:47:18")
                 .build();
-        AntuResponse<List<AntuProductResp>> response = antuService.getSkuList(antuProductReq);
+        AntuResponse<List<AntuProductResp>> response = antuService.getSkuList(antuProductReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(JSONUtil.toJsonStr(response));
     }
     @Test
     public void getReceivingRegionTest() {
-        AntuResponse<List<AntuRegionResp>> response = antuService.getReceivingRegion();
+        AntuResponse<List<AntuRegionResp>> response = antuService.getReceivingRegion(OmsPlatformEnum.OMS_ANTU);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -66,7 +67,7 @@ public class AntuServerTest {
                 .page(1)
                 .pageSize(100)
                 .build();
-        AntuResponse<List<AntuInventoryResp>> response = antuService.getProductInventory(req);
+        AntuResponse<List<AntuInventoryResp>> response = antuService.getProductInventory(req, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 
@@ -77,7 +78,7 @@ public class AntuServerTest {
                 .pageSize(100)
                 .receivingCodeArr(Arrays.asList("RVA091-240702-0001"))
                 .build();
-        AntuResponse<List<AntuReceiptResp>> response = antuService.getReceiptBatch(req);
+        AntuResponse<List<AntuReceiptResp>> response = antuService.getReceiptBatch(req, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 
@@ -89,13 +90,13 @@ public class AntuServerTest {
                 .modifyDateFrom(LocalDateTime.parse("2024-08-26T18:30:11"))
                 .modifyDateTo(LocalDateTime.parse("2024-08-28T18:40:11"))
                 .build();
-        AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req);
+        AntuResponse<List<AntuOutboundResp>> response = antuService.getOutboundBatch(req, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 
     @Test
     public void getShippingMethodTest() {
-        AntuResponse<List<AntuLogisticsProductsResp>> response = antuService.getShippingMethod(null);
+        AntuResponse<List<AntuLogisticsProductsResp>> response = antuService.getShippingMethod(null, OmsPlatformEnum.OMS_ANTU);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -128,13 +129,13 @@ public class AntuServerTest {
                                 .build()
                 ))
                 .build();
-        AntuResponse<String> response = antuService.createOutboundBill(antuCreateOutboundReq);
+        AntuResponse<String> response = antuService.createOutboundBill(antuCreateOutboundReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 
     @Test
     public void cancelOutboundBillTest() {
-        AntuResponse<String> response = antuService.cancelOutboundBill("A001-240621-0003","平台拦截");
+        AntuResponse<String> response = antuService.cancelOutboundBill("A001-240621-0003","平台拦截", OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 
@@ -158,7 +159,7 @@ public class AntuServerTest {
                         .build()))
                 .build();
         System.out.println(JSONUtil.toJsonStr(antuGetReceiptReq));
-        AntuResponse<String> response = antuService.createInboundBill(antuGetReceiptReq);
+        AntuResponse<String> response = antuService.createInboundBill(antuGetReceiptReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
 
@@ -173,12 +174,12 @@ public class AntuServerTest {
                         .quantity(14)
                         .build()))
                 .build();
-        AntuResponse<String> response = antuService.editInboundBill(antuGetReceiptReq);
+        AntuResponse<String> response = antuService.editInboundBill(antuGetReceiptReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
     @Test
     public void cancelInboundBillTest() {
-        AntuResponse<String> response = antuService.cancelInboundBill("RVA001-240826-0003");
+        AntuResponse<String> response = antuService.cancelInboundBill("RVA001-240826-0003", OmsPlatformEnum.OMS_ANTU);
         System.out.println(response);
     }
     @Test
@@ -187,7 +188,7 @@ public class AntuServerTest {
                 .page(1)
                 .pageSize(100)
                 .build();
-        AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq);
+        AntuResponse<List<AntuReturnResp>> response = antuService.getReturnInstock(antuGetReturnReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -203,7 +204,7 @@ public class AntuServerTest {
 //                .width(1F)
 //                .height(1F)
                 .build();
-        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq);
+        AntuResponse<List<AntuCalculateFeeResp>> response = antuService.getCalculateFeeBatch(antuCalculateFeeReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(JSONUtil.toJsonStr(response));
     }
 
@@ -229,7 +230,7 @@ public class AntuServerTest {
                 .fileNote("")
                 .fileUrl("")
                 .build();
-        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuCalculateFeeReq);
+        AntuResponse<AntuUploadFileResp> response = antuService.uploadFile(antuCalculateFeeReq, OmsPlatformEnum.OMS_ANTU);
         System.out.println(JSONUtil.toJsonStr(response));
         //{"ask":"Success","message":"","data":{"attachId":92484,"url":"https://hk-wms-oms-cdn.yunwms.com/ecoms/ntzq7s7/pdf/2025/02/14/20250214102241_53xkl.pdf"}}
     }

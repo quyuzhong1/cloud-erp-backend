@@ -428,6 +428,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 审核不通过原因
          */
         private String reason;
+        /**
+         * 明细数量
+         */
+        private Integer detailCount;
 
         /**
          * 明细列表
