@@ -73,7 +73,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 // 订单状态
                 String sourceOrderStatus = dmpDataMap.getOrDefault("status", "").toString();
-                dmpDataMap.put("orderStatus", convertDmpOrderStatus(sourceOrderStatus, isPlatformWarehouseOrder));
+                dmpDataMap.put("deliveryStatus", convertDmpOrderStatus(sourceOrderStatus, isPlatformWarehouseOrder));
 
                 // 更新时间
                 String updateTimeStr = dmpDataMap.getOrDefault("update_time", "").toString();
@@ -111,7 +111,7 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 // 审核状态
                 String approveStatus = convertApproveStatus(sourceOrderStatus, isPlatformWarehouseOrder);
-                dmpDataMap.put("approveStatus", approveStatus);
+                dmpDataMap.put("orderStatus", approveStatus);
 
                 // 店铺ID
                 String storeId = dmpDataMap.getOrDefault("store_id", "").toString();
