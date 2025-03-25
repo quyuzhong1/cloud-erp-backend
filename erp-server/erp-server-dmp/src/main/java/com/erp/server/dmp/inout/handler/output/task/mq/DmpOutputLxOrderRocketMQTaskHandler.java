@@ -168,7 +168,7 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         orderDTO.setApproveStatusStr(dmpSoInfoEntity.getApproveStatus());
 
         // 订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getAllAmount());
+        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
         // 币别（原币）
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
