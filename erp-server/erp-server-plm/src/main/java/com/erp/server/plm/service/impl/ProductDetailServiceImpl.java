@@ -1086,7 +1086,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return differentFields;
     }
 
-    private List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO) {
+    public List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO) {
         if(StringUtils.isBlank(productInfoDTO.getId())){
             return Collections.emptyList();
         }
@@ -1106,7 +1106,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         return compareFields(oldEntity, productInfoDTO,fieldsToCompare);
     }
 
-        private List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO ) {
+    public List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO ) {
         if(StringUtils.isBlank(productPackDTO.getId())){
             return Collections.emptyList();
         }
@@ -1129,7 +1129,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      * 处理产品变更通知
      * 当产品基本信息或包装信息发生变化时，发送通知
      */
-    private void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList , Boolean isTransaction) {
+    public void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList , Boolean isTransaction) {
         // 检查是否有产品基本信息或包装信息变更
         if(CollUtil.isNotEmpty(noticeDTOList)){
             // 创建通知列表并添加变更信息
@@ -1204,6 +1204,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         //产品款名和产品品名关系处理
         handleProductNames(productNoSpecDTO);
+
+        //获取产品基本信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productSpuBaseInfoDTO);
+        //获取产品包装信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
 
         //SKU操作日志-产品信息
         ProductInfoEntity productInfoEntity = productInfoService.getById(productSpuBaseInfoDTO.getId());
@@ -1376,10 +1381,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //增加默认记录
         productCustomsService.addDefaultCustoms(Collections.singletonList(skuId));
 
-        //获取产品基本信息修改的字段
-        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productSpuBaseInfoDTO);
-        //获取产品包装信息修改的字段
-        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
         //发送通知
         ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
         noticeDTO.setProductId(id);
@@ -1535,6 +1536,18 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             checkSizeAndWeight(productPackDTO);
         });
 
+        //获取产品基本信息修改的字段
+        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productManySpecDTO.getProductInfoDTO());
+        //获取产品包装信息修改的字段
+        Map<String,List<ProductDetailDTO.SkuChangeInfoDTO>> productPackChangeFieldMap = new HashMap<>();
+        if(CollUtil.isNotEmpty(productManySpecDTO.getProductPackList())){
+            for (ProductPackDTO productPackDTO : productManySpecDTO.getProductPackList()) {
+                String skuNo = productPackDTO.getSkuNo();
+                List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
+                productPackChangeFieldMap.put(skuNo,productPackChangeField);
+            }
+        }
+
         //1.修改产品表 主表信息
         ProductInfoDTO productInfoDTO = productManySpecDTO.getProductInfoDTO();
         productInfoDTO.setSpecType(2);
@@ -1676,17 +1689,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //增加默认记录
         productCustomsService.addDefaultCustoms(productDetailLists.stream().map(ProductDetailDTO::getId).collect(Collectors.toList()));
 
-        //获取产品基本信息修改的字段
-        List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productManySpecDTO.getProductInfoDTO());
-        //获取产品包装信息修改的字段
-        Map<String,List<ProductDetailDTO.SkuChangeInfoDTO>> productPackChangeFieldMap = new HashMap<>();
-        if(CollUtil.isNotEmpty(productManySpecDTO.getProductPackList())){
-            for (ProductPackDTO productPackDTO : productManySpecDTO.getProductPackList()) {
-                String skuNo = productPackDTO.getSkuNo();
-                List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
-                productPackChangeFieldMap.put(skuNo,productPackChangeField);
-            }
-        }
         List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
         for (ProductDetailDTO productDetailDTO : productDetailLists) {
             //发送通知
@@ -5529,12 +5531,6 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 productPackDTO.setBoxQty(MathUtil.valueOf(dto.getBoxQty()));
             }
             productNoSpecDTO.setProductPackDTO(productPackDTO);
-            if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
-                this.inportExcel(productNoSpecDTO);
-            }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
-                ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
-                bean.inportExcelAndSync(productNoSpecDTO,productBy);
-            }
 
             //获取产品基本信息修改的字段
             List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productInfoDTO);
@@ -5550,8 +5546,14 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noticeDTO.setProductBasicChangeField(productBasicChangeField);
             noticeDTO.setProductPackChangeField(productPackChangeField);
             noticeDTOList.add(noticeDTO);
-
             productIdList.add(productInfoDTO.getId());
+
+            if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
+                this.inportExcel(productNoSpecDTO);
+            }else if(importType.equals(ImportTypeEnum.IMPORT_APPROVAL.getCode())){
+                ProductDetailServiceImpl bean = ApplicationContextUtils.getBean(ProductDetailServiceImpl.class);
+                bean.inportExcelAndSync(productNoSpecDTO,productBy);
+            }
         }
         //发送消息
         handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
