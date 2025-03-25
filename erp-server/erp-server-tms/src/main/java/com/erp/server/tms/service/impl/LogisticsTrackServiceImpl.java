@@ -15,6 +15,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
@@ -146,6 +147,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }
             String status = item.getStatus();
             String statusName = LogisticTrackStatusEnum.getName(status);
+            if (CharSequenceUtil.isBlank(statusName)){
+                FmLogisticTrackStatusEnum fmLogisticTrackStatusEnum = FmLogisticTrackStatusEnum.getNameByCode(status);
+                statusName = Objects.nonNull(fmLogisticTrackStatusEnum) ?fmLogisticTrackStatusEnum.getName() :CharSequenceUtil.EMPTY;
+            }
             item.setStatusName(statusName);
         }
         viewDTO.setList(resultList);
@@ -161,7 +166,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         }
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
         //设置唯一值
-        newList.forEach(e-> {e.setMd5(getDataMd5(e,dto.getTrackNo()));e.setTrackNo(dto.getTrackNo());});
+        newList.forEach(e-> {e.setTrackNo(dto.getTrackNo());e.setMd5(getDataMd5(e));});
         //增量数据库记录
         this.saveIncrementTrackData(dto.getTrackNo(), newList);
         //获取最新记录
@@ -202,7 +207,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         //数据转换
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.convertWebHookToEntity(trackingDetails);
         //设置唯一值
-        newList.forEach(e-> {e.setMd5(getDataMd5(e,trackNo));e.setTrackNo(trackNo);});
+        newList.forEach(e-> {e.setTrackNo(trackNo);e.setMd5(getDataMd5(e));});
         //获取最新记录
         LogisticsTrackEntity maxTrack = newList.stream().max(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).orElse(null);
         //增量数据库记录
@@ -227,44 +232,12 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }
         }
     }
-
-    @Override
-    public LogisticsTrackDTO.ViewDTO listByParam(String transportNo, List<String> trackNoList, String counterNo, String logisticsBillId) {
-        if(CharSequenceUtil.isAllBlank(transportNo,counterNo,logisticsBillId) && CollectionUtils.isEmpty(trackNoList)){
-            return new LogisticsTrackDTO.ViewDTO();
-        }
-        LogisticsTrackDTO.ViewDTO viewDTO = new LogisticsTrackDTO.ViewDTO();
-        viewDTO.setTrackNo(counterNo);
-
-        List<LogisticsTrackEntity> list = this.lambdaQuery().or().eq(CharSequenceUtil.isNotBlank(transportNo),LogisticsTrackEntity::getTrackNo,transportNo)
-                .or().eq(CharSequenceUtil.isNotBlank(counterNo),LogisticsTrackEntity::getTrackNo,counterNo)
-                .or().eq(CharSequenceUtil.isNotBlank(logisticsBillId),LogisticsTrackEntity::getLogisticsBillId,logisticsBillId)
-                .or().in(CollUtil.isNotEmpty(trackNoList),LogisticsTrackEntity::getTrackNo, trackNoList).orderByDesc(LogisticsTrackEntity::getTrackTime).list();
-        List<LogisticsTrackDTO.ListDTO> resultList = BeanMapperUtils.copyList(LogisticsTrackDTO.ListDTO.class, list);
-        int size = resultList.size();
-        for (int i = 0; i < size; i++) {
-            LogisticsTrackDTO.ListDTO item = resultList.get(i);
-            if (i == 0) {
-                item.setIsLatest(Boolean.TRUE);
-            } else {
-                item.setIsLatest(Boolean.FALSE);
-
-            }
-            String status = item.getStatus();
-            String statusName = LogisticTrackStatusEnum.getName(status);
-            item.setStatusName(statusName);
-        }
-        viewDTO.setList(resultList);
-        return viewDTO;
-    }
-
     /**
      * 获取唯一值
      * @param trackingDetail
-     * @param trackNo
      * @return
      */
-    private String getDataMd5(LogisticsTrackEntity trackingDetail, String trackNo) {
+    private String getDataMd5(LogisticsTrackEntity trackingDetail) {
         String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
         return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
     }
@@ -274,6 +247,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
      * 新增修改处理数据
      */
     private void handleData(LogisticsTrackEntity logisticsTrackEntity) {
-        
+        logisticsTrackEntity.setMd5(getDataMd5(logisticsTrackEntity));
     }
 }

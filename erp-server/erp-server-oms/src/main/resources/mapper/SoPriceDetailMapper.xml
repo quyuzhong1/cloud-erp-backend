@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoPriceDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoPriceDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="sku_id" property="skuId" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="min_qty" property="minQty" />
+       <result column="max_qty" property="maxQty" />
+       <result column="currency" property="currency" />
+       <result column="tax_price" property="taxPrice" />
+       <result column="expire_date" property="expireDate" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="effective_date" property="effectiveDate" />
+       <result column="disabled" property="disabled" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        sku_id, main_id, sku_no, min_qty, max_qty, currency, tax_price, expire_date, tax_rate, delivery_day, effective_date, disabled, remark
+    </sql>
+
+
+    <select id="getTaxPrice" resultType="com.erp.model.oms.dto.SoPriceDetailDTO$SoTaxPriceViewDTO">
+        select
+            sp.customer_id,
+            s.name as customerName,
+            sp.so_org_id as SoOrgId,
+            sp.so_org_name as SoOrgName,
+            spd.currency,
+            spd.tax_price as taxPrice,
+            spd.tax_rate * 100 as taxRate,
+            spd.min_qty as minQty,
+            spd.max_qty as maxQty
+        from so_price sp
+        inner join so_price_detail spd on sp.id = spd.main_id and spd.is_deleted = false
+        inner join customer_info s on sp.customer_id = s.id and s.is_deleted = false
+        <where>
+            sp.is_deleted = false and sp.approve_status = 'approve' and spd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
+            spd.effective_date and spd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
+            <if test="params.skuId != null and params.skuId != ''">
+                and spd.sku_id = #{params.skuId}
+            </if>
+            <if test="params.soQty != null ">
+                and spd.max_qty > #{params.soQty} and #{params.soQty} >= spd.min_qty
+            </if>
+            <if test="params.customerId != null and params.customerId != ''">
+                and sp.customer_id = #{params.customerId}
+            </if>
+            <if test="params.SoOrgId != null and params.SoOrgId != ''">
+                and sp.so_org_id = #{params.SoOrgId}
+            </if>
+        </where>
+    </select>
+
+    <select id="listCheckSoPriceDetail" resultType="com.erp.model.oms.dto.SoPriceDetailDTO$ViewDTO">
+        SELECT
+            id,
+            sku_id,
+            min_qty,
+            max_qty,
+            currency,
+            tax_price,
+            tax_rate,
+            effective_date,
+            expire_date,
+            disabled
+        FROM so_price_detail WHERE
+        is_deleted = false AND
+        main_id IN (
+        SELECT id FROM so_price
+        WHERE customer_id = #{customerId} AND so_org_id = #{SoOrgId} AND is_deleted=FALSE
+        <if test="statusList!=null and statusList.size>0">
+            AND approve_status IN
+            <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+        )
+        <if test="skuIdList!=null and skuIdList.size>0">
+            AND sku_id  IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+
+    </select>
+
+    <!-- 根据客户和状态查询 -->
+    <select id="getByCustomerIdAndStatus" resultType="com.erp.model.oms.entity.SoPriceDetailEntity">
+        SELECT
+            spd.id,
+            spd.sku_id,
+            spd.delivery_day,
+            spd.min_qty,
+            spd.max_qty,
+            spd.currency,
+            spd.tax_price,
+            spd.tax_rate,
+            spd.disabled,
+            sp.approve_status
+        FROM so_price_detail spd
+        inner join so_price sp on sp.id = spd.main_id
+        WHERE
+        spd.is_deleted=FALSE AND sp.is_deleted=FALSE
+        and sp.customer_id = #{customerId} and sp.so_org_id = #{soOrgId}
+        <if test="statusList!=null and statusList.size>0">
+            AND sp.approve_status IN
+            <foreach collection="statusList" item="status" open="(" separator="," close=")">
+                #{status}
+            </foreach>
+        </if>
+    </select>
+
+    <!-- 根据销售报价id查询 -->
+    <select id="listGetListBySoPriceIds" resultType="com.erp.model.oms.entity.SoPriceDetailEntity">
+        SELECT
+            spd.id,
+            spd.create_user_id,
+            spd.create_user_name,
+            spd.create_time,
+            spd.update_user_id,
+            spd.update_user_name,
+            spd.update_time,
+            spd.version,
+            spd.is_deleted,
+            spd.sku_id,
+            spd.main_id,
+            spd.sku_no,
+            spd.min_qty,
+            spd.max_qty,
+            spd.currency,
+            spd.tax_price,
+            spd.expire_date,
+            spd.tax_rate,
+            spd.effective_date,
+            spd.disabled,
+            spd.remark,
+            sp.customer_id,
+            sp.code AS priceCode,
+            sp.so_org_name
+        FROM so_price_detail spd
+        inner join so_price sp on sp.id = spd.main_id and sp.is_deleted = FALSE
+        WHERE
+        spd.is_deleted = FALSE
+        <if test="params.soPriceIds!=null and params.soPriceIds.size>0">
+            AND sp.id IN
+            <foreach collection="params.soPriceIds" item="soPriceId" open="(" separator="," close=")">
+                #{soPriceId}
+            </foreach>
+        </if>
+        <if test="params.priceCode != null and params.priceCode != ''">
+            and sp.code ILIKE concat('%',#{params.priceCode}::text,'%')
+        </if>
+    </select>
+
+    <!--根据ids查询明细数据 -->
+    <select id="listDetailByIds" resultType="com.erp.model.oms.entity.SoPriceDetailEntity">
+        SELECT
+            spd.id,
+            spd.create_user_id,
+            spd.create_user_name,
+            spd.create_time,
+            spd.update_user_id,
+            spd.update_user_name,
+            spd.update_time,
+            spd.version,
+            spd.is_deleted,
+            spd.sku_id,
+            spd.main_id,
+            spd.sku_no,
+            spd.min_qty,
+            spd.max_qty,
+            spd.currency,
+            spd.tax_price,
+            spd.expire_date,
+            spd.tax_rate,
+            spd.effective_date,
+            spd.disabled,
+            spd.remark,
+            sp.approve_status,
+            sp.customer_id,
+            sp.code AS priceCode,
+            sp.so_org_name
+        FROM so_price_detail spd
+        inner join so_price sp on sp.id = spd.main_id AND spd.is_deleted = FALSE
+        WHERE sp.is_deleted = FALSE
+        <if test="soPriceDetailIds != null and soPriceDetailIds.size>0">
+            AND spd.id IN
+            <foreach collection="soPriceDetailIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

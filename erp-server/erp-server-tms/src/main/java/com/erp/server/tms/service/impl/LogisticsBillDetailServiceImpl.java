@@ -255,7 +255,6 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             return;//不记录空跟踪号轨迹
         }
         LogisticsTrackDTO.AddDTO addDTO = new LogisticsTrackDTO.AddDTO();
-        addDTO.setLogisticsBillId(detailEntity.getMainId());
         addDTO.setTrackNo(detailEntity.getTrackNo());
         addDTO.setContent(trackDesc);
         addDTO.setTrackTime(trackTime);

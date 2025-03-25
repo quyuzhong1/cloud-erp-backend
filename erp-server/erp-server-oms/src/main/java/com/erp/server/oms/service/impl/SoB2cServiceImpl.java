@@ -9585,8 +9585,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
 
     @Override
-    public List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
-        return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    public List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset, List<String> platformList) {
+        return baseMapper.queryToSdy(startDate, endDate, pageSize, offset, platformList);
     }
 
     @Override

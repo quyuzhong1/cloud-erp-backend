@@ -25,11 +25,6 @@ import java.time.LocalDateTime;
 @TableName("logistics_track")
 public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
     /**
-     * 物流单ID
-     */
-    @TableField("logistics_bill_id")
-    private String logisticsBillId;
-    /**
     * 运单号
     */
     @TableField("track_no")

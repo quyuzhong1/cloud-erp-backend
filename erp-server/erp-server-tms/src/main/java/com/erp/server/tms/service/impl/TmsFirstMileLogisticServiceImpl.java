@@ -8,6 +8,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
@@ -60,8 +61,6 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.FirstMileDeliveryDetailFeign;
-import com.erp.rpc.wms.feign.OverseaWarehouseInboundFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.tms.convert.FmLogisticsConverter;
@@ -75,7 +74,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.poi.ss.formula.functions.Odd;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
@@ -198,15 +196,12 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     @Resource
     private FirstMileEstimatedBillService firstMileEstimatedBillService;
     @Resource
-    private OverseaWarehouseInboundFeign overseaWarehouseInboundFeign;
-    @Resource
-    private FirstMileDeliveryDetailFeign firstMileDeliveryDetailFeign;
-    @Resource
     private LogisticsLargeService logisticsLargeService;
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
     @Resource
     private TmsCostDetailService tmsCostDetailService;
+    private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1048,11 +1043,11 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             updateDetailList.addAll(detailEntityList);
 
             LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
-            logisticsTrackEntity.setLogisticsBillId(logisticsBillEntity.getId());
             logisticsTrackEntity.setStatus(dto.getLogisticsStatus());
-            logisticsTrackEntity.setTrackNo(logisticsBillEntity.getCounterNo());
+            logisticsTrackEntity.setTrackNo(CharSequenceUtil.isNotBlank(logisticsBillEntity.getCounterNo()) ? logisticsBillEntity.getCounterNo() : logisticsBillEntity.getTransportNo());
             logisticsTrackEntity.setTrackTime(Objects.isNull(dto.getTime())?LocalDateTime.now():dto.getTime());
             logisticsTrackEntity.setContent(StringUtils.isBlank(dto.getLogisticsTrack())?"":dto.getLogisticsTrack());
+            logisticsTrackEntity.setMd5(getDataMd5(logisticsTrackEntity));
             addTrackList.add(logisticsTrackEntity);
             //如果状态为已下单，更新开船时间
             if(statusEnum == FmLogisticTrackStatusEnum.ORDERED){
@@ -1060,7 +1055,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                 LocalDateTime shipTime = sailingService.calculateShipTime(logisticsBillEntity.getChannelId(),dto.getTime());
                 logisticsBillEntity.setShipTime(shipTime);
             }
-
             updateBillList.add(logisticsBillEntity);
         }
         if(CollectionUtils.isNotEmpty(updateDetailList)){
@@ -1072,7 +1066,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if(CollectionUtils.isNotEmpty(updateBillList)){
             this.updateBatchById(updateBillList);
         }
-
         //如果是已揽收，更新物流大表揽收时间
         if (FmLogisticTrackStatusEnum.PICKUP.getCode().equals(statusEnum.getCode())) {
             List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByLogisticsBillIds(dto.getIds());
@@ -1085,7 +1078,15 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
 
         return batchResultDTOList;
     }
-
+    /**
+     * 获取唯一值
+     * @param trackingDetail
+     * @return
+     */
+    private String getDataMd5(LogisticsTrackEntity trackingDetail) {
+        String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
+        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
+    }
     @Override
     @Transactional(rollbackFor = Exception.class)
     public List<BatchResultDTO> updateInvoicesStatus(TmsFirstMileLogisticDTO.UpdateInvoicesStatusDTO dto) {
@@ -2144,10 +2145,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         if (ObjectUtil.isEmpty(logisticsBill)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL,"物流单");
         }
-        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(Collections.singletonList(logisticsBillId));
         String transportNo = logisticsBill.getTransportNo();
-        List<String> trackNoList = logisticsBillDetailEntityList.stream().map(LogisticsBillDetailEntity::getTrackNo).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-        String counterNo = logisticsBill.getCounterNo();
-        return logisticsTrackService.listByParam(transportNo,trackNoList,counterNo,logisticsBillId);
+        String counterNo = CharSequenceUtil.isNotBlank(logisticsBill.getCounterNo()) ? logisticsBill.getCounterNo() : transportNo;
+
+        return logisticsTrackService.listByTrackNo(counterNo);
     }
 }
