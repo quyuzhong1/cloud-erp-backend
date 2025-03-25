@@ -6573,7 +6573,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     }
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
         if (CharSequenceUtil.isBlank(viewDTO.getSkuId())) {
             throw new ServiceException(ApiError.ERROR_95084);
@@ -6582,10 +6582,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         checkSizeAndWeight(viewDTO);
         ProductPackEntity entity = new ProductPackEntity();
         BeanUtils.copyProperties(viewDTO, entity);
-        productPackService.saveOrUpdate(entity);
 
-        //产品推送金蝶
+        //获取产品包装信息修改的字段
+        ProductPackDTO productPackDTO = new ProductPackDTO();
+        BeanMapper.copy(viewDTO,productPackDTO);
+        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO);
+        //发送通知
         ProductDetailEntity productDetailEntity = getById(entity.getSkuId());
+        ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+        ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+        noticeDTO.setProductId(productInfoEntity.getId());
+        noticeDTO.setName(productInfoEntity.getName());
+        noticeDTO.setChargeId(productInfoEntity.getChargeId());
+        noticeDTO.setChargeName(productInfoEntity.getChargeName());
+        noticeDTO.setSkuNo(productDetailEntity.getSkuNo());
+        noticeDTO.setProductPackChangeField(productPackChangeField);
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
+        //发送消息
+        handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+
+        productPackService.saveOrUpdate(entity);
+        //产品推送金蝶
         //只同步审核通过的
         if(Objects.nonNull(productDetailEntity) && productDetailEntity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode())){
             //发送金蝶
@@ -6597,6 +6614,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             //增加缓存清除
             redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO, productDetailEntity.getId());
         }
+
+
 
         //新增操作日志
         String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【包装尺寸高】为【{}】、【毛重】为【{}】、【净重】为【{}】、【箱规长】为【{}】、【箱规宽】为【{}】、【箱规高】为【{}】、【单箱重量】为【{}】、【单箱数量】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getProductHeight()
