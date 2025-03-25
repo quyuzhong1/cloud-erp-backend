@@ -136,7 +136,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                 ShopInventoryDetailEntity detailEntity = ReplenishmentResultDTO.ShopInventoryDetailDTO.buildShopInventoryDetail(detail, entity.getId(), calcVersion);
                 //平台取值
                 String platform = shopIdByPlatform.entrySet().stream()
-                        .filter(entry -> entry.getValue() != null && entry.getValue().contains(dto.getShopInventoryDetails().get(0).getShopId()))
+                        .filter(entry -> entry.getValue() != null && entry.getValue().contains(detailEntity.getShopId()))
                         .map(Map.Entry::getKey)
                         .findFirst()
                         .orElse("");
