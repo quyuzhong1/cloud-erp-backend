@@ -133,26 +133,24 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public SoPriceEntity add(SoPriceDTO.AddDTO dto) {
-        SoPriceEntity SoPrice = new SoPriceEntity();
-        String id = IdWorker.getIdStr();
-        BeanMapper.copy(dto, SoPrice);
+        SoPriceEntity soPrice = new SoPriceEntity();
+        BeanMapper.copy(dto, soPrice);
         //生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
-        SoPrice.setCode(code);
-        SoPrice.setId(id);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSJM);
+        soPrice.setCode(code);
         String pricingUserId = dto.getPricingUserId();
         if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-            SoPrice.setPricingUserName(user != null ? user.getUserName() : "");
+            soPrice.setPricingUserName(user != null ? user.getUserName() : "");
         }
 
         String orgId = dto.getSoOrgId();
         //获取组织
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(orgId));
         if (CollectionUtils.isNotEmpty(orgList)) {
-            SoPrice.setSoOrgName(orgList.get(0).getName());
+            soPrice.setSoOrgName(orgList.get(0).getName());
         }
-        Boolean addResult = this.save(SoPrice);
+        Boolean addResult = this.save(soPrice);
         //保存失败
         if (!addResult) {
            throw new ServiceException(ApiError.ERROR_1002);
@@ -162,13 +160,13 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         //获取到表名
         String type = tableName.value();
         //保存附件
-        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, soPrice.getId());
         //添加明细
-        soPriceDetailService.addPriceDetail(id, dto.getSoPriceDetailList());
+        soPriceDetailService.addPriceDetail(soPrice.getId(), dto.getSoPriceDetailList());
         //添加日志
         String content = String.format("新增了一个{%s}-销售价目-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
-        addModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), id, "新增操作");
-        return SoPrice;
+        addModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), soPrice.getId(), "新增操作");
+        return soPrice;
     }
 
     /**

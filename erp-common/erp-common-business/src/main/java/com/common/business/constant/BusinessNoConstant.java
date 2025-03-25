@@ -168,4 +168,8 @@ public interface BusinessNoConstant {
     //库龄批次号
     String N = "N";
     String INV = "INV";
+
+    String XSJM = "XSJM";
+    String XSTJ = "XSTJ";
+
 }
