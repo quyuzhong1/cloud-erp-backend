@@ -23,6 +23,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseChangeDTO;
 import com.erp.model.scm.dto.PurchaseChangeDetailDTO;
@@ -220,6 +221,9 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
             throw new ServiceException(ApiError.ERROR_98043);
         }
         List<PurchaseChangeDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseChangeDetailDTO.UpdateDTO.class, entityDetails);
+        for (PurchaseChangeDetailDTO.UpdateDTO detail : details) {
+            detail.setFirstMassProductName(FirstMassProductTypeEnum.getName(detail.getFirstMassProduct()));
+        }
         dto.setDetails(details);
         return dto;
     }

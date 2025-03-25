@@ -339,7 +339,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 委外组织名称
          */
         private String   subcontractOrgName;
-
+        /**
+         * 能否编辑
+         * ture 能编辑  false 不能编辑
+         */
+        private Boolean  canEdit = Boolean.FALSE;
         /**
          * 明细集合
          */

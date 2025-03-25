@@ -544,7 +544,12 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98070);
         }
-
+        //从采购申请下推的委外单不可以编辑
+        if(StringUtils.isNotBlank(data.getSourceType()) && data.getSourceType().equals(SourceTypeEnum.PURCHASE_APPLICATION.getCode())){
+            data.setCanEdit(Boolean.FALSE);
+        }else {
+            data.setCanEdit(Boolean.TRUE);
+        }
         //产品信息
         List<String> skuIds = detailList.stream().map(SubcontractOrderDetailEntity::getSkuId).collect(Collectors.toList());
         log.info("查询产品信息，skuId集合：【{}】", JSONUtil.toJsonStr(skuIds));

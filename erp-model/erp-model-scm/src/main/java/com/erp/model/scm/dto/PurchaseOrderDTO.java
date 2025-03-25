@@ -591,6 +591,12 @@ public class PurchaseOrderDTO implements Serializable {
          * 关联单据（仅详情显示，无需传参）
          */
         private PurchaseOrderRefOtherDTO purchaseOrderRefOtherDTO;
+
+        /**
+         * 能否编辑
+         * ture 能编辑  false 不能编辑
+         */
+        private Boolean  canEdit = Boolean.FALSE;
     }
 
 
