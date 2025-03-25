@@ -101,7 +101,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
         //对账单明细
         List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(mainIdList, null, DetailReconciliationTypeEnum.ACTUAL.getCode());
 
-        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByName(supplierNameList);
+        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByShortName(supplierNameList);
         List<String> supplierIds = logisticsSupplierEntityList.stream().map(v->v.getSupplierId()).collect(Collectors.toList());
         List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOList = supplierFeign.listDefaultBySupplierIdList(supplierIds);
 
@@ -218,7 +218,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             List<String> errorMsgList = new ArrayList<>();
             LogisticsSupplierEntity logisticsSupplierEntity;
             if(StringUtils.isNotBlank(excelDTO.getSupplierName())){
-                logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getSupplierName().equals(excelDTO.getSupplierName())).findFirst().orElse(null);
+                logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getShortName().equals(excelDTO.getSupplierName())).findFirst().orElse(null);
                 if(Objects.isNull(logisticsSupplierEntity)){
                     errorMsgList.add("供应商不存在");
                 }else{
