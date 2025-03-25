@@ -62,7 +62,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:paging",
+            menuCode = "oms:soPrice:paging",
             tableAlias = "sp")
     @WebAdvanceQuery(handler = SoPriceQueryHandler.class)
     public ApiResult<PagingVO<SoPriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
@@ -80,7 +80,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:add",
+            menuCode = "oms:soPrice:add",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
     public ApiResult<?> add(@RequestBody @Validated SoPriceDTO.AddDTO dto) {
@@ -99,7 +99,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/tab/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:paging",
+            menuCode = "oms:soPrice:paging",
             tableAlias = "sp")
     public ApiResult<List<SoPriceDTO.TabListDTO>> tabList(PermissionsDTO dto) {
         List<SoPriceDTO.TabListDTO> list = soPriceService.tabList(dto);
@@ -129,7 +129,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:view",
+            menuCode = "oms:soPrice:view",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
     public ApiResult<SoPriceDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
@@ -147,7 +147,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:update",
+            menuCode = "oms:soPrice:update",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SoPriceDTO.UpdateDTO dto) {
@@ -165,7 +165,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:update",
+            menuCode = "oms:soPrice:update",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
     public ApiResult<?> updateAndSubmit(@RequestBody @Validated SoPriceDTO.UpdateDTO dto) {
@@ -184,7 +184,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:delete",
+            menuCode = "oms:soPrice:delete",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
     public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -216,7 +216,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:submit",
+            menuCode = "oms:soPrice:submit",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
     public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -250,7 +250,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:approve",
+            menuCode = "oms:soPrice:approve",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -285,7 +285,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:cancelProcess",
+            menuCode = "oms:soPrice:cancelProcess",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
     public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -346,7 +346,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:disApprove",
+            menuCode = "oms:soPrice:disApprove",
             serviceClass = SoPriceService.class,
             keyIdName = "ids"
     )
@@ -382,7 +382,7 @@ public class SoPriceController extends BaseController {
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
-            menuCode = "oms:so:price:updateDetailRemark",
+            menuCode = "oms:soPrice:updateDetailRemark",
             serviceClass = SoPriceService.class,
             keyIdName = "ids"
     )

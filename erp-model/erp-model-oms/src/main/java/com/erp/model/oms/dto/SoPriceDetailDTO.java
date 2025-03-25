@@ -28,11 +28,6 @@ public class SoPriceDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO implements Serializable{
-        /**
-         * 客户表id
-         */
-        @NotBlank(message = "客户id不能为空")
-        private String customerId;
 
         /**
          * sku id
@@ -243,11 +238,6 @@ public class SoPriceDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
-         * 销售交期（天）
-         */
-        private Integer deliveryDay;
-
-        /**
          * 销售组织
          */
         private String soOrgId;
@@ -284,7 +274,7 @@ public class SoPriceDetailDTO implements Serializable {
         /**
          * 销售价目id
          */
-        private String soPriceId;
+        private String mainId;
 
         /**
          * 主键id
@@ -296,12 +286,10 @@ public class SoPriceDetailDTO implements Serializable {
          */
         private String skuId;
 
-
         /**
          * 产品名称
          */
         private String productName;
-
 
         /**
          * sku_no
@@ -363,18 +351,6 @@ public class SoPriceDetailDTO implements Serializable {
          */
         private String remark;
 
-        private String kingdeeDetailId;
-
-        /**
-         * 客户表id
-         */
-        private String customerId;
-
-        /**
-         * 客户表名称
-         */
-        private String customerName;
-
         /**
          * 价目表编码
          */
@@ -410,12 +386,6 @@ public class SoPriceDetailDTO implements Serializable {
          * sku_no
          */
         private String skuNo;
-
-
-        /**
-         * 销售交期
-         */
-        private Integer deliveryDay;
 
         /**
          * 最小数量
@@ -469,7 +439,6 @@ public class SoPriceDetailDTO implements Serializable {
 
 
         private LocalDateTime createTime;
-
 
     }
 

@@ -89,7 +89,7 @@
         is_deleted = false AND
         main_id IN (
         SELECT id FROM so_price
-        WHERE customer_id = #{customerId} AND so_org_id = #{SoOrgId} AND is_deleted=FALSE
+        WHERE customer_id = #{customerId} AND so_org_id = #{soOrgId} AND is_deleted=FALSE
         <if test="statusList!=null and statusList.size>0">
             AND approve_status IN
             <foreach collection="statusList" item="status" open="(" separator="," close=")">
