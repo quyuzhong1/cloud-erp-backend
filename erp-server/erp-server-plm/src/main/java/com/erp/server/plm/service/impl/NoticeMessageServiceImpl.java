@@ -29,6 +29,7 @@ import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.plm.enums.NoticeItemPeopleEnum;
 import com.erp.model.plm.enums.TaskStateEnum;
+import com.erp.model.sys.dto.SysUserSimpleDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
@@ -3059,9 +3060,13 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                 resultList.addAll(collect);
             }
         }
-
+        //排除禁用人员
+        List<SysUserSimpleDTO> userSimpleInfoByIds = sysUserFeign.getUserSimpleInfoByIds(resultList);
+        if(CollUtil.isNotEmpty(userSimpleInfoByIds)){
+            return userSimpleInfoByIds.stream().map(SysUserSimpleDTO::getUid).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        }
         // 返回结果列表
-        return resultList;
+        return null;
     }
 
 
