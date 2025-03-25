@@ -2,7 +2,7 @@ package com.erp.model.oms.enums;
 
 /**
  * @author Lambda
- * @Classname DictBasicEnum
+ * @Classname CfgSettingEnum
 
  * @Date 2023-03-20 14:15
  * @Created by yl
@@ -27,6 +27,8 @@ public enum DictBasicTypeEnum {
     SHOP_TRANSFER_COST("shopTransferCost","店铺转账费率选项"),
     DELIVERY_MODE("deliveryMode",  "交货方式"),
     TRADE_TERM("tradeTerm",  "贸易条款"),
+
+    CFG_SETTING("cfgSetting", "系统配置"),
 
     ;
 

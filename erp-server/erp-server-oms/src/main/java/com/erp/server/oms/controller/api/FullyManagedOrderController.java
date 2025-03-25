@@ -8,10 +8,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
@@ -32,6 +29,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.oms.query.FullyManagedQueryHandler;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -47,16 +45,16 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * B2C销售订单表
+ * 全托管订单
  *
- * @author Will
- * @since 2023-08-18
+ * @author zdy
+ * @since 2025-03-24
  */
 @Slf4j
 @RestController
-@RequestMapping("/soB2c")
+@RequestMapping("/fully")
 @Validated
-public class SoB2cController extends BaseController {
+public class FullyManagedOrderController extends BaseController {
 
     @Resource
     private SoB2cService soB2cService;
@@ -78,6 +76,8 @@ public class SoB2cController extends BaseController {
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private WorkflowFeign workflowFeign;
+    @Resource
+    private FullyManagedOrderService fullyManagedOrderService;
     /**
      * 获取状态统计
      *
@@ -85,7 +85,7 @@ public class SoB2cController extends BaseController {
      */
     @PostMapping("/tabList")
     public ApiResult<List<SoB2cDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        return success(soB2cService.tabList(dto));
+        return success(fullyManagedOrderService.fullyManagedTabList(dto));
     }
 
     /**
@@ -109,9 +109,9 @@ public class SoB2cController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/paging")
-    @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
+    @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
-        dto.getParams().setIsFullyManaged(Boolean.FALSE);
+        dto.getParams().setIsFullyManaged(Boolean.TRUE);
         return success(soB2cService.paging(dto));
     }
 
@@ -134,23 +134,10 @@ public class SoB2cController extends BaseController {
          */
         SoB2cEntity add = soB2cService.add(dto, null);
         String id = add.getId();
-        //检查是否备案并修改状态
-        soB2cService.checkProductRegistrationAndUpdate(id, "");
-
-
-        //速卖通平台仓订单不走任何规则
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(add.getDictPlatform()) && add.hasPlatformWarehouseOrder()) {
-            return success(add.getId());
-        }
-
-
+        //匹配订单规则
         SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(id);
         //匹配成功
-        Boolean ruleMatch = orderRuleResult.getIsRuleMatch();
-        Boolean isPass = orderRuleResult.getIsPass();
-
-
-        if (ruleMatch && isPass) {
+        if (orderRuleResult.getIsRuleMatch() && orderRuleResult.getIsPass()) {
             //仓库规则
             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
@@ -1321,43 +1308,6 @@ public class SoB2cController extends BaseController {
                 log.error("B2C销售订单添加赠品失败", e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 获取买家信息
-     * @param idDTO
-     * @return
-     */
-    @PostMapping("/getReceiverInfo")
-    public ApiResult<List<SoB2cReceiverDTO.ViewDTO>> getReceiverInfo(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        return success(soB2cService.getReceiverInfo(idDTO.getIds()));
-    }
-
-    /**
-     * 修改买家信息
-     * @param dtoList
-     * @return
-     */
-    @PostMapping("/updateReceiverInfo")
-    public ApiResult<List<BatchResultDTO>> updateReceiverInfo(@RequestBody @Validated List<SoB2cReceiverDTO.UpdateBaseDTO> dtoList) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
-        for (SoB2cReceiverDTO.UpdateBaseDTO dto : dtoList) {
-            BatchResultDTO receiverResult;
-            try {
-                receiverResult = soB2cService.updateReceiverInfo(dto);
-            } catch (Exception e) {
-                log.error("B2C销售订单作废失败", e);
-                SoB2cEntity entity = soB2cService.getById(dto.getMainId());
-                if (ObjectUtil.isEmpty(entity)) {
-                    receiverResult = BatchResultDTO.fail(dto.getMainId(), dto.getSoB2cCode(), "B2C销售订单不存在, 修改买家信息失败");
-                    resultDTOS.add(receiverResult);
-                    continue;
-                }
-                receiverResult = BatchResultDTO.fail(dto.getMainId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(receiverResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
