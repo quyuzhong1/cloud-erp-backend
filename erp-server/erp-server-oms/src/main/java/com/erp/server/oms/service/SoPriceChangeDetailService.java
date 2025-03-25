@@ -2,7 +2,6 @@ package com.erp.server.oms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoPriceChangeDetailDTO;
-import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.entity.SoPriceChangeDetailEntity;
 import com.erp.model.oms.entity.SoPriceChangeEntity;
 
@@ -59,24 +58,6 @@ public interface SoPriceChangeDetailService extends SuperService<SoPriceChangeDe
      */
     void updatePriceChangeDetail(String id, List<SoPriceChangeDetailDTO.UpdateDTO> SoPriceChangeDetailList);
 
-
-    /**
-     * 根据供应商id获取到已变更区间数据
-     * @author yl
-     * @date 2023-04-06 10:01
-     * @param supplierId
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.AddDTO>
-     */
-    List<SoPriceDetailDTO.AddDTO> getBySupplierId(String supplierId);
-    /**
-     * @description:
-     * @author Will
-     * @date: 2023/4/24 20:02
-     * @param soPriceChangeId
-     * @return List<SoPriceChangeDetailEntity>
-     */
-    List<SoPriceChangeDetailEntity> listBySoPriceChangeId(String soPriceChangeId);
-
     /**
      * 根据采购价目详情表id查询变更详情
      * @Author Luo_WG
@@ -93,15 +74,5 @@ public interface SoPriceChangeDetailService extends SuperService<SoPriceChangeDe
      * @param remark
      */
     void updateDetailRemark(List<String> ids, String remark);
-
-    /**
-     * 根据主表id集合获取对应明细
-     * @author yl
-     * @date 2023-10-24 10:09
-     * @param mainIdList
-     * @return java.util.List<com.erp.model.scm.entity.SoPriceChangeDetailEntity>
-     */
-    List<SoPriceChangeDetailEntity> listByMainIdList(List<String> mainIdList);
-
 
 }

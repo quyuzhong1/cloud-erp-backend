@@ -31,6 +31,7 @@ public class SoPriceDetailDTO implements Serializable {
         /**
          * 客户表id
          */
+        @NotBlank(message = "客户id不能为空")
         private String customerId;
 
         /**
@@ -44,9 +45,6 @@ public class SoPriceDetailDTO implements Serializable {
          * sku id
          */
         private String skuNo;
-
-
-        private String productName;
 
         /**
          * 最小数量
@@ -114,9 +112,9 @@ public class SoPriceDetailDTO implements Serializable {
     public static class SoTaxPriceSearchDTO {
 
         /**
-         * 采购数量
+         * 销售数量
          */
-        @NotNull(message = "采购数量不能为空")
+        @NotNull(message = "销售数量不能为空")
         private Integer soQty;
 
         /**
@@ -136,7 +134,7 @@ public class SoPriceDetailDTO implements Serializable {
         private String customerId;
 
         /**
-         * 采购组织id
+         * 销售组织id
          */
         private String soOrgId;
     }
@@ -164,7 +162,7 @@ public class SoPriceDetailDTO implements Serializable {
         private List<Integer> soQtyList;
 
         /**
-         * 采购组织id集合
+         * 销售组织id集合
          */
         private List<String> soOrgIdList;
 
@@ -192,7 +190,7 @@ public class SoPriceDetailDTO implements Serializable {
         private String skuNo;
 
         /**
-         * 采购数量
+         * 销售数量
          */
         private Integer soQty;
     }
@@ -245,17 +243,17 @@ public class SoPriceDetailDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
-         * 采购交期（天）
+         * 销售交期（天）
          */
         private Integer deliveryDay;
 
         /**
-         * 采购组织
+         * 销售组织
          */
         private String soOrgId;
 
         /**
-         * 采购组织名
+         * 销售组织名
          */
         private String soOrgName;
     }
@@ -284,7 +282,7 @@ public class SoPriceDetailDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-         * 采购价目id
+         * 销售价目id
          */
         private String soPriceId;
 
@@ -309,12 +307,6 @@ public class SoPriceDetailDTO implements Serializable {
          * sku_no
          */
         private String skuNo;
-
-
-        /**
-         * 采购交期
-         */
-        private Integer deliveryDay;
 
         /**
          * 最小数量
@@ -389,7 +381,7 @@ public class SoPriceDetailDTO implements Serializable {
         private String priceCode;
 
         /**
-         * 采购组织名称
+         * 销售组织名称
          */
         private String soOrgName;
     }
@@ -421,7 +413,7 @@ public class SoPriceDetailDTO implements Serializable {
 
 
         /**
-         * 采购交期
+         * 销售交期
          */
         private Integer deliveryDay;
 

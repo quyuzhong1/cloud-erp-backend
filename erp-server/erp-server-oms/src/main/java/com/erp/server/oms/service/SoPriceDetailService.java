@@ -1,10 +1,8 @@
 package com.erp.server.oms.service;
 
-import cn.hutool.json.JSONArray;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
-import com.erp.model.oms.dto.SoPriceChangeDTO;
 import com.erp.model.oms.dto.SoPriceChangeDetailDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.entity.SoPriceDetailEntity;
@@ -86,18 +84,6 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
      */
     List<SoPriceDetailDTO.ViewDTO> listBySoPriceDetailIds(List<String> soPriceDetailIds);
 
-
-    /**
-     * 根据价目表id 和详情表id 集合获取对应数据
-     * @author yl
-     * @date 2023-03-27 9:48
-     * @param soPriceId
-     * @param soPriceDetailIds 销售价目详情表id 集合
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.UpdateDTO>
-     */
-    List<SoPriceDetailDTO.ViewDTO> getPriceDetail(String soPriceId,List<String> soPriceDetailIds);
-
-
     /**
      * 修改产品明细
      * @author yl
@@ -149,36 +135,6 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
     List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(String supplierId,String soOrgId,List<String> skuIdList);
 
     /**
-     * 查询供应商的
-     * @Author Luo_WG
-     * @Date 2024/1/9 14:20
-     * @param supplierIdList
-     * @param detailIds
-     * @param skuIdList
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.AddDTO>
-     **/
-    List<SoPriceDetailDTO.AddDTO> listBySupplierId(List<String> supplierIdList,List<String> detailIds,List<String> skuIdList);
-
-    /**
-     * 销售价目表 点击变更报价 获取到详情
-     * @author yl
-     * @date 2023-04-06 12:03
-     * @param ids
-     * @return com.erp.model.scm.dto.SoPriceChangeDTO.ViewDTO
-     */
-    SoPriceChangeDTO.ViewDTO priceChangeDetail(List<String> ids);
-
-    /**
-     * 根据销售价目表id 获取到销售价目变更的明细
-     * @author yl
-     * @date 2023-04-06 18:54
-     * @param dto
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceChangeDetailDTO.ViewDTO>
-     */
-    List<SoPriceChangeDetailDTO.ViewDTO> listPriceChangeDetail(SoPriceChangeDetailDTO.SkuChangeParamDTO dto);
-
-
-    /**
      * 获取根据主表id
      * @author yl
      * @date 2023-05-05 16:41
@@ -201,10 +157,10 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
      * 根据供应商和状态查询价目信息
      * @author yl
      * @date 2023-08-06 9:37
-     * @param supplierId
+     * @param customerId
      * @return java.util.List<SoPriceDetailEntity>
      */
-    List<SoPriceDetailEntity> getBySupplierIdAndStatus(String supplierId,String soOrgId,List<String> statusList);
+    List<SoPriceDetailEntity> getByCustomerIdAndStatus(String customerId, String soOrgId, List<String> statusList);
 
     /**
      * 更新信息
@@ -212,14 +168,7 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
      * @return
      */
     void updateDetail(SoPriceDetailEntity SoPriceDetailEntity, SoPriceDetailEntity old);
-    /**
-     * @description: 批量查询报价
-     * @author Will
-     * @date: 2023/9/14 14:10
-     * @param list
-     * @return List<soTaxPriceBatchViewDTO>
-     */
-    List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> batchGetTaxPrice(List<SoPriceDetailDTO.SoTaxPriceSearchDTO> list);
+
     /**
      * @description: 更新明细备注
      * @author Will
@@ -245,15 +194,5 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
      * @return Boolean
      */
     Boolean enable(BaseIdsDTO.IdsDTO dto);
-
-    /**
-     * 根据组织/供应商/sku/数量获取销售单价
-     * @param skuIdList
-     * @param supplierIdList
-     * @param soQtyList
-     * @param soOrgIdList
-     * @return
-     */
-    List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> batchGetTaxPrice(List<String> skuIdList, List<String> supplierIdList, List<Integer> soQtyList, List<String> soOrgIdList);
 
 }

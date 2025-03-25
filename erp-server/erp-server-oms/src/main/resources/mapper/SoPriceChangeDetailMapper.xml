@@ -23,7 +23,6 @@
        <result column="expire_date" property="expireDate" />
        <result column="tax_rate" property="taxRate" />
        <result column="so_price_detail_id" property="soPriceDetailId" />
-       <result column="delivery_day" property="deliveryDay" />
        <result column="disabled" property="disabled" />
        <result column="remark" property="remark" />
        <result column="customer_id" property="customerId" />
@@ -44,81 +43,28 @@
         sku_id, main_id, sku_no, min_qty, max_qty, currency, tax_price, effective_date, expire_date, tax_rate, so_price_detail_id, delivery_day, disabled, remark, customer_id, so_price_code
     </sql>
 
-
-    <select id="getBySupplierId" resultType="com.erp.model.oms.dto.SoPriceDetailDTO$AddDTO">
-        SELECT
-        sku_id,
-        delivery_day,
-        min_qty,
-        max_qty,
-        currency,
-        tax_price,
-        tax_rate,
-        disabled
-        FROM  so_price_change_detail  WHERE
-        is_deleted=FALSE  AND
-        so_price_change_id IN (
-        SELECT distinct spc.id FROM so_price_change spc
-        LEFT JOIN so_price_change_detail spcd ON spc.id = spcd.so_price_change_id AND spcd.is_deleted = FALSE
-        WHERE spcd.supplier_id=#{supplierId} AND spc.is_deleted=FALSE
-        <if test="statusList!=null and statusList.size>0">
-            AND spc.approve_status IN
-            <foreach collection="statusList" item="status" open="(" separator="," close=")">
-                #{status}
-            </foreach>
-        </if>
-        )
-
-    </select>
-    <select id="listBySoPriceChangeId"
-            resultType="com.erp.model.oms.entity.SoPriceChangeDetailEntity">
-        SELECT
-        spcd.sku_id,
-        spcd.sku_no,
-        spcd.delivery_day,
-        spcd.min_qty,
-        spcd.max_qty,
-        spcd.currency,
-        spcd.tax_price,
-        spcd.tax_rate,
-        spcd.disabled,
-        spcd.effective_date,
-        spcd.expire_date,
-        pp.code as CJJMCode,
-        spcd.so_price_detail_id,
-        spcd.so_price_change_id,
-        spcd.customer_id
-        FROM  so_price_change_detail spcd
-        left join so_price_detail ppd on spcd.so_price_detail_id = ppd.id and ppd.is_deleted = false
-        left join so_price pp on pp.id = ppd.so_price_id and pp.is_deleted = false
-        <where>
-            spcd.is_deleted = false and spcd.purchase_price_change_id = #{purchasePriceChangeId}
-        </where>
-
-    </select>
-
+    <!-- 根据销售价目明细id查询 -->
     <select id="listBySoPriceDetailIds" resultType="com.erp.model.oms.entity.SoPriceChangeDetailEntity">
         SELECT
-        spcd.sku_id,
-        spcd.sku_no,
-        spcd.delivery_day,
-        spcd.min_qty,
-        spcd.max_qty,
-        spcd.currency,
-        spcd.tax_price,
-        spcd.tax_rate,
-        spcd.disabled,
-        spcd.effective_date,
-        spcd.expire_date,
-        spc.code as code,
-        spcd.so_price_detail_id,
-        spcd.so_price_change_id,
-        spcd.customer_id
+            spcd.sku_id,
+            spcd.sku_no,
+            spcd.min_qty,
+            spcd.max_qty,
+            spcd.currency,
+            spcd.tax_price,
+            spcd.tax_rate,
+            spcd.disabled,
+            spcd.effective_date,
+            spcd.expire_date,
+            spc.code as code,
+            spcd.so_price_detail_id,
+            spcd.main_id,
+            spcd.customer_id
         FROM  so_price_change_detail spcd
-        LEFT JOIN so_price_change spc ON spcd.so_price_change_id = spc.id AND spcd.is_deleted = FALSE
+        LEFT JOIN so_price_change spc ON spcd.main_id = spc.id AND spcd.is_deleted = FALSE
         WHERE spc.is_deleted = FALSE
         <if test="soPriceDetailIds!=null and soPriceDetailIds.size>0">
-            AND spcd.purchase_price_detail_id IN
+            AND spcd.so_price_detail_id IN
             <foreach collection="soPriceDetailIds" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>

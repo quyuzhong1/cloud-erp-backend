@@ -50,11 +50,13 @@ public class SoPriceDetailController extends BaseController {
     private SoPriceService soPriceService;
 
 
-    /**
-     * 下载模板
-     *
-     * @return
-     */
+   /**
+    * 下载模板
+    * @author will
+    * @date 2025/3/25 14:32
+    * @param response
+    * @return com.common.core.controller.vo.ApiResult
+    */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板销售价目明细")
     @GetMapping("/downloadTemplate")
     public ApiResult downloadTemplate(HttpServletResponse response) {
@@ -65,8 +67,11 @@ public class SoPriceDetailController extends BaseController {
 
     /**
      * 导入数据
-     *
-     * @return
+     * @author will
+     * @date 2025/3/25 14:32
+     * @param excelImportDTO
+     * @param response
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.oms.dto.SoPriceDetailDTO.ImportDTO>
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入数据销售价目明细")
     @PostMapping("/importFile")
@@ -138,21 +143,6 @@ public class SoPriceDetailController extends BaseController {
     }
 
     /**
-     * 批量查询含税单价
-     *
-     * @param list
-     * @return ApiResult<List < SoTaxPriceBatchViewDTO>>
-     * @author Will
-     * @date: 2023/9/14 14:09
-     */
-    @PostMapping("/batchGetTaxPrice")
-    public ApiResult<List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO>> batchGetTaxPrice(@RequestBody @Validated List<SoPriceDetailDTO.SoTaxPriceSearchDTO> list) {
-        List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> resultList = soPriceDetailService.batchGetTaxPrice(list);
-        return success(resultList);
-    }
-
-
-    /**
      * 批量启动或禁用
      */
     private List<BatchResultDTO> processPricingStatusUpdate(List<String> ids, boolean enable) {
@@ -194,7 +184,4 @@ public class SoPriceDetailController extends BaseController {
         }
         return resultDTOS;
     }
-
-
-
 }

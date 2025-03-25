@@ -81,11 +81,7 @@ public class SoPriceChangeDetailEntity extends BaseEntity<SoPriceChangeDetailEnt
     */
     @TableField("so_price_detail_id")
     private String soPriceDetailId;
-    /**
-    * 交期
-    */
-    @TableField("delivery_day")
-    private Integer deliveryDay;
+
     /**
     * 是否禁用 true  禁用 false 启用
     */

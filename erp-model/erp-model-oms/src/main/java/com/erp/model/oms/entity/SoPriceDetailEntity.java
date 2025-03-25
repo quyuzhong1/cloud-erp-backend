@@ -72,11 +72,6 @@ public class SoPriceDetailEntity extends BaseEntity<SoPriceDetailEntity> {
     @TableField("tax_rate")
     private BigDecimal taxRate;
     /**
-    * 交期
-    */
-    @TableField("delivery_day")
-    private Integer deliveryDay;
-    /**
     * 生效时间
     */
     @TableField("effective_date")
@@ -91,6 +86,31 @@ public class SoPriceDetailEntity extends BaseEntity<SoPriceDetailEntity> {
     */
     @TableField("remark")
     private String remark;
+
+
+    /**
+     *  主单单据状态
+     */
+    @TableField(exist = false)
+    private String approveStatus;
+
+    /**
+     * 客户id
+     */
+    @TableField(exist = false)
+    private String customerId;
+
+    /**
+     * 价目表编码
+     */
+    @TableField(exist = false)
+    private String priceCode;
+
+    /**
+     * 销售组织
+     */
+    @TableField(exist = false)
+    private String soOrgName;
 
 
     public static final String SKU_ID = "sku_id";

@@ -240,7 +240,7 @@ public class SoPriceChangeDetailDTO implements Serializable {
         /**
          * 客户名称
          */
-        private String supplierName;
+        private String customerName;
 
         /**
          * sku id

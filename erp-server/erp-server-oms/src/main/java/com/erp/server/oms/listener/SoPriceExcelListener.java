@@ -1,18 +1,19 @@
 package com.erp.server.oms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoPriceDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.dto.excel.ImportSoPriceExcelDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoPriceDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -42,13 +43,13 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
 
     private List<DictCurrencyEntity> currencyList;
 
-    List<Map<String, Object>> supplierList;
+    List<CustomerInfoEntity> customerList;
 
     private List<BaseIdDTO> orgList;
 
     private SoPriceDetailService priceDetailService;
 
-    private SoPriceService purchasePriceService;
+    private SoPriceService soPriceService;
 
     /**
      * 错误信息
@@ -66,7 +67,7 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
      */
     private List<ImportSoPriceExcelDTO> importList = new ArrayList<>();
 
-    private static final String DEFAULT_PURCHASE_ORG_NAME = "东莞市简拍智造科技有限公司";
+    private static final String DEFAULT_so_ORG_NAME = "东莞市简拍智造科技有限公司";
 
     private static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     private static DateTimeFormatter TIME_FORMAT2 = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -99,15 +100,15 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
     private static final int MAX_QTY = 9999999;
 
 
-    public SoPriceExcelListener(List<FindUserDTO> userList, List<SkuVO> skuList, List<DictCurrencyEntity> currencyList, List<Map<String, Object>> supplierList,
-                                List<BaseIdDTO> orgList, PurchasePriceDetailService priceDetailService, PurchasePriceService purchasePriceService) {
+    public SoPriceExcelListener(List<FindUserDTO> userList, List<SkuVO> skuList, List<DictCurrencyEntity> currencyList, List<CustomerInfoEntity> customerList,
+                                List<BaseIdDTO> orgList, SoPriceDetailService priceDetailService, SoPriceService soPriceService) {
         this.userList = userList;
         this.skuList = skuList;
         this.currencyList = currencyList;
-        this.supplierList = supplierList;
+        this.customerList = customerList;
         this.orgList = orgList;
         this.priceDetailService = priceDetailService;
-        this.purchasePriceService = purchasePriceService;
+        this.soPriceService = soPriceService;
     }
 
     @Override
@@ -118,23 +119,23 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
         if (CollUtil.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        SoPriceDTO.ImportAddDTO addDTO;
-        String supplierName = StrUtils.null2EmptyWithTrim(excelDTO.getSupplierName());
+        SoPriceDTO.ImportAddDTO addDTO = new SoPriceDTO.ImportAddDTO();
+        String customerName = StrUtils.null2EmptyWithTrim(excelDTO.getCustomerName());
 
-        SoPriceDTO.ImportAddDTO existSupplierPurchasePrice = handleList.stream().filter(r -> Objects.equals(supplierName, r.getSupplierName())).findFirst().orElse(null);
-        if(Objects.isNull(existSupplierPurchasePrice)) {
+        //客户信息
+        CustomerInfoEntity customerInfoEntity = customerList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), customerName)).findFirst().orElse(null);
+        if(Objects.isNull(customerInfoEntity)) {
+            errorMsgList.add("客户不存在");
+        } else {
+            addDTO.setCustomerId(customerInfoEntity.getId());
+        }
+
+        SoPriceDTO.ImportAddDTO existCustomerSoPrice = handleList.stream().filter(r -> Objects.equals(customerName, r.getCustomerName())).findFirst().orElse(null);
+        if(Objects.isNull(existCustomerSoPrice)) {
             addDTO = new SoPriceDTO.ImportAddDTO();
         } else {
-            addDTO = existSupplierPurchasePrice;
+            addDTO = existCustomerSoPrice;
         }
-
-        Map<String, Object> supplierMap  = supplierList.stream().filter(r->Objects.equals(supplierName, StrUtils.null2EmptyWithTrim(r.get("name")))).findFirst().orElse(null);
-        if(Objects.isNull(supplierMap)) {
-            errorMsgList.add(ApiError.ERROR_SUPPLIER_ABSENCE.msg);
-        } else {
-            addDTO.setSupplierId(StrUtils.null2EmptyWithTrim(supplierMap.get("id")));
-        }
-        addDTO.setSupplierName(supplierName);
         // 报价日期
         String quotedDateStr = excelDTO.getQuotedDate();
         if(StrUtils.isNotEmpty(quotedDateStr)) {
@@ -161,24 +162,24 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
             addDTO.setPricingUserName(pricingUserName);
         }
         // 采购组织
-        String purchaseOrgName = excelDTO.getPurchaseOrgName();
-        addDTO.setPurchaseOrgName(purchaseOrgName);
-        if(StrUtils.isNotEmpty(purchaseOrgName)) {
-            String orgId = orgList.stream().filter(r -> Objects.equals(purchaseOrgName, r.getName())).findFirst().
+        String soOrgName = excelDTO.getSoOrgName();
+        addDTO.setSoOrgName(soOrgName);
+        if(StrUtils.isNotEmpty(soOrgName)) {
+            String orgId = orgList.stream().filter(r -> Objects.equals(soOrgName, r.getName())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (StrUtils.isEmpty(orgId)) {
                 errorMsgList.add("采购组织不存在");
             }
-            addDTO.setPurchaseOrgId(orgId);
+            addDTO.setSoOrgId(orgId);
         } else {
             // 默认【东莞市简拍智造科技有限公司】
-            addDTO.setPurchaseOrgName(DEFAULT_PURCHASE_ORG_NAME);
-            String orgId = orgList.stream().filter(r -> Objects.equals(DEFAULT_PURCHASE_ORG_NAME, r.getName())).findFirst().
+            addDTO.setSoOrgName(DEFAULT_so_ORG_NAME);
+            String orgId = orgList.stream().filter(r -> Objects.equals(DEFAULT_so_ORG_NAME, r.getName())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (StrUtils.isEmpty(orgId)) {
                 errorMsgList.add("采购组织【东莞市简拍智造科技有限公司】不存在");
             }
-            addDTO.setPurchaseOrgId(orgId);
+            addDTO.setSoOrgId(orgId);
         }
 
         // 币制代码
@@ -207,21 +208,6 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
             detailDTO.setSkuId(skuEntity.getSkuId());
             detailDTO.setSkuNo(skuNo);
             detailDTO.setProductName(skuEntity.getSkuName());
-        }
-
-        // 采购交期
-        String deliveryDayStr = excelDTO.getDeliveryDay();
-        if(StrUtils.isNotEmpty(deliveryDayStr)) {
-            if(StrUtils.isInteger(deliveryDayStr)) {
-                Integer deliveryDay = Integer.parseInt(deliveryDayStr);
-                if(deliveryDay < 0) {
-                    errorMsgList.add("采购交期不能小于0");
-                } else {
-                    detailDTO.setDeliveryDay(deliveryDay);
-                }
-            }
-        } else {
-            detailDTO.setDeliveryDay(0);
         }
 
         // 区间从
@@ -305,9 +291,9 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
         }
 
         //根据供应商 获取到系统已有的区间
-        if(StrUtils.isNotEmpty(addDTO.getSupplierId())) {
+        if(StrUtils.isNotEmpty(addDTO.getCustomerId())) {
             if(Objects.nonNull(detailDTO.getMinQty()) && Objects.nonNull(detailDTO.getMaxQty())) {
-                List<SoPriceDetailEntity> supplierPriceDetailList = priceDetailService.getBySupplierIdAndStatus(addDTO.getSupplierId(),addDTO.getPurchaseOrgId(), CHECK_STATUS_LIST);
+                List<SoPriceDetailEntity> supplierPriceDetailList = priceDetailService.getByCustomerIdAndStatus(addDTO.getCustomerId(),addDTO.getSoOrgId(), CHECK_STATUS_LIST);
                 Map<String, List<SoPriceDetailEntity>> existPriceMap = supplierPriceDetailList.stream().collect(Collectors.groupingBy(SoPriceDetailEntity::getSkuId));
                 if(existPriceMap.containsKey(detailDTO.getSkuId())) {
                     int[] addRange = {detailDTO.getMinQty(), detailDTO.getMaxQty()};
@@ -347,9 +333,9 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
         // 与该Excel已有的行做关联验证
         if(CollUtil.isNotEmpty(importList)) {
             if(Objects.nonNull(detailDTO.getMinQty()) && Objects.nonNull(detailDTO.getMaxQty())) {
-                Map<String, List<ImportSoPriceExcelDTO>> importPurchaseMap = importList.stream().collect(Collectors.groupingBy(r->StrUtils.null2EmptyWithTrim(r.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(r.getSkuNo()) + "-" + StrUtils.null2EmptyWithTrim(r.getPurchaseOrgName())));
-                String checkKey = StrUtils.null2EmptyWithTrim(addDTO.getSupplierName()) + "-" + StrUtils.null2EmptyWithTrim(detailDTO.getSkuNo())+ "-" + StrUtils.null2EmptyWithTrim(excelDTO.getPurchaseOrgName());
-                List<ImportSoPriceExcelDTO> importPriceList = importPurchaseMap.get(checkKey);
+                Map<String, List<ImportSoPriceExcelDTO>> importSoMap = importList.stream().collect(Collectors.groupingBy(r->StrUtils.null2EmptyWithTrim(r.getCustomerName()) + "-" + StrUtils.null2EmptyWithTrim(r.getSkuNo()) + "-" + StrUtils.null2EmptyWithTrim(r.getSoOrgName())));
+                String checkKey = StrUtils.null2EmptyWithTrim(addDTO.getCustomerId()) + "-" + StrUtils.null2EmptyWithTrim(detailDTO.getSkuNo())+ "-" + StrUtils.null2EmptyWithTrim(excelDTO.getSoOrgName());
+                List<ImportSoPriceExcelDTO> importPriceList = importSoMap.get(checkKey);
                 if(CollUtil.isNotEmpty(importPriceList)) {
                     for(ImportSoPriceExcelDTO price : importPriceList) {
                         if(StrUtils.isInteger(price.getMinQty()) && StrUtils.isInteger(price.getMaxQty())
@@ -382,7 +368,7 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
         detailList.add(detailDTO);
         addDTO.setDetailList(detailList);
 
-        if (Objects.isNull(existSupplierPurchasePrice)) {
+        if (Objects.isNull(existCustomerSoPrice)) {
             handleList.add(addDTO);
         }
     }
@@ -390,7 +376,7 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
         if(CollUtil.isNotEmpty(handleList)) {
-            purchasePriceService.batchImport(handleList);
+            soPriceService.batchImport(handleList);
         }
     }
 

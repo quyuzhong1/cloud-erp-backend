@@ -5,9 +5,9 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.dto.SoPriceDetailDTO;
+import com.erp.model.oms.dto.excel.SoPriceDetailImportExcelDTO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchasePriceDetailDTO;
-import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
@@ -27,7 +27,7 @@ import java.util.regex.Pattern;
  * @Created by yl
  */
 @Slf4j
-public class SoPriceDetailExcelListener extends AnalysisEventListener<PurchasePriceDetailImportExcelDTO> {
+public class SoPriceDetailExcelListener extends AnalysisEventListener<SoPriceDetailImportExcelDTO> {
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
@@ -40,13 +40,13 @@ public class SoPriceDetailExcelListener extends AnalysisEventListener<PurchasePr
     /**
      * 成功的数据
      */
-    private List<PurchasePriceDetailDTO.AddDTO> successList = new ArrayList<>();
+    private List<SoPriceDetailDTO.AddDTO> successList = new ArrayList<>();
 
 
     /**
      * 导入错误数据
      */
-    private List<PurchasePriceDetailImportExcelDTO> errorList = new ArrayList<>();
+    private List<SoPriceDetailImportExcelDTO> errorList = new ArrayList<>();
 
 
     public SoPriceDetailExcelListener(List<SkuVO> skuList) {
@@ -74,48 +74,46 @@ public class SoPriceDetailExcelListener extends AnalysisEventListener<PurchasePr
     /**
      * 每解析一行数据回调一遍
      *
-     * @param purchasePriceDetailImportExcelDTO
+     * @param SoPriceDetailImportExcelDTO
      * @param analysisContext
      * @return void
      * @author yl
      * @date 2023-03-27 17:17
      */
     @Override
-    public void invoke(PurchasePriceDetailImportExcelDTO purchasePriceDetailImportExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(SoPriceDetailImportExcelDTO SoPriceDetailImportExcelDTO, AnalysisContext analysisContext) {
 
-        PurchasePriceDetailDTO.AddDTO addDTO = new PurchasePriceDetailDTO.AddDTO();
+        SoPriceDetailDTO.AddDTO addDTO = new SoPriceDetailDTO.AddDTO();
         //注解验证信息
         List<String> errorMsgList = new ArrayList<>();
-        List<String> msgList = FieldValidUtil.fieldValid(purchasePriceDetailImportExcelDTO);
+        List<String> msgList = FieldValidUtil.fieldValid(SoPriceDetailImportExcelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
         if (CollectionUtils.isEmpty(skuList)) {
             errorMsgList.add("系统中未发现已审核SKU");
         } else {
-            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(purchasePriceDetailImportExcelDTO.getSkuNo())).findFirst().orElse(null);
+            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(SoPriceDetailImportExcelDTO.getSkuNo())).findFirst().orElse(null);
             if (Objects.isNull(skuEntity)) {
                 errorMsgList.add("sku有误");
             }
             if (skuEntity != null) {
-                addDTO.setDeliveryDay(purchasePriceDetailImportExcelDTO.getDeliveryDay());
-                String effectiveDateStr = purchasePriceDetailImportExcelDTO.getEffectiveDateStr();
+                String effectiveDateStr = SoPriceDetailImportExcelDTO.getEffectiveDateStr();
                 addDTO.setEffectiveDate(StringUtils.isBlank(effectiveDateStr) ? null : getDate(effectiveDateStr));
-                addDTO.setMinQty(purchasePriceDetailImportExcelDTO.getMinQty());
-                addDTO.setMaxQty(purchasePriceDetailImportExcelDTO.getMaxQty());
-                addDTO.setTaxPrice(purchasePriceDetailImportExcelDTO.getTaxPrice());
-                addDTO.setTaxRate(purchasePriceDetailImportExcelDTO.getTaxRate());
+                addDTO.setMinQty(SoPriceDetailImportExcelDTO.getMinQty());
+                addDTO.setMaxQty(SoPriceDetailImportExcelDTO.getMaxQty());
+                addDTO.setTaxPrice(SoPriceDetailImportExcelDTO.getTaxPrice());
+                addDTO.setTaxRate(SoPriceDetailImportExcelDTO.getTaxRate());
                 addDTO.setSkuId(skuEntity.getSkuId());
                 addDTO.setSkuNo(skuEntity.getSkuNo());
-                addDTO.setProductName(skuEntity.getSkuName());
                 successList.add(addDTO);
             }
         }
 
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
-            purchasePriceDetailImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(purchasePriceDetailImportExcelDTO);
+            SoPriceDetailImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(SoPriceDetailImportExcelDTO);
             return;
         }
 
@@ -150,12 +148,12 @@ public class SoPriceDetailExcelListener extends AnalysisEventListener<PurchasePr
         }
         return null;
     }
-    public List<PurchasePriceDetailImportExcelDTO> getErrorList() {
+    public List<SoPriceDetailImportExcelDTO> getErrorList() {
         return errorList;
     }
 
 
-    public List<PurchasePriceDetailDTO.AddDTO> getSuccessList() {
+    public List<SoPriceDetailDTO.AddDTO> getSuccessList() {
         return successList;
     }
 }

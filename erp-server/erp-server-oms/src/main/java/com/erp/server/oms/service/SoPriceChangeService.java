@@ -1,10 +1,14 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.SoPriceChangeEntity;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.oms.dto.SoPriceChangeDTO;
 import com.common.business.vo.PagingVO;
-import javax.servlet.http.HttpServletResponse;
+import com.erp.model.oms.dto.SoPriceChangeDTO;
+import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
+import com.erp.model.oms.entity.SoPriceChangeEntity;
+
 import java.util.List;
 
 /**
@@ -17,130 +21,129 @@ import java.util.List;
  */
 public interface SoPriceChangeService extends SuperService<SoPriceChangeEntity> {
 
-    /**
-    * 新增
-    * @author will
-    * @date: 2025-03-24
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(SoPriceChangeDTO.AddDTO dto);
 
     /**
-    * 修改
-    * @author will
-    * @date: 2025-03-24
-    * @param dto
-    * @return
-    */
-    Boolean update(SoPriceChangeDTO.UpdateDTO dto);
+     * 添加采购价目变更
+     * @author yl
+     * @date 2023-03-28 11:49
+     * @param dto
+     * @return com.erp.model.scm.entity.SoPriceChangeEntity
+     */
+    SoPriceChangeEntity add(SoPriceChangeDTO.AddDTO dto);
 
     /**
-    * 分页列表查询
-    * @author will
-    * @date: 2025-03-24
-    * @param pagingParamDTO
-    * @return PagingVO<SoPriceChangeDTO.ListDTO>>
-    */
-    PagingVO<SoPriceChangeDTO.PagingViewDTO> paging(PagingDTO<SoPriceChangeDTO.PagingParamDTO> pagingParamDTO);
+     * 提交并审核
+     * @author yl
+     * @date 2023-03-28 14:08
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    SoPriceChangeEntity addAndSubmit(SoPriceChangeDTO.AddDTO dto);
 
     /**
-    * 状态统计
-    * @author will
-    * @date: 2025-03-24
-    * @param dto
-    * @return List<SoPriceChangeDTO.TabListDTO>>
-    */
-    List<SoPriceChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    /**
-    * 详情
-    * @author will
-    * @date: 2025-03-24
-    * @param id
-    * @return
-    */
+     * 采购价目变更详情
+     * @author yl
+     * @date 2023-03-28 14:24
+     * @param id
+     * @return com.erp.model.scm.dto.SoPriceChangeDTO.UpdateDTO
+     */
     SoPriceChangeDTO.ViewDTO view(String id);
 
-    /**
-    * 新增并提交审核
-    * @author will
-    * @date: 2025-03-24
-    * @param dto
-    * @return BaseResultDTO.AddDTO
-    */
-    BaseResultDTO.AddDTO addAndSubmit(SoPriceChangeDTO.AddDTO dto);
 
     /**
-    * 修改并提交审核
-    * @author will
-    * @date: 2025-03-24
-    * @param dto
-    * @return
-    */
-    void updateAndSubmit(SoPriceChangeDTO.UpdateDTO dto);
-
-     /**
-     * 提交审核
-     * @author will
-     * @date: 2025-03-24
-     * @param id
-     * @return
+     * 修改采购价目变更
+     * @author yl
+     * @date 2023-03-28 16:40
+     * @param dto
+     * @return com.erp.model.scm.entity.SoPriceChangeEntity
      */
-    BatchResultDTO submit(String id);
+    String updateSoPriceChange(SoPriceChangeDTO.UpdateDTO dto);
 
     /**
-    * 审核
-    * @author will
-    * @date: 2025-03-24
-    * @param dto
-    * @return
-    */
-    BatchResultDTO approve(ApproveOneDTO dto);
+     * 采购价目变更 提交审核
+     * @author yl
+     * @date 2023-03-28 16:47
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean submitApprove(List<String> ids,Boolean isStartProcess);
 
     /**
-    * 反审核
-    * @author will
-    * @date: 2025-03-24
-    * @param id
-    * @return
-    */
-    BatchResultDTO disApprove(String id);
+     * 采购价目变更 审核
+     * @author yl
+     * @date 2023-03-28 16:52
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
+     * @return java.lang.Boolean
+     */
+    BatchResultDTO approve(SoPriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
-    * 删除
-    * @author will
-    * @date: 2025-03-24
-    * @param id
-    * @return
-    */
-    BatchResultDTO delete(String id);
+     * @description: 结束审核
+     * @author Will
+     * @date: 2023/7/3 18:53
+     * @param entity
+     * @param type
+     * @param comment
+     * @param isNeedProcess
+     * @return Boolean
+     */
+    BatchResultDTO approveEnd (SoPriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
 
     /**
-    * 撤销
-    * @author will
-    * @date: 2025-03-24
-    * @param id
-    * @return
-    */
-    BatchResultDTO cancelProcess(String id);
+     * 取消流程
+     * @author yl
+     * @date 2023-03-28 16:56
+     * @param ids
+     * @return java.lang.Boolean
+     */
+    Boolean cancelProcess(List<String> ids);
 
     /**
-    * 导出Excel
-    * @author will
-    * @date: 2025-03-24
-    * @param dto
-    * @param response
-    * @return
-    */
-    void exportList(SoPriceChangeDTO.ExportDTO dto, HttpServletResponse response);
+     * 分页获取采购价目变更数据
+     * @author yl
+     * @date 2023-03-28 17:15
+     * @param dto
+     * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SoPriceChangeDTO.PagingViewDTO>
+     */
+    PagingVO<SoPriceChangeDTO.PagingViewDTO> paging(PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto);
 
     /**
-    * 审核通过回调方法
-    * @param dto
-    * @param entity
-    * @return
-    */
-    Boolean approveEnd(ApproveOneDTO dto, SoPriceChangeEntity entity);
+     * 修改并审核
+     * @author yl
+     * @date 2023-03-29 9:42
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    Boolean updateAndSubmit(SoPriceChangeDTO.UpdateDTO dto);
+
+    /**
+     * @description: 更新明细备注
+     * @author Will
+     * @date: 2023/9/22 15:08
+     * @param ids
+     * @param remark
+     * @return Boolean
+     */
+    Boolean updateDetailRemark(List<String> ids, String remark);
+    /**
+     * @param dto
+     * @description:
+     * @author Will
+     * @date: 2023/10/18 16:30
+     */
+    void export(SoPriceChangeDTO.PagingParamDTO dto);
+    /**
+     * @description: tab列表
+     * @author Will
+     * @date: 2024/1/20 9:22
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<SoPriceChangeDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto);
 
 }

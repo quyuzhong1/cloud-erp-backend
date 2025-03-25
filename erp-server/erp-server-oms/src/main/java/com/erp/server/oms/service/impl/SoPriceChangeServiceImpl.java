@@ -9,12 +9,16 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -25,24 +29,26 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.SoPriceChangeDTO;
 import com.erp.model.oms.dto.SoPriceChangeDetailDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.entity.SoPriceChangeEntity;
+import com.erp.model.oms.entity.SoPriceDetailEntity;
+import com.erp.model.oms.entity.SoPriceHistoryEntity;
 import com.erp.model.oms.enums.SoPriceChangeTabFlagEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.mapper.SoPriceChangeMapper;
+import com.erp.server.oms.query.SoPriceChangeQueryHandler;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -51,8 +57,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -60,7 +64,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_So_PRICE_CHANGE;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_SO_PRICE_CHANGE;
 
 /**
  * <p>
@@ -73,26 +77,21 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_So_PRICE_CH
 @Slf4j
 @Service
 public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapper, SoPriceChangeEntity> implements SoPriceChangeService {
-    @Resource
-    private SoPriceService soPriceService;
+
     @Resource
     private SoPriceDetailService soPriceDetailService;
-
 
     @Resource
     private SoPriceChangeDetailService soPriceChangeDetailService;
 
     @Resource
-    private SoPriceHistoryService SoPriceHistoryService;
-
+    private SoPriceHistoryService soPriceHistoryService;
 
     @Resource
     private SysUserFeign sysUserFeign;
 
-
     @Resource
     private OmsAttachmentService attachmentService;
-
 
     @Resource
     private OperateLogService moduleOperateLogService;
@@ -104,126 +103,71 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
-    private SoPriceChangeQueryHandler SoPriceChangeQueryHandler;
+    private SoPriceChangeQueryHandler soPriceChangeQueryHandler;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
 
     @Resource
-    private DmpMqFeign dmpMqFeign;
-    @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private CustomerInfoService customerInfoService;
+
     /**
      * 添加销售价目变更
-     *
      * @param dto
      * @return com.erp.model.scm.entity.SoPriceChangeEntity
-     * @author yl
-     * @date 2023-03-28 11:49
+     * @author will
+     * @date 2025-03-28 11:49
      */
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public SoPriceChangeEntity add(SoPriceChangeDTO.AddDTO dto) {
-
-        /**
-         * 报价明细
-         */
         SoPriceChangeEntity changeEntity = new SoPriceChangeEntity();
-        String id = IdWorker.getIdStr();
         BeanMapper.copy(dto, changeEntity);
         //生成单号
-//        String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGTJ, BusinessNoTypeEnum.CODE_CGTJ.getCode()));
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGTJ);
         changeEntity.setCode(code);
-        changeEntity.setId(id);
+        changeEntity.setId(IdWorker.getIdStr());
         String pricingUserId = dto.getAdjustUserId();
         if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
             changeEntity.setAdjustUserName(user != null ? user.getUserName() : "");
         }
-        String orgId = dto.getSoOrgId();
-
         //获取组织
-        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId));
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(dto.getSoOrgId()));
         if (CollectionUtils.isNotEmpty(orgList)) {
             changeEntity.setSoOrgName(orgList.get(0).getName());
         }
         //保存成功
-        Boolean addResult = this.save(changeEntity);
-        if (addResult) {
-
-            Class<SoPriceChangeEntity> credentialClass = SoPriceChangeEntity.class;
-            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String type = tableName.value();
-            //保存附件
-            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
-
-            //添加价格变更明细
-            SoPriceChangeDetailService.addPriceChangeDetail(id, dto.getSoPriceChangeDetailList());
-            //添加日志
-            String content = String.format("新增了一个{%s}-销售调价-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
-            addModuleOperateLog(content, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), id, "新增操作");
-            return changeEntity;
+        boolean addResult = this.save(changeEntity);
+        if (!addResult) {
+            throw new ServiceException(ApiError.ERROR_1002);
         }
-        return null;
+        Class<SoPriceChangeEntity> credentialClass = SoPriceChangeEntity.class;
+        TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        //保存附件
+        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, changeEntity.getId());
+
+        //添加价格变更明细
+        soPriceChangeDetailService.addPriceChangeDetail(changeEntity.getId(), dto.getSoPriceChangeDetailList());
+        //添加日志
+        String content = String.format("新增了一个{%s}-销售调价-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+        addModuleOperateLog(content, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), changeEntity.getId());
+        return changeEntity;
     }
-
-    /**
-     * 可以做自动审核的 就是判断他报价和税率全部都各自不大于原先值的情况  就给他自动审核通过
-     *
-     * @param SoPriceChangeDetailList
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-04-11 12:27
-     */
-    private Boolean getIsPass(List<SoPriceChangeDetailDTO.AddDTO> SoPriceChangeDetailList) {
-        if (CollectionUtils.isNotEmpty(SoPriceChangeDetailList)) {
-            List<Integer> flagList = new ArrayList<>();
-            List<String> detailIds = SoPriceChangeDetailList.stream().map(SoPriceChangeDetailDTO.AddDTO::getSoPriceDetailId).collect(Collectors.toList());
-
-            List<SoPriceDetailEntity> detailEntityList = SoPriceDetailService.listByIds(detailIds);
-            int i = 0;
-            for (SoPriceChangeDetailDTO.AddDTO item : SoPriceChangeDetailList) {
-                SoPriceDetailEntity entity = detailEntityList.stream().filter(d -> d.getId().equals(item.getSoPriceDetailId())).findFirst().orElse(null);
-                if (entity != null) {
-                    //新的报价
-                    BigDecimal newTaxPrice = item.getTaxPrice();
-                    //原有的报价
-                    BigDecimal oldTaxPrice = entity.getTaxPrice();
-
-                    //新的税率
-                    BigDecimal newTaxRate = item.getTaxRate();
-
-                    //原有的税率
-                    BigDecimal oldTaxRate = entity.getTaxRate().multiply(new BigDecimal("100"));
-                    if (newTaxPrice != null && oldTaxPrice != null && newTaxRate != null && oldTaxRate != null) {
-                        if (newTaxPrice.compareTo(oldTaxPrice) <= 0 && newTaxRate.compareTo(oldTaxRate) <= 0) {
-                            i++;
-                            flagList.add(i);
-                        }
-
-                    }
-                }
-            }
-            if (flagList.size() == SoPriceChangeDetailList.size()) {
-                return true;
-            }
-        }
-
-        return false;
-
-    }
-
 
     /**
      * 提交并审核
      *
      * @param dto
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-28 14:08
+     * @author will
+     * @date 2025-03-28 14:08
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -234,6 +178,9 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             throw new ServiceException(ApiError.ERROR_1019);
         }
         Boolean result = this.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_1002);
+        }
         return entity;
     }
 
@@ -242,8 +189,8 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      *
      * @param id
      * @return com.erp.model.scm.dto.SoPriceChangeDTO.UpdateDTO
-     * @author yl
-     * @date 2023-03-28 14:24
+     * @author will
+     * @date 2025-03-28 14:24
      */
     @Override
     public SoPriceChangeDTO.ViewDTO view(String id) {
@@ -261,38 +208,31 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         viewDTO.setAttachmentNameList(attachmentNameList);
         viewDTO.setAttachmentUrlList(attachmentUrlList);
         //获取明细信息
-        List<SoPriceChangeDetailDTO.ViewDTO> soPriceDetailList = SoPriceChangeDetailService.getByPriceChangeId(id);
+        List<SoPriceChangeDetailDTO.ViewDTO> soPriceDetailList = soPriceChangeDetailService.getByPriceChangeId(id);
         List<String> skuIds = soPriceDetailList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
 
         //获取供应商
-        List<String> supplierIds = soPriceDetailList.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
-        List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIds);
+        List<String> customerIds = soPriceDetailList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getCustomerId).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerEntities = customerInfoService.listByIds(customerIds);
 
         //查询销售价目表
-        List<String> SoPriceDetailId = soPriceDetailList.stream().map(req -> req.getSoPriceDetailId()).distinct().collect(Collectors.toList());
+        List<String> SoPriceDetailId = soPriceDetailList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getSoPriceDetailId).distinct().collect(Collectors.toList());
         List<SoPriceDetailDTO.ViewDTO> priceDetailView = soPriceDetailService.listBySoPriceDetailIds(SoPriceDetailId);
-        List<String> soPriceIds = priceDetailView.stream().map(req -> req.getSoPriceId()).distinct().collect(Collectors.toList());
-        List<SoPriceEntity> soPriceEntities = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(soPriceIds)) {
-            soPriceEntities = soPriceService.listByIds(soPriceIds);
-        }
+        List<String> soPriceIds = priceDetailView.stream().map(SoPriceDetailDTO.ViewDTO::getSoPriceId).distinct().collect(Collectors.toList());
 
         for (SoPriceChangeDetailDTO.ViewDTO dto : soPriceDetailList) {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
             dto.setProductName(skuVO.getSkuName());
-            SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> dto.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
-            dto.setSupplierName(supplierEntity.getName());
+            CustomerInfoEntity customerInfoEntity = customerEntities.stream().filter(req -> dto.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
+            dto.setCustomerName(customerInfoEntity.getName());
         }
-
         //查询价目表主标Id
-        List<String> soPriceDetailIds = soPriceDetailList.stream().map(req -> req.getSoPriceDetailId()).distinct().collect(Collectors.toList());
+        List<String> soPriceDetailIds = soPriceDetailList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getSoPriceDetailId).distinct().collect(Collectors.toList());
         List<SoPriceDetailEntity> soPriceDetailEntities = soPriceDetailService.listByIds(soPriceDetailIds);
-        List<String> soPriceIdList = soPriceDetailEntities.stream().map(req -> req.getSoPriceId()).distinct().collect(Collectors.toList());
+        List<String> soPriceIdList = soPriceDetailEntities.stream().map(SoPriceDetailEntity::getMainId).distinct().collect(Collectors.toList());
         viewDTO.setSoPriceIdList(soPriceIdList);
-
-
-        viewDTO.setSoPriceChangeDetailList(soPriceEntities);
+        viewDTO.setSoPriceChangeDetailList(soPriceDetailList);
         return viewDTO;
     }
 
@@ -302,8 +242,8 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      *
      * @param dto
      * @return com.erp.model.scm.entity.SoPriceChangeEntity
-     * @author yl
-     * @date 2023-03-28 16:40
+     * @author will
+     * @date 2025-03-28 16:40
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -344,57 +284,21 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         }
         //修改成功
         Boolean result = this.updateById(priceChangeEntity);
-        if (result) {
-            /**
-             * 添加修改日志
-             */
-            moduleOperateLogService.addModuleOperateLogByObj(old, priceChangeEntity, ModuleTypeEnum.So_PRICE_CHANGE.getCode(), id, "", "");
-
-            Class<SoPriceChangeEntity> credentialClass = SoPriceChangeEntity.class;
-            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String type = tableName.value();
-            //保存附件
-            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
-            //修改明细
-            SoPriceChangeDetailService.updatePriceChangeDetail(id, dto.getSoPriceChangeDetailList());
-            return id;
+        if (!result) {
+           throw new ServiceException(ApiError.ERROR_1002);
         }
-        return "";
-    }
+       //添加日志
+        moduleOperateLogService.addModuleOperateLogByObj(old, priceChangeEntity, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), id, "", "");
 
-
-    /**
-     * 删除 销售价目变更
-     *
-     * @param ids
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-28 16:42
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<SoPriceChangeEntity> priceChangeList = this.listByIds(ids);
-        String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = priceChangeList.stream().filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98009);
-        }
-        //删除价目表
-        Boolean result = this.removeByIds(ids);
-        if (result) {
-            //添加日志
-            String content = "删除价目表[%s]";
-            List<Pair<String, String>> pairList = priceChangeList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), pairList, "删除");
-            attachmentService.deleteByBusinessIds(ids);
-        }
-
-        return result;
+        Class<SoPriceChangeEntity> credentialClass = SoPriceChangeEntity.class;
+        TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        //保存附件
+        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+        //修改明细
+        soPriceChangeDetailService.updatePriceChangeDetail(id, dto.getSoPriceChangeDetailList());
+        return id;
     }
 
 
@@ -403,8 +307,8 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      *
      * @param ids
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-28 16:47
+     * @author will
+     * @date 2025-03-28 16:47
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -420,7 +324,6 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
-
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -435,12 +338,10 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
-
         if (isStartProcess) {
             //提交流程
             startProcess(priceChangeList);
         }
-
         List<Pair<String, String>> pairList = priceChangeList.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(waitSubmitStatus))).
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
@@ -450,14 +351,12 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.So_PRICE_CHANGE.getCode(), pairList, "状态变更");
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), pairList, "状态变更");
 
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.So_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
-
+            batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
         }
-
         return result;
     }
 
@@ -470,8 +369,8 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      * @param comment
      * @param isNeedProcess
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-28 16:52
+     * @author will
+     * @date 2025-03-28 16:52
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -484,7 +383,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         BatchResultDTO resultDTO = approveProcess(entity, type, comment, isNeedProcess);
         if (resultDTO.getSuccess()){
             //添加日志
-            moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.So_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
+            moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
         }
         return resultDTO;
     }
@@ -506,7 +405,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             return BatchResultDTO.success();
         }
         Boolean result;
-        if (type.equals(ScmConstant.PASS)) {
+        if (type.equals(ApproveType.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
@@ -518,18 +417,9 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        if (ScmConstant.PASS.equals(type)) {
+        if (ApproveType.PASS.equals(type)) {
             //更新价目表数据
-            SoPriceChangeDetailService.updateSoPriceDetail(Collections.singletonList(entity));
-            //审核通过发送金蝶
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeSoPriceChangeService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-            //推送金蝶
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-                @Override
-                public void afterCommit() {
-                    dmpMqFeign.sendTask(Collections.singletonList(pushTaskEntity));
-                }
-            });
+            soPriceChangeDetailService.updateSoPriceDetail(Collections.singletonList(entity));
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
@@ -539,8 +429,8 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      *
      * @param ids
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-28 16:56
+     * @author will
+     * @date 2025-03-28 16:56
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -557,7 +447,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         ids.forEach(obj -> {
             ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
             revokeDTO.setBusinessId(obj);
-            revokeDTO.setBusinessKey(SourceTypeEnum.So_PRICE_CHANGE.getCode());
+            revokeDTO.setBusinessKey(SourceTypeEnum.SO_PRICE_CHANGE.getCode());
             revokeDTO.setUserId(userInfo.getUid());
             workflowFeign.revokeProcess(revokeDTO);
         });
@@ -569,18 +459,17 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             String content = String.format("状态由[%s]变更为[%s] ", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             List<Pair<String, String>> pairList = list.stream().
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.So_PRICE_CHANGE.getCode(), pairList, "取消流程");
+            batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), pairList, "取消流程");
         }
         return result;
     }
 
     /**
      * 分页获取销售价目变更数据
-     *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SoPriceChangeDTO.PagingViewDTO>
-     * @author yl
-     * @date 2023-03-28 17:15
+     * @author will
+     * @date 2025-03-28 17:15
      */
     @Override
     public PagingVO<SoPriceChangeDTO.PagingViewDTO> paging(PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
@@ -612,15 +501,15 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             }
             //历史调价数据
             List<String> changeDetailIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
-            List<SoPriceHistoryEntity> SoPriceHistoryList = SoPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
+            List<SoPriceHistoryEntity> SoPriceHistoryList = soPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
 
             //原调价表数据
             List<String> priceDetailIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getSoPriceDetailId).collect(Collectors.toList());
-            List<SoPriceDetailDTO.ViewDTO> priceDetailList = SoPriceDetailService.listBySoPriceDetailIds(priceDetailIdList);
+            List<SoPriceDetailDTO.ViewDTO> priceDetailList = soPriceDetailService.listBySoPriceDetailIds(priceDetailIdList);
 
 
-            List<String> supplierIdList = list.stream().map(req -> req.getSupplierId()).distinct().collect(Collectors.toList());
-            List<SupplierEntity> supplierEntities = supplierService.listByIds(supplierIdList);
+            List<String> customerIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getCustomerId).distinct().collect(Collectors.toList());
+            List<CustomerInfoEntity> customerEntities = customerInfoService.listByIds(customerIdList);
 
             for (SoPriceChangeDTO.PagingViewDTO item : list) {
                 SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
@@ -641,8 +530,8 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
                 }
 
                 //供应商
-                SupplierEntity supplierEntity = supplierEntities.stream().filter(req -> item.getSupplierId().equals(req.getId())).findFirst().orElse(new SupplierEntity());
-                item.setSupplierName(supplierEntity.getName());
+                CustomerInfoEntity customerInfoEntity = customerEntities.stream().filter(req -> item.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
+                item.setCustomerName(customerInfoEntity.getName());
                 //历史调价
                 SoPriceHistoryEntity SoPriceHistoryEntity = SoPriceHistoryList.stream().filter(obj -> StrUtil.equals(item.getChangeDetailId(), obj.getChangeDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(SoPriceHistoryEntity)) {
@@ -667,11 +556,10 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
 
     /**
      * 修改并审核
-     *
      * @param dto
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-29 9:42
+     * @author will
+     * @date 2025-03-29 9:42
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -681,29 +569,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submitApprove(Arrays.asList(id), Boolean.TRUE);
-    }
-
-
-    /**
-     * 根据销售价目表id  获取对应产品信息
-     *
-     * @param dto
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceChangeDTO.ViewDTO>
-     * @author yl
-     * @date 2023-03-31 16:07
-     */
-    @Override
-    public List<SoPriceChangeDetailDTO.ViewDTO> getSkuChangeList(SoPriceChangeDetailDTO.SkuChangeParamDTO dto) {
-        return soPriceDetailService.listPriceChangeDetail(dto);
-    }
-
-    @Override
-    public Boolean updateSyncKingdeeId(String id, String syncKingdeeId) {
-        return this.lambdaUpdate()
-                .eq(SoPriceChangeEntity::getId, id)
-                .set(StringUtils.isNotBlank(syncKingdeeId), SoPriceChangeEntity::getSyncKingdeeId, syncKingdeeId)
-                .update();
+        return this.submitApprove(Collections.singletonList(id), Boolean.TRUE);
     }
 
     @Override
@@ -717,17 +583,16 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
 
     @Override
     public void export(SoPriceChangeDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("销售调价数据", EXPORT_SCM_So_PRICE_CHANGE.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("销售调价数据", EXPORT_SO_PRICE_CHANGE.getCode(), dto);
     }
 
     /**
      * 修改状态
-     *
      * @param list
      * @param statusEnum
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-28 16:50
+     * @author will
+     * @date 2025-03-28 16:50
      */
     private Boolean updateApproveStatus(List<SoPriceChangeEntity> list, ApproveStatusEnum statusEnum) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -758,8 +623,8 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      * @param pairList
      * @param operation
      * @return void
-     * @author yl
-     * @date 2023-03-28 16:46
+     * @author will
+     * @date 2025-03-28 16:46
      */
     private void batchAddModuleOperateLog(String content, String code, List<Pair<String, String>> pairList, String operation) {
         moduleOperateLogService.batchAddModuleOperateLog(content, code, pairList, operation);
@@ -773,13 +638,12 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
      * @param content
      * @param code
      * @param businessId
-     * @param operation
      * @return void
-     * @author yl
-     * @date 2023-03-28 12:25
+     * @author will
+     * @date 2025-03-28 12:25
      */
-    private void addModuleOperateLog(String content, String code, String businessId, String operation) {
-        moduleOperateLogService.addModuleOperateLog(content, code, businessId, operation);
+    private void addModuleOperateLog(String content, String code, String businessId) {
+        moduleOperateLogService.addModuleOperateLog(content, code, businessId, "新增操作");
 
     }
 
@@ -839,39 +703,6 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
-
-    /**
-     * 临时修复线上数据
-     */
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public void tempUpdateHistoryDb() {
-
-        List<SoPriceChangeDetailEntity> priceChangeDetailList = baseMapper.listTemp();
-
-        Map<String, List<SoPriceChangeDetailEntity>> map = priceChangeDetailList.stream().collect(Collectors.groupingBy(SoPriceChangeDetailEntity::getSoPriceDetailId));
-        List<SoPriceHistoryEntity> updateList = new ArrayList<>(10);
-        for (Map.Entry<String, List<SoPriceChangeDetailEntity>> item : map.entrySet()) {
-            //销售价目详情id
-            String SoPriceDetailId = item.getKey();
-            List<SoPriceChangeDetailEntity> list = item.getValue();
-            List<SoPriceHistoryEntity> priceEntityList = SoPriceHistoryService.getHistoryByDetailIds(Arrays.asList(SoPriceDetailId));
-            list = list.stream().
-                    sorted(Comparator.comparing(SoPriceChangeDetailEntity::getUpdateTime).reversed()).collect(Collectors.toList());
-            for (int i = 0; i < priceEntityList.size(); i++) {
-                if (list.size() > i) {
-                    SoPriceHistoryEntity historyEntity = priceEntityList.get(i);
-                    historyEntity.setChangeDetailId(list.get(i).getId());
-                    updateList.add(historyEntity);
-                }
-            }
-
-        }
-        if (CollectionUtils.isNotEmpty(updateList)) {
-            SoPriceHistoryService.updateBatchById(updateList);
-        }
-    }
-
     @Override
     public List<SoPriceChangeDTO.TabListDTO> tabList(PermissionsDTO dto) {
         SoPriceChangeTabFlagEnum[] values = SoPriceChangeTabFlagEnum.values();
@@ -880,7 +711,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             SoPriceChangeDTO.PagingParamDTO searchParamDTO = new SoPriceChangeDTO.PagingParamDTO();
             searchParamDTO.setPermissionSql(dto.getPermissionSql());
             SoPriceChangeDTO.TabListDTO resultDTO = new SoPriceChangeDTO.TabListDTO();
-            String tabSql = SoPriceChangeQueryHandler.getTabSql(item.getCode());
+            String tabSql = soPriceChangeQueryHandler.getTabSql(item.getCode());
             HashMap<String,String> map = new HashMap<>();
             map.put("default",tabSql);
             searchParamDTO.setSqlMap(map);
@@ -911,15 +742,15 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         List<String> changeDetailIdList = page.getRecords().stream().map(SoPriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
 
         //销售价目详情表id
-        List<String> SoPriceDetailIds = page.getRecords().stream().map(SoPriceChangeDTO.PagingViewDTO::getSoPriceDetailId).collect(Collectors.toList());
+        List<String> soPriceDetailIds = page.getRecords().stream().map(SoPriceChangeDTO.PagingViewDTO::getSoPriceDetailId).collect(Collectors.toList());
         //历史的
-        List<SoPriceHistoryEntity> historyList = SoPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
+        List<SoPriceHistoryEntity> historyList = soPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
         //获取到对应的价目明细
-        List<SoPriceDetailEntity> SoPriceDetailList = SoPriceDetailService.listByIds(SoPriceDetailIds);
+        List<SoPriceDetailEntity> SoPriceDetailList = soPriceDetailService.listByIds(soPriceDetailIds);
 
         //最新审核人
         ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        page.getRecords().forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.So_PRICE_CHANGE.getCode(), obj.getId())));
+        page.getRecords().forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_PRICE_CHANGE.getCode(), obj.getId())));
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
         if (CollectionUtils.isNotEmpty(dtoList)) {
             listApiResult = workflowFeign.curApprover(dtoList);
@@ -964,7 +795,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             Integer maxQty = item.getMaxQty();
             excelDTO.setQtySection(minQty + "-" + maxQty);
             //最新审核人
-            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
                 String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
                 excelDTO.setApproveUserName(curApprove);
             }

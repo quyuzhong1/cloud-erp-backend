@@ -42,38 +42,37 @@
     </sql>
 
 
-    <select id="paging" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
+    <select id="paging" resultType="com.erp.model.oms.dto.SoPriceDTO$PagingViewDTO">
         SELECT
-        pp.id,
-        pp.code,
-        pp.voucher_no as voucherNo,
-        pp.create_user_id AS createUserId,
-        pp.create_user_name AS createUserName,
-        pp.create_time AS createTime,
-        pp.supplier_id AS supplierId,
-        (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
-        ppd.sku_id AS skuId,
-        ppd.sku_no AS skuNo,
-        ppd.product_name AS productName,ppd.min_qty as minQty,ppd.max_qty as maxQty,
-        pp.approve_status as approveStatus,
-        ppd.tax_price as taxPrice,
-        ppd.currency,
-        ppd.tax_rate*100 AS taxRate ,
-        ppd.effective_date AS effectiveDate,
-        ppd.expire_date AS expireDate,
-        pp.purchase_org_id as purchase_Org_Id,
-        pp.purchase_org_name as purchaseOrgName,
-        ppd.id AS purchasePriceDetailId,
-        ppd.disabled,
-        ppd.remark as detailRemark,
-        pp.approve_time,
-        ppd.delivery_day
-        FROM purchase_price_detail ppd
-        INNER JOIN purchase_price pp
-        ON ppd.purchase_price_id=pp.id
+        sp.id,
+        sp.code,
+        sp.create_user_id AS createUserId,
+        sp.create_user_name AS createUserName,
+        sp.create_time AS createTime,
+        sp.customer_id AS customerId,
+        ci.name AS customerName,
+        spd.sku_id AS skuId,
+        spd.sku_no AS skuNo,
+        spd.min_qty as minQty,
+        spd.max_qty as maxQty,
+        sp.approve_status as approveStatus,
+        spd.tax_price as taxPrice,
+        spd.currency,
+        spd.tax_rate * 100 AS taxRate ,
+        spd.effective_date AS effectiveDate,
+        spd.expire_date AS expireDate,
+        sp.so_org_id as soOrgId,
+        sp.so_org_name as soOrgName,
+        spd.id AS soPriceDetailId,
+        spd.disabled,
+        spd.remark as detailRemark,
+        sp.approve_time
+        FROM so_price_detail spd
+        INNER JOIN so_price sp ON spd.main_id = sp.id and sp.is_deleted = false
+        inner join customer_info ci on ci.id = sp.customer_id and ci.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        and pp.is_deleted = false AND ppd.is_deleted= false
+        and  spd.is_deleted= false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -84,109 +83,17 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        pp.create_time DESC,ppd.id DESC
-    </select>
-
-    <select id="getExport" resultType="com.erp.model.scm.dto.PurchasePriceDTO$PagingViewDTO">
-        SELECT
-        pp.id,
-        pp.code,
-        pp.voucher_no as voucherNo,
-        pp.create_user_id AS createUserId,
-        pp.create_user_name AS createUserName,
-        pp.create_time AS createTime,
-        pp.supplier_id AS supplierId,
-        (SELECT name FROM supplier WHERE id=pp.supplier_id) AS supplierName,
-        ppd.sku_id AS skuId,
-        ppd.sku_no AS skuNo,
-        ppd.product_name AS productName,ppd.min_qty AS minQty,ppd.max_qty AS maxQty,
-        pp.approve_status AS approveStatus,
-        ppd.tax_price AS taxPrice,
-        ppd.tax_rate*100 AS taxRate ,
-        ppd.effective_date AS effectiveDate,
-        ppd.expire_date AS expireDate,
-        ppd.currency,
-        pp.purchase_org_id AS purchaseOrgId,
-        pp.purchase_org_name AS purchaseOrgName,
-        PPd.disabled,
-        pp.approve_time
-        FROM purchase_price_detail ppd
-        LEFT JOIN purchase_price pp
-        ON ppd.purchase_price_id=pp.id
-        WHERE
-        ${params.sqlMap.default}
-        and pp.is_deleted=false AND ppd.is_deleted= false
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
-        ORDER BY
-        <if test="params.sortList != null and params.sortList.size > 0">
-            <foreach collection="params.sortList" item="item" separator="," close=",">
-                ${item.field} ${item.sort}
-            </foreach>
-        </if>
-        pp.create_time DESC,ppd.id DESC
-    </select>
-
-    <select id="listSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
-        SELECT
-        p.supplier_id,
-        p.sku_id,
-        p.sku_no,
-        p.tax_price,
-        p.tax_rate,
-        p.currency
-        from(
-        SELECT
-        pp.supplier_id,
-        ppd.sku_id,
-        ppd.sku_no,
-        ppd.tax_price,
-        ppd.tax_rate,
-        ppd.min_qty,
-        ppd.currency,
-        row_number() over(partition by pp.supplier_id,
-        ppd.sku_id,
-        ppd.sku_no order by ppd.min_qty ASC,ppd.update_time desc) as rank
-        FROM purchase_price pp
-        LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
-        WHERE pp.is_deleted = false and approve_status = 'approve' AND pp.supplier_id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
-        ) p
-        WHERE p.rank=1
-    </select>
-
-    <select id="listAllSupplierSkuPrice" resultType="com.erp.model.scm.dto.PurchasePriceDTO$SupplierSkuPrice">
-        SELECT
-        pp.supplier_id,
-        ppd.sku_id,
-        ppd.sku_no,
-        ppd.tax_price,
-        ppd.tax_rate,
-        ppd.min_qty,
-        ppd.max_qty,
-        ppd.currency,
-        pp.purchase_org_id as purchaseOrgId,
-        pp.purchase_org_name as purchaseOrgName
-        FROM purchase_price pp
-        LEFT JOIN purchase_price_detail ppd ON pp.id = ppd.purchase_price_id and ppd.is_deleted = false
-        WHERE pp.is_deleted = false and ppd.disabled = false and approve_status = 'approve' AND pp.supplier_id IN
-        <foreach collection="ids" item="id" open="(" separator="," close=")">
-            #{id}
-        </foreach>
+        sp.create_time DESC,spd.id DESC
     </select>
 
     <select id="tabList" resultType="java.lang.Integer">
         select
-        count(distinct pp.id)
-        from purchase_price pp
-        left join purchase_price_detail ppd on pp.id = ppd.purchase_price_id and ppd.is_deleted = false
+        count(distinct sp.id)
+        from so_price sp
+        left join so_price_detail spd on sp.id = spd.main_id and spd.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and pp.is_deleted = false
+            and sp.is_deleted = false
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>

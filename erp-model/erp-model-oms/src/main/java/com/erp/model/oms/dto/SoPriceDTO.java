@@ -32,12 +32,12 @@ import java.util.Map;
 public class SoPriceDTO implements Serializable {
 
     /**
-     * 下推采购订单View
+     * 下推销售订单View
      */
     @Data
     @NoArgsConstructor
     @Valid
-    public static class PushDownsoView {
+    public static class PushDownSoView {
         /**
          * id
          */
@@ -50,17 +50,13 @@ public class SoPriceDTO implements Serializable {
          */
         @NotBlank(message = "detailId不能为空")
         private String detailId;
-        /**
-         * 客户联系人表id
-         */
-        private String supplierContactId;
 
         /**
-         * 采购日期
+         * 销售日期
          */
         private LocalDate soDate;
         /**
-         * 采购员id
+         * 销售员id
          */
         private String soUserId;
         /**
@@ -84,15 +80,15 @@ public class SoPriceDTO implements Serializable {
         private String customerName;
 
         /**
-         * 采购组织
+         * 销售组织
          */
-        @NotBlank(message = "采购组织不能为空")
+        @NotBlank(message = "销售组织不能为空")
         private String soOrgId;
 
         /**
-         * 采购组织名
+         * 销售组织名
          */
-        @NotBlank(message = "采购组织不能为空")
+        @NotBlank(message = "销售组织不能为空")
         private String soOrgName;
         /**
          * 交货仓库
@@ -157,16 +153,16 @@ public class SoPriceDTO implements Serializable {
         private BigDecimal taxRate;
 
         /**
-         * 采购数量
+         * 销售数量
          */
-        @NotNull(message = "采购数量不能为空")
-        @Min(value = 0,message = "采购数量最小值为0")
-        @Max(value = 999999999,message = "采购数量最大值为999999999")
+        @NotNull(message = "销售数量不能为空")
+        @Min(value = 0,message = "销售数量最小值为0")
+        @Max(value = 999999999,message = "销售数量最大值为999999999")
         private Integer soQty;
 
         private Integer replenishQty;
 
-        private Integer oldsoQty;
+        private Integer oldSoQty;
 
         /**
          * 价税合计
@@ -227,7 +223,7 @@ public class SoPriceDTO implements Serializable {
 
 
         /**
-         * 采购组织id
+         * 销售组织id
          */
         private String soOrgId;
 
@@ -286,10 +282,7 @@ public class SoPriceDTO implements Serializable {
          */
         @NotNull(message = "报价日期不能为空")
         private LocalDate quotedDate;
-        /**
-         * 外部平台单号
-         */
-        private String voucherNo;
+
         /**
          * 审核状态
          */
@@ -301,7 +294,7 @@ public class SoPriceDTO implements Serializable {
         private String pricingUserId;
 
         /**
-         * 采购组织id
+         * 销售组织id
          */
         private String soOrgId;
 
@@ -344,7 +337,7 @@ public class SoPriceDTO implements Serializable {
         /**
          * 表id
          */
-        @NotBlank(message = "采购价目表id不能为空")
+        @NotBlank(message = "销售价目表id不能为空")
         private String id;
 
         /**
@@ -412,7 +405,7 @@ public class SoPriceDTO implements Serializable {
 
 
         /**
-         * 采购价目详情id
+         * 销售价目详情id
          */
         private String SoPriceDetailId;
 
@@ -465,24 +458,20 @@ public class SoPriceDTO implements Serializable {
          */
         private String approveStatusCode;
 
-
         /**
          * 单据状态名
          */
         private String approveStatusName;
-
 
         /**
          * 最大数量
          */
         private Integer maxQty;
 
-
         /**
          * 币种
          */
         private String currency;
-
 
         /**
          * 币种 符号
@@ -510,12 +499,12 @@ public class SoPriceDTO implements Serializable {
         private LocalDate expireDate;
 
         /**
-         * 采购组织
+         * 销售组织
          */
         private String soOrgId;
 
         /**
-         * 采购组织名
+         * 销售组织名
          */
         private String soOrgName;
 
@@ -599,21 +588,21 @@ public class SoPriceDTO implements Serializable {
 
 
     /**
-     * 导出采购价目
+     * 导出销售价目
      */
     @Data
     @NoArgsConstructor
-    public static class SupplierSkuPrice {
+    public static class CustomerSkuPrice {
         /**
          * 客户id
          */
         private String customerId;
         /**
-         * 采购组织Id
+         * 销售组织Id
          */
         private String soOrgId;
         /**
-         * 采购组织名称
+         * 销售组织名称
          */
         private String soOrgName;
         /**
@@ -666,7 +655,7 @@ public class SoPriceDTO implements Serializable {
     public static class ImportAddDTO {
 
         /**
-         * 采购价目主表id（更新时使用）
+         * 销售价目主表id（更新时使用）
          */
         private String id;
 
@@ -688,14 +677,14 @@ public class SoPriceDTO implements Serializable {
         private LocalDate quotedDate;
 
         /**
-         * 采购组织id
+         * 销售组织id
          */
         private String soOrgId;
 
         /**
-         * 采购组织
+         * 销售组织
          */
-        @Size(max = 50, message = "采购组织名称最大50字符")
+        @Size(max = 50, message = "销售组织名称最大50字符")
         private String soOrgName;
 
         /**
@@ -741,7 +730,7 @@ public class SoPriceDTO implements Serializable {
     @AllArgsConstructor
     public static class PriceDTO {
         /**
-         * 采购组织
+         * 销售组织
          */
         private String soOrgId;
         /**
@@ -753,7 +742,7 @@ public class SoPriceDTO implements Serializable {
          */
         private String customerId;
         /**
-         * 采购数量
+         * 销售数量
          */
         private Integer qty;
 

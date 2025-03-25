@@ -253,7 +253,7 @@ public class SoPriceChangeDTO implements Serializable {
         /**
          * 客户名
          */
-        private String customerNameId;
+        private String customerName;
 
 
         /**

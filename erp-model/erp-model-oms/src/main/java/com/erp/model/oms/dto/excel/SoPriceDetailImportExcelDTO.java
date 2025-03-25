@@ -28,18 +28,10 @@ public class SoPriceDetailImportExcelDTO {
     private String  skuNo;
 
     /**
-     * 采购交期
-     */
-    @ColumnWidth(20)
-    @ExcelProperty(value = "*采购交期", index = 1)
-    private Integer  deliveryDay;
-
-
-    /**
      * 区间-从
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "区间-从", index = 2)
+    @ExcelProperty(value = "区间-从", index = 1)
     private Integer  minQty;
 
 
@@ -47,7 +39,7 @@ public class SoPriceDetailImportExcelDTO {
      * 区间-到
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "区间-到", index = 3)
+    @ExcelProperty(value = "区间-到", index = 2)
     private Integer  maxQty;
 
 
@@ -55,7 +47,7 @@ public class SoPriceDetailImportExcelDTO {
      * 含税单价
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "含税单价", index = 4)
+    @ExcelProperty(value = "含税单价", index = 3)
     private BigDecimal taxPrice;
 
 
@@ -65,7 +57,7 @@ public class SoPriceDetailImportExcelDTO {
      * 税率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率", index = 5)
+    @ExcelProperty(value = "税率", index = 4)
     private BigDecimal taxRate;
 
 
@@ -73,15 +65,14 @@ public class SoPriceDetailImportExcelDTO {
      * 税率
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "生效时间", index = 6)
-//    @FieldValid(fieldName = "生效时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @ExcelProperty(value = "生效时间", index = 5)
     private String effectiveDateStr;
 
 
     /**
      * 错误数据
      */
-    @ExcelProperty(value = "错误数据", index = 7)
+    @ExcelProperty(value = "错误数据", index = 6)
     private String  errorMsg;
 
 

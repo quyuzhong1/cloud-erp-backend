@@ -4,6 +4,7 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.entity.SoPriceHistoryEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -45,7 +45,7 @@ public class SoPriceHistoryServiceImpl extends SuperServiceImpl<SoPriceHistoryMa
     @Override
     public List<SoPriceDetailDTO.HistoryDTO> getHistory(String priceDetailId) {
         List<SoPriceHistoryEntity> list = this.getByPriceDetailId(priceDetailId);
-        BigDecimal hundred = new BigDecimal("100");
+        BigDecimal hundred = MathUtil.BigDecimal_100;
         List<SoPriceDetailDTO.HistoryDTO> resultList = BeanMapper.copyList(list, SoPriceDetailDTO.HistoryDTO.class);
         List<String> skuIdList = resultList.stream().map(SoPriceDetailDTO.HistoryDTO::getSkuId).collect(Collectors.toList());
         List<String> currencyIdList = resultList.stream().map(SoPriceDetailDTO.HistoryDTO::getCurrency).collect(Collectors.toList());
@@ -64,63 +64,8 @@ public class SoPriceHistoryServiceImpl extends SuperServiceImpl<SoPriceHistoryMa
             String skuName = skuList.stream().filter(s -> skuId.equals(s.getSkuId())).findFirst().
                     map(SkuVO::getSkuName).orElse(item.getProductName());
             item.setProductName(skuName);
-
         }
         return resultList;
-    }
-
-    @Override
-    public List<SoPriceDetailDTO.SoTaxPriceViewDTO> getHistoryTaxPrice(SoPriceDetailDTO.SoTaxPriceSearchDTO dto) {
-
-        return baseMapper.getHistoryTaxPrice(dto);
-    }
-
-
-    /**
-     * 根据供应商id 获取到对应的合sku 价格
-     *
-     * @param supplierId
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.AddDTO>
-     * @author yl
-     * @date 2023-04-11 14:55
-     */
-    @Override
-    public List<SoPriceDetailDTO.AddDTO> getBySupplierId(String supplierId, List<String> skuIdList) {
-        LambdaQueryWrapper<SoPriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SoPriceHistoryEntity::getSupplierId, supplierId);
-        if (CollectionUtils.isNotEmpty(skuIdList)) {
-            queryWrapper.in(SoPriceHistoryEntity::getSkuId, skuIdList);
-        }
-        LocalDate now = LocalDate.now();
-        queryWrapper.le(SoPriceHistoryEntity::getEffectiveDate, now);
-        queryWrapper.ge(SoPriceHistoryEntity::getExpireDate, now);
-        List<SoPriceHistoryEntity> list = this.list(queryWrapper);
-
-        return BeanMapper.copyList(list, SoPriceDetailDTO.AddDTO.class);
-    }
-
-    @Override
-    public List<SoPriceDetailDTO.AddDTO> listBySupplierId(List<String> supplierIds, List<String> skuIdList) {
-        LambdaQueryWrapper<SoPriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SoPriceHistoryEntity::getSupplierId, supplierIds);
-        if (CollectionUtils.isNotEmpty(skuIdList)) {
-            queryWrapper.in(SoPriceHistoryEntity::getSkuId, skuIdList);
-        }
-        LocalDate now = LocalDate.now();
-        queryWrapper.le(SoPriceHistoryEntity::getEffectiveDate, now);
-        queryWrapper.ge(SoPriceHistoryEntity::getExpireDate, now);
-        List<SoPriceHistoryEntity> list = this.list(queryWrapper);
-
-        return BeanMapper.copyList(list, SoPriceDetailDTO.AddDTO.class);
-    }
-
-    @Override
-    public List<SoPriceHistoryEntity> getHistoryByDetailIds(List<String> SoPriceDetailIds) {
-        if (CollectionUtils.isEmpty(SoPriceDetailIds)) {
-            return Collections.emptyList();
-        }
-        List<SoPriceHistoryEntity> list = lambdaQuery().in(SoPriceHistoryEntity::getPriceDetailId, SoPriceDetailIds).orderByDesc(SoPriceHistoryEntity::getCreateTime).list();
-        return list;
     }
 
     @Override
@@ -131,7 +76,13 @@ public class SoPriceHistoryServiceImpl extends SuperServiceImpl<SoPriceHistoryMa
         return this.lambdaQuery().in(SoPriceHistoryEntity::getChangeDetailId,changeDetailIdList).list();
     }
 
-
+    /**
+     * 根据销售价目表明细id查询
+     * @author will
+     * @date 2025/3/25 14:49
+     * @param priceDetailId
+     * @return java.util.List<com.erp.model.oms.entity.SoPriceHistoryEntity>
+     */
     private List<SoPriceHistoryEntity> getByPriceDetailId(String priceDetailId) {
         LambdaQueryWrapper<SoPriceHistoryEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SoPriceHistoryEntity::getPriceDetailId, priceDetailId);

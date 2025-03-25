@@ -34,26 +34,19 @@ public interface SoPriceDetailMapper extends BaseMapper<SoPriceDetailEntity> {
      * 根据供应商、组织、SKU查询
      * @author yl
      * @date 2023-04-06 9:52
-     * @param supplierId
+     * @param customerId
      * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.AddDTO>
      */
-    List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(@Param("supplierId") String supplierId, @Param("statusList") List<String> statusList, @Param("SoOrgId") String SoOrgId, @Param("skuIdList") List<String> skuIdList);
+    List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(@Param("customerId") String customerId, @Param("statusList") List<String> statusList, @Param("soOrgId") String soOrgId, @Param("skuIdList") List<String> skuIdList);
 
     /**
-     * 根据供应商id 获取到对应明细
-     * @Author Luo_WG
-     * @Date 2024/1/9 14:16
-     * @param supplierIds
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.AddDTO>
-     **/
-    List<SoPriceDetailDTO.AddDTO> listBySupplierId(@Param("supplierIds") List<String> supplierIds,@Param("statusList") List<String> statusList,@Param("detailIds") List<String> detailIds,@Param("skuIdList") List<String> skuIdList);
-
-    List<SoPriceDetailEntity> getBySupplierAndStatus(@Param("supplierId") String supplierId, @Param("SoOrgId") String SoOrgId, @Param("statusList") List<String> statusList);
-    /**
-     * 批量修改
+     * 根据客户状态查询
+     * @param customerId
+     * @param soOrgId
+     * @param statusList
+     * @return SoPriceDetailEntity
      */
-    List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> batchGetTaxPrice(@Param("params") SoPriceDetailDTO.SoTaxPriceBatchSearchDTO dto);
-
+    List<SoPriceDetailEntity> getByCustomerIdAndStatus(@Param("customerId") String customerId, @Param("soOrgId") String soOrgId, @Param("statusList") List<String> statusList);
     /**
      * 根据主标查询明细
      * @Author Luo_WG
@@ -67,8 +60,8 @@ public interface SoPriceDetailMapper extends BaseMapper<SoPriceDetailEntity> {
      * 根据id查询详情
      * @Author Luo_WG
      * @Date 2024/1/16 11:25
-     * @param SoPriceDetailIds
+     * @param soPriceDetailIds
      * @return java.util.List<com.erp.model.scm.entity.SoPriceDetailEntity>
      **/
-    List<SoPriceDetailEntity> listDetailByIds(@Param("SoPriceDetailIds") List<String> SoPriceDetailIds);
+    List<SoPriceDetailEntity> listDetailByIds(@Param("soPriceDetailIds") List<String> soPriceDetailIds);
 }

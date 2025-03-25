@@ -8,8 +8,6 @@ import com.erp.model.oms.entity.SoPriceChangeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.util.List;
-
 /**
  * <p>
  * 销售价变更表 Mapper 接口
@@ -36,7 +34,6 @@ public interface SoPriceChangeMapper extends BaseMapper<SoPriceChangeEntity> {
      * @param dto
      * @return List<PagingViewDTO>
      */
-    List<SoPriceChangeDTO.PagingViewDTO> listExport(@Param("params") SoPriceChangeDTO.PagingParamDTO dto);
     Page<SoPriceChangeDTO.PagingViewDTO> listExport(@Param("page") Page<SoPriceChangeDTO.PagingViewDTO> page, @Param("params") SoPriceChangeDTO.PagingParamDTO dto);
 
     /**

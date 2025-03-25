@@ -2,7 +2,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,7 +23,6 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
@@ -33,18 +31,17 @@ import com.erp.model.oms.dto.SoPriceDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.dto.excel.ImportSoPriceExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
+import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoPriceChangeDetailEntity;
 import com.erp.model.oms.entity.SoPriceDetailEntity;
 import com.erp.model.oms.entity.SoPriceEntity;
 import com.erp.model.oms.enums.SoPriceTabFlagEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
-import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -72,7 +69,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -117,27 +113,21 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     private SoPriceDetailService soPriceDetailService;
 
     @Resource
-    private SoPriceChangeService soPriceChangeService;
-
-    @Resource
-    private DmpMqFeign dmpMqFeign;
-
-    @Resource
     private SoPriceQueryHandler soPriceQueryHandler;
 
     @Resource
-    private SoPriceChangeDetailService soPriceChangeDetailService;
+    private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private DownloadTaskFeign downloadTaskFeign;
+    private CustomerInfoService customerInfoService;
 
     /**
      * 添加销售价目表
      *
      * @param dto
      * @return com.erp.model.scm.entity.SoPriceEntity
-     * @author yl
-     * @date 2023-03-24 12:22
+     * @author will
+     * @date 2025-03-24 12:22
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -163,27 +153,23 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             SoPrice.setSoOrgName(orgList.get(0).getName());
         }
         Boolean addResult = this.save(SoPrice);
-        //保存成功
-        if (addResult) {
-            Class<SoPriceEntity> credentialClass = SoPriceEntity.class;
-            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String type = tableName.value();
-            //保存附件
-            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
-            /**
-             * 添加明细
-             */
-            soPriceDetailService.addPriceDetail(id, dto.getSoPriceDetailList());
-            //添加日志
-            String content = String.format("新增了一个{%s}-销售价目-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
-            addModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), id, "新增操作");
-            return SoPrice;
-
+        //保存失败
+        if (!addResult) {
+           throw new ServiceException(ApiError.ERROR_1002);
         }
-        return null;
+        Class<SoPriceEntity> credentialClass = SoPriceEntity.class;
+        TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        //保存附件
+        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+        //添加明细
+        soPriceDetailService.addPriceDetail(id, dto.getSoPriceDetailList());
+        //添加日志
+        String content = String.format("新增了一个{%s}-销售价目-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
+        addModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), id, "新增操作");
+        return SoPrice;
     }
-
 
     /**
      * 添加日志
@@ -193,8 +179,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      * @param businessId
      * @param operation
      * @return void
-     * @author yl
-     * @date 2023-03-27 12:19
+     * @author will
+     * @date 2025-03-27 12:19
      */
     private void addModuleOperateLog(String content, String code, String businessId, String operation) {
         moduleOperateLogService.addModuleOperateLog(content, code, businessId, operation);
@@ -206,8 +192,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param id
      * @return com.erp.model.scm.dto.SoPriceDTO.ViewDTO
-     * @author yl
-     * @date 2023-03-27 9:11
+     * @author will
+     * @date 2025-03-27 9:11
      */
     @Override
     public SoPriceDTO.ViewDTO view(String id) {
@@ -226,8 +212,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         viewDTO.setAttachmentUrlList(attachmentUrlList);
         //获取明细信息
         List<SoPriceDetailDTO.ViewDTO> SoPriceDetailList = soPriceDetailService.getBySoPriceId(id);
-
-
         List<String> skuIds = SoPriceDetailList.stream().map(SoPriceDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
         SoPriceDetailList.forEach(req -> {
@@ -245,8 +229,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param dto
      * @return com.erp.model.scm.entity.SoPriceEntity
-     * @author yl
-     * @date 2023-03-27 10:52
+     * @author will
+     * @date 2025-03-27 10:52
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -280,25 +264,24 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
             SoPrice.setPricingUserName(user != null ? user.getUserName() : "");
         }
-
         //修改成功
         boolean result = this.updateById(SoPrice);
-        if (result) {
-            /**
-             * 添加修改日志
-             */
-            moduleOperateLogService.addModuleOperateLogByObj(old, SoPrice, ModuleTypeEnum.SO_PRICE.getCode(), id, "", "");
-
-            Class<SoPriceEntity> credentialClass = SoPriceEntity.class;
-            TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
-            //获取到表名
-            String type = tableName.value();
-            attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
-            //修改明细
-            soPriceDetailService.updatePriceDetail(id, dto.getSoPriceDetailList());
-            return SoPrice;
+        if (!result) {
+          throw new ServiceException(ApiError.ERROR_1002);
         }
-        return null;
+        /**
+         * 添加修改日志
+         */
+        moduleOperateLogService.addModuleOperateLogByObj(old, SoPrice, ModuleTypeEnum.SO_PRICE.getCode(), id, "", "");
+
+        Class<SoPriceEntity> credentialClass = SoPriceEntity.class;
+        TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
+        //获取到表名
+        String type = tableName.value();
+        attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
+        //修改明细
+        soPriceDetailService.updatePriceDetail(id, dto.getSoPriceDetailList());
+        return SoPrice;
     }
 
     /**
@@ -306,8 +289,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param dto
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-27 11:46
+     * @author will
+     * @date 2025-03-27 11:46
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -328,8 +311,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param dto
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-27 11:58
+     * @author will
+     * @date 2025-03-27 11:58
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -349,8 +332,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param entity
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-27 12:04
+     * @author will
+     * @date 2025-03-27 12:04
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -363,17 +346,16 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         }
         List<String> ids = Collections.singletonList(entity.getId());
         //删除价目表
-        Boolean result = this.removeByIds(ids);
-        if (result) {
-            //添加日志
-            String content = "删除价目表[%s]";
-            List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), pairList, "删除");
-            attachmentService.deleteByBusinessIds(ids);
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
-        } else {
+        boolean result = this.removeByIds(ids);
+        if (!result) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         }
+        //添加日志
+        String content = "删除价目表[%s]";
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), pairList, "删除");
+        attachmentService.deleteByBusinessIds(ids);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
 
@@ -382,8 +364,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param entity
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-27 12:11
+     * @author will
+     * @date 2025-03-27 12:11
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -414,19 +396,16 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
                 map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
 
         Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
-        if (result) {
-            //添加日志
-            String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), pairList, "状态变更");
-
-            //审核不通过
-            String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SO_PRICE.getCode(), rejectPairList, "状态变更");
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
-        } else {
+        if (!result) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
         }
-
+        //添加日志
+        String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+        batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), pairList, "状态变更");
+        //审核不通过
+        String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
+        batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SO_PRICE.getCode(), rejectPairList, "状态变更");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     /**
@@ -437,8 +416,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      * @param comment
      * @param isNeedProcess
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-27 12:29
+     * @author will
+     * @date 2025-03-27 12:29
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -492,8 +471,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param entity
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-27 14:04
+     * @author will
+     * @date 2025-03-27 14:04
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -519,15 +498,14 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(waitSubmitStatus));
-        if (result) {
-            String content = String.format("状态由[%s]变更为[%s] ", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            List<Pair<String, String>> pairList = Stream.of(entity).
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), pairList, "取消流程");
-            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
-        } else {
+        if (!result) {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
         }
+        String content = String.format("状态由[%s]变更为[%s] ", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
+        List<Pair<String, String>> pairList = Stream.of(entity).
+                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        batchAddModuleOperateLog(content, ModuleTypeEnum.SO_PRICE.getCode(), pairList, "取消流程");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
 
@@ -536,73 +514,81 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      *
      * @param dto
      * @return com.common.business.vo.PagingVO<com.erp.model.scm.dto.SoPriceDTO.PagingViewDTO>
-     * @author yl
-     * @date 2023-03-27 14:43
+     * @author will
+     * @date 2025-03-27 14:43
      */
     @Override
     public PagingVO<SoPriceDTO.PagingViewDTO> paging(PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
         SoPriceDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
+        IPage<SoPriceDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
         List<SoPriceDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> skuIds = list.stream().map(SoPriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
-            List<String> currencyIdList = list.stream().map(SoPriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
-            //币种信息
-            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
-
-            //最新审核人
-            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-            list.forEach(obj -> {
-                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_PRICE.getCode(), obj.getId()));
-            });
-            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-            if (CollectionUtils.isNotEmpty(dtoList)) {
-                listApiResult = workflowFeign.curApprover(dtoList);
-                Integer code = listApiResult.getCode();
-                if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
-                }
-            }
-
-            for (SoPriceDTO.PagingViewDTO item : list) {
-                SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
-                item.setProductName(skuVO.getSkuName());
-                ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
-                item.setApproveStatusCode(approveStatusEnum.getStatus());
-                item.setApproveStatusName(approveStatusEnum.getName());
-                //币种
-                String currency = item.getCurrency();
-                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
-                item.setCurrencySymbol(currencySymbol);
-
-                //最新审核人
-                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    item.setApproveUserName(curApprove);
-                }
-            }
-        }
+        handlePaging(list);
         return new PagingVO<>(pageData);
     }
 
+    /**
+     * 分页查询处理
+     * @author will
+     * @date 2025/3/25 11:07
+     * @param list
+     */
+    private void handlePaging ( List<SoPriceDTO.PagingViewDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> skuIds = list.stream().map(SoPriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> currencyIdList = list.stream().map(SoPriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_PRICE.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            }
+        }
+        for (SoPriceDTO.PagingViewDTO item : list) {
+            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+            item.setProductName(skuVO.getSkuName());
+            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+            item.setApproveStatusCode(approveStatusEnum.getStatus());
+            item.setApproveStatusName(approveStatusEnum.getName());
+            //币种
+            String currency = item.getCurrency();
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+            item.setCurrencySymbol(currencySymbol);
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
+        }
+    }
 
     /**
      * 销售价目表导出
      *
      * @param dto
      * @return void
-     * @author yl
-     * @date 2023-03-27 17:55
+     * @author will
+     * @date 2025-03-27 17:55
      */
     @Override
     public void exportSoPrice(SoPriceDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("销售价目数据", EXPORT_SO_PRICE.getCode(), dto);
     }
-
 
     /**
      * 批量保存日志
@@ -612,8 +598,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      * @param pairList
      * @param operation
      * @return void
-     * @author yl
-     * @date 2023-03-27 12:16
+     * @author will
+     * @date 2025-03-27 12:16
      */
     private void batchAddModuleOperateLog(String content, String code, List<Pair<String, String>> pairList, String operation) {
         moduleOperateLogService.batchAddModuleOperateLog(content, code, pairList, operation);
@@ -627,12 +613,11 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
      * @param list
      * @param statusEnum
      * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-03-27 12:13
+     * @author will
+     * @date 2025-03-27 12:13
      */
     private Boolean updateApproveStatus(List<SoPriceEntity> list, ApproveStatusEnum statusEnum) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-
         if (CollectionUtils.isNotEmpty(list)) {
             list.stream().forEach(obj -> {
                 if (ApproveStatusEnum.APPROVE.equals(statusEnum) || ApproveStatusEnum.REJECT.equals(statusEnum)) {
@@ -651,38 +636,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         return false;
     }
 
-    /**
-     * 修改状态
-     * @Author Luo_WG
-     * @Date 2023/6/30 19:47
-     * @param ids
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceDTO.SupplierSkuPrice>
-     **/
-    @Override
-    public List<SoPriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return new ArrayList<>();
-        }
-        return baseMapper.listSupplierSkuPrice(ids);
-    }
-
-    @Override
-    public List<SoPriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return new ArrayList<>();
-        }
-        List<SoPriceDTO.SupplierSkuPrice> list = baseMapper.listAllSupplierSkuPrice(ids);
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> currencyList = list.stream().map(SoPriceDTO.SupplierSkuPrice::getCurrency).collect(Collectors.toList());
-            List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
-            for (SoPriceDTO.SupplierSkuPrice price : list) {
-                String currencySymbol = viewList.stream().filter(obj -> obj.getId().equals(price.getCurrency())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
-                price.setCurrencySymbol(currencySymbol);
-            }
-        }
-        return list;
-    }
-
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
         //用户信息
@@ -693,8 +646,10 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
         // 币制
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
+        //客户
+        List<CustomerInfoEntity> list = customerInfoService.list();
 
-        SoPriceExcelListener excelListener = new SoPriceExcelListener(userList, skuList, currencyList, orgList, soPriceDetailService, this);
+        SoPriceExcelListener excelListener = new SoPriceExcelListener(userList, skuList, currencyList,list, orgList, soPriceDetailService, this);
         try {
             EasyExcel.read(excelFile.getInputStream(), ImportSoPriceExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -771,7 +726,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             // 当该新增的主单有明细时才新增
             if(CollUtil.isNotEmpty(addItemList)) {
                 //生成单号
-//                String code = sysUserFeign.getBusinessNo(new SysCodeDTO(BusinessNoConstant.CGJM, BusinessNoTypeEnum.CODE_CGJM.getCode()));
                 String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
                 SoPriceEntity.setCode(code);
                 String id = IdWorker.getIdStr();
@@ -879,125 +833,30 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Override
     public PagingVO<SoPriceExportExcelDTO> exportSoPrice(PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
         //获取导出数据
-        Page<SoPriceDTO.PagingViewDTO> page = baseMapper.getExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        PagingVO<SoPriceDTO.PagingViewDTO> page = this.paging(dto);
+        if (CollUtil.isEmpty( page.getList())) {
+            throw new ServiceException("导出数据为空");
+        }
         List<SoPriceExportExcelDTO> resultList = new ArrayList<>();
-        if (CollectionUtils.isNotEmpty(page.getRecords())) {
-            List<String> currencyIdList = page.getRecords().stream().map(SoPriceDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
-            //币种信息
-            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
-            List<String> skuIds = page.getRecords().stream().map(SoPriceDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
+        for (SoPriceDTO.PagingViewDTO item : page.getList()) {
+            SoPriceExportExcelDTO excelDTO = new SoPriceExportExcelDTO();
+            BeanMapper.copy(item, excelDTO);
+            Integer minQty = item.getMinQty();
+            Integer maxQty = item.getMaxQty();
+            excelDTO.setQtySection(minQty + "-" + maxQty);
 
-            //最新审核人
-            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-            page.getRecords().forEach(obj -> {
-                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_PRICE.getCode(), obj.getId()));
-            });
-            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-            if (CollectionUtils.isNotEmpty(dtoList)) {
-                listApiResult = workflowFeign.curApprover(dtoList);
-                Integer code = listApiResult.getCode();
-                if (200 != code) {
-                    throw new ServiceException(ApiError.ERROR_500);
-                }
-            }
-            for (SoPriceDTO.PagingViewDTO item : page.getRecords()) {
-                SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
-                SoPriceExportExcelDTO excelDTO = new SoPriceExportExcelDTO();
-                BeanMapper.copy(item, excelDTO);
-                excelDTO.setProductName(skuVO.getSkuName());
-                Integer minQty = item.getMinQty();
-                Integer maxQty = item.getMaxQty();
-                excelDTO.setQtySection(minQty + "-" + maxQty);
-                ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
-                excelDTO.setApproveStatusName(approveStatusEnum.getName());
-
-                Boolean disabled = item.getDisabled();
-                excelDTO.setEnabled((disabled != null && disabled) ? "停用" : "启用");
-                //含税单价
-                BigDecimal taxPrice = item.getTaxPrice();
-                //币种
-                String currency = item.getCurrency();
-                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
-                excelDTO.setTaxPrice(currencySymbol + taxPrice.toString());
-
-                //最新审核人
-                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    excelDTO.setApproveUserName(curApprove);
-                }
-                excelDTO.setApproveTime(item.getApproveTime());
-
-                resultList.add(excelDTO);
-            }
+            Boolean disabled = item.getDisabled();
+            excelDTO.setEnabled((disabled != null && disabled) ? "停用" : "启用");
+            //含税单价
+            BigDecimal taxPrice = item.getTaxPrice();
+            //币种
+            excelDTO.setTaxPrice(item.getCurrencySymbol() + taxPrice.toString());
+            excelDTO.setApproveTime(item.getApproveTime());
+            resultList.add(excelDTO);
         }
-        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+        return new PagingVO<>(resultList, (int) page.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
     }
 
-    @Override
-    public List<SoPriceDTO.PriceDTO> batchGetSoPrice(List<SoPriceDTO.PriceDTO> list) {
-        List<SoPriceDTO.PriceDTO> updateList = new ArrayList<>();
-        if (CollectionUtils.isEmpty(list)){
-            return Collections.emptyList();
-        }
-        //销售组织Id
-        List<String> SoOrgIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSoOrgId())).map(SoPriceDTO.PriceDTO::getSoOrgId).distinct().collect(Collectors.toList());
-        List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(SoOrgIdList);
-        if (CollectionUtils.isEmpty(companyList)){
-            return Collections.emptyList();
-        }
-
-        //skuId
-        List<String> skuIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())).map(SoPriceDTO.PriceDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-        if (CollectionUtils.isEmpty(skuVOList)) {
-            return Collections.emptyList();
-        }
-        //供应商Id
-        List<String> supplierIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSupplierId())).map(SoPriceDTO.PriceDTO::getSupplierId).distinct().collect(Collectors.toList());
-        List<SupplierEntity> supplierEntityList = supplierService.listByIds(supplierIdList);
-        if (CollectionUtils.isEmpty(supplierEntityList)) {
-            return Collections.emptyList();
-        }
-        //销售数量-需要根据sku进行汇总
-        Map<String, Integer> skuQtyList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
-                        && StrUtil.isNotBlank(e.getSupplierId()) && Objects.nonNull(e.getQty()))
-                .collect(Collectors.groupingBy(e -> e.getSkuId() + "_" + e.getSupplierId(), Collectors.summingInt(SoPriceDTO.PriceDTO::getQty)));
-        List<Integer> SoQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(SoQtyList)) {
-            return Collections.emptyList();
-        }
-        //查询对应销售价目
-        List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> viewList = soPriceDetailService.batchGetTaxPrice(skuIdList,supplierIdList,SoQtyList,SoOrgIdList);
-        if (CollectionUtils.isEmpty(viewList)){
-            //未查到结果，直接返回
-            return Collections.emptyList();
-        }
-        for(SoPriceDTO.PriceDTO updateDTO : list){
-            if (StrUtil.isBlank(updateDTO.getSoOrgId()) || StrUtil.isBlank(updateDTO.getSkuId()) || StrUtil.isBlank(updateDTO.getSupplierId()) || Objects.isNull(updateDTO.getQty())){
-                continue;
-            }
-            //获取sku汇总数量
-            Integer SoQty = skuQtyList.getOrDefault(updateDTO.getSkuId() + "_" + updateDTO.getSupplierId(), null);
-            SoPriceDetailDTO.SoTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> StrUtil.isNotBlank(updateDTO.getSkuId())
-                            && StrUtil.isNotBlank(obj.getSkuId()) && obj.getSkuId().equals(updateDTO.getSkuId())
-                            && StrUtil.isNotBlank(obj.getSupplierId()) && StrUtil.isNotBlank(updateDTO.getSupplierId()) && obj.getSupplierId().equals(updateDTO.getSupplierId())
-                            && StrUtil.isNotBlank(obj.getSoOrgId()) && StrUtil.isNotBlank(updateDTO.getSoOrgId()) && StrUtil.equals(obj.getSoOrgId(),updateDTO.getSoOrgId())
-                            && Objects.nonNull(SoQty) && (SoQty >= obj.getMinQty() && obj.getMaxQty() > SoQty))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(viewDTO)){
-                updateDTO.setTaxPrice(viewDTO.getTaxPrice());
-                updateDTO.setTaxRate(viewDTO.getTaxRate());
-                updateDTO.setCurrency(viewDTO.getCurrency());
-                updateDTO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(viewDTO.getCurrency()));
-                updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), updateDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
-                updateDTO.setDeliveryDay(viewDTO.getDeliveryDay());
-                updateList.add(updateDTO);
-            }
-        }
-        return updateList;
-    }
     /**
      * @description: 提交流程
      * @author Will

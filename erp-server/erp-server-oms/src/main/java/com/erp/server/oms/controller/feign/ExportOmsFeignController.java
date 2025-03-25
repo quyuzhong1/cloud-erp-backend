@@ -7,6 +7,9 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
+import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.dto.excel.PurchasePriceExportExcelDTO;
 import com.erp.server.oms.query.*;
 import com.erp.server.oms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -50,6 +53,10 @@ public class ExportOmsFeignController {
     private ReportManagerService reportManagerService;
     @Resource
     private InvoiceInfoService invoiceInfoService;
+
+    @Resource
+    private SoPriceService soPriceService;
+
 
 
     @PostMapping("/customerB2BSellerChange")
@@ -159,5 +166,20 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery
     public PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
         return invoiceInfoService.paging(dto, true);
+    }
+
+    /**
+     * 销售价目表导出
+     * @param dto
+     * @return PurchasePriceExportExcelDTO
+     */
+    @PostMapping("/soPrice")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "oms:so:price:paging",
+            tableAlias = "sp")
+    @WebAdvanceQuery(handler = SoPriceQueryHandler.class)
+    public PagingVO<SoPriceChangeExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
+        return soPriceService.exportSoPrice(dto);
     }
 }

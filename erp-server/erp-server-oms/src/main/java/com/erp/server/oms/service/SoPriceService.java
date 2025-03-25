@@ -72,8 +72,6 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
      */
     SoPriceEntity updateAndSubmit(SoPriceDTO.UpdateDTO dto);
 
-
-
     /**
      * 批量删除销售价目信息
      * @author yl
@@ -134,7 +132,6 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
      */
     PagingVO<SoPriceDTO.PagingViewDTO> paging(PagingDTO<SoPriceDTO.PagingParamDTO> dto);
 
-
     /**
      * 销售价目表导出
      *
@@ -144,25 +141,6 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
      * @date 2025-03-27 17:55
      */
     void exportSoPrice(SoPriceDTO.PagingParamDTO dto);
-
-
-    /**
-     * 修改状态
-     * @Author Luo_WG
-     * @Date 2023/6/30 19:47
-     * @param ids
-     * @return java.util.List<com.erp.model.scm.dto.SoPriceDTO.SupplierSkuPrice>
-     **/
-    List<SoPriceDTO.SupplierSkuPrice> listSupplierSkuPrice(List<String> ids);
-
-    /**
-     * @description: 查询所有供应商价格
-     * @author Will
-     * @date: 2023/10/27 10:05
-     * @param ids
-     * @return List<SupplierSkuPrice>
-     */
-    List<SoPriceDTO.SupplierSkuPrice> listAllSupplierSkuPrice(List<String> ids);
 
     /**
      * 销售价目表导入
@@ -211,8 +189,11 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
      */
     List<SoPriceDTO.TabListDTO> tabList(PermissionsDTO dto);
 
+    /**
+     * 导出销售价目
+     * @param dto
+     * @return SoPriceExportExcelDTO
+     */
     PagingVO<SoPriceExportExcelDTO> exportSoPrice(PagingDTO<SoPriceDTO.PagingParamDTO> dto);
-
-    List<SoPriceDTO.PriceDTO> batchGetSoPrice(List<SoPriceDTO.PriceDTO> list);
 
 }

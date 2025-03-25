@@ -3,8 +3,8 @@ package com.erp.server.oms.query;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
-import com.erp.server.scm.service.CommonService;
+import com.erp.model.oms.enums.SoPriceChangeTabFlagEnum;
+import com.erp.server.oms.service.CommonService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
@@ -24,11 +24,6 @@ public class SoPriceChangeQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        //供应商名称
-        if("supplierName".equals(field)){
-            return "ppd.supplier_id IN (SELECT id FROM supplier  WHERE is_deleted= false and name "+ compareCodeSplicingValueSql +
-                    ")" ;
-        }
         //选项卡
         if("tab".equals(field)){
             return getTabSql(value);
@@ -45,24 +40,24 @@ public class SoPriceChangeQueryHandler extends AbstractQueryHandler {
      */
     public String getTabSql (Object value) {
         //待我审核
-        if (PurchasePriceChangeTabFlagEnum.APPROVE_ING.getCode().equals(value)) {
-            super.buildDefaultDTO("pp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
+        if (SoPriceChangeTabFlagEnum.APPROVE_ING.getCode().equals(value)) {
+            super.buildDefaultDTO("sp.approve_status",Collections.singletonList(ApproveStatusEnum.APPROVE_ING.getStatus()));
             //需要审核的业务ids
-            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
+            List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.SO_PRICE_CHANGE.getCode());
             if (CollectionUtils.isNotEmpty(businessIds)) {
-                super.buildDefaultDTO("pp.id", businessIds);
+                super.buildDefaultDTO("sp.id", businessIds);
             }else{
                 //返回空结果
                 return this.getQueryEmptySql();
             }
         }
         // 已审核
-        if (PurchasePriceChangeTabFlagEnum.APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
+        if (SoPriceChangeTabFlagEnum.APPROVE.getCode().equals(value)) {
+            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.APPROVE.getStatus()));
         }
         //不通过
-        if (PurchasePriceChangeTabFlagEnum.REJECT.getCode().equals(value)) {
-            super.buildDefaultDTO("pp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
+        if (SoPriceChangeTabFlagEnum.REJECT.getCode().equals(value)) {
+            super.buildDefaultDTO("sp.approve_status", Collections.singletonList(ApproveStatusEnum.REJECT.getStatus()));
         }
         return super.getSplicingSQL();
     }
