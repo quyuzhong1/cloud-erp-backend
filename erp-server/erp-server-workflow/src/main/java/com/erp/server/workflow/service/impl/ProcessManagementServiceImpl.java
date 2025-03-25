@@ -787,9 +787,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             String startUserId = "" + execution.getVariable("creator");
             candidateUsers = addApproveInfo(startUserId, propertiesDTO, execution.getVariables());
         }
-        if (CharSequenceUtil.isNotBlank(propertiesDTO.getSomebody_exp())){
-            candidateUsers = replaceApproveVariables(Arrays.asList(propertiesDTO.getSomebody_exp().split(",")), execution.getVariables());
-        }
+//        if ("somebody_exp".equals(propertiesDTO.getAssigneeOption()) && CharSequenceUtil.isNotBlank(propertiesDTO.getSomebody_exp())){
+//            candidateUsers = replaceApproveVariables(Arrays.asList(propertiesDTO.getSomebody_exp().split(",")), execution.getVariables());
+//        }
 
         return candidateUsers;
     }
