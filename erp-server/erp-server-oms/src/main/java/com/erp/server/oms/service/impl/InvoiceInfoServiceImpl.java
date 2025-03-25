@@ -349,6 +349,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode());
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.WAIT_UPLOAD.getCode());
         }catch (Exception e){
+            log.error("生成发票失败",e);
             invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
             invoiceInfoEntity.setRemark(StrUtil.format("生成发票失败,{}",e.getMessage()));
             soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.INVOICE_FAILED.getCode());
@@ -479,6 +480,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                     updateList.add(invoiceInfoEntity);
                 }
             }catch (Exception e){
+                log.error("亚马逊查询发票异常",e);
                 invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
                 invoiceInfoEntity.setQueryResult("系统异常"+e.getMessage());
                 invoiceInfoEntity.setRemark("系统异常"+e.getMessage());
