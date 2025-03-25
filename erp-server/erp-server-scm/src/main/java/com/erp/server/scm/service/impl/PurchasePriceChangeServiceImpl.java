@@ -425,6 +425,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
+        //校验附件信息
+        ids.forEach(this::checkAttachment);
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -977,5 +979,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             resultList.add(excelDTO);
         }
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    /**
+     * 校验附件必填
+     * @author will
+     * @date 2025/3/25 16:32
+     * @param bussinessId
+     */
+    private void checkAttachment (String bussinessId) {
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(bussinessId);
+        if (CollectionUtils.isEmpty(attachmentList)){
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"附件信息");
+        }
     }
 }
