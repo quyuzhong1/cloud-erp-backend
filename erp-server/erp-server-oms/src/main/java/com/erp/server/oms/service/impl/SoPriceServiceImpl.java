@@ -143,7 +143,6 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
             soPrice.setPricingUserName(user != null ? user.getUserName() : "");
         }
-
         String orgId = dto.getSoOrgId();
         //获取组织
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(orgId));

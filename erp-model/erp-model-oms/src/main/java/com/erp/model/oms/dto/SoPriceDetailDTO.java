@@ -360,6 +360,16 @@ public class SoPriceDetailDTO implements Serializable {
          * 销售组织名称
          */
         private String soOrgName;
+
+        /**
+         * 客户表id
+         */
+        private String customerId;
+
+        /**
+         * 客户名称
+         */
+        private String customerName;
     }
 
 
