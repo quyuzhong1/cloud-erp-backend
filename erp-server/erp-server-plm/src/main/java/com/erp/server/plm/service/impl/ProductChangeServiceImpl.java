@@ -127,27 +127,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     @Transactional
     public Boolean add(AddChangeDTO dto) {
-
-        // 如果商品信息为空，则直接返回
-        if (StringUtils.isBlank(dto.getDetailsJson())) {
-            return Boolean.FALSE;
-        }
-        // 解析商品信息JSON，转换为ProductSmallestUnitDTO对象
-        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(dto.getDetailsJson(), ProductSmallestUnitDTO.class);
-        // 获取商品的SKU编号
-        String skuNo = skuDTO.getProductManySkuDetail().getSkuNo();
-        String skuId = skuDTO.getProductManySkuDetail().getId();
-        // 获取商品属性ID
-        String propertyId = skuDTO.getProductManySpecBaseDTO().getPropertyId();
-        // 根据商品ID获取商品信息实体
-        ProductInfoEntity productInfoEntity = productInfoService.getById(skuDTO.getProductManySpecBaseDTO().getId());
-        // 如果商品信息实体为空，则抛出异常
-        if(Objects.isNull(productInfoEntity)){
-            throw new ServiceException(ApiError.ERROR_95162,skuNo);
-        }
-        //单品或者Bom都需要检查库存是否大于零
-        checkInventoryGreaterThanZero(productInfoEntity,propertyId, skuId);
-
         ProductChangeEntity change = new ProductChangeEntity();
         String type = dto.getType();
         String changeBom = BomConstant.CHANGE_BOM;
@@ -723,26 +702,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     public Boolean edit(UpdateChangeDTO dto) {
-        // 如果商品信息为空，则直接返回
-        if (StringUtils.isBlank(dto.getDetailsJson())) {
-            return Boolean.FALSE;
-        }
-        // 解析商品信息JSON，转换为ProductSmallestUnitDTO对象
-        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(dto.getDetailsJson(), ProductSmallestUnitDTO.class);
-        // 获取商品的SKU编号
-        String skuNo = skuDTO.getProductManySkuDetail().getSkuNo();
-        String skuId = skuDTO.getProductManySkuDetail().getId();
-        // 获取商品属性ID
-        String propertyId = skuDTO.getProductManySpecBaseDTO().getPropertyId();
-        // 根据商品ID获取商品信息实体
-        ProductInfoEntity productInfoEntity = productInfoService.getById(skuDTO.getProductManySpecBaseDTO().getId());
-        // 如果商品信息实体为空，则抛出异常
-        if(Objects.isNull(productInfoEntity)){
-            throw new ServiceException(ApiError.ERROR_95162,skuNo);
-        }
-        //单品或者Bom都需要检查库存是否大于零
-        checkInventoryGreaterThanZero(productInfoEntity,propertyId, skuId);
-
         String id = dto.getId();
         //获取到变更信息
         ProductChangeEntity changeEntity = this.getById(id);
