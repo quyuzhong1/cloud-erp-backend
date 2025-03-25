@@ -236,7 +236,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         }
 
         //查询价目信息
-        List<String> soPriceIds = viewList.stream().map(SoPriceDetailDTO.ViewDTO::getSoPriceId).collect(Collectors.toList());
+        List<String> soPriceIds = viewList.stream().map(SoPriceDetailDTO.ViewDTO::getMainId).collect(Collectors.toList());
         List<SoPriceEntity> soPriceEntities = priceService.listByIds(soPriceIds);
 
         //校验审核状态才可以修改
@@ -280,7 +280,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             result.setSkuNo(item.getSkuNo());
             result.setSkuId(item.getSkuId());
             //销售价目信息
-            SoPriceEntity soPriceEntity = soPriceEntities.stream().filter(req -> item.getSoPriceId().equals(req.getId())).findFirst().orElse(null);
+            SoPriceEntity soPriceEntity = soPriceEntities.stream().filter(req -> item.getMainId().equals(req.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(soPriceEntity)) {
                 throw new ServiceException(ApiError.ERROR_98024);
             }
