@@ -216,8 +216,9 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             }
             //校验供应商和渠道
             List<String> errorMsgList = new ArrayList<>();
+            LogisticsSupplierEntity logisticsSupplierEntity;
             if(StringUtils.isNotBlank(excelDTO.getSupplierName())){
-                LogisticsSupplierEntity logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getSupplierName().equals(excelDTO.getSupplierName())).findFirst().orElse(null);
+                logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getSupplierName().equals(excelDTO.getSupplierName())).findFirst().orElse(null);
                 if(Objects.isNull(logisticsSupplierEntity)){
                     errorMsgList.add("供应商不存在");
                 }else{
@@ -228,13 +229,22 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                     }
                     entity.setLogisticsSupplierId(logisticsSupplierEntity.getId());
                 }
+            } else {
+                logisticsSupplierEntity = null;
             }
             if(StringUtils.isNotBlank(excelDTO.getChannelName())){
                 LogisticsChannelEntity logisticsChannelEntity = logisticsChannelEntityList.stream().filter(v->v.getName().equals(excelDTO.getChannelName())).findFirst().orElse(null);
                 if(Objects.isNull(logisticsChannelEntity)){
                     errorMsgList.add("渠道不存在");
                 }else{
-                    entity.setChannelId(logisticsChannelEntity.getId());
+                    if(Objects.nonNull(logisticsSupplierEntity) && !logisticsSupplierEntity.getId().equals(logisticsChannelEntity.getMainId())){
+                        errorMsgList.add("渠道与物流商不匹配");
+                    }else{
+                        entity.setChannelId(logisticsChannelEntity.getId());
+                        if(StringUtils.isBlank(entity.getLogisticsSupplierId())){
+                            entity.setLogisticsSupplierId(logisticsChannelEntity.getMainId());
+                        }
+                    }
                 }
             }
 
