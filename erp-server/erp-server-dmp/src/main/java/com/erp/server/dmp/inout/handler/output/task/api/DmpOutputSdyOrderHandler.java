@@ -498,7 +498,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     if(dictCurrencyMap == null) {
                     	dictCurrencyMap = new HashMap<>();
                     }
-                    String tradeCurrency = shopInfo.getTradeCurrency();
+                    String tradeCurrency = dmpSoInfoEntity.getCurrencyCode();
                     Object dictCurrencybject = dictCurrencyMap.get(tradeCurrency);
                     DictCurrencyEntity dictCurrency = null;
                     if(dictCurrencybject == null) {
@@ -511,7 +511,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     if (ObjectUtil.isNotEmpty(dictCurrency)) {
                         shudiyunB2cOrderDTO.setTransaction_currency(dictCurrency.getName());
                     } else {
-                        shudiyunB2cOrderDTO.setTransaction_currency(dmpSoInfoEntity.getCurrencyCode());
+                        ServiceException.runError("未找到sys币别信息【dict_currency】：{}", tradeCurrency);
                     }
                 } else {
                     shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
