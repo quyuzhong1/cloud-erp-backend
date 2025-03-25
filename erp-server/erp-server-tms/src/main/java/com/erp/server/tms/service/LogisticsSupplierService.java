@@ -126,6 +126,8 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
 
     List<LogisticsSupplierEntity> listByName(List<String> supplierNameList);
 
+    List<LogisticsSupplierEntity> listByShortName(List<String> shortSupplierNameList);
+
     PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
 
 }
