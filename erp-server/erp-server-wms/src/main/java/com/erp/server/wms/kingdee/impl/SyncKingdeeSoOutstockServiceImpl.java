@@ -1193,7 +1193,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 }
             }
         }
-        shudiyunB2cOrderDTO.setRoot_node_no(entity.getCode());
+        shudiyunB2cOrderDTO.setRoot_node_no(orderPlatformCode);
 
         //产品信息
         shudiyunB2cOrderDTO.setGoods_no(soOutstockDetailEntity.getSkuNo());
