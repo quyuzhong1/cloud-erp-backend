@@ -1,9 +1,6 @@
 package com.erp.model.scm.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -64,7 +61,7 @@ public class SalesDemandExportExcelDTO implements Serializable {
      * 新品首批
      */
     @ExcelProperty(value = "新品首批", index = 7)
-    private String isFirstMassProduct;
+    private String firstMassProduct;
 
     /**
      * 备注
