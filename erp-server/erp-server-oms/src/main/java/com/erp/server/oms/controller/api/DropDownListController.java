@@ -49,6 +49,7 @@ public class DropDownListController extends BaseController {
      *  uploadStatus 上传状态
      *  cfgInvoiceType 发票配置类型
      *  fullyManaged 全托管平台类型
+     *  orderSourceType 订单来源类型
      * @return
      */
     @GetMapping("/dict/list")

@@ -83,6 +83,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return viewDTO;
     }
 
+    @Override
+    public CfgSettingEntity getSettingByKey(String key) {
+        if (CharSequenceUtil.isBlank(key)){
+            return null;
+        }
+        return this.lambdaQuery().eq(CfgSettingEntity::getKey, key).one();
+    }
+
     private void handleViewEnum(CfgSettingEntity cfgSetting, CfgSettingDTO.ViewDTO viewDTO) {
         //获取枚举
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());

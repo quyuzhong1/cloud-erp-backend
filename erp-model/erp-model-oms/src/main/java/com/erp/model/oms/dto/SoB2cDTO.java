@@ -294,6 +294,23 @@ public class SoB2cDTO implements Serializable {
          * vat发票状态名称
          */
         private String vatInvoiceStatusName;
+        /**
+         * 平台订单状态
+         */
+        private String platformOrderStatus;
+        /**
+         * 平台订单状态名称
+         * 全托管平台订单状态
+         */
+        private String platformOrderStatusName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
 
         /**
          * 单据编码

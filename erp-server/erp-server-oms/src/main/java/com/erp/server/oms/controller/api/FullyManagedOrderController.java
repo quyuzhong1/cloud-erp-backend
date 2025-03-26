@@ -1277,4 +1277,17 @@ public class FullyManagedOrderController extends BaseController {
         return success(resultDTOS);
     }
 
+    /**
+     * 超时设置
+     *
+     * @param timeOutSettingDTO
+     * @return ApiResult<List < BaseResultDTO.ContentDTO>>
+     * @author zdy
+     * @date: 2024/11/1 9:20
+     */
+    @PostMapping("/timeOutConfig")
+    public ApiResult timeOutConfig(@RequestBody @Validated CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO){
+        fullyManagedOrderService.timeOutConfig(timeOutSettingDTO);
+        return success();
+    }
 }

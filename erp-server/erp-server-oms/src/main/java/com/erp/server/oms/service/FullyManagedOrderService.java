@@ -1,12 +1,8 @@
 package com.erp.server.oms.service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.FullyManagedDTO;
+import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 
@@ -26,4 +22,10 @@ public interface FullyManagedOrderService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.TabListDTO> fullyManagedTabList(PermissionsDTO dto);
+
+    /**
+     * 设置订单超时预警时间
+     * @param timeOutSettingDTO
+     */
+    void timeOutConfig(CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO);
 }

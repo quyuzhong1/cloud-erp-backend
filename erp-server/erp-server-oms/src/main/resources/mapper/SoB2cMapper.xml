@@ -134,10 +134,12 @@
         sb2c.source_id as sourceId,
         sb2c.source_type as sourceType,
         sb2c.source_code as sourceCode,
+        sb2c.platform_order_status as platformOrderStatus,
         sb2c.is_match_order_rule as isMatchOrderRule,
         sb2c.is_match_logistics_rule as isMatchLogisticsRule,
         sb2c.sign_order_error as signOrderError,
         sb2c.seller_order_code as sellerOrderCode,
+        sb2c.create_time as createTime,
         sb2c.approve_time as approveTime,
         sb2c.approve_user_id as approveUserId,
         sb2c.approve_user_name as approveUserName,
@@ -1246,6 +1248,22 @@
           and sb2c.label_json ~ 'AFN'
           and sb2c.vat_invoice_status = ''
           and sb2c.shop_id = #{shopId} and sb2c.platform_order_create_time >= #{enableTime}
+    </update>
+    <update id="updateTimeOutConfig">
+        UPDATE so_b2c_extend sbe
+        SET delivery_warning_time = sbe.required_delivery_time - ${offsetMinutes} * INTERVAL '1 minute'
+        FROM so_b2c sb
+        WHERE sb.id = sbe.main_id
+          AND sb.dict_platform = ''
+          AND sbe.is_deleted = FALSE
+          AND sb.is_deleted = FALSE
+          AND sbe.required_delivery_time IS NOT NULL
+        <if test="platformList != null and platformList.size > 0">
+            AND sb.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </update>
 
     <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">

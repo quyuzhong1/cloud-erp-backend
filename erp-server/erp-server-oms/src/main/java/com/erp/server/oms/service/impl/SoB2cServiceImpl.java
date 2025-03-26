@@ -3848,6 +3848,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 data.setIsDeliver(labelJsonDTO.getIsDeliver());
             }
             if (isFullyManaged) {
+                data.setPlatformOrderStatusName(FullyManagedPlatformStatusEnum.getName(data.getPlatformOrderStatus()));
                 //扩展信息
                 String extendData = data.getExtendData();
                 if (StringUtils.isNotBlank(extendData)) {
@@ -3867,18 +3868,21 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         data.setDeliveryWarningDesc("未超时");
                     }else if (Objects.nonNull(data.getRequiredDeliveryTime())){
                         double hour = LocalDateUtil.calculateHoursWithDecimal(data.getRequiredDeliveryTime(), deliveryTime, 1);
+                        data.setWarningHour(BigDecimal.valueOf(hour));
                         data.setDeliveryWarningDesc("已超时" + hour + "小时");
                     }
                 }else if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(data.getBillStatus()) && Objects.nonNull(data.getRequiredDeliveryTime())){
                     LocalDateTime requiredDeliveryTime = data.getRequiredDeliveryTime();
                     LocalDateTime deliveryWarningTime = data.getDeliveryWarningTime();
                     if (LocalDateTime.now().isBefore(deliveryWarningTime)){
-                        data.setDeliveryWarningDesc("");
+                        data.setDeliveryWarningDesc("暂无预警");
                     }else if (LocalDateTime.now().isBefore(requiredDeliveryTime) && LocalDateTime.now().isAfter(deliveryWarningTime)){
                         double hour = LocalDateUtil.calculateHoursWithDecimal(requiredDeliveryTime, LocalDateTime.now(), 1);
+                        data.setWarningHour(BigDecimal.valueOf(hour));
                         data.setDeliveryWarningDesc(hour + "小时后超时");
                     }else if (requiredDeliveryTime.isBefore(LocalDateTime.now())){
                         double hour = LocalDateUtil.calculateHoursWithDecimal(requiredDeliveryTime, LocalDateTime.now(), 1);
+                        data.setWarningHour(BigDecimal.valueOf(hour));
                         data.setDeliveryWarningDesc("已超期" + -hour + "小时");
                     }
                 }
@@ -3889,6 +3893,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CollectionUtils.isEmpty(detailList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
+            data.setOrderQty(detailList.stream().mapToInt(SoB2cDetailEntity::getQty).sum());
             List<String> warehouseList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
             long warehouseCount = overseasProviderWarehouseList.stream().filter(o -> warehouseList.contains(o.getWarehouseId())).count();
             Boolean isOverseasProviderWarehouse = warehouseCount > 0;

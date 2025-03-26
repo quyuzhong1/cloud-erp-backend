@@ -73,8 +73,9 @@ public class CfgSettingDTO implements Serializable {
     @NoArgsConstructor
     public static class TimeOutSettingDTO {
         /**
-         * 超时时间
+         * 超时预警时间
          */
+        @NotNull(message = "预警时间不能为空")
         private BigDecimal warningTime;
         /**
          * 发送通知人员列表
