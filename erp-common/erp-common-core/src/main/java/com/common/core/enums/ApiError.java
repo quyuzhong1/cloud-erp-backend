@@ -1277,6 +1277,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
     ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
     ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
+    ERROR_SO_B2C_EXTEND_NOT_EXIST(92062,"未找到B2C销售订单扩展信息"),
     ERROR_SO_B2C_HAND_DISTRIBUTION(92063,"只有待配货和配货中数据允许手动配货"),
     ERROR_SO_B2C_LOGISTICS_CODE(92064,"B2C销售订单【{}】渠道为空或者已有运输单号"),
     ERROR_SO_B2C_DETAIL_NOT_EXIST(92065,"未找到B2C销售订单明细信息"),

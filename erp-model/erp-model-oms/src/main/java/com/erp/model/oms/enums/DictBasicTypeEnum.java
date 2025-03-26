@@ -13,6 +13,7 @@ public enum DictBasicTypeEnum {
     SUPPLIER_CATEGORY("supplierCategory" , "供应商分类"),
     PLATFORM("platform" , "平台类型"),
     SALES_PLATFORM("salesPlatform" , "销售平台"),
+    FULLY_MANAGED("fullyManaged" , "全托管平台类型"),
     SALES_PLATFORM_INTERNAL("internalSalesPlatform" , "国内"),
     SALES_PLATFORM_OVERSEAS("overseasSalesPlatform" , "海外"),
     SALES_PLATFORM_OTHER("otherSalesPlatform" , "其他"),

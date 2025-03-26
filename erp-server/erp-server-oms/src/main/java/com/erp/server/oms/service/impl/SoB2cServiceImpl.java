@@ -618,7 +618,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      */
     @Override
     public boolean isFullyManagedOrder(String platform) {
-        return PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(platform);
+        List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
+        //是否包含对应的销售平台
+        return dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList()).contains(platform);
     }
 
     private CustomerB2CDTO.AddDTO buildB2cCustomerAddDTO(SoB2cDTO.AddDTO addDTO, String id) {
