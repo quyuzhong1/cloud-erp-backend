@@ -639,7 +639,7 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         LocalDateTime localDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String format = localDateTime.format(formatter);
-        stringBuffer.append("深圳市优篮子科技有限公司+").append(format);
+        stringBuffer.append("深圳市十二篮子电商有限公司+").append(format);
         Integer count = this.lambdaQuery().likeRight(TransferDeclareEntity::getInstockRefCode,stringBuffer.toString()).count();
         if (Objects.isNull(count)){
             stringBuffer.append(StringUtils.leftPad("1",4, "0"));
