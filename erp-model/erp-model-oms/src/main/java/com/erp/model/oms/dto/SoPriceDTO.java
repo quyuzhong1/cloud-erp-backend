@@ -366,6 +366,12 @@ public class SoPriceDTO implements Serializable {
 
 
         /**
+         * 销售组织id
+         */
+        @NotBlank(message = "销售组织不能为空")
+        private String soOrgId;
+
+        /**
          * 报价人id
          */
         private String pricingUserId;
