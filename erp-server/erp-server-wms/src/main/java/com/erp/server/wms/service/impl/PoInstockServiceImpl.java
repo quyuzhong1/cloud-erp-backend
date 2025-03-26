@@ -1389,6 +1389,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 addDetailDTO.setExceedQty(generateStockInDTO.getExceedQty());
                 addDetailDTO.setRemark(generateStockInDTO.getRemark());
                 addDetailDTO.setWarehouseLocation(generateStockInDTO.getWarehouseLocation());
+                addDetailDTO.setFirstMassProduct(generateStockInDTO.getFirstMassProduct());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);

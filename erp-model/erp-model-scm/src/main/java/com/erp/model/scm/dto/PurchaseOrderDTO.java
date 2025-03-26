@@ -1098,6 +1098,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
     }
 
     @Data
