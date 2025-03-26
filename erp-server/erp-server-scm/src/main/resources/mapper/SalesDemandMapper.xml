@@ -49,7 +49,18 @@
             sd.approve_time as approveTime,
             sd.create_user_name as createUserName,
             sd.create_time as createTime,
-            sdd.first_mass_product as firstMassProduct
+            sdd.first_mass_product as firstMassProduct,
+        CASE
+        sdd.first_mass_product
+        WHEN 'firstPilotBatch' THEN
+        '试产首批'
+        WHEN 'firstMassProductionBatch' THEN
+        '量产首批'
+        WHEN 'firstTrialProductionBatch' THEN
+        '试量产首批'
+        WHEN 'subsequentBatch' THEN
+        '非首批' ELSE''
+        END AS firstMassProductName
         from sales_demand  sd
         inner join  sales_demand_detail sdd  on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
         where

@@ -1072,6 +1072,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
                     detailDTO.setPrice(detailEntity.getTaxPrice());//退货单下推单采购订单-这里可以直接取采购订单含税单价
                     detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                    detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                     detailDTOList.add(detailDTO);
                 }
             }else {
@@ -1085,6 +1086,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detailDTO.setOldPrice(detailEntity.getTaxPrice());
                 detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
                 detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                 detailDTOList.add(detailDTO);
             }
 
