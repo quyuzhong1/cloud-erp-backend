@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -95,24 +96,20 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
      * @author will
      * @date 2025-03-27 12:29
      * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
+     * @param dto
      * @return java.lang.Boolean
      */
-    BatchResultDTO approve(SoPriceEntity entity, String type, String comment, Boolean isNeedProcess);
+    BatchResultDTO approve(SoPriceEntity entity, ApproveOneDTO dto);
 
     /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 16:18
      * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
+     * @param entity
      * @return Boolean
      */
-    Boolean approveEnd (SoPriceEntity entity, String type, String comment, Boolean isNeedProcess);
+    Boolean approveEnd (ApproveOneDTO dto, SoPriceEntity entity);
 
     /**
      * 取消流程

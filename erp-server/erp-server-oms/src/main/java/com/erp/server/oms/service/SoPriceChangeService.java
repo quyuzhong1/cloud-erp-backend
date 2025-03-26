@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -67,31 +68,27 @@ public interface SoPriceChangeService extends SuperService<SoPriceChangeEntity> 
      * @param ids
      * @return java.lang.Boolean
      */
-    Boolean submitApprove(List<String> ids,Boolean isStartProcess);
+    Boolean submit(List<String> ids, Boolean isStartProcess);
 
     /**
      * 销售价目变更 审核
      * @author yl
      * @date 2023-03-28 16:52
      * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
+     * @param dto
      * @return java.lang.Boolean
      */
-    BatchResultDTO approve(SoPriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
+    BatchResultDTO approve(SoPriceChangeEntity entity, ApproveOneDTO dto);
 
     /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/3 18:53
+     * @param dto
      * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
      * @return Boolean
      */
-    BatchResultDTO approveEnd (SoPriceChangeEntity entity, String type, String comment, Boolean isNeedProcess);
+    Boolean approveEnd (ApproveOneDTO dto, SoPriceChangeEntity entity);
 
     /**
      * 取消流程

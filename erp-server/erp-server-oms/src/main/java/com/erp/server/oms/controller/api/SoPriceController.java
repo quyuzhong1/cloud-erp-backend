@@ -263,7 +263,7 @@ public class SoPriceController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soPriceService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+                resultDTOS.add(soPriceService.approve(entity,new ApproveOneDTO(id, dto.getType(),dto.getComment())));
             }catch (Exception e){
                 log.error("销售价目审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
