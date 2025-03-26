@@ -1,5 +1,6 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.enums.ApproveStatusEnum;
@@ -75,7 +76,7 @@ public class SoPriceEntity extends BaseEntity<SoPriceEntity> {
     /**
     * 审核时间
     */
-    @TableField("approve_time")
+    @TableField(value = "approve_time",updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime approveTime;
     /**
     * 审核人名称
