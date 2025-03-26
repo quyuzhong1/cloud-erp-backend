@@ -1250,8 +1250,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         result.setWarehouseName(entity.getWarehouseName());
         //入库质检
         String qcType = QcTypeEnum.STOCK_IN.getCode();
-        //非首批：否：新品入库质检
-        if (detailEntity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
+        //非首批：否
+        if (!detailEntity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
             qcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
         }
         Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
