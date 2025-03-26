@@ -231,13 +231,13 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
     @Transactional(rollbackFor = Exception.class)
     public SoPriceEntity updateSoPrice(SoPriceDTO.UpdateDTO dto) {
         String id = dto.getId();
-        SoPriceEntity SoPrice = this.getById(id);
-        if (Objects.isNull(SoPrice)) {
+        SoPriceEntity soPrice = this.getById(id);
+        if (Objects.isNull(soPrice)) {
             throw new ServiceException(ApiError.ERROR_98024);
         }
-        ApproveStatusEnum status = SoPrice.getApproveStatus();
+        ApproveStatusEnum status = soPrice.getApproveStatus();
         SoPriceEntity old = new SoPriceEntity();
-        BeanMapper.copy(SoPrice, old);
+        BeanMapper.copy(soPrice, old);
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -248,26 +248,32 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         if (!statusList.contains(status.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98019);
         }
-        BeanMapper.copy(dto, SoPrice);
+        BeanMapper.copy(dto, soPrice);
         //编号
-        String code = SoPrice.getCode();
-        SoPrice.setCode(code);
-        SoPrice.setApproveStatus(status);
+        String code = soPrice.getCode();
+        soPrice.setCode(code);
+        soPrice.setApproveStatus(status);
 
         String pricingUserId = dto.getPricingUserId();
         if (StringUtils.isNotBlank(pricingUserId)) {
             FindUserDTO user = sysUserFeign.getUserByUserId(pricingUserId);
-            SoPrice.setPricingUserName(user != null ? user.getUserName() : "");
+            soPrice.setPricingUserName(user != null ? user.getUserName() : "");
+        }
+        String orgId = dto.getSoOrgId();
+        //获取组织
+        List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(orgId));
+        if (CollectionUtils.isNotEmpty(orgList)) {
+            soPrice.setSoOrgName(orgList.get(0).getName());
         }
         //修改成功
-        boolean result = this.updateById(SoPrice);
+        boolean result = this.updateById(soPrice);
         if (!result) {
           throw new ServiceException(ApiError.ERROR_1002);
         }
         /**
          * 添加修改日志
          */
-        moduleOperateLogService.addModuleOperateLogByObj(old, SoPrice, ModuleTypeEnum.SO_PRICE.getCode(), id, "", "");
+        moduleOperateLogService.addModuleOperateLogByObj(old, soPrice, ModuleTypeEnum.SO_PRICE.getCode(), id, "", "");
 
         Class<SoPriceEntity> credentialClass = SoPriceEntity.class;
         TableName tableName = credentialClass.getDeclaredAnnotation(TableName.class);
@@ -276,7 +282,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
         //修改明细
         soPriceDetailService.updatePriceDetail(id, dto.getSoPriceDetailList());
-        return SoPrice;
+        return soPrice;
     }
 
     /**
