@@ -2979,7 +2979,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
         }
         //构建消息内容的映射
-        Map<String,Object> contentMap = getCardMessageMap(title, message, url);
+        Map<String,Object> contentMap = getCardMessageMap(title, message, null);
         sendMessage.setContentMap(contentMap);
         //发送消息的结果
         Boolean sendResult = fsService.sendMessage(sendMessage);
@@ -3050,9 +3050,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
             }
         }
         //排除禁用人员
-        List<SysUserSimpleDTO> userSimpleInfoByIds = sysUserFeign.getUserSimpleInfoByIds(resultList);
-        if(CollUtil.isNotEmpty(userSimpleInfoByIds)){
-            return userSimpleInfoByIds.stream().map(SysUserSimpleDTO::getUid).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(resultList)){
+            List<SysUserSimpleDTO> userSimpleInfoByIds = sysUserFeign.getUserSimpleInfoByIds(resultList);
+            if(CollUtil.isNotEmpty(userSimpleInfoByIds)){
+                return userSimpleInfoByIds.stream().map(SysUserSimpleDTO::getUid).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+            }
         }
         // 返回结果列表
         return null;

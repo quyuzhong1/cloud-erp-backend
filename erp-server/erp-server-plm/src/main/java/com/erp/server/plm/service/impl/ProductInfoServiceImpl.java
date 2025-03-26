@@ -414,7 +414,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             ProductInfoEntity productInfoEntity = this.getById(req);
             ProductInfoDTO productInfoDTO = new  ProductInfoDTO();
             BeanMapper.copy(productInfoEntity, productInfoDTO);
-            productInfoDTO.setCategory(categoryNames);
+            productInfoDTO.setCategory(basicCategoryList.get(0).getName());
             productInfoDTO.setCategoryId(dto.getCategoryId());
             List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = productDetailService.getProductBasicChangeField(productInfoDTO, productInfoEntity);
             //发送通知
