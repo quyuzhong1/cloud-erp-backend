@@ -566,6 +566,26 @@ public class SoPriceDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+        /**
+         * 审核状态集合
+         */
+        private List<String> approveStatusList;
+        /**
+         * 客户id集合
+         */
+        private List<String> customerIdList;
+        /**
+         * 销售组织id集合
+         */
+        private List<String> soOrgIdList;
+        /**
+         * 价目表编码
+         */
+        private String code;
+        /**
+         * sku
+         */
+        private List<String> skuNoList;
     }
 
 

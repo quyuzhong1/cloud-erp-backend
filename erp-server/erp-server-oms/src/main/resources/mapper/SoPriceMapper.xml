@@ -77,6 +77,33 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+        <if test="params.code != null and params.code != ''">
+           and sp.code like concat('%',#{params.code},'%')
+        </if>
+        <if test="params.skuNoList != null and params.skuNoList.size > 0">
+            and spd.sku_no in
+            <foreach collection="params.skuNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
+            and sp.approve_status in
+            <foreach collection="params.approveStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.customerIdList != null and params.customerIdList.size > 0">
+            and sp.customer_id in
+            <foreach collection="params.customerIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.soOrgIdList != null and params.soOrgIdList.size > 0">
+            and sp.so_org_id in
+            <foreach collection="params.soOrgIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
