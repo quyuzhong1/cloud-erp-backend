@@ -24,9 +24,7 @@ import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -1032,6 +1030,17 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void writeBackSoOutstockDate(String soId, String soOutstockDate);
 
+    String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
+
+    /**
+     * 获取物流面单
+     *
+     * @param entity
+     * @param soB2cLogisticsEntity
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+
     /**
      * 销售统计
      */
@@ -1042,7 +1051,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
 
-    String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
     /**
      * 根据店铺更新未配置vat的订单
      *
@@ -1053,10 +1061,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 
-    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
-
-    void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
-
     /**
      * 根据销售订单id和平台获取分区id
      * @param soId
@@ -1064,4 +1068,5 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     String getPartitionId(String soId, String platform);
+    void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
 }
