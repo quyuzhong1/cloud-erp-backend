@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -324,14 +325,16 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 // 数量
                 Integer qty = dmpSoDetailEntity.getQty();
 				detailDTO.setQty(qty);
-                
-                BigDecimal sellPriceOrigin = dmpSoDetailEntity.getSellPriceOrigin();
-                if(sellPriceOrigin != null && qty != null && qty.compareTo(0) != 0) {
-                	// 单价
-                	detailDTO.setPrice(sellPriceOrigin.divide(new BigDecimal(qty) , 2, RoundingMode.HALF_UP));
+
+				// 单价
+                BigDecimal sellPriceOrigin = null == dmpSoDetailEntity.getSellPriceOrigin() ? BigDecimal.ZERO : dmpSoDetailEntity.getSellPriceOrigin();
+				// 明细总价
+				BigDecimal amount = BigDecimal.ZERO;
+				if(qty != null && qty.compareTo(0) != 0) {
+                	amount = sellPriceOrigin.multiply(BigDecimal.valueOf(qty));
                 }
-                
-				detailDTO.setAmount(sellPriceOrigin);
+				detailDTO.setPrice(sellPriceOrigin);
+				detailDTO.setAmount(amount);
                 detailDTO.setCurrency(dmpSoDetailEntity.getCurrencyCode());
                 
                 // 汇率
