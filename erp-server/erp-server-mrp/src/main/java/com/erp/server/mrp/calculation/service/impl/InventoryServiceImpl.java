@@ -1,6 +1,7 @@
 package com.erp.server.mrp.calculation.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.enums.ApiError;
@@ -186,7 +187,7 @@ public class InventoryServiceImpl implements InventoryService {
                     Set<String> shopSet;
                     if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType())) {
                         List<String> dictPlatformList = v.getChannelIdJson().stream().map(Object::toString).collect(Collectors.toList());
-                        if (dictPlatformList.contains("")) {
+                        if (dictPlatformList.contains("") || ObjectUtil.isEmpty(v.getChannelIdJson())) {
                             shopSet = new HashSet<>();
                             // 全量平台：合并所有店铺ID（去重）
                             shopIdByPlatform.values().stream() // 非必要不用parallelStream
