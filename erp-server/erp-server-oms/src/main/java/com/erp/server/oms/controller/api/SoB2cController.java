@@ -198,7 +198,6 @@ public class SoB2cController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入B2C销售订单")
     @PostMapping("/importB2cFile")
-    //@RequestPermissions("plm:product:detail:importProductFile")
     public ApiResult importB2cFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         soB2cService.importB2cFile(excelFile, response);
         return success();
@@ -210,7 +209,7 @@ public class SoB2cController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportUpdateTemplate")
     public void exportUpdateTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/productUpdateTemplate.xlsx";
+        String path = "classpath:excel/b2cUpdateTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
