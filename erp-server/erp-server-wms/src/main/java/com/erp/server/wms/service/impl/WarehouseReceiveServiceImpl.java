@@ -1075,6 +1075,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
                     detailDTO.setWarehouseLocation(req.getWarehouseLocation());
                     detailDTO.setSourceDetailId(req.getId());
                     detailDTO.setPurchaseOrderDetailId(req.getPurchaseOrderDetailId());
+                    detailDTO.setFirstMassProduct(req.getFirstMassProduct());
                     detailDTOList.add(detailDTO);
                 }
             });
