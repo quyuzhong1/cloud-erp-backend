@@ -75,10 +75,17 @@
         sdd.sku_no as skuNo,
         sdd.product_name as productName,
         sdd.is_urgent as isUrgent,
-        case sd.is_first_mass_product
-            when true then '是'
-            when false then '否'
-        end as isFirstMassProduct,
+        CASE
+        sdd.first_mass_product
+        WHEN 'firstPilotBatch' THEN
+        '试产首批'
+        WHEN 'firstMassProductionBatch' THEN
+        '量产首批'
+        WHEN 'firstTrialProductionBatch' THEN
+        '试量产首批'
+        WHEN 'subsequentBatch' THEN
+        '非首批' ELSE''
+        END AS firstMassProduct,
         sdd.plan_delivery_date as planDeliveryDate,
         sdd.plan_stock_qty as planStockQty,
         sdd.dest_warehouse_name as destWarehouseName,
