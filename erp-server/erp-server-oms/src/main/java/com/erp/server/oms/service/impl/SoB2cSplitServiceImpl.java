@@ -111,6 +111,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cExtendService soB2cExtendService;
 
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
@@ -773,14 +775,22 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
         SoB2cLogisticsDTO.AddDTO logisticsAddDTO = new SoB2cLogisticsDTO.AddDTO();
         BeanMapperUtils.copy(soB2cLogisticsEntity, logisticsAddDTO);
-
-        //买家信息
-        SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(dto.getId());
-        if (ObjectUtils.isEmpty(soB2cReceiverEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
-        }
         SoB2cReceiverDTO.AddDTO receiverAddDTO = new SoB2cReceiverDTO.AddDTO();
-        BeanMapperUtils.copy(soB2cReceiverEntity, receiverAddDTO);
+        SoB2cExtendDTO.AddDTO extendDTO = new SoB2cExtendDTO.AddDTO();
+        if (soB2cService.isFullyManagedOrder(entity.getDictPlatform())){
+            SoB2cExtendEntity extendEntity = soB2cExtendService.getByMainId(dto.getId());
+            if (ObjectUtils.isEmpty(extendEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_EXTEND_NOT_EXIST);
+            }
+            BeanMapperUtils.copy(extendEntity,extendDTO);
+        }else {
+            //买家信息
+            SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(dto.getId());
+            if (ObjectUtils.isEmpty(soB2cReceiverEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+            }
+            BeanMapperUtils.copy(soB2cReceiverEntity, receiverAddDTO);
+        }
 
         //订单分类
         List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Arrays.asList(dto.getId()));
@@ -827,6 +837,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 addDTO.setCategoryIdList(categoryIdList);
             }
             addDTO.setReceiverDTO(receiverAddDTO);
+            addDTO.setExtendDTO(extendDTO);
 
             //拆分后金额合计
             BigDecimal splitTotalAmount = BigDecimal.ZERO;

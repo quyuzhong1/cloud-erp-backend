@@ -143,20 +143,9 @@ public class FullyManagedOrderController extends BaseController {
             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
             if (warehouseRuleMatch) {
                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
-                Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
-                Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
-                //表示成功
-                if(isRuleMatch){
-                    //检查是否备案并修改状态
-                    soB2cService.checkProductRegistrationAndUpdate(id, "");
-                    //申报信息规则
-                    soB2cService.declareRule(id, new HashMap<>(), Boolean.FALSE, false);
-                }
                 SoB2cEntity entity = soB2cService.getById(id);
-                Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
-                if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
-                        || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                if ((Objects.nonNull(logisticsRuleResult.getAutoGetTrackNo()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo()))
+                        || (Boolean.FALSE.equals(entity.getIsOutOfRangeDelivery()) && Objects.nonNull(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()))) {
                     soB2cService.getLogisticsCode(id,  Boolean.TRUE);
                 }
             }
@@ -179,11 +168,11 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 submit = soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, true);
             } catch (Exception e) {
-                log.error("B2C销售订单 批量更新报关异常", e);
+                log.error("全平台销售订单 批量更新报关异常", e);
 
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 批量更新报关失败");
+                    submit = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 批量更新报关失败");
                     resultDTOS.add(submit);
                     continue;
                 }
@@ -206,7 +195,7 @@ public class FullyManagedOrderController extends BaseController {
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
         //检查是否备案并修改状态
-        soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");
+//        soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");
         //自动计算预估运费到订单的预估运费字段
         soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(dto.getId()));
         return success();
@@ -232,7 +221,7 @@ public class FullyManagedOrderController extends BaseController {
             BatchResultDTO submit;
             SoB2cEntity entity = soB2cEntityList.stream().filter(e -> Objects.equals(id, e.getId())).findFirst().orElse(null);
             if (Objects.isNull(entity)){
-                submit = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交失败");
+                submit = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 提交失败");
                 resultDTOS.add(submit);
                 continue;
             }
@@ -253,7 +242,7 @@ public class FullyManagedOrderController extends BaseController {
                 }
 
             } catch (Exception e) {
-                log.error("B2C销售订单 提交审核失败", e);
+                log.error("全平台销售订单 提交审核失败", e);
                 submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(submit);
@@ -290,10 +279,10 @@ public class FullyManagedOrderController extends BaseController {
                     }
                 }
             } catch (Exception e) {
-                log.error("B2C销售订单审核失败", e);
+                log.error("全平台销售订单审核失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    approveResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 审核失败");
+                    approveResult = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 审核失败");
                     resultDTOS.add(approveResult);
                     continue;
                 }
@@ -315,12 +304,6 @@ public class FullyManagedOrderController extends BaseController {
         Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
         if (warehouseRuleMatch) {
             SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(id, new HashMap<>(), false);
-            //表示成功
-            if(logisticsRuleResult.getIsRuleMatch()){
-                //检查是否备案并修改状态
-                soB2cService.checkProductRegistrationAndUpdate(id, "");
-            }
-
             Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
             Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
             Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
@@ -353,10 +336,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 invalidResult = soB2cService.invalid(id, dto.getRemark(), SoB2cInvalidTypeEnum.ENUM_MANUAL);
             } catch (Exception e) {
-                log.error("B2C销售订单作废失败", e);
+                log.error("全平台销售订单作废失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    invalidResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 作废失败");
+                    invalidResult = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 作废失败");
                     resultDTOS.add(invalidResult);
                     continue;
                 }
@@ -383,10 +366,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 unInvalidResult = soB2cService.unInvalid(id, SoB2cInvalidTypeEnum.ENUM_MANUAL);
             } catch (Exception e) {
-                log.error("B2C销售订单取消作废失败", e);
+                log.error("全平台销售订单取消作废失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    unInvalidResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消作废失败");
+                    unInvalidResult = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 取消作废失败");
                     resultDTOS.add(unInvalidResult);
                     continue;
                 }
@@ -442,10 +425,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 resultDTO = soB2cService.cancelProcess(id);
             } catch (Exception e) {
-                log.error("B2C销售订单撤销失败>>>>>{}", e.getMessage());
+                log.error("全平台销售订单撤销失败>>>>>{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.isNull(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "B2c销售订单不存在, 撤销流程失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 撤销流程失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -467,7 +450,7 @@ public class FullyManagedOrderController extends BaseController {
      * @create 2024-01-09 14:09
      */
     @PostMapping("/disApprove")
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核B2C销售订单")
+    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核全平台销售订单")
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
@@ -476,10 +459,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 resultDTO = soB2cService.disApprove(id);
             } catch (Exception e) {
-                log.error("B2C销售订单反审核失败>>>>>{}", e.getMessage());
+                log.error("全平台销售订单反审核失败>>>>>{}", e.getMessage());
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (Objects.isNull(entity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "B2c销售订单不存在, 反审核失败");
+                    resultDTO = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 反审核失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
@@ -507,10 +490,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 updateRemarkResult = soB2cService.updateRemark(id, dto.getRemark());
             } catch (Exception e) {
-                log.error("B2C销售订单修改订单备注失败", e);
+                log.error("全平台销售订单修改订单备注失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    updateRemarkResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 修改订单备注失败");
+                    updateRemarkResult = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 修改订单备注失败");
                     resultDTOS.add(updateRemarkResult);
                     continue;
                 }
@@ -537,10 +520,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 updateRemarkResult = soB2cService.updateCategory(id, dto.getTypeEnum(), dto.getCategoryIdList());
             } catch (Exception e) {
-                log.error("B2C销售订单修改分类失败", e);
+                log.error("全平台销售订单修改分类失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    updateRemarkResult = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 修改分类失败");
+                    updateRemarkResult = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 修改分类失败");
                     resultDTOS.add(updateRemarkResult);
                     continue;
                 }
@@ -580,7 +563,7 @@ public class FullyManagedOrderController extends BaseController {
                 //长宽高校验
                 result = soB2cService.checkLength(id, dto);
             } catch (Exception e) {
-                log.error("B2C销售订单校验物流尺寸失败", e);
+                log.error("全平台销售订单校验物流尺寸失败", e);
                 result = getBatchResultDTOByB2cId(id, e);
             }
             resultDTOS.add(result);
@@ -597,7 +580,7 @@ public class FullyManagedOrderController extends BaseController {
     private BatchResultDTO getBatchResultDTOByB2cId(String id, Exception e) {
         SoB2cEntity entity = soB2cService.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
-            return BatchResultDTO.fail(id, id, "B2C销售订单不存在, 配货失败");
+            return BatchResultDTO.fail(id, id, "全平台销售订单不存在, 配货失败");
         }else {
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
         }
@@ -633,7 +616,7 @@ public class FullyManagedOrderController extends BaseController {
                     }
                 }
             } catch (Exception e) {
-                log.error("B2C销售订单配货失败", e);
+                log.error("全平台销售订单配货失败", e);
                 result = getBatchResultDTOByB2cId(id, e);
             }
             resultDTOS.add(result);
@@ -644,7 +627,7 @@ public class FullyManagedOrderController extends BaseController {
     }
 
     /**
-     * 获取物流单号
+     * 创建送货单
      *
      * @param dto
      * @return ApiResult<List < BatchResultDTO>>
@@ -661,10 +644,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 result = soB2cService.getLogisticsCode(id, dto.getIsDelivery());
             } catch (Exception e) {
-                log.error("B2C销售订单获取物流单号失败", e);
+                log.error("全平台销售订单获取物流单号失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流单号失败");
+                    result = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 获取物流单号失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -694,20 +677,20 @@ public class FullyManagedOrderController extends BaseController {
             BatchResultDTO result;
             SoB2cEntity entity = entityList.stream().filter(e ->Objects.equals(id, e.getId())).findFirst().orElse(null);
             if (Objects.isNull(entity)) {
-                result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流面单失败");
+                result = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 获取物流面单失败");
                 resultDTOS.add(result);
                 continue;
             }
             SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityList.stream().filter(e -> Objects.equals(id, e.getMainId())).findFirst().orElse(null);
             if (Objects.isNull(soB2cLogisticsEntity)) {
-                result = BatchResultDTO.fail(id, entity.getCode(), "B2C销售订单物流信息不存在, 获取物流面单失败");
+                result = BatchResultDTO.fail(id, entity.getCode(), "全平台销售订单物流信息不存在, 获取物流面单失败");
                 resultDTOS.add(result);
                 continue;
             }
             try {
                 result = soB2cService.getLogisticsLabel(entity,soB2cLogisticsEntity);
             } catch (Exception e) {
-                log.error("B2C销售订单获取物流单号失败", e);
+                log.error("全平台销售订单获取物流单号失败", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
@@ -742,10 +725,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 result = soB2cService.submitDelivery(id, dto.getChannelId());
             } catch (Exception e) {
-                log.error("B2C销售订单提交发货失败,id:{}",id, e);
+                log.error("全平台销售订单提交发货失败,id:{}",id, e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 提交发货失败");
+                    result = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 提交发货失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -772,10 +755,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 result = soB2cService.deliveryIntercept(id, dto.getRemark());
             } catch (Exception e) {
-                log.error("B2C销售订单发货拦截失败", e);
+                log.error("全平台销售订单发货拦截失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 发货拦截失败");
+                    result = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 发货拦截失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -802,112 +785,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 result = soB2cService.cancelDeliveryIntercept(id);
             } catch (Exception e) {
-                log.error("B2C销售订单取消发货拦截失败", e);
+                log.error("全平台销售订单取消发货拦截失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消发货拦截失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 合并列表
-     *
-     * @param dto
-     * @return ApiResult<PagingVO < MergeListDTO>>
-     * @author Will
-     * @date: 2023/8/18 18:31
-     */
-    @PostMapping("/mergePaging")
-    @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
-    public ApiResult<PagingVO<SoB2cDTO.MergeListDTO>> mergePaging(@RequestBody @Validated PagingDTO<SoB2cDTO.MergePagingParamDTO> dto) {
-        return success(soB2cService.mergePaging(dto));
-    }
-
-    /**
-     * 合并列表数量
-     *
-     * @param dto
-     * @return ApiResult<Integer>
-     * @author Will
-     * @date: 2023/8/24 16:18
-     */
-    @PostMapping("/mergePagingCount")
-    public ApiResult<Integer> mergePagingCount(@RequestBody @Validated SoB2cDTO.MergePagingParamDTO dto) {
-        return success(soB2cService.mergePagingCount(dto));
-    }
-
-    /**
-     * 合并保存
-     *
-     * @param dto
-     * @return ApiResult<List < BatchResultDTO>>
-     * @author Will
-     * @date: 2023/8/18 18:35
-     */
-    @PostMapping("/mergeSave")
-    public ApiResult<List<BatchResultDTO>> mergeSave(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        String soId = soB2cService.mergeSave(dto.getIds());
-        soB2cService.checkProductRegistrationAndUpdate(soId,"");
-        return StringUtils.isNotBlank(soId) ? success() : failure();
-    }
-
-    /**
-     * 不合并
-     *
-     * @param dto
-     * @return ApiResult<List < BatchResultDTO>>
-     * @author Will
-     * @date: 2023/9/11 9:23
-     */
-    @PostMapping("/isNotNeedMerge")
-    public ApiResult<List<BatchResultDTO>> isNotNeedMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = soB2cService.isNotNeedMerge(id);
-            } catch (Exception e) {
-                log.error("B2C销售订单无需合并标记失败", e);
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 无需合并标记失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 取消合并
-     *
-     * @param dto
-     * @return ApiResult<List < BatchResultDTO>>
-     * @author Will
-     * @date: 2023/8/21 9:07
-     */
-    @PostMapping("/cancelMerge")
-    public ApiResult<List<BatchResultDTO>> cancelMerge(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = soB2cService.cancelMerge(id);
-            } catch (Exception e) {
-                log.error("B2C销售订单取消合并失败", e);
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消合并失败");
+                    result = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 取消发货拦截失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -951,10 +832,10 @@ public class FullyManagedOrderController extends BaseController {
                 result = BatchResultDTO.success(dto.getId(),entity.getCode(),"订单拆分成功");
                 allSoIdList.addAll(resultDTO.getSoB2cIds());
             } catch (Exception e) {
-                log.error("B2C销售订单取消拆分失败", e);
+                log.error("全平台销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(dto.getId());
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(dto.getId(), dto.getId(), "B2C销售订单不存在, 拆分保存失败");
+                    result = BatchResultDTO.fail(dto.getId(), dto.getId(), "全平台销售订单不存在, 拆分保存失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -980,6 +861,7 @@ public class FullyManagedOrderController extends BaseController {
     }
 
     /**
+     * 取消拆分
      * @param dto
      * @return ApiResult<List < BatchResultDTO>>
      * @description: 取消拆分
@@ -994,10 +876,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 result = soB2cSplitService.cancelSplit(id, true);
             } catch (Exception e) {
-                log.error("B2C销售订单取消拆分失败", e);
+                log.error("全平台销售订单取消拆分失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-//                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 取消拆分失败");
+//                    result = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 取消拆分失败");
 //                    resultDTOS.add(result);
                     continue;
                 }
@@ -1087,54 +969,6 @@ public class FullyManagedOrderController extends BaseController {
     }
 
     /**
-     * 订单预报
-     */
-    @PostMapping("/orderForecast")
-    public ApiResult<List<BatchResultDTO>> orderForecast(@RequestBody @Validated SoB2cDTO.TransferDeclareDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.orderForecast(dto);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 取消订单预报
-     */
-    @PostMapping("/cancelOrderForecast")
-    public ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds(), true);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-    /**
-     * 重试订单预报
-     * @Author Luo_WG
-     * @Date 2024/1/25 9:54
-     * @param dto  这里的id是 so_id列表
-     * @return com.common.core.controller.vo.ApiResult
-     **/
-//    @LogViewService
-    @PostMapping(value = "/retryOrderForecast")
-    public ApiResult<List<BatchResultDTO>> retryOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = soB2cService.retryOrderForecast(dto.getIds());
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 中转报关
-     *
-     * @param dto
-     * @return
-     * @description
-     * @author Lambda
-     * @create 2024-01-20 15:27
-     */
-    @PostMapping("/transferDeclare")
-    public ApiResult<List<BatchResultDTO>>  transferDeclare(@RequestBody BaseIdsDTO.IdsDTO dto) {
-
-        List<BatchResultDTO> resultDTOS= soB2cService.transferDeclare(dto.getIds());
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-
-    }
-
-    /**
      * 验证是否缺货
      * @author Will
      * @date: 2024/3/12 18:39
@@ -1179,13 +1013,13 @@ public class FullyManagedOrderController extends BaseController {
 
 
     /**
-     * 导出B2C销售订单信息
+     * 导出全平台销售订单信息
      * @author Will
      * @date: 2024/4/16 15:06
      * @param dto
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出B2C销售订单信息")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出全平台销售订单信息")
     @PostMapping(value = "/exportExcel")
     public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto) {
         Boolean flag = soB2cService.exportExcel(dto);
@@ -1203,17 +1037,6 @@ public class FullyManagedOrderController extends BaseController {
     public ApiResult<List<BatchResultDTO>> deliveryWithNotOutbound(@RequestBody @Validated SoB2cDTO.DeliveryWithNotOutboundDTO dto) {
         List<BatchResultDTO> resultDTOS = soB2cService.deliveryWithNotOutbound(dto);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 修复历史sku销售成本价
-     * @param dto
-     * @return
-     */
-    @PostMapping("/initCostPrice")
-    public ApiResult<List<BatchResultDTO>> initCostPrice(@RequestBody SoB2cDTO.CostPriceDTO dto) {
-        soB2cService.initCostPrice(dto);
-        return success();
     }
 
     /**
@@ -1268,16 +1091,6 @@ public class FullyManagedOrderController extends BaseController {
     }
 
     /**
-     * 同步处理历史审核订单数据到订单表
-     * @return
-     */
-    @PostMapping("/processOrderApproveData")
-    public ApiResult processOrderApproveData(){
-        soB2cService.processOrderApproveData();
-        return ApiResult.success();
-    }
-
-    /**
      * 添加赠品
      *
      * @param dtoList
@@ -1305,7 +1118,7 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 resultDTOS.add(soB2cService.addGift(entity,dtoList1, LogisticsEntity, detailEntityList1));
             } catch (Exception e) {
-                log.error("B2C销售订单添加赠品失败", e);
+                log.error("全平台销售订单添加赠品失败", e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }
@@ -1328,10 +1141,10 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 result = soB2cLogisticsService.cancelLogistic(id,soB2cEntityList,soB2cLogisticsEntityList, true);
             } catch (Exception e) {
-                log.error("B2C销售订单取消物流单失败", e);
+                log.error("全平台销售订单取消物流单失败", e);
                 SoB2cEntity entity = soB2cService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流单号失败");
+                    result = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 获取物流单号失败");
                     resultDTOS.add(result);
                     continue;
                 }
@@ -1340,71 +1153,6 @@ public class FullyManagedOrderController extends BaseController {
             resultDTOS.add(result);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 订单冻结
-     * @return
-     */
-    @PostMapping("/freeze")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "订单冻结：ids={ids}")
-    public ApiResult<List<BatchResultDTO>> freeze(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
-        for (String id : idDTO.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = soB2cStatusService.freeze(id,soB2cEntityList);
-            } catch (Exception e) {
-                log.error("B2C销售订单冻结异常", e);
-                SoB2cEntity entity = soB2cService.getById(id);
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 取消冻结
-     * @return
-     */
-    @PostMapping("/unfreeze")
-    @LogAction(value = LogActionEnum.UPDATE_STATUS, desc = "取消冻结：ids={ids}")
-    public ApiResult<List<BatchResultDTO>> unfreeze(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(idDTO.getIds());
-        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(idDTO.getIds());
-        for (String id : idDTO.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = soB2cStatusService.unfreeze(id,soB2cEntityList,soB2cDetailEntityList,soB2cLogisticsEntityList);
-            } catch (Exception e) {
-                log.error("B2C销售订单取消冻结异常", e);
-                SoB2cEntity entity = soB2cService.getById(id);
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
-     * 下推销售退货单View
-     * @return
-     */
-    @PostMapping("/generateSoB2cReturnView")
-    public ApiResult<List<SoB2cDTO.GenerateSoB2cReturnViewDTO>> generateSoB2cReturnView(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        return success(soB2cService.generateSoB2cReturnView(idDTO.getIds()));
-    }
-    /**
-     * 下推销售退货单
-     * @return
-     */
-    @PostMapping("/generateSoB2cReturn")
-    public ApiResult<Boolean> generateSoB2cReturn(@RequestBody @Valid List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list) {
-        return success(soB2cService.generateSoB2cReturn(list));
     }
 
     /**
@@ -1435,13 +1183,13 @@ public class FullyManagedOrderController extends BaseController {
             BatchResultDTO result;
             SoB2cEntity entity = soB2cEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), dto.getId())).findFirst().orElse(null);
             if (Objects.isNull(entity)){
-                result = BatchResultDTO.fail(dto.getId(), dto.getId(), "B2C销售订单记录不存在");
+                result = BatchResultDTO.fail(dto.getId(), dto.getId(), "全平台销售订单记录不存在");
                 resultDTOS.add(result);
                 continue;
             }
             SoB2cDetailEntity detail = soB2cDetailEntityList.stream().filter(e -> Objects.nonNull(e) && Objects.equals(e.getId(), dto.getDetailId())).findFirst().orElse(null);
             if (Objects.isNull(detail)){
-                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), "B2C销售订单明细记录不存在");
+                result = BatchResultDTO.fail(dto.getId(), entity.getCode(), "全平台销售订单明细记录不存在");
                 resultDTOS.add(result);
                 continue;
             }
@@ -1467,7 +1215,7 @@ public class FullyManagedOrderController extends BaseController {
             try {
                 result = soB2cDetailService.changeDeliverySku(dto.getTargetId(),entity,detail,skuVO);
             } catch (Exception e) {
-                log.error("B2C销售订单取消冻结异常", e);
+                log.error("全平台销售订单取消冻结异常", e);
                 result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
             }
             resultDTOS.add(result);
@@ -1521,7 +1269,7 @@ public class FullyManagedOrderController extends BaseController {
                 String content = StrUtil.format("拆分后订单编号：【{}】",String.join(",", resultDTO.getSoCodeList()));
                 result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg("操作成功").content(content).build();
             } catch (Exception e) {
-                log.error("B2C销售订单拆分SKU失败", e);
+                log.error("全平台销售订单拆分SKU失败", e);
                 result = BaseResultDTO.ContentDTO.builder().id(id).code(soB2cEntity.getCode()).msg(e.getMessage()).content("操作失败").build();
             }
             resultDTOS.add(result);
@@ -1529,34 +1277,4 @@ public class FullyManagedOrderController extends BaseController {
         return success(resultDTOS);
     }
 
-    /**
-     * 刷新订单
-     * @return
-     */
-    @PostMapping("/refreshOrderByIds")
-    public ApiResult<List<BatchResultDTO>> refreshOrderByIds(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
-        List<BatchResultDTO> resultDTOS = soB2cService.fetchOrder(idDTO.getIds());
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success() : failure(resultDTOS);
-    }
-
-    /**
-     * 临时修复数据接口 todo
-     * @return
-     */
-    @PostMapping("/tempTikTokOrderDate")
-    public ApiResult tempTikTokOrderDate() {
-        Boolean result = soB2cService.tempTikTokOrderDate();
-        return result ? success():failure();
-    }
-
-    /**
-     * 上传物流面单
-     *
-     * @param dto
-     * @return
-     */
-    @PostMapping("/uploadLogisticLabel")
-    public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) throws IOException {
-        return success(soB2cService.uploadLogisticLabel(dto));
-    }
 }
