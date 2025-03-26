@@ -1226,16 +1226,19 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     /**
      * 根据采购订单id 获取对应产品信息
      *
-     * @param purchaseOrderId
+     * @param purchaseOrderDetailId
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
      * @author yl
      * @date 2023-04-17 18:27
      */
     @Override
-    public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId) {
+    public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderDetailId) {
+        PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailService.getById(purchaseOrderDetailId);
+        if (ObjectUtils.isEmpty(detailEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
         PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
-        PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(purchaseOrderId);
-        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
+        PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(detailEntity.getPurchaseOrderId());
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
@@ -1243,36 +1246,28 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         result.setSupplierName(entity.getSupplierName());
         result.setWarehouseId(entity.getDeliveryWarehouseId());
         result.setWarehouseName(entity.getWarehouseName());
-        //是否新品首批
-        boolean isFirstMassProduct = detailList.stream().anyMatch(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct()));
         //入库质检
         String qcType = QcTypeEnum.STOCK_IN.getCode();
-        //是
-        if (isFirstMassProduct) {
+        //非首批：否：新品入库质检
+        if (detailEntity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
             qcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
         }
         Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
         result.setQcType(qcType);
         result.setIsInside(isInside);
-
         //采购订单详情
-        List<PurchaseOrderDetailEntity> orderDetailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
-        List<String> skuIdList = orderDetailList.stream().map(PurchaseOrderDetailEntity::getSkuId).collect(Collectors.toList());
+        String skuId = detailEntity.getSkuId();
+        List<String> skuIdList =Collections.singletonList(skuId);
         List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
-        List<ProductVO.ProductPackVO> productList = new ArrayList<>(orderDetailList.size());
-        for (PurchaseOrderDetailEntity item : orderDetailList) {
-            ProductVO.ProductPackVO flag = new ProductVO.ProductPackVO();
-            String skuId = item.getSkuId();
-            ProductVO.ProductPackVO find = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
-            if (find != null) {
-                BeanMapper.copy(find, flag);
-            }
-            flag.setPurchaseOrderDetailId(item.getId());
-            flag.setQty(item.getPurchaseQty());
-            flag.setSkuId(skuId);
-            productList.add(flag);
+        ProductVO.ProductPackVO flag = new ProductVO.ProductPackVO();
+        ProductVO.ProductPackVO find = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (find != null) {
+            BeanMapper.copy(find, flag);
         }
-        result.setProductList(productList);
+        flag.setPurchaseOrderDetailId(detailEntity.getId());
+        flag.setQty(detailEntity.getPurchaseQty());
+        flag.setSkuId(skuId);
+        result.setProductList(Collections.singletonList(flag));
         return result;
     }
 
