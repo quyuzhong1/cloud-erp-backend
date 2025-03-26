@@ -45,9 +45,11 @@ public class TmsTransferDeclareQueryHandler extends AbstractQueryHandler {
 
         if(field.equals("tdd.outstockStatus")){
             if((Boolean)value){
-                this.buildDefaultDTO("sb.bill_status", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
+                return " EXISTS (select 1 from so_b2c sb where sb.id = tdd.so_id and sb.is_deleted = false and sb.bill_status = 'shipped') ";
+//                this.buildDefaultDTO("sb.bill_status", SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             }else{
-                this.buildSplicingSQLDTO("sb.bill_status", QueryConditionEnum.NE,SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(), QueryDataTypeEnum.STRING);
+                return " EXISTS (select 1 from so_b2c sb where sb.id = tdd.so_id and sb.is_deleted = false and sb.bill_status != 'shipped') ";
+//                this.buildSplicingSQLDTO("sb.bill_status", QueryConditionEnum.NE,SoB2cBillStatusEnum.ENUM_SHIPPED.getCode(), QueryDataTypeEnum.STRING);
             }
         }
         return null;

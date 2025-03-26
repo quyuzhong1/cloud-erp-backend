@@ -537,5 +537,19 @@ public class LocalDateUtil {
 
         return dateList;
     }
+
+    /**
+     * 计算两个时间之间的小时数，保留小数
+     * @param startTime
+     * @param endTime
+     * @param decimalPlaces
+     * @return
+     */
+    public static double calculateHoursWithDecimal(LocalDateTime startTime, LocalDateTime endTime, int decimalPlaces) {
+        Duration duration = Duration.between(startTime, endTime);
+        double totalHours = duration.toMillis() / 1000.0 / 3600.0;
+        double scale = Math.pow(10, decimalPlaces);
+        return Math.round(totalHours * scale) / scale;
+    }
 }
 

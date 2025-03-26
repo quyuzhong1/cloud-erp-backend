@@ -133,6 +133,8 @@ public enum ModuleTypeEnum {
     SO_PRICE("118", "销售价目表"),
     SO_PRICE_CHANGE("119", "销售调目表"),
 
+    CFG_SETTING("118", "系统配置"),
+    SO_B2C_EXTEND("119", "销售订单扩展信息"),
     ;
 
 

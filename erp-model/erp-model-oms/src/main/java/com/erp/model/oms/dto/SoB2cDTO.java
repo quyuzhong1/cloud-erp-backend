@@ -256,6 +256,10 @@ public class SoB2cDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+        /**
+         * 是否全托管
+         */
+        private Boolean isFullyManaged;
     }
 
     @Data
@@ -573,6 +577,14 @@ public class SoB2cDTO implements Serializable {
          */
         private String label;
         /**
+         * 扩展字段
+         */
+        private String extendData;
+        /**
+         * 是否可送
+         */
+        private Boolean isDeliver;
+        /**
          * 标签对象
          */
         private LabelDTO labelDTO;
@@ -695,6 +707,10 @@ public class SoB2cDTO implements Serializable {
          * 提交发货时间
          */
         private LocalDateTime createDeliveryTime;
+        /**
+         * 实际发货时间
+         */
+        private LocalDateTime deliveryTime;
 
         /**
          * 面单打印时间
@@ -714,6 +730,60 @@ public class SoB2cDTO implements Serializable {
          * 提交发货是否选择渠道
          */
         private Boolean isSelectChannel = false;
+
+        //属性字段
+
+        private String extendId;
+        /**
+         * 要求发货时间
+         */
+        private LocalDateTime requiredDeliveryTime;
+        /**
+         * 要求收货时间
+         */
+        private LocalDateTime requiredReceiveTime;
+        /**
+         * 发货预警时间
+         */
+        private LocalDateTime deliveryWarningTime;
+        /**
+         * 预警时间
+         * 未发货时
+         * 当前时间< 预警时间时 无异常 黑色
+         * 当前时间> 预警时间时 且 当前时间< 要求发货时间 有异常
+         * 要求发货时间-当前时间  正数 橙色  负数红色
+         * 已发货时
+         * 要求发货时间>实际发货时间：则显示未超时
+         * 要求发货时间<实际发货时间：则显示已超期N小时
+         */
+        private BigDecimal warningHour;
+        /**
+         * 发货预警描述【导出使用】
+         */
+        private String deliveryWarningDesc;
+        /**
+         * 订单来源类型
+         * SoB2cExtendOrderSourceTypeEnum
+         */
+        private String orderSourceType;
+        private String orderSourceTypeName;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
     }
 
     @Data
@@ -751,6 +821,17 @@ public class SoB2cDTO implements Serializable {
          * 发货类型
          */
         private String deliveryType;
+        /**
+         * 紧急程度
+         * 紧急(最高)-URGENT
+         * 加急（高）-EXPEDITED
+         * 普通-GENERAL
+         */
+        private String priorityLevel;
+        /**
+         * 是否可送
+         */
+        private Boolean isDeliver;
     }
 
     @Data
@@ -819,6 +900,23 @@ public class SoB2cDTO implements Serializable {
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+        /**
+         * 发货类型
+         * NORMAL-普通备货
+         * JIT-JIT备货
+         */
+        private String deliveryType;
+        /**
+         * 紧急程度
+         * 紧急(最高)-URGENT
+         * 加急（高）-EXPEDITED
+         * 普通-GENERAL
+         */
+        private String priorityLevel;
+        /**
+         * 是否可送
+         */
+        private Boolean isDeliver;
     }
 
 
@@ -922,6 +1020,8 @@ public class SoB2cDTO implements Serializable {
          */
         @Valid
         private SoB2cReceiverDTO.ViewDTO receiverDTO;
+
+        private SoB2cExtendDTO.ViewDTO extendDTO;
 
         /**
          * 财务信息
@@ -1163,9 +1263,13 @@ public class SoB2cDTO implements Serializable {
         /**
          * 买家信息
          */
-        @NotNull(message = "买家信息不能为空")
-        @Valid
+//        @NotNull(message = "买家信息不能为空")
+//        @Valid
         private SoB2cReceiverDTO.AddDTO receiverDTO;
+        /**
+         * 全托管扩展信息
+         */
+        private SoB2cExtendDTO.AddDTO extendDTO;
 
         /**
          * 明细信息
@@ -1257,9 +1361,13 @@ public class SoB2cDTO implements Serializable {
         /**
          * 买家信息
          */
-        @NotNull(message = "买家信息不能为空")
-        @Valid
+//        @NotNull(message = "买家信息不能为空")
+//        @Valid
         private SoB2cReceiverDTO.UpdateDTO receiverDTO;
+        /**
+         * 全托管扩展信息
+         */
+        private SoB2cExtendDTO.UpdateDTO extendDTO;
 
         /**
          * 明细信息
@@ -1311,7 +1419,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 付款时间
          */
-        @NotNull(message = "付款时间不能为空")
+        @NotNull(message = "付款时间/下单时间不能为空")
         private LocalDateTime payTime;
 
         /**
@@ -3505,5 +3613,25 @@ public class SoB2cDTO implements Serializable {
          * 销售平台类型
          */
         List<String> dictPlatformList;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExtendDataDTO {
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
     }
 }

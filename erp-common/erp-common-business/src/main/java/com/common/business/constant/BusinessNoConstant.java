@@ -172,4 +172,5 @@ public interface BusinessNoConstant {
     String XSJM = "XSJM";
     String XSTJ = "XSTJ";
 
+    String XSBH = "XSBH";
 }

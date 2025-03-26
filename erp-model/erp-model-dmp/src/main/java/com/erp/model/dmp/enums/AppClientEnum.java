@@ -30,6 +30,8 @@ public enum AppClientEnum  {
     TIKTOK_AUTHORIZE("tikTokAuthorize","sales","TikTok"),
     TIKTOK_ACCESS_TOKEN("tikTokAccessToken","sales","TikTok"),
 
+    TIKTOK_FULLY_AUTHORIZE("tikTokAuthorize","sales","TikTokFully"),
+    TIKTOK_FULLY_ACCESS_TOKEN("tikTokAccessToken","sales","TikTokFully"),
 
     // 物流平台
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),
