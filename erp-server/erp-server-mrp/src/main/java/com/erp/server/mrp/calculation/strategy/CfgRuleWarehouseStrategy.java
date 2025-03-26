@@ -40,8 +40,8 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
                     .filter(v -> !ObjectUtils.isEmpty(v.getVirtualWarehouseId()))
                     .filter(v -> {
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(strategyDTO.getPlatformType())) {
-                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && v.getChannelIdJson().contains(strategyDTO.getPlatform()))
-                                    || v.getChannelIdJson().contains(strategyDTO.getShopId());
+                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && (v.getChannelIdJson().contains("") || v.getChannelIdJson().contains(strategyDTO.getPlatform()))
+                                    || v.getChannelIdJson().contains(strategyDTO.getShopId()));
                         }
                         return true;
                     })
