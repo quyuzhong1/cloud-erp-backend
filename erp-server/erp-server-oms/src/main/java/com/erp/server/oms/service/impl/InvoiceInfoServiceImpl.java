@@ -468,19 +468,28 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 ApiResult<Object> result = amazonUploadInvoiceService.getInvoiceResult(invoiceInfoEntity.getQueryId(),invoiceInfoEntity.getShopId());
                 if(result.isSuccess()){
                     invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                    invoiceInfoEntity.setRemark("");
                     soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
                     updateSoB2cList.add(soB2cEntity);
                     updateList.add(invoiceInfoEntity);
                 }else if(!result.getCode().equals(300)){
-                    invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
-                    invoiceInfoEntity.setQueryResult(result.getMsg());
-                    invoiceInfoEntity.setRemark("上传发票失败"+result.getMsg());
-                    soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
-                    updateSoB2cList.add(soB2cEntity);
-                    updateList.add(invoiceInfoEntity);
+                    if(result.getMsg().contains("There is already a document with same invoice number")){
+                        invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode());
+                        invoiceInfoEntity.setRemark("");
+                        soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_SUCCESS.getCode());
+                        updateSoB2cList.add(soB2cEntity);
+                        updateList.add(invoiceInfoEntity);
+                    }else{
+                        invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
+                        invoiceInfoEntity.setQueryResult(result.getMsg());
+                        invoiceInfoEntity.setRemark("上传发票失败"+result.getMsg());
+                        soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
+                        updateSoB2cList.add(soB2cEntity);
+                        updateList.add(invoiceInfoEntity);
+                    }
                 }
             }catch (Exception e){
-                log.error("亚马逊查询发票异常",e);
+                log.error("{}亚马逊查询发票异常",soB2cEntity.getCode(),e);
                 invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
                 invoiceInfoEntity.setQueryResult("系统异常"+e.getMessage());
                 invoiceInfoEntity.setRemark("系统异常"+e.getMessage());

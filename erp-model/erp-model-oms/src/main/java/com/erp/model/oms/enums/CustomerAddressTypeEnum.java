@@ -39,6 +39,9 @@ public enum CustomerAddressTypeEnum  implements EnumMessage {
     }
 
     public static String getName(String code) {
+        if(code == null){
+            return "";
+        }
         for (CustomerAddressTypeEnum addressTypeEnum : CustomerAddressTypeEnum.values()) {
             if (code.equals(addressTypeEnum.getCode())) {
                 return addressTypeEnum.getName();
