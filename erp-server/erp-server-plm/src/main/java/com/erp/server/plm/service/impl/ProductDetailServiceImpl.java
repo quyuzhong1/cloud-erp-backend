@@ -1092,10 +1092,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
 
         if(Objects.isNull(oldEntity)){
-            oldEntity = productInfoService.lambdaQuery()
-                    .select(ProductInfoEntity::getId, ProductInfoEntity::getCategory, ProductInfoEntity::getChargeId)
-                    .eq(ProductInfoEntity::getId, productInfoDTO.getId())
-                    .one();
+            oldEntity = productInfoService.getById(productInfoDTO.getId());
             if(Objects.isNull(oldEntity)){
                 return Collections.emptyList();
             }
@@ -6552,8 +6549,28 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         productPackEntity.setProductWidth(width);
         productPackEntity.setProductHeight(height);
         productPackEntity.setGrossWeight(weight);
+
+        //获取产品包装信息修改的字段
+        ProductPackDTO productPackDTO = new ProductPackDTO();
+        BeanMapper.copy(productPackEntity,productPackDTO);
+        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,productPackEntity);
+
         boolean result = productPackService.updateById(productPackEntity);
         if(result){
+            //发送通知
+            ProductDetailEntity productDetailEntity = getById(productPackEntity.getSkuId());
+            ProductInfoEntity productInfoEntity = productInfoService.getById(productDetailEntity.getProductId());
+            ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+            noticeDTO.setProductId(productInfoEntity.getId());
+            noticeDTO.setName(productInfoEntity.getName());
+            noticeDTO.setChargeId(productInfoEntity.getChargeId());
+            noticeDTO.setChargeName(productInfoEntity.getChargeName());
+            noticeDTO.setSkuNo(productDetailEntity.getSkuNo());
+            noticeDTO.setProductPackChangeField(productPackChangeField);
+            List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
+            //发送消息
+            handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
                     .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
         }
