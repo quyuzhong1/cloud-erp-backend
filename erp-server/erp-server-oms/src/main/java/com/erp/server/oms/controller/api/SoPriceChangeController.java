@@ -268,7 +268,7 @@ public class SoPriceChangeController extends BaseController {
                 continue;
             }
             try {
-                Boolean disabled = soPriceChangeService.submitApprove(Collections.singletonList(id), Boolean.TRUE);
+                Boolean disabled = soPriceChangeService.submit(Collections.singletonList(id), Boolean.TRUE);
                 if (disabled){
                     resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "提交销售调价单成功"));
                 } else {
@@ -300,7 +300,7 @@ public class SoPriceChangeController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(soPriceChangeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
+                resultDTOS.add(soPriceChangeService.approve(entity,new ApproveOneDTO(id, dto.getType(),dto.getComment())));
             }catch (Exception e){
                 log.error("销售调价审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

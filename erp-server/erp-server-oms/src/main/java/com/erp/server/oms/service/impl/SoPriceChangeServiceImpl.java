@@ -11,14 +11,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.dto.base.*;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -177,7 +171,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         if (null == entity) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submitApprove(Collections.singletonList(entity.getId()), Boolean.TRUE);
+        Boolean result = this.submit(Collections.singletonList(entity.getId()), Boolean.TRUE);
         if (!result) {
             throw new ServiceException(ApiError.ERROR_1002);
         }
@@ -313,7 +307,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean submitApprove(List<String> ids, Boolean isStartProcess) {
+    public Boolean submit(List<String> ids, Boolean isStartProcess) {
         if (CollectionUtils.isEmpty(ids)) {
             return false;
         }
@@ -361,51 +355,45 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     }
 
 
-    /**
-     * 销售价目变更 审核
-     *
-     * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
-     * @return java.lang.Boolean
-     * @author will
-     * @date 2025-03-28 16:52
-     */
+   /**
+    * 销售价目变更 审核
+    * @author will
+    * @date 2025/3/26 10:54
+    * @param entity
+    * @param dto
+    * @return com.common.business.dto.base.BatchResultDTO
+    */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(SoPriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
+    public BatchResultDTO approve(SoPriceChangeEntity entity, ApproveOneDTO dto) {
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus().getStatus())) {
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //调用审核流程
-        BatchResultDTO resultDTO = approveProcess(entity, type, comment, isNeedProcess);
-        if (resultDTO.getSuccess()){
-            //添加日志
-            moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售价目【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(StringUtils.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
-        }
-        return resultDTO;
+        approveProcess(entity, dto);
+        //添加日志
+        moduleOperateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售价目【%s】", ApproveTypeEnum.getName(dto.getType()), entity.getCode()).concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO_PRICE_CHANGE.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.approveStatus(entity.getApproveStatus()));
     }
 
-    /**
-     * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
-     * @description: 结束审核
-     * @author Will
-     * @date: 2023/7/3 15:25
-     */
+   /**
+    * 结束审核
+    * @author will
+    * @date 2025/3/26 10:47
+    * @param dto
+    * @param entity
+    * @return com.common.business.dto.base.BatchResultDTO
+    */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO approveEnd(SoPriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
-        if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(entity)) {
-            return BatchResultDTO.success();
+    public Boolean approveEnd(ApproveOneDTO dto, SoPriceChangeEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.TRUE;
         }
         Boolean result;
-        if (type.equals(ApproveType.PASS)) {
+        if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
             result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
@@ -414,14 +402,14 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
             result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(rejectStatus));
         }
-        if (!result) {
+        if (Boolean.FALSE.equals(result)) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        if (ApproveType.PASS.equals(type)) {
+        if (ApproveType.PASS.equals(dto.getType())) {
             //更新价目表数据
             soPriceChangeDetailService.updateSoPriceDetail(Collections.singletonList(entity));
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+        return result;
     }
 
     /**
@@ -569,7 +557,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submitApprove(Collections.singletonList(id), Boolean.TRUE);
+        return this.submit(Collections.singletonList(id), Boolean.TRUE);
     }
 
     @Override
@@ -698,34 +686,31 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     }
 
     /**
+     * 流程审核
+     * @author will
+     * @date 2025/3/26 10:55
      * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
-     * @description: 流程审核
-     * @author Will
-     * @date: 2023/7/3 15:24
+     * @param dto
+     * @return com.common.business.dto.base.BatchResultDTO
      */
-    private BatchResultDTO approveProcess(SoPriceChangeEntity entity, String type, String comment, Boolean isNeedProcess) {
+    private void approveProcess(SoPriceChangeEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.SO_PRICE_CHANGE.getCode());
-        approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
-        approveDTO.setComment(comment);
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
         approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
+            throw new ServiceException(ApiError.ERROR_94006);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
-
-        if (com.baomidou.mybatisplus.core.toolkit.ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-            return approveEnd(entity, type,comment,isNeedProcess);
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || Boolean.TRUE.equals(!data.getIsExistProcess())) {
+             approveEnd(dto,entity);
         }
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
     @Override
