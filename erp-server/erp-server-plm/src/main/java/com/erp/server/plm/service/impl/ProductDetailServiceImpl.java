@@ -7,7 +7,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -2663,7 +2662,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
                     log.info("skuCostDTO: {}", JSONUtil.toJsonStr(skuCostDTO));
                     if (Objects.isNull(skuCostDTO)) {
-                        batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(),CharSequenceUtil.format("SKU【{}】中中台Bom关系表不存",productDetailEntity.getSkuNo())));
+                        batchResultDTOList.add(BatchResultDTO.fail(skuId,productDetailEntity.getSkuNo(), format("SKU【{}】中中台Bom关系表不存",productDetailEntity.getSkuNo())));
                         continue;
                     }
                     if (Objects.nonNull(skuCostDTO.getCostPrice())) {
@@ -2686,7 +2685,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 customs.setToDeclarePrice(resultDestDeclarePrice);
                 customs.setToCurrency(CurrencyEnum.USD.getCurrencyCode());
                 customs.setToCurrencySymbol(CurrencyEnum.USD.getCurrencySymbol());
-                String oldCountry = CharSequenceUtil.isBlank(customs.getCountry()) || CommonConstants.DEFAULT.equals(customs.getCountry()) ? "默认" : customs.getCountry();
+                String oldCountry = isBlank(customs.getCountry()) || CommonConstants.DEFAULT.equals(customs.getCountry()) ? "默认" : customs.getCountry();
                 String newCountry = "";
                 if (Objects.isNull(customs.getId())){
                     customs.setSkuId(skuId);
@@ -2696,17 +2695,17 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     newCountry = CommonConstants.DEFAULT;
                     addList.add(customs);
                 }else {
-                    if (CharSequenceUtil.isBlank(customs.getCountry())){
+                    if (isBlank(customs.getCountry())){
                         customs.setCountry(CommonConstants.DEFAULT);
                     }
                     updateList.add(customs);
                 }
-                newCountry = CharSequenceUtil.isBlank(newCountry) || CommonConstants.DEFAULT.equals(newCountry) ? "默认" : customs.getCountry();
+                newCountry = isBlank(newCountry) || CommonConstants.DEFAULT.equals(newCountry) ? "默认" : customs.getCountry();
                 String msg = "";
                 if (isManual){
-                    msg = CharSequenceUtil.format("手动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
+                    msg = format("手动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
                 }else {
-                    msg = CharSequenceUtil.format("自动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
+                    msg = format("自动重算【{}】国家从【{}】改为【{}】，目的国申报价从【{}】改为【{}】", productDetailEntity.getSkuNo(),oldCountry, newCountry,destDeclarePrice, resultDestDeclarePrice);
                 }
                 sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(productDetailEntity.getProductId())
                         .setBusinessId(productDetailEntity.getId()).setOperation("编辑操作").setContent(msg));
@@ -4395,7 +4394,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //添加日志
         String fieldValue = getFieldValue(dto);
         entityList.forEach(obj -> {
-            String content = CharSequenceUtil.format("操作了【{}】，修改字段【{}】为【{}】",obj.getSkuNo(),ProductBatchFieldEnum.getName(dto.getUpdateFiledCode()),fieldValue);
+            String content = format("操作了【{}】，修改字段【{}】为【{}】",obj.getSkuNo(),ProductBatchFieldEnum.getName(dto.getUpdateFiledCode()),fieldValue);
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(obj.getProductId())
                     .setBusinessId(obj.getId()).setOperation("批量更新").setContent(content));
         });
@@ -4419,7 +4418,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         if (ProductBatchFieldEnum.PRODUCT_PROPERTY_ID.getCode().equals(dto.getUpdateFiledCode())) {
             List<BasicDictEntity> basicDictList = basicDictService.listByIds(Arrays.asList(dto.getValues().toString().split(",")));
-            return CollUtil.isEmpty(basicDictList) ? "" :basicDictList.stream().map(BasicDictEntity::getName).collect(Collectors.joining(","));
+            return isEmpty(basicDictList) ? "" :basicDictList.stream().map(BasicDictEntity::getName).collect(Collectors.joining(","));
         }
         if (ProductBatchFieldEnum.CHARGE_ID.getCode().equals(dto.getUpdateFiledCode())) {
             return commonService.getNameByIds(Arrays.asList(dto.getValues().toString().split(",")));
@@ -4668,7 +4667,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             if (ObjectUtil.isEmpty(productInfo.getSaleMethod() )|| (!productInfo.getSaleMethod().contains(SaleMethodEnum.GOODS.getName()) && !productInfo.getSaleMethod().contains(SaleMethodEnum.GIFT.getName()))) {
                 continue;
             }
-            if (CharSequenceUtil.isNotBlank(errMsg)) {
+            if (isNotBlank(errMsg)) {
                 throw new ServiceException(errMsg.toString());
             }
         }
@@ -4794,20 +4793,42 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             File file = ExcelUtil.exportFile(excelPath, fileName, successList);
             if (file != null && !file.isDirectory()) {
                 successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+                //成功添加日志文本
+                for (String productId : productIdList) {
+                    addProductImportLog(successUrl,productId);
+                }
             }
-        }
-        for (String productId : productIdList) {
-            //新增操作日志
-            SysLogEntity sysLogEntity = new SysLogEntity().setContent(StrUtil.format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
-                    .setBusinessId(productId)
-                    .setPid(productId)
-                    .setOperation("导入")
-                    .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
-            //添加日志
-            sysLogService.addSysLogByOther(sysLogEntity);
         }
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
+
+    /**
+     * 添加产品导入日志
+     * @author will
+     * @date 2025/3/26 09:53
+     * @param successUrl
+     * @param productId
+     */
+    private void addProductImportLog (String successUrl,String productId) {
+        //新增操作日志
+        SysLogEntity sysLogEntity = new SysLogEntity().setContent(format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
+                .setBusinessId(productId)
+                .setPid(productId)
+                .setOperation("导入")
+                .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
+        //添加日志
+        sysLogService.addSysLogByOther(sysLogEntity);
+    }
+
+    /**
+     * 成功数据处理
+     * @author will
+     * @date 2025/3/26 09:51
+     * @param importType
+     * @param successList
+     * @param errorList
+     * @return java.util.List<java.lang.String>
+     */
     private List<String> handleUpdateSuccessList(Integer importType, List<ProductDetailImprotUpdateExcelDTO> successList, List<ProductDetailImprotUpdateExcelDTO> errorList) {
         List<String> productIdList = new ArrayList<>();
         
@@ -5059,7 +5080,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         productInfoDTO.setCategoryId(secondaryCategoryEntity.getId());
                     }
                     //存在错误信息则返回
-                    if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorMsgList)) {
+                    if (CollectionUtils.isNotEmpty(errorMsgList)) {
                         dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                         errorList.add(dto);
                         continue;
@@ -5625,17 +5646,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             File file = ExcelUtil.exportFile(excelPath, fileName, successList);
             if (file != null && !file.isDirectory()) {
                 successUrl = FastDFSClientUtil.uploadFile(file, fileName);
+                //成功添加日志文本
+                for (String productId : productIdList) {
+                    addProductImportLog(successUrl,productId);
+                }
             }
-        }
-        for (String productId : productIdList) {
-            //新增操作日志
-            SysLogEntity sysLogEntity = new SysLogEntity().setContent(StrUtil.format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
-                    .setBusinessId(productId)
-                    .setPid(productId)
-                    .setOperation("导入")
-                    .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
-            //添加日志
-            sysLogService.addSysLogByOther(sysLogEntity);
         }
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
@@ -6562,7 +6577,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\"");
         // 创建字体
         ProductPrintFormatEnum formatEnum = ProductPrintFormatEnum.valueOf(printEanDTO.getPrintFormat());
-        Document document = new Document(new com.itextpdf.text.Rectangle(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()),
+        Document document = new Document(new Rectangle(UnitConverterUtil.mmToPoints(printEanDTO.getWidth()),
                 UnitConverterUtil.mmToPoints(printEanDTO.getHeight())));
         try (OutputStream out = response.getOutputStream()) {
             InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("net/sf/jasperreports/fonts/dejavu/HarmonyOS_Sans_SC_Regular.ttf");
@@ -6604,7 +6619,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO) {
-        if (CharSequenceUtil.isBlank(viewDTO.getSkuId())) {
+        if (isBlank(viewDTO.getSkuId())) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
@@ -6647,7 +6662,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
 
         //新增操作日志
-        String content = CharSequenceUtil.format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【包装尺寸高】为【{}】、【毛重】为【{}】、【净重】为【{}】、【箱规长】为【{}】、【箱规宽】为【{}】、【箱规高】为【{}】、【单箱重量】为【{}】、【单箱数量】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getProductHeight()
+        String content = format("操作了SKU【{}】，修改字段【包装尺寸长】为【{}】、【包装尺寸宽】为【{}】、【包装尺寸高】为【{}】、【毛重】为【{}】、【净重】为【{}】、【箱规长】为【{}】、【箱规宽】为【{}】、【箱规高】为【{}】、【单箱重量】为【{}】、【单箱数量】为【{}】",productDetailEntity.getSkuNo(),entity.getProductLength(),entity.getProductWidth(),entity.getProductHeight()
                 ,entity.getGrossWeight(),entity.getNetWeight(),entity.getBoxLength(),entity.getBoxWidth(),entity.getBoxHeight(),entity.getBoxWeight(),entity.getBoxQty());
         sysLogService.addSysLogByOther(new SysLogEntity().setBusinessId(entity.getSkuId()).setPid(productDetailEntity.getProductId())
                 .setOperation("更新包装信息").setContent(content));
@@ -6660,29 +6675,29 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             StringBuilder errMsg = new StringBuilder();
             //包装尺寸
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductLength()) >= 0  || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getProductHeight()) >= 0) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.ERROR_PRODUCT_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //箱规
             if (MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxLength()) >= 0 ||MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxWidth()) >= 0 || MathUtil.compareTo(BigDecimal.ZERO, productPackDTO.getBoxHeight()) >= 0) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.ERROR_BOX_SIZE_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //毛重
             if (MathUtil.compareTo(productPackDTO.getGrossWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.ERROR_GROSS_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //单箱重量
             if (MathUtil.compareTo(productPackDTO.getBoxWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.ERROR_BOX_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //净重
             if (MathUtil.compareTo(productPackDTO.getNetWeight(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
+                errMsg.append(format(ApiError.ERROR_NET_WEIGHT_NOT_EXIST.msg, productPackDTO.getSkuNo())).append(ProductConstant.HTML_BR);
             }
             //单箱数量
             if (MathUtil.compareTo(productPackDTO.getBoxQty(), MathUtil.ZERO) == MathUtil.ZERO) {
-                errMsg.append(CharSequenceUtil.format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg, productPackDTO.getSkuNo()));
+                errMsg.append(format(ApiError.ERROR_BOX_QTY_NOT_EXIST.msg, productPackDTO.getSkuNo()));
             }
-            if (CharSequenceUtil.isNotBlank(errMsg)) {
+            if (isNotBlank(errMsg)) {
                 throw new ServiceException(errMsg.toString());
             }
 
@@ -6751,16 +6766,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
         for (ProductInfoDTO productInfoDTO : successList) {
             productInfoService.updateSpec(productInfoDTO);
-            //新增操作日志
-            SysLogEntity sysLogEntity = new SysLogEntity().setContent(StrUtil.format("<a href='{}' class='custom-link'>{}</a>", FastDFSClientUtil.publicUrl + successUrl,"导入成功"))
-                    .setBusinessId(productInfoDTO.getId())
-                    .setPid(productInfoDTO.getId())
-                    .setOperation("导入")
-                    .setClassPath(SysLogClassPathEnum.PRODUCTINFOENTITY.getDesc());
-            //添加日志
-            sysLogService.addSysLogByOther(sysLogEntity);
+            //添加导入日志
+            addProductImportLog(successUrl,productInfoDTO.getId());
         }
-
         return new ExcelImportFsDTO.UrlDTO(successUrl,errorUrl);
     }
 
