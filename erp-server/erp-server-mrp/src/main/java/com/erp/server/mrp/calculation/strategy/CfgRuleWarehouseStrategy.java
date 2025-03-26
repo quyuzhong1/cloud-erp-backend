@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.strategy;
 
+import cn.hutool.core.util.ObjUtil;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
@@ -40,8 +41,9 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
                     .filter(v -> !ObjectUtils.isEmpty(v.getVirtualWarehouseId()))
                     .filter(v -> {
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(strategyDTO.getPlatformType())) {
-                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && (v.getChannelIdJson().contains("") || v.getChannelIdJson().contains(strategyDTO.getPlatform()))
-                                    || v.getChannelIdJson().contains(strategyDTO.getShopId()));
+                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && (ObjUtil.isEmpty(v.getChannelIdJson()) ||
+                            v.getChannelIdJson().contains("") || v.getChannelIdJson().contains(strategyDTO.getPlatform())))
+                                    || v.getChannelIdJson().contains(strategyDTO.getShopId());
                         }
                         return true;
                     })
@@ -54,8 +56,9 @@ public class CfgRuleWarehouseStrategy implements CfgRuleSettingStrategy<CfgRuleW
                     .filter(v -> ObjectUtils.isEmpty(v.getVirtualWarehouseId()))
                     .filter(v -> {
                         if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(strategyDTO.getPlatformType())) {
-                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && (v.getChannelIdJson().contains("") || v.getChannelIdJson().contains(strategyDTO.getPlatform()))
-                                    || v.getChannelIdJson().contains(strategyDTO.getShopId()));
+                            return (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && (ObjUtil.isEmpty(v.getChannelIdJson()) ||
+                                    v.getChannelIdJson().contains("") || v.getChannelIdJson().contains(strategyDTO.getPlatform())))
+                                    || v.getChannelIdJson().contains(strategyDTO.getShopId());
                         }
                         return true;
                     })
