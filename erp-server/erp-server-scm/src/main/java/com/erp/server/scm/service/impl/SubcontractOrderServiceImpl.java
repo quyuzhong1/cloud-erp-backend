@@ -613,6 +613,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             if (CollectionUtils.isEmpty(childList)) {
                 throw new ServiceException(ApiError.ERROR_98072);
             }
+            //新品首批
+            viewDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
             List<SubcontractOrderDetailDTO.ChildDTO> childDTOList = BeanMapperUtils.copyList(SubcontractOrderDetailDTO.ChildDTO.class, childList);
             for (SubcontractOrderDetailDTO.ChildDTO childViewDTO : childDTOList) {
                 //bom信息
@@ -646,8 +648,9 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 //仓位名称
                 String warehouseLocationName = warehouseLocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),childViewDTO.getWarehouseId()) && StrUtil.equals(obj.getCode(), childViewDTO.getWarehouseLocation())).map(WarehouseLocationEntity::getName).findFirst().orElse("");
                 childViewDTO.setWarehouseLocationName(warehouseLocationName);
+                //新品首批
+                childViewDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(childViewDTO.getFirstMassProduct()));
             }
-
             viewDTO.setChildList(childDTOList);
         }
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
