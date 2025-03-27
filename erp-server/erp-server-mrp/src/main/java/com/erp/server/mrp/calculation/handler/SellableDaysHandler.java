@@ -5,6 +5,7 @@ import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
@@ -54,7 +55,7 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
             setSellableDays(detail.getFbaUsableQty(), estimateQty, replenishmentResultDTO.getReplenishmentDetail()::setFbaSellableDays);
         }
         //海外仓可售天数 海外仓总库存 / 备货期日均销量
-        if (Boolean.TRUE.equals(cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas())) {
+        if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
             Set<String> overseasResult = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getTotalOverseasInventory());
             int totalOverseasQty = 0;
             totalOverseasQty = getTotalOverseasQty(overseasResult, totalOverseasQty, detail);
