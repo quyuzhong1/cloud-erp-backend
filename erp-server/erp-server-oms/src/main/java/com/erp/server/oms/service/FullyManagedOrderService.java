@@ -6,6 +6,7 @@ import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -28,4 +29,9 @@ public interface FullyManagedOrderService extends SuperService<SoB2cEntity> {
      * @param timeOutSettingDTO
      */
     void timeOutConfig(CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO);
+    /**
+     * 导出模板
+     * @param response
+     */
+    void downloadTemplate(HttpServletResponse response);
 }
