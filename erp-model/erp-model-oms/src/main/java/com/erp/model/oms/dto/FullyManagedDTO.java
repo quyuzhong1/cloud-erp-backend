@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * @author zdy
@@ -20,7 +21,26 @@ public class FullyManagedDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PartitionDTO{
-
+    public static class WarningDTO{
+        /**
+         * 销售订单
+         */
+        private  String id;
+        /**
+         * 销售订单编号
+         */
+        private  String code;
+        /**
+         * 平台编码
+         */
+        private  String platformCode;
+        /**
+         * 发货预警时间
+         */
+        private LocalDateTime deliveryWarningTime;
+        /**
+         * 要求发货时间
+         */
+        private LocalDateTime requiredDeliveryTime;
     }
 }

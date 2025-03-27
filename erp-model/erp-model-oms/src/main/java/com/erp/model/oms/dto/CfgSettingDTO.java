@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -74,8 +75,10 @@ public class CfgSettingDTO implements Serializable {
     public static class TimeOutSettingDTO {
         /**
          * 超时预警时间
+         * HOUR:小时
          */
         @NotNull(message = "预警时间不能为空")
+        @Digits(integer = 12, fraction = 1, message = "预警时间不能超过12位，小数位不能超过1位")
         private BigDecimal warningTime;
         /**
          * 发送通知人员列表

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -60,4 +61,10 @@ public class NoticeMsgInfoDTO implements Serializable {
      * 按钮信息
      */
     private NoticeMsgCardButtonDTO noticeMsgCardButtonDTO;
+
+    /**
+     * 延迟时间，仅支持飞书，单位：分钟
+     * 说明：如果指定了延迟时间，则会在指定的时间后发送消息，否则立即发送消息
+     */
+    private LocalDateTime delayTime;
 }

@@ -3871,7 +3871,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         data.setWarningHour(BigDecimal.valueOf(hour));
                         data.setDeliveryWarningDesc("已超时" + hour + "小时");
                     }
-                }else if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(data.getBillStatus()) && Objects.nonNull(data.getRequiredDeliveryTime())){
+                }else if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(data.getBillStatus()) && Objects.nonNull(data.getRequiredDeliveryTime()) && Objects.nonNull(data.getDeliveryWarningTime())){
                     LocalDateTime requiredDeliveryTime = data.getRequiredDeliveryTime();
                     LocalDateTime deliveryWarningTime = data.getDeliveryWarningTime();
                     if (LocalDateTime.now().isBefore(deliveryWarningTime)){
