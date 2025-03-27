@@ -61,61 +61,62 @@ public class DistributeLockerAspect {
 
     @Around("dataPointCut()")
     public Object doAround(ProceedingJoinPoint pjp) throws Throwable {
+        // 1. 获取并验证当前方法
         Method method = currentMethod(pjp);
-        // 校验 method 是否为 null
         if (method == null) {
             log.error("无法获取当前方法信息，请检查切入点配置");
             throw new IllegalArgumentException("当前方法不存在");
         }
 
-        //获取到方法的注解对象
+        // 2. 获取注解和线程信息
         DistributeLocker annotation = method.getAnnotation(DistributeLocker.class);
-
-        //当前线程名
         String threadName = Thread.currentThread().getName();
-        log.info("线程{}------进入分布式锁aop------", threadName);
+        String methodName = method.getName();
 
-        List<String> keys = getLockKeys(annotation, pjp);
+        log.info("线程[{}]执行方法[{}]准备获取分布式锁", threadName, methodName);
 
-        // 获取锁
-        List<RLock> rLocks;
-        rLocks = keys.stream()
-                .map(key -> redissonClient.getLock(key))
-                .collect(Collectors.toList());
-        // 如果没有取到锁Key,直接执行方法,不加锁,但同时打印警告日志
-        if(rLocks.isEmpty()){
-            log.warn("线程{} 未找到需要锁定的键,执行方法不加锁,keys={}", threadName, keys);
+        // 3. 获取锁键并创建锁对象
+        List<String> lockKeys = getLockKeys(annotation, pjp);
+        if (lockKeys.isEmpty()) {
+            log.warn("线程[{}]执行方法[{}]未找到需要锁定的键，执行方法不加锁", threadName, methodName);
             return pjp.proceed();
         }
 
-        long waitTime = getWaitTime(annotation,pjp);
+        List<RLock> rLocks;
+        rLocks = lockKeys.stream()
+                .map(key -> redissonClient.getLock(key))
+                .collect(Collectors.toList());
 
+        // 4. 创建多锁并准备获取
         RedissonMultiLock multiLock = new RedissonMultiLock(rLocks.toArray(new RLock[0]));
+        long waitTime = getWaitTime(annotation, pjp);
         boolean locked = false;
-        // 尝试加锁
+
         try {
+            // 5. 尝试获取锁
             locked = multiLock.tryLock(waitTime, annotation.timeUnit());
-            if(locked){
-                log.info("线程{} 获取锁成功,key={}", threadName, keys);
-                return pjp.proceed();
-            } else {
-                log.warn("线程{} 获取锁失败,key={}", threadName, keys);
-                throw new ServiceException("线程 "+threadName+" 获取锁失败,请求超时");
+            if (!locked) {
+                log.warn("线程[{}]执行方法[{}]获取锁失败，keys={}", threadName, methodName, lockKeys);
+                throw new ServiceException(String.format("线程[%s]获取锁失败，请求超时", threadName));
             }
+
+            log.info("线程[{}]执行方法[{}]获取锁成功，keys={}", threadName, methodName, lockKeys);
+            // 6. 执行原方法
+            return pjp.proceed();
         } catch (InterruptedException e) {
-            log.error("线程{} 获取锁失败", threadName);
-            Thread.currentThread().interrupt();
-            throw new ServiceException("线程 "+threadName+" 获取锁失败,请求超时",e);
+            log.error("线程[{}]执行方法[{}]获取锁时被中断", threadName, methodName, e);
+            Thread.currentThread().interrupt(); // 重置中断状态
+            throw new ServiceException(String.format("线程[%s]获取锁失败，请求被中断", threadName), e);
         } finally {
-            if(locked){
+            // 7. 安全释放锁
+            if (locked && multiLock.isHeldByCurrentThread()) {
                 try {
                     multiLock.unlock();
-                    log.info("线程{} 释放锁成功,key={}", threadName,keys);
-                }catch (Exception e){
-                    log.error("线程 {} 释放锁失败", threadName, e);
+                    log.info("线程[{}]执行方法[{}]释放锁成功，keys={}", threadName, methodName, lockKeys);
+                } catch (Exception e) {
+                    log.error("线程[{}]执��方法[{}]释放锁失败", threadName, methodName, e);
                 }
             }
-
         }
     }
 
