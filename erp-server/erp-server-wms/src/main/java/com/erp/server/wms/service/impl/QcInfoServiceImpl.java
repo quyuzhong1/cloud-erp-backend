@@ -641,7 +641,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            if (!FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(entity.getFirstMassProduct())) {
+            if (FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(entity.getFirstMassProduct())) {
                 continue;
             }
             long count = productPactList.stream().filter(obj -> obj.getSkuId().equals(qcProductEntity.getSkuId())).count();
