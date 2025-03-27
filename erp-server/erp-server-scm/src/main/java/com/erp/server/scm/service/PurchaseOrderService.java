@@ -215,10 +215,19 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * 根据采购订单明细id 获取对应产品信息
      * @author yl
      * @date 2023-04-17 18:27
+     * @param purchaseOrderId
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
+     */
+    PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId);
+
+    /**
+     * 根据采购订单明细id 获取对应产品信息
+     * @author jack
+     * @date 2025-03-27
      * @param purchaseOrderDetailId
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
      */
-    PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderDetailId);
+    PurchaseOrderDTO.GetQcProductDTO getQcProductInfoByDetailId(String purchaseOrderDetailId);
     /**
      * @description: 更新金蝶发送状态
      * @author Will
