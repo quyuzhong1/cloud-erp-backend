@@ -66,7 +66,7 @@ public class SoPriceHistoryEntity extends BaseEntity<SoPriceHistoryEntity> {
     * 失效时间
     */
     @TableField("expire_date")
-    private LocalDateTime expireDate;
+    private LocalDate expireDate;
     /**
     * 税率
     */
