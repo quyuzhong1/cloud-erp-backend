@@ -304,12 +304,10 @@ public class SoPriceChangeDTO implements Serializable {
          */
         private String currency;
 
-
         /**
          * 币种 符号
          */
         private String currencySymbol;
-
         /**
          *  禁用启用状态
          *  true 禁用
@@ -317,18 +315,15 @@ public class SoPriceChangeDTO implements Serializable {
          */
         private Boolean disabled;
 
-
         /**
          * 含税单价
          */
         private BigDecimal taxPrice;
 
-
         /**
          * 税率
          */
         private BigDecimal taxRate;
-
 
         /**
          * 生效时间
@@ -336,17 +331,19 @@ public class SoPriceChangeDTO implements Serializable {
         private LocalDate effectiveDate;
 
         /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+        /**
          * 升降比例（带百分比）【不能排序】
          */
         private String offsetRate;
-
 
         /**
          * 销售组织
          */
         private String soOrgId;
-
-
 
         /**
          * 销售组织名
