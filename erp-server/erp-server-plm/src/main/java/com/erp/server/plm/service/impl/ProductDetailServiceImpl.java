@@ -6568,7 +6568,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //获取产品包装信息修改的字段
         ProductPackDTO productPackDTO = new ProductPackDTO();
         BeanMapper.copy(productPackEntity,productPackDTO);
-        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,productPackEntity);
+        List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,null);
 
         boolean result = productPackService.updateById(productPackEntity);
         if(result){
