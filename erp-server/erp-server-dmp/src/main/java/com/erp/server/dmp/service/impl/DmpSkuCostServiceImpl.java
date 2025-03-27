@@ -19,7 +19,6 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -197,7 +196,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             allSkuIdList.addAll(childSkuNoList);
         }
         Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildrenSkuList.stream()
-                .filter(obj -> BomTypeEnum.COMBINATION.getType().equals(obj.getType())).collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
+                .collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
 
         List<DmpSkuCostEntity> childDmpSkuCostList = getChildDmpSkuCostEntity(allSkuIdList);
         if (CollUtil.isEmpty(childDmpSkuCostList)) {

@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -20,10 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductChangeEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.ProductChangeStateEnum;
@@ -132,27 +130,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Override
     @Transactional
     public Boolean add(AddChangeDTO dto) {
-
-        // 如果商品信息为空，则直接返回
-        if (StringUtils.isBlank(dto.getDetailsJson())) {
-            return Boolean.FALSE;
-        }
-        // 解析商品信息JSON，转换为ProductSmallestUnitDTO对象
-        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(dto.getDetailsJson(), ProductSmallestUnitDTO.class);
-        // 获取商品的SKU编号
-        String skuNo = skuDTO.getProductManySkuDetail().getSkuNo();
-        String skuId = skuDTO.getProductManySkuDetail().getId();
-        // 获取商品属性ID
-        String propertyId = skuDTO.getProductManySpecBaseDTO().getPropertyId();
-        // 根据商品ID获取商品信息实体
-        ProductInfoEntity productInfoEntity = productInfoService.getById(skuDTO.getProductManySpecBaseDTO().getId());
-        // 如果商品信息实体为空，则抛出异常
-        if(Objects.isNull(productInfoEntity)){
-            throw new ServiceException(ApiError.ERROR_95162,skuNo);
-        }
-        //单品或者Bom都需要检查库存是否大于零
-        checkInventoryGreaterThanZero(productInfoEntity,propertyId, skuId);
-
         ProductChangeEntity change = new ProductChangeEntity();
         String type = dto.getType();
         String changeBom = BomConstant.CHANGE_BOM;
@@ -405,7 +382,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             parameterMap.put("productManagerList", productManagerList);
 
             //获取产品经理上一级
-            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
+            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
+            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
             //产品经理上级
@@ -728,26 +706,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      */
     @Override
     public Boolean edit(UpdateChangeDTO dto) {
-        // 如果商品信息为空，则直接返回
-        if (StringUtils.isBlank(dto.getDetailsJson())) {
-            return Boolean.FALSE;
-        }
-        // 解析商品信息JSON，转换为ProductSmallestUnitDTO对象
-        ProductSmallestUnitDTO skuDTO = JSONObject.parseObject(dto.getDetailsJson(), ProductSmallestUnitDTO.class);
-        // 获取商品的SKU编号
-        String skuNo = skuDTO.getProductManySkuDetail().getSkuNo();
-        String skuId = skuDTO.getProductManySkuDetail().getId();
-        // 获取商品属性ID
-        String propertyId = skuDTO.getProductManySpecBaseDTO().getPropertyId();
-        // 根据商品ID获取商品信息实体
-        ProductInfoEntity productInfoEntity = productInfoService.getById(skuDTO.getProductManySpecBaseDTO().getId());
-        // 如果商品信息实体为空，则抛出异常
-        if(Objects.isNull(productInfoEntity)){
-            throw new ServiceException(ApiError.ERROR_95162,skuNo);
-        }
-        //单品或者Bom都需要检查库存是否大于零
-        checkInventoryGreaterThanZero(productInfoEntity,propertyId, skuId);
-
         String id = dto.getId();
         //获取到变更信息
         ProductChangeEntity changeEntity = this.getById(id);
@@ -822,6 +780,35 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
         this.updateById(changeEntity);
+
+        List<ProductChangeDetailsEntity> details = productChangeDetailsService.lambdaQuery().eq(ProductChangeDetailsEntity::getChangeInfoId, id).list().stream().filter(v -> StringUtils.isNotBlank(v.getDetailsJson())).collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(details)){
+            for (ProductChangeDetailsEntity detail : details) {
+                ProductSmallestUnitDTO newProductEntity = JSONUtil.toBean(detail.getDetailsJson(), ProductSmallestUnitDTO.class);
+                ProductManySpecBaseDTO productManySpecBaseDTO = newProductEntity.getProductManySpecBaseDTO();
+                ProductInfoDTO productInfoDTO = new ProductInfoDTO();
+                BeanMapper.copy(productManySpecBaseDTO,productInfoDTO);
+                List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = productDetailService.getProductBasicChangeField(productInfoDTO, null);
+
+                ProductPackShowDTO productPackShowDTO = newProductEntity.getProductPackShowDTO();
+                ProductPackDTO productPackDTO = new ProductPackDTO();
+                BeanMapper.copy(productPackShowDTO,productPackDTO);
+                List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = productDetailService.getProductPackChangeField(productPackDTO, null);
+
+                //发送通知
+                ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+                noticeDTO.setProductId(productManySpecBaseDTO.getId());
+                noticeDTO.setName(productManySpecBaseDTO.getName());
+                noticeDTO.setChargeId(newProductEntity.getProductManySkuDetail().getChargeId());
+                noticeDTO.setChargeName(newProductEntity.getProductManySkuDetail().getChargeName());
+                noticeDTO.setSkuNo(newProductEntity.getProductManySkuDetail().getSkuNo());
+                noticeDTO.setProductPackChangeField(productPackChangeField);
+                noticeDTO.setProductBasicChangeField(productBasicChangeField);
+                List<ProductDetailDTO.NoticeDTO> noticeDTOList = Collections.singletonList(noticeDTO);
+                //发送消息
+                productDetailService.handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
+            }
+        }
 
         String operateContent = String.format("[变更审核]" + BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_ING.getName() + "  审核意见：" + dto.getComment());
         //操作记录

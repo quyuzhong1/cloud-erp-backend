@@ -10,6 +10,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -216,9 +218,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
-     * @return java.lang.Boolean
+     * @return String
      **/
-    Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO);
+    String inportExcel(ProductNoSpecDTO productNoSpecDTO);
 
     /**
      * @Description 新增无规格sku信息 并推送金蝶
@@ -867,4 +869,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param list
      */
     void sendPushTask (List<ProductDetailEntity> list, String operate);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO, ProductInfoEntity oldEntity);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO, ProductPackEntity oldEntity);
+
+    void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList, Boolean isTransaction);
 }

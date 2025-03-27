@@ -113,7 +113,7 @@ public class NoticeMsgConstant {
     /**
      * 采购调价消息内容
      */
-    public final static String PRUCHASE_PRICE_CHANGE_WAIT_CONTENT = "采购调价表【%s】已在数大臣审核提交，请尽快审核\n供应商：%s \n创建人：%s \n创建时间：%s \n审核人：%s \n审核时间：%s";
+    public final static String PRUCHASE_PRICE_CHANGE_WAIT_CONTENT = "采购调价表【%s】已在数大臣审核提交，请尽快审核\n供应商：%s \n创建人：%s \n创建时间：%s \n审核人：%s \n审核时间：";
     public final static String PRUCHASE_PRICE_CHANGE_REJECT_CONTENT = "采购调价表【%s】已在数大臣审核不通过，请知悉\n供应商：%s \n创建人：%s \n创建时间：%s \n审核人：%s \n审核时间：%s \n审核结果：审核不通过 \n审核说明：%s ";
     public final static String PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT = "采购调价表【%s】已在数大臣审核通过，请知悉\n供应商：%s \n创建人：%s \n创建时间：%s \n审核人：%s \n审核时间：%s \n审核结果：审核通过 \n审核说明：%s ";
 

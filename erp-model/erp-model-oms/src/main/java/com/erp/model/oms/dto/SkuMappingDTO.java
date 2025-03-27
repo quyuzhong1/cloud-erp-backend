@@ -1116,6 +1116,10 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListSkuDTO {
         /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
          * 产品skuId
          */
         private String productSkuId;

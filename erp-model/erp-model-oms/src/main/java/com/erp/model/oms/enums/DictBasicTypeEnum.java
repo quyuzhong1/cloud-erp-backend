@@ -55,7 +55,7 @@ public enum DictBasicTypeEnum {
 
     public static String getName(String type) {
         for (DictBasicTypeEnum dictBasic : DictBasicTypeEnum.values()) {
-            if (type.equals(dictBasic.getType())) {
+            if (dictBasic.getType().equals(type)) {
                 return dictBasic.getDesc();
             }
         }

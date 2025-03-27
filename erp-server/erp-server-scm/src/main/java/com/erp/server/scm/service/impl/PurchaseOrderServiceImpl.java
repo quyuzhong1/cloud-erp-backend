@@ -1072,6 +1072,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
                     detailDTO.setPrice(detailEntity.getTaxPrice());//退货单下推单采购订单-这里可以直接取采购订单含税单价
                     detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                    detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                     detailDTOList.add(detailDTO);
                 }
             }else {
@@ -1085,6 +1086,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detailDTO.setOldPrice(detailEntity.getTaxPrice());
                 detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
                 detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                 detailDTOList.add(detailDTO);
             }
 
@@ -1273,6 +1275,46 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             productList.add(flag);
         }
         result.setProductList(productList);
+        return result;
+    }
+
+    @Override
+    public PurchaseOrderDTO.GetQcProductDTO getQcProductInfoByDetailId(String purchaseOrderDetailId) {
+        PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailService.getById(purchaseOrderDetailId);
+        if (ObjectUtils.isEmpty(detailEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
+        PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(detailEntity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        result.setSupplierId(entity.getPurchaseOrderSupplierDTO().getSupplierId());
+        result.setSupplierName(entity.getSupplierName());
+        result.setWarehouseId(entity.getDeliveryWarehouseId());
+        result.setWarehouseName(entity.getWarehouseName());
+        //入库质检
+        String qcType = QcTypeEnum.STOCK_IN.getCode();
+        //非首批：否
+        if (!detailEntity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
+            qcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+        }
+        Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
+        result.setQcType(qcType);
+        result.setIsInside(isInside);
+        //采购订单详情
+        String skuId = detailEntity.getSkuId();
+        List<String> skuIdList =Collections.singletonList(skuId);
+        List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
+        ProductVO.ProductPackVO flag = new ProductVO.ProductPackVO();
+        ProductVO.ProductPackVO find = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (find != null) {
+            BeanMapper.copy(find, flag);
+        }
+        flag.setPurchaseOrderDetailId(detailEntity.getId());
+        flag.setQty(detailEntity.getPurchaseQty());
+        flag.setSkuId(skuId);
+        result.setProductList(Collections.singletonList(flag));
         return result;
     }
 

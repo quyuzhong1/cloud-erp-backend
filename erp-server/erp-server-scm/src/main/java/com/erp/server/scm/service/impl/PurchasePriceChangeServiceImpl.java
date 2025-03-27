@@ -44,6 +44,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.NoticeReceiverDTO;
+import com.erp.model.sys.dto.SysUserSimpleDTO;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticePurItemRoleEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
@@ -565,6 +566,14 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //去重
             userIdList = userIdList.stream().distinct().filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
 
+            //排除禁用人员
+            List<SysUserSimpleDTO> userSimpleInfoByIds = sysUserFeign.getUserSimpleInfoByIds(userIdList);
+            if(CollUtil.isEmpty(userSimpleInfoByIds)){
+                continue;
+            }
+            List<String> sendIdList = userSimpleInfoByIds.stream().map(SysUserSimpleDTO::getUid).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+
+
             String code = noticeMsgViewDTO.getCode();
             String createUserName = noticeMsgViewDTO.getCreateUserName();
             String createTime = noticeMsgViewDTO.getCreateTime().format(formatter);
@@ -574,7 +583,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                     .collect(Collectors.joining(", "));
             if(ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)){ //待审核
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_HEAD;
-                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime);
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName);
             }else if(ApproveStatusEnum.REJECT.equals(approveStatus)){//不通过
                 msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_HEAD;
                 msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime,comment);
@@ -583,7 +592,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
                 msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime,comment);
             }
             NoticeMsgInfoDTO noticeMsgInfo = new NoticeMsgInfoDTO();
-            noticeMsgInfo.setReceiverUserIds(userIdList);
+            noticeMsgInfo.setReceiverUserIds(sendIdList);
             noticeMsgInfo.setTitle(msgHead);
             noticeMsgInfo.setContent(msgContent);
             noticeMsgInfo.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);

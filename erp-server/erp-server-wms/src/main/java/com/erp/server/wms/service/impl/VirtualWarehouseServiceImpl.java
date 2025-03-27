@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -589,7 +588,7 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
 
         //平台信息
         List<String> platformList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getDictPlatform())).map(VirtualWarehouseDTO.ExportDTO::getDictPlatform).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictPlatformList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getValue,platformList).list();
+        List<DictBasicEntity> dictPlatformList = FeignQuery.create(DictBasicEntity.class).in(DictBasicEntity::getValue,platformList).list();
 
         //区域信息
         List<String> partitionIdList = list.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getPartitionId())).map(VirtualWarehouseDTO.ExportDTO::getPartitionId).distinct().collect(Collectors.toList());
@@ -602,23 +601,25 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         for (VirtualWarehouseDTO.ExportDTO exportDTO : list) {
             exportDTO.setDisabledStr(exportDTO.getDisabled() ? "禁用" : "启用");
 
-            //店铺名称
-            String shopName = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
-            exportDTO.setShopName(shopName);
-
             //平台名称
             DictBasicEntity dictPlatform = dictPlatformList.stream().filter(obj -> CharSequenceUtil.equals(obj.getValue(), exportDTO.getDictPlatform())).findFirst().orElse(new DictBasicEntity());
-            if (ObjUtil.isNotEmpty(dictPlatform)) {
-                exportDTO.setDictPlatformName(dictPlatform.getName());
-                exportDTO.setTypeName(DictBasicTypeEnum.getName(dictPlatform.getSubType()));
-            }
+            String dictPlatformName = CharSequenceUtil.equals(exportDTO.getType(), VitualWarehouseChannelTypeEnum.PLATFORM.getCode()) && CharSequenceUtil.isBlank(exportDTO.getDictPlatform()) ? "全部" : dictPlatform.getName();
+            exportDTO.setDictPlatformName(dictPlatformName);
+            exportDTO.setTypeName(DictBasicTypeEnum.getName(dictPlatform.getSubType()));
+
+            //店铺名称
+            String shopName = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getShopId())).map(ShopInfoEntity::getName).findFirst().orElse("");
+            shopName = CharSequenceUtil.isNotBlank(dictPlatformName) && CharSequenceUtil.isBlank(exportDTO.getShopId()) ? "全部" : shopName;
+            exportDTO.setShopName(shopName);
+
 
             //区域名称
             String partitionName = partitionList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getPartitionId())).map(DictPartitionEntity::getName).findFirst().orElse("");
-            exportDTO.setPartitionName(partitionName);
+            partitionName = CharSequenceUtil.isNotBlank(dictPlatformName) && CharSequenceUtil.isBlank(exportDTO.getPartitionId()) ? "全部" : partitionName;
+            exportDTO.setPartitionName( partitionName);
 
             //虚拟仓关联仓库名称
-            ThirdMappingEntity thirdMappingEntity = thirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getThirdId(), exportDTO.getShopId())).findFirst().orElse(new ThirdMappingEntity());
+            ThirdMappingEntity thirdMappingEntity = thirdMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSysId(), exportDTO.getId())).findFirst().orElse(new ThirdMappingEntity());
             exportDTO.setOutSideVirtualWarehouseName(thirdMappingEntity.getThirdName());
             exportDTO.setOutSidePlatformName(EnumMessage.getNameByCode(PlatformDictEnum.class, thirdMappingEntity.getThirdSysType()));
         }
