@@ -1279,8 +1279,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (!item.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
                 detailQcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
             }
-            result.setQcType(detailQcType);
-            result.setIsInside(QcTypeEnum.getIsInsideByCode(detailQcType));
+            flag.setQcType(detailQcType);
+            flag.setIsInside(QcTypeEnum.getIsInsideByCode(detailQcType));
             productList.add(flag);
         }
         result.setProductList(productList);
