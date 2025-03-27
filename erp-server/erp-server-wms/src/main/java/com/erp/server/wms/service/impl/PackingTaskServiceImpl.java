@@ -23,6 +23,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
@@ -47,6 +48,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.FileTemplateDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.FileTemplateEntity;
+import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.sys.entity.SysPostUserEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.*;
@@ -399,7 +401,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //更新主表状态
         updatePackingStatus(groupSkuList, packingTask);
         //发送飞书通知
-        this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent());
+        this.sendNoticeMsg(packingTask,dto.getTaskId(), dto.getOperation(), dto.getContent(), );
 
         //装箱完成
         if(packingTask.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
@@ -511,8 +513,9 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
      * 发送通知
      */
     @Override
-    public void sendNoticeMsg(String taskId, String operation, String content){
+    public void sendNoticeMsg(String taskId, String operation, String content, PackingTaskEntity packingTask){
         //检查配置
+        LoginUser loginUser = UserContext.getNonLoginUser();
         CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.FINISH_PACKING_NOTICE.getCode());
         if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
             return;
@@ -526,6 +529,16 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //岗位下用户
             List<String> postUserIdList = sysPostList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList());
             noticeUserIdList.addAll(postUserIdList);
+
+            List<String> collect = sysPostFeign.listById(dto.getPostIdList()).stream().map(SysPostEntity::getPostName).collect(Collectors.toList());
+            for (String s : collect) {
+                if (NoticeUserEnum.CREATE_USER.getName().equals(s)) {
+                    noticeUserIdList.add(packingTask.getCreateUserId());
+                }
+                if (NoticeUserEnum.HANDLE_USER.getName().equals(s)) {
+                    noticeUserIdList.add(loginUser.getUid());
+                }
+            }
         }
         //抄送人员
         if (CollectionUtils.isNotEmpty(dto.getUserIdList())) {
@@ -1302,7 +1315,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //更新装箱状态
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
             //发送飞书通知
-            this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
+            this.sendNoticeMsg(packingTaskEntity,addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent(), );
 
 
         }else {
@@ -1313,7 +1326,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             //更新装箱状态
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
             //发送飞书通知
-            this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent());
+            this.sendNoticeMsg(packingTaskEntity,addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent(), );
             wmsCartonEntity = wmsCartonService.getById(cartonId);
         }
 
@@ -1405,7 +1418,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         //更新装箱状态
         this.updatePackingStatus(listGroupSkuById(dto.getTaskId()),packingTaskEntity);
         //发送飞书通知
-        this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()));
+        this.sendNoticeMsg(packingTaskEntity,dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()), );
         return packingTaskEntity.getSourceCode() + "-" + boxNo;
     }
 
