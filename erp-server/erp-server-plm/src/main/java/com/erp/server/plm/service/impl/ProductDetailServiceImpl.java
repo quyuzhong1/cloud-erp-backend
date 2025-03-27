@@ -1051,25 +1051,27 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                         // 判断字段是否为数字类型
                         boolean isNumberType = Number.class.isAssignableFrom(field1.getType());
                         // 如果值不同，则记录差异
-                        if (isNumberType) {
-                            // 如果是数字类型，直接比较值是否相等
-                            BigDecimal bigDecimal1 = new BigDecimal(value1.toString()).setScale(2);
-                            BigDecimal bigDecimal2 = new BigDecimal(value2.toString()).setScale(2);
-                            if (!Objects.equals(bigDecimal1, bigDecimal2)) {
-                                ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
-                                skuChangeInfoDTO.setOldValue(bigDecimal1.toString());
-                                skuChangeInfoDTO.setNewValue(bigDecimal2.toString());
-                                skuChangeInfoDTO.setFieldName(fieldName);
-                                differentFields.add(skuChangeInfoDTO);
-                            }
-                        } else {
-                            // 非数字类型，考虑 null 情况
-                            if ((value1 == null && value2 != null) || (value1 != null && !value1.equals(value2))) {
-                                ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
-                                skuChangeInfoDTO.setOldValue((String)value1);
-                                skuChangeInfoDTO.setNewValue((String)value2);
-                                skuChangeInfoDTO.setFieldName(fieldName);
-                                differentFields.add(skuChangeInfoDTO);
+                        if(null != value1 && null != value2 && "" != value1 && "" != value2 ){
+                            if (isNumberType) {
+                                // 如果是数字类型，直接比较值是否相等
+                                BigDecimal bigDecimal1 = new BigDecimal(value1.toString()).setScale(2);
+                                BigDecimal bigDecimal2 = new BigDecimal(value2.toString()).setScale(2);
+                                if (!Objects.equals(bigDecimal1, bigDecimal2)) {
+                                    ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
+                                    skuChangeInfoDTO.setOldValue(bigDecimal1.toString());
+                                    skuChangeInfoDTO.setNewValue(bigDecimal2.toString());
+                                    skuChangeInfoDTO.setFieldName(fieldName);
+                                    differentFields.add(skuChangeInfoDTO);
+                                }
+                            } else {
+                                // 非数字类型，考虑 null 情况
+                                if( !value1.equals(value2)){
+                                    ProductDetailDTO.SkuChangeInfoDTO skuChangeInfoDTO = new ProductDetailDTO.SkuChangeInfoDTO();
+                                    skuChangeInfoDTO.setOldValue((String)value1);
+                                    skuChangeInfoDTO.setNewValue((String)value2);
+                                    skuChangeInfoDTO.setFieldName(fieldName);
+                                    differentFields.add(skuChangeInfoDTO);
+                                }
                             }
                         }
                     }
@@ -4699,8 +4701,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
     private String getInsurancePropertyList(String insurancePropertyName, Map<String, BasicDictEntity> mapById, List<String> errorMsgList) {
         if (StringUtils.isBlank(insurancePropertyName)) {
-            errorMsgList.add("保险属性不能为空");
-            return "";
+//            errorMsgList.add("保险属性不能为空");
+            return null;
         }
 
         if(InsurancePropertyEnum.NOT.getName().equals(insurancePropertyName)){
@@ -5577,9 +5579,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
             productNoSpecDTO.setProductPackDTO(productPackDTO);
 
+            ProductKeyDTO productKey = productDetailMapper.getProductKey(productBy.getId());
             //获取产品基本信息修改的字段
             List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = getProductBasicChangeField(productInfoDTO,null);
             //获取产品包装信息修改的字段
+            productPackDTO.setId(productKey.getPackId());
             List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = getProductPackChangeField(productPackDTO,null);
             //发送通知
             ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
@@ -5796,8 +5800,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
 
             }
 
-            //保险属性
+            //保险属性 ,导入新增：不填则默认为无
             String insurancePropertyName = getInsurancePropertyList(dto.getInsuranceProperty(), insurancePropertyMap,errorMsgList);
+            if(StringUtils.isBlank(insurancePropertyName)){
+                errorMsgList.add("保险属性不能为空");
+            }
             dto.setInsuranceProperty(insurancePropertyName);
 
             //图片是否完成
