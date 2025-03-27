@@ -756,6 +756,38 @@ public class SoPriceDTO implements Serializable {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class PriceParamDTO {
+        /**
+         * SKU
+         */
+        @NotBlank(message = "SKU不能为空")
+        private String skuId;
+        /**
+         * 客户id
+         */
+        private String customerId;
+        /**
+         * 组织id
+         */
+        private String soOrgId;
+        /**
+         * 店铺
+         */
+        private String shopId;
+        /**
+         * 数量
+         */
+        private Integer qty;
+        /**
+         * 时间
+         */
+        private LocalDate date;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PriceDTO {
         /**
          * 销售组织

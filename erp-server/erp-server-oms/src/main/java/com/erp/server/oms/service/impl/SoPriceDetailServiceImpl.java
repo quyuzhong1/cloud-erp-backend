@@ -680,6 +680,19 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     }
 
     @Override
+    public List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> batchGetTaxPrice(List<String> skuIdList, List<String> customerIdList, List<Integer> soQtyList, List<String> soOrgIdList) {
+        SoPriceDetailDTO.SoTaxPriceBatchSearchDTO dto = new SoPriceDetailDTO.SoTaxPriceBatchSearchDTO();
+        dto.setSkuIdList(skuIdList);
+        dto.setCustomerIdList(customerIdList);
+        dto.setSoQtyList(soQtyList);
+        dto.setSoOrgIdList(soOrgIdList);
+        if (CollectionUtils.isEmpty(dto.getSoOrgIdList()) && CollectionUtils.isEmpty(dto.getSkuIdList()) && CollectionUtils.isEmpty(dto.getCustomerIdList())&& CollectionUtils.isEmpty(dto.getSoQtyList())) {
+            return Collections.emptyList();
+        }
+        return baseMapper.batchGetTaxPrice(dto);
+    }
+
+    @Override
     public Pair<String, List<SoPriceDetailDTO.SoTaxPriceViewDTO>> listSoTaxPriceView(SoPriceDetailDTO.SoTaxPriceSearchDTO dto) {
         List<SoPriceDetailDTO.SoTaxPriceViewDTO> resultList = new ArrayList<>();
 

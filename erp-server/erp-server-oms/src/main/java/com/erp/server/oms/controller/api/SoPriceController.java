@@ -419,5 +419,20 @@ public class SoPriceController extends BaseController {
     }
 
 
+    /**
+     * 批量获取销售报价
+     * @author will
+     * @date 2025/3/27 11:40
+     * @param list
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.SoPriceDTO.PriceDTO>>
+     */
+    @PostMapping("/batchGetSoPrice")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "oms:soPrice:paging",
+            tableAlias = "sp")
+    public ApiResult<List<SoPriceDTO.PriceDTO>> batchGetSoPrice(@RequestBody List<SoPriceDTO.PriceParamDTO> list) {
+        return success(soPriceService.batchGetSoPrice(list));
+    }
 
 }
