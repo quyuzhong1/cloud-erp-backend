@@ -73,12 +73,8 @@
         WHERE
         ${params.sqlMap.default}
         and  spd.is_deleted= false
-        <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
-        </if>
         <if test="params.code != null and params.code != ''">
-           and sp.code like concat('%',#{params.code},'%')
+           and sp.code ilike concat('%',#{params.code}::text,'%')
         </if>
         <if test="params.skuNoList != null and params.skuNoList.size > 0">
             and spd.sku_no in
@@ -103,6 +99,9 @@
             <foreach collection="params.soOrgIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
