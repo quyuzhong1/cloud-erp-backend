@@ -58,6 +58,7 @@
             spcd.currency,
             spcd.tax_rate * 100 AS taxRate ,
             spcd.effective_date AS effectiveDate,
+            spcd.expire_date AS expireDate,
             spc.so_org_id AS soOrgId,
             spc.so_org_name AS soOrgName,
             spcd.disabled,
