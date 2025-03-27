@@ -822,6 +822,16 @@ public class WarehouseReceiveDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批名称
+         */
+        private String firstMassProductName;
     }
 
     /**

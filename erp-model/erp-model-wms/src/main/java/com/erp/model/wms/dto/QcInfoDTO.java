@@ -898,6 +898,12 @@ public class QcInfoDTO implements Serializable {
          * 质检完成时间
          */
         private LocalDateTime qcFinishTime;
+
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
     }
 
 
