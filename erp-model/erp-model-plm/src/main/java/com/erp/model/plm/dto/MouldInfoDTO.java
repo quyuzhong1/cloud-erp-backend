@@ -10,6 +10,7 @@ import com.erp.model.plm.enums.RefundStandardEnum;
 import lombok.*;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -517,6 +518,11 @@ public class MouldInfoDTO implements Serializable {
          * 差异数量
          */
         private Integer diffQty;
+
+        /**
+         * 实际返还金额
+         */
+        private BigDecimal realRefundAmount;
     }
 
     @Getter
@@ -530,6 +536,10 @@ public class MouldInfoDTO implements Serializable {
          * 返还金额
          */
         private BigDecimal refundAmount;
+        /**
+         * 实际返还金额
+         */
+        private BigDecimal realRefundAmount;
         /**
          * 采购数量
          */
@@ -552,6 +562,14 @@ public class MouldInfoDTO implements Serializable {
          * 模具id
          */
         private String mouldDetailId;
+
+        /**
+         * 返还金额
+         */
+
+        @NotNull(message = "实际返还金额不能为空")
+        @Digits(integer = 9, fraction = 2, message = "实际返还金额最大999999999，最多2位小数")
+        private BigDecimal realRefundAmount;
 
         /**
          * 文件地址
@@ -989,6 +1007,10 @@ public class MouldInfoDTO implements Serializable {
          * 差异数量
          */
         private Integer diffQty;
+        /**
+         * 实际返还金额
+         */
+        private BigDecimal realRefundAmount;
         /**
          * 修改时间
          */

@@ -33,9 +33,12 @@ import com.erp.model.mrp.entity.*;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.*;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -47,6 +50,7 @@ import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.mrp.calculation.handler.SalesEstimateHandler;
@@ -63,6 +67,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
@@ -184,6 +189,8 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
     @Resource
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    @Autowired
+    private SkuMappingFeign skuMappingFeign;
     @Resource
     private ReplenishmentSuggestionDetailHistoryService replenishmentSuggestionDetailHistoryService;
     @Resource
@@ -224,7 +231,27 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
             dates.add(date);
             date = date.plusDays(1);
         }
+
+        //oms信息
+        List<String> platformList = records.stream().map(ReplenishmentSuggestionVO.PagingView::getPlatform).distinct().collect(Collectors.toList());
+
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatformList(platformList);
+        paramDTO.setShopIdList(shopIds);
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setSkuIdList(skuIds);
+        paramDTO.setIsExpire(false);
+        // 所有包含历史映射关系
+        List<ListingInfoWithSkuMappingDTO> skuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
+
         for (ReplenishmentSuggestionVO.PagingView view : records) {
+            //平台sku+仓库sku
+             List<ReplenishmentSuggestionVO.FnMSkuDTO> fnMSKuList = new ArrayList<>();
+            skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuNo(), view.getSkuNo()) && CharSequenceUtil.equals(obj.getDictPlatform(), view.getPlatform()) && CharSequenceUtil.equals(obj.getShopId(), view.getShopId())).forEach(obj -> {
+                fnMSKuList.add(new ReplenishmentSuggestionVO.FnMSkuDTO(obj.getPlatformFnSku(),obj.getPlatformSkuNo()));
+            });
+            view.setFnMSKuList(fnMSKuList);
+
             SkuVO skuVO = skuVOS.stream().filter(v -> v.getSkuId().equals(view.getSkuId())).findFirst().orElse(new SkuVO());
             ShopInfoEntity shopInfoEntity = shopInfos.stream().filter(v -> v.getId().equals(view.getShopId())).findFirst().orElse(new ShopInfoEntity());
             DictCountryEntity dictCountry = countryList.stream().filter(v -> v.getId().equals(view.getCountry())).findFirst().orElse(new DictCountryEntity());
@@ -1244,6 +1271,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
                .in(ReplenishmentSuggestionEntity::getSkuId, skuIdList)
        );
     }
+
 
     @Override
     public void exportSales(ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response) {

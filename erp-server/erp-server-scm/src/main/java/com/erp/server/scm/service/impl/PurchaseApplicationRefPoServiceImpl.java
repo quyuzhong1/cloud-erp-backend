@@ -5,6 +5,7 @@ import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import com.erp.server.scm.mapper.PurchaseApplicationRefPoMapper;
 import com.erp.server.scm.service.PurchaseApplicationRefPoService;
+import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -59,4 +60,13 @@ public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<Purcha
         return lambdaQuery().in(PurchaseApplicationRefPoEntity::getPurchaseApplicationDetailId,purchaseApplicationDetailIds).list();
     }
 
+    @Override
+    public Boolean getPurchaseApplicationByPurchaseOrderId(String purchaseOrderId) {
+        String basPurchaseApplicationId = baseMapper.getPurchaseApplicationByPurchaseOrderId(purchaseOrderId);
+        if(StringUtil.isNotBlank(basPurchaseApplicationId)){
+            return Boolean.FALSE;
+        }else {
+            return Boolean.TRUE;
+        }
+    }
 }

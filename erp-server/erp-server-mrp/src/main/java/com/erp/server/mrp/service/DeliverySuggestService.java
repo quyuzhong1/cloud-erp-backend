@@ -126,7 +126,7 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @param ids
      * @return ViewPushDeliveryPlanDTO
      */
-    DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlan(List<String> ids,String warehouseId);
+    DeliverySuggestDTO.ViewPushDeliveryPlanDTO viewPushDeliveryPlan(List<String> ids,String shopId,String warehouseId);
     /**
      * 下推发货计划保存
      * @author will
@@ -192,4 +192,11 @@ public interface DeliverySuggestService extends SuperService<DeliverySuggestEnti
      * @return List<PlatformDTO>
      */
     List<DeliverySuggestDTO.PlatformDTO> listPlatformByPlatformType(DeliverySuggestDTO.PlatformTypeParamDTO dto);
+
+    /**
+     * 店铺下拉
+     * @param ids
+     * @return
+     */
+    List<DeliverySuggestDTO.ShopSelectDTO> listShopSelect(List<String> ids);
 }

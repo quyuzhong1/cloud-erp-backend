@@ -46,5 +46,17 @@
         </where>
 
     </select>
+    <select id="getPurchaseApplicationByPurchaseOrderId" resultType="java.lang.String" parameterType="java.lang.String">
+        SELECT
+            pa.ID
+        FROM
+            purchase_application pa
+                LEFT JOIN purchase_application_ref_po parp ON parp.is_deleted = FALSE
+                AND pa.ID = parp.purchase_application_id
+        WHERE
+          pa.is_deleted = FALSE
+          AND  parp.purchase_order_id = #{ purchaseOrderId }
+
+    </select>
 
 </mapper>

@@ -3,6 +3,7 @@ package com.erp.server.plm.controller.api;
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -17,11 +18,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
-import com.erp.model.plm.entity.*;
+import com.erp.model.plm.entity.ProductDetailApproverEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductPurchaseRemarkEntity;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
 import com.erp.server.plm.query.ProductDetailQueryHandler;
 import com.erp.server.plm.service.*;
@@ -712,9 +715,9 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入产品信息")
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
-    public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = productDetailService.importProductFile(excelFile, importType, response);
-        return flag == true ? success() : failure();
+    public ApiResult<ExcelImportFsDTO.UrlDTO> importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        ExcelImportFsDTO.UrlDTO urlDTO = productDetailService.importProductFile(excelFile, importType, response);
+        return success(urlDTO);
     }
 
     /**
@@ -722,9 +725,9 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.IMPORT, desc = "更新产品信息")
     @PostMapping("/importProductUpdate")
-    public ApiResult<String> importProductUpdate(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
-        productDetailService.importProductUpdate(excelFile, response);
-        return success();
+    public ApiResult<ExcelImportFsDTO.UrlDTO> importProductUpdate(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        ExcelImportFsDTO.UrlDTO urlDTO = productDetailService.importProductUpdate(excelFile, response);
+        return success(urlDTO);
     }
 
     /**

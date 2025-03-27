@@ -60,6 +60,10 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+        /**
+         * 补货类型
+         */
+        private String replenishmentType;
 
         /**
          * 最近日期排序

@@ -199,6 +199,16 @@ public class WarehouseReceiveDetailDTO {
          * 采购单详情表id
          */
         private String PurchaseOrderDetailId;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
 }

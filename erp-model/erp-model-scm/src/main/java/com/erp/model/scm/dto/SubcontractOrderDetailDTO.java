@@ -99,6 +99,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
          * 子件集合
          */
         private List<ChildDTO> childList;
+
+        /**
+         * 新品首批名称
+         */
+        private String firstMassProductName;
     }
 
     @Data
@@ -175,6 +180,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
          * 库位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     /**
@@ -280,6 +290,11 @@ public class SubcontractOrderDetailDTO implements Serializable {
         */
         @NotNull(message = "是否加急（false否，true是）不能为空")
         private Boolean isUrgent;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
 
         /**
          * 备注

@@ -10,7 +10,8 @@ package com.erp.model.sys.enums;
 public enum NoticeItemRoleEnum {
 
     ITEM_MANAGER("projectCharge", "项目经理"),
-    PRODUCT_MANAGER("productCharge", "产品经理");
+    PRODUCT_MANAGER("productCharge", "产品经理"),
+    ;
 
 
     private String code;

@@ -55,7 +55,11 @@ public enum  BasicDictTypeEnum {
     /**
      * 立项状态
      */
-    APPROVAL_STATUS("approvalStatus", "立项状态")
+    APPROVAL_STATUS("approvalStatus", "立项状态"),
+    /**
+     * 保险属性
+     */
+    INSURANCE_PROPERTY("insuranceProperty", "保险属性")
     ;
 
 
