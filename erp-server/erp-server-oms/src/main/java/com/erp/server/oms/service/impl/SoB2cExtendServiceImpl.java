@@ -1,25 +1,26 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.dto.CfgSettingDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.FullyManagedDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cExtendEntity;
 import com.erp.model.oms.enums.CfgSettingEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.server.oms.mapper.SoB2cExtendMapper;
-import com.erp.server.oms.service.CfgSettingService;
-import com.erp.server.oms.service.ShopInfoService;
-import com.erp.server.oms.service.SoB2cExtendService;
+import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,8 @@ import com.erp.model.oms.dto.SoB2cExtendDTO;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -54,6 +57,8 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
     private ShopInfoService shopInfoService;
     @Resource
     private SysPartitionFeign sysPartitionFeign;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -135,5 +140,14 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
                 soB2cExtendEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(shopInfo.getDictCountryCode()));
             }
         }
+    }
+
+    @Override
+    public List<FullyManagedDTO.WarningDTO> fullyManagedOrderMsgWarning(Integer offsetMinutes) {
+        List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
+        if (CollUtil.isEmpty(dtoList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.fullyManagedOrderMsgWarning(offsetMinutes,dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
     }
 }

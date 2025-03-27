@@ -1254,7 +1254,6 @@
         SET delivery_warning_time = sbe.required_delivery_time - ${offsetMinutes} * INTERVAL '1 minute'
         FROM so_b2c sb
         WHERE sb.id = sbe.main_id
-          AND sb.dict_platform = ''
           AND sbe.is_deleted = FALSE
           AND sb.is_deleted = FALSE
           AND sbe.required_delivery_time IS NOT NULL
