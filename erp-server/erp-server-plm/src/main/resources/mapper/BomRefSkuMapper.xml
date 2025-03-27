@@ -299,4 +299,23 @@
         </where>
         order by parentSkuId ,sku_id
     </select>
+
+
+    <select id="getSingleBomInfo" resultType="com.erp.model.plm.dto.BomDTO$BomSku">
+        SELECT
+        bs.parent_sku_id,
+        bs.parent_sku_no,
+        bs.sku_id,
+        bs.sku_no,
+        bs.quantity as qty
+        FROM product_bom_sku bs LEFT JOIN product_bom_info b
+        ON bs.bom_id = b.id AND b.is_deleted = FALSE
+        WHERE bs.is_deleted = FALSE and b.type = 'single'
+        <if test="skuIdList !=null and skuIdList.size>0">
+            and bs.parent_sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
+    </select>
 </mapper>

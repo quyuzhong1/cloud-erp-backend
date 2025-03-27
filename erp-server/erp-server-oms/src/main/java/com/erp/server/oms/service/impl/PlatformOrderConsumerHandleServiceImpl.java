@@ -10,7 +10,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
-import com.common.business.enums.*;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -109,6 +108,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private SoB2cSplitService soB2cSplitService;
 
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -227,6 +228,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             dto.getRefundDTOList().forEach(e->{
                 newPlatformRefundOrderConsumerService.handle(JSON.toJSONString(e));
             });
+        }
+        //亚马逊平台仓订单已发货生成发票
+        if (isShipped  && hasPlatformWarehouse && PlatformDictEnum.AMAZON.getCode().equals(mainEntity.getDictPlatform())) {
+            List<InvoiceInfoEntity> invoiceInfoEntities = invoiceInfoService.listBySoIds(Collections.singletonList(mainEntity.getId()));
+            if (CollectionUtils.isEmpty(invoiceInfoEntities)){
+                try {
+                    invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                }catch (Exception e){
+                    log.error("亚马逊订单已发货生成发票异常：{}",e.getMessage());
+                }
+            }
         }
     }
 
@@ -384,12 +396,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
 
         //如果是已支付的订单
-        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) ) {
+//        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) ) {
+//            //同步数帝云
+//            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
+//            syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+//        }
+        // 已支付订单在出库时推送
+        // 已取消订单推送?
+        if (mainEntity.getIsCancel()) {
             //同步数帝云
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
-            syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+            syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
-
         return resultDTO;
     }
 
@@ -402,6 +419,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         soB2cEntityList = soB2cEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
         List<String> ids = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(ids);
+        //过滤掉包裹号为空的订单
+        detailList = detailList.stream().filter(v->StringUtils.isNotBlank(v.getPlatformPackageId())).collect(Collectors.toList());
+        List<String> filterSoIds = detailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        soB2cEntityList = soB2cEntityList.stream().filter(v->filterSoIds.contains(v.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soB2cEntityList)){
+            return true;
+        }
         List<String> dtoPackageIds = dto.getDetails().stream().map(PlatformOrderDetailDTO::getPlatformPackageId).distinct().collect(Collectors.toList());
         List<String> soPackageIds = detailList.stream().map(SoB2cDetailEntity::getPlatformPackageId).distinct().collect(Collectors.toList());
         if (CollectionUtils.isEmpty(dtoPackageIds) || CollectionUtils.isEmpty(soPackageIds)){
@@ -447,12 +471,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 splitSaveDTO.setIsSyncPlatform(false);
                 Map<String,List<PlatformOrderDetailDTO>> packageIdMap = dto.getDetails().stream().collect(Collectors.groupingBy(PlatformOrderDetailDTO::getPlatformPackageId));
                 List<SoB2cDTO.GroupSplitSaveDTO> groupList = new ArrayList<>();
-                packageIdMap.forEach((k,v) -> {
+                List<SoB2cDetailEntity> finalDetailList = detailList;
+                packageIdMap.forEach((k, v) -> {
                     SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = new SoB2cDTO.GroupSplitSaveDTO();
                     List<SoB2cDTO.SplitDetailSaveDTO> splitDetailList = new ArrayList<>();
                     v.forEach(e -> {
                         SoB2cDTO.SplitDetailSaveDTO splitDetailSaveDTO = new SoB2cDTO.SplitDetailSaveDTO();
-                        SoB2cDetailEntity soB2cDetailEntity = detailList.stream().filter(d -> d.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
+                        SoB2cDetailEntity soB2cDetailEntity = finalDetailList.stream().filter(d -> d.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
                         if(Objects.isNull(soB2cDetailEntity)){
                             return;
                         }

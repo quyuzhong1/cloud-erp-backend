@@ -34,7 +34,7 @@
         FROM
             wms_first_mile_delivery fd
         LEFT JOIN wms_first_mile_delivery_detail fdd ON fdd.main_id = fd.ID AND fdd.is_deleted =FALSE
-                LEFT JOIN wms_overseas_warehouse_inbound owi ON owi.source_id = fd.ID AND owi.is_deleted = FALSE
+                LEFT JOIN wms_overseas_warehouse_inbound owi ON owi.source_id = fd.ID AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
         WHERE
             fd.is_deleted = FALSE
         ) AS fd ON lb.outstock_id = fd.ID

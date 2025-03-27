@@ -210,7 +210,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
         orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
 
-        orderDTO.setIsCancel(Boolean.FALSE);
+        orderDTO.setIsCancel(dmpSoInfoEntity.getIsCancel());
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(dmpSoInfoEntity.getPlatformOriginalStatus());
         if ("ON_HOLD".equalsIgnoreCase(dmpSoInfoEntity.getPlatformOriginalStatus())) {
@@ -224,6 +224,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         //优惠金额
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
+
+        //运费
+        orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
@@ -288,7 +291,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         BigDecimal salePrice = soDetailEntityList.stream().map(req -> req.getAfterAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
         detailDTO.setAmount(salePrice);
         // 单价
-        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPrice()));
+        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPriceOrigin()));
         // 币别（原币）
         detailDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率

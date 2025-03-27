@@ -12,7 +12,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -25,7 +24,6 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.ShippingCalculationDTO;
@@ -35,15 +33,15 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
+import com.erp.model.wms.enums.SptWarehouseStatusEnum;
+import com.erp.model.wms.enums.SptWarehouseTypeEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.wms.convert.ThirdWarehouseConverter;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.mapper.OverseasProviderMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.OverseasProviderService;
-import com.erp.server.wms.service.OverseasProviderWarehouseService;
-import com.erp.server.wms.service.ThirdWarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -82,6 +80,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+
+    @Resource
+    private OverseasTransferWarehouseService overseasTransferWarehouseService;
 
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
@@ -133,6 +134,28 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         viewDTO.setAuthStatusName(AuthStatusEnum.getName(viewDTO.getAuthStatus()));
         List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = overseasProviderWarehouseService.listByMainIds(Collections.singletonList(id));
         List<OverseasProviderWarehouseDTO.ViewDTO> warehouseList = BeanMapper.copyList(overseasProviderWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
+        if(CollUtil.isNotEmpty(warehouseList)){
+            warehouseList.forEach(v->{
+                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.STANDARD.getName());
+                v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
+            });
+        }
+        List<OverseasTransferWarehouseEntity> overseasTransferWarehouseEntities = overseasTransferWarehouseService.lambdaQuery().eq(OverseasTransferWarehouseEntity::getDictPlatform, entity.getCode()).list();
+//        List<OverseasProviderWarehouseDTO.ViewDTO> transferViews = BeanMapper.copyList(overseasTransferWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
+        if(CollUtil.isNotEmpty(overseasTransferWarehouseEntities)){
+            overseasTransferWarehouseEntities.forEach(overseasTransferWarehouseEntitiy->{
+                OverseasProviderWarehouseDTO.ViewDTO v = new OverseasProviderWarehouseDTO.ViewDTO();
+                v.setId(overseasTransferWarehouseEntitiy.getId());
+                v.setMainId(id);
+                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.TRANSIT.getName());
+                v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
+                v.setPlatformWarehouseCode(overseasTransferWarehouseEntitiy.getPlatformToWarehouseCode());
+                v.setPlatformWarehouseName(overseasTransferWarehouseEntitiy.getPlatformToWarehouseName());
+                v.setCountry(overseasTransferWarehouseEntitiy.getCountry());
+                v.setCountryName(overseasTransferWarehouseEntitiy.getCountryName());
+                warehouseList.add(v);
+            });
+        }
         viewDTO.setDetailList(warehouseList);
         return viewDTO;
     }
@@ -205,7 +228,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
 
     @Override
     public OverseasProviderEntity getByPlatformCode(String code) {
-        return lambdaQuery().eq(OverseasProviderEntity::getCode,code).one();
+        return lambdaQuery().eq(OverseasProviderEntity::getCode,code).last("LIMIT 1").one();
     }
 
     @Override
@@ -388,7 +411,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 return Collections.emptyList();
             }
             return getGucangCalculateFeeReq(providerWarehouseEntity, params);
-        }else if (PlatformDictEnum.ANTU.getCode().equals(platform)){
+        }else if (PlatformDictEnum.ANTU.getCode().equals(platform) || PlatformDictEnum.SPT.getCode().equals(platform)){
             if (CollUtil.isEmpty(params.getToCountryList())){
                 return Collections.emptyList();
             }

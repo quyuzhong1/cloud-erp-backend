@@ -114,6 +114,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
 
+
+    private void checkInventoryGreaterThanZero(){
+
+    }
+
     /**
      * 添加变更
      *

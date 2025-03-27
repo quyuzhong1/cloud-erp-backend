@@ -414,4 +414,21 @@
         </if>
         order by ra.ID,rad.create_time desc
     </select>
+    <select id="pagingSkuByDeliveryPlan" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$PagingSkuByDeliveryPlanDTO">
+        select
+            wdpd.platform_sku as platformSku,
+            wdpd.platform_sku_name as platformSkuName,
+            wdpd.sku_id as skuId,
+            wdpd.sku_no as skuNo,
+            wdpd.platform_sku as msku,
+            wdpd.platform_fn_sku as fnSku,
+            wdpd.platform_spu as asin,
+            wdpd.is_combination as isCombination,
+            wdpd.id as sourceDetailId
+        from wms_delivery_plan wdp
+        inner join wms_delivery_plan_detail wdpd on wdp.id = wdpd.main_id and wdpd.is_deleted = false
+        where  ${params.sqlMap.default}
+        and wdp.is_deleted = false
+        and wdp.id = #{id}
+    </select>
 </mapper>

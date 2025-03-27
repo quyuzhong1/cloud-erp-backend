@@ -270,4 +270,6 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     void writeBackRequisitionDeliveryPushDownStatus(String requisitionApplicationId);
 
     void writeBackRequisitionPickPushDownStatus(String requisitionApplicationId);
+
+    PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto);
 }

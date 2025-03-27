@@ -370,6 +370,14 @@ public class FirstMileDeliveryDTO implements Serializable {
          * FBA货件编码
          */
         private String fbaShipmentCode;
+        /**
+         * 中转仓库集合
+         */
+        private String transferWarehouseIds;
+        /**
+         * 中转仓库名称
+         */
+        private String transferWarehouseNames;
 
     }
     /**

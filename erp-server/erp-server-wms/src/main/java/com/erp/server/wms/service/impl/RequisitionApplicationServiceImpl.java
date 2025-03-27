@@ -40,6 +40,7 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -82,6 +83,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.beans.BeanUtils;
@@ -2133,6 +2135,70 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         lambdaUpdate().set(RequisitionApplicationEntity::getPickPushDownStatus, pickPushDownStatus)
                 .eq(RequisitionApplicationEntity::getId, requisitionApplicationId)
                 .update();
+    }
+
+    @Override
+    public PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto) {
+        RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO pagingParamDTO = dto.getParams();
+        String requisitionId = pagingParamDTO.getId();
+        RequisitionApplicationEntity requisitionApplicationEntity = getById(requisitionId);
+        if (ObjectUtil.isEmpty(requisitionApplicationEntity)) {
+            throw new ServiceException(ApiError.ERROR_BILL_NOT_EXIST);
+        }
+        if(!SourceTypeEnum.DELIVERY_PLAN.getCode().equals(requisitionApplicationEntity.getSourceType())){
+            throw new ServiceException("要货申请不是发货计划下推");
+        }
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> iPage = baseMapper.pagingSkuByDeliveryPlan(query,pagingParamDTO,requisitionApplicationEntity.getSourceId());
+        List<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> records = iPage.getRecords();
+        if(CollectionUtils.isEmpty(records)){
+            return new PagingVO<>(iPage);
+        }
+        List<String> skuNo = records.stream().map(RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNo);
+        List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = requisitionApplicationDetailService.listByMainIds(Collections.singletonList(requisitionApplicationEntity.getId()));
+
+        records.forEach(v->{
+            SkuVO skuVO = skuVOList.stream().filter(t->t.getSkuNo().equals(v.getSkuNo())).findFirst().orElse(null);
+            if(Objects.nonNull(skuVO)){
+                v.setImagesUrl(skuVO.getSkuImagesUrl());
+                v.setProductName(skuVO.getSkuName());
+            }
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = requisitionApplicationDetailEntityList.stream().filter(t->t.getSourceDetailId().equals(v.getSourceDetailId())).findFirst().orElse(null);
+            //如果能关联到要货申明细，设置为修改类型
+            if(Objects.nonNull(requisitionApplicationDetailEntity)){
+                v.setRequisitionDetailId(requisitionApplicationDetailEntity.getId());
+                v.setBomVersion(requisitionApplicationDetailEntity.getBomVersion());
+                v.setChangeType(RequisitionChangeTypeEnum.UPDATE.getCode());
+                v.setChangeTypeName(RequisitionChangeTypeEnum.UPDATE.getName());
+                v.setOriginRequisitionQty(requisitionApplicationDetailEntity.getRequisitionQty());
+            }else{
+                v.setChangeType(RequisitionChangeTypeEnum.ADD.getCode());
+                v.setChangeTypeName(RequisitionChangeTypeEnum.ADD.getName());
+            }
+        });
+
+        //获取子SKU集合
+        List<String> requisitionIds = records.stream().map(RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO::getRequisitionDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<PickingDetailEntity> pickingDetailEntityList = pickingDetailService.listPickingDetailBySourceDetailIds(requisitionIds);
+        List<String> skuIds = records.stream().filter(v-> StringUtils.isNotBlank(v.getRequisitionDetailId())).map(RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO::getSkuId).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> allBomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        for (RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO productDTO : records) {
+            if(StringUtils.isBlank(productDTO.getRequisitionDetailId())){
+                continue;
+            }
+            List<BomChildrenSkuDTO> currentBomList = allBomChildrenSkuList.stream().filter(v->v.getParentSkuId().equals(productDTO.getSkuId())&& BomTypeEnum.COMBINATION.getType().equals(v.getType())).collect(Collectors.toList());
+            List<PickingDetailEntity> currentPickList = pickingDetailEntityList.stream().filter(v -> v.getSourceDetailId().equals(productDTO.getRequisitionDetailId())).collect(Collectors.toList());
+            int pickedQty;
+            if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){
+                Integer bomQty = currentBomList.stream().filter(v->v.getSkuId().equals(currentPickList.get(0).getSkuId())).findFirst().map(BomChildrenSkuDTO::getQuantity).orElse(0);
+                pickedQty = bomQty * currentPickList.get(0).getQty();
+            }else{
+                pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
+            }
+            productDTO.setPickQty(pickedQty);
+        }
+        return new PagingVO<>(iPage);
     }
 
     /**

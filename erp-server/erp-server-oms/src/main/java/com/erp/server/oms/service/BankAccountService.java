@@ -70,6 +70,7 @@ public interface BankAccountService extends SuperService<BankAccountEntity> {
      */
     List<BankAccountEntity> listByAccountNameList(List<String> receiveAccountList);
 
+    List<BankAccountEntity> listByAccountList(List<String> receiveAccountList);
     /**
      * 分页获取银行账号信息
      * @description

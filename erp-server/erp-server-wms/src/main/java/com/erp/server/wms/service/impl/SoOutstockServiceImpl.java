@@ -121,7 +121,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
 
@@ -263,6 +262,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
+
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
 
     @Override
     public List<SoOutstockEntity> listBySourceId(List<String> ids) {
@@ -545,7 +547,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             result.setCountryName(countryName);
         }
 
-        if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(soOutstock.getSourceType())) {
+        if ("qimen".equals(soOutstock.getCreateUserName()) || "wangdiantong".equals(soOutstock.getCreateUserName())){
             String countryName = countryList.stream().filter(e -> e.getId().equals(soOutstock.getCountry())).map(DictCountryDTO.ListDTO::getNameCn).findFirst().orElse("");
             result.setCountryId(soOutstock.getCountry());
             result.setCountryName(countryName);
@@ -799,21 +801,23 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     private void syncToSdy(SoOutstockEntity entity, String operate) {
-        //推送数帝云
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
-        syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
-
+        // 配货单推送数帝云
         if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            // B2B
             //更新推送数帝云订单信息
             SoInfoToSdyDTO soInfoToSdyDTO = new SoInfoToSdyDTO();
             soInfoToSdyDTO.setSoId(entity.getSoId());
             soInfoToSdyDTO.setOperateEnum(operate);
             soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
             soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
-
-        } else {
-            soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate);
+        } else if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())){
+            soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate, entity.getSourceType());
         }
+
+        // 销售出库单推送数帝云
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
+
     }
 
     /**
@@ -1335,7 +1339,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, soOutstockDetailAllList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
 
-
         }
         return result;
     }
@@ -1559,11 +1562,18 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomerByIds(customerIds);
         Map<String, String> customerPlatformTypeMap = customerInfoEntities.stream().collect(Collectors.toMap(CustomerInfoEntity::getId, CustomerInfoEntity::getPlatformType));
 
+        //查询虚拟仓信息
+        List<String> virtualWarehouseIds = list.stream().map(SoOutstockDTO.PagingViewDTO::getVirtualWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<VirtualWarehouseEntity> virtualWarehouseEntities = CollectionUtils.isNotEmpty(virtualWarehouseIds)?virtualWarehouseService.listByIds(virtualWarehouseIds):new ArrayList<>();
         for (SoOutstockDTO.PagingViewDTO item : list) {
             //设置跟踪单号
 //            if(trackNoMAp.containsKey(item.getId())){
 //                item.setTrackNo(trackNoMAp.get(item.getId()));
 //            }
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntities.stream().filter(obj -> obj.getId().equals(item.getVirtualWarehouseId())).findFirst().orElse(null);
+            if (Objects.nonNull(virtualWarehouseEntity)) {
+                item.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+            }
             if (StringUtils.isNotEmpty(item.getTrackNos())){
                 String[] split = item.getTrackNos().split(",");
                 item.setTrackNo(Arrays.stream(split).collect(Collectors.toList()));
@@ -3408,7 +3418,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             if (!isB2c) {
                 pushTaskEntity = syncKingdeeSoOutstockService.syncDataToKingdee(obj, operate);
             } else {
-                if (SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(obj.getSourceType())){
+                if ("qimen".equals(obj.getCreateUserName()) || "wangdiantong".equals(obj.getCreateUserName())){
                     pushTaskEntity = syncKingdeeSoOutstockService.syncWdtDataToKingdee(obj, operate);
                 }else {
                     pushTaskEntity = syncKingdeeSoOutstockService.syncB2cDataToKingdee(obj, operate);

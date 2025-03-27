@@ -14,14 +14,14 @@ import java.util.List;
 public interface AliexpressDeliveryFeign {
 
     /**
-     * 新增速卖通发货单
+     * 新增/更新速卖通发货单
      * @Author Luo_WG
      * @Date 2024/1/30 17:09
      * @param dto
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
-    @PostMapping(value = "/feign/aliexpressDelivery/add")
-    BaseResultDTO.AddDTO add(@RequestBody AliexpressDeliveryDTO.AddDTO dto);
+    @PostMapping(value = "/feign/aliexpressDelivery/addOrUpdate")
+    BaseResultDTO.AddDTO addOrUpdate(@RequestBody AliexpressDeliveryDTO.AddDTO dto);
 
     /**
      * 更新速卖通发货单 出库状态

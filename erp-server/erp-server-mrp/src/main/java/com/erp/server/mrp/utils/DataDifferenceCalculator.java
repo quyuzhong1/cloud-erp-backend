@@ -132,7 +132,7 @@ public class DataDifferenceCalculator {
         result.MAPEScore = errorToScore(mape);
 
         // R^2 如果 < 0 => 0，否则取原值（也可根据需求改进）
-        result.R2Score = r2.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : r2;
+        result.R2Score = r2.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : r2.multiply(new BigDecimal(100));
 
         return result;
     }

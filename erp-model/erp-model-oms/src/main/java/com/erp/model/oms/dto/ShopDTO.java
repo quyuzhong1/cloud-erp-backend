@@ -387,7 +387,7 @@ public class ShopDTO implements Serializable {
         /**
          * 平台经营模式
          */
-        private String businessModel‌;
+        private String businessModel;
     }
 
 
@@ -571,12 +571,12 @@ public class ShopDTO implements Serializable {
         /**
          * 平台经营模式
          */
-        private String businessModel‌;
+        private String businessModel;
 
         /**
          * 平台经营模式名称
          */
-        private String businessModelName‌;
+        private String businessModelName;
     }
 
     @Data
@@ -639,6 +639,10 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "店铺名称不能为空")
         @Size(max = 100, message = "店铺名称最大100字符")
         private String name;
+        /**
+         * 站点，必须选一个
+         */
+        private List<String> dictCountryCodeList;
 
         /**
          * 店铺负责人
@@ -675,6 +679,15 @@ public class ShopDTO implements Serializable {
         private String warehouseId;
 
         /**
+         * 国家id
+         */
+        private String dictCountryCode;
+
+        /**
+         * 国家名
+         */
+        private String countryName;
+        /**
          * 客户的id
          * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
@@ -705,7 +718,7 @@ public class ShopDTO implements Serializable {
         /**
          * 平台经营模式
          */
-        private String businessModel‌;
+        private String businessModel;
 
     }
     @Data

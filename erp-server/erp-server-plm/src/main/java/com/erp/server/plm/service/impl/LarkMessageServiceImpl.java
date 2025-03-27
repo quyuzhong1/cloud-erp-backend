@@ -1,7 +1,9 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import com.common.business.constant.ThirdConstants;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BaseStatusEnum;
 import com.common.business.service.impl.RedisService;
@@ -292,9 +294,14 @@ public class LarkMessageServiceImpl implements LarkMessageService {
 
         //排除关闭通知的人员 并去重
         List<String> cancelNoticeUserIds = userCancelNoticeService.cancelNoticeUserIds(notice.getId());
+
+        //获取未禁用的人员
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<String> userIdList = CollUtil.isEmpty(userList) ? Collections.emptyList() : userList.stream().map(FindUserDTO::getUserId).distinct().collect(Collectors.toList());
+
         List<String> noticeUserIds = pressUserList.stream().map(LarkPressMessageDTO.SendUserInfo::getUserId).collect(Collectors.toList());
         Map<String, String> userIdNameMap = pressUserList.stream().collect(Collectors.toMap(LarkPressMessageDTO.SendUserInfo::getUserId, LarkPressMessageDTO.SendUserInfo::getUserName));
-        List<String> noticeUserList = noticeUserIds.stream().filter(n -> !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
+        List<String> noticeUserList = noticeUserIds.stream().filter(n -> userIdList.contains(n) && !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
         //获取飞书的 unionId 与用户关系
         List<ThirdUnionDTO> unionIdList = sysUserFeign.getThirdUnionId(ThirdConstants.FS_PLATFORM);
         List<ThirdUnionDTO> noticeUnionList = unionIdList

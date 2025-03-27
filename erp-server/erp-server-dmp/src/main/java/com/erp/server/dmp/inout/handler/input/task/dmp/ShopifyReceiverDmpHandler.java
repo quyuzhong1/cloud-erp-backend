@@ -63,6 +63,7 @@ public class ShopifyReceiverDmpHandler extends DmpInputDoNextDmpHandler{
                 if (ObjectUtil.isNotEmpty(customerObj)) {
                     Map<String, Object> customerMap = (Map<String, Object>) customerObj;
                     detail.put("mainPhone", customerMap.get("phone"));
+                    detail.put("buyerId", customerMap.get("id"));
                 }
                 Map<String, Object> extensionsMap = dmpInputExtensionsMongoChildList.stream().filter(req -> String.valueOf(req.get("orderId")).equals(detail.get("orderId")+"")).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(extensionsMap)) {

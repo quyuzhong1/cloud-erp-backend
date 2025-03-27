@@ -157,4 +157,12 @@ public class LogisticsDeclareProductDTO implements Serializable {
      * 属性id
      */
     private String productPropertyId;
+    /**
+     * 真实售价
+     */
+    private BigDecimal price;
+    /**
+     * 售价原币种
+     */
+    private String currency;
 }

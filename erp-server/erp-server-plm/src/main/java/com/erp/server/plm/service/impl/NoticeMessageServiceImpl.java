@@ -494,7 +494,12 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
 
             //获取取消通知的用户id
             List<String> cancelNoticeUserIds = userCancelNoticeService.cancelNoticeUserIds(notice.getId());
-            List<String> resultList = noticeTaskChargeIdList.stream().filter(n -> !cancelNoticeUserIds.contains(n)).collect(Collectors.toList());
+
+            //获取未禁用的人员
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            List<String> userIdList = CollUtil.isEmpty(userList) ? Collections.emptyList() : userList.stream().map(FindUserDTO::getUserId).distinct().collect(Collectors.toList());
+
+            List<String> resultList = noticeTaskChargeIdList.stream().filter(n -> userIdList.contains(n) && !cancelNoticeUserIds.contains(n)).collect(Collectors.toList());
             List<ThirdUnionDTO> noticeTaskChargeUnionList = getNoticeUnionIds(unionIdList, resultList);
             Map<String, List<ThirdUnionDTO>> groupMap = noticeTaskChargeUnionList.stream().collect(Collectors.groupingBy(ThirdUnionDTO::getUserId));
             for (Map.Entry<String, List<ThirdUnionDTO>> item : groupMap.entrySet()) {
@@ -2562,7 +2567,11 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
      * @date 2022-11-15 11:14
      */
     public List<ThirdUnionDTO> getNoticeUnionIds(List<ThirdUnionDTO> unionIdList, List<String> userIds) {
-        List<ThirdUnionDTO> unionIds = unionIdList.stream().filter(u -> userIds.contains(u.getUserId())).collect(Collectors.toList());
+        //获取未禁用的人员
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<String> userIdList = CollUtil.isEmpty(userList) ? Collections.emptyList() : userList.stream().map(FindUserDTO::getUserId).distinct().collect(Collectors.toList());
+
+        List<ThirdUnionDTO> unionIds = unionIdList.stream().filter(u -> userIdList.contains(u.getUserId()) &&  userIds.contains(u.getUserId())).collect(Collectors.toList());
         return unionIds;
     }
 
@@ -2579,8 +2588,12 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
     private List<String> eliminateCloseNotice(String noticeId, List<String> allNoticeUserIds) {
         //获取取消通知的用户id
         List<String> cancelNoticeUserIds = userCancelNoticeService.cancelNoticeUserIds(noticeId);
-        List<String> resultList = allNoticeUserIds.stream().filter(n -> !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
-        return resultList;
+
+        //获取未禁用的人员
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        List<String> userIdList = CollUtil.isEmpty(userList) ? Collections.emptyList() : userList.stream().map(FindUserDTO::getUserId).distinct().collect(Collectors.toList());
+
+        return allNoticeUserIds.stream().filter(n -> userIdList.contains(n) && !cancelNoticeUserIds.contains(n)).distinct().collect(Collectors.toList());
     }
 
 

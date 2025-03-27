@@ -935,34 +935,101 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //校验包装信息是否完整
         validateProductSize(entity.getId());
         //校验是否有采购价目表
-        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        validatePurchasePriceDetail(entity.getId());
+
+    }
+
+    private void validatePurchasePriceDetail(String id) {
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, id).list();
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_95281);
+        }
+        List<String> skuIdList = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        Map<String, List<BomDTO.BomSku>> singleBomMap = bomSkuService.getSingleBomInfo(skuIdList).stream()
+                .collect(Collectors.groupingBy(BomDTO.BomSku::getParentSkuId));
+
         for (PilotApplicationDetailEntity detailEntity : detailList) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-            priceSearchDTO.setSkuId(detailEntity.getSkuId());
-            priceSearchDTO.setSkuNo(detailEntity.getSkuNo());
-            priceSearchDTO.setSupplierId(detailEntity.getMainSupplierId());
-            priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty());
-            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList;
-            try {
-                taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
-            } catch (Exception e) {
-                throw new ServiceException("尚未提交供应商采购价目表，请联系采购开发提交后提审: sku：{}，数量：{}", detailEntity.getSkuNo(), detailEntity.getApplyQty());
-            }
-            boolean flag = false;
-            for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
-                if (detailEntity.getApplyQty() >= priceViewDTO.getMinQty() && detailEntity.getApplyQty() <= priceViewDTO.getMaxQty()) {
-                    flag = true;
-                    break;
-                }
-            }
-            if (!flag) {
-                throw new ServiceException("尚未提交供应商采购价目表，请联系采购开发提交后提审: sku：{}，数量：{}", detailEntity.getSkuNo(), detailEntity.getApplyQty());
+            if(singleBomMap.containsKey(detailEntity.getSkuId())){//校验SKU为父级时，且存在BOM类型为单品BOM时，无需校验当前SKU，校验子SKU是否存在报价
+                // 校验子 SKU 是否存在报价
+                validateChildSkuPrices(detailEntity, singleBomMap);
+            }else {
+                // 校验当前 SKU 是否存在报价
+                validateSkuPrice(detailEntity);
             }
         }
     }
 
-    private void validateProductSize(String id) {
+    private void validateChildSkuPrices(PilotApplicationDetailEntity detailEntity, Map<String, List<BomDTO.BomSku>> singleBomMap) {
+        List<BomDTO.BomSku> skuList = singleBomMap.get(detailEntity.getSkuId());
+        StringBuilder error = new  StringBuilder();
+        StringBuilder ruleError = new  StringBuilder();
+        for (BomDTO.BomSku childSku : skuList) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            priceSearchDTO.setSkuId(childSku.getSkuId());
+            priceSearchDTO.setSkuNo(childSku.getSkuNo());
+            priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty() * childSku.getQty());
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>  taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+            if (CollUtil.isEmpty(taxPriceList)) {
+                error.append("sku：");
+                error.append(priceSearchDTO.getSkuNo());
+                error.append(",");
+                error.append("数量：");
+                error.append(priceSearchDTO.getPurchaseQty());
+                error.append(";");
+            }else {
+                Boolean flag = false;
+                for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                    if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if(!flag){
+                    ruleError.append("sku：");
+                    ruleError.append(priceSearchDTO.getSkuNo());
+                    ruleError.append(",");
+                    ruleError.append("数量：");
+                    ruleError.append(priceSearchDTO.getPurchaseQty());
+                    ruleError.append(";");
+                }
+            }
+        }
+        if(StringUtils.isNotBlank(error.toString())){
+            throw new ServiceException(ApiError.ERROR_95288, error.toString());
+        }
+        if(StringUtils.isNotBlank(ruleError.toString())){
+            throw new ServiceException(ApiError.ERROR_95289, ruleError.toString());
+        }
+    }
 
+    private void validateSkuPrice(PilotApplicationDetailEntity detailEntity) {
+        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+        priceSearchDTO.setSkuId(detailEntity.getSkuId());
+        priceSearchDTO.setSkuNo(detailEntity.getSkuNo());
+        priceSearchDTO.setSupplierId(detailEntity.getMainSupplierId());
+        priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty());
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>  taxPriceList;
+        try {
+            taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+        }
+        if (CollUtil.isEmpty(taxPriceList)) {
+            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+        }
+        boolean flag = false;
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+            if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag) {
+            throw new ServiceException(ApiError.ERROR_95288, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+        }
+    }
+
+    private void validateProductSize(String id) {
         List<PilotApplicationDetailEntity> list = pilotApplicationDetailService.list(Wrappers.<PilotApplicationDetailEntity>lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id));
         List<String> skuIdList = list.stream().map(PilotApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIdList);

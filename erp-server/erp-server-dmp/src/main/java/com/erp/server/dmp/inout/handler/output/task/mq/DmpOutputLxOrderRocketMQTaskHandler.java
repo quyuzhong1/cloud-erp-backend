@@ -160,15 +160,15 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         orderDTO.setInvalidRemark("");
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(dmpSoInfoEntity.getOrderStatus());
+        orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
         orderDTO.setPayStatus(dmpSoInfoEntity.getPayStatus() ? SoB2cPayStatusEnum.ENUM_PAID.getCode() : SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
         // 审核状态
-        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getApproveStatus());
+        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
         // 订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getAllAmount());
+        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
         // 币别（原币）
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
@@ -299,10 +299,10 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         detailDTO.setQty(item.getQty());
         // item总价
         // 金额
-        detailDTO.setAmount(item.getAfterAmount());
+        detailDTO.setAmount(item.getSellPriceOrigin().multiply(BigDecimal.valueOf(item.getQty())));
 
         // 单价
-        detailDTO.setPrice(item.getSellPrice());
+        detailDTO.setPrice(item.getSellPriceOrigin());
 
         // 币别（原币）
         detailDTO.setCurrency(item.getCurrencyCode());

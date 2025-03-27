@@ -16,6 +16,8 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.*;
 import lombok.Getter;
@@ -168,13 +170,6 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             }
             if(Objects.nonNull(firstMileDeliveryEntity) && (FmDeliveryLogisticsStatusEnum.FINISH.equals(firstMileDeliveryEntity.getLogisticsStatus()) || WmsDeclareStatusEnum.FINISH.equals(firstMileDeliveryEntity.getDeclareStatus()))){
                 packingExcelDTO.setErrorMsg("物流单/报关单已生成，不支持修改");
-                errorList.add(packingExcelDTO);
-                it.remove();
-                continue;
-            }
-            //检查发货单是否已审核
-            if(Objects.nonNull(firstMileDeliveryEntity) && firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-                packingExcelDTO.setErrorMsg(" 发货单已审核，无法更改装箱");
                 errorList.add(packingExcelDTO);
                 it.remove();
                 continue;

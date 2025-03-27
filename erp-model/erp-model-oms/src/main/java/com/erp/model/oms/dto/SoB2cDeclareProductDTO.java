@@ -102,6 +102,14 @@ public class SoB2cDeclareProductDTO implements Serializable {
          * 申报标签名称
          */
         private String declareLabelName;
+        /**
+         * 真实售价
+         */
+        private BigDecimal price;
+        /**
+         * 售价币种
+         */
+        private String currency;
     }
 
     /**
@@ -224,6 +232,16 @@ public class SoB2cDeclareProductDTO implements Serializable {
          * 申报标签(正常申报normal，高申报high，低申报low)
          */
         private String declareLabel;
+        /**
+         * 真实售价
+         */
+        @NotNull(message = "申报重真实售价不能为空")
+        @Digits(integer = 12, fraction = 4, message = "申报重真实售价整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal price;
+        /**
+         * 售价币种
+         */
+        private String currency;
     }
 
     @Data
