@@ -11,6 +11,7 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -261,4 +262,11 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     Integer listFullManagedCount(@Param("params") SoB2cDTO.PagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+
+    /**
+     * 更新超时预警时间
+     * @param platformList
+     * @param offsetMinutes
+     */
+    void updateTimeOutConfig(@Param("platformList") List<String> platformList, @Param("offsetMinutes") Integer offsetMinutes);
 }

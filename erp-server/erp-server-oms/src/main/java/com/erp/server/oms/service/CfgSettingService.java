@@ -34,4 +34,11 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return
      */
     CfgSettingDTO.ViewDTO getSetting(String key);
+
+    /**
+     * 获取配置实体记录
+     * @param key
+     * @return
+     */
+    CfgSettingEntity getSettingByKey(String key);
 }

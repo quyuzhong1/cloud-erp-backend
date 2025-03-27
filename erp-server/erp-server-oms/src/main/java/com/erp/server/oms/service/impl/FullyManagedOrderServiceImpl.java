@@ -1,38 +1,33 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
-import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
-import com.erp.model.oms.dto.FullyManagedDTO;
-import com.erp.model.oms.dto.ShopSysUserAuthDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.CfgSettingEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.FullyManagedTabEnum;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.FullyManagedQueryHandler;
-import com.erp.server.oms.query.SoB2cQueryHandler;
-import com.erp.server.oms.service.FullyManagedOrderService;
-import com.erp.server.oms.service.ShopSysUserAuthService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -57,7 +52,9 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
     @Resource
     private FullyManagedQueryHandler fullyManagedQueryHandler;
     @Resource
-    private SoB2cService soB2cService;
+    private CfgSettingService cfgSettingService;
+    @Resource
+    private DictBasicService dictBasicService;
     
     @Override
     public List<SoB2cDTO.TabListDTO> fullyManagedTabList(PermissionsDTO param) {
@@ -105,6 +102,24 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             }
         }
         return list;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void timeOutConfig(CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO) {
+        //检查预警设置是否存在 更新配置
+        CfgSettingEntity setting = cfgSettingService.getSettingByKey(CfgSettingEnum.TIME_OUT_CONFIG.getCode());
+        if (Objects.isNull(setting)) {
+            setting = new CfgSettingEntity();
+        }
+        setting.setKey(CfgSettingEnum.TIME_OUT_CONFIG.getCode());
+        setting.setValue(JSONUtil.parseObj(timeOutSettingDTO).toString());
+        cfgSettingService.saveOrUpdate(setting);
+        //修改全托管订单的预警时间
+        List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
+        List<String> typeList = dtoList.stream().map(DictBasicDTO.ViewDTO::getType).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        //更新全托管订单的预警时间
+        this.baseMapper.updateTimeOutConfig(typeList,timeOutSettingDTO.getWarningTime().multiply(new BigDecimal(60)).intValue());
     }
 
     /**

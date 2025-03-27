@@ -542,7 +542,7 @@ public class LocalDateUtil {
      * 计算两个时间之间的小时数，保留小数
      * @param startTime
      * @param endTime
-     * @param decimalPlaces
+     * @param decimalPlaces 小数位数
      * @return
      */
     public static double calculateHoursWithDecimal(LocalDateTime startTime, LocalDateTime endTime, int decimalPlaces) {
@@ -550,6 +550,15 @@ public class LocalDateUtil {
         double totalHours = duration.toMillis() / 1000.0 / 3600.0;
         double scale = Math.pow(10, decimalPlaces);
         return Math.round(totalHours * scale) / scale;
+    }
+    /**
+     * 计算两个时间之间的秒数，结果为整数
+     * @param startTime
+     * @param endTime
+     * @return 秒数
+     */
+    public static long calculateSeconds(LocalDateTime startTime, LocalDateTime endTime) {
+        return startTime.until(endTime, ChronoUnit.SECONDS);
     }
 }
 

@@ -40,6 +40,27 @@
                  left join shop_info si on si.is_deleted = false and si.id = sb.shop_id
         where sbe.partition_id = '' and sbe.is_deleted = false and sb.is_deleted = false
     </select>
+    <select id="fullyManagedOrderMsgWarning" resultType="com.erp.model.oms.dto.FullyManagedDTO$WarningDTO">
+        SELECT
+            sbe.main_id as id,
+            sb.code as code,
+            sb.platform_code as platformCode,
+            sbe.required_delivery_time as requiredDeliveryTime,
+            sbe.delivery_warning_time as deliveryWarningTime
+        from so_b2c_extend sbe
+        inner join so_b2c sb on sbe.main_id = sb.id and sb.is_deleted = false
+        where sbe.is_deleted = false
+        AND sbe.required_delivery_time IS NOT NULL
+        AND sbe.delivery_warning_time IS NOT NULL
+        AND sbe.delivery_warning_time >= NOW()
+        AND NOW() >= sbe.delivery_warning_time - ${offsetMinutes} * INTERVAL '1 minute'
+        <if test="platformList != null and platformList.size > 0">
+            AND sb.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 
 
 </mapper>

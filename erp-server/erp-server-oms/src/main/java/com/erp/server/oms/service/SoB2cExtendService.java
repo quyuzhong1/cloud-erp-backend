@@ -1,11 +1,14 @@
 package com.erp.server.oms.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.FullyManagedDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cExtendEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.SoB2cExtendDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -50,4 +53,11 @@ public interface SoB2cExtendService extends SuperService<SoB2cExtendEntity> {
      * @return
      */
     SoB2cExtendEntity getByMainId(String id);
+
+    /**
+     * 订单超时警告查询
+     * @param offsetMinutes 单位：分钟 获取当前时间和预警时间区间内的销售订单列表
+     * @return
+     */
+    List<FullyManagedDTO.WarningDTO> fullyManagedOrderMsgWarning(Integer offsetMinutes);
 }
