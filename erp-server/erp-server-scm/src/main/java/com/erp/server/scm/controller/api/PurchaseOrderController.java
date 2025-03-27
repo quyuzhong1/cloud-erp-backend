@@ -672,6 +672,19 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
+     * 根据采购订单明细id 获取质检产品信息
+     * @author jack
+     * @date 2025-03-27
+     * @param id
+     * @return com.common.core.controller.vo.ApiResult<com.erp.model.scm.dto.PurchaseOrderDTO.GetOneDTO>
+     */
+    @GetMapping(value = "/getQcProductInfoByDetailId")
+    public ApiResult<PurchaseOrderDTO.GetQcProductDTO> getQcProductInfoByDetailId(@RequestParam("id") String id) {
+        PurchaseOrderDTO.GetQcProductDTO result = purchaseOrderService.getQcProductInfoByDetailId(id);
+        return success(result);
+    }
+
+    /**
      * 添加产品数据显示
      * @author Will
      * @date: 2023/4/14 10:21

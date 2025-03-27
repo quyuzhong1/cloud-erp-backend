@@ -170,11 +170,10 @@ public class QcInfoDTO implements Serializable {
          * 来源详情id
          */
         private String sourceDetailId;
-
         /**
-         * 是否新品
+         * 新品首批
          */
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
         /**
          * 质检类型
          */
@@ -325,11 +324,6 @@ public class QcInfoDTO implements Serializable {
          * 退货单编号
          */
         private String soReturnCode;
-
-        /**
-         * 是否新品
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * 质检类型
@@ -904,6 +898,12 @@ public class QcInfoDTO implements Serializable {
          * 质检完成时间
          */
         private LocalDateTime qcFinishTime;
+
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
     }
 
 
@@ -1072,7 +1072,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 是否新品首批
          */
-        Boolean isFirstMassProduct;
+        private String firstMassProduct;
 
         /**
          * 产品状态

@@ -856,6 +856,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
                         .eq(MouldRefundAgreementEntity::getMouldDetailId, dto.getMouldDetailId())))
                 .orElseThrow(() -> new ServiceException("未找到模具数据"));
         agreement.setRefundStatus(MouldRefundStatusEnum.RETURNED.getCode());
+        agreement.setRealRefundAmount(dto.getRealRefundAmount());
         mouldRefundAgreementService.updateById(agreement);
         MouldDetailEntity mouldDetail = mouldDetailService.getById(dto.getMouldDetailId());
         MouldInfoEntity entity = getById(mouldDetail.getMainId());
@@ -865,6 +866,7 @@ public class MouldInfoServiceImpl extends SuperServiceImpl<MouldInfoMapper, Moul
         data.put("mouldNo", mouldDetail.getMouldNo());
         data.put("supplierName", supplier.getName());
         data.put("refundAmount", agreement.getRefundAmount());
+        data.put("realRefundAmount", agreement.getRealRefundAmount());
         data.put("userName", UserContext.getDefaultLoginUser().getUserName());
         data.put("updateTime", LocalDateTime.now().format(DateTimeFormatter.ofPattern(DATE_FORMAT)));
         LoginUser user = UserContext.getDefaultLoginUser();

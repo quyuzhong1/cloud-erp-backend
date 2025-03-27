@@ -4,13 +4,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -232,12 +230,6 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 resultMap.put("purchaseUserName", kingSellerInfo.getUserName());
             }
         }
-        //新品首批
-        if (entity.getIsFirstMassProduct()) {
-            resultMap.put("isFirstMassProduct", 1);
-        } else {
-            resultMap.put("isFirstMassProduct", 2);
-        }
 
         resultMap.put("receiveOrgCode", receiveOrgCode);
 
@@ -298,6 +290,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("supplierCode", supplierEntity.getCode());
             //供应商编码
             jsonObject.set("supplierName", supplierEntity.getName());
+            jsonObject.set("firstMassProduct", detail.getFirstMassProduct());
             //交货仓库
             jsonObject.set("deliveryWarehouseName", entity.getDeliveryWarehouseName());
             if (ObjectUtil.isNotEmpty(warehouseEntity)) {

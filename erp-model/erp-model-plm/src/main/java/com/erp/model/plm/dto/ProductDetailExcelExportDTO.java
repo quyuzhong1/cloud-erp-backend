@@ -39,6 +39,18 @@ public class ProductDetailExcelExportDTO {
     @MenuCode("plm:product:detail:listProinfo")
     private String spuNo;
     /**
+     * 款名（中文）
+     */
+    @ExcelProperty("款名（中文）")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String spuName;
+    /**
+     * 款名（英文）
+     */
+    @ExcelProperty("款名（英文）")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String spuNameEn;
+    /**
      * sku编号
      */
     @ExcelProperty("sku编号")
@@ -449,6 +461,12 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("报关产品属性")
     @MenuCode("plm:product:detail:listLogistics")
     private String productProperty;
+    /**
+     * 保险属性
+     */
+    @ExcelProperty("保险属性")
+    @MenuCode("plm:product:detail:listLogistics")
+    private String insuranceProperty;
 
     /**
      * 报关申报价（$）

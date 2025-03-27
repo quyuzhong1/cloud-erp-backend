@@ -195,6 +195,14 @@ public class DeliverySuggestDTO implements Serializable {
         private String imagesUrl;
 
         /**
+         * fba仓库
+         */
+        private String fbaWarehouseId;
+        /**
+         * fba仓库名称
+         */
+        private String fbaWarehouseName;
+        /**
          * 创建类型（auto系统，manual人工）
          */
         private String dataType;
@@ -712,7 +720,14 @@ public class DeliverySuggestDTO implements Serializable {
          * 品名
          */
         private String productName;
-
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
         /**
          * 发货备货量
          */
@@ -920,6 +935,21 @@ public class DeliverySuggestDTO implements Serializable {
         private String warehouseName;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShopSelectDTO {
+        /**
+         * 店铺Id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+    }
+
     /**
      * 添加发货计划
      */
@@ -931,6 +961,11 @@ public class DeliverySuggestDTO implements Serializable {
          */
         @NotEmpty
         private List<String> ids;
+
+        /**
+         * 店铺id
+         */
+        private String shopId;
 
         /**
          * 仓库信息

@@ -64,6 +64,16 @@ public class PoInstockDetailDTO implements Serializable {
          * sku编号（PDA用）
          */
         private String skuNo;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     @Data
@@ -179,7 +189,15 @@ public class PoInstockDetailDTO implements Serializable {
          */
         private String currency;
 
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
 
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
 
         /**
          * 币别符号

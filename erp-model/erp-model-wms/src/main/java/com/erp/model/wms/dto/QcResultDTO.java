@@ -458,10 +458,14 @@ public class QcResultDTO {
         private String qcStatus;
 
         /**
-         * 是否新品首批
-         * true 是
+         * 新品首批
          */
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
+
+        /**
+         * 采购单明细id
+         */
+        private String purchaseOrderDetailId;
 
         /**
          * 采购订单code

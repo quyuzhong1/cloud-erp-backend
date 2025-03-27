@@ -35,7 +35,8 @@ public enum NoticeEnum {
     MOULD_SUBMIT("mouldSubmit", "模具审核通知"),
     MOULD_APPROVE("mouldApprove", "模具审核完成通知"),
     MOULD_REFUND_REACH("mouldRefundReach", "模具达量通知"),
-    MOULD_REFUND_CONFIRM("mouldRefundConfirm", "模具费用返还确认通知")
+    MOULD_REFUND_CONFIRM("mouldRefundConfirm", "模具费用返还确认通知"),
+    PRODUCT_DETAIL_CHANGE("productDetailChange", "产品信息变更通知")
     ;
 
 

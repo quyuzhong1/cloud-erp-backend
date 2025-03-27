@@ -9,11 +9,9 @@ import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.sys.vo.SupplierUserInfoVO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -214,13 +212,22 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PurchaseOrderDTO.GetOneDTO getPurchaseOrder(String id);
 
     /**
-     * 根据采购订单id 获取对应产品信息
+     * 根据采购订单明细id 获取对应产品信息
      * @author yl
      * @date 2023-04-17 18:27
      * @param purchaseOrderId
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
      */
     PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId);
+
+    /**
+     * 根据采购订单明细id 获取对应产品信息
+     * @author jack
+     * @date 2025-03-27
+     * @param purchaseOrderDetailId
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
+     */
+    PurchaseOrderDTO.GetQcProductDTO getQcProductInfoByDetailId(String purchaseOrderDetailId);
     /**
      * @description: 更新金蝶发送状态
      * @author Will
