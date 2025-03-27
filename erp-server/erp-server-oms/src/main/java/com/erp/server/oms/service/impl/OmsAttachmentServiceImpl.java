@@ -3,8 +3,10 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.server.oms.mapper.OmsAttachmentMapper;
 import com.erp.server.oms.service.OmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -90,5 +93,48 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
             queryWrapper.eq(OmsAttachmentEntity::getBusinessId, dto.getBusinessId());
         }
         this.remove(queryWrapper);
+    }
+
+
+    /**
+     * 根据业务表id 集合删除
+     *
+     * @param businessIdList
+     * @return void
+     * @author yl
+     * @date 2023-03-20 11:52
+     */
+    @Override
+    public void deleteByBusinessIds(List<String> businessIdList) {
+        if (CollectionUtils.isNotEmpty(businessIdList)) {
+            LambdaQueryWrapper<OmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(OmsAttachmentEntity::getBusinessId, businessIdList);
+            List<OmsAttachmentEntity> list = this.list(queryWrapper);
+            List<String> urlList = list.stream().map(OmsAttachmentEntity::getAttachUrl).collect(Collectors.toList());
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+            this.removeByIds(list.stream().map(OmsAttachmentEntity::getId).collect(Collectors.toList()));
+        }
+    }
+
+
+
+    /**
+     * 根据业务表id 获取附件信息
+     *
+     * @param businessId
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @author yl
+     * @date 2023-03-27 9:37
+     */
+    @Override
+    public List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId) {
+        LambdaQueryWrapper<OmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OmsAttachmentEntity::getBusinessId, businessId);
+        List<OmsAttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }
 }
