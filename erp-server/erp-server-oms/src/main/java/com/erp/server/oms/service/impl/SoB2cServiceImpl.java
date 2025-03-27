@@ -4555,9 +4555,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(logisticsEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
         }
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(id);
-        if (ObjectUtil.isEmpty(receiverEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+        SoB2cReceiverEntity receiverEntity = null;
+        if (!isFullyManagedOrder(soB2cEntity.getDictPlatform())){
+            receiverEntity = soB2cReceiverService.getByMainId(id);
+            if (ObjectUtil.isEmpty(receiverEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+            }
         }
         SoB2cFinanceEntity soB2cFinanceEntity = soB2cFinanceService.getByMainId(id);
         if (ObjectUtil.isEmpty(soB2cFinanceEntity)) {
@@ -4679,13 +4682,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         long warehouseCount = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).filter(StrUtil::isNotBlank).distinct().count();
         map.put("deliveryWarehouseQty", warehouseCount);
         map.put("buyLogisticsChannelId", logisticsEntity.getName());
-        map.put("destCountry", receiverEntity.getCountry());
-        map.put("destCity", receiverEntity.getCityName());
-        map.put("toProvince", receiverEntity.getProvinceName());
+        map.put("destCountry", Objects.nonNull(receiverEntity) ? receiverEntity.getCountry() : "");
+        map.put("destCity", Objects.nonNull(receiverEntity) ? receiverEntity.getCityName() : "");
+        map.put("toProvince", Objects.nonNull(receiverEntity) ? receiverEntity.getProvinceName() : "");
         map.put("orderTaxCost", totalTaxCost);
         map.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
         map.put("orderProfitRate", financialInfo.getProfitRateFlag());
-        map.put("postCode", receiverEntity.getPostCode());
+        map.put("postCode", Objects.nonNull(receiverEntity) ? receiverEntity.getPostCode() : "");
 
         List<Map<String, Object>> mapList = new ArrayList<>(detailList.size());
         for (SoB2cDetailEntity detailEntity : detailList) {
@@ -4729,16 +4732,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             detailMap.put("isHavebuyerRemark", isHavebuyerRemark);
             detailMap.put("deliveryWarehouseQty", warehouseCount);
             detailMap.put("sellerLogistics", logisticsEntity.getName());
-            detailMap.put("destCountry", receiverEntity.getCountry());
-            detailMap.put("destCity", receiverEntity.getCityName());
-            detailMap.put("toProvince", receiverEntity.getProvinceName());
+            detailMap.put("destCountry", Objects.nonNull(receiverEntity) ? receiverEntity.getCountry():"");
+            detailMap.put("destCity", Objects.nonNull(receiverEntity) ?receiverEntity.getCityName():"");
+            detailMap.put("toProvince", Objects.nonNull(receiverEntity) ?receiverEntity.getProvinceName():"");
             detailMap.put("orderTaxCost", totalTaxCost);
             detailMap.put("amount", MathUtil.multiply(soB2cEntity.getAmount(), soB2cEntity.getExchangeRate()));
             detailMap.put("orderProfitRate", financialInfo.getProfitRate());
             detailMap.put("isAmazonFBA", isAmazonFBA);
             detailMap.put("packageWidth", logisticsEntity.getWidth());
             detailMap.put("buyLogisticsChannelId", logisticsEntity.getName());
-            detailMap.put("postCode", receiverEntity.getPostCode());
+            detailMap.put("postCode", Objects.nonNull(receiverEntity) ?receiverEntity.getPostCode():"");
 
             //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
             if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {

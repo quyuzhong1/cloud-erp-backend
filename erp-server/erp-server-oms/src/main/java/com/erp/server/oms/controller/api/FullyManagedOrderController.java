@@ -35,12 +35,20 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1288,6 +1296,18 @@ public class FullyManagedOrderController extends BaseController {
     @PostMapping("/timeOutConfig")
     public ApiResult timeOutConfig(@RequestBody @Validated CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO){
         fullyManagedOrderService.timeOutConfig(timeOutSettingDTO);
+        return success();
+    }
+
+    /**
+     * 下载全托管订单导入模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载全托管订单导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
+        fullyManagedOrderService.downloadTemplate(response);
         return success();
     }
 }

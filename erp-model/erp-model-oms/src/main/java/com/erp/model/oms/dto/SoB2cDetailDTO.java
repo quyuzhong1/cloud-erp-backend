@@ -518,6 +518,14 @@ public class SoB2cDetailDTO implements Serializable {
         private BigDecimal firstMileShippingCost;
         //清关税费
         private BigDecimal clearanceCustomsTax;
+        /**
+         * 是否赠品：true/false
+         */
+        private Boolean isGift;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
     }
 
 
