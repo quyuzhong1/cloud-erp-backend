@@ -83,7 +83,7 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      */
     Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isAddCarton);
 
-    void sendNoticeMsg(String taskId, String operation, String content);
+    void sendNoticeMsg(String taskId, String operation, String content, PackingTaskEntity packingTask);
 
     /**
      * 装箱详情
