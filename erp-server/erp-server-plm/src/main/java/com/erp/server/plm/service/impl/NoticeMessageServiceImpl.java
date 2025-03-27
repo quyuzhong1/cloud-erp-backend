@@ -2920,7 +2920,7 @@ public class NoticeMessageServiceImpl extends ServiceImpl<NoticeMessageMapper, N
                         sb.append(String.format(NoticeMessageConstant.PRODUCT_CHANGE_CONTENT_START,skuChangeFieldsDTO.getSkuNo()));
                         sb.append(content);
                         // 添加操作人和操作时间信息
-                        sb.append(String.format(NoticeMessageConstant.PRODUCT_CHANGE_CONTENT_END,loginUser.getUserName(),nowStr));
+                        sb.append(String.format(NoticeMessageConstant.PRODUCT_CHANGE_CONTENT_END,loginUser == null ? "" : loginUser.getUserName(),nowStr));
 
                         // 构造通知消息中的变量替换Map
                         Map<String,String> map = new HashMap<>();

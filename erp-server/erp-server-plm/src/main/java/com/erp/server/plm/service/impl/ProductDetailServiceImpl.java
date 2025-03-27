@@ -6569,7 +6569,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             noticeDTO.setProductPackChangeField(productPackChangeField);
             List<ProductDetailDTO.NoticeDTO> noticeDTOList = Arrays.asList(noticeDTO);
             //发送消息
-            handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+            handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
 
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(purchaseEntity.getProductId())
                     .setBusinessId(purchaseEntity.getId()).setOperation("品质称重").setContent(logContent));
