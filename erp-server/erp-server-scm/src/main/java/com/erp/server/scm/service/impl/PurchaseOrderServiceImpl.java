@@ -1272,6 +1272,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             flag.setPurchaseOrderDetailId(item.getId());
             flag.setQty(item.getPurchaseQty());
             flag.setSkuId(skuId);
+
+            //入库质检
+            String detailQcType = QcTypeEnum.STOCK_IN.getCode();
+            //非首批：否
+            if (!item.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
+                detailQcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+            }
+            result.setQcType(detailQcType);
+            result.setIsInside(QcTypeEnum.getIsInsideByCode(detailQcType));
             productList.add(flag);
         }
         result.setProductList(productList);

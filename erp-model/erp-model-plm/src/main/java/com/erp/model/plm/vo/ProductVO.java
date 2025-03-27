@@ -140,6 +140,17 @@ public class ProductVO implements Serializable {
          */
         private List<String> boxImageUrlList;
 
+        /**
+         * 质检类型
+         */
+        private String qcType;
+
+
+        /**
+         * 是否 是内检
+         */
+        private Boolean isInside;
+
 
     }
 }
