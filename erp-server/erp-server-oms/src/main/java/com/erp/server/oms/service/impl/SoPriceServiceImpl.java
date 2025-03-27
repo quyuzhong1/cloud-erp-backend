@@ -2,7 +2,9 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -19,8 +21,10 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
@@ -29,10 +33,7 @@ import com.erp.model.oms.dto.SoPriceDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.dto.excel.ImportSoPriceExcelDTO;
 import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.SoPriceChangeDetailEntity;
-import com.erp.model.oms.entity.SoPriceDetailEntity;
-import com.erp.model.oms.entity.SoPriceEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoPriceTabFlagEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
@@ -67,6 +68,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -845,6 +847,95 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             resultList.add(excelDTO);
         }
         return new PagingVO<>(resultList, (int) page.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    /**
+     * 设置客户和组织
+     * @author will
+     * @date 2025/3/27 11:55
+     * @param list
+     */
+    private void setCustomerAndOrgByShopId (List<SoPriceDTO.PriceParamDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> shopIdList = list.stream().map(SoPriceDTO.PriceParamDTO::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopList = CollUtil.isEmpty(shopIdList) ? Collections.emptyList() : FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+        if (CollUtil.isEmpty(shopList)) {
+            return;
+        }
+        for (SoPriceDTO.PriceParamDTO priceParam : list) {
+            ShopInfoEntity shopInfoEntity = shopList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), priceParam.getShopId())).findFirst().orElse(new ShopInfoEntity());
+            priceParam.setCustomerId(shopInfoEntity.getCustomerId());
+            priceParam.setSoOrgId(shopInfoEntity.getSalesOrgId());
+        }
+    }
+
+    @Override
+    public List<SoPriceDTO.PriceDTO> batchGetSoPrice(List<SoPriceDTO.PriceParamDTO> list) {
+        List<SoPriceDTO.PriceDTO> updateList = new ArrayList<>();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        //根据店铺取客户和销售组织
+        setCustomerAndOrgByShopId(list);
+
+        //销售组织Id
+        List<String> soOrgIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSoOrgId())).map(SoPriceDTO.PriceParamDTO::getSoOrgId).distinct().collect(Collectors.toList());
+        List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.getAccountingCompanyList(soOrgIdList);
+        if (CollectionUtils.isEmpty(companyList)){
+            return Collections.emptyList();
+        }
+        //skuId
+        List<String> skuIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())).map(SoPriceDTO.PriceParamDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
+        if (CollectionUtils.isEmpty(skuVOList)) {
+            return Collections.emptyList();
+        }
+        //客户Id
+        List<String> customerIdList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getCustomerId())).map(SoPriceDTO.PriceParamDTO::getCustomerId).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> supplierEntityList = customerInfoService.listByIds(customerIdList);
+        if (CollectionUtils.isEmpty(supplierEntityList)) {
+            return Collections.emptyList();
+        }
+        //采购数量-需要根据sku进行汇总
+        Map<String, Integer> skuQtyList = list.stream().filter(e -> Objects.nonNull(e) && StrUtil.isNotBlank(e.getSkuId())
+                        && StrUtil.isNotBlank(e.getCustomerId()) && Objects.nonNull(e.getQty()))
+                .collect(Collectors.groupingBy(e -> e.getSkuId() + "_" + e.getCustomerId(), Collectors.summingInt(SoPriceDTO.PriceParamDTO::getQty)));
+        List<Integer> soQtyList = skuQtyList.values().stream().distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soQtyList)) {
+            return Collections.emptyList();
+        }
+        //查询对应采购价目
+        List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> viewList = soPriceDetailService.batchGetTaxPrice(skuIdList,customerIdList,soQtyList,soOrgIdList);
+        if (CollectionUtils.isEmpty(viewList)){
+            //未查到结果，直接返回
+            return Collections.emptyList();
+        }
+        List<SoPriceDTO.PriceDTO> result = new ArrayList<>();
+        for(SoPriceDTO.PriceParamDTO priceParamDTO : list){
+            SoPriceDTO.PriceDTO priceDTO = new SoPriceDTO.PriceDTO();
+            BeanUtil.copyProperties(priceParamDTO,priceDTO);
+            if (StrUtil.isBlank(priceParamDTO.getSoOrgId()) || StrUtil.isBlank(priceParamDTO.getSkuId()) || StrUtil.isBlank(priceParamDTO.getCustomerId()) || Objects.isNull(priceParamDTO.getQty())){
+                result.add(priceDTO);
+                continue;
+            }
+            //获取sku汇总数量
+            Integer purchaseQty = skuQtyList.getOrDefault(priceParamDTO.getSkuId() + "_" + priceParamDTO.getCustomerId(), null);
+            SoPriceDetailDTO.SoTaxPriceBatchViewDTO viewDTO = viewList.stream().filter(obj -> StrUtil.isNotBlank(priceParamDTO.getSkuId())
+                            && StrUtil.isNotBlank(obj.getSkuId()) && obj.getSkuId().equals(priceParamDTO.getSkuId())
+                            && StrUtil.isNotBlank(obj.getCustomerId()) && StrUtil.isNotBlank(priceParamDTO.getCustomerId()) && obj.getCustomerId().equals(priceParamDTO.getCustomerId())
+                            && StrUtil.isNotBlank(obj.getSoOrgId()) && StrUtil.isNotBlank(priceParamDTO.getSoOrgId()) && StrUtil.equals(obj.getSoOrgId(),priceParamDTO.getSoOrgId())
+                            && Objects.nonNull(purchaseQty) && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
+                    .findFirst().orElse(new SoPriceDetailDTO.SoTaxPriceBatchViewDTO());
+            priceDTO.setTaxPrice(viewDTO.getTaxPrice());
+            priceDTO.setTaxRate(viewDTO.getTaxRate());
+            priceDTO.setCurrency(viewDTO.getCurrency());
+            priceDTO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(viewDTO.getCurrency()));
+            priceDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), priceParamDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+            result.add(priceDTO);
+        }
+        return updateList;
     }
 
     /**

@@ -212,5 +212,15 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
      * @return Boolean
      */
     Boolean enable(BaseIdsDTO.IdsDTO dto);
-
+    /**
+     * 批量查询报价信息
+     * @author will
+     * @date 2025/3/27 12:16
+     * @param skuIdList
+     * @param customerIdList
+     * @param soQtyList
+     * @param soOrgIdList
+     * @return java.util.List<com.erp.model.oms.dto.SoPriceDetailDTO.SoTaxPriceBatchViewDTO>
+     */
+    List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> batchGetTaxPrice(List<String> skuIdList, List<String> customerIdList, List<Integer> soQtyList, List<String> soOrgIdList);
 }

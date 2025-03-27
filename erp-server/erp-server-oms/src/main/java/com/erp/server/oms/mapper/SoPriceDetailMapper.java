@@ -64,4 +64,12 @@ public interface SoPriceDetailMapper extends BaseMapper<SoPriceDetailEntity> {
      * @return java.util.List<com.erp.model.scm.entity.SoPriceDetailEntity>
      **/
     List<SoPriceDetailEntity> listDetailByIds(@Param("soPriceDetailIds") List<String> soPriceDetailIds);
+    /**
+     * 批量查询
+     * @author will
+     * @date 2025/3/27 12:18
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.SoPriceDetailDTO.SoTaxPriceBatchViewDTO>
+     */
+    List<SoPriceDetailDTO.SoTaxPriceBatchViewDTO> batchGetTaxPrice(SoPriceDetailDTO.SoTaxPriceBatchSearchDTO dto);
 }

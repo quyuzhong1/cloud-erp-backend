@@ -213,4 +213,50 @@
         </if>
     </select>
 
+    <select id="batchGetTaxPrice" resultType="com.erp.model.oms.dto.SoPriceDetailDTO$SoTaxPriceBatchViewDTO">
+        select
+        sp.customer_id,
+        si.name as customerName,
+        spd.sku_id as skuId,
+        spd.sku_no as skuNo,
+        spd.currency,
+        spd.tax_price as taxPrice,
+        spd.tax_rate * 100 as taxRate,
+        spd.min_qty as minQty,
+        spd.max_qty as maxQty,
+        sp.so_org_id as purchaseOrgId,
+        sp.so_org_name as purchaseOrgName
+        from so_price sp
+        inner join so_price_detail spd on pp.id = ppd.main_id and ppd.is_deleted = false
+        inner join customer_info si on pp.customer_id = si.id and si.is_deleted = false
+        <where>
+            sp.is_deleted = false and sp.approve_status = 'approve' and spd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
+            spd.effective_date and spd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
+            <if test="params.skuIdList != null and params.skuIdList.size > 0">
+                and spd.sku_id in
+                <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.soQtyList != null and params.soQtyList.size > 0">
+                and
+                <foreach collection="params.soQtyList" item="item" open="(" separator="or" close=")">
+                    (spd.max_qty > #{item} and #{item} >= spd.min_qty)
+                </foreach>
+            </if>
+            <if test="params.customerIdList != null and params.customerIdList.size > 0">
+                and sp.customer_id in
+                <foreach collection="params.customerIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+            <if test="params.soOrgIdList != null and params.soOrgIdList.size > 0">
+                and sp.so_org_id in
+                <foreach collection="params.soOrgIdList" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
+        </where>
+    </select>
+
 </mapper>

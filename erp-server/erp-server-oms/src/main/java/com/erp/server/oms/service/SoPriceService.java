@@ -190,5 +190,12 @@ public interface SoPriceService extends SuperService<SoPriceEntity> {
      * @return SoPriceExportExcelDTO
      */
     PagingVO<SoPriceExportExcelDTO> exportSoPrice(PagingDTO<SoPriceDTO.PagingParamDTO> dto);
-
+    /**
+     * 批量查询销售价目表
+     * @author will
+     * @date 2025/3/27 11:46
+     * @param list
+     * @return java.util.List<com.erp.model.oms.dto.SoPriceDTO.PriceDTO>
+     */
+    List<SoPriceDTO.PriceDTO> batchGetSoPrice(List<SoPriceDTO.PriceParamDTO> list);
 }
