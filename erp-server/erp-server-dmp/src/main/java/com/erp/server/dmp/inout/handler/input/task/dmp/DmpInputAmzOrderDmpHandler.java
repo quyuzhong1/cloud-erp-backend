@@ -98,6 +98,12 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
+                String orderStatus = sourceOrder.getOrderStatus();
+                dmpDataMap.put("platformOriginalStatus", orderStatus);
+                // 审核状态状态
+                // （ApproveStatus字典类型）
+                String dmpOrderStatus = sourceOrder.convertApproveStatusStr();
+                dmpDataMap.put("orderStatus", dmpOrderStatus);
 
                 // 付款金额
                 BigDecimal payMount = null == sourceOrder.getOrderTotal() ? BigDecimal.ZERO : new BigDecimal(sourceOrder.getOrderTotal().getAmount());
@@ -138,7 +144,6 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 }
                 dmpDataMap.put("extendData", JSON.toJSONString(lableMap));
 
-                dmpDataMap.put("platformOrderStatus", sourceOrder.getOrderStatus());
 
                 dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus());
                 dmpDataMap.put("payStatus", SoB2cPayStatusEnum.ENUM_PAID.getCode().equalsIgnoreCase(sourceOrder.convertPayStatus()));
@@ -150,9 +155,6 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 // 未付款无付款时间
                 dmpDataMap.put("payTime", "payment".equalsIgnoreCase(sourceOrder.convertPayStatus()) ? null : purchaseLocalDateTime);
 
-                // 审核状态状态
-                // （ApproveStatus字典类型）
-                dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatusStr());
             }
         }
         log.debug("DmpInputAmzOrderDmpHandler 处理完成: taskId={}", dmpInputTaskEntity.getId());
