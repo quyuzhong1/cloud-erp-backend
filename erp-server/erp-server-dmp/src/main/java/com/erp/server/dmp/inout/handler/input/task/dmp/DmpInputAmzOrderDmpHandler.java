@@ -2,11 +2,15 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
+import com.erp.sdk.oms.amz.spapi.model.orders.OrderItem;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +34,7 @@ import java.util.stream.Collectors;
 @Scope("prototype")
 public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
+    public static final String AMAZON_ORDER_ID = "amazonOrderId";
     @Resource
     private DmpSoInfoService dmpSoInfoService;
 
@@ -63,12 +68,35 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     .update();
         }
 
+        List<ParamData> paramDataList = new ArrayList<>();
+        paramDataList.add(new ParamData(AMAZON_ORDER_ID, AMAZON_ORDER_ID, PannoEnum.IN, orderIdList));
+        paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
+        List<Map<String, Object>> detailMongoData = mongoService.findMongoData(paramDataList, "amazon_order_items_data");
+
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap :
                 dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
             Map<String, Object> mongoDataMap = mongoDataMaps.get(0);
             Order sourceOrder = JSON.parseObject(JSON.toJSONString(mongoDataMap), Order.class);
+            // 明细信息
+            List<OrderItem> orderItemList = detailMongoData.stream()
+                    .filter(e -> e.getOrDefault(AMAZON_ORDER_ID, "").toString().equalsIgnoreCase(sourceOrder.getAmazonOrderId()))
+                    .map(e -> JSON.parseObject(JSON.toJSONString(e), OrderItem.class))
+                    .collect(Collectors.toList());
+
+            BigDecimal allAmount = orderItemList.stream()
+                    .filter(e-> null != e.getItemPrice())
+                    .filter(e-> null != e.getItemPrice().getAmount())
+                    .map(e -> new BigDecimal(e.getItemPrice().getAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalDiscount = orderItemList.stream()
+                    .filter(e-> null != e.getPromotionDiscount())
+                    .filter(e-> null != e.getPromotionDiscount().getAmount())
+                    .map(e -> new BigDecimal(e.getPromotionDiscount().getAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 
                 // 付款金额
@@ -76,7 +104,10 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 dmpDataMap.put("payAmount", payMount);
 
                 // 订单金额
-                dmpDataMap.put("allAmount", payMount);
+                dmpDataMap.put("allAmount", allAmount);
+
+                // 折扣总价
+                dmpDataMap.put("totalDiscount", totalDiscount);
 
                 // 币别（原币）
                 String currencyCode = null == sourceOrder.getOrderTotal() ? "" : sourceOrder.getOrderTotal().getCurrencyCode();
@@ -109,7 +140,7 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 dmpDataMap.put("platformOrderStatus", sourceOrder.getOrderStatus());
 
-                dmpDataMap.put("orderStatus", sourceOrder.convertBillStatus());
+                dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus());
                 dmpDataMap.put("payStatus", SoB2cPayStatusEnum.ENUM_PAID.getCode().equalsIgnoreCase(sourceOrder.convertPayStatus()));
 
                 // 订单日期
@@ -121,7 +152,7 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 // 审核状态状态
                 // （ApproveStatus字典类型）
-                dmpDataMap.put("approveStatus", sourceOrder.convertApproveStatusStr());
+                dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatusStr());
             }
         }
         log.debug("DmpInputAmzOrderDmpHandler 处理完成: taskId={}", dmpInputTaskEntity.getId());
