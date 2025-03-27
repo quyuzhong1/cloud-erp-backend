@@ -314,7 +314,8 @@
             pod.purchase_qty AS purchaseQty,
             0 as unReceiveQty,
             0 as receiveQty,
-            0 as exceedQty
+            0 as exceedQty,
+            pod.first_mass_product as firstMassProduct
         FROM purchase_order po
         INNER JOIN purchase_order_detail pod ON pod.purchase_order_id = po.id AND po.is_deleted = FALSE
         LEFT JOIN purchase_order_supplier pos ON pos.purchase_order_id = po."id" AND pod.is_deleted = FALSE

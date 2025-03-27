@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.plm.enums.*;
@@ -98,6 +99,12 @@ public class ProductDetailUpdateApproveExcelDTO {
      * 报关产品属性
      */
     private String productProperty;
+
+    /**
+     * 保险属性
+     */
+    @FieldValid(fieldName = "保险属性")
+    private String insuranceProperty;
 
     /**
      * 报关申报价（$）

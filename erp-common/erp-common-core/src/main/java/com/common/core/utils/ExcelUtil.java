@@ -409,6 +409,46 @@ public class ExcelUtil {
     }
 
     /**
+     * 导出文件
+     * @param templatePath
+     * @param fileName
+     * @param dataResult
+     * @return File
+     */
+    public static File exportFile(String templatePath,String fileName, List<?> dataResult) {
+        // 1. 获取模板输入流（假设模板在 resources/excel 目录下）
+        InputStream templateStream = ExcelUtil.class.getClassLoader().getResourceAsStream(templatePath);
+        // 2. 修改后的导出代码
+        File tempDirectory = FileUtils.getTempDirectory();
+        File outputFile = new File(tempDirectory,fileName);
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            // EasyExcel 模板填充逻辑
+            ExcelWriter excelWriter = EasyExcel.write(fos)
+                    .withTemplate(templateStream) // 绑定模板
+                    .build();
+
+            WriteSheet writeSheet = EasyExcel.writerSheet().build();
+
+            // 填充数据（假设 errorList 是模板中的占位符数据）
+            excelWriter.fill(dataResult, writeSheet);
+
+            excelWriter.finish(); // 必须调用 finish 确保写入完成
+            return outputFile;
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        } finally {
+            // 关闭模板流（重要！）
+            if (templateStream != null) {
+                try {
+                    templateStream.close();
+                } catch (IOException e) {
+                    // 日志记录或处理异常
+                }
+            }
+        }
+    }
+
+    /**
      * 导出数据为excel文件（按内容自适应列宽）
      *
      * @param filename   文件名称

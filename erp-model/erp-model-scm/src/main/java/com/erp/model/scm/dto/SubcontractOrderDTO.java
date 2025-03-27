@@ -1,6 +1,5 @@
 package com.erp.model.scm.dto;
 
-import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
@@ -340,7 +339,11 @@ public class SubcontractOrderDTO implements Serializable {
          * 委外组织名称
          */
         private String   subcontractOrgName;
-
+        /**
+         * 能否编辑
+         * ture 能编辑  false 不能编辑
+         */
+        private Boolean  canEdit = Boolean.FALSE;
         /**
          * 明细集合
          */
@@ -412,11 +415,6 @@ public class SubcontractOrderDTO implements Serializable {
          */
         @NotBlank(message = "委外组织不能为空")
         private String subcontractOrgId;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
 
         /**
         * 来源id
@@ -602,6 +600,16 @@ public class SubcontractOrderDTO implements Serializable {
          * 仓库库位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     @Data
@@ -767,7 +775,7 @@ public class SubcontractOrderDTO implements Serializable {
         /**
          * 新品首批（false否,true是）
          */
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
 
         /**
          * 备注

@@ -53,6 +53,12 @@ public class ListingInfoParamDTO {
      */
     private String platform;
 
+    /**
+     * 平台集合
+     */
+    private List<String> platformList;
+
+
     private String authId;
 
     /**

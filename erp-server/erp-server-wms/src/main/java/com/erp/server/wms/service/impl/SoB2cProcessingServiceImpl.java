@@ -36,7 +36,6 @@ import org.springframework.util.StopWatch;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -125,7 +124,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
          */
         //查询加工单数据
         List<String> deliveryIdList = list.stream().map(SoB2cProcessingEntity::getDeliveryId).distinct().collect(Collectors.toList());
-        List<List<String>> sourceDetailIdListPartition = Lists.partition(deliveryIdList, 50000);
+        List<List<String>> sourceIdListPartition = Lists.partition(deliveryIdList, 50000);
 
         //查询发货单出库流水
         List<VirtualTransFlowEntity> virtualTransFlowList = new ArrayList<>();
@@ -134,16 +133,16 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         //销售出库单数据
         List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = new ArrayList<>();
         //分页查询数据
-        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
-            List<VirtualTransFlowEntity> virtualTransFlowPageList = virtualTransFlowService.listBySourceDetailIdList(sourceDetailIdPartition);
+        for (List<String> sourceIdPartition : sourceIdListPartition) {
+            List<VirtualTransFlowEntity> virtualTransFlowPageList = virtualTransFlowService.listBySourceIdList(sourceIdPartition);
             if (CollectionUtils.isNotEmpty(virtualTransFlowPageList)) {
                 virtualTransFlowList.addAll(virtualTransFlowPageList);
             }
-            List<SoB2bProcessingDTO.ResponseDTO> transferPageList = transferInfoDetailService.listTransferBySourceIdList(sourceDetailIdPartition);
+            List<SoB2bProcessingDTO.ResponseDTO> transferPageList = transferInfoDetailService.listTransferBySourceIdList(sourceIdPartition);
             if (CollectionUtils.isNotEmpty(transferPageList)) {
                 transferList.addAll(transferPageList);
             }
-            List<SoB2bProcessingDTO.ResponseDTO> soOutstockPageList = soOutstockDetailService.listSoOutstockBySourceIdList(sourceDetailIdPartition);
+            List<SoB2bProcessingDTO.ResponseDTO> soOutstockPageList = soOutstockDetailService.listSoOutstockBySourceIdList(sourceIdPartition);
             if (CollectionUtils.isNotEmpty(soOutstockPageList)) {
                 soOutstockList.addAll(soOutstockPageList);
             }

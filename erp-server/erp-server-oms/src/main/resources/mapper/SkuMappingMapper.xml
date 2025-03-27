@@ -439,6 +439,16 @@
             AND li.platform = #{params.platform}
             AND sm.dict_platform = #{params.platform}
         </if>
+        <if test="params.platformList !=null and params.platformList.size>0">
+            AND li.platform IN
+            <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            AND sm.dict_platform in
+            <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--匹配结果吧true 已匹配 false 未匹配-->
         <if test="params.matchResult != null">
             AND li.match_result = #{params.matchResult}

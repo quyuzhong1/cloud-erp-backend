@@ -596,10 +596,6 @@ public class PoInstockDTO implements Serializable {
          */
         private String stockInDeptName;
 
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * 供应商信息

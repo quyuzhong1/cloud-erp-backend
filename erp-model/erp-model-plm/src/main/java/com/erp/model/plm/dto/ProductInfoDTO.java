@@ -204,7 +204,6 @@ public class ProductInfoDTO {
 
     private String applicationCategoryId;
 
-
     @Data
     @NoArgsConstructor
     public static class ProductRolePeopleDTO {

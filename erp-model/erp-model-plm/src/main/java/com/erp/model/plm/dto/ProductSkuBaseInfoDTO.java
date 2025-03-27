@@ -1,13 +1,10 @@
 package com.erp.model.plm.dto;
 
 import com.common.core.anno.StateEnumValue;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 @Data
 public class ProductSkuBaseInfoDTO {

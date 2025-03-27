@@ -112,7 +112,7 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param deliveryDetailIdList
      * @return List<VirtualTransFlowEntity>
      */
-    List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList);
+    List<VirtualTransFlowEntity> listBySourceIdList(List<String> deliveryDetailIdList);
     /**
      * 查询虚拟仓即时库存id
      * @author will

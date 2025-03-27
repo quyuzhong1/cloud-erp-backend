@@ -679,4 +679,25 @@ public class BasicCategoryServiceImpl extends ServiceImpl<BasicCategoryMapper, B
             }
         });
     }
+
+    /**
+     * 根据分类id 找出父类的一二级名称，以/分隔
+     *
+     * @param categoryId
+     * @return java.lang.String
+     * @author jack
+     * @date 2025-03-12
+     */
+    @Override
+    public String getParentName(String categoryId) {
+        List<String> pidList = getPidList(categoryId);
+        if(CollUtil.isEmpty(pidList)){
+            return "";
+        }
+        BasicCategoryEntity basicCategoryEntity = this.getById(pidList.get(0));
+        if(Objects.isNull(basicCategoryEntity)){
+            return "";
+        }
+        return basicCategoryEntity.getName();
+    }
 }
