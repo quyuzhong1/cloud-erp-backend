@@ -62,7 +62,7 @@ public class TikTokFullService {
 
         String url = TikTokConstant.URL;
         String secret = "530a7d739653179b07d7026a63cde31671f10f61";
-        String accessToken = "ROW_Q_G7MwAAAABVlKa00W9Nne3pV522i3L6mAsF00yqiNPmrnKp8F94bP11MuEH-o_idyCIo7LDNtimPI5VtraSkZ_umFYSmFq";
+        String accessToken = "ROW_B6eCcQAAAABVlKa00W9Nne3pV522i3L6Ie04obpPK2d-5Rq9rL7jO0YSbotwLjpZ4DfljtV--ZI9dIDBdmztWivYPnUtt7dp";
         String appKey = "69p2ui5hr09sn";
         StringBuffer sb = new StringBuffer();
         //组装授权url
@@ -72,14 +72,8 @@ public class TikTokFullService {
         Map<String, Object> params = new HashMap<>();
         params.put("access_token", accessToken);
         params.put("app_key", appKey);
-        params.put("page_size", "100");
-        params.put("page_token", "");
-//        params.put("shop_cipher", shopInfoDTO.getShopCipher());
-        params.put("shop_id", "");
-        params.put("sign", "");
         String timestamp = System.currentTimeMillis() / 1000 + "";
         params.put("timestamp", timestamp);
-        params.put("version", TikTokConstant.FULLY_VERSION);
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>();
@@ -87,7 +81,8 @@ public class TikTokFullService {
         headerMap.put("x-tts-access-token", accessToken);
 
         //请求body，平台用于计算签名
-        Map<String, String> bodyMap = new HashMap<>();
+        Map<String, Object> bodyMap = new HashMap<>();
+        bodyMap.put("page_size", 50);
 
         String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
         // 追加请求路径获取签名
@@ -100,13 +95,8 @@ public class TikTokFullService {
         sb.append(path);
         sb.append("?access_token=" + params.get("access_token") + "");
         sb.append("&app_key=" + params.get("app_key") + "");
-        sb.append("&page_size=" + params.get("page_size") + "");
-        sb.append("&page_token=" + params.get("page_token") + "");
-        sb.append("&shop_cipher=" + params.get("shop_cipher") + "");
-        sb.append("&shop_id=" + params.get("shop_id") + "");
         sb.append("&sign=" + params.get("sign") + "");
         sb.append("&timestamp=" + params.get("timestamp") + "");
-        sb.append("&version=" + params.get("version") + "");
 
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);

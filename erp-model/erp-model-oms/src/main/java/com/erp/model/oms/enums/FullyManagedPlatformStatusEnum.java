@@ -1,8 +1,13 @@
 package com.erp.model.oms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.constant.EnumMessage;
+import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.Arrays;
 
 /**
  * <p>
@@ -57,6 +62,46 @@ public enum FullyManagedPlatformStatusEnum implements EnumMessage {
         for (FullyManagedPlatformStatusEnum statusEnum : FullyManagedPlatformStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
+            }
+        }
+        return "";
+    }
+
+
+    @Getter
+    public enum TikTokStatusEnum {
+        WAIT_CONFIRM("WAIT_CONFIRM","已建单待商家确认", FullyManagedPlatformStatusEnum.WAIT_CONFIRM),
+        WAIT_SEND("WAIT_SEND","已确认待商家发货", FullyManagedPlatformStatusEnum.CONFIRMED),
+        SENDED("SENDED","商家已发货", FullyManagedPlatformStatusEnum.SHIPPED),
+        SIGNED("SIGNED","已签收待仓库收货", FullyManagedPlatformStatusEnum.WAIT_RECEIVE),
+        RECEIVED("RECEIVED","已收货完成待装箱", FullyManagedPlatformStatusEnum.RECEIVED),
+        IN_QUALITY_CHECK("IN_QUALITY_CHECK","已装箱完成待质检", FullyManagedPlatformStatusEnum.WAIT_QC),
+        QUALITY_CHECK_COMPLETED("QUALITY_CHECK_COMPLETED","已质检完成待上架", FullyManagedPlatformStatusEnum.WAIT_INSTOCK),
+        RETURN_COMPLETED("RETURN_COMPLETED","已退供", FullyManagedPlatformStatusEnum.RETURN),
+        INBOUND("INBOUND","已入库上架", FullyManagedPlatformStatusEnum.SOTOCK_IN),
+        INVAILD("INVAILD","已作废", FullyManagedPlatformStatusEnum.INVAILD),
+        ;
+                ;
+        private final String code;
+        private final String name;
+        private final FullyManagedPlatformStatusEnum erpEnum;
+
+        TikTokStatusEnum(String code, String name, FullyManagedPlatformStatusEnum erpEnum) {
+            this.code = code;
+            this.name = name;
+            this.erpEnum = erpEnum;
+        }
+    }
+
+    public static String getErpCodeByCode(String platform,String code) {
+        if (StringUtils.isBlank(platform) || StringUtils.isBlank(code)) {
+            return "";
+        }
+        if(PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(platform)){
+            for (TikTokStatusEnum statusEnum : TikTokStatusEnum.values()) {
+                if (code.equals(statusEnum.getCode())) {
+                    return statusEnum.getErpEnum().getCode();
+                }
             }
         }
         return "";
