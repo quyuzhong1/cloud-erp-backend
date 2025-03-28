@@ -6055,6 +6055,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setInvalidType(oldEntity.getInvalidType());
             }
 
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                dto.setPlatformOrderStatus(FullyManagedPlatformStatusEnum.getErpCodeByCode(dto.getDictPlatform(),dto.getPlatformOrderStatus()));
+            }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (StringUtils.isNotBlank(dto.getSellerOrderCode())) {
