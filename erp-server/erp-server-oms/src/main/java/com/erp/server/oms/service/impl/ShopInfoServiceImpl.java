@@ -34,6 +34,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -765,13 +766,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         currIds.addAll(list.stream().map(ShopDTO.PagingViewDTO::getTradeCurrency).collect(Collectors.toList()));
 		Map<String, String> currIdNameMap = FeignQuery.getByIds(DictCurrencyEntity.class, currIds)
         		.stream().collect(Collectors.toMap(DictCurrencyEntity::getId, DictCurrencyEntity::getName));
+        List<DictGlobalAreaEntity> dictGlobalAreaEntityList = FeignQuery.list(DictGlobalAreaEntity.class);
         for (ShopDTO.PagingViewDTO item : list) {
             //平台
             String dictPlatform = item.getDictPlatform();
             String platformName = dictList.stream().filter(d -> d.getValue().equals(dictPlatform)).
                     findFirst().map(DictBasicEntity::getName).orElse("");
             item.setPlatformName(platformName);
-            item.setAreaName(item.getDictAreaCode());
+            DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalAreaEntityList.stream().filter(d -> d.getId().equals(item.getDictAreaCode())).findFirst().orElse(null);
+            if (Objects.nonNull(dictGlobalAreaEntity)) {
+                item.setAreaName(dictGlobalAreaEntity.getSubregionName());
+            }else{
+                item.setAreaName(item.getDictAreaCode());
+            }
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "禁用" : "启用";
             item.setDisabledName(disabledName);
