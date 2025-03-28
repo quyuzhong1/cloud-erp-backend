@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -34,4 +35,11 @@ public interface FullyManagedOrderService extends SuperService<SoB2cEntity> {
      * @param response
      */
     void downloadTemplate(HttpServletResponse response);
+    /**
+     * 导入Excel
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }

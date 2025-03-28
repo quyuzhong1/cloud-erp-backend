@@ -551,11 +551,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //计算物流尺寸
         calculateSizeByAdd(addDTO.getLogisticsDTO(), addDTO.getDetailList());
-        //新增物流信息
-        soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
         if (isFullyManagedOrder(dictPlatform)){
             //新增全托管附属信息
             soB2cExtendService.add(addDTO.getExtendDTO(),soB2cEntity);
+            //物流信息同步新增运单号
+            addDTO.getLogisticsDTO().setCode(addDTO.getLogisticsDTO().getTrackNo());
         }else {
             if(Objects.isNull(addDTO.getReceiverDTO())){
                 throw new ServiceException("订单买家信息不能为空");
@@ -577,6 +577,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     addDTO.getLogisticsDTO().getLogisticsChannelId());
             soB2cEntity.setIsOutOfRangeDelivery(isOutOfRangeDelivery);
         }
+        //新增物流信息
+        soB2cLogisticsService.add(addDTO.getLogisticsDTO(), soB2cEntity.getId());
         //新增明细
         soB2cDetailService.add(addDTO, soB2cEntity.getId());
         //新增财务信息
@@ -3344,7 +3346,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-
         //财务信息
         SoB2cFinanceEntity soB2cFinanceEntity = soB2cFinanceService.getByMainId(id);
         if (CollectionUtils.isEmpty(soB2cDetailList)) {
@@ -3833,15 +3834,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 //订单来源类型
                 data.setOrderSourceTypeName(SoB2cExtendOrderSourceTypeEnum.getName(data.getOrderSourceType()));
                 //预警描述
-                if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(data.getBillStatus()) && Objects.nonNull(data.getDeliveryTime())){
+                if (SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(data.getBillStatus()) && Objects.nonNull(data.getDeliveryTime()) && Objects.nonNull(data.getRequiredDeliveryTime())){
                     //已发货
                     LocalDateTime deliveryTime = data.getDeliveryTime();
                     if (deliveryTime.isBefore(data.getRequiredDeliveryTime())){
                         data.setDeliveryWarningDesc("未超时");
-                    }else if (Objects.nonNull(data.getRequiredDeliveryTime())){
-                        double hour = LocalDateUtil.calculateHoursWithDecimal(data.getRequiredDeliveryTime(), deliveryTime, 1);
+                    }else {
+                        double hour = LocalDateUtil.calculateHoursWithDecimal(deliveryTime, data.getRequiredDeliveryTime(), 1);
                         data.setWarningHour(BigDecimal.valueOf(hour));
-                        data.setDeliveryWarningDesc("已超时" + hour + "小时");
+                        data.setDeliveryWarningDesc("已超时" + -hour + "小时");
                     }
                 }else if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(data.getBillStatus()) && Objects.nonNull(data.getRequiredDeliveryTime()) && Objects.nonNull(data.getDeliveryWarningTime())){
                     LocalDateTime requiredDeliveryTime = data.getRequiredDeliveryTime();
@@ -3849,11 +3850,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     if (LocalDateTime.now().isBefore(deliveryWarningTime)){
                         data.setDeliveryWarningDesc("暂无预警");
                     }else if (LocalDateTime.now().isBefore(requiredDeliveryTime) && LocalDateTime.now().isAfter(deliveryWarningTime)){
-                        double hour = LocalDateUtil.calculateHoursWithDecimal(requiredDeliveryTime, LocalDateTime.now(), 1);
+                        double hour = LocalDateUtil.calculateHoursWithDecimal( LocalDateTime.now(), requiredDeliveryTime, 1);
                         data.setWarningHour(BigDecimal.valueOf(hour));
                         data.setDeliveryWarningDesc(hour + "小时后超时");
                     }else if (requiredDeliveryTime.isBefore(LocalDateTime.now())){
-                        double hour = LocalDateUtil.calculateHoursWithDecimal(requiredDeliveryTime, LocalDateTime.now(), 1);
+                        double hour = LocalDateUtil.calculateHoursWithDecimal(LocalDateTime.now(), requiredDeliveryTime, 1);
                         data.setWarningHour(BigDecimal.valueOf(hour));
                         data.setDeliveryWarningDesc("已超期" + -hour + "小时");
                     }
@@ -6055,6 +6056,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setInvalidType(oldEntity.getInvalidType());
             }
 
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+                dto.setPlatformOrderStatus(FullyManagedPlatformStatusEnum.getErpCodeByCode(dto.getDictPlatform(),dto.getPlatformOrderStatus()));
+            }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
             if (StringUtils.isNotBlank(dto.getSellerOrderCode())) {

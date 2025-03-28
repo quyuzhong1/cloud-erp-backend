@@ -1862,6 +1862,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public List<ShopInfoEntity> listShopByName(List<String> shopNameList) {
+        if (CollUtil.isEmpty(shopNameList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ShopInfoEntity::getName, shopNameList).list();
+    }
+
+    @Override
     public PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds) {
         Page query = new Page(advanceQueryDTO.getCurrPage(), advanceQueryDTO.getPageSize());
         IPage pageData = baseMapper.pageAuthShop(query, advanceQueryDTO.getParams(),shopIds);

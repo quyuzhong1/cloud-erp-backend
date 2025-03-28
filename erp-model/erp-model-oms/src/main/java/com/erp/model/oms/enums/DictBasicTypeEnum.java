@@ -30,6 +30,7 @@ public enum DictBasicTypeEnum {
     TRADE_TERM("tradeTerm",  "贸易条款"),
 
     CFG_SETTING("cfgSetting", "系统配置"),
+    ORDER_SOURCE_TYPE("orderSourceType", "订单来源类型"),
 
     ;
 

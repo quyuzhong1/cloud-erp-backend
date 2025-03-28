@@ -6,6 +6,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderExtendDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -127,7 +129,7 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
             CfgSettingDTO.ViewDTO setting = cfgSettingService.getSetting(CfgSettingEnum.TIME_OUT_CONFIG.getCode());
             if (Objects.nonNull(setting) && Objects.nonNull(setting.getTimeOutSettingDTO()) && Objects.nonNull(setting.getTimeOutSettingDTO().getWarningTime())){
                 BigDecimal warningTime = setting.getTimeOutSettingDTO().getWarningTime();
-                soB2cExtendEntity.setDeliveryWarningTime(soB2cExtendEntity.getRequiredDeliveryTime().plusHours(-warningTime.longValue()));
+                soB2cExtendEntity.setDeliveryWarningTime(soB2cExtendEntity.getRequiredDeliveryTime().plusMinutes(-warningTime.multiply(new BigDecimal(60)).longValue()));
             }
         }
         if (Objects.isNull(soB2cExtendEntity.getWarningCount())){
@@ -149,5 +151,26 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
             return Collections.emptyList();
         }
         return baseMapper.fullyManagedOrderMsgWarning(offsetMinutes,dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity) {
+        PlatformOrderExtendDTO platformOrderExtendDTO = dto.getExtend();
+        if (Objects.isNull(platformOrderExtendDTO)){
+            return;
+        }
+        SoB2cExtendEntity soB2cExtendEntity = getByMainId(mainEntity.getId());
+        if (Objects.isNull(soB2cExtendEntity)) {
+            soB2cExtendEntity = new SoB2cExtendEntity();
+            soB2cExtendEntity.setMainId(mainEntity.getId());
+            BeanMapperUtils.copy(platformOrderExtendDTO, soB2cExtendEntity);
+            handleData(soB2cExtendEntity, mainEntity);
+            super.save(soB2cExtendEntity);
+        }else{
+            BeanMapperUtils.copy(platformOrderExtendDTO, soB2cExtendEntity);
+            handleData(soB2cExtendEntity, mainEntity);
+            super.updateById(soB2cExtendEntity);
+        }
     }
 }
