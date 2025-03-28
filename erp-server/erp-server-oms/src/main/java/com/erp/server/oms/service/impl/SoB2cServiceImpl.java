@@ -9782,7 +9782,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //销售平台
         List<DictBasicDTO.ViewDTO> salesPlatformList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        Map<String, String> salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getValue));
+        Map<String, String> salesPlatformMap = salesPlatformList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getValue, (oldValue, newValue) -> oldValue));
 
         //授权店铺
         List<String> salesPlatformNames = successList.stream().filter(v -> StringUtils.isNotBlank(v.getDictPlatformName())).map(B2CSoImportExcelDTO::getDictPlatformName).distinct().collect(Collectors.toList());
@@ -9791,26 +9791,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             salesPlatformIds.add(salesPlatformMap.get(salesPlatformName));
         }
         List<ShopInfoEntity> shopInfoAuthList = shopInfoService.listAuthPlatform(salesPlatformIds);
-        Map<String, ShopInfoEntity> shopInfoAuthMap = shopInfoAuthList.stream().collect(Collectors.toMap(ShopInfoEntity::getName, v -> v));
+        Map<String, ShopInfoEntity> shopInfoAuthMap = shopInfoAuthList.stream().collect(Collectors.toMap(ShopInfoEntity::getName, v -> v, (oldValue, newValue) -> oldValue));
         //币别
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         //订单分类
         List<OrderCategoryDetailDTO.ListDTO> orderCategoryList = orderCategoryDetailService.listOrderCategory();
-        Map<String, String> orderCategoryMap = orderCategoryList.stream().collect(Collectors.toMap(OrderCategoryDetailDTO.ListDTO::getName, OrderCategoryDetailDTO.ListDTO::getId));
+        Map<String, String> orderCategoryMap = orderCategoryList.stream().collect(Collectors.toMap(OrderCategoryDetailDTO.ListDTO::getName, OrderCategoryDetailDTO.ListDTO::getId, (oldValue, newValue) -> oldValue));
         //物流渠道
         List<BaseDropDownDTO.DisabledDTO> logisticsList = logisticsFeign.listAll();
-        Map<String, String> logisticsMap = logisticsList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode));
+        Map<String, String> logisticsMap = logisticsList.stream().collect(Collectors.toMap(BaseDropDownDTO.DisabledDTO::getValue, BaseDropDownDTO.DisabledDTO::getCode, (oldValue, newValue) -> oldValue));
         //国家
         List<String> countryNames = successList.stream().map(B2CSoImportExcelDTO::getCountryName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryNames);
-        Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(DictCountryEntity::getNameCn, DictCountryEntity::getId));
+        Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(DictCountryEntity::getNameCn, DictCountryEntity::getId, (oldValue, newValue) -> oldValue));
         //仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
-        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getName, WarehouseDTO.UpdateDTO::getId));
+        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getName, WarehouseDTO.UpdateDTO::getId, (oldValue, newValue) -> oldValue));
         //B2C客户
         List<String> customerNameList = successList.stream().map(B2CSoImportExcelDTO::getCustomerName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<CustomerB2CDTO.DropListDTO> b2cCustomerList = customerB2cService.customerListByName(customerNameList);
-        Map<String, CustomerB2CDTO.DropListDTO> b2cCustomerMap = b2cCustomerList.stream().collect(Collectors.toMap(CustomerB2CDTO.DropListDTO::getCustomerName, v -> v));
+        Map<String, CustomerB2CDTO.DropListDTO> b2cCustomerMap = b2cCustomerList.stream().collect(Collectors.toMap(CustomerB2CDTO.DropListDTO::getCustomerName, v -> v, (oldValue, newValue) -> oldValue));
 
         //客户SKU
         //SKU对照表信息
@@ -9820,7 +9820,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
         Map<String, SkuMappingDTO.ListSkuDTO> skuNoMap = new HashMap<>();
         if (CollUtil.isNotEmpty(skuMappingList)){
-            skuNoMap = skuMappingList.stream().collect(Collectors.toMap(SkuMappingDTO.ListSkuDTO::getProductSkuNo, v -> v));
+            skuNoMap = skuMappingList.stream().collect(Collectors.toMap(SkuMappingDTO.ListSkuDTO::getProductSkuNo, v -> v, (oldValue, newValue) -> oldValue));
         }
 
         LocalDateTime nowTime = LocalDateTime.now();
@@ -9859,7 +9859,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(StringUtils.isNotBlank(salesPlatformMap.get(dictPlatformName))){
                 soB2cEntity.setDictPlatform(salesPlatformMap.get(dictPlatformName));
             }else {
-                errorMsgList.add("平台不存在");
+                errorMsgList.add("平台未找到");
             }
             //店铺
             ShopInfoEntity shopInfoEntity = shopInfoAuthMap.get(mainInfo.getShopName());
@@ -9869,17 +9869,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cEntity.setOrgId(shopInfoEntity.getSalesOrgId());
                 soB2cEntity.setOrgName(shopInfoEntity.getSalesOrgName());
             }else {
-                errorMsgList.add("店铺不存在");
+                errorMsgList.add("店铺未找到");
             }
             //订单金额
             soB2cEntity.setAmount(MathUtil.getBigDecimalByStr(mainInfo.getAmount()));
             //币别
             String currencyStr = mainInfo.getCurrency();
-            DictCurrencyEntity currencyEntity = currencyList.stream().filter(c -> c.getName().equals(currencyStr)).
+            DictCurrencyEntity currencyEntity = currencyList.stream().filter(c -> c.getId().equals(currencyStr)).
                     findFirst().orElse(null);
             String currency = "";
             if (Objects.isNull(currencyEntity)) {
-                errorMsgList.add("币种不存在");
+                errorMsgList.add("币种未找到");
             } else {
                 currency = currencyEntity.getId();
                 soB2cEntity.setCurrency(currency);
@@ -9910,7 +9910,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             //订单类型
-            soB2cEntity.setTransactionSubType(OrderSubTypeEnum.getByCode(mainInfo.getTransactionSubType()).getCode());
+            soB2cEntity.setTransactionSubType(OrderSubTypeEnum.getName(mainInfo.getTransactionSubType()));
             //订单备注
             soB2cEntity.setRemark(mainInfo.getRemark());
 
@@ -9925,7 +9925,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(StringUtils.isNotBlank(countryMap.get(mainInfo.getCountryName()))){
                 receiverDTO.setCountry(countryMap.get(mainInfo.getCountryName()));
             }else {
-                errorMsgList.add("国家不存在");
+                errorMsgList.add("国家未找到");
             }
 
             //物流渠道
@@ -9933,7 +9933,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(StringUtils.isNotBlank(mainInfo.getLogisticsChannelName()) && StringUtils.isNotBlank(logisticsMap.get(mainInfo.getLogisticsChannelName()))){
                 b2cLogisitics.setLogisticsChannelId(logisticsMap.get(mainInfo.getLogisticsChannelName()));
             }else {
-                errorMsgList.add("物流渠道不存在");
+                errorMsgList.add("物流渠道未找到");
             }
             //跟踪号
             b2cLogisitics.setCode(mainInfo.getTrackNo());
@@ -9968,7 +9968,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 String skuNo = detail.getSkuNo();
                 SkuMappingDTO.ListSkuDTO skuVO = skuNoMap.get(skuNo);
                 if(Objects.isNull(skuVO)){
-                    msgList.add("sku不存在");
+                    msgList.add("sku未找到");
                 }else {
                     detailEntity.setSkuId(skuVO.getProductSkuId());
                     detailEntity.setSkuNo(skuVO.getProductSkuNo());
@@ -9985,7 +9985,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             detailEntity.setWarehouseId(warehouseId);
                             detailEntity.setWarehouseName(detail.getWarehouseName());
                         }else {
-                            msgList.add("仓库不存在");
+                            msgList.add("仓库未找到");
                         }
                     }
                     detailEntity.setMainId(soB2cEntity.getId());
