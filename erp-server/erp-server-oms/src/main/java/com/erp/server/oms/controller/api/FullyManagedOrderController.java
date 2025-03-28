@@ -40,6 +40,7 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -1309,5 +1310,15 @@ public class FullyManagedOrderController extends BaseController {
     public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
         fullyManagedOrderService.downloadTemplate(response);
         return success();
+    }
+    /**
+     * 导入全托管订单
+     *
+     * @return
+     */
+    @PostMapping("/importFile")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = fullyManagedOrderService.importExcel(excelFile, response);
+        return result ? success() : failure();
     }
 }

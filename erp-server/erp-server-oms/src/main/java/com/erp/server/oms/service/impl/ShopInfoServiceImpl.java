@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -1853,6 +1854,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return Collections.emptyList();
         }
         return this.listByIds(shopIdList);
+    }
+
+    @Override
+    public List<ShopInfoEntity> listShopByName(List<String> shopNameList) {
+        if (CollUtil.isEmpty(shopNameList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ShopInfoEntity::getName, shopNameList).list();
     }
 
     @Override
