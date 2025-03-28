@@ -1656,6 +1656,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if(packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
                 && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
             //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
+            //发送飞书通知
+            this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "修改箱规", packingTaskEntity);
             RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getSourceId());
             if(null != entity){
                 Map<String,String> map = new HashMap<>();
