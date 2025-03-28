@@ -227,8 +227,8 @@
         sp.so_org_id as purchaseOrgId,
         sp.so_org_name as purchaseOrgName
         from so_price sp
-        inner join so_price_detail spd on pp.id = ppd.main_id and ppd.is_deleted = false
-        inner join customer_info si on pp.customer_id = si.id and si.is_deleted = false
+        inner join so_price_detail spd on sp.id = spd.main_id and spd.is_deleted = false
+        inner join customer_info si on sp.customer_id = si.id and si.is_deleted = false
         <where>
             sp.is_deleted = false and sp.approve_status = 'approve' and spd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
             spd.effective_date and spd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
