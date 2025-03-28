@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -466,81 +467,9 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
 
         IPage pageData = baseMapper.paging(query, params);
-        List<SoPriceChangeDTO.PagingViewDTO> list = pageData.getRecords();
-        if (CollectionUtils.isNotEmpty(list)) {
-            List<String> skuIds = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-            List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
-            List<String> currencyIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
-            //币种信息
-            List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
-
-            //最新审核人
-            ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-            list.forEach(obj -> {
-                dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_PRICE_CHANGE.getCode(), obj.getId()));
-            });
-            ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-            if (CollectionUtils.isNotEmpty(dtoList)) {
-                listApiResult = workflowFeign.curApprover(dtoList);
-                Integer code = listApiResult.getCode();
-                if (200 != code) {
-                    throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
-                }
-            }
-            //历史调价数据
-            List<String> changeDetailIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
-            List<SoPriceHistoryEntity> SoPriceHistoryList = soPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
-
-            //原调价表数据
-            List<String> priceDetailIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getSoPriceDetailId).collect(Collectors.toList());
-            List<SoPriceDetailDTO.ViewDTO> priceDetailList = soPriceDetailService.listBySoPriceDetailIds(priceDetailIdList);
-
-
-            List<String> customerIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getCustomerId).distinct().collect(Collectors.toList());
-            List<CustomerInfoEntity> customerEntities = customerInfoService.listByIds(customerIdList);
-
-            for (SoPriceChangeDTO.PagingViewDTO item : list) {
-                SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
-                item.setProductName(skuVO.getSkuName());
-                ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
-                item.setApproveStatusCode(approveStatusEnum.getStatus());
-                item.setApproveStatusName(approveStatusEnum.getName());
-                //币种
-                String currency = item.getCurrency();
-                String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
-                        flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
-                item.setCurrencySymbol(currencySymbol);
-
-                //最新审核人
-                if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                    String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                    item.setApproveUserName(curApprove);
-                }
-
-                //供应商
-                CustomerInfoEntity customerInfoEntity = customerEntities.stream().filter(req -> item.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
-                item.setCustomerName(customerInfoEntity.getName());
-                //历史调价
-                SoPriceHistoryEntity SoPriceHistoryEntity = SoPriceHistoryList.stream().filter(obj -> StrUtil.equals(item.getChangeDetailId(), obj.getChangeDetailId())).findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(SoPriceHistoryEntity)) {
-                    //升降比例
-                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), SoPriceHistoryEntity.getTaxPrice()), SoPriceHistoryEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
-                    item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
-                } else {
-                    SoPriceDetailDTO.ViewDTO viewDTO = priceDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getSoPriceDetailId())).findFirst().orElse(null);
-                    if (ObjectUtil.isEmpty(viewDTO)) {
-                        continue;
-                    }
-                    //升降比例
-                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), viewDTO.getTaxPrice()), viewDTO.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
-                    item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
-                }
-            }
-        }
-
+        handlePaging(pageData.getRecords());
         return new PagingVO<>(pageData);
     }
-
 
     /**
      * 修改并审核
@@ -736,83 +665,27 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
 
     @Override
     public PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
-
         //获取导出数据
-        Page<SoPriceChangeDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        if (CollectionUtils.isEmpty(page.getRecords())) {
-            return new PagingVO<>();
+        PagingVO<SoPriceChangeDTO.PagingViewDTO> page = this.paging(dto);
+        if (CollUtil.isEmpty( page.getList())) {
+            throw new ServiceException("导出数据为空");
         }
-
         List<SoPriceChangeExportExcelDTO> resultList = new ArrayList<>();
-
-        List<String> skuIds = page.getRecords().stream().map(SoPriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
-
-        //销售价目变更详情id
-        List<String> changeDetailIdList = page.getRecords().stream().map(SoPriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
-
-        //销售价目详情表id
-        List<String> soPriceDetailIds = page.getRecords().stream().map(SoPriceChangeDTO.PagingViewDTO::getSoPriceDetailId).collect(Collectors.toList());
-        //历史的
-        List<SoPriceHistoryEntity> historyList = soPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
-        //获取到对应的价目明细
-        List<SoPriceDetailEntity> SoPriceDetailList = soPriceDetailService.listByIds(soPriceDetailIds);
-
-        //最新审核人
-        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
-        page.getRecords().forEach(obj -> dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_PRICE_CHANGE.getCode(), obj.getId())));
-        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
-        if (CollectionUtils.isNotEmpty(dtoList)) {
-            listApiResult = workflowFeign.curApprover(dtoList);
-            Integer code = listApiResult.getCode();
-            if (200 != code) {
-                throw new ServiceException(ApiError.ERROR_500);
-            }
-        }
-
-        for (SoPriceChangeDTO.PagingViewDTO item : page.getRecords()) {
+        for (SoPriceChangeDTO.PagingViewDTO item : page.getList()) {
             SoPriceChangeExportExcelDTO excelDTO = new SoPriceChangeExportExcelDTO();
             BeanMapper.copy(item, excelDTO);
-            //sku信息
-            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
-            excelDTO.setProductName(skuVO.getSkuName());
-            //历史报价
-            SoPriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getChangeDetailId().equals(item.getChangeDetailId())).findFirst().orElse(null);
-            //现有报价
-            SoPriceDetailEntity priceDetailEntity = SoPriceDetailList.stream().filter(p -> p.getId().equals(item.getSoPriceDetailId())).findFirst().orElse(null);
-            if (historyEntity != null) {
-                excelDTO.setOldTaxPrice(historyEntity.getTaxPrice());
-                if (historyEntity.getTaxRate() != null) {
-                    excelDTO.setOldTaxRate(historyEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
-                    //升降比例
-                    BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), historyEntity.getTaxPrice()), historyEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
-                    excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
-                }
-            } else {
-                if (priceDetailEntity != null) {
-                    excelDTO.setOldTaxPrice(priceDetailEntity.getTaxPrice());
-                    if (priceDetailEntity.getTaxRate() != null) {
-                        excelDTO.setOldTaxRate(priceDetailEntity.getTaxRate().multiply(MathUtil.BigDecimal_100));
-                        //升降比例
-                        BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), priceDetailEntity.getTaxPrice()), priceDetailEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
-                        excelDTO.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
-                    }
-                }
-            }
-            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
-            excelDTO.setApproveStatusName(approveStatusEnum.getName());
             Integer minQty = item.getMinQty();
             Integer maxQty = item.getMaxQty();
             excelDTO.setQtySection(minQty + "-" + maxQty);
-            //最新审核人
-            if (listApiResult != null && CollectionUtils.isNotEmpty(listApiResult.getData())) {
-                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
-                excelDTO.setApproveUserName(curApprove);
-            }
+
+            //含税单价
+            excelDTO.setTaxPrice(item.getCurrencySymbol() + item.getTaxPrice().toString());
+            //旧含税单价
+            excelDTO.setTaxPrice(item.getCurrencySymbol() + item.getOldTaxPrice().toString());
             excelDTO.setApproveTime(item.getApproveTime());
             resultList.add(excelDTO);
         }
-        return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+        return new PagingVO<>(resultList, (int) page.getTotalPage(), dto.getPageSize(), dto.getCurrPage());
     }
 
     /**
@@ -826,5 +699,87 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
     @Override
     public List<SoPriceChangeDetailDTO.ViewDTO> getSkuChangeList(SoPriceChangeDetailDTO.SkuChangeParamDTO dto) {
         return soPriceDetailService.listPriceChangeDetail(dto);
+    }
+
+    /**
+     * 分页数据处理
+     * @author will
+     * @date 2025/3/28 09:30
+     * @param list
+     */
+    private void handlePaging (List<SoPriceChangeDTO.PagingViewDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> skuIds = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuNoList = plmTaskFeign.listSkuProductByIds(skuIds);
+        List<String> currencyIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getCurrency).collect(Collectors.toList());
+        //币种信息
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
+
+        //最新审核人
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        list.forEach(obj -> {
+            dtoList.add(new ProcessManagementDTO.HistoryActivityDTO(SourceTypeEnum.SO_PRICE_CHANGE.getCode(), obj.getId()));
+        });
+        ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = null;
+        if (CollectionUtils.isNotEmpty(dtoList)) {
+            listApiResult = workflowFeign.curApprover(dtoList);
+            Integer code = listApiResult.getCode();
+            if (200 != code) {
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
+            }
+        }
+        //历史调价数据
+        List<String> changeDetailIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getChangeDetailId).collect(Collectors.toList());
+        List<SoPriceHistoryEntity> soPriceHistoryList = soPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
+
+        //原调价表数据
+        List<String> priceDetailIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getSoPriceDetailId).collect(Collectors.toList());
+        List<SoPriceDetailDTO.ViewDTO> priceDetailList = soPriceDetailService.listBySoPriceDetailIds(priceDetailIdList);
+
+
+        List<String> customerIdList = list.stream().map(SoPriceChangeDTO.PagingViewDTO::getCustomerId).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerEntities = customerInfoService.listByIds(customerIdList);
+
+        for (SoPriceChangeDTO.PagingViewDTO item : list) {
+            SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
+            item.setProductName(skuVO.getSkuName());
+            ApproveStatusEnum approveStatusEnum = item.getApproveStatus();
+            item.setApproveStatusCode(approveStatusEnum.getStatus());
+            item.setApproveStatusName(approveStatusEnum.getName());
+            //币种
+            String currency = item.getCurrency();
+            String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
+            item.setCurrencySymbol(currencySymbol);
+
+            //最新审核人
+            if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
+                String curApprove = listApiResult.getData().stream().filter(e -> e.getBusinessId().equals(item.getId()) && StringUtils.isNotBlank(e.getCurApproveName())).map(ProcessManagementDTO.CurApproveInfoDTO::getCurApproveName).collect(Collectors.joining(","));
+                item.setApproveUserName(curApprove);
+            }
+
+            //客户
+            CustomerInfoEntity customerInfoEntity = customerEntities.stream().filter(req -> item.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
+            item.setCustomerName(customerInfoEntity.getName());
+            //历史调价
+            SoPriceHistoryEntity soPriceHistoryEntity = soPriceHistoryList.stream().filter(obj -> StrUtil.equals(item.getChangeDetailId(), obj.getChangeDetailId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(soPriceHistoryEntity)) {
+                item.setOldTaxPrice(soPriceHistoryEntity.getTaxPrice());
+                //升降比例
+                BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), soPriceHistoryEntity.getTaxPrice()), soPriceHistoryEntity.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
+            } else {
+                SoPriceDetailDTO.ViewDTO viewDTO = priceDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), item.getSoPriceDetailId())).findFirst().orElse(null);
+                if (ObjectUtil.isEmpty(viewDTO)) {
+                    continue;
+                }
+                item.setOldTaxPrice(viewDTO.getTaxPrice());
+                //升降比例
+                BigDecimal offsetRate = MathUtil.divide(MathUtil.subtract(item.getTaxPrice(), viewDTO.getTaxPrice()), viewDTO.getTaxPrice()).multiply(MathUtil.BigDecimal_100);
+                item.setOffsetRate(StrUtil.format("{}%",offsetRate.stripTrailingZeros().toPlainString()));
+            }
+        }
     }
 }
