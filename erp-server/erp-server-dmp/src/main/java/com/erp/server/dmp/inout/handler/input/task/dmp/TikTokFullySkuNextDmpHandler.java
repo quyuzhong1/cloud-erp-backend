@@ -24,7 +24,7 @@ public class TikTokFullySkuNextDmpHandler extends DmpInputDoNextDmpHandler {
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
 		List<Map<String, Object>> detailList = (List<Map<String, Object>>) dmpInputMongoEntity.get("skus");
 		detailList.forEach(d -> {
-			d.put("platformSpuCode", dmpInputMongoEntity.get("platformSpuCode"));
+			d.put("spuCode", dmpInputMongoEntity.get("spuCode"));
 		});
 		return detailList;
 	}
@@ -43,20 +43,8 @@ public class TikTokFullySkuNextDmpHandler extends DmpInputDoNextDmpHandler {
 				Object updateTimeObj = dmpDataMap.get("updateTime");
 				if (updateTimeObj != null) {
 					// 使用Instant类将Unix时间戳转换为LocalDateTime对象
-					LocalDateTime updateTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(updateTimeObj + "")), ZoneId.systemDefault());
+					LocalDateTime updateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.valueOf(updateTimeObj + "")), ZoneId.systemDefault());
 					dmpDataMap.put("platformUpdateTime", updateTime);
-				}
-				//状态
-				Object statusObj = dmpDataMap.get("status");
-				if (statusObj != null) {
-					String status = String.valueOf(statusObj);
-					if ("UPSHELF".equalsIgnoreCase(status)) {
-						dmpDataMap.put("status", "1");
-					} else if ("DOWNSHELF".equalsIgnoreCase(status)) {
-						dmpDataMap.put("status", "3");
-					} else if ("WAIT_FOR_UPSHELF".equalsIgnoreCase(status)) {
-						dmpDataMap.put("status", "5");
-					}
 				}
 			}
 		}
