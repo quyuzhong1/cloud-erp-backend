@@ -62,11 +62,12 @@ public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<Purcha
 
     @Override
     public Boolean getPurchaseApplicationByPurchaseOrderId(String purchaseOrderId) {
-        String basPurchaseApplicationId = baseMapper.getPurchaseApplicationByPurchaseOrderId(purchaseOrderId);
-        if(StringUtil.isNotBlank(basPurchaseApplicationId)){
+        // 采购订单id不能为空
+        if (StringUtil.isBlank(purchaseOrderId)) {
             return Boolean.FALSE;
-        }else {
-            return Boolean.TRUE;
         }
+
+        // 查询采购申请单是否存在 ，存在则返回false表示不可编辑，不存在则返回true表示可编辑
+        return baseMapper.existsPurchaseApplicationByPurchaseOrderId(purchaseOrderId).equals(Boolean.TRUE) ? Boolean.FALSE : Boolean.TRUE;
     }
 }
