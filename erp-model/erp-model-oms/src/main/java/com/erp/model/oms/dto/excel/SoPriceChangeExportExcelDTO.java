@@ -68,14 +68,14 @@ public class SoPriceChangeExportExcelDTO implements Serializable {
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "调整前含税单价", index = 6)
-    private BigDecimal oldTaxPrice;
+    private String oldTaxPrice;
 
     /**
      * 调整后含税单价
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "调整后含税单价", index = 7)
-    private BigDecimal taxPrice;
+    private String taxPrice;
 
     /**
      * 调整前税率
@@ -92,11 +92,11 @@ public class SoPriceChangeExportExcelDTO implements Serializable {
     private BigDecimal taxRate;
 
     /**
-     * 采购组织名
+     * 销售组织名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购组织", index = 10)
-    private String purchaseOrgName;
+    @ExcelProperty(value = "销售组织", index = 10)
+    private String soOrgName;
 
     /**
      * 生效时间

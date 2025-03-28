@@ -30,11 +30,11 @@ public class SoPriceExportExcelDTO implements Serializable {
 
 
     /**
-     * 供应商名称
+     * 客户名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "供应商名称", index = 1)
-    private String supplierName;
+    @ExcelProperty(value = "客户名称", index = 1)
+    private String customerName;
 
 
     /**
@@ -59,17 +59,12 @@ public class SoPriceExportExcelDTO implements Serializable {
     @ExcelProperty(value = "区间从-到", index = 4)
     private String qtySection;
 
-
-
-
-
     /**
      * 含税单价
      */
     @ColumnWidth(10)
     @ExcelProperty(value = "含税单价", index = 5)
     private String taxPrice;
-
 
     /**
      * 含税单价
@@ -78,14 +73,12 @@ public class SoPriceExportExcelDTO implements Serializable {
     @ExcelProperty(value = "税率(%)", index = 6)
     private BigDecimal taxRate;
 
-
     /**
      * 生效时间
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "生效时间", index = 7)
     private LocalDate effectiveDate;
-
 
     /**
      * 失效时间
@@ -102,11 +95,11 @@ public class SoPriceExportExcelDTO implements Serializable {
     private String enabled;
 
     /**
-     * 采购组织名
+     * 销售组织名
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "采购组织", index = 10)
-    private String purchaseOrgName;
+    @ExcelProperty(value = "销售组织", index = 10)
+    private String soOrgName;
 
     /**
      * 单据状态
@@ -114,7 +107,6 @@ public class SoPriceExportExcelDTO implements Serializable {
     @ColumnWidth(20)
     @ExcelProperty(value = "单据状态", index = 11)
     private String approveStatusName;
-
 
     /**
      * 审核人（最新）
@@ -130,7 +122,9 @@ public class SoPriceExportExcelDTO implements Serializable {
     @ColumnWidth(20)
     private LocalDateTime approveTime;
 
-
+    /**
+     * 创建人
+     */
     @ColumnWidth(10)
     @ExcelProperty(value = "创建人", index = 14)
     private String createUserName;
@@ -142,6 +136,4 @@ public class SoPriceExportExcelDTO implements Serializable {
     @ExcelProperty(value = "创建时间", index = 15,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
-
-    private String voucherNo;
 }
