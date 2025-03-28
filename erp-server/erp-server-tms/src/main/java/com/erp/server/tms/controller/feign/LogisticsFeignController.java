@@ -1,5 +1,6 @@
 package com.erp.server.tms.controller.feign;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.core.anno.LogSystemModule;
@@ -230,5 +231,14 @@ public class LogisticsFeignController {
     @PostMapping("/listSkuCostByDetailList")
     public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(@RequestBody List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList){
         return inventorySkuCostService.listSkuCostByDetailList(queryDetailDTOList);
+    }
+
+    /**
+     * 所有渠道下拉
+     * @return
+     */
+    @GetMapping("listAll")
+    public List<BaseDropDownDTO.DisabledDTO> listAll(){
+        return logisticsChannelService.listAll();
     }
 }
