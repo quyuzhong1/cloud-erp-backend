@@ -64,6 +64,13 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/getChannelByName")
     List<LogisticsChannelEntity> getChannelByName(@RequestBody String channelName);
+    /**
+     * 获取渠道 根据渠道名称
+     * @param channelNameList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listChannelByNameList")
+    List<LogisticsChannelEntity> listChannelByNameList(@RequestBody List<String> channelNameList);
     @PostMapping("/feign/logistics/getChannelInfoById")
     LogisticsChannelDTO.BaseDTO getChannelInfoById(@RequestBody String channelId);
 

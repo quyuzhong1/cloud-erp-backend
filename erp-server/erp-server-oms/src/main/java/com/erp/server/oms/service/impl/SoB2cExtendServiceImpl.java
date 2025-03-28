@@ -129,7 +129,7 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
             CfgSettingDTO.ViewDTO setting = cfgSettingService.getSetting(CfgSettingEnum.TIME_OUT_CONFIG.getCode());
             if (Objects.nonNull(setting) && Objects.nonNull(setting.getTimeOutSettingDTO()) && Objects.nonNull(setting.getTimeOutSettingDTO().getWarningTime())){
                 BigDecimal warningTime = setting.getTimeOutSettingDTO().getWarningTime();
-                soB2cExtendEntity.setDeliveryWarningTime(soB2cExtendEntity.getRequiredDeliveryTime().plusHours(-warningTime.longValue()));
+                soB2cExtendEntity.setDeliveryWarningTime(soB2cExtendEntity.getRequiredDeliveryTime().plusMinutes(-warningTime.multiply(new BigDecimal(60)).longValue()));
             }
         }
         if (Objects.isNull(soB2cExtendEntity.getWarningCount())){

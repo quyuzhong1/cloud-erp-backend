@@ -99,7 +99,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         }
         switch (cfgSettingEnum) {
             case TIME_OUT_CONFIG:
-                CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO = BeanUtil.toBean(cfgSetting.getValue(), CfgSettingDTO.TimeOutSettingDTO.class);
+                CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO = JSONUtil.toBean(cfgSetting.getValue(), CfgSettingDTO.TimeOutSettingDTO.class);
                 viewDTO.setTimeOutSettingDTO(timeOutSettingDTO);
                 break;
             default:

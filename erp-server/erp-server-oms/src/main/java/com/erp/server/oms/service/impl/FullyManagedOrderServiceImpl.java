@@ -1,8 +1,11 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.PermissionsDTO;
@@ -10,14 +13,17 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CfgSettingEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.dto.excel.*;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CfgSettingEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.FullyManagedTabEnum;
+import com.erp.server.oms.listener.*;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.FullyManagedQueryHandler;
 import com.erp.server.oms.service.*;
@@ -29,12 +35,15 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -63,6 +72,8 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
     private CfgSettingService cfgSettingService;
     @Resource
     private DictBasicService dictBasicService;
+    @Resource
+    private SoB2cService soB2cService;
     
     @Override
     public List<SoB2cDTO.TabListDTO> fullyManagedTabList(PermissionsDTO param) {
@@ -125,9 +136,9 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         cfgSettingService.saveOrUpdate(setting);
         //修改全托管订单的预警时间
         List<DictBasicDTO.ViewDTO> dtoList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
-        List<String> typeList = dtoList.stream().map(DictBasicDTO.ViewDTO::getType).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> platformList = dtoList.stream().map(DictBasicDTO.ViewDTO::getValue).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
         //更新全托管订单的预警时间
-        this.baseMapper.updateTimeOutConfig(typeList,timeOutSettingDTO.getWarningTime().multiply(new BigDecimal(60)).intValue());
+        this.baseMapper.updateTimeOutConfig(platformList,timeOutSettingDTO.getWarningTime().multiply(new BigDecimal(60)).intValue());
     }
 
     @Override
@@ -150,6 +161,80 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         } catch (Exception e) {
             throw new ServiceException(ApiError.DEFAULT);
         }
+    }
+
+    @Override
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        FullyManagedImportExcelListener excelListenerUtil = new FullyManagedImportExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), FullyManagedImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            //错误的
+            List<FullyManagedImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+            //数据验证
+            List<FullyManagedImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+            //处理验证成功数据
+            handleImportSuccessList(successList, errorList);
+            if (errorList.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/fullyManagedOrderError.xlsx";
+                String name = "fullyManaged";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
+            }
+        } catch (SocketTimeoutException e) {
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        return Boolean.TRUE;
+
+    }
+
+    private void handleImportSuccessList(List<FullyManagedImportExcelDTO> successList, List<FullyManagedImportExcelDTO> errorList) {
+        //上游已经将数据处理完成 现在开始执行导入
+        if (CollectionUtils.isEmpty(successList)) {
+            return;
+        }
+        //根据平台单号进行分组
+        Map<String, List<FullyManagedImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(e ->e.getPlatformCode() + e.getDictPlatform()));
+        //遍历分组数据
+        collect.forEach((key, value) -> {
+            SoB2cDTO.AddDTO addDTO = buildAddDTO(key,value,errorList);
+            if (Objects.nonNull(addDTO)){
+                soB2cService.add(addDTO, null);
+            }
+        });
+    }
+
+    /**
+     * 构建导入数据
+     * @param key = platformCode + dictPlatform
+     * @param value
+     * @param errorList
+     * @return
+     */
+    private SoB2cDTO.AddDTO buildAddDTO(String key, List<FullyManagedImportExcelDTO> value, List<FullyManagedImportExcelDTO> errorList) {
+        //平台列表
+        SoB2cEntity entity = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).one();
+        if (ObjectUtil.isNotEmpty(entity)) {
+            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台订单号【{}】销售订单已存在【{}】", e.getPlatformCode(), entity.getCode())));
+            errorList.addAll(value);
+            return null;
+        }
+
+        return null;
     }
 
     /**
