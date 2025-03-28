@@ -334,7 +334,10 @@ public class SoPriceChangeDTO implements Serializable {
          * 失效时间
          */
         private LocalDate expireDate;
-
+        /**
+         * 旧含税单价
+         */
+        private BigDecimal oldTaxPrice;
         /**
          * 升降比例（带百分比）【不能排序】
          */

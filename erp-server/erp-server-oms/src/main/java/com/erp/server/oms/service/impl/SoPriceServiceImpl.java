@@ -549,6 +549,10 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
                 throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
+
+        List<String> customerIdList = list.stream().map(SoPriceDTO.PagingViewDTO::getCustomerId).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerEntities = customerInfoService.listByIds(customerIdList);
+
         for (SoPriceDTO.PagingViewDTO item : list) {
             SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(item.getSkuId())).findFirst().orElse(new SkuVO());
             item.setProductName(skuVO.getSkuName());
@@ -560,6 +564,10 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             String currencySymbol = currencyList.stream().filter(c -> c.getId().equals(currency)).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("￥");
             item.setCurrencySymbol(currencySymbol);
+
+            //客户
+            CustomerInfoEntity customerInfoEntity = customerEntities.stream().filter(req -> item.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
+            item.setCustomerName(customerInfoEntity.getName());
 
             //最新审核人
             if (CollectionUtils.isNotEmpty(listApiResult.getData())) {
