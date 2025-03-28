@@ -9960,6 +9960,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 b2cLogisitics.setAccessoriesCost(MathUtil.getBigDecimalByStr(mainInfo.getActualShippingCost()));
             }
 
+            //根据渠道和(国家+邮编）判断订单是否超范围配送
+            Boolean isOutOfRangeDelivery = estimateIsOutOfRangeDelivery(soB2cEntity.getId(),
+                    receiverDTO.getCountry(),
+                    receiverDTO.getPostCode(),
+                    b2cLogisitics.getLogisticsChannelId());
+            soB2cEntity.setIsOutOfRangeDelivery(isOutOfRangeDelivery);
+
             //明细信息
             List<SoB2cDetailEntity> detailList = new ArrayList<>();
             for (B2CSoImportExcelDTO detail : list) {
@@ -10022,10 +10029,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //新增买家信息
                     soB2cReceiverService.add(receiverDTO, soB2cEntity);
                     //新增明细
-                    SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
-                    BeanMapper.copy(soB2cEntity,addDTO);
-                    addDTO.setDetailList(addDTOS);
-                    soB2cDetailService.add(addDTO, soB2cEntity.getId());
+//                    SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
+//                    BeanMapper.copy(soB2cEntity,addDTO);
+//                    addDTO.setDetailList(addDTOS);
+//                    soB2cDetailService.add(addDTO, soB2cEntity.getId());
+                    soB2cDetailService.saveBatch(detailList);
                     //新增财务信息
                     addSoB2cFinance(soB2cEntity);
                     //订单分类
@@ -10038,13 +10046,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         }
                         soB2cRefCategoryService.add(addList, soB2cEntity.getId());
                     }
-                    //根据渠道和(国家+邮编）判断订单是否超范围配送
-                    Boolean isOutOfRangeDelivery = estimateIsOutOfRangeDelivery(soB2cEntity.getId(),
-                            addDTO.getReceiverDTO().getCountry(),
-                            addDTO.getReceiverDTO().getPostCode(),
-                            addDTO.getLogisticsDTO().getLogisticsChannelId());
-                    soB2cEntity.setIsOutOfRangeDelivery(isOutOfRangeDelivery);
-
                     //检查是否备案并修改状态
                     soB2cService.checkProductRegistrationAndUpdate(soB2cEntity.getId(), "");
                     //速卖通平台仓订单不走任何规则
@@ -10057,13 +10058,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             //仓库规则
                             SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
                             Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
-                            if (warehouseRuleMatch) {
+                            if (Boolean.TRUE.equals(warehouseRuleMatch)) {
                                 SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(soB2cEntity.getId(), new HashMap<>(), false);
                                 Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
                                 Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
                                 Boolean isRuleMatch = logisticsRuleResult.getIsRuleMatch();
                                 //表示成功
-                                if(isRuleMatch){
+                                if(Boolean.TRUE.equals(isRuleMatch)){
                                     //检查是否备案并修改状态
                                     checkProductRegistrationAndUpdate(soB2cEntity.getId(), "");
                                     //申报信息规则
