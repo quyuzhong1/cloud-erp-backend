@@ -480,7 +480,10 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
 
     @Override
     public List<SalesDemandEntity> listBySourceIds(List<String> sourceIds) {
-        return lambdaQuery().in(SalesDemandEntity::getSourceId, sourceIds).list();
+        return lambdaQuery().in(SalesDemandEntity::getSourceId, sourceIds)
+                .eq(SalesDemandEntity::getInvalidStatus,Boolean.FALSE)
+                .eq(SalesDemandEntity::getIsDeleted,Boolean.FALSE)
+                .list();
     }
 
     /**
