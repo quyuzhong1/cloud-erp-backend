@@ -71,6 +71,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private SoB2cFinanceService soB2cFinanceService;
 
     @Resource
+    private SoB2cExtendService soB2cExtendService;
+
+    @Resource
     private CustomerB2cService customerB2cService;
     @Resource
     private CustomerB2cAddressService customerB2cAddressService;
@@ -366,22 +369,28 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity, allNetWeight,maxLength,maxWidth,totalHeight);
-        //买家信息更新保存
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity, countryList,null == soB2cError);
 
         //财务信息更新保存
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
-        //客户信息
-        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList,null == soB2cError);
+        //扩展信息保存
+        soB2cExtendService.saveOrUpdateEntity(dto, mainEntity);
+        if(!PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(dto.getDictPlatform())){
+            //买家信息更新保存
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity, countryList,null == soB2cError);
 
-        customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
+            //客户信息
+            CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList,null == soB2cError);
 
-        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
+            customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
 
-        receiverEntity.setCustomerId(customerB2cEntity.getId());
-        soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
-        soB2cReceiverService.saveOrUpdate(receiverEntity);
+            customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
+
+            receiverEntity.setCustomerId(customerB2cEntity.getId());
+            soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
+            soB2cReceiverService.saveOrUpdate(receiverEntity);
+        }
+
 //        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
 //            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
 //        }

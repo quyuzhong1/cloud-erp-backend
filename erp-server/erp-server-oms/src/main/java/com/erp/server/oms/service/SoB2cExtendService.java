@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.PlatformOrderDTO;
 import com.erp.model.oms.dto.FullyManagedDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cExtendEntity;
@@ -60,4 +61,6 @@ public interface SoB2cExtendService extends SuperService<SoB2cExtendEntity> {
      * @return
      */
     List<FullyManagedDTO.WarningDTO> fullyManagedOrderMsgWarning(Integer offsetMinutes);
+
+    void saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity);
 }
