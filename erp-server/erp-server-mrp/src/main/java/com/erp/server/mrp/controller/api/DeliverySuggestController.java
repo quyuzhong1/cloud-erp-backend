@@ -297,7 +297,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @PostMapping(value = "/viewPushDeliveryPlan")
     public ApiResult<DeliverySuggestDTO.ViewPushDeliveryPlanDTO> viewPushDeliveryPlan(@RequestBody DeliverySuggestDTO.PushDeliveryPlanParamDTO paramDTO) {
-        DeliverySuggestDTO.ViewPushDeliveryPlanDTO dto = deliverySuggestService.viewPushDeliveryPlan(paramDTO.getIds(),paramDTO.getWarehouseId());
+        DeliverySuggestDTO.ViewPushDeliveryPlanDTO dto = deliverySuggestService.viewPushDeliveryPlan(paramDTO.getIds(),paramDTO.getShopId(),paramDTO.getWarehouseId());
         return success(dto);
     }
 
@@ -326,6 +326,19 @@ public class DeliverySuggestController extends BaseController {
     @PostMapping(value = "/listOverseasWarehouse")
     public ApiResult<List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO>> listOverseasWarehouse(@RequestBody BaseIdsDTO.IdsDTO dto) {
         List<DeliverySuggestDTO.DeliverySuggestWarehouseDTO> list = deliverySuggestService.listOverseasWarehouse(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 店铺下拉
+     * @author will
+     * @date 2025/03/07 12:04
+     * @param dto
+     * @return ApiResult<DeliverySuggestWarehouseDTO>
+     */
+    @PostMapping(value = "/listShopSelect")
+    public ApiResult<List<DeliverySuggestDTO.ShopSelectDTO>> listShopSelect(@RequestBody BaseIdsDTO.IdsDTO dto) {
+        List<DeliverySuggestDTO.ShopSelectDTO> list = deliverySuggestService.listShopSelect(dto.getIds());
         return success(list);
     }
 }

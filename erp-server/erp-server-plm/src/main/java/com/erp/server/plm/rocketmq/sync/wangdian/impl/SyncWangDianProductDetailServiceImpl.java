@@ -3,8 +3,9 @@ package com.erp.server.plm.rocketmq.sync.wangdian.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
+import com.alibaba.nacos.common.utils.Objects;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -30,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.ObjectUtils;
-import org.springframework.util.StringUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -57,6 +57,12 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
     private DmpMqFeign dmpMqFeign;
     @Resource
     private PlmPushMsgService plmPushMsgService;
+    @Resource
+    private ProductLogisticsService productLogisticsService;
+    @Resource
+    private BasicDictService basicDictService;
+    @Resource
+    private BasicCategoryService basicCategoryService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -77,10 +83,16 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         ProductInfoEntity info = productInfoService.getById(entity.getProductId());
         ProductPurchaseEntity productPurchase = Optional.ofNullable(productPurchaseService.getBySkuId(entity.getId())).orElse(new ProductPurchaseEntity());
         ProductPackEntity productPack = productPackService.getBySkuId(entity.getId());
+        ProductLogisticsEntity productLogistics = productLogisticsService.getBySkuId(entity.getId());
         GoodsBatchPushDTO dto = new GoodsBatchPushDTO();
         dto.setGoodsNo(entity.getSkuNo());
         dto.setGoodsName(entity.getName());
         dto.setGoodsType(getGoodsType(info.getSaleMethod(), info.getProperty()));
+        if(StringUtils.isNotBlank(info.getCategoryId())){
+            dto.setClassName(basicCategoryService.getParentName(info.getCategoryId()));
+            //自动创建分类
+            dto.setAutoCreateBc(Boolean.TRUE);
+        }
         GoodsBatchPushDTO.SpecList specList = new GoodsBatchPushDTO.SpecList();
         specList.setSpecNo(entity.getSkuNo());
         specList.setSpecName(entity.getName());
@@ -91,8 +103,14 @@ public class SyncWangDianProductDetailServiceImpl implements SyncWangDianProduct
         specList.setHeight(LengthConverterUtil.mmToCm(productPack.getProductHeight()));
         specList.setImgUrl(entity.getImagesUrl());
 //        specList.setUnitName(entity.getUnitName());
+        if (Objects.nonNull(productLogistics) && StringUtils.isNotBlank(productLogistics.getProductPropertyId())) {
+            String[] split = productLogistics.getProductPropertyId().split(",");
+            List<BasicDictEntity> basicDictEntities = basicDictService.listByIds(Arrays.asList(split));
+            List<String> productPropertyNameList = basicDictEntities.stream().map(BasicDictEntity::getValue).collect(Collectors.toList());
+            specList.setGoodsLabel(StringUtils.join(productPropertyNameList, ","));
+        }
+
         dto.setSpecList(Collections.singletonList(specList));
-        
         SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
         		.eq(CfgSettingEntity::getKey, SourceTypeEnum.WDT_PRODUCT_DETAIL.getCode())

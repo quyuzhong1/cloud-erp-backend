@@ -195,4 +195,11 @@ public class ProductLogisticsShowDTO implements Serializable {
     private List<String> disableFieldList;
 
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 保险属性
+     */
+    private List<String> insurancePropertyList;
+    private List<String> insurancePropertyNameList;
+    private String insuranceProperty;
 }

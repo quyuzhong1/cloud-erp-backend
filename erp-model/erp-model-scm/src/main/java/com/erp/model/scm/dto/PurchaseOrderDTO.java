@@ -460,16 +460,6 @@ public class PurchaseOrderDTO implements Serializable {
          * 目的仓库/交货仓库
          */
         private String deliveryWarehouseName;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        @NotNull(message = "新品首批不能为空")
-        private Boolean isFirstMassProduct;
-        /**
-         * 新品首批 新品首批（false否,true是）
-         */
-        private String firstMassProductName;
         /**
          * 委外订单类型(child子级，parent父级)
          */
@@ -601,6 +591,12 @@ public class PurchaseOrderDTO implements Serializable {
          * 关联单据（仅详情显示，无需传参）
          */
         private PurchaseOrderRefOtherDTO purchaseOrderRefOtherDTO;
+
+        /**
+         * 能否编辑
+         * ture 能编辑  false 不能编辑
+         */
+        private Boolean  canEdit = Boolean.FALSE;
     }
 
 
@@ -790,6 +786,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 付款方式名称
          */
         private String paymentConditionName;
+        /**
+         * 付款方式名称
+         */
+        private String logoUrl;
 
         /**
          * 明细信息
@@ -892,6 +892,17 @@ public class PurchaseOrderDTO implements Serializable {
          * 备注
          */
         private Integer remark;
+
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     /**
@@ -1029,6 +1040,16 @@ public class PurchaseOrderDTO implements Serializable {
          * 来源明细id
          */
         private String sourceDetailId;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     @Data
@@ -1081,6 +1102,10 @@ public class PurchaseOrderDTO implements Serializable {
          * 库位
          */
         private String warehouseLocation;
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
     }
 
     @Data
@@ -1582,11 +1607,6 @@ public class PurchaseOrderDTO implements Serializable {
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * 委外订单类型(child子级，parent父级)

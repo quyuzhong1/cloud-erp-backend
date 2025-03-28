@@ -121,7 +121,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
 
@@ -811,7 +810,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soInfoToSdyDTO.setOperateEnum(operate);
             soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
             soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
-        } else {
+        } else if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())){
             soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate, entity.getSourceType());
         }
 

@@ -53,4 +53,6 @@ public interface PurchaseApplicationRefPoService extends SuperService<PurchaseAp
      * @return List<PurchaseApplicationRefPoEntity> 
      */
     List<PurchaseApplicationRefPoEntity> listByPurchaseApplicationDetailIds(List<String> purchaseApplicationDetailIds);
+
+    Boolean getPurchaseApplicationByPurchaseOrderId(String purchaseOrderId);
 }

@@ -3209,6 +3209,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDetailDTO.setWarehouseLocation(detailView.getWarehouseLocation());
                 addDetailDTO.setIsRevalueTaxRate(false);
                 addDetailDTO.setPurchaseAmount(detailView.getTotalTaxAmount());
+                addDetailDTO.setFirstMassProduct(detailView.getFirstMassProduct());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
