@@ -27,5 +27,5 @@ public interface PurchaseApplicationRefPoMapper extends BaseMapper<PurchaseAppli
      */
     List<PurchaseApplicationRefPoDTO.ListDTO> list(@Param("params") PurchaseApplicationRefPoDTO.SearchParamDTO params);
 
-    String getPurchaseApplicationByPurchaseOrderId(@Param("purchaseOrderId")String purchaseOrderId);
+    Boolean existsPurchaseApplicationByPurchaseOrderId(@Param("purchaseOrderId")String purchaseOrderId);
 }
