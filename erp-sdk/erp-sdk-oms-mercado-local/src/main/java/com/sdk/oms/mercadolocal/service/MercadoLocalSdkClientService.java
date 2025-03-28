@@ -370,16 +370,16 @@ public class MercadoLocalSdkClientService {
         return resultList;
     }
 
-    public static void main(String[] args) {
-        MercadoLocalSdkClientService sdkClientService = new MercadoLocalSdkClientService();
-        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
-        JobTaskDTO task = new JobTaskDTO();
-        shopInfoDTO.setUserId(2119968271L);
-        shopInfoDTO.setAccessToken("APP_USR-5344160433223219-031022-1a5190634d7aba85c9b279a5ffb4af4d-2119968271");
-        task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        task.setNextTime(LocalDateTime.parse("2025-03-11 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
-        sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
-    }
+//    public static void main(String[] args) {
+//        MercadoLocalSdkClientService sdkClientService = new MercadoLocalSdkClientService();
+//        MercadoShopInfoDTO shopInfoDTO = new MercadoShopInfoDTO();
+//        JobTaskDTO task = new JobTaskDTO();
+//        shopInfoDTO.setUserId(2119968271L);
+//        shopInfoDTO.setAccessToken("APP_USR-5344160433223219-031022-1a5190634d7aba85c9b279a5ffb4af4d-2119968271");
+//        task.setLastTime(LocalDateTime.parse("2025-01-01 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//        task.setNextTime(LocalDateTime.parse("2025-03-11 00:00:00", DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+//        sdkClientService.sendMercadoGetOrder(shopInfoDTO, task);
+//    }
 
 
     private String dateToStr(LocalDateTime dateTime) {
@@ -659,16 +659,27 @@ public class MercadoLocalSdkClientService {
      * @return
      */
     public String printShippingLabel(Map<String, String> authMap, Long shippingId) {
-        String orderUrl = "https://api.mercadolibre.com/shipments/"+shippingId+"/labels";
+//        String orderUrl = "https://api.mercadolibre.com/marketplace/shipments/"+shippingId+"/labels";
+        String orderUrl = "https://api.mercadolibre.com/shipment_labels";
         String token = authMap.get("token");
         //入参
         HashMap<String, Object> orderParams = new HashMap<>(1);
+        orderParams.put("shipment_ids",shippingId);
+        orderParams.put("response_type","pdf");
         //设置请求头
         Map<String, String> orderHeaderMap = new HashMap<>(1);
         orderHeaderMap.put("Authorization", "Bearer " + token);
         orderHeaderMap.put("x-format-new", "true");
         //拉取数据
         return OkHttpUtils.doGetJsonBase64(orderUrl, orderParams, orderHeaderMap);
+    }
+
+    public static void main(String[] args) {
+        MercadoLocalSdkClientService sdkClientService = new MercadoLocalSdkClientService();
+        Map<String, String> authMap = new HashMap<>();
+        String shippingId = "44487360197";
+        authMap.put("token","APP_USR-5344160433223219-032623-9028ad77ee8c26b78726511bfa91047d-2119968271");
+        sdkClientService.printShippingLabel(authMap, Long.valueOf(shippingId));
     }
 
     /**
