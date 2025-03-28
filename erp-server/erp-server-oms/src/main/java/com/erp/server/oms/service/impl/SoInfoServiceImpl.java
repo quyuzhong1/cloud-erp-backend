@@ -51,7 +51,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.entity.SalesDemandEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -1775,32 +1774,46 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     private void isExistDowmstream(List<String> ids) {
         //校验是否有下游单据
-        //订单变更 soChange oms
-        //发货通知单 soDeliveryNotice wms
-        //销售退货订单 soReturn oms
-        //备货申请单 salesDemand scm
-        //销售出库单 outstock wms
-        Integer count1 = soChangeService.lambdaQuery().in(SoChangeEntity::getSoId, ids).count();
-        if(count1 > 0){
-            throw new ServiceException(ApiError.ERROR_92175);
-        }
-        Integer count2 = soReturnService.lambdaQuery().in(SoReturnEntity::getSourceId, ids).count();
-        if(count2 > 0){
-            throw new ServiceException(ApiError.ERROR_92175);
-        }
-
-        List<SoDeliveryNoticeDetailDTO.ListDTO> soDeliveryNoticeList = soDeliveryNoticeFeign.listBySourceIdList(ids);
+        //订单变更
+//        Integer soChangeCount = soChangeService.lambdaQuery()
+//                .in(SoChangeEntity::getSoId, ids)
+//                .eq(SoChangeEntity::getInvalidStatus,Boolean.FALSE)
+//                .eq(SoChangeEntity::getIsDeleted,Boolean.FALSE)
+//                .count();
+//        if(soChangeCount > 0){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
+//        //销售退货订单
+//        Integer soReturnCount = soReturnService.lambdaQuery().in(SoReturnEntity::getSourceId, ids)
+//                .eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE)
+//                .eq(SoReturnEntity::getIsDeleted,Boolean.FALSE)
+//                .count();
+//        if(soReturnCount > 0){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
+        //发货通知单
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeList = FeignQuery.create(SoDeliveryNoticeEntity.class)
+                .in(SoDeliveryNoticeEntity::getSourceId,ids)
+                .eq(SoDeliveryNoticeEntity::getInvalidStatus,Boolean.FALSE)
+                .eq(SoDeliveryNoticeEntity::getIsDeleted,Boolean.FALSE)
+                .list();
         if(!soDeliveryNoticeList.isEmpty()){
             throw new ServiceException(ApiError.ERROR_92175);
         }
-        List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(ids);
-        if(!soOutstockList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_92175);
-        }
-        List<SalesDemandEntity> salesDemandList = saleDemandFeign.listBySourceIds(ids);
-        if(!salesDemandList.isEmpty()){
-            throw new ServiceException(ApiError.ERROR_92175);
-        }
+//        //销售出库单
+//        List<SoOutstockEntity> soOutstockList = FeignQuery.create(SoOutstockEntity.class)
+//                .in(SoOutstockEntity::getSoId,ids)
+//                .eq(SoOutstockEntity::getInvalidStatus,Boolean.FALSE)
+//                .eq(SoOutstockEntity::getIsDeleted,Boolean.FALSE)
+//                .list();
+//        if(!soOutstockList.isEmpty()){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
+//        //备货申请单
+//        List<SalesDemandEntity> salesDemandList = saleDemandFeign.listBySourceIds(ids);
+//        if(!salesDemandList.isEmpty()){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
     }
 
 
