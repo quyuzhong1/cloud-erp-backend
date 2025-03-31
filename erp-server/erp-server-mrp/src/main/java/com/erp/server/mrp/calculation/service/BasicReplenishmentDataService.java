@@ -2,6 +2,7 @@ package com.erp.server.mrp.calculation.service;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.config.DocNoGenHelper;
@@ -343,7 +344,7 @@ public class BasicReplenishmentDataService {
         }
         List<String> overseasWarehouse = warehouseResult.getOverseasWarehouseList()
                 .stream()
-                .filter(obj -> CharSequenceUtil.equals(basicDTO.getPlatform(),obj.getDictPlatform()) || obj.getChannelIdJson().contains(basicDTO.getPlatform()))
+                .filter(obj -> CharSequenceUtil.equals(basicDTO.getPlatform(),obj.getDictPlatform()) || ObjUtil.isEmpty(obj.getChannelIdJson()) || obj.getChannelIdJson().contains(basicDTO.getPlatform()))
                 .map(CfgRuleWarehouseDTO.StrategyDetailResultDTO::getWarehouseId)
                 .collect(Collectors.toList());
         resultDTO.setOverseasWarehouseId(overseasWarehouse);
