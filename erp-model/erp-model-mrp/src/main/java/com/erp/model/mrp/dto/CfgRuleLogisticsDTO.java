@@ -69,6 +69,11 @@ public class CfgRuleLogisticsDTO implements Serializable {
         private String stockUpId;
 
         /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        private String platformType;
+
+        /**
          * 物流明细信息
          */
         private List<CfgRuleLogisticsDetailDTO.ViewDTO> detailList;
@@ -119,6 +124,11 @@ public class CfgRuleLogisticsDTO implements Serializable {
         @Min(value = 0,message = "发货频率（天）最小值为0")
         @Max(value = 365,message = "发货频率（天）最大值为365")
         private Integer logisticsCycleDays;
+
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         */
+        private String platformType;
 
         /**
          * 物流明细信息

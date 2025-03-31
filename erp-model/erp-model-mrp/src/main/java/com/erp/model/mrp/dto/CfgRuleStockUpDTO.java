@@ -1,7 +1,6 @@
 package com.erp.model.mrp.dto;
 
-import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
-import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
+import com.erp.model.mrp.entity.CfgRuleSafeDaysEntity;
 import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.CfgRuleStockingRatioEntity;
 import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
@@ -13,7 +12,6 @@ import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Function;
 
 /**
@@ -42,6 +40,89 @@ public class CfgRuleStockUpDTO implements Serializable {
         private String id;
 
         /**
+         * 平台安全天数（天）
+         */
+        private Integer platformSafeDays;
+        /**
+         * 海外仓安全天数（天）
+         */
+        private Integer overseasSafeDays;
+
+        /**
+         * 常规品备货系数
+         */
+        private BigDecimal stockingRatio;
+
+        /**
+         * 新品备货系数
+         */
+        private BigDecimal newStockingRatio;
+
+        /**
+         * 平台类型
+         */
+        private String platform;
+
+        /**
+         * 关联id
+         */
+        private String refId;
+
+        /**
+         * 关联类型
+         */
+        private String refType;
+        /**
+         * 是否同常规品设置
+         */
+        private Boolean isCfgSame;
+
+        /**
+         * 常规品备货系数信息
+         */
+        private List<CfgRuleStockingRatioDTO.ViewDTO> stockingRatioList;
+
+        /**
+         * 新品备货系数信息
+         */
+        private List<CfgRuleStockingRatioDTO.ViewDTO> newStockingRatioList;
+
+        /**
+         * 平台安全天数（天）更多
+         */
+        private List<CfgRuleSafeDaysDTO.ViewDTO> platformSafeDaysList;
+        /**
+         * 海外仓安全天数（天）更多
+         */
+        private List<CfgRuleSafeDaysDTO.ViewDTO> overseasSafeDaysList;
+
+    }
+
+    /**
+     * 产品规则
+     */
+    @Getter
+    @Setter
+    public static class RefViewDTO {
+        /**
+         * 备货id
+         */
+        private String stockUpId;
+        /**
+         * 时效id
+         */
+        private String expireTimeId;
+
+        /**
+         * 关联id
+         */
+        private String refId;
+
+        /**
+         * 关联类型
+         */
+        private String refType;
+        /**
          * 采购审批天数（天）
          */
         private Integer purchaseApproveDays;
@@ -72,39 +153,9 @@ public class CfgRuleStockUpDTO implements Serializable {
         private Integer safeDays;
 
         /**
-         * 入库天数（天）
-         */
-        private Integer instockDays;
-
-        /**
          * 常规品备货系数
          */
         private BigDecimal stockingRatio;
-
-        /**
-         * 新品备货系数
-         */
-        private BigDecimal newStockingRatio;
-
-        /**
-         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-         */
-        private String platformType;
-
-        /**
-         * 关联id
-         */
-        private String refId;
-
-        /**
-         * 关联类型
-         */
-        private String refType;
-
-        /**
-         * 物流信息
-         */
-        private List<CfgRuleLogisticsDTO.ViewDTO> cfgLogisticsList;
 
         /**
          * 常规品备货系数信息
@@ -112,9 +163,14 @@ public class CfgRuleStockUpDTO implements Serializable {
         private List<CfgRuleStockingRatioDTO.ViewDTO> stockingRatioList;
 
         /**
-         * 新品备货系数信息
+         * 是否是自定义
          */
-        private List<CfgRuleStockingRatioDTO.ViewDTO> newStockingRatioList;
+        private Boolean isCustom = false;
+
+        /**
+         * 物流信息
+         */
+        private List<CfgRuleLogisticsDTO.ViewDTO> cfgLogisticsList;
     }
 
     /**
@@ -123,15 +179,25 @@ public class CfgRuleStockUpDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CustomUpdateDTO {
+
         /**
-         * 主键id
+         * 备货id
          */
-        private String id;
+        private String stockUpId;
+        /**
+         * 时效id
+         */
+        private String expireTimeId;
 
         /**
          * 是否是自定义
          */
         private Boolean isCustom = true;
+
+        /**
+         * 是否是批量
+         */
+        private Boolean isBatch = false;
 
         /**
          * 采购审批天数（天）
@@ -170,13 +236,6 @@ public class CfgRuleStockUpDTO implements Serializable {
         private BigDecimal stockingRatio;
 
         /**
-         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
-         */
-        @NotBlank(message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)不能为空")
-        @Size(max = 32, message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
-        private String platformType;
-
-        /**
          * 关联id
          */
         @Size(max = 19, message = "关联id最大长度不能超过19位")
@@ -199,12 +258,6 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         @Valid
         private List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList;
-
-        /**
-         * 新品备货系数信息
-         */
-        @Valid
-        private List<CfgRuleStockingRatioDTO.UpdateDTO> newStockingRatioList;
     }
 
     /**
@@ -214,16 +267,17 @@ public class CfgRuleStockUpDTO implements Serializable {
     @NoArgsConstructor
     public static class UpdateDTO extends CommonDTO {
         /**
+         * id
+         */
+        private String id;
+        /**
          * 是否是自定义
          */
         private Boolean isCustom = false;
-
         /**
-         * 物流信息
+         * 是否是批量
          */
-        @NotEmpty(message = "物流信息配置不能为空")
-        @Valid
-        private List<CfgRuleLogisticsDTO.UpdateDTO> cfgLogisticsList;
+        private Boolean isBatch = false;
 
         /**
          * 常规品备货系数信息
@@ -237,6 +291,17 @@ public class CfgRuleStockUpDTO implements Serializable {
         @Valid
         private List<CfgRuleStockingRatioDTO.UpdateDTO> newStockingRatioList;
 
+        /**
+         * 平台安全天数（天）更多
+         */
+        @Valid
+        private List<CfgRuleSafeDaysDTO.UpdateDTO> platformSafeDaysList;
+        /**
+         * 海外仓安全天数（天）更多
+         */
+        @Valid
+        private List<CfgRuleSafeDaysDTO.UpdateDTO> overseasSafeDaysList;
+
     }
 
     @Data
@@ -244,60 +309,18 @@ public class CfgRuleStockUpDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-         * 采购审批天数（天）
+         * 平台安全天数（天）
          */
-        @NotNull(message = "采购审批天数（天）不能为空")
-        @Min(value = 0, message = "采购审批天数（天）最小值为0")
-        @Max(value = 365, message = "采购审批天数（天）最大值为365")
-        private Integer purchaseApproveDays;
+        @Min(value = 0, message = "平台仓安全天数（天）最小值为0")
+        @Max(value = 365, message = "平台仓安全天数（天）最大值为365")
+        private Integer platformSafeDays;
 
         /**
-         * 生产周期天数（天）
+         * 海外仓安全天数（天）
          */
-        @NotNull(message = "生产周期天数（天）不能为空")
-        @Min(value = 0, message = "生产周期天数（天）最小值为0")
-        @Max(value = 365, message = "生产周期天数（天）最大值为365")
-        private Integer productionDays;
-
-        /**
-         * 供应商发货天数（天）
-         */
-        @NotNull(message = "供应商发货天数（天）不能为空")
-        @Min(value = 0, message = "供应商发货天数（天）最小值为0")
-        @Max(value = 365, message = "供应商发货天数（天）最大值为365")
-        private Integer supplierDeliveryDays;
-
-        /**
-         * 质检入库天数（天）
-         */
-        @NotNull(message = "质检入库天数（天）不能为空")
-        @Min(value = 0, message = "质检入库天数（天）最小值为0")
-        @Max(value = 365, message = "质检入库天数（天）最大值为365")
-        private Integer qcDays;
-
-        /**
-         * 采购频率天数（天）
-         */
-        @NotNull(message = "采购频率天数（天）不能为空")
-        @Min(value = 0, message = "采购频率天数（天）最小值为0")
-        @Max(value = 365, message = "采购频率天数（天）最大值为365")
-        private Integer purchaseCycleDays;
-
-        /**
-         * 安全天数（天）
-         */
-        @NotNull(message = "安全天数（天）不能为空")
-        @Min(value = 0, message = "安全天数（天）最小值为0")
-        @Max(value = 365, message = "安全天数（天）最大值为365")
-        private Integer safeDays;
-
-        /**
-         * 入库天数（天）
-         */
-        @NotNull(message = "入库天数（天）不能为空")
-        @Min(value = 0, message = "入库天数（天）最小值为0")
-        @Max(value = 365, message = "入库天数（天）最大值为365")
-        private Integer instockDays;
+        @Min(value = 0, message = "海外仓安全天数（天）最小值为0")
+        @Max(value = 365, message = "海外仓安全天数（天）最大值为365")
+        private Integer overseasSafeDays;
 
         /**
          * 常规品备货系数
@@ -314,11 +337,11 @@ public class CfgRuleStockUpDTO implements Serializable {
         private BigDecimal newStockingRatio;
 
         /**
-         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         * 平台类型
          */
-        @NotBlank(message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)不能为空")
-        @Size(max = 32, message = "平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)最大长度不能超过32位")
-        private String platformType;
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 32, message = "平台类型最大长度不能超过32位")
+        private String platform;
 
         /**
          * 关联id
@@ -332,6 +355,10 @@ public class CfgRuleStockUpDTO implements Serializable {
         @Size(max = 32, message = "关联类型最大长度不能超过32位")
         private String refType;
 
+        /**
+         * 是否同常规品设置
+         */
+        private Boolean isCfgSame;
     }
 
 
@@ -346,63 +373,52 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private String refId;
         /**
-         * 平台类型
+         * 平台
          *
-         * @see CfgRulePlatformTypeEnum
+         */
+        private String platform;
+        /**
+         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
          */
         private String platformType;
+
         /**
          * sku类型
-         *
-         * @see CfgRuleStockingRatioTypeEnum
          */
         private String skuType;
-        /**
-         * 区域
-         */
-        private String area;
+
         /**
          * 店铺id
          */
         private String shopId;
         /**
-         * 海外仓id
+         * 备货配置
          */
-        private List<String> warehouseId;
+        private List<CfgRuleStockUpEntity> cfgRuleStockUpList;
         /**
-         * 默认备货配置
+         * 备货系数配置
          */
-        private CfgRuleStockUpEntity defaultStockUp;
-        /**
-         * 默认备货系数配置
-         */
-        private List<CfgRuleStockingRatioEntity> defaultStockingRatio;
-        /**
-         * 默认物流配置
-         */
-        private List<CfgRuleLogisticsEntity> defaultLogistics;
-        /**
-         * 默认物流明细配置
-         */
-        private List<CfgRuleLogisticsDetailEntity> logisticsDetails;
+        private List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList;
 
-        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO resultDTO, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioEntity> defaultStockingRatio,
-                                                   List<CfgRuleLogisticsEntity> defaultLogistics, List<CfgRuleLogisticsDetailEntity> logisticsDetails) {
-            ReplenishmentResultDTO.BasicDTO entity = resultDTO.getReplenishment();
+        /**
+         * 安全天数配置
+         */
+        private List<CfgRuleSafeDaysEntity> cfgRuleSafeDaysList;
+
+        public static StrategyDTO buildStrategyDTO(ReplenishmentResultDTO resultDTO, List<CfgRuleStockUpEntity> cfgRuleStockUpList,
+                                                   List<CfgRuleStockingRatioEntity> cfgRuleStockingRatioList,
+                                                   List<CfgRuleSafeDaysEntity> cfgRuleSafeDaysList) {
             StrategyDTO dto = new StrategyDTO();
-            dto.setRefId(entity.getId());
-            dto.setPlatformType(entity.getPlatformType());
+            dto.setRefId(resultDTO.getReplenishment().getId());
             dto.setSkuType(resultDTO.getReplenishmentDetail().getSkuType());
-            dto.setArea(entity.getArea());
-            dto.setShopId(entity.getShopId());
-            dto.setDefaultStockUp(defaultStockUp);
-            dto.setDefaultStockingRatio(defaultStockingRatio);
-            dto.setDefaultLogistics(defaultLogistics);
-            dto.setLogisticsDetails(logisticsDetails);
-            dto.setWarehouseId(resultDTO.getOverseasWarehouseId());
+            dto.setPlatform(resultDTO.getReplenishment().getPlatform());
+            dto.setShopId(resultDTO.getReplenishment().getShopId());
+            dto.setPlatformType(resultDTO.getReplenishment().getPlatformType());
+            dto.setCfgRuleStockUpList(cfgRuleStockUpList);
+            dto.setCfgRuleStockingRatioList(cfgRuleStockingRatioList);
+            dto.setCfgRuleSafeDaysList(cfgRuleSafeDaysList);
             return dto;
         }
-
     }
 
     @Getter
@@ -413,65 +429,25 @@ public class CfgRuleStockUpDTO implements Serializable {
          */
         private String id;
         /**
-         * 采购审批天数（天）
-         */
-        private Integer purchaseApproveDays;
-        /**
-         * 生产周期天数（天）
-         */
-        private Integer productionDays;
-        /**
-         * 供应商发货天数（天）
-         */
-        private Integer supplierDeliveryDays;
-        /**
-         * 质检入库天数（天）
-         */
-        private Integer qcDays;
-        /**
-         * 采购频率天数（天）
-         */
-        private Integer purchaseCycleDays;
-        /**
          * 安全天数（天）
          */
         private Integer safeDays;
         /**
-         * 入库天数（天）
-         */
-        private Integer instockDays;
-        /**
-         * 常规品备货系数
+         * 默认备货系数
          */
         private BigDecimal stockingRatio;
-        /**
-         * 新品备货系数
-         */
-        private BigDecimal newStockingRatio;
         /**
          * sku备货系数
          */
         private BigDecimal refStockingRatio;
         /**
-         * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+         * 平台类型
          */
-        private String platformType;
+        private String platform;
         /**
          * 关联id
          */
         private String refId;
-        /**
-         * 物流时效
-         */
-        private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult;
-        /**
-         * 物流最大时效
-         */
-        private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult;
-        /**
-         * 物流最小时效
-         */
-        private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult;
         /**
          * 备货默认明细系数
          */
@@ -482,35 +458,33 @@ public class CfgRuleStockUpDTO implements Serializable {
         private List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults;
 
 
-        public void buildStrategyResultDTO(CfgRuleStockUpEntity entity, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults,
-                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult,
-                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult,List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults
-        ) {
-            CfgRuleStockUpEntity effectiveEntity = Optional.ofNullable(entity).orElse(defaultStockUp);
+        public void buildStrategyResultDTO(StrategyDTO dto, CfgRuleStockUpEntity entity, CfgRuleStockUpEntity defaultStockUp, List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> stockingRatioResults
+                , List<CfgRuleStockingRatioDTO.StockingRatioResultDTO> refStockingRatioResults) {
             // 设置实体字段值
-            this.setId(effectiveEntity.getId());
-            this.setPurchaseApproveDays(getOrDefault(entity, CfgRuleStockUpEntity::getPurchaseApproveDays, defaultStockUp.getPurchaseApproveDays()));
-            this.setProductionDays(getOrDefault(entity, CfgRuleStockUpEntity::getProductionDays, defaultStockUp.getProductionDays()));
-            this.setSupplierDeliveryDays(getOrDefault(entity, CfgRuleStockUpEntity::getSupplierDeliveryDays, defaultStockUp.getSupplierDeliveryDays()));
-            this.setQcDays(getOrDefault(entity, CfgRuleStockUpEntity::getQcDays, defaultStockUp.getQcDays()));
-            this.setPurchaseCycleDays(getOrDefault(entity, CfgRuleStockUpEntity::getPurchaseCycleDays, defaultStockUp.getPurchaseCycleDays()));
-            this.setSafeDays(getOrDefault(entity, CfgRuleStockUpEntity::getSafeDays, defaultStockUp.getSafeDays()));
-            this.setInstockDays(getOrDefault(entity, CfgRuleStockUpEntity::getInstockDays, defaultStockUp.getInstockDays()));
-
+            this.setId(getOrDefault(entity, CfgRuleStockUpEntity::getId, defaultStockUp.getId()));
             // 设置默认/新备货比率
-            this.setStockingRatio(defaultStockUp.getStockingRatio());
-            this.setNewStockingRatio(defaultStockUp.getNewStockingRatio());
-            this.setRefStockingRatio(entity != null ? entity.getStockingRatio() : null);
-
+            this.setStockingRatio(CfgRuleStockingRatioTypeEnum.NEW.getCode().equals(dto.getSkuType()) ? defaultStockUp.getNewStockingRatio() : defaultStockUp.getStockingRatio());
+            this.setRefStockingRatio(getOrDefault(entity, CfgRuleStockUpEntity::getStockingRatio, null));
+            if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType())) {
+                this.setSafeDays(getOrDefault(entity, CfgRuleStockUpEntity::getPlatformSafeDays, getDefaultSafeDays(dto, defaultStockUp)));
+            } else {
+                this.setSafeDays(getOrDefault(entity, CfgRuleStockUpEntity::getOverseasSafeDays, getDefaultSafeDays(dto, defaultStockUp)));
+            }
             // 设置平台类型和引用ID
-            this.setPlatformType(getOrDefault(entity, CfgRuleStockUpEntity::getPlatformType, defaultStockUp.getPlatformType()));
-            this.setRefId(entity != null ? entity.getRefId() : "");
-            // 设置物流和备货比率结果
-            this.setLogisticsResult(logisticsResult);
-            this.setLogisticsMinResult(logisticsMinResult);
-            this.setLogisticsMaxResult(logisticsMaxResult);
+            this.setPlatform(getOrDefault(entity, CfgRuleStockUpEntity::getPlatform, defaultStockUp.getPlatform()));
+            this.setRefId(getOrDefault(entity, CfgRuleStockUpEntity::getRefId, ""));
+            // 设置备货比率结果
             this.setStockingRatioResults(stockingRatioResults);
             this.setRefStockingRatioResults(refStockingRatioResults);
+        }
+
+        private Integer getDefaultSafeDays(StrategyDTO dto, CfgRuleStockUpEntity defaultStockUp) {
+            return dto.getCfgRuleSafeDaysList()
+                    .stream().filter(v -> v.getPlatformType().equals(dto.getPlatformType()))
+                    .filter(v -> v.getShopIdJson().contains(dto.getShopId()))
+                    .findFirst()
+                    .map(CfgRuleSafeDaysEntity::getSafeDays)
+                    .orElse(CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getPlatformType()) ? defaultStockUp.getPlatformSafeDays() : defaultStockUp.getOverseasSafeDays());
         }
 
         // 提取默认值的辅助方法

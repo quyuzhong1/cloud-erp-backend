@@ -91,10 +91,8 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             String fieldClass = keyPair.getValue();
             //Pair<旧值, 新值>
             Pair<String, String> valuePair = entry.getValue();
-            String oldValue = String.valueOf(valuePair.getKey());
-            String newValue = String.valueOf(valuePair.getValue());
             CfgOperateLogFieldEntity fieldEntity = fieldList.stream().filter(obj -> obj.getField().equals(field) && obj.getClassPath().equals(fieldClass)).findAny().orElse(null);
-            if (ObjectUtils.isEmpty(fieldEntity) || oldValue.equals(newValue)) {
+            if (ObjectUtils.isEmpty(fieldEntity)) {
                 continue;
             }
             String fieldName = fieldEntity.getFieldName();
@@ -117,6 +115,11 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             //国家
             if (ModuleOperateLogFieldTypeEnum.TYPE_COUNTRY.getCode().equals(type)) {
                 valuePair = setCountryValue(valuePair);
+            }
+            String oldValue = String.valueOf(valuePair.getKey());
+            String newValue = String.valueOf(valuePair.getValue());
+            if (oldValue.equals(newValue)) {
+                continue;
             }
             String content;
             String concat = msg.concat("编辑了【").concat(fieldName).concat("】");

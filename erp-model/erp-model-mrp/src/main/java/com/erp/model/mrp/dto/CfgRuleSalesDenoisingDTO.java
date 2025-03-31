@@ -65,6 +65,10 @@ public class CfgRuleSalesDenoisingDTO implements Serializable {
         * 销量表id（cfg_rule_sales_qty）
         */
         private String salesQtyId;
+        /**
+         * sku类型 新品/常规品
+         */
+        private String skuType;
 
     }
 

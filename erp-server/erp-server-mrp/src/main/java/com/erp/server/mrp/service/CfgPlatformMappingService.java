@@ -1,6 +1,5 @@
 package com.erp.server.mrp.service;
 
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.erp.model.mrp.dto.CfgPlatformMappingDTO;
@@ -77,4 +76,11 @@ public interface CfgPlatformMappingService extends SuperService<CfgPlatformMappi
      * @param code
      */
     List<String> listEffectiveByPlatform(String code);
+
+    /**
+     * 根据平台查询数据
+     * @param platformList
+     * @return List<CfgPlatformMappingEntity>
+     */
+    List<CfgPlatformMappingEntity> listByPlatformList(List<String> platformList);
 }

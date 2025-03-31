@@ -48,13 +48,12 @@ public class CfgRuleCommonController extends BaseController {
      * 查询详情
      * @author will
      * @date 2024/8/26 9:19
-     * @param platformType
      * @return ApiResult<ViewDTO>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<List<CfgRuleCommonDTO.ViewDTO>> view(@RequestParam("platformType") String platformType,@RequestParam("type") String type) {
-        return success(cfgRuleCommonService.view(platformType,type));
+    public ApiResult<List<CfgRuleCommonDTO.ViewDTO>> view(@RequestParam("type") String type) {
+        return success(cfgRuleCommonService.view(type));
     }
 
 
@@ -71,8 +70,8 @@ public class CfgRuleCommonController extends BaseController {
      * 获取备注描述
      */
     @GetMapping("/timeFrame")
-    public ApiResult<String> timeFrame(@RequestParam("platformType") String platformType) {
-        String timeFrame = cfgRuleCommonService.timeFrame(platformType);
+    public ApiResult<String> timeFrame() {
+        String timeFrame = cfgRuleCommonService.timeFrame();
         return success(timeFrame);
     }
 }
