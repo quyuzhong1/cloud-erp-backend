@@ -110,7 +110,7 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
                             //建议采购量
                             LocalDate calcDate = suggestDTO.getSuggestPurchaseDate().plusDays(Math.min(agingDays, days));
                             //按是否存在bom重新赋值
-                            int suggestDeliveryQty = CharSequenceUtil.isBlank(suggestDTO.getBomVersion()) ? totalSuggestQty : totalSuggestQty * suggestDTO.getQuantity();
+                            int suggestDeliveryQty = (CharSequenceUtil.isBlank(suggestDTO.getBomVersion()) || ObjectUtil.isEmpty(suggestDTO.getQuantity())) ? totalSuggestQty : totalSuggestQty * suggestDTO.getQuantity();
                             suggestDTO.setSuggestDeliveryQty(suggestDeliveryQty);
 
                             int inventory = inventoryService.getInventoryByPurchaseSuggest(suggestDTO,replenishmentResultDTO, calcDate, purchaseVolumeInventory);
@@ -143,9 +143,16 @@ public class PurchaseSuggestHandler extends AbstractSkuCalculationHandler {
         }
         //无配置或者不拆分也直接返回
         CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = replenishmentResultDTO.getCfgRuleStrategy().getOrderResult();
-        if (ObjectUtil.isEmpty(orderResult) || Boolean.TRUE.equals(!orderResult.getIsSplit())) {
+        if (ObjectUtil.isEmpty(orderResult) || Boolean.FALSE.equals(orderResult.getIsSplit())) {
             return Collections.singletonList(suggestDTO);
         }
+        //配置拆分并且独立采购，仅标记bom无需进行拆分
+        if (Boolean.FALSE.equals(orderResult.getIsMergeSku())) {
+            suggestDTO.setBomVersion(bomSkuList.get(0).getBomVersion());
+            suggestDTO.setParentSkuId(bomSkuList.get(0).getParentSkuId());
+            return Collections.singletonList(suggestDTO);
+        }
+
         List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests = new ArrayList<>();
         for (BomChildrenSkuDTO bomSku : bomSkuList) {
             ReplenishmentResultDTO.PurchaseSuggestDTO childSuggestDTO = PurchaseSuggestConverter.INSTANCE.copyPurchaseSuggest(suggestDTO);
