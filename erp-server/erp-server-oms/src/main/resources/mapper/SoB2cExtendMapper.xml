@@ -49,7 +49,7 @@
             sbe.delivery_warning_time as deliveryWarningTime
         from so_b2c_extend sbe
         inner join so_b2c sb on sbe.main_id = sb.id and sb.is_deleted = false
-        where sbe.is_deleted = false
+        where sbe.is_deleted = false AND sb.bill_status != 'shipped'
         AND sbe.required_delivery_time IS NOT NULL
         AND sbe.delivery_warning_time IS NOT NULL
         AND sbe.delivery_warning_time >= NOW()

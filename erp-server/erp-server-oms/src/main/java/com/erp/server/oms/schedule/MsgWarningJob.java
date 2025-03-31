@@ -2,6 +2,7 @@ package com.erp.server.oms.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
@@ -51,7 +52,7 @@ public class MsgWarningJob {
             XxlJobHelper.log("全托管预警信息推送执行完成 没有配置预警配置");
             return; // 没有配置则不执行
         }
-        CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO = BeanUtil.toBean(setting.getValue(), CfgSettingDTO.TimeOutSettingDTO.class);
+        CfgSettingDTO.TimeOutSettingDTO timeOutSettingDTO = JSONUtil.toBean(setting.getValue(), CfgSettingDTO.TimeOutSettingDTO.class);
         if (Objects.isNull(timeOutSettingDTO) || Objects.isNull(timeOutSettingDTO.getWarningTime()) || CollUtil.isEmpty(timeOutSettingDTO.getUserIdList())) {
             XxlJobHelper.log("全托管预警信息推送执行完成 没有配置预警时间或预警人");
             return; // 没有配置则不执行
