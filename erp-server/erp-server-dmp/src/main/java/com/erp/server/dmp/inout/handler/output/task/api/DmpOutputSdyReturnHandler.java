@@ -169,16 +169,13 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             String shopId = "";
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoReturnEntity.getSourceSystem())) {
                 //RMA.退货单
-            	if ("1".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
-                    sdyDTO.setTransaction_type("RMA.退货单");
-                    sdyDTO.setTransaction_sub_type("售前退款");
-                } else if ("2".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
+            	if ("2".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
                     sdyDTO.setTransaction_type("RMA.退货单");
                     sdyDTO.setTransaction_sub_type("退款退货");
                 } else if ("3".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
                     sdyDTO.setTransaction_type("RMA.换货单");
                     sdyDTO.setTransaction_sub_type("换货退货");
-                } else if ("4".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
+                } else if ("1".equals(dmpSoReturnDetailEntity.getReturnOriginalType()) || "4".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
                     sdyDTO.setTransaction_type("RMA.退货单");
                     sdyDTO.setTransaction_sub_type("退款不退货");
                 } else if ("6".equals(dmpSoReturnDetailEntity.getReturnOriginalType())) {
