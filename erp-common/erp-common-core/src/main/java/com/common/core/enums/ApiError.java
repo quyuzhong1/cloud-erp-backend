@@ -541,7 +541,6 @@ public enum ApiError implements Serializable {
     ERROR_95285(95285,"单据已作废，不支持编辑功能"),
     ERROR_95286(95286,"SKU存在【{}】库存，产品属性不允许变更"),
     ERROR_95287(95287, "当选择<产品信息变更>时，需选择<变更内容>，最少1项"),
-
     ERROR_95281(95281,"试产量产详情不存在"),
     ERROR_95282(95282,"获取供应商采购价目表失败: sku：{}，数量：{}"),
     ERROR_95288(95288,"尚未提交供应商采购价目表，请联系采购开发提交后提审:{}"),
@@ -1196,6 +1195,7 @@ public enum ApiError implements Serializable {
     ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
+    ERROR_SO_DETAIL_NOT_EXIST(92248,"销售订单明细未找到"),
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),

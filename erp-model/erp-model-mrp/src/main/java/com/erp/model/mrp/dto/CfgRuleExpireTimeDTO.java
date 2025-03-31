@@ -4,7 +4,6 @@ import com.erp.model.mrp.entity.CfgRuleExpireTimeEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleLogisticsEntity;
 import com.erp.model.mrp.entity.CfgRuleOverseasInstockDaysEntity;
-import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -304,10 +303,9 @@ public class CfgRuleExpireTimeDTO {
          */
         private CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult;
 
-        public void buildStrategyResultDTO(String platformType, CfgRuleExpireTimeEntity entity, CfgRuleExpireTimeEntity defaultExpireTime,
+        public void buildStrategyResultDTO(CfgRuleExpireTimeEntity entity, CfgRuleExpireTimeEntity defaultExpireTime,
                                            CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMaxResult,
-                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult
-        ) {
+                                           CfgRuleLogisticsDTO.LogisticsResultDTO logisticsMinResult, int instockDays) {
             // 设置实体字段值
             this.setId(getOrDefault(entity, CfgRuleExpireTimeEntity::getId, defaultExpireTime.getId()));
             this.setPurchaseApproveDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getPurchaseApproveDays, defaultExpireTime.getPurchaseApproveDays()));
@@ -315,21 +313,18 @@ public class CfgRuleExpireTimeDTO {
             this.setSupplierDeliveryDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getSupplierDeliveryDays, defaultExpireTime.getSupplierDeliveryDays()));
             this.setQcDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getQcDays, defaultExpireTime.getQcDays()));
             this.setPurchaseCycleDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getPurchaseCycleDays, defaultExpireTime.getPurchaseCycleDays()));
-            if (CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType)) {
-                this.setInstockDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getPlatformInstockDays, defaultExpireTime.getPlatformInstockDays()));
-            } else {
-                this.setInstockDays(getOrDefault(entity, CfgRuleExpireTimeEntity::getOverseasInstockDays, defaultExpireTime.getOverseasInstockDays()));
-            }
             this.setRefId(getOrDefault(entity, CfgRuleExpireTimeEntity::getRefId, ""));
             // 设置物流和备货比率结果
             this.setLogisticsResult(logisticsResult);
             this.setLogisticsMinResult(logisticsMinResult);
             this.setLogisticsMaxResult(logisticsMaxResult);
+            this.setInstockDays(instockDays);
         }
 
-        // 提取默认值的辅助方法
-        private <T> T getOrDefault(CfgRuleExpireTimeEntity entity, Function<CfgRuleExpireTimeEntity, T> getter, T defaultValue) {
-            return (entity != null && getter.apply(entity) != null) ? getter.apply(entity) : defaultValue;
-        }
+
+    }
+    // 提取默认值的辅助方法
+    public static  <T> T getOrDefault(CfgRuleExpireTimeEntity entity, Function<CfgRuleExpireTimeEntity, T> getter, T defaultValue) {
+        return (entity != null && getter.apply(entity) != null) ? getter.apply(entity) : defaultValue;
     }
 }

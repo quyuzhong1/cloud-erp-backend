@@ -89,6 +89,7 @@ public class CfgRuleSalesEstimateFileServiceImpl extends SuperServiceImpl<CfgRul
 
         CfgRuleSalesQtyEntity salesQty = cfgRuleSalesQtyService.getOne(Wrappers.<CfgRuleSalesQtyEntity>lambdaQuery()
                 .eq(CfgRuleSalesQtyEntity::getPlatform, platform)
+                .eq(CfgRuleSalesQtyEntity::getRefId,"")
                 .last("LIMIT 1")
         );
         List<SkuVO> skuVOS = plmTaskFeign.listApproveSku();

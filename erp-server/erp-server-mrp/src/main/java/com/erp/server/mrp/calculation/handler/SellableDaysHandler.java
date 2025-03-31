@@ -5,6 +5,7 @@ import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.RecentTimePeriodEnum;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,10 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+        if  (replenishmentResultDTO.getReplenishment().getSkuId().equals("1619184278518632450") && replenishmentResultDTO.getReplenishment().getShopId().equals("1735117862084808706")) {
+            System.out.println("SellableDaysHandler.doHandle");
+
+        }
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         ReplenishmentResultDTO.DetailDTO detail = replenishmentResultDTO.getReplenishmentDetail();
         List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> estimates = replenishmentResultDTO.getAvgTimePeriodSalesEstimates();
@@ -54,7 +59,7 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
             setSellableDays(detail.getFbaUsableQty(), estimateQty, replenishmentResultDTO.getReplenishmentDetail()::setFbaSellableDays);
         }
         //海外仓可售天数 海外仓总库存 / 备货期日均销量
-        if (Boolean.TRUE.equals(cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas())) {
+        if (CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType())) {
             Set<String> overseasResult = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getTotalOverseasInventory());
             int totalOverseasQty = 0;
             totalOverseasQty = getTotalOverseasQty(overseasResult, totalOverseasQty, detail);
@@ -100,9 +105,9 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
             if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_USABLE.getCode().equals(code)) {
                 totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasUsableQty()) ? 0 : detail.getOverseasUsableQty();
             } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_IN_TRANSIT.getCode().equals(code)) {
-                totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasInTransitQty()) ? 0 : detail.getOverseasUsableQty();
+                totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasInTransitQty()) ? 0 : detail.getOverseasInTransitQty();
             } else if (CfgRuleInventoryNodeEnum.TOTAL_OVERSEAS_ESTIMATED_DELIVERY.getCode().equals(code)) {
-                totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasPlanDeliveryQty()) ? 0 : detail.getOverseasUsableQty();
+                totalOverseasQty += ObjectUtils.isEmpty(detail.getOverseasPlanDeliveryQty()) ? 0 : detail.getOverseasPlanDeliveryQty();
             }
         }
         return totalOverseasQty;

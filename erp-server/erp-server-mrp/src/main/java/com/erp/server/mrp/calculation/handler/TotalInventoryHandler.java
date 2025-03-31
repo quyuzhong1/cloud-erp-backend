@@ -5,6 +5,7 @@ import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -37,13 +38,15 @@ public class TotalInventoryHandler extends AbstractSkuCalculationHandler {
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
+        //是否启用海外仓
+        Boolean isEnableOverseas = CfgRulePlatformTypeEnum.OVERSEAS.getCode().equals(replenishmentResultDTO.getReplenishment().getPlatformType()) ? Boolean.TRUE : Boolean.FALSE;
         int totalQty = 0;
         List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
         String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey();
         //计算FBA的库存
         totalQty = getFBATotalQty(replenishmentResultDTO, inventoryResult, baseKey, totalQty);
         //计算海外仓的库存
-        totalQty = getOverseasTotalQty(replenishmentResultDTO, cfgRuleStrategyDTO.getWarehouseResult().getIsEnableOverseas(), inventoryResult, baseKey, totalQty);
+        totalQty = getOverseasTotalQty(replenishmentResultDTO,isEnableOverseas, inventoryResult, baseKey, totalQty);
         //计算本地的库存
         totalQty = getLocalTotalQty(replenishmentResultDTO, inventoryResult, baseKey, totalQty);
         replenishmentResultDTO.getReplenishmentDetail().setTotalInventoryQty(totalQty);

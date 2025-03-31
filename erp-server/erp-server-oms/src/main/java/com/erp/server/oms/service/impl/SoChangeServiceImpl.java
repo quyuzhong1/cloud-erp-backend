@@ -1039,6 +1039,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         list.forEach(obj -> {
             String sellerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
                     map(SoInfoEntity::getSellerId).findFirst().orElse("");
+            String customerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
+                    map(SoInfoEntity::getCustomerId).findFirst().orElse("");
+            obj.setCustomerId(customerId);
             if (StringUtils.isNotBlank(sellerId)) {
                 ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
                 startDTO.setBusinessId(obj.getId());

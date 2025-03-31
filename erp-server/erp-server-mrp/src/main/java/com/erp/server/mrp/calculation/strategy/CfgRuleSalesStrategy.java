@@ -34,7 +34,7 @@ public class CfgRuleSalesStrategy implements CfgRuleSettingStrategy<CfgRuleSales
                     .collect(Collectors.toList());
         }
         CfgRuleSalesQtyEntity defaultCfgRuleSalesQty = dto.getCfgRuleSalesQtyList()
-                .stream().filter(v -> v.getPlatform().equals(dto.getPlatform()))
+                .stream().filter(v -> v.getPlatform().equals(dto.getPlatform()) && "".equals(v.getRefId()))
                 .findFirst()
                 .orElse(new CfgRuleSalesQtyEntity());
         List<CfgRuleSalesQtyDTO.StrategyDenoisingResultDTO> defaultDenoising = dto.getCfgRuleSalesDenoisingList().stream()

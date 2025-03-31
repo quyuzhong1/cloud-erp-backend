@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.entity.*;
 import com.erp.server.dmp.push.service.lingxing.LxCommonService;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
@@ -262,54 +263,18 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		if(requestData.trim().startsWith("{")) {
 			Boolean isQuerySync = JSON.parseObject(requestData).getBoolean(DmpOutputConstant.IS_QUERY_SYNC);
 			if (isQuerySync != null && isQuerySync) {
-				if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(syncOperate)) {
-					List<DmpPushMsgEntity> leSourceList = dmpPushMsgService.lambdaQuery()
-							.eq(DmpPushMsgEntity::getSourceId, sourceId)
-							.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
-							.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
-							.ne(DmpPushMsgEntity::getId, dataId)
-							.ne(DmpPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_DELETE.getCode())
-							.list();
-					if(CollUtil.isEmpty(leSourceList)) {
-						dmpOutputUtils.updateStatus(id, DmpOutputTaskRecordStatusEnum.ERROR.getCode(), "首次不允许推送删除操作" , "");
-						return;
-					}
-					List<DmpOutputTaskRecordEntity> leOutputRecordList = dmpOutputTaskRecordService.lambdaQuery()
-						.in(DmpOutputTaskRecordEntity::getDataId, leSourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
-						.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
-						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.notLike(DmpOutputTaskRecordEntity::getRequestData, DmpOutputConstant.IS_QUERY_SYNC)
-						.list();
-					if(CollUtil.isEmpty(leOutputRecordList)) {
-						return;
-					}else {
-						String leRequestData = leOutputRecordList.get(0).getRequestData();
-						JSONObject parseObject = JSON.parseObject(leRequestData);
-						parseObject.put("status", "已删除");
-						requestData = parseObject.toJSONString();
-						dmpOutputTaskRecordService.lambdaUpdate()
-							.eq(DmpOutputTaskRecordEntity::getId, id)
-							.set(DmpOutputTaskRecordEntity::getRequestData, requestData)
-							.update();
-					}
-				}else {
-					List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
-					if(CollUtil.isNotEmpty(erpQuerySync)) {
-						requestData = erpQuerySync.get(0).getRequestData();
-						//如果查询同步后还是没有数据，当删除处理
-						isQuerySync = JSON.parseObject(requestData).getBoolean(DmpOutputConstant.IS_QUERY_SYNC);
-						if (isQuerySync != null && isQuerySync) {
-							List<DmpPushMsgEntity> geSourceList = dmpPushMsgService.lambdaQuery()
-									.eq(DmpPushMsgEntity::getSourceId, sourceId)
-									.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
-									.ge(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
-									.ne(DmpPushMsgEntity::getId, dataId)
-									.eq(DmpPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_DELETE.getCode())
-									.list();
-							if(CollUtil.isEmpty(geSourceList)) {
-								return;
-							}else {
-								dmpOutputUtils.updateStatus(id, status, "后续有删除操作，直接更新为推送成功" , "");
+				List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+				if(CollUtil.isNotEmpty(erpQuerySync)) {
+					requestData = erpQuerySync.get(0).getRequestData();
+					//如果查询同步后还是没有数据，当删除处理
+					isQuerySync = JSON.parseObject(requestData).getBoolean("isQuerySync");
+					if (isQuerySync != null && isQuerySync) {
+						DmpOutputTaskEntity mainOutputTaskEntity = dmpOutputTaskService.getById(dmpOutputTaskRecordEntity.getMainId());
+						if (null != mainOutputTaskEntity){
+						//查询是否之前有推送过数帝云
+							List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.queryBySourceCodeAndCfgOutputId(erpQuerySync.get(0).getSourceCode(), mainOutputTaskEntity.getCfgOutputId());
+							if (CollUtil.isNotEmpty(list)) {
+								requestData = isDeletedHandler(list, erpQuerySync.get(0).getSourceCode());
 							}
 						}
 					}
@@ -404,10 +369,11 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			shudiyunB2cOrderDTO1.setStatus("已删除");
 			return JSON.toJSONString(shudiyunB2cOrderDTO1);
 		} else {
+			List<String> ids = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 			dmpOutputTaskRecordService.lambdaUpdate()
 					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 					.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
-					.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
+					.in(DmpOutputTaskRecordEntity::getId, ids)
 					.update();
 			return "";
 		}

@@ -802,7 +802,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soInfoToSdyDTO.setOperateEnum(operate);
             soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
             soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
-        } else {
+        } else if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())){
             soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate, entity.getSourceType());
         }
 
