@@ -1,12 +1,14 @@
 package com.erp.server.dmp.inout.handler.input.task.init.api.tiktok;
 
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputApiInitRequest;
@@ -45,14 +47,14 @@ public class TikTokFullyOrderApiInitHandler implements DmpInputApiInitHandler {
 
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
-//        TikTokShopInfoDTO shopInfoDTO = tikTokFullService.getShopInfoByShopId(nextLevelId);
-//        if (ObjectUtil.isEmpty(shopInfoDTO)) {
-//            throw new ServiceException("TikTok全托管店铺id：" + nextLevelId + "未找到对应的店铺信息");
-//        }
-        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
-        shopInfoDTO.setClientSecret("530a7d739653179b07d7026a63cde31671f10f61");
-        shopInfoDTO.setAccessToken("ROW_B6eCcQAAAABVlKa00W9Nne3pV522i3L6Ie04obpPK2d-5Rq9rL7jO0YSbotwLjpZ4DfljtV--ZI9dIDBdmztWivYPnUtt7dp");
-        shopInfoDTO.setClientId("69p2ui5hr09sn");
+        TikTokShopInfoDTO shopInfoDTO = tikTokFullService.getShopInfoByShopId(nextLevelId);
+        if (ObjectUtil.isEmpty(shopInfoDTO)) {
+            throw new ServiceException("TikTok全托管店铺id：" + nextLevelId + "未找到对应的店铺信息");
+        }
+//        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
+//        shopInfoDTO.setClientSecret("530a7d739653179b07d7026a63cde31671f10f61");
+//        shopInfoDTO.setAccessToken("ROW_B6eCcQAAAABVlKa00W9Nne3pV522i3L6Ie04obpPK2d-5Rq9rL7jO0YSbotwLjpZ4DfljtV--ZI9dIDBdmztWivYPnUtt7dp");
+//        shopInfoDTO.setClientId("69p2ui5hr09sn");
         Integer pageSize = 50;
         //分页token
         String pageToken = "";
