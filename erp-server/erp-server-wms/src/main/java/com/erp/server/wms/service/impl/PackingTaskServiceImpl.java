@@ -2812,4 +2812,34 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         firstMileDeliveryEntity.addAll(firstMileDeliveryService.listByIds(sourceIds));
         return firstMileDeliveryEntity;
     }
+
+    /**
+     * 根据源码列表检查纸箱重量
+     * 此方法通过源码获取打包任务实体列表，并进一步处理以获取未打包的视图列表
+     * 主要用于过滤和处理数据，以提供有关未打包纸箱的详细信息
+     *
+     * @param sourceCodes 源码列表，用于查询打包任务
+     * @return 返回一个 NoPackingView 对象列表，表示未打包的纸箱信息
+     */
+    @Override
+    public List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(List<String> sourceCodes){
+        // 根据源码列表获取打包任务实体列表
+        List<PackingTaskEntity> packingTaskEntityList = this.listBySourceCodes(sourceCodes);
+
+        // 检查打包任务实体列表是否为空，如果为空则直接返回空列表
+        if(CollUtil.isEmpty(packingTaskEntityList)){
+            return Collections.emptyList();
+        }
+
+        // 提取打包任务实体列表中的任务ID，并去重
+        List<String> taskIds = packingTaskEntityList.stream()
+                .map(PackingTaskEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 对每个 taskId 调用 notPackingDetailView 方法，获取未打包的视图列表
+        return taskIds.stream()
+                .map(this::notPackingDetailView)
+                .collect(Collectors.toList());
+    }
 }

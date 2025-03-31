@@ -23,7 +23,6 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -41,6 +40,7 @@ import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -48,13 +48,13 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.convert.TmsFirstMileReconciliationConverter;
 import com.erp.server.tms.listener.FirstMileReconciliationConfigExcelListener;
 import com.erp.server.tms.listener.FirstMileReconciliationStandardExcelListener;
 import com.erp.server.tms.mapper.TmsFirstMileReconciliationDetailMapper;
 import com.erp.server.tms.service.*;
-import com.sun.corba.se.spi.orb.StringPair;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -132,6 +132,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private LogisticsBillDetailService logisticsBillDetailService;
+    @Resource
+    private PackingTaskFeign packingTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1413,7 +1415,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     private TmsFirstMileReconciliationDetailDTO.ImportDTO importStandardFile(MultipartFile excelFile, TmsFirstMileReconciliationEntity mainEntity) {
         FirstMileReconciliationStandardExcelListener excelListenerUtil = new FirstMileReconciliationStandardExcelListener();
         try {
-            EasyExcel.read(excelFile.getInputStream(), FirstMileReconciliationStandardExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            EasyExcel.read(excelFile.getInputStream(), FirstMileReconciliationStandardExcelDTO.class, excelListenerUtil).sheet(0).headRowNumber(2) .doRead();
         } catch (IOException e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
@@ -1452,6 +1454,38 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         if (CollectionUtils.isEmpty(successList)) {
             return Collections.emptyList();
         }
+
+        Map<String, List<FirstMileReconciliationStandardExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
+        // 筛选出 value 的数量等于 1 的所有数据，并将结果集转换为 List
+        successList = collect.entrySet().stream()
+                .filter(entry -> entry.getValue().size() == 1)
+                .flatMap(entry -> entry.getValue().stream())
+                .collect(Collectors.toList());
+        // 筛选出 value 的数量大于 1 的所有数据
+        List<FirstMileReconciliationStandardExcelDTO> filteredCollect = collect.entrySet().stream()
+                .filter(entry -> entry.getValue().size() > 1)
+                .flatMap(entry -> entry.getValue().stream())
+                .sorted(Comparator.comparing(FirstMileReconciliationStandardExcelDTO::getNo).reversed())
+                .collect(Collectors.toList());
+        if(ObjectUtil.isNotEmpty(filteredCollect)){
+            List<String> deliveryCodeList = filteredCollect.stream().map(FirstMileReconciliationStandardExcelDTO::getSourceCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+            //通过发货单号找到未装箱清单
+            List<WmsCartonSpecDTO.NoPackingView> noPackingViews = packingTaskFeign.checkCartonWeightBySourceCodes(deliveryCodeList);
+            if(CollUtil.isNotEmpty(noPackingViews)){
+                //根据发货单单号
+                Map<String, WmsCartonSpecDTO.NoPackingView> noPackingViewMap = noPackingViews.stream().collect(Collectors.toMap(WmsCartonSpecDTO.NoPackingView::getSourceCode, v -> v, (oldValue, newValue) -> oldValue));
+                for (FirstMileReconciliationStandardExcelDTO excelDTO : filteredCollect) {
+                    //重量校验:未装箱清单不为空 则失败
+                    if(CollUtil.isNotEmpty(noPackingViewMap.get(excelDTO.getSourceCode()).getDetailList())){
+                        excelDTO.setErrorMsg("装箱未全部完成");
+                        errorList.add(excelDTO);
+                    }else{
+                        successList.add(excelDTO);
+                    }
+                }
+            }
+        }
+
         // 结果
         Map<String, List<TmsFirstMileReconciliationDetailDTO.ListDTO>> resultMap = new HashMap<>();
         // 币种

@@ -2,7 +2,6 @@ package com.erp.server.wms.controller.feign;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -67,5 +66,16 @@ public class PackingTaskFeignController extends BaseController {
     PackingTaskEntity getBySourceId(@RequestParam String sourceId){
         return packingTaskService.lambdaQuery().eq(PackingTaskEntity::getSourceId, sourceId).one();
     }
+
+
+
+    /**
+     * 根据发货单单号查询是否有装箱重量
+     */
+    @PostMapping("/checkCartonWeightBySourceCodes")
+    List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(@RequestBody List<String> sourceCodes){
+        return packingTaskService.checkCartonWeightBySourceCodes(sourceCodes);
+    }
+
 
 }

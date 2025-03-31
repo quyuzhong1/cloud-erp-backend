@@ -38,4 +38,10 @@ public interface PackingTaskFeign {
      */
     @GetMapping("/feign/packingTask/getBySourceId")
     PackingTaskEntity getBySourceId(@RequestParam String sourceId);
+
+    /**
+     * 根据发货单单号查询是否有装箱重量
+     */
+    @PostMapping("/feign/packingTask/checkCartonWeightBySourceCodes")
+    List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(@RequestBody List<String> sourceCodes);
 }
