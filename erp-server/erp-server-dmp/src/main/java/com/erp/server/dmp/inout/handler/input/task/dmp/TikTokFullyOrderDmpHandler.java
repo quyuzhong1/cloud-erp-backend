@@ -42,7 +42,7 @@ public class TikTokFullyOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         if (CollUtil.isNotEmpty(keySet)) {
             List<String> orderIdList = new ArrayList<>();
             for (List<Map<String, Object>> key : keySet) {
-                orderIdList.addAll(key.stream().map(f -> f.get("fid").toString()).collect(Collectors.toList()));
+                orderIdList.addAll(key.stream().map(f -> f.get("code").toString()).collect(Collectors.toList()));
             }
 
             List<DmpSoInfoEntity> list = dmpSoInfoService.lambdaQuery()

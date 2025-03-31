@@ -30,10 +30,10 @@ public class TikTokFullyOrderDetailDmpHandler extends DmpInputDoNextDmpHandler {
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                dmpDataMap.put("third_detail_id", dmpDataMap.get("externalSkuCode"));
-                dmpDataMap.put("platform_detail_id", dmpDataMap.get("externalSkuCode"));
-                dmpDataMap.put("platform_sku", dmpDataMap.get("externalSkuCode"));
-                dmpDataMap.put("platform_spu_no", dmpDataMap.get("platformSkuCode"));
+                dmpDataMap.put("thirdDetailId", dmpDataMap.get("externalSkuCode"));
+                dmpDataMap.put("platformDetailId", dmpDataMap.get("externalSkuCode"));
+                dmpDataMap.put("platformSku", dmpDataMap.get("externalSkuCode"));
+                dmpDataMap.put("platformSpuNo", dmpDataMap.get("platformSkuCode"));
                 buildExtendData(dmpDataMap);
             }
         }
