@@ -117,7 +117,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
-
+        orderDTO.setPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntity.getNextLevelId());
 
@@ -196,16 +196,16 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
         JSONObject orderExtendJson = new JSONObject();
         if (extendDataJson.containsKey("deliveryQty")) {
-            label.put("deliveryQty", extendDataJson.get("deliveryQty"));
+            orderExtendJson.put("deliveryQty", extendDataJson.get("deliveryQty"));
         }
         if (extendDataJson.containsKey("receiveQty")) {
-            label.put("receiveQty", extendDataJson.get("receiveQty"));
+            orderExtendJson.put("receiveQty", extendDataJson.get("receiveQty"));
         }
         if (extendDataJson.containsKey("instockQty")) {
-            label.put("instockQty", extendDataJson.get("instockQty"));
+            orderExtendJson.put("instockQty", extendDataJson.get("instockQty"));
         }
         if (extendDataJson.containsKey("returnQty")) {
-            label.put("returnQty", extendDataJson.get("returnQty"));
+            orderExtendJson.put("returnQty", extendDataJson.get("returnQty"));
         }
         orderDTO.setExtendData(orderExtendJson.toJSONString());
 
