@@ -775,7 +775,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             item.setPlatformName(platformName);
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalAreaEntityList.stream().filter(d -> d.getId().equals(item.getDictAreaCode())).findFirst().orElse(null);
             if (Objects.nonNull(dictGlobalAreaEntity)) {
-                item.setAreaName(dictGlobalAreaEntity.getSubregionName());
+                item.setAreaName(dictGlobalAreaEntity.getRegionName());
             }else{
                 item.setAreaName(item.getDictAreaCode());
             }
