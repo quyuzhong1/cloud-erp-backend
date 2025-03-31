@@ -439,7 +439,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     public List<SoDetailEntity> listSoDetailByMainIds(List<String> ids) {
-        return baseMapper.listSoDetailByMainIds(ids);
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDetailEntity::getMainId, ids).list();
     }
 
     @Override

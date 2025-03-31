@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.entity.*;
 import com.erp.server.dmp.push.service.lingxing.LxCommonService;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
@@ -404,10 +405,11 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			shudiyunB2cOrderDTO1.setStatus("已删除");
 			return JSON.toJSONString(shudiyunB2cOrderDTO1);
 		} else {
+			List<String> ids = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
 			dmpOutputTaskRecordService.lambdaUpdate()
 					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 					.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
-					.eq(DmpOutputTaskRecordEntity::getSourceCode, sourceCode)
+					.in(DmpOutputTaskRecordEntity::getId, ids)
 					.update();
 			return "";
 		}

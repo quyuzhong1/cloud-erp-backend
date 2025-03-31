@@ -190,12 +190,12 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     private PurchaseSuggestMergeService purchaseSuggestMergeService;
     @Resource
     private ThreadPoolTaskExecutor threadPoolTaskExecutor;
+    @Autowired
+    private SkuMappingFeign skuMappingFeign;
     @Resource
     private ReplenishmentSuggestionDetailHistoryService replenishmentSuggestionDetailHistoryService;
     @Resource
     private SalesEstimateHistoryService salesEstimateHistoryService;
-    @Autowired
-    private SkuMappingFeign skuMappingFeign;
 
     @Resource
     private CfgPlatformMappingService cfgPlatformMappingService;
