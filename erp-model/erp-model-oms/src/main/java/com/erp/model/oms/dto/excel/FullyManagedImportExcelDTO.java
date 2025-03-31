@@ -221,7 +221,7 @@ public class FullyManagedImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "真实售价", index = 19)
     @FieldValid(fieldName = "真实售价",isNotBlank = true,formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
-    private String price;
+    private BigDecimal price;
 
 
     /**

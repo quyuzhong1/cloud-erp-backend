@@ -551,8 +551,8 @@ public class FullyManagedOrderController extends BaseController {
      * @author Will
      * @date: 2023/8/18 16:36
      */
-    @PostMapping("/viewSoB2cDistribution")
-    public ApiResult<List<SoB2cDTO.ViewSoB2cDistributionDTO>> viewSoB2cDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    @PostMapping("/viewFullyDistribution")
+    public ApiResult<List<SoB2cDTO.ViewSoB2cDistributionDTO>> viewFullyDistribution(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<SoB2cDTO.ViewSoB2cDistributionDTO> list = soB2cService.viewSoB2cDistribution(dto);
         return success(list);
     }
@@ -603,9 +603,9 @@ public class FullyManagedOrderController extends BaseController {
      * @author Will
      * @date: 2023/8/18 16:43
      */
-    @PostMapping("/saveSoB2cDistribution")
+    @PostMapping("/saveFullyDistribution")
     @DistributeLocker(businessType = RedisKeyConstant.SO_B2C_ORDER_KEY,keyName = "dto.ids",waiteTime = 60)
-    public ApiResult<List<BatchResultDTO>> saveSoB2cDistribution(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
+    public ApiResult<List<BatchResultDTO>> saveFullyDistribution(@RequestBody SoB2cDTO.SaveSoB2cDistributionDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO result;
