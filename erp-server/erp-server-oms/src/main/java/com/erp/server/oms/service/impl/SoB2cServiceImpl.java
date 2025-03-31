@@ -3913,7 +3913,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (ObjectUtils.isNotEmpty(listingInfoEntity)) {
                     detailDTO.setImageUrl(listingInfoEntity.getProductImageUrl());
                 }
-
+                //扩展信息
+                String extendData = detailDTO.getExtendData();
+                if (StringUtils.isNotBlank(extendData)) {
+                    SoB2cDTO.ExtendDataDTO extendDataDTO = JSONUtil.toBean(extendData, SoB2cDTO.ExtendDataDTO.class);
+                    detailDTO.setDeliveryQty(extendDataDTO.getDeliveryQty());
+                    detailDTO.setReceiveQty(extendDataDTO.getReceiveQty());
+                    detailDTO.setInstockQty(extendDataDTO.getInstockQty());
+                    detailDTO.setReturnQty(extendDataDTO.getReturnQty());
+                }
                 //订单本位币金额
                 detailDTO.setSourceAmount(detailDTO.getAmount());
                 detailDTO.setSourceCurrency(detailDTO.getCurrency());
