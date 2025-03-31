@@ -1240,6 +1240,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
 
+
+
     @Override
     public void rollbackPickingInventory(List<String> ids) {
         //删除拣货单
@@ -2512,4 +2514,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<VirtualInventoryStockDTO.OutInStockDTO> rebuildB2cVirtualFlow() {
+        return baseMapper.rebuildB2cVirtualFlow();
+    }
 }

@@ -3,10 +3,9 @@ package com.erp.server.wms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.PagingDTO;
-import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -99,4 +98,11 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
     List<RequisitionApplicationDTO.PrintFnskuDetailDTO> listPrintPreviewByIds(@Param("ids")List<String> ids);
 
     IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(Page<T> query, @Param("params")RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO pagingParamDTO,@Param("id")String id);
+    /**
+     * 查询头程流水数据
+     * @author will
+     * @date 2025/3/31 12:06
+     * @return java.util.List<com.erp.model.wms.entity.VirtualInventoryStockDTO.OutInStockDTO>
+     */
+    List<VirtualInventoryStockDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
 }

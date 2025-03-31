@@ -431,4 +431,9 @@
         and wdp.is_deleted = false
         and wdp.id = #{id}
     </select>
+
+    <!-- 查询头程流水数据 -->
+    <select id="rebuildFirstMileVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO$OutInStockDTO">
+
+    </select>
 </mapper>

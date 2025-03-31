@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -293,4 +294,11 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     void updateByNoticeChange(List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
 
     Boolean generateMachineInfo(List<String> ids);
+    /**
+     * 查询b2b流水
+     * @author will
+     * @date 2025/3/31 11:28
+     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
+     */
+    List<VirtualInventoryStockDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 }

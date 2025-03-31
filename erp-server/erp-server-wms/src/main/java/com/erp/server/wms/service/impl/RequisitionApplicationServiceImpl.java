@@ -2201,6 +2201,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return new PagingVO<>(iPage);
     }
 
+
     /**
      * 回写要货申请的头程发货单生成状态
      * @author jack
@@ -3032,5 +3033,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 base64List.add(base);
             }
         }
+    }
+
+    @Override
+    public List<VirtualInventoryStockDTO.OutInStockDTO> rebuildFirstMileVirtualFlow() {
+        return baseMapper.rebuildFirstMileVirtualFlow();
     }
 }

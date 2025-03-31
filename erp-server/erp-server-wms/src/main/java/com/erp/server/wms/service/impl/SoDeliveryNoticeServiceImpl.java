@@ -1920,4 +1920,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    public List<VirtualInventoryStockDTO.OutInStockDTO> rebuildB2bVirtualFlow() {
+        return baseMapper.rebuildB2bVirtualFlow();
+    }
 }

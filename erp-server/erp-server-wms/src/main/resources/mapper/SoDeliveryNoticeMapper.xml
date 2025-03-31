@@ -248,4 +248,94 @@
             </foreach>
         </if>
     </select>
+
+    <!-- 查询b2b订单流水 -->
+    <select id="rebuildB2bVirtualFlow"
+            resultType="com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO$OutInStockDTO">
+        -- b2b销售订单冻结
+        select
+            sd.sku_id,
+            sd.sku_no,
+            si.virtual_warehouse_id,
+            si.warehouse_id,
+            'soInfo' as source_type,
+            si.code as source_code,
+            si.id as source_id,
+            sd.id as source_detail_id,
+            to_char(sd.frozen_time,'YYYY-MM-dd') as bill_date,
+            sd.frozen_qty as qty
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        where si.is_deleted = false and si.virtual_warehouse_id != '' and sd.frozen_qty != 0
+        union all
+        -- 发货通知单冻结
+        select
+            sdnd.sku_id,
+            sdnd.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'soDeliveryNotice' as source_type,
+            sdn.code as source_code,
+            sdn.id as source_id,
+            sdnd.id as source_detail_id,
+            to_char(sdn.create_time,'YYYY-MM-dd') as bill_date,
+            sdnd.delivery_qty as qty
+        from so_delivery_notice sdn
+        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
+        where sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false
+        -- 加工单出库
+        union all
+        select
+            md.sku_id,
+            md.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            to_char(mi.approve_time,'YYYY-MM-dd') as bill_date,
+            md.qty as qty
+        from machine_info mi
+        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'
+        inner join so_delivery_notice_detail sdnd on sdnd.source_detail_id = md.id and sdnd.is_deleted = false
+        inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != ''
+        where mi.is_deleted = false  and mi.source_type in ('soInfo','soDeliveryNotice')
+        --直接调拨单出库
+        union all
+        select
+            tid.sku_id,
+            tid.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'transferInfo' as source_type,
+            ti.id as source_id,
+            ti.code as source_code,
+            tid.id as source_detail_id,
+            to_char(ti.approve_time,'YYYY-MM-dd') as bill_date,
+            tid.qty as qty
+        from transfer_info ti
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        inner join so_delivery_notice_detail sdnd on sdnd.id = tid.source_detail_id and sdnd.is_deleted = false
+        inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and tid.out_warehouse_id = sdn.warehouse_id
+        where ti.is_deleted = false and ti.approve_status = 'approve'
+        union all
+        -- 销售出库单出库
+        select
+            sod.sku_id,
+            sod.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'soOutstock' as source_type,
+            so.id as source_id,
+            so.code as source_code,
+            sod.id as source_detail_id,
+            to_char(so.approve_time,'YYYY-MM-dd') as bill_date,
+            sod.actual_qty as qty
+        from so_outstock so
+        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        inner join so_delivery_notice_detail sdnd on sdnd.id = sod.source_detail_id and sdnd.is_deleted = false
+        inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sod.warehouse_id = sdn.warehouse_id
+        where so.is_deleted = false and so.approve_status = 'approve'
+    </select>
 </mapper>
