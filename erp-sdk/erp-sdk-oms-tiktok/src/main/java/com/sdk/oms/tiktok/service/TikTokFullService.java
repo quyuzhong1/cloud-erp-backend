@@ -3,6 +3,8 @@ package com.sdk.oms.tiktok.service;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.utils.RedisUtil;
@@ -99,7 +101,7 @@ public class TikTokFullService {
         sb.append("&timestamp=" + params.get("timestamp") + "");
 
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200)) {
             log.error("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}",
@@ -110,8 +112,8 @@ public class TikTokFullService {
         ObjectMapper objectMapper = new ObjectMapper();
         FullyListingDTO listingDTO = null;
         try {
-            listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), FullyListingDTO.class);
-        } catch (JsonProcessingException e) {
+            listingDTO = JSON.parseObject(apiResult.getData(),new TypeReference<FullyListingDTO>() {}.getType());
+        } catch (Exception e) {
             log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                     url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));

@@ -28,8 +28,8 @@ public class FullyListingDTO {
         @NoArgsConstructor
         @Data
         public static class SpusDTO {
-            @JsonProperty("platform_spu_code")
-            private String platformSpuCode;
+            @JsonProperty("spu_code")
+            private String spuCode;
             @JsonProperty("skus")
             private List<SkusDTO> skus;
 

@@ -3,6 +3,7 @@ package com.erp.server.oms.convert;
 import com.common.business.mapper.NumberMapperWork;
 import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.dto.excel.FullyManagedImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -339,4 +340,65 @@ public interface B2cOrderConverter {
      */
     SoB2cDTO.SplitDetailSaveDTO convertDetailTOSplitDTO(SoB2cDetailEntity detailEntity);
     List<SoB2cDTO.SplitDetailSaveDTO> convertDetailTOSplitDTO(List<SoB2cDetailEntity> detailEntityList1);
+
+    /**
+     * 全托管订单转换新增DTO
+     * @param fullyManagedImportExcelDTO
+     * @return
+     */
+    @Mapping(target = "transactionSubType", expression = "java(com.erp.model.oms.enums.OrderSubTypeEnum.ONLINE_ORDER.getCode())")
+    @Mapping(target = "thirdSystem", ignore = true)
+    @Mapping(target = "thirdCode", ignore = true)
+    @Mapping(target = "sourceType", ignore = true)
+    @Mapping(target = "sourceCode", ignore = true)
+    @Mapping(target = "sellerOrderCode", ignore = true)
+    @Mapping(target = "receiverDTO", ignore = true)
+    @Mapping(target = "payStatus", ignore = true)
+    @Mapping(target = "operateType", ignore = true)
+    @Mapping(target = "logisticsDTO", ignore = true)
+    @Mapping(target = "extendData", ignore = true)
+    @Mapping(target = "extendDTO", ignore = true)
+    @Mapping(target = "dictPayMethod", ignore = true)
+    @Mapping(target = "detailList", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "buyerRemark", ignore = true)
+    @Mapping(target = "billDate", ignore = true)
+    SoB2cDTO.AddDTO convertFullyManagedExcelDTO(FullyManagedImportExcelDTO fullyManagedImportExcelDTO);
+
+    @Mapping(target = "deliveryWarningTime", ignore = true)
+    SoB2cExtendDTO.AddDTO convertFullyManagedExtendDTO(FullyManagedImportExcelDTO fullyManagedImportExcelDTO);
+
+    @Mapping(target = "warehouseSkuNo", ignore = true)
+    @Mapping(target = "warehouseId", source = "deliveryWarehouseId")
+    @Mapping(target = "taxCost", ignore = true)
+    @Mapping(target = "splitDetailId", ignore = true)
+    @Mapping(target = "sourcePlatform", ignore = true)
+    @Mapping(target = "sourceDetailId", ignore = true)
+    @Mapping(target = "productCost", ignore = true)
+    @Mapping(target = "platformSpuNo", ignore = true)
+    @Mapping(target = "platformSkuNo", ignore = true)
+    @Mapping(target = "platformLineNumber", ignore = true)
+    @Mapping(target = "operateDetailId", ignore = true)
+    @Mapping(target = "isGift", expression = "java(detail.getPrice().compareTo(java.math.BigDecimal.ZERO) <= 0)")
+    @Mapping(target = "firstMileShippingCost", ignore = true)
+    @Mapping(target = "costSource", ignore = true)
+    @Mapping(target = "clearanceCustomsTax", ignore = true)
+    SoB2cDetailDTO.AddDTO convertFullyManagedDetailDTO(FullyManagedImportExcelDTO detail);
+    List<SoB2cDetailDTO.AddDTO> convertFullyManagedDetailDTO(List<FullyManagedImportExcelDTO> detailList);
+
+    @Mapping(target = "weight", ignore = true)
+    @Mapping(target = "name", ignore = true)
+    @Mapping(target = "logisticsChannelId", source = "channelId")
+    @Mapping(target = "iossTaxNo", ignore = true)
+    @Mapping(target = "estimatedShippingCurrency", ignore = true)
+    @Mapping(target = "estimatedShippingCost", ignore = true)
+    @Mapping(target = "deliveryTime", ignore = true)
+    @Mapping(target = "code", source = "trackNo")
+    @Mapping(target = "actualShippingCurrency", ignore = true)
+    @Mapping(target = "accessoriesSkuId", ignore = true)
+    @Mapping(target = "accessoriesQty", ignore = true)
+    @Mapping(target = "accessoriesNw", ignore = true)
+    @Mapping(target = "accessoriesCostCurrency", ignore = true)
+    @Mapping(target = "accessoriesCost", ignore = true)
+    SoB2cLogisticsDTO.AddDTO convertFullyManagedLogisticsDTO(FullyManagedImportExcelDTO fullyManagedImportExcelDTO);
 }

@@ -3,7 +3,9 @@ package com.erp.server.dmp.inout.handler.input.task.init.api.tiktok.fully;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.TypeReference;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
@@ -19,6 +21,7 @@ import com.sdk.oms.tiktok.dto.tiktok.listing.ListingDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.oms.tiktok.util.EncryptionUtils;
+import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Scope;
@@ -47,9 +50,13 @@ public class TikTokFullyProductApiInitHandler implements DmpInputApiInitHandler 
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
             throw new ServiceException("TikTok全托管店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
+//        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
+//        shopInfoDTO.setClientId("69p2ui5hr09sn");
+//        shopInfoDTO.setClientSecret("530a7d739653179b07d7026a63cde31671f10f61");
+//        shopInfoDTO.setAccessToken("ROW_B6eCcQAAAABVlKa00W9Nne3pV522i3L6Ie04obpPK2d-5Rq9rL7jO0YSbotwLjpZ4DfljtV--ZI9dIDBdmztWivYPnUtt7dp");
 
-        //每次最多获取200条
-        Integer pageSize = 100;
+        //每次最多获取50条
+        Integer pageSize = 50;
         //分页token
         String pageToken = "";
         //平台接口地址
@@ -68,14 +75,8 @@ public class TikTokFullyProductApiInitHandler implements DmpInputApiInitHandler 
             Map<String, Object> params = new HashMap<>();
             params.put("access_token", shopInfoDTO.getAccessToken());
             params.put("app_key", shopInfoDTO.getClientId());
-            params.put("page_size", pageSize);
-            params.put("page_token", pageToken);
-            params.put("shop_cipher", shopInfoDTO.getShopCipher());
-            params.put("shop_id", "");
-            params.put("sign", "");
             String timestamp = System.currentTimeMillis() / 1000 + "";
             params.put("timestamp", timestamp);
-            params.put("version", TikTokConstant.FULLY_VERSION);
 
             //设置请求头
             Map<String, String> headerMap = new HashMap<>();
@@ -83,7 +84,9 @@ public class TikTokFullyProductApiInitHandler implements DmpInputApiInitHandler 
             headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
 
             //请求body，平台用于计算签名
-            Map<String, String> bodyMap = new HashMap<>();
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("page_size", pageSize);
+            bodyMap.put("page_token", pageToken);
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
@@ -96,16 +99,11 @@ public class TikTokFullyProductApiInitHandler implements DmpInputApiInitHandler 
             sb.append(path);
             sb.append("?access_token=" + params.get("access_token") + "");
             sb.append("&app_key=" + params.get("app_key") + "");
-            sb.append("&page_size=" + params.get("page_size") + "");
-            sb.append("&page_token=" + params.get("page_token") + "");
-            sb.append("&shop_cipher=" + params.get("shop_cipher") + "");
-            sb.append("&shop_id=" + params.get("shop_id") + "");
             sb.append("&sign=" + params.get("sign") + "");
             sb.append("&timestamp=" + params.get("timestamp") + "");
-            sb.append("&version=" + params.get("version") + "");
 
             //拉取数据
-            ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
+            ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
             if (!Objects.equals(apiResult.getCode(), 200)) {
                 log.error("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询sku数据失败，返回值 responseMap={}",
@@ -116,8 +114,8 @@ public class TikTokFullyProductApiInitHandler implements DmpInputApiInitHandler 
             ObjectMapper objectMapper = new ObjectMapper();
             FullyListingDTO listingDTO = null;
             try {
-                listingDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), FullyListingDTO.class);
-            } catch (JsonProcessingException e) {
+                listingDTO = JSON.parseObject(apiResult.getData(),new TypeReference<FullyListingDTO>() {}.getType());
+            } catch (Exception e) {
                 log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
                 throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));

@@ -127,6 +127,10 @@ public class SoB2cDetailDTO implements Serializable {
         * 明细标签
         */
        private String labelJson;
+        /**
+         * 扩展字段
+         */
+       private String extendData;
 
        /**
         * 来源平台（SoB2cSourcePlatformEnum枚举，selfAddERP新增，thirdPlatform第三方平台新增）
@@ -175,6 +179,22 @@ public class SoB2cDetailDTO implements Serializable {
          * 申报标签名称
          */
         private String declareLabelName;
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
 
         /**
          * 子件缺货信息

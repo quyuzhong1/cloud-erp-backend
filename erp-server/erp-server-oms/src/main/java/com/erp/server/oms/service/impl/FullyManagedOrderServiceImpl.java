@@ -23,6 +23,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.CfgSettingEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.FullyManagedTabEnum;
+import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.listener.*;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.FullyManagedQueryHandler;
@@ -213,7 +214,31 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         collect.forEach((key, value) -> {
             SoB2cDTO.AddDTO addDTO = buildAddDTO(key,value,errorList);
             if (Objects.nonNull(addDTO)){
-                soB2cService.add(addDTO, null);
+                try {
+                    SoB2cEntity soB2cEntity = soB2cService.add(addDTO, null);
+                    //匹配订单规则
+                    SoB2cDTO.RuleResultDTO orderRuleResult = soB2cService.orderRule(soB2cEntity.getId());
+                    //匹配成功
+                    if (orderRuleResult.getIsRuleMatch() && orderRuleResult.getIsPass()) {
+                        //仓库规则
+                        SoB2cDTO.RuleResultDTO warehouseRuleResult = soB2cService.warehouseRule(orderRuleResult.getId(), orderRuleResult.getSoB2cDetailList(), orderRuleResult.getMap());
+                        Boolean warehouseRuleMatch = warehouseRuleResult.getIsRuleMatch();
+                        if (warehouseRuleMatch) {
+                            SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.logisticsRule(soB2cEntity.getId(), new HashMap<>(), false);
+                            SoB2cEntity entity = soB2cService.getById(soB2cEntity.getId());
+                            if ((Objects.nonNull(logisticsRuleResult.getAutoGetTrackNo()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo()))
+                                    || (Boolean.FALSE.equals(entity.getIsOutOfRangeDelivery()) && Objects.nonNull(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()))) {
+                                soB2cService.getLogisticsCode(soB2cEntity.getId(),  Boolean.TRUE);
+                            }
+                        }
+                    }
+                    //自动计算预估运费到订单的预估运费字段
+                    soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(soB2cEntity.getId()));
+                }catch (Exception e){
+                    log.error("导入失败！>>>{}", e);
+                    value.forEach(f -> f.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】新增失败：【{}】",f.getDictPlatformName(), f.getPlatformCode(), e.getMessage())));
+                    errorList.addAll(value);
+                }
             }
         });
     }
@@ -229,12 +254,29 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         //平台列表
         SoB2cEntity entity = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).one();
         if (ObjectUtil.isNotEmpty(entity)) {
-            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台订单号【{}】销售订单已存在【{}】", e.getPlatformCode(), entity.getCode())));
+            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】销售订单已存在【{}】",e.getDictPlatformName(), e.getPlatformCode(), entity.getCode())));
             errorList.addAll(value);
             return null;
         }
-
-        return null;
+        if (value.size() > 1){
+            //判断每个导入列中字段值是否一致
+            boolean flag = value.stream()
+                    .allMatch(e -> e.getPrice().compareTo(value.get(0).getPrice()) == 0
+                            && e.getCurrencyCode().equals(value.get(0).getCurrencyCode())
+                            && e.getPayTime().equals(value.get(0).getPayTime())
+                            && e.getOrderSourceType().equals(value.get(0).getOrderSourceType())
+                    );
+            if (!flag){
+                value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】中订单金额/币别/下单时间/平台来源需要一致",e.getDictPlatformName(), e.getPlatformCode(), entity.getCode())));
+                errorList.addAll(value);
+                return null;
+            }
+        }
+        SoB2cDTO.AddDTO addDTO = B2cOrderConverter.INSTANCE.convertFullyManagedExcelDTO(value.get(0));
+        addDTO.setExtendDTO(B2cOrderConverter.INSTANCE.convertFullyManagedExtendDTO(value.get(0)));
+        addDTO.setDetailList(B2cOrderConverter.INSTANCE.convertFullyManagedDetailDTO(value));
+        addDTO.setLogisticsDTO(B2cOrderConverter.INSTANCE.convertFullyManagedLogisticsDTO(value.get(0)));
+        return addDTO;
     }
 
     /**
