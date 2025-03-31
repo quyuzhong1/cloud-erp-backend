@@ -87,6 +87,7 @@ public class TikTokFullyProductApiInitHandler implements DmpInputApiInitHandler 
             Map<String, Object> bodyMap = new HashMap<>();
             bodyMap.put("page_size", pageSize);
             bodyMap.put("page_token", pageToken);
+            bodyMap.put("sku_status", "UPSHELF");
 
             String input = EncryptionUtils.urlParamsSort(params, path, headerMap, secret, JSONUtil.toJsonStr(bodyMap));
             // 追加请求路径获取签名
