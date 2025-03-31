@@ -572,6 +572,37 @@ public class ShudiyunB2cOrderDTO {
      */
     private String root_node_no_initial;
 
+    /**
+     * 区域编码
+     */
+    private String region_code;
+
+    /**
+     * 区域名称
+     */
+    private String region_name;
+
+    /**
+     * 军区编码
+     */
+    private String military_region_code;
+
+    /**
+     * 军区名称
+     */
+    private String military_region_name;
+
+    /**
+     * 部门编码
+     */
+    private String department_code;
+
+    /**
+     * 部门名称
+     */
+    private String department_name;
+
+
     public String sdyStatusHandle(String operateEnum, int mainVersion, int detailVersion) {
         int version = 0;
         if (mainVersion > 0) {

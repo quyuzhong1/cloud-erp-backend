@@ -6,7 +6,11 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -39,8 +43,12 @@ public interface SyncSoB2cService {
                                                   List<ShopInfoEntity> shopInfoList,
                                                   List<CustomerInfoEntity> customerInfoList,
                                                   List<BaseIdDTO.CodeDTO> companyEntities,
-                                                  List<DictBasicEntity> dictBasicEntityList,
-                                                  List<DictBasicEntity> dictList);
+                                                  SoB2cReceiverEntity receiverEntity,
+                                                  List<DictBasicEntity> omsAllDictList,
+                                                  List<DictPartitionEntity> partitionEntityList,
+                                                  List<DictCountryEntity> countryEntityList,
+                                                  List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                  List<SysDepartmentDTO> deptList);
 
     void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate);
 
@@ -56,8 +64,12 @@ public interface SyncSoB2cService {
                        List<ShopInfoEntity> shopInfoList,
                        List<CustomerInfoEntity> customerInfoList,
                        List<BaseIdDTO.CodeDTO> companyEntities,
-                       List<DictBasicEntity> dictBasicEntityList,
-                       List<DictBasicEntity> dictList);
+                       SoB2cReceiverEntity receiverEntity,
+                       List<DictBasicEntity> omsAllDictList,
+                       List<DictPartitionEntity> partitionEntityList,
+                       List<DictCountryEntity> countryEntityList,
+                       List<DictGlobalAreaEntity> dictGlobalEntityList,
+                       List<SysDepartmentDTO> deptList);
 
     void syncSelfAddDataToSdy(SoB2cEntity soB2cEntity, String operateEnum);
 
@@ -80,10 +92,13 @@ public interface SyncSoB2cService {
                                                          List<ShopInfoEntity> shopInfoList,
                                                          List<CustomerInfoEntity> customerInfoList,
                                                          List<BaseIdDTO.CodeDTO> companyEntities,
-                                                         List<DictBasicEntity> dictBasicEntityList,
-                                                         List<DictBasicEntity> dictList,
-                                                         Map<String, BigDecimal> deliveryDetailPriceMap
-                                                         );
+                                                         Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                         SoB2cReceiverEntity receiverEntity,
+                                                         List<DictBasicEntity> omsAllDictList,
+                                                         List<DictPartitionEntity> partitionEntityList,
+                                                         List<DictCountryEntity> countryEntityList,
+                                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<SysDepartmentDTO> deptList);
 
     Map<String, Object> syncAliExpressDataToSdyFieldHandler(SoB2cEntity soB2cEntity,
                                                             List<SoB2cDetailEntity> soB2cDetailEntityList,
@@ -100,13 +115,17 @@ public interface SyncSoB2cService {
                                                             List<ShopInfoEntity> shopInfoList,
                                                             List<CustomerInfoEntity> customerInfoList,
                                                             List<BaseIdDTO.CodeDTO> companyEntities,
-                                                            List<DictBasicEntity> dictBasicEntityList,
-                                                            List<DictBasicEntity> dictList, Map<String, BigDecimal> deliveryDetailPriceMap);
+                                                            Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                            SoB2cReceiverEntity receiverEntity,
+                                                            List<DictBasicEntity> omsAllDictList,
+                                                            List<DictPartitionEntity> partitionEntityList,
+                                                            List<DictCountryEntity> countryEntityList,
+                                                            List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                            List<SysDepartmentDTO> deptList);
 
     /**
      * 同步数帝云
      *
-     * @param soId
      * @param operateEnum
      * @param sourceType
      */
@@ -143,9 +162,12 @@ public interface SyncSoB2cService {
             List<ShopInfoEntity> shopInfoList,
             List<CustomerInfoEntity> customerInfoList,
             List<BaseIdDTO.CodeDTO> companyEntities,
-            List<DictBasicEntity> dictBasicEntityList,
-            List<DictBasicEntity> dictList
-    );
+            SoB2cReceiverEntity receiverEntity,
+            List<DictBasicEntity> omsAllDictList,
+            List<DictPartitionEntity> partitionEntityList,
+            List<DictCountryEntity> countryEntityList,
+            List<DictGlobalAreaEntity> dictGlobalEntityList,
+            List<SysDepartmentDTO> deptList);
 
     void hisSyncAliExpressDataToSdyFieldHandler(
             SoB2cEntity soB2cEntity,
@@ -163,7 +185,10 @@ public interface SyncSoB2cService {
             List<ShopInfoEntity> shopInfoList,
             List<CustomerInfoEntity> customerInfoList,
             List<BaseIdDTO.CodeDTO> companyEntities,
-            List<DictBasicEntity> dictBasicEntityList,
-            List<DictBasicEntity> dictList
-    );
+            SoB2cReceiverEntity receiverEntity,
+            List<DictBasicEntity> omsAllDictList,
+            List<DictPartitionEntity> partitionEntityList,
+            List<DictCountryEntity> countryEntityList,
+            List<DictGlobalAreaEntity> dictGlobalEntityList,
+            List<SysDepartmentDTO> deptList);
 }

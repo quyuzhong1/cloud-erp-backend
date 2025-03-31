@@ -15,6 +15,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -22,7 +23,11 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
@@ -52,13 +57,7 @@ import java.util.stream.Collectors;
 @Service
 public class SyncSoB2cServiceImpl implements SyncSoB2cService {
     @Resource
-    private PlmTaskFeign plmTaskFeign;
-    @Resource
-    private SysUserFeign sysUserFeign;
-    @Resource
     private OmsPushMsgService omsPushMsgService;
-    @Resource
-    private DictBasicService dictBasicService;
     @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
     @Resource
@@ -80,8 +79,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                          List<ShopInfoEntity> shopInfoList,
                                                          List<CustomerInfoEntity> customerInfoList,
                                                          List<BaseIdDTO.CodeDTO> companyEntities,
-                                                         List<DictBasicEntity> dictBasicEntityList,
-                                                         List<DictBasicEntity> dictList
+                                                         SoB2cReceiverEntity receiverEntity,
+                                                         List<DictBasicEntity> omsAllDictList,
+                                                         List<DictPartitionEntity> partitionEntityList,
+                                                         List<DictCountryEntity> countryEntityList,
+                                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<SysDepartmentDTO> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -138,13 +141,17 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shopInfoList,
                 customerInfoList,
                 companyEntities,
-                dictBasicEntityList,
-                dictList,
                 soB2cDetailEntity.getSkuId(),
                 soB2cDetailEntity.getSkuNo(),
                 setBlankMskuName,
                 soB2cDetailEntity.getCurrency(),
-                shudiyunB2cOrderDTO
+                shudiyunB2cOrderDTO,
+                receiverEntity,
+                omsAllDictList,
+                partitionEntityList,
+                countryEntityList,
+                dictGlobalEntityList,
+                deptList
         );
 
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
@@ -163,14 +170,30 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                      List<ShopInfoEntity> shopInfoList,
                                      List<CustomerInfoEntity> customerInfoList,
                                      List<BaseIdDTO.CodeDTO> companyEntities,
-                                     List<DictBasicEntity> dictBasicEntityList,
-                                     List<DictBasicEntity> dictList,
                                      String skuId,
                                      String skuNo,
                                      boolean blankMskuNameSetting,
                                      String currency,
-                                     ShudiyunB2cOrderDTO shudiyunB2cOrderDTO
+                                     ShudiyunB2cOrderDTO shudiyunB2cOrderDTO,
+                                     SoB2cReceiverEntity receiverEntity,
+                                     List<DictBasicEntity> omsAllDictList,
+                                     List<DictPartitionEntity> partitionEntityList,
+                                     List<DictCountryEntity> countryEntityList,
+                                     List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                     List<SysDepartmentDTO> deptList
+
     ) {
+        // 字典分组
+        Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        // 销售平台
+        List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
+        // 数帝云子平台映射
+        List<DictBasicEntity> dictList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(), Collections.emptyList());
+        // 数帝云军区一级部门映射
+        List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
+        // 数帝云平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType(), Collections.emptyList());
+
         if (StringUtils.isBlank(skuId) || StringUtils.isBlank(skuNo)) {
             ServiceException.runError("未找到ERP sku未空: skuId={}, skuNo={}", skuId, skuNo);
         }
@@ -345,6 +368,53 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shudiyunB2cOrderDTO.setMsku_code(skuVO.getSkuNo());
             }
         }
+
+        if (null != receiverEntity){
+            String partitionId = receiverEntity.getPartitionId();
+            DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(partitionId)).findFirst().orElse(null);
+            if (null != dictPartitionEntity){
+                // 军区编码
+                shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
+                // 军区名称
+                shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
+                // 军区一级部门映射
+                DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
+                // 销售平台二级部门映射
+                DictBasicEntity sdyPlatformDeptEntity = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
+                if (null != sdyPartitionDeptEntity && null != sdyPlatformDeptEntity){
+                    SysDepartmentDTO departmentDTO = deptList.stream().filter(e ->
+                                    e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
+                                            && e.getId().equalsIgnoreCase(sdyPlatformDeptEntity.getValue())
+                            )
+                            .findFirst()
+                            .orElse(null);
+                    if (null != departmentDTO){
+                        // 部门编码
+                        shudiyunB2cOrderDTO.setDepartment_code(departmentDTO.getCode());
+                        // 部门名称
+                        shudiyunB2cOrderDTO.setDepartment_name(departmentDTO.getName());
+                    }
+                }
+            }
+
+            if (StringUtils.isNotBlank(receiverEntity.getCountry())){
+                String country = receiverEntity.getCountry();
+                // 国家编码
+                shudiyunB2cOrderDTO.setCountry_code(country);
+                DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(country)).findFirst().orElse(null);
+                if (null != dictCountryEntity){
+                    // 国家名称
+                    shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
+                    // 区域编码
+                    shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
+                    // 区域名称
+                    DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
+                    if (null != dictGlobalAreaEntity){
+                        shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
+                    }
+                }
+            }
+        }
     }
 
     @Override
@@ -372,7 +442,25 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
     }
 
     @Override
-    public void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, String operate, List<SkuVO> skuVOList, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, List<ProductDetailEntity> parentSkuList, List<ListingInfoEntity> listingInfoEntities, List<CurrencyDTO.ViewDTO> currencyList, List<DictCurrencyEntity> dictCurrencyEntities, List<ShopInfoEntity> shopInfoList, List<CustomerInfoEntity> customerInfoList, List<BaseIdDTO.CodeDTO> companyEntities, List<DictBasicEntity> dictBasicEntityList, List<DictBasicEntity> dictList) {
+    public void syncDataToSdy(SoB2cEntity soB2cEntity,
+                              List<SoB2cDetailEntity> detailEntityList,
+                              String operate,
+                              List<SkuVO> skuVOList,
+                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                              List<ProductDetailEntity> parentSkuList,
+                              List<ListingInfoEntity> listingInfoEntities,
+                              List<CurrencyDTO.ViewDTO> currencyList,
+                              List<DictCurrencyEntity> dictCurrencyEntities,
+                              List<ShopInfoEntity> shopInfoList,
+                              List<CustomerInfoEntity> customerInfoList,
+                              List<BaseIdDTO.CodeDTO> companyEntities,
+                              SoB2cReceiverEntity receiverEntity,
+                              List<DictBasicEntity> omsAllDictList,
+                              List<DictPartitionEntity> partitionEntityList,
+                              List<DictCountryEntity> countryEntityList,
+                              List<DictGlobalAreaEntity> dictGlobalEntityList,
+                              List<SysDepartmentDTO> deptList
+    ) {
         for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
             if (StringUtils.isBlank(soB2cDetailEntity.getSkuId()) || StringUtils.isBlank(soB2cDetailEntity.getSkuNo())) {
                 continue;
@@ -384,7 +472,25 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             omsPushMsgEntity.setSourceId(soB2cDetailEntity.getId());
             omsPushMsgEntity.setSourceCode(soB2cEntity.getCode() + "_" + soB2cDetailEntity.getSkuNo());
             omsPushMsgEntity.setSyncOperate(operate);
-            omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(soB2cEntity, detailEntityList, soB2cDetailEntity, operate, skuVOList, bomChildrenSkuDTOS, parentSkuList, listingInfoEntities, currencyList, dictCurrencyEntities, shopInfoList, customerInfoList, companyEntities, dictBasicEntityList, dictList)));
+            omsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(soB2cEntity,
+                    detailEntityList,
+                    soB2cDetailEntity,
+                    operate,
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    parentSkuList,
+                    listingInfoEntities,
+                    currencyList,
+                    dictCurrencyEntities,
+                    shopInfoList,
+                    customerInfoList,
+                    companyEntities,
+                    receiverEntity,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList)));
             omsPushMsgService.save(omsPushMsgEntity);
         }
     }
@@ -477,9 +583,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                 List<ShopInfoEntity> shopInfoList,
                                                                 List<CustomerInfoEntity> customerInfoList,
                                                                 List<BaseIdDTO.CodeDTO> companyEntities,
-                                                                List<DictBasicEntity> dictBasicEntityList,
-                                                                List<DictBasicEntity> dictList,
-                                                                Map<String, BigDecimal> deliveryDetailPriceMap
+                                                                Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                                SoB2cReceiverEntity receiverEntity,
+                                                                List<DictBasicEntity> omsAllDictList,
+                                                                List<DictPartitionEntity> partitionEntityList,
+                                                                List<DictCountryEntity> countryEntityList,
+                                                                List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                                List<SysDepartmentDTO> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -556,13 +666,17 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shopInfoList,
                 customerInfoList,
                 companyEntities,
-                dictBasicEntityList,
-                dictList,
                 soB2cDeliveryDetailEntity.getSkuId(),
                 soB2cDeliveryDetailEntity.getSkuNo(),
                 setBlankMskuName,
                 soB2cDetailEntity.getCurrency(),
-                shudiyunB2cOrderDTO
+                shudiyunB2cOrderDTO,
+                receiverEntity,
+                omsAllDictList,
+                partitionEntityList,
+                countryEntityList,
+                dictGlobalEntityList,
+                deptList
         );
 
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
@@ -585,9 +699,14 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                    List<ShopInfoEntity> shopInfoList,
                                                                    List<CustomerInfoEntity> customerInfoList,
                                                                    List<BaseIdDTO.CodeDTO> companyEntities,
-                                                                   List<DictBasicEntity> dictBasicEntityList,
-                                                                   List<DictBasicEntity> dictList,
-                                                                   Map<String, BigDecimal> deliveryDetailPriceMap) {
+                                                                   Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                                   SoB2cReceiverEntity receiverEntity,
+                                                                   List<DictBasicEntity> omsAllDictList,
+                                                                   List<DictPartitionEntity> partitionEntityList,
+                                                                   List<DictCountryEntity> countryEntityList,
+                                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                                   List<SysDepartmentDTO> deptList
+    ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
         shudiyunB2cOrderDTO.setBiz_uni_key(aliexpressDeliveryEntity.getId() + aliexpressDeliveryDetailEntity.getId());
@@ -638,13 +757,17 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shopInfoList,
                 customerInfoList,
                 companyEntities,
-                dictBasicEntityList,
-                dictList,
                 aliexpressDeliveryDetailEntity.getSkuId(),
                 aliexpressDeliveryDetailEntity.getSkuNo(),
                 true,
                 aliexpressDeliveryDetailEntity.getCurrency(),
-                shudiyunB2cOrderDTO
+                shudiyunB2cOrderDTO,
+                receiverEntity,
+                omsAllDictList,
+                partitionEntityList,
+                countryEntityList,
+                dictGlobalEntityList,
+                deptList
         );
         return JSONObject.parseObject(JSONObject.toJSONString(shudiyunB2cOrderDTO), Map.class);
     }
@@ -918,8 +1041,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<ShopInfoEntity> shopInfoList,
             List<CustomerInfoEntity> customerInfoList,
             List<BaseIdDTO.CodeDTO> companyEntities,
-            List<DictBasicEntity> dictBasicEntityList,
-            List<DictBasicEntity> dictList
+            SoB2cReceiverEntity receiverEntity,
+            List<DictBasicEntity> omsAllDictList,
+            List<DictPartitionEntity> partitionEntityList,
+            List<DictCountryEntity> countryEntityList,
+            List<DictGlobalAreaEntity> dictGlobalEntityList,
+            List<SysDepartmentDTO> deptList
+
     ){
         Map<String, BigDecimal> deliveryDetailPriceMap = convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
             //同步配货单
@@ -944,10 +1072,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     shopInfoList,
                     customerInfoList,
                     companyEntities,
-                    dictBasicEntityList,
-                    dictList,
-                    deliveryDetailPriceMap
-            )));
+                    deliveryDetailPriceMap,
+                    receiverEntity, 
+                    omsAllDictList, 
+                    partitionEntityList, 
+                    countryEntityList, 
+                    dictGlobalEntityList, 
+                    deptList)));
             omsPushMsgService.save(omsPushMsgEntity);
     }
 
@@ -969,8 +1100,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<ShopInfoEntity> shopInfoList,
             List<CustomerInfoEntity> customerInfoList,
             List<BaseIdDTO.CodeDTO> companyEntities,
-            List<DictBasicEntity> dictBasicEntityList,
-            List<DictBasicEntity> dictList
+            SoB2cReceiverEntity receiverEntity,
+            List<DictBasicEntity> omsAllDictList,
+            List<DictPartitionEntity> partitionEntityList,
+            List<DictCountryEntity> countryEntityList,
+            List<DictGlobalAreaEntity> dictGlobalEntityList,
+            List<SysDepartmentDTO> deptList
     ) {
         // 计算自发货明细单价
         Map<String, BigDecimal> deliveryDetailPriceMap = convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList);
@@ -996,10 +1131,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 shopInfoList,
                 customerInfoList,
                 companyEntities,
-                dictBasicEntityList,
-                dictList,
-                deliveryDetailPriceMap
-        )));
+                deliveryDetailPriceMap,
+                receiverEntity,
+                omsAllDictList,
+                partitionEntityList,
+                countryEntityList,
+                dictGlobalEntityList,
+                deptList)));
         omsPushMsgService.save(omsPushMsgEntity);
     }
 }
