@@ -19,7 +19,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(10)
     @ExcelProperty(value = "*序号")
-    @FieldValid(fieldName = "序号", isNotBlank = true )
+    @FieldValid(fieldName = "序号", isNotBlank = true ,maxLength = 10,formatPattern= FieldFormatPatternTypeEnum.NUMBER)
     private String no;
 
 
@@ -29,7 +29,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*平台订单号")
-    @FieldValid(fieldName = "平台订单号", isNotBlank = true)
+    @FieldValid(fieldName = "平台订单号", isNotBlank = true,maxLength = 30)
     private String platformCode;
 
 
@@ -39,7 +39,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*平台")
-    @FieldValid(fieldName = "平台", isNotBlank = true)
+    @FieldValid(fieldName = "平台", isNotBlank = true,maxLength = 30)
     private String dictPlatformName;
 
 
@@ -50,7 +50,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*店铺")
-    @FieldValid(fieldName = "店铺", isNotBlank = true)
+    @FieldValid(fieldName = "店铺", isNotBlank = true,maxLength = 30)
     private String shopName;
 
     /**
@@ -59,7 +59,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*订单金额")
-    @FieldValid(fieldName = "订单金额",isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "订单金额",isNotBlank = true,maxLength = 30,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String amount;
 
     /**
@@ -68,7 +68,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(10)
     @ExcelProperty(value = "*币别")
-    @FieldValid(fieldName = "币别",isNotBlank = true)
+    @FieldValid(fieldName = "币别",isNotBlank = true,maxLength = 10)
     private String currency;
 
     /**
@@ -86,7 +86,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "卖家订单编号")
-    @FieldValid(fieldName = "卖家订单编号")
+    @FieldValid(fieldName = "卖家订单编号",maxLength = 30)
     private String sellerOrderCode;
 
 
@@ -96,7 +96,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "订单分类")
-    @FieldValid(fieldName = "订单分类")
+    @FieldValid(fieldName = "订单分类",maxLength = 30)
     private String category;
 
 
@@ -105,7 +105,7 @@ public class B2CSoImportExcelDTO {
      */
     @ColumnWidth(30)
     @ExcelProperty(value = "*订单类型")
-    @FieldValid(fieldName = "订单类型",isNotBlank = true)
+    @FieldValid(fieldName = "订单类型",isNotBlank = true,maxLength = 30)
     private String transactionSubType;
 
 
@@ -115,7 +115,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "订单备注")
-    @FieldValid(fieldName = "订单备注")
+    @FieldValid(fieldName = "订单备注",maxLength = 255)
     private String remark;
 
     /**
@@ -124,7 +124,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "物流渠道")
-    @FieldValid(fieldName = "物流渠道")
+    @FieldValid(fieldName = "物流渠道",maxLength = 30)
     private String logisticsChannelName;
 
     /**
@@ -133,7 +133,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "跟踪号")
-    @FieldValid(fieldName = "跟踪号")
+    @FieldValid(fieldName = "跟踪号",maxLength = 30)
     private String trackNo;
 
 
@@ -143,7 +143,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "包装尺寸(长*宽*高)")
-    @FieldValid(fieldName = "包装尺寸(长*宽*高)")
+    @FieldValid(fieldName = "包装尺寸(长*宽*高)",maxLength = 30)
     private String packSize;
 
 
@@ -153,7 +153,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "预估运费")
-    @FieldValid(fieldName = "预估运费",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "预估运费",maxLength = 20,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String estimatedShippingCost;
 
 
@@ -163,7 +163,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "实际运费")
-    @FieldValid(fieldName = "实际运费",formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "实际运费",maxLength = 20,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String actualShippingCost;
 
 
@@ -173,7 +173,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*买家全名")
-    @FieldValid(fieldName = "买家全名",isNotBlank = true)
+    @FieldValid(fieldName = "买家全名",isNotBlank = true,maxLength = 50)
     private String customerName;
 
     /**
@@ -182,7 +182,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "买家邮箱")
-    @FieldValid(fieldName = "买家邮箱")
+    @FieldValid(fieldName = "买家邮箱",maxLength = 50)
     private String email;
 
 
@@ -192,7 +192,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "买家电话")
-    @FieldValid(fieldName = "买家电话")
+    @FieldValid(fieldName = "买家电话",maxLength = 20)
     private String telNumber;
 
 
@@ -201,8 +201,8 @@ public class B2CSoImportExcelDTO {
      */
     
     @ColumnWidth(30)
-    @ExcelProperty(value = "国家")
-    @FieldValid(fieldName = "国家",isNotBlank = true)
+    @ExcelProperty(value = "*国家")
+    @FieldValid(fieldName = "国家",isNotBlank = true,maxLength = 30)
     private String countryName;
 
 
@@ -212,7 +212,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "省/州")
-    @FieldValid(fieldName = "省/州")
+    @FieldValid(fieldName = "省/州",maxLength = 30)
     private String provinceName;
     /**
      * 城市
@@ -220,7 +220,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*城市")
-    @FieldValid(fieldName = "城市",isNotBlank = true)
+    @FieldValid(fieldName = "城市",isNotBlank = true,maxLength = 30)
     private String cityName;
 
     /**
@@ -229,7 +229,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "区域")
-    @FieldValid(fieldName = "区域")
+    @FieldValid(fieldName = "区域",maxLength = 30)
     private String districtName;
 
     /**
@@ -238,7 +238,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*收货人")
-    @FieldValid(fieldName = "收货人",isNotBlank = true)
+    @FieldValid(fieldName = "收货人",isNotBlank = true,maxLength = 30)
     private String receiverName;
     /**
      * 邮编
@@ -246,7 +246,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "邮编")
-    @FieldValid(fieldName = "邮编")
+    @FieldValid(fieldName = "邮编",maxLength = 30)
     private String postCode;
     /**
      * 收货人电话
@@ -254,7 +254,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "收货人电话")
-    @FieldValid(fieldName = "收货人电话")
+    @FieldValid(fieldName = "收货人电话",maxLength = 30)
     private String receiverTelNumber;
 
     /**
@@ -263,7 +263,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "收件人税号")
-    @FieldValid(fieldName = "收件人税号")
+    @FieldValid(fieldName = "收件人税号",maxLength = 30)
     private String receiverTaxNo;
 
     /**
@@ -272,7 +272,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "收件人地址1")
-    @FieldValid(fieldName = "收件人地址1")
+    @FieldValid(fieldName = "收件人地址1",maxLength = 255)
     private String firstAddress;
 
     /**
@@ -281,7 +281,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "收件人地址2")
-    @FieldValid(fieldName = "收件人地址2")
+    @FieldValid(fieldName = "收件人地址2",maxLength = 255)
     private String secondAddress;
 
     /**
@@ -290,7 +290,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "街道详细地址")
-    @FieldValid(fieldName = "街道详细地址")
+    @FieldValid(fieldName = "街道详细地址",maxLength = 255)
     private String fullAddress;
 
     /**
@@ -299,7 +299,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*SKU")
-    @FieldValid(fieldName = "SKU",isNotBlank = true)
+    @FieldValid(fieldName = "SKU",isNotBlank = true,maxLength = 30)
     private String skuNo;
 
 
@@ -308,8 +308,8 @@ public class B2CSoImportExcelDTO {
      */
     
     @ColumnWidth(20)
-    @ExcelProperty(value = "数量")
-    @FieldValid(fieldName = "数量",isNotBlank = true)
+    @ExcelProperty(value = "*数量")
+    @FieldValid(fieldName = "数量",isNotBlank = true,maxLength = 10,formatPattern= FieldFormatPatternTypeEnum.NUMBER)
     private String qty;
 
     /**
@@ -318,7 +318,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "仓库")
-    @FieldValid(fieldName = "仓库")
+    @FieldValid(fieldName = "仓库",maxLength = 30)
     private String warehouseName;
     /**
      * 真实售价
@@ -326,7 +326,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(20)
     @ExcelProperty(value = "*真实售价")
-    @FieldValid(fieldName = "真实售价",isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
+    @FieldValid(fieldName = "真实售价",isNotBlank = true,maxLength = 10,formatPattern= FieldFormatPatternTypeEnum.AMOUNT)
     private String detailAmount;
 
     /**

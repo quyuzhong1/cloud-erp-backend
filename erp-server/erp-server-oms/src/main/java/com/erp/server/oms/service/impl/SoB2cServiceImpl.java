@@ -9741,7 +9741,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 sb.append(name);
                 try {
                     //排序
-                    errorList.sort(Comparator.comparing(B2CSoImportExcelDTO::getNo));
+//                    errorList.sort(Comparator.comparing(B2CSoImportExcelDTO::getNo));
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
                     throw new ServiceException(ApiError.ERROR_95125);
@@ -9940,9 +9940,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //包装尺寸(长*宽*高)
             if(StringUtils.isNotBlank(mainInfo.getPackSize())){
                 String[] split = mainInfo.getPackSize().split("\\*");
-                b2cLogisitics.setLength(MathUtil.getBigDecimalByStr(split[0].trim()));
-                b2cLogisitics.setWidth(MathUtil.getBigDecimalByStr(split[1].trim()));
-                b2cLogisitics.setHeight(MathUtil.getBigDecimalByStr(split[2].trim()));
+                if(split.length == 3){
+                    b2cLogisitics.setLength(MathUtil.getBigDecimalByStr(split[0].trim()));
+                    b2cLogisitics.setWidth(MathUtil.getBigDecimalByStr(split[1].trim()));
+                    b2cLogisitics.setHeight(MathUtil.getBigDecimalByStr(split[2].trim()));
+                }else {
+                    errorMsgList.add("包装尺寸(长*宽*高)格式异常");
+                }
+
             }
             //预估运费
             if(StringUtils.isNotBlank(mainInfo.getEstimatedShippingCost())){
