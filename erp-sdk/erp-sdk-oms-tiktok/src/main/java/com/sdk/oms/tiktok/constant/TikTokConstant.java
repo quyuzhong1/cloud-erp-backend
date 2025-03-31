@@ -8,4 +8,7 @@ public class TikTokConstant {
 
     //全托管接口版本
     public static final String FULLY_VERSION ="202410";
+
+
+    public static final String FULLY_ORDER_VERSION ="202407";
 }
