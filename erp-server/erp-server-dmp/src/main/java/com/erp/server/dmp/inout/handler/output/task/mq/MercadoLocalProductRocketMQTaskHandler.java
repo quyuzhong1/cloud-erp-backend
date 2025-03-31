@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformProductDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpProductInfoEntity;
@@ -91,7 +92,7 @@ public class MercadoLocalProductRocketMQTaskHandler extends DmpOutputRocketMQTas
     	}
     	PlatformProductDTO product = new PlatformProductDTO();
     	
-    	product.setPlatform(dmpProductInfoEntity.getSourcePlatform());
+    	product.setPlatform(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode());
         // 平台sku no
         product.setPlatformProductNo(dmpSkuInfoEntity.getSpuId());
         // 平台sku 名
