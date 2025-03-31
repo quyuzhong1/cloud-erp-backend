@@ -117,7 +117,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
-
+        orderDTO.setPlatform(PlatformDictEnum.TIK_TOK_FULLY.getCode());
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntity.getNextLevelId());
 
