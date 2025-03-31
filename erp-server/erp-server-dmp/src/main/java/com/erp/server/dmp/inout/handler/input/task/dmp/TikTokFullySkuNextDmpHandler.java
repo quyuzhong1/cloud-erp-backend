@@ -38,7 +38,8 @@ public class TikTokFullySkuNextDmpHandler extends DmpInputDoNextDmpHandler {
 			for(TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
 
 				dmpDataMap.put("skuNo", dmpDataMap.get("externalSkuCode"));
-				dmpDataMap.put("spuId", dmpDataMap.get("code"));
+				dmpDataMap.put("skuId", dmpDataMap.get("code"));
+				dmpDataMap.put("spuId", dmpDataMap.get("spuCode"));
 				//修改时间
 				Object updateTimeObj = dmpDataMap.get("updateTime");
 				if (updateTimeObj != null) {
