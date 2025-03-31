@@ -815,10 +815,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
         List<String> soIds = noticeEntities.stream().map(SoDeliveryNoticeEntity::getSourceId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfos = new ArrayList<>();
-        List<SoDetailEntity> soDetailEntityList = new ArrayList<>();
         if (CollUtil.isNotEmpty(soIds)) {
             soInfos = soInfoFeign.listSoInfoByIds(soIds);
-            soDetailEntityList = soInfoFeign.listSoDetailByIds(soIds);
         }
         for (PickingListsEntity picking : pickingLists) {
             PickingListsDTO.PrintView printView = new PickingListsDTO.PrintView();
@@ -840,7 +838,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 printView.setHandlingUserName(soInfo.getCreateUserName());
             }
             List<PickingDetailEntity> details = detailList.stream().filter(v->v.getMainId().equals(picking.getId())).collect(Collectors.toList());
-            List<SoDetailEntity> finalSoDetailEntityList = soDetailEntityList;
             List<PickingListsDTO.PrintDetailView> views = details.stream().map(detail -> {
                 //匹配sku信息
                 SkuVO skuVO = skuVOList.stream()
@@ -860,12 +857,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                                 .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
                         view.setThirdSku(applicationDetail.getPlatformFnSku());
                     }
-                }else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(picking.getSourceType())){
-                    SoDeliveryNoticeDetailEntity noticeDetail = noticeDetailEntities.stream().filter(v -> v.getId().equals(detail.getSourceDetailId()))
-                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST));
-                    finalSoDetailEntityList.stream().filter(v->v.getId().equals(noticeDetail.getSourceDetailId())).findFirst().ifPresent(v->{
-                        view.setCustomerPo(v.getCustomerPO());
-                    });
                 }
                 return view;
             }).collect(Collectors.toList());
