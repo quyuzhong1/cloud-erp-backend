@@ -541,6 +541,10 @@ public class TransferOutDTO implements Serializable {
          * 调出仓位
          */
         private String outWarehouseLocation;
+        /**
+         * 调出仓位名称
+         */
+        private String outWarehouseLocationName;
 
         /**
          * 备注（分步式调出单明细）
@@ -599,6 +603,12 @@ public class TransferOutDTO implements Serializable {
          */
         @NotNull(message = "调入仓库不能为空")
         private String  inWarehouseId;
+
+
+        /**
+         * 调入仓位
+         */
+        private String inWarehouseLocation;
 
         /**
          * skuId

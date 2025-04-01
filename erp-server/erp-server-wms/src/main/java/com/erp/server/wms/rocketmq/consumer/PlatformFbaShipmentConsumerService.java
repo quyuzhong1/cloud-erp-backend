@@ -202,6 +202,9 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
      * @param currentShopEntity
      */
     private void checkAndSetCountryWithShop(FbaShipmentEntity entity, PlatformFbaShipmentDTO dto, ShopInfoEntity currentShopEntity) {
+        // 补充来源名称
+        entity.setShopName(currentShopEntity.getName());
+        dto.setShopName(currentShopEntity.getName());
         // 查询仓库中心对应国家
         String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
         // 没有配置处理

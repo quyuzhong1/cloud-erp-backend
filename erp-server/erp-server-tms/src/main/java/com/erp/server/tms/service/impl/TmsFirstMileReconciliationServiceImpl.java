@@ -501,7 +501,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, detailEntityList);
 
         tmsFirstMileReconciliationDetailService.fillDetailList(viewDTOList, currency, currencyView);
-
+        List<String> sourceIds = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+        data.setDetailCount(sourceIds.size());
         data.setDetailList(viewDTOList);
 
     }

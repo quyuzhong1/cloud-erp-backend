@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import cn.hutool.core.lang.Pair;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
@@ -102,6 +103,14 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return List<String>
      */
     List<String> getCfgHead();
+
+    /**
+     * 查询配置导出表头信息
+     * @author will
+     * @date 2024/12/9 9:20
+     * @return List<Pair<String,String>>
+     */
+    List<Pair<String,String>> getCfgHeadExport();
     /**
      * 详情库龄图
      * @author will
@@ -166,4 +175,11 @@ public interface VirtualInventoryDetailService extends SuperService<VirtualInven
      * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryAgeDTO.SendNoticeTotalDTO>
      */
     List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
+
+    /**
+     * 差异导出
+     * @param dto
+     * @return
+     */
+    Boolean diffExportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto);
 }

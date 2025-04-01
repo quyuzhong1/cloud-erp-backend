@@ -561,7 +561,14 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 标签
          */
         private String tag;
-
+        /**
+         * 中转仓库集合
+         */
+        private String transferWarehouseIds;
+        /**
+         * 中转仓库名称
+         */
+        private String transferWarehouseNames;
     }
 
     /**

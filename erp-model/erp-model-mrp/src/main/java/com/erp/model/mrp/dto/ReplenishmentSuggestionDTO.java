@@ -52,6 +52,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         @NotBlank(message = "建议类型不能为空")
         private String platformType;
+
+        /**
+         * 平台
+         */
+        private String platform;
         /**
          * sku类型
          */
@@ -60,6 +65,10 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+        /**
+         * 补货类型
+         */
+        private String replenishmentType;
 
         /**
          * 最近日期排序
@@ -123,8 +132,8 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 销量设置
          */
-        @Valid
-        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+//        @Valid
+//        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
 
     }
 
@@ -134,6 +143,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BatchUpdateRuleDTO {
+
+        /**
+         * 是否批量
+         */
+        private Boolean isBatch = false;
 
         /**
          * 主键ids
@@ -151,7 +165,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 销量设置
          */
         @Valid
-        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+        private CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO;
 
     }
 
@@ -923,24 +937,24 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         private String endDate;
 
 
-        @ExcelProperty(value = "MAE", index = 5)
-        private BigDecimal mAEScore;
+        @ExcelProperty(value = "maeScore", index = 5)
+        private String maeScore;
 
 
-        @ExcelProperty(value = "MSE", index = 6)
-        private BigDecimal mSEScore;
+        @ExcelProperty(value = "mseScore", index = 6)
+        private String mseScore;
 
 
-        @ExcelProperty(value = "RMSE", index = 7)
-        private BigDecimal rMSEScore;
+        @ExcelProperty(value = "rmseScore", index = 7)
+        private String rmseScore;
 
 
-        @ExcelProperty(value = "MAPE", index = 8)
-        private BigDecimal mAPEScore;
+        @ExcelProperty(value = "mapeScore", index = 8)
+        private String mapeScore;
 
 
-        @ExcelProperty(value = "R2Score", index = 9)
-        private BigDecimal r2Score;
+        @ExcelProperty(value = "r2Score", index = 9)
+        private String r2Score;
 
         public static HistorySaleExportDTO bulidHistorySaleExportDTO(ReplenishmentSuggestionDTO.SkuShopDTO shopDTO, String platformName,
                                                                      ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO) {

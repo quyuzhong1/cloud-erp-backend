@@ -31,6 +31,7 @@ import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.enums.PilotPushPurchaseStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
@@ -77,7 +78,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_APPLICATION;
-import static com.common.core.constant.EnumMessage.getByCode;
 
 /**
  * <p>
@@ -149,7 +149,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             return new PagingVO<>(pageData);
         }
         //数据处理
-        doOpHandlePurchaseApplication(records,false);
+        doOpHandlePurchaseApplication(records);
         return new PagingVO<>(pageData);
     }
 
@@ -376,6 +376,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             SkuPurchaseDTO.PurchaseInfo skuPurchase = skuPurchaseMap.getOrDefault(entity.getSkuId(), new SkuPurchaseDTO.PurchaseInfo());
             dto.setPurchaseUserId(skuPurchase.getPurchaseUserId());
             dto.setPurchaseUserName(skuPurchase.getPurchaseUserName());
+            dto.setFirstMassProduct(entity.getFirstMassProduct());
+            dto.setFirstMassProductName(FirstMassProductTypeEnum.getName(entity.getFirstMassProduct()));
             dto.setSupplierId(skuPurchase.getSupplierId());
             dto.setSupplierName(skuPurchase.getSupplierName());
             //预计交货日期
@@ -453,7 +455,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setPurchaseDate(LocalDate.now());
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
-            addDTO.setIsFirstMassProduct(entity.getIsFirstMassProduct());
 
             //采购订单供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
@@ -505,6 +506,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setPurchaseApplicationId(generatePurchaseOrderDTO.getId());
                 addDetailDTO.setPurchaseApplicationDetailId(generatePurchaseOrderDTO.getPurchaseApplicationDetailId());
                 addDetailDTO.setRemark(generatePurchaseOrderDTO.getDetailRemark());
+                addDetailDTO.setFirstMassProduct(generatePurchaseOrderDTO.getFirstMassProduct());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);
@@ -788,6 +790,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setQty(viewDTO.getToPushdownQty());
             viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
+            viewDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
             //报价信息
             PurchasePriceDTO.PriceDTO priceDTO = viewDTOList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())
                             && obj.getSupplierId().equals(supplierId)
@@ -829,6 +832,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setCurrency(null);
                 viewGenerateDTO.setCurrencySymbol(null);
                 viewGenerateDTO.setAmount(null);
+                viewGenerateDTO.setFirstMassProduct(viewDTO.getFirstMassProduct());
+                viewGenerateDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);
@@ -924,7 +929,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //委外订单主表数据
             SubcontractOrderDTO.AddDTO addDTO = BeanMapperUtils.map(SubcontractOrderDTO.AddDTO.class, subcontractOrderDTO);
             addDTO.setBillDate(LocalDate.now());
-            addDTO.setIsFirstMassProduct(purchaseApplicationEntity.getIsFirstMassProduct());
             addDTO.setSubcontractOrgId(subcontractOrderDTO.getPurchaseOrgId());
             addDTO.setPurchaserId(userInfo.getUid());
             addDTO.setDeptId(findUserDTO.getDepartmentId());
@@ -936,7 +940,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 SubcontractOrderDetailDTO.AddDTO detail = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateDetailDTO);
                 PurchaseApplicationDetailEntity purchaseApplicationDetailEntity = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(generateDetailDTO.getSourceDetailId())).findFirst().orElse(new PurchaseApplicationDetailEntity());
                 detail.setIsUrgent(purchaseApplicationDetailEntity.getIsUrgent());
-
                 //委外订单子件SKU
                 List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> generateChildList = generateDetailDTO.getChildList();
                 List<SubcontractOrderDetailDTO.AddDTO> childList = new ArrayList<>();
@@ -990,7 +993,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         Page<PurchaseApplicationDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理
-            doOpHandlePurchaseApplication(page.getRecords(),true);
+            doOpHandlePurchaseApplication(page.getRecords());
         }
         return new PagingVO<>(page);
     }
@@ -1237,7 +1240,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
      * @date: 2023/4/19 17:57
      * @param records
      */
-    private void doOpHandlePurchaseApplication(List<PurchaseApplicationDTO.ListDTO> records,boolean isExport){
+    private void doOpHandlePurchaseApplication(List<PurchaseApplicationDTO.ListDTO> records){
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -1309,7 +1312,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     obj.setIsConstitute(Boolean.TRUE);
                 }
             }
-
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             if(obj.getCreatePoType().equals(CreatePoTypeEnum.CLOSED.getStatus())){
@@ -1317,9 +1320,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }else{
                 obj.setWaitQty(obj.getApplyQty() - (Objects.isNull(obj.getRealPurchaseQty())?0:obj.getRealPurchaseQty()));
             }
-            if(isExport){
-                obj.setIsFirstMassProductStr(obj.getIsFirstMassProduct()?"是":"否");
-            }
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             //采购建议数据
             if (SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode().equals(obj.getSourceType())) {
                 List<PurchaseSuggestMergeDTO.PushSourceDTO> pushSourceList = BeanUtil.copyToList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class);

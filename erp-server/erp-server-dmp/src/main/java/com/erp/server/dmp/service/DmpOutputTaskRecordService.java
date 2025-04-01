@@ -140,4 +140,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
     void dmpOutputMoveToHistoryTable(String beforeUpdateTime , String size);
     
     void dmpOutputNoRecordMoveToHistoryTable();
+
+    List<DmpOutputTaskRecordEntity> queryBySourceCodeAndCfgOutputId(String sourceCode, String cfgOutputId);
 }

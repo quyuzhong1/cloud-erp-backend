@@ -282,7 +282,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 金额
         detailDTO.setAmount(soDetailEntity.getAfterAmount());
         // 单价
-        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPrice()));
+        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPriceOrigin()));
         // 币别（原币）
         detailDTO.setCurrency(dmpSoInfoEntityList.get(0).getCurrencyCode());
         // 汇率

@@ -54,4 +54,8 @@ public interface PurchasePriceChangeMapper extends BaseMapper<PurchasePriceChang
      * @return Integer
      */
     Integer tabList(@Param("params")PurchaseOrderDTO.SearchParamDTO searchParamDTO);
+
+    /**
+     */
+    List<PurchasePriceChangeDTO.NoticeMsgViewDTO> listPurchasePriceChange(@Param("idList") List<String> idList);
 }

@@ -1,5 +1,6 @@
 package com.cloud.erp.gateway.component;
 
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -11,6 +12,7 @@ import com.common.business.constant.TokenConstants;
 import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -35,6 +37,7 @@ import java.util.Objects;
  * @Date 2022-07-11 11:38
  * @Created by yl
  */
+@Slf4j
 @Component
 public class AuthGatewayFilter implements GlobalFilter, Order {
 
@@ -132,6 +135,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
         GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
         if (null != gatewayContext) {
             String data = gatewayContext.getRequestBody();
+            log.info("埋点接口待解析数据:{}", data);
             if (StringUtils.isNotBlank(data)) {
                 // 解析 JSON 获取 token 字段
                 try {
@@ -141,12 +145,17 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                         //解析token
                         LoginUser loginUser = tokenService.getLoginUser(token);
                         if (Objects.isNull(loginUser)) {
-                            ServiceException.runError(ApiError.ERROR_403.msg);
+//                            ServiceException.runError(ApiError.ERROR_403.msg);
+                            log.info("埋点接口token失效:{}", data);
+                            return;
                         }
                         loginUser.setAccessToken(token);
                         request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
+                        log.info("埋点接口token解析成功:{}", data);
                     }
+                    log.warn("埋点接口未找到前端提交的token:{}", data);
                 } catch (Exception e) {
+                    log.error("埋点接口解析token 失败:{}", ExceptionUtil.stacktraceToString(e));
                     e.printStackTrace();
                 }
             }

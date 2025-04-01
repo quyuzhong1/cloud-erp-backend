@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -17,7 +18,6 @@ import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
 import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceChangeService;
@@ -150,6 +150,7 @@ public class PurchasePriceChangeController extends BaseController {
             keyIdName = "id")
     public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
         PurchasePriceChangeEntity entity = purchasePriceChangeService.addAndSubmit(dto);
+        purchasePriceChangeService.sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
         return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
@@ -206,6 +207,7 @@ public class PurchasePriceChangeController extends BaseController {
             keyIdName = "id")
     public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
         Boolean result = purchasePriceChangeService.updateAndSubmit(dto);
+        purchasePriceChangeService.sendMsg(Collections.singletonList(dto.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
         return result == true ? success() : failure();
     }
 
@@ -274,6 +276,7 @@ public class PurchasePriceChangeController extends BaseController {
                 Boolean disabled = purchasePriceChangeService.submitApprove(Collections.singletonList(id), Boolean.TRUE);
                 if (disabled){
                     resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "提交采购调价单成功"));
+                    purchasePriceChangeService.sendMsg(Collections.singletonList(id), ApproveStatusEnum.WAIT_SUBMIT,"");
                 } else {
                     resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "提交采购调价单失败"));
                 }

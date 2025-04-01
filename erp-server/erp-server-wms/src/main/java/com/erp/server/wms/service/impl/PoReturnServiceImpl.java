@@ -15,6 +15,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -826,17 +827,10 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             if (CollectionUtils.isNotEmpty(podIds)) {
                 purchaseDetailIdList.addAll(podIds);
             }
-
-            //更新采购订单明细中的执行状态
-            if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
-                updateArrivalState(purchaseDetailIdList);
-            }
-            //自动生成补货采购订单
-            autoAddPurchaseOrder(poReturnEntityList1, Boolean.TRUE);
-            //审核通过生成对账明细
-            autoAddPoReconciliationDetail(poReturnEntityList1);
             // 更新库存信息
             updateInventoryTransCore(poReturnEntityList1);
+            //需要分步式事物代码处理
+            ApplicationContextUtils.getBean(PoReturnServiceImpl.class).approveTransactional(purchaseDetailIdList,poReturnEntityList1);
             //发送金蝶
             sendPushTask(poReturnEntityList1,SyncOperateEnum.OPERATE_APPROVE.getCode());
             //发送旺店通
@@ -852,6 +846,21 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void approveTransactional (List<String> purchaseDetailIdList,List<PoReturnEntity> poReturnEntityList1) {
+        //更新采购订单明细中的执行状态
+        if (CollectionUtils.isNotEmpty(purchaseDetailIdList)) {
+            updateArrivalState(purchaseDetailIdList);
+        }
+        //自动生成补货采购订单
+        autoAddPurchaseOrder(poReturnEntityList1, Boolean.TRUE);
+        //审核通过生成对账明细
+        autoAddPoReconciliationDetail(poReturnEntityList1);
+    }
+
     /**
      * 根据退货单类型生成委外退料单
      *
@@ -3200,6 +3209,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                 addDetailDTO.setWarehouseLocation(detailView.getWarehouseLocation());
                 addDetailDTO.setIsRevalueTaxRate(false);
                 addDetailDTO.setPurchaseAmount(detailView.getTotalTaxAmount());
+                addDetailDTO.setFirstMassProduct(detailView.getFirstMassProduct());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);

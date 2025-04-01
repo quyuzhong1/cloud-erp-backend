@@ -40,6 +40,12 @@ public class ShopInventoryDetailEntity extends BaseEntity<ShopInventoryDetailEnt
     private String shopId;
 
     /**
+     * 平台
+     */
+    @TableField("dict_platform")
+    private String dictPlatform;
+
+    /**
      * 数量
      */
     @TableField("qty")

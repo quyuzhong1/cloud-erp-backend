@@ -62,10 +62,10 @@ public class SysEventTrackingEntity extends BaseEntity<SysEventTrackingEntity> {
     @TableField("dept_id")
     private String deptId;
     /**
-     * 触发埋点的时间戳
+     * 触发时间
      */
     @TableField("event_time")
-    private Long eventTime;
+    private LocalDateTime eventTime;
     /**
     * 客户端的设备信息
     */
@@ -96,6 +96,21 @@ public class SysEventTrackingEntity extends BaseEntity<SysEventTrackingEntity> {
     */
     @TableField("ip_address")
     private String ipAddress;
+    /**
+     * 数据类型描述
+     */
+    @TableField("type_desc")
+    private String typeDesc;
+    /**
+     * 设备类型
+     */
+    @TableField("device_type")
+    private String deviceType;
+    /**
+     * 时区
+     */
+    @TableField("time_zone")
+    private String timeZone;
 
 
     public static final String ENV = "env";

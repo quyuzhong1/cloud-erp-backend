@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictNodeDTO;
@@ -54,7 +55,12 @@ public class DictNodeServiceImpl extends SuperServiceImpl<DictNodeMapper, DictNo
      */
     @Override
     public List<DictNodeDTO.ViewDTO> listByModule(String module) {
-        List<DictNodeEntity> list = this.lambdaQuery().eq(DictNodeEntity::getModule, module).list();
+        List<DictNodeEntity> list = null;
+        if(StringUtils.isBlank(module)){
+            list = this.list();
+        }else {
+            list = this.lambdaQuery().eq(DictNodeEntity::getModule, module).list();
+        }
         List<DictNodeDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictNodeDTO.ViewDTO.class);
         List<String> nodeKeys = resultList.stream().map(DictNodeDTO.ViewDTO::getNodeKey).collect(Collectors.toList());
         List<NoticeInfoEntity> noticeInfoList = noticeInfoService.listByNodeKeys(nodeKeys);

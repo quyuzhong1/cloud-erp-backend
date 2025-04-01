@@ -229,6 +229,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("is_platform_ship")
     private Boolean isPlatformShip;
 
+    /**
+     * 配送商类型
+     */
+    @TableField("carrier_type")
+    private String carrierType;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String FIELD_NAME = "name";

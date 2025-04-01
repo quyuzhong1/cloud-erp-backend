@@ -1,8 +1,12 @@
 package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -25,7 +29,13 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.msg.constant.NoticeMsgConstant;
+import com.erp.model.msg.dto.NoticeMsgInfoDTO;
+import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.PurchasePriceChangeExportExcelDTO;
@@ -33,11 +43,18 @@ import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PurchasePriceChangeTabFlagEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.NoticeReceiverDTO;
+import com.erp.model.sys.dto.SysUserSimpleDTO;
+import com.erp.model.sys.enums.NoticeNodeEnum;
+import com.erp.model.sys.enums.NoticePurItemRoleEnum;
+import com.erp.model.sys.enums.NoticeReceiverEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
@@ -45,9 +62,13 @@ import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
 import com.erp.server.scm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -56,6 +77,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,6 +92,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_PR
  * @since 2023-03-15
  */
 @Service
+@Slf4j
 public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePriceChangeMapper, PurchasePriceChangeEntity> implements PurchasePriceChangeService {
 
     @Resource
@@ -118,6 +141,13 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
     private DmpMqFeign dmpMqFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
+
+    @Resource
+    private ProcessTaskManagementFeign processTaskManagementFeign;
+
     /**
      * 添加采购价目变更
      *
@@ -425,6 +455,8 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
+        //校验附件信息
+        ids.forEach(this::checkAttachment);
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -460,10 +492,116 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE_CHANGE.getCode(), rejectPairList, "状态变更");
-
         }
 
         return result;
+    }
+
+    /**
+     * 发送消息
+     * @param idList
+     */
+    @Override
+    public void sendMsg(List<String> idList, ApproveStatusEnum approveStatus,String comment ) {
+        if(CollUtil.isEmpty(idList)){
+            return ;
+        }
+        List<PurchasePriceChangeDTO.NoticeMsgViewDTO> noticeMsgViewDTOS = this.baseMapper.listPurchasePriceChange(idList);
+        if(CollUtil.isEmpty(noticeMsgViewDTOS)){
+            return ;
+        }
+
+        //接收人
+        List<NoticeReceiverDTO.InfoDTO> receiverList = null;
+        if(ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)){ //待审核
+            receiverList = sysUserFeign.listNoticeReceiverByNodeKey(NoticeNodeEnum.PURCHASE_PRICE_CHANGE_WAIT.getCode());
+        }else if(ApproveStatusEnum.REJECT.equals(approveStatus)){//不通过
+            receiverList = sysUserFeign.listNoticeReceiverByNodeKey(NoticeNodeEnum.PURCHASE_PRICE_CHANGE_REJECT.getCode());
+        }else if(ApproveStatusEnum.APPROVE.equals(approveStatus)){//通过
+            receiverList = sysUserFeign.listNoticeReceiverByNodeKey(NoticeNodeEnum.PURCHASE_PRICE_CHANGE_APPROVE.getCode());
+        }
+        if (CollectionUtils.isEmpty(receiverList)) {
+            return;
+        }
+
+        List<String> userIdList = new ArrayList<>();
+        //其它人员
+        String otherPeople = NoticeReceiverEnum.OTHER_PEOPLE.getCode();
+        List<String> otherUsers = receiverList.stream().filter(r -> otherPeople.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+
+        //这个是项目角色
+        String itemRole = NoticeReceiverEnum.PUR_ITEM_ROLE.getCode();
+        List<String> itemRoles = receiverList.stream().filter(r -> itemRole.equals(r.getReceiverType())).
+                map(NoticeReceiverDTO.InfoDTO::getReceiverValue).collect(Collectors.toList());
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String msgHead = "";
+        String msgContent = "";
+        String approveTime = LocalDateTime.now().format(formatter);
+        for (String id : idList) {
+            List<PurchasePriceChangeDTO.NoticeMsgViewDTO> collect = noticeMsgViewDTOS.stream().filter(obj -> obj.getId().equals(id)).collect(Collectors.toList());
+            PurchasePriceChangeDTO.NoticeMsgViewDTO noticeMsgViewDTO = collect.get(0);
+            //这个是审核人
+            List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(id).stream().filter(item -> item.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())).collect(Collectors.toList());
+            List<String> approveUserIdList = approveHistoryList.stream().map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveId).filter(StringUtil::isNotBlank).collect(Collectors.toList());
+            String approveUserName = approveHistoryList.stream().map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveName).filter(StringUtil::isNotBlank).collect(Collectors.joining(","));;
+
+            //当不为空
+            if (CollUtil.isNotEmpty(itemRoles)) {
+                for (String role : itemRoles) {
+                    if(role.equals(NoticePurItemRoleEnum.CREATE_USER.getCode())){
+                        userIdList.add(noticeMsgViewDTO.getCreateUserId());
+                    }else if(role.equals(NoticePurItemRoleEnum.APPROVE_USER.getCode())){
+                        userIdList.addAll(approveUserIdList);
+                    }else if(role.equals(NoticePurItemRoleEnum.PURCHASER.getCode())){
+                        userIdList.addAll( collect.stream().map(PurchasePriceChangeDTO.NoticeMsgViewDTO::getPurchaseUserId).distinct().collect(Collectors.toList()));
+                    }
+                }
+            }
+            userIdList.addAll(otherUsers);
+            if(CollUtil.isEmpty(userIdList)){
+                continue;
+            }
+            //去重
+            userIdList = userIdList.stream().distinct().filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+
+            //排除禁用人员
+            List<SysUserSimpleDTO> userSimpleInfoByIds = sysUserFeign.getUserSimpleInfoByIds(userIdList);
+            if(CollUtil.isEmpty(userSimpleInfoByIds)){
+                continue;
+            }
+            List<String> sendIdList = userSimpleInfoByIds.stream().map(SysUserSimpleDTO::getUid).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+
+
+            String code = noticeMsgViewDTO.getCode();
+            String createUserName = noticeMsgViewDTO.getCreateUserName();
+            String createTime = noticeMsgViewDTO.getCreateTime().format(formatter);
+            String supplierNames = collect.stream()
+                    .map(PurchasePriceChangeDTO.NoticeMsgViewDTO::getSupplierName)
+                    .distinct()
+                    .collect(Collectors.joining(", "));
+            if(ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)){ //待审核
+                msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_HEAD;
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_WAIT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName);
+            }else if(ApproveStatusEnum.REJECT.equals(approveStatus)){//不通过
+                msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_HEAD;
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_REJECT_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime,comment);
+            }else if(ApproveStatusEnum.APPROVE.equals(approveStatus)){//通过
+                msgHead = NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_HEAD;
+                msgContent = String.format(NoticeMsgConstant.PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT,code,supplierNames,createUserName,createTime,approveUserName,approveTime,comment);
+            }
+            NoticeMsgInfoDTO noticeMsgInfo = new NoticeMsgInfoDTO();
+            noticeMsgInfo.setReceiverUserIds(sendIdList);
+            noticeMsgInfo.setTitle(msgHead);
+            noticeMsgInfo.setContent(msgContent);
+            noticeMsgInfo.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
+            SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, RocketMqTagEnum.MSG_NOTICE_TAG.getName(),
+                    noticeMsgInfo, IdUtil.simpleUUID());
+            if (!SendStatus.SEND_OK.equals(result.getSendStatus())) {
+                log.error("消息发送结果失败：{}", JSONObject.toJSONString(result));
+            }
+        }
     }
 
 
@@ -837,6 +975,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_94006.msg);
         }
         ProcessManagementDTO.ApproveResultDTO data = result.getData();
+        ApproveStatusEnum approveStatusEnum = ApproveStatusEnum.REJECT;
+        if (type.equals(ScmConstant.PASS)) {
+            approveStatusEnum = ApproveStatusEnum.APPROVE;
+        }
+        //异步发送通知
+        ApproveStatusEnum finalApproveStatusEnum = approveStatusEnum;
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                sendMsg(Collections.singletonList(entity.getId()), finalApproveStatusEnum, comment);
+            }
+        });
 
         if (ObjectUtils.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             return approveEnd(entity, type,comment,isNeedProcess);
@@ -977,5 +1127,18 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             resultList.add(excelDTO);
         }
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    /**
+     * 校验附件必填
+     * @author will
+     * @date 2025/3/25 16:32
+     * @param bussinessId
+     */
+    private void checkAttachment (String bussinessId) {
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(bussinessId);
+        if (CollectionUtils.isEmpty(attachmentList)){
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"附件信息");
+        }
     }
 }

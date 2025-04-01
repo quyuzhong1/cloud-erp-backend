@@ -50,6 +50,8 @@ public class GoodsBatchPushDTO {
         private String barcode;
         @SerializedName("spec_name")
         private String specName;
+        @SerializedName("goods_label")
+        private String goodsLabel;
         private BigDecimal length;
         private BigDecimal width;
         private BigDecimal height;

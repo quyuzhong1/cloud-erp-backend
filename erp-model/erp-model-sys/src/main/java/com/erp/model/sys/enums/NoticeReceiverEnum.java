@@ -8,6 +8,8 @@ package com.erp.model.sys.enums;
  */
 public enum NoticeReceiverEnum {
 
+
+    PUR_ITEM_ROLE("purItemRole", "项目人员--采购调价"),
     ITEM_ROLE("itemRole", "项目角色"),
     OTHER_PEOPLE("otherPeople", "其它人员");
 

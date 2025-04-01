@@ -3,7 +3,6 @@ package com.erp.server.mrp.calculation.handler;
 import com.erp.model.mrp.dto.CfgRuleStockUpDTO;
 import com.erp.model.mrp.dto.CfgRuleStockingRatioDTO;
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
-import com.erp.model.mrp.enums.CfgRuleStockingRatioTypeEnum;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -53,7 +52,6 @@ public class StockingDateSalesHandler extends AbstractSkuCalculationHandler {
     }
 
     private static BigDecimal getStockingRatio(String skuType, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, LocalDate finalSuggestDeliveryDate) {
-        boolean isNew = CfgRuleStockingRatioTypeEnum.NEW.getCode().equals(skuType);
         //获取建议配置明细备货失效
         return stockUpResult.getRefStockingRatioResults().stream()
                 .filter(v -> !v.getStartDate().isAfter(finalSuggestDeliveryDate) && !v.getEndDate().isBefore(finalSuggestDeliveryDate))
@@ -67,7 +65,7 @@ public class StockingDateSalesHandler extends AbstractSkuCalculationHandler {
                                 .max(Comparator.comparing(CfgRuleStockingRatioDTO.StockingRatioResultDTO::getIndex))
                                 .map(CfgRuleStockingRatioDTO.StockingRatioResultDTO::getStockingRatio)
                                 //获取默认配置默认系数
-                                .orElse(isNew ? stockUpResult.getNewStockingRatio() : stockUpResult.getStockingRatio())))
+                                .orElse(stockUpResult.getStockingRatio())))
 
                 ;
     }

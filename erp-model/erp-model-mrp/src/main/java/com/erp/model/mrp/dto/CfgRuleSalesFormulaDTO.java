@@ -78,6 +78,11 @@ public class CfgRuleSalesFormulaDTO implements Serializable {
         private Integer fixedValue;
 
         /**
+         * sku类型 新品/常规品
+         */
+        private String skuType;
+
+        /**
          * 百分比json
          */
         private String percentJson;

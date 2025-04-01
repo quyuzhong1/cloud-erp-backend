@@ -8,6 +8,7 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.enums.WeightAllocationStatusEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
@@ -74,7 +75,35 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
             compareCodeSplicingValueSql = compareCodeSplicingValueSql.replace("signTime","lt.track_time");
             return " exists (SELECT 1 from  logistics_track lt where lt.is_deleted = false and lt.status = 'sign' and lt.track_no = lbd.track_no AND lt.track_time = (select max(track_time) from logistics_track b where b.track_no = lbd.track_no and b.is_deleted = false) and lt.track_time "+compareCodeSplicingValueSql+" ) ";
         }
-
+        if(field.equals("weightAllocationStatus")){
+            if (isContain()){
+                if(value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryAllSql();
+                }
+                if(!value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && !value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryEmptySql();
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.TODO.getCode())){
+                    return " not exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())) {
+                    return " exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+            }else {
+                if(value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryEmptySql();
+                }
+                if(!value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && !value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryAllSql();
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return " not exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.TODO.getCode())) {
+                    return " exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+            }
+        }
         if(field.equals("warn")){
             List<TmsFirstMileLogisticDTO.PagingVO> list = tmsFirstMileLogisticService.hasWarnPaging(new TmsFirstMileLogisticDTO.PagingParamDTO());
             List<String> ids = new ArrayList<>();

@@ -26,4 +26,6 @@ public interface ListingInfoMapper extends BaseMapper<ListingInfoEntity> {
     List<ListingInfoDTO.ListDTO> listByType(@Param("type") String type);
 
     IPage<ListingInfoDTO.PageDTO> paging(Page query, @Param("params") ListingInfoDTO.PagingParamDTO pagingParamDTO);
+
+    List<ListingInfoDTO.SearchResultDTO> searchByKey(@Param("params") ListingInfoDTO.SearchParamDTO dto);
 }

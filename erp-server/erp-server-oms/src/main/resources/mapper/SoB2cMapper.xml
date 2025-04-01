@@ -104,7 +104,8 @@
         sb2c.is_out_of_range_delivery as isOutOfRangeDelivery,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        sb2c.vat_invoice_status as vatInvoiceStatus
     </sql>
 
     <!-- 通用查询结果列 -->
@@ -1169,15 +1170,43 @@
         platform_package_id = #{platformPackageId}
         WHERE id = #{id}
     </update>
+    <update id="updateFbaNotVatInvoice">
+        UPDATE so_b2c sb2c
+        SET vat_invoice_status = #{vatInvoiceStatus},update_time = NOW(),version = sb2c.version + 1
+        WHERE sb2c.is_deleted = FALSE
+          and sb2c.bill_status = 'shipped'
+          and sb2c.label_json ~ 'AFN'
+          and sb2c.vat_invoice_status = ''
+          and sb2c.shop_id = #{shopId} and sb2c.platform_order_create_time >= #{enableTime}
+    </update>
 
     <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">
-        SELECT DISTINCT so.* FROM so_b2c so
+        select * from (
+SELECT DISTINCT so.* FROM so_b2c so
         LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
-        WHERE so.bill_date >= #{startDate}
-        AND so.bill_date &lt;= #{endDate}
-        AND so.approve_status = 'approve'
+        WHERE so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
+        AND (so.pay_time >= #{startDate} AND so.pay_time &lt; #{endDate})
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+union all
+SELECT DISTINCT so.* FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        AND so.pay_time is null and so.platform_order_create_time >= #{startDate} AND so.platform_order_create_time &lt; #{endDate}) t
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

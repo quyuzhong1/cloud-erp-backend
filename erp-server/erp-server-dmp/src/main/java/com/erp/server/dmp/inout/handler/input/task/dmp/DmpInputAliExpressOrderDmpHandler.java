@@ -129,6 +129,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						Object amount = orderAmountMap.get("amount");
 						if (amount != null) {
 							dmpDataMap.put("totalDiscount", MathUtil.valueOf(amount).subtract(payAmount));
+							dmpDataMap.put("allAmount", amount);
 						}
 					}
 

@@ -35,6 +35,11 @@ public class NoticeMessageEntity extends BaseEntity<NoticeMessageEntity> impleme
      */
     private Integer state;
 
+    /**
+     * json数据
+     */
+    private String dataJson;
+
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
 }

@@ -71,8 +71,10 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "channelCode", source = "shippingMethod")
     @Mapping(target = "channelNameEn", source = "shippingName")
     @Mapping(target = "channelName", source = "shippingNameCn")
+    @Mapping(target = "effectiveTime", source = "invalid")
+    @Mapping(target = "effectiveTimeStr", source = "invalid")
     ThirdWarehouseCalculateFeeResponse antuResToThirdWarehouseResponse(AntuCalculateFeeResp antuCalculateFeeResp);
-    List<ThirdWarehouseCalculateFeeResponse> antuResToThirdWarehouseResponse(List<AntuCalculateFeeResp> antuCalculateFeeRespList);
+    List<ThirdWarehouseCalculateFeeResponse>  antuResToThirdWarehouseResponse(List<AntuCalculateFeeResp> antuCalculateFeeRespList);
 
     @Mapping(target = "state", source = "province")
     @Mapping(target = "smCode", source = "channelCode")

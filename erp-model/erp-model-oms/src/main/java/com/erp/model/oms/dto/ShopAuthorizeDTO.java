@@ -114,6 +114,12 @@ public class ShopAuthorizeDTO implements Serializable {
             return this;
         }
 
+        // 美客多-本土站
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
+            this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode());
+            return this;
+        }
+
         // 美客多
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MERCADOLIBRE.getCode())){
             this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE.getCode());

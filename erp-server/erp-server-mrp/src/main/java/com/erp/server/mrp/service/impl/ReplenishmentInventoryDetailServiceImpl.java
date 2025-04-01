@@ -31,6 +31,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -73,6 +74,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
         if (!CollectionUtils.isEmpty(virtualWarehouseIdList)) {
             virtualWarehouseEntities = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
         }
+
         for (InventoryDetailVO detailVO : page.getRecords()) {
             detailVO.setPlatformType(platformType);
             WarehouseEntity warehouse = warehouseEntities.stream()
@@ -83,6 +85,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
                     .filter(e -> e.getId().equals(detailVO.getVirtualWarehouseId()))
                     .findFirst().orElse(new VirtualWarehouseEntity());
             detailVO.setVirtualWarehouseName(virtualWarehouseEntity.getName());
+
             if (CfgRuleInventoryAllocateTypeEnum.SHARE.getCode().equals(detailVO.getInventoryAllocateType())) {
                 if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(detailVO.getChannelType())) {
                     List<String> shopNames = allShopInfo.stream()
@@ -121,7 +124,7 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion) {
+    public void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion, Map<String, List<String>> shopIdByPlatform) {
         List<ReplenishmentInventoryDetailEntity> entities = new ArrayList<>();
         List<ShopInventoryDetailEntity> detailEntities = new ArrayList<>();
         for (ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO dto : inventoryDetail) {
@@ -129,7 +132,16 @@ public class ReplenishmentInventoryDetailServiceImpl extends SuperServiceImpl<Re
             entity.setId(IdWorker.getIdStr());
             entities.add(entity);
             for (ReplenishmentResultDTO.ShopInventoryDetailDTO detail : dto.getShopInventoryDetails()) {
-                detailEntities.add(ReplenishmentResultDTO.ShopInventoryDetailDTO.buildShopInventoryDetail(detail,entity.getId(), calcVersion));
+
+                ShopInventoryDetailEntity detailEntity = ReplenishmentResultDTO.ShopInventoryDetailDTO.buildShopInventoryDetail(detail, entity.getId(), calcVersion);
+                //平台取值
+                String platform = shopIdByPlatform.entrySet().stream()
+                        .filter(entry -> entry.getValue() != null && entry.getValue().contains(detailEntity.getShopId()))
+                        .map(Map.Entry::getKey)
+                        .findFirst()
+                        .orElse("");
+                detailEntity.setDictPlatform(platform);
+                detailEntities.add(detailEntity);
             }
         }
         SpringUtil.getBean(ReplenishmentInventoryDetailServiceImpl.class).saveBatch(entities);

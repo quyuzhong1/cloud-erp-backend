@@ -249,7 +249,11 @@ public class WdtSoOutStockDTO extends UniqueDto {
      * 订单标签
      */
     private String tradeLabel;
-
+    
+    /**
+     * 状态 1.已发货 2.已作废
+     */
+    private String status;
 
     private List<WdtSoOutStockDetailDTO> detailList;
 }

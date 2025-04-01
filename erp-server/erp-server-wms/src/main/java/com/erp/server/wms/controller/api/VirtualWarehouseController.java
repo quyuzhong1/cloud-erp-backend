@@ -161,4 +161,18 @@ public class VirtualWarehouseController extends BaseController {
     public ApiResult<List<VirtualWarehouseDTO.SelectDTO>> listByParam(@RequestBody @Validated VirtualWarehouseDTO.SearchDTO dto){
         return success(virtualWarehouseService.listByParam(dto));
     }
+
+    /**
+     * 分页列表导出excel
+     * @author will
+     * @date 2025/03/11 11:02
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/exportExcel")
+    @WebAdvanceQuery
+    public ApiResult exportExcel(@RequestBody VirtualWarehouseDTO.PagingParamDTO dto) {
+        Boolean flag = virtualWarehouseService.exportExcel(dto);
+        return Boolean.TRUE.equals(flag) ? success() : failure();
+    }
 }

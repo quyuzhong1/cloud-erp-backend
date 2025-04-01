@@ -511,6 +511,15 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 				deliveryDetailDTO.setPlatformSpuNo(v.getThirdDetailId());
 				deliveryDetailDTO.setPlatformSkuId(v.getSkuId());
 				deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
+				deliveryDetailDTO.setCurrency(v.getCurrency());
+				deliveryDetailDTO.setPayAmount(v.getPayAmount());
+				deliveryDetailDTO.setPayCurrency(v.getPayCurrency());
+				deliveryDetailDTO.setDiscountAmount(v.getDiscountAmount());
+				deliveryDetailDTO.setDiscountCurrency(v.getDiscountCurrency());
+				deliveryDetailDTO.setPrice(v.getSellPrice());
+				deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
+				// 唯一UD
+				deliveryDetailDTO.setUniqueId(v.getId());
 				detailDTOList.add(deliveryDetailDTO);
 				platformWarehouseName = v.getWarehouseName();
 			}
