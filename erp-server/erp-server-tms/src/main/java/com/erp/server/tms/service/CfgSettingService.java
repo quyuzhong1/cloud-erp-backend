@@ -3,7 +3,10 @@ package com.erp.server.tms.service;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.tms.dto.CfgSettingDTO;
+import com.erp.model.tms.dto.CfgSettingValueDTO;
 import com.erp.model.tms.entity.CfgSettingEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -40,4 +43,8 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return com.erp.model.wms.entity.CfgSettingEntity
      **/
     CfgSettingEntity getByKey(String key);
+
+    List<CfgSettingEntity> listCfgSettingByKeys(List<String> keys);
+
+    CfgSettingValueDTO.AllocationSettingDTO getCfgSettingByAllocationSetting();
 }

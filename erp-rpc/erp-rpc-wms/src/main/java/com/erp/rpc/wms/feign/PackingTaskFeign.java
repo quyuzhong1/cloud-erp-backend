@@ -2,6 +2,7 @@ package com.erp.rpc.wms.feign;
 
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -38,4 +39,15 @@ public interface PackingTaskFeign {
      */
     @GetMapping("/feign/packingTask/getBySourceId")
     PackingTaskEntity getBySourceId(@RequestParam String sourceId);
+
+    /**
+     * 根据发货单单号查询是否有装箱重量
+     */
+    @PostMapping("/feign/packingTask/checkCartonWeightBySourceCodes")
+    List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(@RequestBody List<String> sourceCodes);
+    /**
+     * 根据发货单单号查询是否有装箱信息
+     */
+    @PostMapping("/feign/packingTask/listCartonBySourceCodes")
+    List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(@RequestBody List<String> sourceCodes);
 }
