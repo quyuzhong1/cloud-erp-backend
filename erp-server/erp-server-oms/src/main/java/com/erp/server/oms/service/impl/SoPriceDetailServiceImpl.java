@@ -293,7 +293,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             CustomerInfoEntity customerEntity = customerEntities.stream().filter(req -> item.getCustomerId().equals(req.getId())).findFirst().orElse(new CustomerInfoEntity());
             result.setCustomerId(soPriceEntity.getCustomerId());
             result.setCustomerName(customerEntity.getName());
-            result.setPriceCode(soPriceEntity.getCode());
+            result.setSoPriceCode(soPriceEntity.getCode());
             resultList.add(result);
         }
         viewDTO.setSoPriceChangeDetailList(resultList);
@@ -331,7 +331,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             result.setSoPriceDetailId(item.getId());
             result.setCustomerId(item.getCustomerId());
             result.setCustomerName(item.getCustomerName());
-            result.setPriceCode(item.getPriceCode());
+            result.setSoPriceCode(item.getPriceCode());
             result.setEffectiveDate(item.getEffectiveDate());
             result.setDisabled(item.getDisabled());
             result.setSoOrgName(item.getSoOrgName());
