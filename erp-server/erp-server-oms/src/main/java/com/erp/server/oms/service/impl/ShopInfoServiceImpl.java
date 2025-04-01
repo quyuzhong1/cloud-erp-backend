@@ -884,7 +884,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 view.setBusinessModelName(mercadolibreBusinessModel.getName());
             }
         }
-
+        if (CharSequenceUtil.isNotBlank(shop.getBusinessModel()) && PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(shop.getDictPlatform())) {
+            DictBasicEntity mercadolibreBusinessModel = dictBasicService.getByTypeAndValue("mercadolibreBusinessModel", shop.getBusinessModel());
+            if (ObjectUtil.isNotEmpty(mercadolibreBusinessModel)) {
+                view.setBusinessModelName(mercadolibreBusinessModel.getName());
+            }
+        }
         //客户名称
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(shop.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
