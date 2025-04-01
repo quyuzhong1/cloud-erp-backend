@@ -419,12 +419,12 @@ public class SoPriceDTO implements Serializable {
 
 
         /**
-         * code
+         * code，可排序
          */
         private String code;
 
         /**
-         * 客户id
+         * 客户id，可排序
          */
         private String customerId;
 
@@ -434,13 +434,13 @@ public class SoPriceDTO implements Serializable {
         private String customerName;
 
         /**
-         * sku id
+         * sku id，可排序
          */
         private String skuId;
 
 
         /**
-         * sku no
+         * sku no，可排序
          */
         private String skuNo;
 
@@ -451,7 +451,7 @@ public class SoPriceDTO implements Serializable {
         private String productName;
 
         /**
-         * 最小数量
+         * 最小数量，可排序
          */
         private Integer minQty;
 
@@ -472,12 +472,12 @@ public class SoPriceDTO implements Serializable {
         private String approveStatusName;
 
         /**
-         * 最大数量
+         * 最大数量，可排序
          */
         private Integer maxQty;
 
         /**
-         * 币种
+         * 币种，可排序
          */
         private String currency;
 
@@ -487,27 +487,27 @@ public class SoPriceDTO implements Serializable {
         private String currencySymbol;
 
         /**
-         * 含税单价
+         * 含税单价，可排序
          */
         private BigDecimal taxPrice;
 
         /**
-         * 税率
+         * 税率，可排序
          */
         private BigDecimal taxRate;
 
         /**
-         * 生效时间
+         * 生效时间，可排序
          */
         private LocalDate effectiveDate;
 
         /**
-         * 失效时间
+         * 失效时间，可排序
          */
         private LocalDate expireDate;
 
         /**
-         * 销售组织
+         * 销售组织，可排序
          */
         private String soOrgId;
 
@@ -522,17 +522,17 @@ public class SoPriceDTO implements Serializable {
         private String approveUserName;
 
         /**
-         * 审核完成时间
+         * 审核完成时间，可排序
          */
         private LocalDateTime approveTime;
 
         /**
-         * 创建人名称
+         * 创建人名称，可排序
          */
         private String createUserName;
 
         /**
-         * 创建时间
+         * 创建时间，可排序
          */
         private LocalDateTime createTime;
 

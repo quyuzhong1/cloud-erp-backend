@@ -1450,6 +1450,7 @@ public enum ApiError implements Serializable {
     SO_ORG_NOT_REPEAT(98113,"只有相同的销售组织可以批量变更报价"),
     ERROR_INTERVAL_CUSTOMER_OVERLAP(98047,"该客户SKU区间存在重叠，不可提交"),
     ERROR_INTERVAL_CUSTOMER_CHANGE_OVERLAP(98048,"与该客户SKU变更区间存在重叠，不可提交"),
+    ERROR_SO_PRICE_INTERVAL_SIZE(98050,"SKU【{}】区间从值不能大于区间到值"),
 
 
     /**

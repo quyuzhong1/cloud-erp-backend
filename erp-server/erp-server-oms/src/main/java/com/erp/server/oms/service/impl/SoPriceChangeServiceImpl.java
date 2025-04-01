@@ -211,11 +211,6 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
         List<String> customerIds = soPriceDetailList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getCustomerId).distinct().collect(Collectors.toList());
         List<CustomerInfoEntity> customerEntities = customerInfoService.listByIds(customerIds);
 
-        //查询销售价目表
-        List<String> SoPriceDetailId = soPriceDetailList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getSoPriceDetailId).distinct().collect(Collectors.toList());
-        List<SoPriceDetailDTO.ViewDTO> priceDetailView = soPriceDetailService.listBySoPriceDetailIds(SoPriceDetailId);
-        List<String> soPriceIds = priceDetailView.stream().map(SoPriceDetailDTO.ViewDTO::getMainId).distinct().collect(Collectors.toList());
-
         for (SoPriceChangeDetailDTO.ViewDTO dto : soPriceDetailList) {
             SkuVO skuVO = skuNoList.stream().filter(obj -> obj.getSkuId().equals(dto.getSkuId())).findFirst().orElse(new SkuVO());
             dto.setProductName(skuVO.getSkuName());
