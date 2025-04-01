@@ -60,9 +60,9 @@ public class SoPriceChangeController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id,seller_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "pp")
+            tableAlias = "spc,spc,ci")
     @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
     public ApiResult<PagingVO<SoPriceChangeDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
         PagingVO<SoPriceChangeDTO.PagingViewDTO> pagingVO = soPriceChangeService.paging(dto);
@@ -79,9 +79,9 @@ public class SoPriceChangeController extends BaseController {
      */
     @PostMapping("/tab/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id,seller_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "pp")
+            tableAlias = "spc,spc,ci")
     public ApiResult<List<SoPriceChangeDTO.TabListDTO>> tabList(PermissionsDTO dto) {
         List<SoPriceChangeDTO.TabListDTO> list = soPriceChangeService.tabList(dto);
         return success(list);
@@ -96,7 +96,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加销售变更")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:add",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
@@ -141,7 +141,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交销售变更")
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:add",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
@@ -160,7 +160,7 @@ public class SoPriceChangeController extends BaseController {
     @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:priceChangeDetail",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
@@ -179,7 +179,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售调价单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:update",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
@@ -197,7 +197,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核销售调价单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:update",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
@@ -216,7 +216,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除销售调价单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:delete",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids")
@@ -254,7 +254,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售调价单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:submit",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids")
@@ -290,6 +290,11 @@ public class SoPriceChangeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售调价单")
     @PostMapping("/approve")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "adjust_user_id,create_user_id",
+            menuCode = "oms:soPrice:approve",
+            serviceClass = SoPriceChangeService.class,
+            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<SoPriceChangeEntity> entityList = soPriceChangeService.listByIds(dto.getIds());
@@ -321,7 +326,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售调价单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:cancelProcess",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids")
@@ -355,7 +360,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新销售调价单明细备注:备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "adjust_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:updateDetailRemark",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids"
