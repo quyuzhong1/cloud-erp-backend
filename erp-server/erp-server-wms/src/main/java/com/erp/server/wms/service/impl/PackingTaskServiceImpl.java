@@ -2879,4 +2879,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         return resutlList;
     }
 
+    @Override
+    public List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity) {
+        String id = firstMileDeliveryEntity.getId();
+        String sourceId = firstMileDeliveryEntity.getSourceId();
+
+        List<String > list = new ArrayList<>();
+        list.add(id);
+        list.add(sourceId);
+        return lambdaQuery().in(PackingTaskEntity::getSourceId, list).list();
+    }
+
 }
