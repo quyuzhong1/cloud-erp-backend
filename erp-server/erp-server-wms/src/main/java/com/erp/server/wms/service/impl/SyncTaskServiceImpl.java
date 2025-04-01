@@ -1255,6 +1255,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         Map<String, List<SoReturnInstockEntity>> instockGroupMap = list.stream().collect(Collectors.groupingBy(SoReturnInstockEntity::getType));
 
+        List<SoB2cEntity> soB2cEntityList = new LinkedList();
         List<SoB2cReceiverEntity> receiverEntityList = new LinkedList();
         // 查询B2C订单
         List<SoReturnInstockEntity> b2cReturnInstockList = instockGroupMap.get("B2C");
@@ -1265,6 +1266,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     .collect(Collectors.toList());
             receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
                     .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                    .list();
+
+            soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
+                    .in(SoB2cEntity::getId, b2cSoIds)
                     .list();
         }
 
@@ -1306,6 +1311,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             String country = "";
             // 分区
             String partitionId = "";
+            // 平台
+            String dictPlatform = "";
 
             String sourceId = syncParamDetailDTO.getSourceId();
             SoReturnInstockDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
@@ -1323,6 +1330,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     CustomerInfoEntity customerInfoEntity = customerInfoList.stream().filter(e -> e.getId().equalsIgnoreCase(soInfoEntity.getCustomerId())).findFirst().orElse(null);
                     if (null != customerInfoEntity){
                         country = customerInfoEntity.getCountryId();
+                        dictPlatform = customerInfoEntity.getPlatformType();
                     }
                 }
             } else if ("B2C".equalsIgnoreCase(entity.getType())){
@@ -1330,6 +1338,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 if (null != receiverEntity){
                     country = receiverEntity.getCountry();
                     partitionId = receiverEntity.getPartitionId();
+                }
+                SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                if (null != soB2cEntity){
+                    dictPlatform = soB2cEntity.getDictPlatform();
                 }
             }
 
@@ -1348,6 +1360,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     receiveReturnList,
                     country,
                     partitionId,
+                    dictPlatform,
                     omsAllDictList,
                     partitionEntityList,
                     countryEntityList,
