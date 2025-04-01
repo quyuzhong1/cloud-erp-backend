@@ -452,7 +452,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             .values().stream()
                     )
                     .sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getCustomerPo)
-                            .thenComparing(PickingListsDTO.PrintDetailView::getSkuNo)
+                            .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)
                     )
                     .collect(Collectors.toList());
             //相同sku去空格
