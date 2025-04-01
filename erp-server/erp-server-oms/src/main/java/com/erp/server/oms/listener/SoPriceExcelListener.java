@@ -16,7 +16,6 @@ import com.erp.model.oms.dto.excel.ImportSoPriceExcelDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoPriceDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.server.oms.service.SoPriceDetailService;
 import com.erp.server.oms.service.SoPriceService;
 import com.google.common.collect.Lists;
@@ -41,8 +40,6 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
     private List<FindUserDTO> userList;
 
     private List<SkuVO> skuList;
-
-    private List<DictCurrencyEntity> currencyList;
 
     List<CustomerInfoEntity> customerList;
 
@@ -101,11 +98,10 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
     private static final int MAX_QTY = 9999999;
 
 
-    public SoPriceExcelListener(List<FindUserDTO> userList, List<SkuVO> skuList, List<DictCurrencyEntity> currencyList, List<CustomerInfoEntity> customerList,
+    public SoPriceExcelListener(List<FindUserDTO> userList, List<SkuVO> skuList, List<CustomerInfoEntity> customerList,
                                 List<BaseIdDTO> orgList, SoPriceDetailService priceDetailService, SoPriceService soPriceService) {
         this.userList = userList;
         this.skuList = skuList;
-        this.currencyList = currencyList;
         this.customerList = customerList;
         this.orgList = orgList;
         this.priceDetailService = priceDetailService;
@@ -124,7 +120,7 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
         String customerName = StrUtils.null2EmptyWithTrim(excelDTO.getCustomerName());
 
         //客户信息
-        CustomerInfoEntity customerInfoEntity = customerList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), customerName)).findFirst().orElse(null);
+        CustomerInfoEntity customerInfoEntity = customerList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), customerName)).findFirst().orElse(null);
         if(Objects.isNull(customerInfoEntity)) {
             errorMsgList.add("客户不存在");
         } else {
@@ -184,17 +180,7 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
         }
 
         // 币制代码
-        String currency = excelDTO.getCurrency();
-        if(StrUtils.isNotEmpty(currency)) {
-            DictCurrencyEntity dictCurrencyEntity = currencyList.stream().filter(r->Objects.equals(currency, r.getId())).findFirst().orElse(null);
-            if(Objects.isNull(dictCurrencyEntity)) {
-                errorMsgList.add("币制编码错误");
-            } else {
-                addDTO.setCurrency(currency);
-            }
-        } else {
-            addDTO.setCurrency(DEFAULT_CURRENCY);
-        }
+        addDTO.setCurrency(DEFAULT_CURRENCY);
 
         SoPriceDetailDTO.ImportSaveDTO detailDTO = new  SoPriceDetailDTO.ImportSaveDTO();
         //定价员id
@@ -276,10 +262,6 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
         } else {
             detailDTO.setEffectiveDate(LocalDate.now());
         }
-
-        // 启用状态
-        String disabledStr = excelDTO.getDisabled();
-        detailDTO.setDisabled(Objects.equals(disabledStr, "停用"));
 
         // 验证 区间从和区间到
         if(Objects.nonNull(detailDTO.getMaxQty()) && Objects.nonNull(detailDTO.getMinQty())

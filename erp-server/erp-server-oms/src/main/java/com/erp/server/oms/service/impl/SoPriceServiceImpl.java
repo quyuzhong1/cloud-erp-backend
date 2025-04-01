@@ -39,7 +39,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -644,12 +643,10 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         List<SkuVO> skuList = plmTaskFeign.listApproveSku();
         // 组织
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
-        // 币制
-        List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         //客户
         List<CustomerInfoEntity> list = customerInfoService.list();
 
-        SoPriceExcelListener excelListener = new SoPriceExcelListener(userList, skuList, currencyList,list, orgList, soPriceDetailService, this);
+        SoPriceExcelListener excelListener = new SoPriceExcelListener(userList, skuList,list, orgList, soPriceDetailService, this);
         try {
             EasyExcel.read(excelFile.getInputStream(), ImportSoPriceExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
