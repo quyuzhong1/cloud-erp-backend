@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -71,5 +71,5 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @date 2025/3/31 11:31
      * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
      */
-    List<VirtualInventoryStockDTO.OutInStockDTO> rebuildB2bVirtualFlow();
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 }

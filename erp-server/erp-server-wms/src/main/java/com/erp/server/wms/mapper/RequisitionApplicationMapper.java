@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -104,5 +104,5 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @date 2025/3/31 12:06
      * @return java.util.List<com.erp.model.wms.entity.VirtualInventoryStockDTO.OutInStockDTO>
      */
-    List<VirtualInventoryStockDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
 }

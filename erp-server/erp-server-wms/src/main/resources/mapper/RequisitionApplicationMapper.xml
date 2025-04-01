@@ -433,22 +433,21 @@
     </select>
 
     <!-- 查询头程流水数据 -->
-    <select id="rebuildFirstMileVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO$OutInStockDTO">
+    <select id="rebuildFirstMileVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
         --要货申请冻结
         select
             rad.sku_id,
             rad.sku_no,
             rad.from_virtual_warehouse_id as virtual_warehouse_id,
-            sbdd.warehouse_id,
-            'soB2cDelivery' as source_type,
-            sbd.id as source_id,
-            sbd.code as source_code,
-            sbdd.id as source_detail_id,
-            to_char(sbd.create_time,'YYYY-MM-dd') as bill_date,
-            sbdd.delivery_qty as qty
+            rad.from_warehouse_id,
+            'requisitionApplication' as source_type,
+            ra.id as source_id,
+            ra.code as source_code,
+            rad.id as source_detail_id,
+            to_char(ra.handle_time,'YYYY-MM-dd') as bill_date,
+            rad.virtual_frozen_qty as qty
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false and rad.from_virtual_warehouse_id != '' and ra.status in ('handleIng','handle')
         where ra.is_deleted = false
-
     </select>
 </mapper>

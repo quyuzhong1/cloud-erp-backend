@@ -110,7 +110,7 @@
     </select>
 
     <!--根据订单号查询-->
-    <select id="rebuildB2cVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO$OutInStockDTO">
+    <select id="rebuildB2cVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
         -- b2c发货单冻结
         select
             sbdd.sku_id,

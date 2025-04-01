@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -58,7 +58,7 @@ public interface SoB2cDeliveryMapper extends BaseMapper<SoB2cDeliveryEntity> {
      * 查询b2c流水数据
      * @author will
      * @date 2025/3/31 11:57
-     * @return java.util.List<com.erp.model.wms.entity.VirtualInventoryStockDTO.OutInStockDTO>
+     * @return java.util.List<com.erp.model.wms.entity.VirtualFlowRefactorDTO.OutInStockDTO>
      */
-    List<VirtualInventoryStockDTO.OutInStockDTO> rebuildB2cVirtualFlow();
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
 }

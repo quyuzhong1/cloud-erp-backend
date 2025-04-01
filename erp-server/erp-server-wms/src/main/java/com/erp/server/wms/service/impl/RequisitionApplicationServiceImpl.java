@@ -56,6 +56,7 @@ import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
 import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -3036,7 +3037,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     @Override
-    public List<VirtualInventoryStockDTO.OutInStockDTO> rebuildFirstMileVirtualFlow() {
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow() {
         return baseMapper.rebuildFirstMileVirtualFlow();
     }
 }

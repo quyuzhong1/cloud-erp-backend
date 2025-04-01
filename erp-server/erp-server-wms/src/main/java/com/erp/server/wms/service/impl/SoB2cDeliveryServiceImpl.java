@@ -63,6 +63,7 @@ import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -2515,7 +2516,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     }
 
     @Override
-    public List<VirtualInventoryStockDTO.OutInStockDTO> rebuildB2cVirtualFlow() {
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow() {
         return baseMapper.rebuildB2cVirtualFlow();
     }
 }

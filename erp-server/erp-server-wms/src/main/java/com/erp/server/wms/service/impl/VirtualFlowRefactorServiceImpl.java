@@ -2,7 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.erp.server.wms.service.RequisitionApplicationService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
@@ -58,7 +58,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @date 2025/3/31 10:52
      */
     private void rebuildB2bFlow() {
-       List<VirtualInventoryStockDTO.OutInStockDTO> list =  soDeliveryNoticeService.rebuildB2bVirtualFlow();
+       List<VirtualFlowRefactorDTO.OutInStockDTO> list =  soDeliveryNoticeService.rebuildB2bVirtualFlow();
        if (CollUtil.isEmpty(list)) {
            return;
        }
@@ -71,7 +71,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @date 2025/3/31 10:52
      */
     private void rebuildB2cFlow() {
-        List<VirtualInventoryStockDTO.OutInStockDTO> list =  soB2cDeliveryService.rebuildB2cVirtualFlow();
+        List<VirtualFlowRefactorDTO.OutInStockDTO> list =  soB2cDeliveryService.rebuildB2cVirtualFlow();
     }
 
     /**
@@ -80,7 +80,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @date 2025/3/31 10:52
      */
     private void rebuildFirstMileFlow() {
-        List<VirtualInventoryStockDTO.OutInStockDTO> list =  requisitionApplicationService.rebuildFirstMileVirtualFlow();
+        List<VirtualFlowRefactorDTO.OutInStockDTO> list =  requisitionApplicationService.rebuildFirstMileVirtualFlow();
 
     }
 }

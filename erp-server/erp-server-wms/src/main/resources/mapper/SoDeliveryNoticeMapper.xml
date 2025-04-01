@@ -251,7 +251,7 @@
 
     <!-- 查询b2b订单流水 -->
     <select id="rebuildB2bVirtualFlow"
-            resultType="com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO$OutInStockDTO">
+            resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
         -- b2b销售订单冻结
         select
             sd.sku_id,
@@ -263,7 +263,8 @@
             si.id as source_id,
             sd.id as source_detail_id,
             to_char(sd.frozen_time,'YYYY-MM-dd') as bill_date,
-            sd.frozen_qty as qty
+            sd.frozen_qty as qty,
+            'so_info_lock_add' as businessType
         from so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
         where si.is_deleted = false and si.virtual_warehouse_id != '' and sd.frozen_qty != 0

@@ -42,6 +42,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
@@ -1922,7 +1923,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     }
 
     @Override
-    public List<VirtualInventoryStockDTO.OutInStockDTO> rebuildB2bVirtualFlow() {
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow() {
         return baseMapper.rebuildB2bVirtualFlow();
     }
 }
