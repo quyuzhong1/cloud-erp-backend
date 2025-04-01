@@ -80,6 +80,7 @@ public class DmpInputChildDataToParentDmpHandler extends DmpInputDbConvertDmpHan
 		List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, mongoStorageName);
 		if(CollUtil.isNotEmpty(findMongoData)) {
 			dmpInputMongoEntityList.clear();
+			findMongoData.forEach(f -> f.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, nextLevelId));
 			dmpInputMongoEntityList.addAll(findMongoData);
 		}
 	}
