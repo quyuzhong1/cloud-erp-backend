@@ -198,8 +198,29 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-
+        map.entrySet().stream().parallel().forEach(obj -> {
+            List<VirtualFlowRefactorDTO.OutInStockDTO> value = obj.getValue();
+            String sourceType = value.get(0).getSourceType().getCode();
+            List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
+            VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
+            dto.setParamList(params);
+            //要货申请需冻结
+            if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(sourceType)) {
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getType());
+            }
+            //加工单需出库
+            if (SourceTypeEnum.MACHINE_INFO.getCode().equals(sourceType)) {
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getType());
+            }
+            //直接调拨单需出库
+            if (SourceTypeEnum.TRANSFER_INFO.getCode().equals(sourceType)) {
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getType());
+            }
+            //更新库存
+            ApplicationContextUtils.getBean(VirtualFlowRefactorServiceImpl.class).approve(dto);
+        });
     }
 
 
