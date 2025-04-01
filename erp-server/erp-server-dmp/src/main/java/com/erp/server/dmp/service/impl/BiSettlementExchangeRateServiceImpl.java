@@ -62,16 +62,7 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             return BigDecimal.ONE;
         }
         //查询redis中存储的成本信息
-        String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE,CurrencyEnum.CNY.getCurrencyCode(),sourceCurrencyCode);
-        List<BiSettlementExchangeRateEntity> rateList = (List<BiSettlementExchangeRateEntity>) redisUtil.get(existKey);
-        if (CollectionUtils.isEmpty(rateList)) {
-            //查询库中数据添加缓存
-            rateList = baseMapper.listByCurrencyCode(targetCurrencyCode, sourceCurrencyCode);
-            if (CollectionUtils.isNotEmpty(rateList)) {
-                //添加缓存
-                redisUtil.set(existKey,rateList,3600);
-            }
-        }
+        List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(targetCurrencyCode, sourceCurrencyCode);
         if (CollectionUtils.isEmpty(rateList)) {
             return null;
         }
