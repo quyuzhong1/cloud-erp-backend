@@ -2,6 +2,7 @@ package com.erp.server.oms.listener;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -165,16 +166,7 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
             String orgId = orgList.stream().filter(r -> Objects.equals(soOrgName, r.getName())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (StrUtils.isEmpty(orgId)) {
-                errorMsgList.add("采购组织不存在");
-            }
-            addDTO.setSoOrgId(orgId);
-        } else {
-            // 默认【东莞市简拍智造科技有限公司】
-            addDTO.setSoOrgName(DEFAULT_so_ORG_NAME);
-            String orgId = orgList.stream().filter(r -> Objects.equals(DEFAULT_so_ORG_NAME, r.getName())).findFirst().
-                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            if (StrUtils.isEmpty(orgId)) {
-                errorMsgList.add("采购组织【东莞市简拍智造科技有限公司】不存在");
+                errorMsgList.add("销售组织不存在");
             }
             addDTO.setSoOrgId(orgId);
         }
@@ -259,8 +251,24 @@ public class SoPriceExcelListener extends AnalysisEventListener<ImportSoPriceExc
                 LocalDate effectiveDate = getDate(effectiveDateStr);
                 detailDTO.setEffectiveDate(effectiveDate);
             }
-        } else {
-            detailDTO.setEffectiveDate(LocalDate.now());
+        }
+
+        // 失效时间
+        String expireDateStr = excelDTO.getExpireDate();
+        if(StrUtils.isNotEmpty(expireDateStr)) {
+            if(!isDate(expireDateStr)) {
+                errorMsgList.add("失效日期格式错误");
+            } else {
+                LocalDate expireDate = getDate(expireDateStr);
+                detailDTO.setExpireDate(expireDate);
+            }
+        }
+
+        if (ObjectUtil.isNotEmpty(detailDTO.getEffectiveDate()) && ObjectUtil.isNotEmpty(detailDTO.getExpireDate())) {
+            if (detailDTO.getEffectiveDate().isAfter(detailDTO.getExpireDate())) {
+                errorMsgList.add("生效日期不能大于失效日期");
+            }
+
         }
 
         // 验证 区间从和区间到

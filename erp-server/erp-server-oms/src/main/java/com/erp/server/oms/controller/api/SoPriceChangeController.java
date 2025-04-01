@@ -61,7 +61,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:paging",
+            menuCode = "oms:oms:soPriceChange::paging",
             tableAlias = "spc,spc")
     @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
     public ApiResult<PagingVO<SoPriceChangeDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
@@ -80,7 +80,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/tab/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:paging",
+            menuCode = "oms:oms:soPriceChange::paging",
             tableAlias = "spc,spc")
     public ApiResult<List<SoPriceChangeDTO.TabListDTO>> tabList(PermissionsDTO dto) {
         List<SoPriceChangeDTO.TabListDTO> list = soPriceChangeService.tabList(dto);
@@ -97,7 +97,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:add",
+            menuCode = "oms:oms:soPriceChange::add",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
     public ApiResult<?> add(@RequestBody @Validated SoPriceChangeDTO.AddDTO dto) {
@@ -142,7 +142,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/addAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:add",
+            menuCode = "oms:oms:soPriceChange::add",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
     public ApiResult<?> addAndSubmit(@RequestBody @Validated SoPriceChangeDTO.AddDTO dto) {
@@ -161,7 +161,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:priceChangeDetail",
+            menuCode = "oms:oms:soPriceChange::priceChangeDetail",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
     public ApiResult<SoPriceChangeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
@@ -180,7 +180,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:update",
+            menuCode = "oms:oms:soPriceChange::update",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated SoPriceChangeDTO.UpdateDTO dto) {
@@ -198,7 +198,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:update",
+            menuCode = "oms:oms:soPriceChange::update",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
     public ApiResult<?> updateAndSubmit(@RequestBody @Validated SoPriceChangeDTO.UpdateDTO dto) {
@@ -217,7 +217,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:delete",
+            menuCode = "oms:oms:soPriceChange::delete",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids")
     public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -255,7 +255,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:submit",
+            menuCode = "oms:oms:soPriceChange::submit",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids")
     public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -292,7 +292,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:approve",
+            menuCode = "oms:oms:soPriceChange::approve",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
@@ -327,7 +327,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:cancelProcess",
+            menuCode = "oms:oms:soPriceChange::cancelProcess",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids")
     public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
@@ -361,7 +361,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPrice:updateDetailRemark",
+            menuCode = "oms:oms:soPriceChange::updateDetailRemark",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "ids"
     )

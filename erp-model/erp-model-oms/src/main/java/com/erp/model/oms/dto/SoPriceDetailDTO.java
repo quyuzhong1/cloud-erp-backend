@@ -503,6 +503,12 @@ public class SoPriceDetailDTO implements Serializable {
 
 
         /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+
+        /**
          * 含税单价
          */
         @NotNull(message = "含税单价不能为空")
