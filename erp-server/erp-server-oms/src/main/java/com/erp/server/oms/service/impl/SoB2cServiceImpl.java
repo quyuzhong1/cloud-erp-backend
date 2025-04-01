@@ -7201,12 +7201,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public Boolean updateAliExpressOrderWarehouse(String soId, String shopId) {
         SoB2cEntity entity = this.getById(soId);
-        //查询速卖通仓库名称是否映射ERP仓库
-        List<DmpOutputTaskRecordEntity> list = FeignQuery.create(DmpOutputTaskRecordEntity.class).eq(DmpOutputTaskRecordEntity::getSourceCode, entity.getPlatformCode()).orderByDesc(DmpOutputTaskRecordEntity::getCreateTime).list();
-        if (CollUtil.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = list.stream().max(Comparator.comparing(DmpOutputTaskRecordEntity::getCreateTime)).orElse(null);
+        DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpTaskFeign.getOutputTaskRecord(entity.getPlatformCode(),"DmpOutputAliExpressOrderRocketMQTaskHandler");
         if (Objects.isNull(dmpOutputTaskRecordEntity)) {
             return Boolean.TRUE;
         }
