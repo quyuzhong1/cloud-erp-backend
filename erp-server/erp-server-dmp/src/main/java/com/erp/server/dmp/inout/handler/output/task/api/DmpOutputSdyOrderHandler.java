@@ -584,7 +584,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getPlatformSku());
             shudiyunB2cOrderDTO.setGoods_name(dmpSoDetailEntity.getSkuName());
 
-            if (dmpSoDetailEntity.getIsGift() && dmpSoDetailEntity.getIsGift() != null) {
+            BigDecimal sellPriceOrigin = dmpSoDetailEntity.getSellPriceOrigin();
+            if (sellPriceOrigin != null && BigDecimal.ZERO.compareTo(sellPriceOrigin) == 0) {
                 shudiyunB2cOrderDTO.setIs_gift(1);
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
