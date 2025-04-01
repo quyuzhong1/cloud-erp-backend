@@ -329,4 +329,17 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
           AND dotr.is_deleted = FALSE
           AND dor.is_deleted = FALSE
     </select>
+    <select id="getOutputTaskRecord" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+        SELECT
+            dotr.*
+        FROM
+            dmp_output_task_record AS dotr
+                LEFT JOIN dmp_output_task AS dor ON dor.ID = dotr.main_id
+                LEFT JOIN dmp_cfg_output AS dco on dco.id = dor.cfg_output_id
+        WHERE
+            dco.output_class = #{outputClass}
+          AND dotr.source_code = #{sourceCode}
+          AND dotr.is_deleted = FALSE
+          AND dor.is_deleted = FALSE ORDER BY dotr.create_time LIMIT 1
+    </select>
 </mapper>
