@@ -315,5 +315,18 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
 		insert into dmp_output_task_his select * from dmp_output_task g where g.id in (${conditionSql});
 		delete from dmp_output_task g where g.id in (${conditionSql});
 	</delete>
-    
+
+    <select id="queryBySourceCodeAndCfgOutputId" resultMap="BaseResultMap">
+        SELECT
+            dotr.*
+        FROM
+            dmp_output_task_record AS dotr
+            LEFT JOIN dmp_output_task AS dor ON dor.ID = dotr.main_id
+        WHERE
+            dor.cfg_output_id = #{cfgOutputId}
+          AND dotr.source_code = #{sourceCode}
+          AND dotr.source_code NOT IN ( '', '_' )
+          AND dotr.is_deleted = FALSE
+          AND dor.is_deleted = FALSE
+    </select>
 </mapper>

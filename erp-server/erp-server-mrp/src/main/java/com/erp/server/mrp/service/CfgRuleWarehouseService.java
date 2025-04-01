@@ -29,25 +29,15 @@ public interface CfgRuleWarehouseService extends SuperService<CfgRuleWarehouseEn
      * 查看详情
      * @author will
      * @date 2024/8/24 15:48
-     * @param platformType
      * @return ViewDTO
      */
-    CfgRuleWarehouseDTO.ViewDTO view(String platformType);
-    /**
-     * 平台类型
-     * @author will
-     * @date 2024/8/26 9:38
-     * @param platformType
-     * @return CfgRuleWarehouseEntity
-     */
-    CfgRuleWarehouseEntity getByPlatformType(String platformType);
+    CfgRuleWarehouseDTO.ViewDTO view();
     /**
      * 刷新虚拟仓数据
      * @author will
      * @date 2024/9/3 17:28
-     * @param platformType
      */
-    void refreshVirtual(String platformType);
+    void refreshVirtual();
     /**
      * 查询是否启用海外仓
      * @author will
@@ -68,13 +58,12 @@ public interface CfgRuleWarehouseService extends SuperService<CfgRuleWarehouseEn
      * 查询海外仓设置
      * @author will
      * @date 2024/10/29 11:27
-     * @param platformType
      * @return List<OverseasWarehouseDTO>
      */
-    List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO> listOverseasWarehouse(String platformType);
+    List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO> listOverseasWarehouse();
 
     /**
      * 查询是否启用虚拟仓
      */
-    Boolean getIsEnableVirtual(String platformType);
+    Boolean getIsEnableVirtual();
 }
