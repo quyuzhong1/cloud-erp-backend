@@ -14,7 +14,6 @@ import com.common.business.wrapper.QueryParam;
 import com.common.business.wrapper.QueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
@@ -48,7 +47,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 
 /**
@@ -219,8 +217,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
 
 
-            if (dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
-                shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getAfterTaxPayAmount());
+            if (dmpSoInfoEntity.getSourceSystem().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
+                shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getAfterTaxAmount());
             } else {
                 shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPayAmount());
             }

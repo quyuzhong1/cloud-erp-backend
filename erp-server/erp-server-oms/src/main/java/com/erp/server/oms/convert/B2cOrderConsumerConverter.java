@@ -72,6 +72,8 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "platformOrderStatus", source = "dto.platformOrderStatus"),
             @Mapping(target = "remark", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(oldEntity.getRemark()) ? dto.getRemark() : oldEntity.getRemark())"),
             @Mapping(target = "isCancel", source = "dto.isCancel"),
+            @Mapping(target = "totalTaxFee", source = "dto.totalTaxFee"),
+            @Mapping(target = "afterTaxAmount", source = "dto.afterTaxAmount"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),

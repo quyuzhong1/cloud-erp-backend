@@ -236,8 +236,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
         }
 
+        if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
+        } else {
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getPayAmount());
+        }
+        shudiyunB2cOrderDTO.setTaxation(soB2cEntity.getTotalTaxFee());
 
-        shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
         String customerId = "";
         ShopInfoEntity shopInfo = shopInfoList.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
