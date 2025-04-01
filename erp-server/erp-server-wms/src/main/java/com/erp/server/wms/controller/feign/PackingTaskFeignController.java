@@ -2,12 +2,12 @@ package com.erp.server.wms.controller.feign;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.service.PackingTaskService;
@@ -66,6 +66,22 @@ public class PackingTaskFeignController extends BaseController {
     @GetMapping("/getBySourceId")
     PackingTaskEntity getBySourceId(@RequestParam String sourceId){
         return packingTaskService.lambdaQuery().eq(PackingTaskEntity::getSourceId, sourceId).one();
+    }
+
+    /**
+     * 根据发货单单号查询是否有装箱重量
+     */
+    @PostMapping("/checkCartonWeightBySourceCodes")
+    List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(@RequestBody List<String> sourceCodes){
+        return packingTaskService.checkCartonWeightBySourceCodes(sourceCodes);
+    }
+
+    /**
+     * 根据发货单单号查询所有已完成的装箱信息
+     */
+    @PostMapping("/listCartonBySourceCodes")
+    List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(@RequestBody List<String> sourceCodes){
+        return  listCartonBySourceCodes(sourceCodes);
     }
 
 }

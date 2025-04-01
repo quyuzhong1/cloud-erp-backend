@@ -1009,4 +1009,17 @@ public class WmsCartonSpecDTO implements Serializable {
         @NotBlank(message = "箱子ID不能为空")
         private String cartonId;
     }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingCartonSpecDTO {
+        private String mainId;
+        private Integer boxQty;
+        private BigDecimal packageWeight;
+        private String weightUnit;
+    }
 }

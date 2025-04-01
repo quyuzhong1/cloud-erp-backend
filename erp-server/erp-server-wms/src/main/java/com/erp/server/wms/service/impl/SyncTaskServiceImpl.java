@@ -23,6 +23,10 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -47,11 +51,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -1079,6 +1079,14 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<String> b2cSoIds = b2cEntity.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(b2cSoIds);
 
+        // B2C收货信息
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = new LinkedList<>();
+        if (CollectionUtils.isEmpty(soB2cEntities)){
+            soB2cReceiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+                    .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                    .list();
+        }
+
         //B2B订单
         List<SoOutstockEntity> b2bEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2B.getCode().equals(req.getOrderType())).collect(Collectors.toList());
         List<String> b2bSoIds = b2bEntity.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
@@ -1131,10 +1139,27 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     .in(ProductDetailEntity::getId, parentSkuId)
                     .list();
         }
-        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+        // OMS字典信息
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                ))
+                .list();
 
-        List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
@@ -1158,8 +1183,13 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     parentSkuList,
                     soB2cEntities,
                     soInfoEntities,
+                    soB2cReceiverEntityList,
                     dictBasicEntityList,
-                    dictList));
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList
+            ));
         }
         return resultList;
     }

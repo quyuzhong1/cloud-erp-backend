@@ -510,4 +510,26 @@ public class WmsCartonDTO {
          */
         private List<WmsCartonDetailDTO.BoxDetailDTO> detailList;
     }
+
+    /**
+     * 装箱清单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListPackingCartonDTO {
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**plmtaskFeign
+         * 发货单号
+         */
+        private String sourceCode;
+
+        private List<WmsCartonDetailDTO.BoxDTO> cartonDetailDTOList;
+
+        private List<WmsCartonSpecDTO.PackingCartonSpecDTO> cartonSpecDTOList;
+
+    }
+
 }

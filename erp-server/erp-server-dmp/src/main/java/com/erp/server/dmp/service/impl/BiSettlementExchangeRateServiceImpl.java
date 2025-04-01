@@ -1,5 +1,6 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.utils.RedisUtil;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Comparator;
 import java.util.List;
 
@@ -39,10 +41,20 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
         BigDecimal exchangeRate = listRedisByCurrencyCode(date, targetCurrencyCode, sourceCurrencyCode);
         return exchangeRate;
     }
+    
+    @Override
+    public BigDecimal findByCurrencyAndMonth(String date, String sourceCurrencyCode) {
+    	String targetCurrencyCode = CurrencyEnum.CNY.getCurrencyCode();
+    	return this.listRedisByCurrencyCodeType(date, targetCurrencyCode, sourceCurrencyCode, true);
+    }
 
     @Override
     public BigDecimal listRedisByCurrencyCode (String date, String targetCurrencyCode, String sourceCurrencyCode) {
-        //数据验证
+        return this.listRedisByCurrencyCodeType(date, targetCurrencyCode, sourceCurrencyCode, false);
+    }
+    
+    private BigDecimal listRedisByCurrencyCodeType(String date, String targetCurrencyCode, String sourceCurrencyCode , boolean isMonth) {
+    	//数据验证
         checkNotBlank(date,targetCurrencyCode,sourceCurrencyCode);
 
         //如果目标币别和来源币别一致则直接返回1
@@ -50,28 +62,29 @@ public class BiSettlementExchangeRateServiceImpl extends ServiceImpl<BiSettlemen
             return BigDecimal.ONE;
         }
         //查询redis中存储的成本信息
-        String existKey = StrUtil.format(RedisKeyConstant.SETTLEMENT_EXCHANGE_RATE,CurrencyEnum.CNY.getCurrencyCode(),sourceCurrencyCode);
-        List<BiSettlementExchangeRateEntity> rateList = (List<BiSettlementExchangeRateEntity>) redisUtil.get(existKey);
-        if (CollectionUtils.isEmpty(rateList)) {
-            //查询库中数据添加缓存
-            rateList = baseMapper.listByCurrencyCode(targetCurrencyCode, sourceCurrencyCode);
-            if (CollectionUtils.isNotEmpty(rateList)) {
-                //添加缓存
-                redisUtil.set(existKey,rateList);
-            }
-        }
+        List<BiSettlementExchangeRateEntity> rateList = baseMapper.listByCurrencyCode(targetCurrencyCode, sourceCurrencyCode);
         if (CollectionUtils.isEmpty(rateList)) {
             return null;
         }
         //格式化日期
         LocalDate localDate = LocalDateUtil.parseStrToLocalDate(date);
         //汇率
-        BigDecimal exchangeRate = rateList.stream().filter(obj -> obj.getSettlementDateBegin().isEqual(localDate)
-                        || obj.getSettlementDateEnd().isEqual(localDate)
-                        || (obj.getSettlementDateBegin().isBefore(localDate) && obj.getSettlementDateEnd().isAfter(localDate)))
-                .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
-                .map(BiSettlementExchangeRateEntity::getExchangeRate)
-                .findFirst().orElse(null);
+        BigDecimal exchangeRate = null;
+        if(isMonth) {
+        	int year = localDate.getYear();
+        	int monthValue = localDate.getMonthValue();
+        	exchangeRate = rateList.stream().filter(obj -> obj.getSettlementDateBegin().getYear() == year && obj.getSettlementDateBegin().getMonthValue() == monthValue)
+            .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
+            .map(BiSettlementExchangeRateEntity::getExchangeRate)
+            .findFirst().orElse(null);
+        }else {
+        	exchangeRate = rateList.stream().filter(obj -> obj.getSettlementDateBegin().isEqual(localDate)
+                    || obj.getSettlementDateEnd().isEqual(localDate)
+                    || (obj.getSettlementDateBegin().isBefore(localDate) && obj.getSettlementDateEnd().isAfter(localDate)))
+            .sorted(Comparator.comparing(BiSettlementExchangeRateEntity::getUpdateTime, Comparator.reverseOrder()))
+            .map(BiSettlementExchangeRateEntity::getExchangeRate)
+            .findFirst().orElse(null);
+        }
         return exchangeRate;
     }
 

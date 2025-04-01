@@ -278,6 +278,13 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("total_tax_fee")
     private BigDecimal totalTaxFee = BigDecimal.ZERO;
 
+    /**
+     * 总税后支付金额
+     */
+    @TableField("after_tax_pay_amount")
+    private BigDecimal afterTaxPayAmount = BigDecimal.ZERO;
+
+
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 
     public static final String PLATFORM_UPDATE_TIME = "platform_update_time";
