@@ -881,7 +881,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
 
     @Override
     public List<SoPriceDTO.PriceDTO> batchGetSoPrice(List<SoPriceDTO.PriceParamDTO> list) {
-        List<SoPriceDTO.PriceDTO> updateList = new ArrayList<>();
+
         if (CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
@@ -943,7 +943,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             priceDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), priceParamDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
             result.add(priceDTO);
         }
-        return updateList;
+        return result;
     }
 
     /**
