@@ -3,12 +3,7 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.exception.ServiceException;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.enums.DeliveryTypeEnum;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
@@ -18,20 +13,10 @@ import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
-import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryReq;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryResp;
-import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDetailDTO;
-import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
-import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOther;
-import com.sdk.oms.tiktok.dto.tiktok.ship.ShipOrderOtherParam;
 import com.sdk.oms.tiktok.service.TikTokFullService;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
-import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
-import com.sdk.tms.tiktok.service.TikTokShipperService;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -78,7 +63,7 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<TikTokFullyDeliveryReq.PackagesDTO> packagesDTOS = new ArrayList<>();
         List<TikTokFullyDeliveryReq.PackagesDTO.ItemsDTO> itemsDTOS = new ArrayList<>();
         for (LogisticsProductVO logisticsProductVO : logisticsOrderVO.getLogisticsProductVOList()) {
-            TikTokFullyDeliveryReq.PackagesDTO.ItemsDTO itemsDTO = new TikTokFullyDeliveryReq.PackagesDTO.ItemsDTO(logisticsProductVO.getPlatformSkuId(),logisticsProductVO.getQuantity());
+            TikTokFullyDeliveryReq.PackagesDTO.ItemsDTO itemsDTO = new TikTokFullyDeliveryReq.PackagesDTO.ItemsDTO(logisticsProductVO.getPlatformLineNumber(),logisticsProductVO.getDeliveryQty());
             itemsDTOS.add(itemsDTO);
         }
         TikTokFullyDeliveryReq.PackagesDTO packagesDTO = new TikTokFullyDeliveryReq.PackagesDTO();
