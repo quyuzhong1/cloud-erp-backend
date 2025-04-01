@@ -29,10 +29,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.Md5Util;
+import com.common.core.utils.*;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -2842,4 +2839,44 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 .map(this::notPackingDetailView)
                 .collect(Collectors.toList());
     }
+
+
+    @Override
+    public List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(List<String> sourceCodes) {
+        if(CollUtil.isEmpty(sourceCodes)){
+            return Collections.emptyList();
+        }
+
+        List<WmsCartonDTO.ListPackingCartonDTO>  resutlList = new ArrayList<>();
+        // 根据源码列表获取打包任务实体列表
+        List<PackingTaskEntity> packingTaskEntityList = this.listBySourceCodes(sourceCodes);
+
+        List<String> idList = packingTaskEntityList.stream().map(PackingTaskEntity::getId).distinct().collect(Collectors.toList());
+        List<WmsCartonEntity> wmsCartonList = wmsCartonService.listByTaskIds(idList);
+        List<String> wmsCartonIdList = wmsCartonList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
+        List<WmsCartonDetailEntity> detailList = wmsCartonDetailService.lambdaQuery().in(WmsCartonDetailEntity::getMainId, wmsCartonIdList).list();
+        List<WmsCartonSpecEntity> specList = wmsCartonSpecService.lambdaQuery().in(WmsCartonSpecEntity::getMainId, wmsCartonIdList).list();
+
+        List<WmsCartonDetailDTO.BoxDTO> boxDTOS = BeanMapper.copyList(detailList, WmsCartonDetailDTO.BoxDTO.class);
+        List<WmsCartonSpecDTO.PackingCartonSpecDTO> packingCartonSpecDTOS = BeanMapper.copyList(specList, WmsCartonSpecDTO.PackingCartonSpecDTO.class);
+
+        for (PackingTaskEntity packingTaskEntity : packingTaskEntityList) {
+            String taskId = packingTaskEntity.getId();
+            String sourceCode = packingTaskEntity.getSourceCode();
+            WmsCartonDTO.ListPackingCartonDTO listPackingCartonDTO = new WmsCartonDTO.ListPackingCartonDTO();
+            List<String> cartonIdList = wmsCartonList.stream().filter(e -> e.getPackingTaskId().equals(taskId)).map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
+            //分别找出boxDTOS 和 packingCartonSpecDTOS中 mainId 在 cartonIdList 中的数据集合
+            List<WmsCartonDetailDTO.BoxDTO> boxDTOList = boxDTOS.stream().filter(e -> cartonIdList.contains(e.getMainId())).collect(Collectors.toList());
+            List<WmsCartonSpecDTO.PackingCartonSpecDTO> packingCartonSpecDTOList = packingCartonSpecDTOS.stream().filter(e -> cartonIdList.contains(e.getMainId())).collect(Collectors.toList());
+
+            listPackingCartonDTO.setTaskId(taskId);
+            listPackingCartonDTO.setSourceCode(sourceCode);
+            listPackingCartonDTO.setCartonDetailDTOList(boxDTOList);
+            listPackingCartonDTO.setCartonSpecDTOList(packingCartonSpecDTOList);
+            resutlList.add(listPackingCartonDTO);
+        }
+
+        return resutlList;
+    }
+
 }

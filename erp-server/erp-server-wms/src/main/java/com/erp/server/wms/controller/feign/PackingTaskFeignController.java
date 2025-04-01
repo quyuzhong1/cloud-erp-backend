@@ -7,6 +7,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.service.PackingTaskService;
@@ -67,8 +68,6 @@ public class PackingTaskFeignController extends BaseController {
         return packingTaskService.lambdaQuery().eq(PackingTaskEntity::getSourceId, sourceId).one();
     }
 
-
-
     /**
      * 根据发货单单号查询是否有装箱重量
      */
@@ -77,5 +76,12 @@ public class PackingTaskFeignController extends BaseController {
         return packingTaskService.checkCartonWeightBySourceCodes(sourceCodes);
     }
 
+    /**
+     * 根据发货单单号查询所有已完成的装箱信息
+     */
+    @PostMapping("/listCartonBySourceCodes")
+    List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(@RequestBody List<String> sourceCodes){
+        return  listCartonBySourceCodes(sourceCodes);
+    }
 
 }

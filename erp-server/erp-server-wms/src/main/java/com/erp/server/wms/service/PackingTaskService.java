@@ -298,4 +298,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     Boolean deleteCarton(WmsCartonSpecDTO.DeleteCartonDTO dto);
 
     List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(List<String> sourceCodes);
+
+    List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(List<String> sourceCodes);
 }

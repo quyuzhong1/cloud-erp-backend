@@ -8,6 +8,7 @@ import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -80,4 +81,10 @@ public class FirstMileReconciliationStandardExcelDTO implements Serializable {
     private String logisticsBillId;
     @ExcelIgnore
     private String costId;
+    @ExcelIgnore
+    private BigDecimal grossWeigh;
+    @ExcelIgnore
+    private BigDecimal weightRate;
+    @ExcelIgnore
+    private BigDecimal skuCost;
 }
