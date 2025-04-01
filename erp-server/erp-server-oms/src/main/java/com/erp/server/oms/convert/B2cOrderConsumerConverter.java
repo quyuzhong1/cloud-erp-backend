@@ -74,6 +74,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isCancel", source = "dto.isCancel"),
             @Mapping(target = "totalTaxFee", source = "dto.totalTaxFee"),
             @Mapping(target = "afterTaxAmount", source = "dto.afterTaxAmount"),
+            @Mapping(target = "totalDiscount", source = "dto.totalDiscount"),
             // 历史实体
             @Mapping(target = "exchangeRate", source = "oldEntity.exchangeRate"),
             @Mapping(target = "code", source = "oldEntity.code"),
@@ -94,7 +95,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "isNotMerge", source = "oldEntity.isNotMerge"),
             @Mapping(target = "syncKingdeeId", source = "oldEntity.syncKingdeeId"),
             @Mapping(target = "shopName", source = "oldEntity.shopName"),
-            @Mapping(target = "totalDiscount", source = "oldEntity.totalDiscount"),
+//            @Mapping(target = "totalDiscount", source = "oldEntity.totalDiscount"),
             @Mapping(target = "totalCancelGoodsAmount", source = "oldEntity.totalCancelGoodsAmount"),
             @Mapping(target = "cancelGoodsCurrency", source = "oldEntity.cancelGoodsCurrency"),
             @Mapping(target = "sellerOrderCode",ignore = true),
