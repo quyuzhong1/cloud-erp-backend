@@ -22,7 +22,11 @@ public class TikTokFullyOrderDetailDmpHandler extends DmpInputDoNextDmpHandler {
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
-        return (List<Map<String, Object>>) dmpInputMongoEntity.get("skus");
+        List<Map<String, Object>> detailList = (List<Map<String, Object>>) dmpInputMongoEntity.get("skus");
+        detailList.forEach(d -> {
+            d.put("platformSpuCode", dmpInputMongoEntity.get("platformSpuCode"));
+        });
+        return detailList;
     }
 
     @Override
@@ -30,10 +34,10 @@ public class TikTokFullyOrderDetailDmpHandler extends DmpInputDoNextDmpHandler {
         for (Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
             List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
-                dmpDataMap.put("thirdDetailId", dmpDataMap.get("externalSkuCode"));
-                dmpDataMap.put("platformDetailId", dmpDataMap.get("externalSkuCode"));
+                dmpDataMap.put("thirdDetailId", dmpDataMap.get("platformSkuCode"));
+                dmpDataMap.put("platformDetailId", dmpDataMap.get("platformSkuCode"));
                 dmpDataMap.put("platformSku", dmpDataMap.get("externalSkuCode"));
-                dmpDataMap.put("platformSpuNo", dmpDataMap.get("platformSkuCode"));
+                dmpDataMap.put("platformSpuNo", dmpDataMap.get("platformSpuCode"));
                 buildExtendData(dmpDataMap);
             }
         }
