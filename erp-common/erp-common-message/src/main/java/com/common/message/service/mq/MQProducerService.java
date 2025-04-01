@@ -271,7 +271,8 @@ public class MQProducerService<T> {
         NoticeTypeEnum noticeTypeEnum = msgInfoDTO.getNoticeTypeEnum();
         String topic = RocketMqTopic.NOTICE_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
         String destination = CharSequenceUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
-        return rocketMQTemplate.syncSend(destination, msgInfoDTO,delayTimeLevel);
+        Message<?> message = MessageBuilder.withPayload(msgInfoDTO).build();
+        return rocketMQTemplate.syncSend(destination, message,10000,delayTimeLevel);
     }
 
     /**

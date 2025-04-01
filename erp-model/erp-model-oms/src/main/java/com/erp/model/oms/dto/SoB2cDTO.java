@@ -2736,6 +2736,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String id;
         /**
+         * 订单创建时间
+         */
+        private LocalDateTime createTime;
+        /**
          * 销售订单明细id
          */
         private String detailId;
@@ -2776,6 +2780,15 @@ public class SoB2cDTO implements Serializable {
          * 作废类型名称
          */
         private String invalidTypeName;
+        /**
+         * 平台订单状态
+         */
+        private String platformOrderStatus;
+        /**
+         * 平台订单状态名称
+         * 全托管平台订单状态
+         */
+        private String platformOrderStatusName;
         /**
          * 是否冻结
          */
@@ -2947,6 +2960,18 @@ public class SoB2cDTO implements Serializable {
          * 订单原币金额
          */
         private BigDecimal sourceAmount;
+        /**
+         * 单价
+         */
+        private BigDecimal sourcePrice;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 成本来源
+         */
+        private String costSource;
 
         /**
          * 币别（原币）
@@ -3044,11 +3069,14 @@ public class SoB2cDTO implements Serializable {
          * 包装辅料sku编码
          */
         private String accessoriesSkuNo;
-
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
         /**
          * 物流跟踪单
          */
-        private String logisticsCode;
+        private String trackNo;
         /**
          * 物流类型
          */
@@ -3259,6 +3287,59 @@ public class SoB2cDTO implements Serializable {
          */
         private LocalDateTime finishPrintTime;
 
+        //销售订单扩展字段
+        //属性字段
+        private String extendId;
+        /**
+         * 要求发货时间
+         */
+        private LocalDateTime requiredDeliveryTime;
+        /**
+         * 要求收货时间
+         */
+        private LocalDateTime requiredReceiveTime;
+        /**
+         * 发货预警时间
+         */
+        private LocalDateTime deliveryWarningTime;
+        /**
+         * 预警时间
+         * 未发货时
+         * 当前时间< 预警时间时 无异常 黑色
+         * 当前时间> 预警时间时 且 当前时间< 要求发货时间 有异常
+         * 要求发货时间-当前时间  正数 橙色  负数红色
+         * 已发货时
+         * 要求发货时间>实际发货时间：则显示未超时
+         * 要求发货时间<实际发货时间：则显示已超期N小时
+         */
+        private BigDecimal warningHour;
+        /**
+         * 发货预警描述【导出使用】
+         */
+        private String deliveryWarningDesc;
+        /**
+         * 订单来源类型
+         * SoB2cExtendOrderSourceTypeEnum
+         */
+        private String orderSourceType;
+        private String orderSourceTypeName;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();

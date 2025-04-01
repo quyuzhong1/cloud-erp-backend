@@ -85,17 +85,17 @@ public class FullyManagedImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*下单时间", index = 6)
-    @FieldValid(fieldName = "下单时间",isNotBlank = true,formatPattern=FieldFormatPatternTypeEnum.DATETIME)
+    @FieldValid(fieldName = "下单时间",isNotBlank = true)
     private String payTimeStr;
     @ExcelIgnore
     private LocalDateTime payTime;
 
     /**
-     * 平台来源
+     * 订单来源
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "*平台来源", index = 7)
-    @FieldValid(fieldName = "平台来源",isNotBlank = true,enumClass = SoB2cExtendOrderSourceTypeEnum.class)
+    @ExcelProperty(value = "*订单来源", index = 7)
+    @FieldValid(fieldName = "订单来源",isNotBlank = true,enumClass = SoB2cExtendOrderSourceTypeEnum.class)
     private String orderSourceTypeName;
     @ExcelIgnore
     private String orderSourceType;
@@ -166,7 +166,7 @@ public class FullyManagedImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "要求发货时间", index = 14)
-    @FieldValid(fieldName = "要求发货时间",formatPattern= FieldFormatPatternTypeEnum.DATETIME)
+    @FieldValid(fieldName = "要求发货时间")
     private String requiredDeliveryTimeStr;
 
     @ExcelIgnore
@@ -178,7 +178,7 @@ public class FullyManagedImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "要求收货时间", index = 15)
-    @FieldValid(fieldName = "要求收货时间",formatPattern= FieldFormatPatternTypeEnum.DATETIME)
+    @FieldValid(fieldName = "要求收货时间")
     private String requiredReceiveTimeStr;
     @ExcelIgnore
     private LocalDateTime requiredReceiveTime;
