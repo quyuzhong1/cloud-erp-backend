@@ -22,8 +22,8 @@ public enum FbaOrderTypeEnum implements EnumMessage {
     }
 
     public static String getStringByCode(JSONArray orderType) {
-        return Arrays.stream(OverseasOrderTypeEnum.values()).filter(v -> orderType.contains(v.getCode()))
-                .map(OverseasOrderTypeEnum::getName)
+        return Arrays.stream(FbaOrderTypeEnum.values()).filter(v -> orderType.contains(v.getCode()))
+                .map(FbaOrderTypeEnum::getName)
                 .collect(Collectors.joining(","));
     }
 

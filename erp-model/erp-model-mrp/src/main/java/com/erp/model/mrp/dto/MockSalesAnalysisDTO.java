@@ -37,6 +37,6 @@ public class MockSalesAnalysisDTO {
      * 销量设置
      */
     @Valid
-    private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+    private CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO;
 
 }

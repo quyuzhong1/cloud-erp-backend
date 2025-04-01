@@ -19,7 +19,7 @@ public class CfgRuleInventoryStrategy implements CfgRuleSettingStrategy<CfgRuleC
 
     @Override
     public List<CfgRuleCommonDTO.StrategyResultDTO> process(CfgRuleCommonDTO.StrategyDTO strategyDTO) {
-        return cfgRuleCommonService.getCfgRuleCommon(strategyDTO.getPlatformType(), CfgRuleCommonTypeEnum.INVENTORY.getCode());
+        return cfgRuleCommonService.getCfgRuleCommon(CfgRuleCommonTypeEnum.INVENTORY.getCode());
     }
 
     @Override

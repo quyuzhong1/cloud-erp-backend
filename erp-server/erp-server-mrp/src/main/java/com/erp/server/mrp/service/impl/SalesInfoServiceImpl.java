@@ -47,13 +47,6 @@ public class SalesInfoServiceImpl extends SuperServiceImpl<SalesInfoMapper, Sale
     private OrderHistorySalesEsService orderHistorySalesEsService;
 
     @Resource
-    @Lazy
-    private ReplenishmentSuggestionService replenishmentSuggestionService;
-
-    @Resource
-    private ThreadPoolTaskExecutor threadPoolTaskExecutor;
-
-    @Resource
     private CfgPlatformMappingService cfgPlatformMappingService;
 
 

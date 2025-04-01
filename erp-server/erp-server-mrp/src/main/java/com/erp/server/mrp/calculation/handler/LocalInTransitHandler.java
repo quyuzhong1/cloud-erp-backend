@@ -2,7 +2,6 @@ package com.erp.server.mrp.calculation.handler;
 
 import com.erp.model.mrp.dto.ReplenishmentResultDTO;
 import com.erp.server.mrp.calculation.service.InventoryService;
-import com.erp.server.mrp.service.CfgRuleCommonService;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -14,8 +13,6 @@ public class LocalInTransitHandler extends AbstractSkuCalculationHandler {
     private LocalPlanPurchaseHandler localPlanPurchaseHandler;
     @Resource
     private InventoryService inventoryService;
-    @Resource
-    private CfgRuleCommonService cfgRuleCommonService;
 
 
     @Override

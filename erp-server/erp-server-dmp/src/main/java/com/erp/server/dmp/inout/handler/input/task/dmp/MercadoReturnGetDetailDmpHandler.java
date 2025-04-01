@@ -2,7 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
-import com.sdk.oms.mercado.constant.MercadoConstant;
+import com.sdk.oms.mercadolocal.constant.MercadoConstant;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
