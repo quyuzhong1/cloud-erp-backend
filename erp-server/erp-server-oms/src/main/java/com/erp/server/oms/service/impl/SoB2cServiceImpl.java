@@ -10053,7 +10053,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     if(StringUtils.isBlank(receiverDTO.getCustomerId())){
                         //新增B2C客户
                         SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
-                        BeanMapper.copy(mainInfo, addDTO);
+                        BeanMapper.copyNonNull(mainInfo, addDTO);
                         addDTO.setReceiverDTO(receiverDTO);
                         CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO, soB2cEntity.getId());
                         String customerId = customerB2cService.add(dto);
