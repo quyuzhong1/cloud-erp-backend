@@ -43,8 +43,10 @@ public class LogisticsProductVO  implements Serializable {
 
     private String id;
 
-    private String platformSkuId;
+    private String platformLineNumber;
 
+
+    private Integer deliveryQty;
 
     /**
      * 产品sku表id
