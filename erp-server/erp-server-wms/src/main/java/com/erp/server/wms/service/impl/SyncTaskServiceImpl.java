@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -1242,8 +1243,6 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         financialOrganization.addAll(list.stream().map(SoReturnInstockEntity::getSalesOrgId).distinct().collect(Collectors.toList()));
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
 
-        List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
-
 
         List<String> soReturnIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<SoReturnEntity> soReturnEntityList = soReturnFeign.listByIds(soReturnIds);
@@ -1254,7 +1253,60 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<String> returnIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
         List<SoReturnEntity> receiveReturnList = soReturnFeign.listByIds(returnIds);
 
+        Map<String, List<SoReturnInstockEntity>> instockGroupMap = list.stream().collect(Collectors.groupingBy(SoReturnInstockEntity::getType));
+
+        List<SoB2cReceiverEntity> receiverEntityList = new LinkedList();
+        // 查询B2C订单
+        List<SoReturnInstockEntity> b2cReturnInstockList = instockGroupMap.get("B2C");
+        if (CollectionUtils.isEmpty(b2cReturnInstockList)){
+            List<String> b2cSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+                    .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                    .list();
+        }
+
+        List<SoInfoEntity> soInfoEntityList = new LinkedList();
+        // 查询B2B订单
+        List<SoReturnInstockEntity> b2bReturnInstockList = instockGroupMap.get("B2B");
+        if (CollectionUtils.isEmpty(b2bReturnInstockList)){
+            List<String> b2bSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            soInfoEntityList = FeignQuery.create(SoInfoEntity.class)
+                    .in(SoInfoEntity::getId, b2bSoIds)
+                    .list();
+        }
+
+        List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                )).list();
+
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            // 国家
+            String country = "";
+            // 分区
+            String partitionId = "";
+
             String sourceId = syncParamDetailDTO.getSourceId();
             SoReturnInstockDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(detailEntity)) {
@@ -1264,6 +1316,23 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
+            if ("B2B".equalsIgnoreCase(entity.getType())){
+                SoInfoEntity soInfoEntity = soInfoEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                if (null != soInfoEntity){
+                    partitionId = soInfoEntity.getPartitionId();
+                    CustomerInfoEntity customerInfoEntity = customerInfoList.stream().filter(e -> e.getId().equalsIgnoreCase(soInfoEntity.getCustomerId())).findFirst().orElse(null);
+                    if (null != customerInfoEntity){
+                        country = customerInfoEntity.getCountryId();
+                    }
+                }
+            } else if ("B2C".equalsIgnoreCase(entity.getType())){
+                SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                if (null != receiverEntity){
+                    country = receiverEntity.getCountry();
+                    partitionId = receiverEntity.getPartitionId();
+                }
+            }
+
 
             resultList.put(syncParamDetailDTO.getDataId(), syncSoReturnInstockService.syncDataToSdyFieldHandler(entity,
                     detailEntity,
@@ -1274,10 +1343,17 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     parentSkuList,
                     customerInfoList,
                     companyEntities,
-                    dictBasicEntityList,
                     soReturnEntityList,
                     soReturnReceiveEntityList,
-                    receiveReturnList));
+                    receiveReturnList,
+                    country,
+                    partitionId,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList
+            ));
         }
         return resultList;
     }
