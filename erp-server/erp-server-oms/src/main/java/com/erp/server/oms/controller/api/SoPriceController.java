@@ -61,9 +61,9 @@ public class SoPriceController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id,seller_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "sp")
+            tableAlias = "sp,sp,ci")
     @WebAdvanceQuery(handler = SoPriceQueryHandler.class)
     public ApiResult<PagingVO<SoPriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
         PagingVO<SoPriceDTO.PagingViewDTO> pagingVO = soPriceService.paging(dto);
@@ -79,7 +79,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加销售价目表")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:add",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
@@ -98,9 +98,9 @@ public class SoPriceController extends BaseController {
      */
     @PostMapping("/tab/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id,seller_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "sp")
+            tableAlias = "sp,sp,ci")
     public ApiResult<List<SoPriceDTO.TabListDTO>> tabList(PermissionsDTO dto) {
         List<SoPriceDTO.TabListDTO> list = soPriceService.tabList(dto);
         return success(list);
@@ -128,7 +128,7 @@ public class SoPriceController extends BaseController {
     @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:view",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
@@ -146,7 +146,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改销售价目")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:update",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
@@ -164,7 +164,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核销售价目")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:update",
             serviceClass = SoPriceService.class,
             keyIdName = "id")
@@ -183,7 +183,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除销售价目")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:delete",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
@@ -215,7 +215,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交销售价目")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:submit",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
@@ -249,7 +249,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核销售价目")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:approve",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
@@ -284,7 +284,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销销售价目")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:cancelProcess",
             serviceClass = SoPriceService.class,
             keyIdName = "ids")
@@ -345,7 +345,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核销售价目")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:disApprove",
             serviceClass = SoPriceService.class,
             keyIdName = "ids"
@@ -381,7 +381,7 @@ public class SoPriceController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新明细备注销售价目:明细备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:updateDetailRemark",
             serviceClass = SoPriceService.class,
             keyIdName = "ids"
@@ -428,9 +428,9 @@ public class SoPriceController extends BaseController {
      */
     @PostMapping("/batchGetSoPrice")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
+            tableField = "pricing_user_id,create_user_id,seller_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "sp")
+            tableAlias = "sp,sp,ci")
     public ApiResult<List<SoPriceDTO.PriceDTO>> batchGetSoPrice(@RequestBody List<SoPriceDTO.PriceParamDTO> list) {
         return success(soPriceService.batchGetSoPrice(list));
     }

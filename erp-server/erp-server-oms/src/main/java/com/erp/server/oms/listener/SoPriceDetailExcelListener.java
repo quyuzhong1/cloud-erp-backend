@@ -99,6 +99,7 @@ public class SoPriceDetailExcelListener extends AnalysisEventListener<SoPriceDet
             }
             if (skuEntity != null) {
                 String effectiveDateStr = SoPriceDetailImportExcelDTO.getEffectiveDateStr();
+                addDTO.setExpireDate(StringUtils.isBlank(effectiveDateStr) ? null : getDate(effectiveDateStr));
                 addDTO.setEffectiveDate(StringUtils.isBlank(effectiveDateStr) ? null : getDate(effectiveDateStr));
                 addDTO.setMinQty(SoPriceDetailImportExcelDTO.getMinQty());
                 addDTO.setMaxQty(SoPriceDetailImportExcelDTO.getMaxQty());
