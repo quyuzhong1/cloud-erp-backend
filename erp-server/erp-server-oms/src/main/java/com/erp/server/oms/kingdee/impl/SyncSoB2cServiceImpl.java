@@ -121,7 +121,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         } else {
             shudiyunB2cOrderDTO.setMsku_name(platformSkuName);
         }
-        if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal price = soB2cDetailEntity.getPrice();
+        if (price != null && BigDecimal.ZERO.compareTo(price) == 0) {
             shudiyunB2cOrderDTO.setIs_gift(1);
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
@@ -539,7 +540,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         } else {
             shudiyunB2cOrderDTO.setMsku_name(platformSkuName);
         }
-        if (soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal newPrice = soB2cDetailEntity.getPrice();
+        if (newPrice != null && BigDecimal.ZERO.compareTo(newPrice) == 0) {
             shudiyunB2cOrderDTO.setIs_gift(1);
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
@@ -621,7 +623,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         // 速卖通货品ID
         String scItemId = aliexpressDeliveryDetailEntity.getScItemId();
         shudiyunB2cOrderDTO.setMsku_code(scItemId);
-        if (aliexpressDeliveryDetailEntity.getPayAmount().compareTo(BigDecimal.ZERO) == 0) {
+        BigDecimal aliPrice = aliexpressDeliveryDetailEntity.getPrice();
+        if (aliPrice != null && BigDecimal.ZERO.compareTo(aliPrice) == 0) {
             shudiyunB2cOrderDTO.setIs_gift(1);
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
