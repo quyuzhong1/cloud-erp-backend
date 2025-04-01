@@ -462,6 +462,9 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", dictPayMethod='" + dictPayMethod + '\'' +
                 ", buyerRemark='" + buyerRemark + '\'' +
                 ", isCancel=" + isCancel +
+                ", totalTaxFee=" + totalTaxFee +
+                ", afterTaxAmount=" + afterTaxAmount +
+                ", totalDiscount=" + totalDiscount +
                 '}';
     }
 
