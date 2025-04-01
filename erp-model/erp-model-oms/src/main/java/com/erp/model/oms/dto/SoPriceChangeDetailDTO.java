@@ -46,11 +46,6 @@ public class SoPriceChangeDetailDTO implements Serializable {
         private String customerId;
 
         /**
-         * 价目表编码
-         */
-        private String priceCode;
-
-        /**
          * 销售价目详情表id
          */
         @NotBlank(message = "销售价目详情表id 不能为空")
@@ -137,10 +132,6 @@ public class SoPriceChangeDetailDTO implements Serializable {
         @NotBlank(message = "客户不能为空")
         private String customerId;
 
-        /**
-         * 价目表编码
-         */
-        private String priceCode;
 
         /**
          * sku id
@@ -229,7 +220,7 @@ public class SoPriceChangeDetailDTO implements Serializable {
         /**
          * 价目表Code
          */
-        private String priceCode;
+        private String soPriceCode;
 
         /**
          * 客户表id
