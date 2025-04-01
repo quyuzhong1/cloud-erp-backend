@@ -60,9 +60,9 @@ public class SoPriceChangeController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "adjust_user_id,create_user_id,seller_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "spc,spc,ci")
+            tableAlias = "spc,spc")
     @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
     public ApiResult<PagingVO<SoPriceChangeDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
         PagingVO<SoPriceChangeDTO.PagingViewDTO> pagingVO = soPriceChangeService.paging(dto);
@@ -79,9 +79,9 @@ public class SoPriceChangeController extends BaseController {
      */
     @PostMapping("/tab/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "adjust_user_id,create_user_id,seller_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "spc,spc,ci")
+            tableAlias = "spc,spc")
     public ApiResult<List<SoPriceChangeDTO.TabListDTO>> tabList(PermissionsDTO dto) {
         List<SoPriceChangeDTO.TabListDTO> list = soPriceChangeService.tabList(dto);
         return success(list);
@@ -96,7 +96,7 @@ public class SoPriceChangeController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "添加销售变更")
     @PostMapping("/add")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id,create_user_id",
+            tableField = "adjust_user_id,create_user_id",
             menuCode = "oms:soPrice:add",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")

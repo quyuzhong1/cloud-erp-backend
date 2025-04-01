@@ -61,9 +61,9 @@ public class SoPriceController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id,create_user_id,seller_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "sp,sp,ci")
+            tableAlias = "sp,sp")
     @WebAdvanceQuery(handler = SoPriceQueryHandler.class)
     public ApiResult<PagingVO<SoPriceDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
         PagingVO<SoPriceDTO.PagingViewDTO> pagingVO = soPriceService.paging(dto);
@@ -98,9 +98,9 @@ public class SoPriceController extends BaseController {
      */
     @PostMapping("/tab/list")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id,create_user_id,seller_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "sp,sp,ci")
+            tableAlias = "sp,sp")
     public ApiResult<List<SoPriceDTO.TabListDTO>> tabList(PermissionsDTO dto) {
         List<SoPriceDTO.TabListDTO> list = soPriceService.tabList(dto);
         return success(list);
@@ -428,9 +428,9 @@ public class SoPriceController extends BaseController {
      */
     @PostMapping("/batchGetSoPrice")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id,create_user_id,seller_id",
+            tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:paging",
-            tableAlias = "sp,sp,ci")
+            tableAlias = "sp,sp")
     public ApiResult<List<SoPriceDTO.PriceDTO>> batchGetSoPrice(@RequestBody List<SoPriceDTO.PriceParamDTO> list) {
         return success(soPriceService.batchGetSoPrice(list));
     }

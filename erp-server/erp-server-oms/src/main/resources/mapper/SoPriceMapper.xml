@@ -117,7 +117,6 @@
         count(distinct sp.id)
         from so_price sp
         left join so_price_detail spd on sp.id = spd.main_id and spd.is_deleted = false
-        left join customer_info ci on ci.id = sp.customer_id and ci.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and sp.is_deleted = false
