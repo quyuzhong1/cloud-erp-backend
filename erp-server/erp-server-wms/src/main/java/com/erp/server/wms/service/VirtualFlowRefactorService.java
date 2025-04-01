@@ -1,5 +1,7 @@
 package com.erp.server.wms.service;
 
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
+
 public interface VirtualFlowRefactorService {
     /**
      * 重构
@@ -8,4 +10,11 @@ public interface VirtualFlowRefactorService {
      * @param jobParam
      */
     void rebuildFlow(String jobParam);
+    /**
+     * 流水审核
+     * @author will
+     * @date 2025/4/1 16:04
+     * @param dto
+     */
+    void approve(VirtualInventoryStockDTO.StockParamDTO dto);
 }

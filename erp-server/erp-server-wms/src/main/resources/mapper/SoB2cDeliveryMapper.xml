@@ -122,7 +122,8 @@
             sbd.code as source_code,
             sbdd.id as source_detail_id,
             to_char(sbd.create_time,'YYYY-MM-dd') as bill_date,
-            sbdd.delivery_qty as qty
+            sbdd.delivery_qty as qty,
+            'so_b2c_delivery' as businessType
         from so_b2c_delivery sbd
         inner join  so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false
         and sbdd.virtual_warehouse_id != '' and sbd.status in ('shipped','cancelDelivery')
@@ -138,8 +139,9 @@
             sbd.id as source_id,
             sbd.code as source_code,
             sbdd.id as source_detail_id,
-            to_char(sbd.create_time,'YYYY-MM-dd') as bill_date,
-            sbdd.delivery_qty as qty
+            to_char(sbd.update_time,'YYYY-MM-dd') as bill_date,
+            sbdd.delivery_qty as qty,
+            'so_b2c_delivery_cancel' as businessType
         from so_b2c_delivery sbd
         inner join  so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false
         and sbdd.virtual_warehouse_id != '' and sbd.status = 'cancelDelivery'
@@ -156,7 +158,8 @@
             ti.code as source_code,
             tid.id as source_detail_id,
             to_char(ti.approve_time,'YYYY-MM-dd') as bill_date,
-            tid.qty as qty
+            tid.qty as qty,
+            '' as businessType
         from transfer_info ti
         inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false and ti.approve_status = 'approve'
         inner join picking_detail pd on tid.source_detail_id = pd.id and pd.is_deleted = false
@@ -169,19 +172,37 @@
             sod.sku_no,
             sbdd.virtual_warehouse_id,
             sbdd.warehouse_id,
-            'transferInfo' as source_type,
+            'soOutstock' as source_type,
             so.id as source_id,
             so.code as source_code,
             sod.id as source_detail_id,
             to_char(so.approve_time,'YYYY-MM-dd') as bill_date,
-            sod.actual_qty as qty
+            sod.actual_qty as qty,
+            '' as businessType
         from so_outstock so
-        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false and so.approve_status = 'approve' and so.source_type = 'soB2cDelivery'
+        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        and so.approve_status = 'approve' and so.source_type = 'soB2cDelivery' and so.order_type ='b2c' and sod.virtual_warehouse_id != ''
         inner join picking_detail pd on sod.source_detail_id = pd.id and pd.is_deleted = false
         inner join so_b2c_delivery_detail sbdd on sbdd.id = pd.source_detail_id and sbdd.is_deleted = false and sbdd.virtual_warehouse_id != '' and sbdd.warehouse_id = sod.warehouse_id
         where so.is_deleted = false
+        union all
         --旺店通来源销售出库单出库
-
+        select
+            sod.sku_id,
+            sod.sku_no,
+            sod.virtual_warehouse_id,
+            sod.warehouse_id,
+            'soOutstock' as source_type,
+            so.id as source_id,
+            so.code as source_code,
+            sod.id as source_detail_id,
+            to_char(so.approve_time,'YYYY-MM-dd') as bill_date,
+            sod.actual_qty as qty,
+            '' as businessType
+        from so_outstock so
+        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        and so.approve_status = 'approve' and so.source_type != 'soB2cDelivery' and so.order_type ='b2c' and sod.virtual_warehouse_id != ''
+        where so.is_deleted = false
     </select>
 
 </mapper>

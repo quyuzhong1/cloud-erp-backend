@@ -263,8 +263,7 @@
             si.id as source_id,
             sd.id as source_detail_id,
             to_char(sd.frozen_time,'YYYY-MM-dd') as bill_date,
-            sd.frozen_qty as qty,
-            'so_info_lock_add' as businessType
+            sd.frozen_qty as qty
         from so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
         where si.is_deleted = false and si.virtual_warehouse_id != '' and sd.frozen_qty != 0

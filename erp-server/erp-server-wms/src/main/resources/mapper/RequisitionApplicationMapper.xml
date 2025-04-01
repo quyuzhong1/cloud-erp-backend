@@ -449,5 +449,24 @@
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false and rad.from_virtual_warehouse_id != '' and ra.status in ('handleIng','handle')
         where ra.is_deleted = false
+        --加工单出库
+        union all
+        select
+            md.sku_id,
+            md.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            to_char(mi.approve_time,'YYYY-MM-dd') as bill_date,
+            md.qty as qty
+        from machine_info mi
+        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'
+
+        inner join so_delivery_notice_detail sdnd on sdnd.source_detail_id = md.id and sdnd.is_deleted = false
+        inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != ''
+        where mi.is_deleted = false  and mi.source_type in ('soInfo','soDeliveryNotice')
     </select>
 </mapper>
