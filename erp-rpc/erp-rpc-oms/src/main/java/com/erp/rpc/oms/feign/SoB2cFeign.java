@@ -704,4 +704,10 @@ public interface SoB2cFeign {
      **/
     @PostMapping("feign/soB2c/approve")
     List<BatchResultDTO> approve(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * 查询订单关联的拆分信息
+     **/
+    @PostMapping("feign/soB2c/getSplitCombination")
+    SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId);
 }
