@@ -1437,8 +1437,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<FirstMileReconciliationStandardExcelDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
         List<FirstMileReconciliationStandardExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理数据(对相同序号的数据进行成本分摊和重量分摊)
+        List<FirstMileReconciliationStandardExcelDTO> handlerList = splitWeightAndCost(successList, errorList);
         //导入数据保存
-        List<TmsFirstMileReconciliationDetailDTO.ListDTO> successImortList = handleImportStandardData(successList, errorList, mainEntity);
+        List<TmsFirstMileReconciliationDetailDTO.ListDTO> successImortList = handleImportStandardData(handlerList, errorList, mainEntity);
 
         String url = "";
         if (!CollectionUtils.isEmpty(errorList)) {
@@ -1507,17 +1509,25 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
 
-    //执行重量分摊 以及费用分摊
+    //执行重量分摊以及费用分摊
     private List<FirstMileReconciliationStandardExcelDTO> splitWeightAndCost(
             List<FirstMileReconciliationStandardExcelDTO> successList,
-            List<FirstMileReconciliationStandardExcelDTO> errorList,
-            TmsFirstMileReconciliationEntity mainEntity) {
-        List<FirstMileReconciliationStandardExcelDTO> newSuccessList = new ArrayList<>();
+            List<FirstMileReconciliationStandardExcelDTO> errorList) {
+        List<FirstMileReconciliationStandardExcelDTO> resultList = new ArrayList<>();
 
         // 重量校验：当存在一致的序号时，是否有装箱重量
         if (CollUtil.isNotEmpty(successList)) {
-            Map<String, List<FirstMileReconciliationStandardExcelDTO>> excelMap = successList.stream()
-                    .collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo))
+            Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
+                    .collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
+
+            //序号唯一的设置到结果集合里
+            List<FirstMileReconciliationStandardExcelDTO> singleEntryList = successMap.entrySet().stream()
+                    .filter(entry -> entry.getValue().size() == 1)
+                    .flatMap(entry -> entry.getValue().stream())
+                    .collect(Collectors.toList());
+            resultList.addAll(singleEntryList);
+
+            Map<String, List<FirstMileReconciliationStandardExcelDTO>> excelMap = successMap
                     .entrySet().stream()
                     .filter(entry -> entry.getValue().size() > 1)
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -1550,7 +1560,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                                 errorList.add(excelDTO);
                             }
                         } else {
-                            newSuccessList.addAll(entry.getValue());
+                            resultList.addAll(entry.getValue());
                         }
                     }
                 } catch (Exception e) {
@@ -1560,13 +1570,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             }
         }
 
-        if (CollUtil.isNotEmpty(newSuccessList)) {
+        if (CollUtil.isNotEmpty(resultList)) {
             CfgSettingValueDTO.AllocationSettingDTO cfgSettingByAllocationSetting = cfgSettingService.getCfgSettingByAllocationSetting();
             if (cfgSettingByAllocationSetting == null) {
                 throw new ServiceException("分摊设置未配置，请联系管理员");
             }
 
-            List<String> deliveryCodeList = newSuccessList.stream()
+            List<String> deliveryCodeList = resultList.stream()
                     .map(FirstMileReconciliationStandardExcelDTO::getSourceCode)
                     .collect(Collectors.toList());
 
@@ -1596,26 +1606,27 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
                 Map<String, BigDecimal> deliveryCodeCostMap = calculateDeliveryCodeCost(listPackingCartonDTOS, skuCostMap);
 
-                newSuccessList.forEach(e -> {
+                resultList.forEach(e -> {
                     e.setGrossWeigh(deliveryCodeWeightMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO));
                     e.setSkuCost(deliveryCodeCostMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO));
                 });
 
-                Map<String, List<FirstMileReconciliationStandardExcelDTO>> groupByNoAndCostNameMap = newSuccessList.stream()
+                Map<String, List<FirstMileReconciliationStandardExcelDTO>> groupByNoAndCostNameMap = resultList.stream()
                         .collect(Collectors.groupingBy(e -> e.getNo() + ":" + e.getCostName()));
 
                 allocateWeightsAndCosts(groupByNoAndCostNameMap, costCategoryMap, cfgSettingByAllocationSetting);
 
-                newSuccessList = groupByNoAndCostNameMap.values().stream()
+                List<FirstMileReconciliationStandardExcelDTO> multipleEntryList = groupByNoAndCostNameMap.values().stream()
                         .flatMap(List::stream)
                         .collect(Collectors.toList());
+
+                resultList.addAll(multipleEntryList);
             } catch (Exception e) {
                 log.error("处理重量和成本分摊时发生错误", e);
                 throw new ServiceException("处理重量和成本分摊失败，请稍后重试");
             }
         }
-
-        return newSuccessList;
+        return resultList;
     }
 
     // 提取公共逻辑：计算发货单重量
@@ -1774,9 +1785,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         }
     }
 
-
-
-
+    /**
+     * 根据成本类别设置成本值
+     * 本方法通过判断成本名称属于哪一类成本类别（如运费、申报费等），并根据配置设置和计算公式计算成本值
+     * 不同的成本类别对应不同的计算逻辑，本方法旨在通过一种通用的方式处理这些逻辑
+     */
     private static BigDecimal setCostValueByCostCategory(Set<String> shippingCostSet,
                                                          Set<String> declareCostSet,
                                                          Set<String> otherCostSet,
@@ -1805,7 +1818,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 dtoCostValue = calculateCostValue(cfgSettingByAllocationSetting, costValue, weightRate, costRate);
             }
         }
-
         return dtoCostValue;
     }
 
