@@ -9825,6 +9825,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         LocalDateTime nowTime = LocalDateTime.now();
         LocalDate nowDate = LocalDate.now();
+
+        //校验整数或者小数正则
+        String regex = "^[0-9]+(\\.[0-9]+)?$";
+
         // 根据序号分组
         Map<String, List<B2CSoImportExcelDTO>> groupedByNo = successList.stream().collect(Collectors.groupingBy(B2CSoImportExcelDTO::getNo));
         for (Map.Entry<String, List<B2CSoImportExcelDTO>> entry : groupedByNo.entrySet()) {
@@ -9872,7 +9876,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 errorMsgList.add("店铺未找到");
             }
             //订单金额
-            soB2cEntity.setAmount(MathUtil.getBigDecimalByStr(mainInfo.getAmount()));
+            if(mainInfo.getAmount().matches(regex)){
+                soB2cEntity.setAmount(MathUtil.getBigDecimalByStr(mainInfo.getAmount()));
+            }else {
+                errorMsgList.add("订单金额包含非数字字符");
+            }
             //币别
             String currencyStr = mainInfo.getCurrency();
             DictCurrencyEntity currencyEntity = currencyList.stream().filter(c -> c.getId().equals(currencyStr)).
@@ -9932,8 +9940,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cLogisticsDTO.AddDTO b2cLogisitics = new SoB2cLogisticsDTO.AddDTO();
             if(StringUtils.isNotBlank(mainInfo.getLogisticsChannelName()) && StringUtils.isNotBlank(logisticsMap.get(mainInfo.getLogisticsChannelName()))){
                 b2cLogisitics.setLogisticsChannelId(logisticsMap.get(mainInfo.getLogisticsChannelName()));
-            }else {
-                errorMsgList.add("物流渠道未找到");
             }
             //跟踪号
             b2cLogisitics.setCode(mainInfo.getTrackNo());
@@ -9941,21 +9947,41 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(StringUtils.isNotBlank(mainInfo.getPackSize())){
                 String[] split = mainInfo.getPackSize().split("\\*");
                 if(split.length == 3){
-                    b2cLogisitics.setLength(MathUtil.getBigDecimalByStr(split[0].trim()));
-                    b2cLogisitics.setWidth(MathUtil.getBigDecimalByStr(split[1].trim()));
-                    b2cLogisitics.setHeight(MathUtil.getBigDecimalByStr(split[2].trim()));
+                    boolean allNumeric = true;
+                    for (String s : split) {
+                        if (!s.trim().matches(regex)) { // 匹配整数或小数
+                            allNumeric = false;
+                            break;
+                        }
+                    }
+                    if (allNumeric) {
+                        b2cLogisitics.setLength(MathUtil.getBigDecimalByStr(split[0].trim()));
+                        b2cLogisitics.setWidth(MathUtil.getBigDecimalByStr(split[1].trim()));
+                        b2cLogisitics.setHeight(MathUtil.getBigDecimalByStr(split[2].trim()));
+                    } else {
+                        errorMsgList.add("包装尺寸(长*宽*高)包含非数字字符");
+                    }
                 }else {
                     errorMsgList.add("包装尺寸(长*宽*高)格式异常");
                 }
 
             }
             //预估运费
-            if(StringUtils.isNotBlank(mainInfo.getEstimatedShippingCost())){
-                b2cLogisitics.setEstimatedShippingCost(MathUtil.getBigDecimalByStr(mainInfo.getEstimatedShippingCost()));
+            if(StringUtils.isNotBlank(mainInfo.getEstimatedShippingCost()) ){
+                if(mainInfo.getEstimatedShippingCost().matches(regex)){
+                    b2cLogisitics.setEstimatedShippingCost(MathUtil.getBigDecimalByStr(mainInfo.getEstimatedShippingCost()));
+                }else {
+                    errorMsgList.add("预估运费包含非数字字符");
+                }
+
             }
             //实际运费
             if(StringUtils.isNotBlank(mainInfo.getActualShippingCost())){
-                b2cLogisitics.setAccessoriesCost(MathUtil.getBigDecimalByStr(mainInfo.getActualShippingCost()));
+                if(mainInfo.getActualShippingCost().matches(regex)){
+                    b2cLogisitics.setAccessoriesCost(MathUtil.getBigDecimalByStr(mainInfo.getActualShippingCost()));
+                }else {
+                    errorMsgList.add("实际运费包含非数字字符");
+                }
             }
 
             //根据渠道和(国家+邮编）判断订单是否超范围配送
@@ -9977,8 +10003,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }else {
                     detailEntity.setSkuId(skuVO.getProductSkuId());
                     detailEntity.setSkuNo(skuVO.getProductSkuNo());
-                    detailEntity.setQty(MathUtil.valueOfInteger(detail.getQty()));
-                    detailEntity.setAmount(MathUtil.getBigDecimalByStr(detail.getDetailAmount()));
+                    //正则判断qty是整整数
+                    if(mainInfo.getQty().matches("\\d+")){
+                        detailEntity.setQty(MathUtil.valueOfInteger(detail.getQty()));
+                    }else {
+                        errorMsgList.add("数量包含非数字字符");
+                    }
+                    if(mainInfo.getDetailAmount().matches(regex)){
+                        detailEntity.setAmount(MathUtil.getBigDecimalByStr(detail.getDetailAmount()));
+                    }else {
+                        errorMsgList.add("真实售价包含非数字字符");
+                    }
                     detailEntity.setCurrency(currency);
                     detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
                     detailEntity.setAdvicePrice(skuVO.getAdvicePrice());
