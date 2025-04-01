@@ -765,4 +765,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 			this.getBaseMapper().dmpOutputNoRecordMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
 		}
 	}
+
+    @Override
+    public List<DmpOutputTaskRecordEntity> queryBySourceCodeAndCfgOutputId(String sourceCode, String cfgOutputId) {
+        return this.baseMapper.queryBySourceCodeAndCfgOutputId(sourceCode, cfgOutputId);
+    }
 }

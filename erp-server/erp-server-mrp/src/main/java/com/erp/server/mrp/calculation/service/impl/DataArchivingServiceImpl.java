@@ -12,6 +12,7 @@ import com.erp.server.mrp.calculation.service.DataArchivingService;
 import com.erp.server.mrp.calculation.service.InventoryService;
 import com.erp.server.mrp.service.CfgDataArchivingService;
 import com.erp.server.mrp.service.CfgPlatformMappingService;
+import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.ReplenishmentSuggestionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -41,6 +42,8 @@ public class DataArchivingServiceImpl implements DataArchivingService {
     @Resource
     private ReplenishmentSuggestionService replenishmentSuggestionService;
     @Resource
+    private CfgRuleWarehouseService cfgRuleWarehouseService;
+    @Resource
     private InventoryService inventoryService;
 
     @Override
@@ -59,6 +62,8 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                 }
                 //归档建议
                 cfgDataArchivingService.dataArchivingSuggestion(null);
+                //更新虚拟仓配置
+                cfgRuleWarehouseService.refreshVirtual();
                 List<CfgPlatformMappingEntity> mappings = cfgPlatformMappingService.listByEffective();
                 log.warn("完成处理归档数据,时间{}", System.currentTimeMillis());
                 String calcDate = calculationDate.format(DateTimeFormatter.BASIC_ISO_DATE);
@@ -90,7 +95,7 @@ public class DataArchivingServiceImpl implements DataArchivingService {
                     List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType.getCode());
                     //计算数据是否需要进行补货
                     log.warn("开始清洗{}是否需要进行补货数据,时间{}", platformType.getName(), System.currentTimeMillis());
-                    replenishmentDataService.isReplenishment(suggestions,platformType.getCode(), calculationDate);
+                    replenishmentDataService.isReplenishment(suggestions, calculationDate);
                     log.warn("完成清洗{}是否需要进行补货数据,时间{}", platformType.getName(), System.currentTimeMillis());
                     //计算明细数据
                     replenishmentDataService.calculationDetail(platformType.getCode(), calculationDate);

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.mrp.entity.CfgOperateLogFieldEntity;
+import com.erp.model.mrp.entity.CfgRuleExpireTimeEntity;
 import com.erp.server.mrp.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.mrp.service.CfgOperateLogFieldService;
 import org.springframework.stereotype.Service;
@@ -33,21 +34,18 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
     @Override
     public Boolean saveBatchSysLogField() {
         //用于手动添加字段对应信息，后续可添加界面添加,classPath为比较DTO路径
-        String  classPath = String.valueOf(CfgOperateLogFieldEntity.class);
+        String  classPath = String.valueOf(CfgRuleExpireTimeEntity.class);
         List<CfgOperateLogFieldEntity> logFields =  Arrays.asList(
-                new CfgOperateLogFieldEntity().setField("name").setFieldName("供应商名称").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("categoryName").setFieldName("分类名").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("purchaseApproveDays").setFieldName("采购审批天数（天）").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("productionDays").setFieldName("生产周期天数（天）").setClassPath(classPath).setType(0) .setEnumClass(""),
 
-                new CfgOperateLogFieldEntity().setField("gradeId").setFieldName("等级").setClassPath(classPath).setType(3) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("supplierDeliveryDays").setFieldName("供应商发货天数（天）").setClassPath(classPath).setType(0) .setEnumClass(""),
 
-                new CfgOperateLogFieldEntity().setField("purchaseUserName").setFieldName("采购员").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("qcDays").setFieldName("质检入库天数（天）").setClassPath(classPath).setType(0) .setEnumClass(""),
 
-                new CfgOperateLogFieldEntity().setField("companyWebsite").setFieldName("公司网址").setClassPath(classPath).setType(0) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("disabled").setFieldName("禁用状态").setClassPath(classPath).setType(1) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("payMethodId").setFieldName("付款方式").setClassPath(classPath).setType(3) .setEnumClass(""),
-                new CfgOperateLogFieldEntity().setField("payCurrency").setFieldName("付款币种").setClassPath(classPath).setType(0) .setEnumClass(""),
-
-                new CfgOperateLogFieldEntity().setField("companyAddress").setFieldName("公司地址").setClassPath(classPath).setType(0) .setEnumClass("")
+                new CfgOperateLogFieldEntity().setField("purchaseCycleDays").setFieldName("采购频率天数（天）").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("platformInstockDays").setFieldName("FBA入库天数（天）").setClassPath(classPath).setType(0) .setEnumClass(""),
+                new CfgOperateLogFieldEntity().setField("overseasInstockDays").setFieldName("海外入库天数（天）").setClassPath(classPath).setType(0) .setEnumClass("")
 
 
         );

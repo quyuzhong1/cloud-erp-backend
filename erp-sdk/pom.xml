@@ -38,7 +38,8 @@
         <module>erp-sdk-oms-aliexpress</module>
         <module>erp-sdk-tms-batong</module>
         <module>erp-sdk-tms-baohong</module>
-        <module>erp-sdk-oms-mercado</module>
+        <module>erp-sdk-oms-mercado-cbt</module>
+        <module>erp-sdk-oms-mercado-local</module>
         <module>erp-sdk-oms-tiktok</module>
         <module>erp-sdk-tms-tiktok</module>
         <module>erp-sdk-third-wangdian</module>

@@ -17,13 +17,13 @@ public interface InventoryService {
      *
      * @param replenishmentResultDTO 参数
      * @param strategyCodes          编码
-     * @param stockUpResult          备货配置
+     * @param expireTimeResult       时效配置
      * @param sourceType             来源类型
      * @param inventoryTypeEnum      库存类型
      * @param type                   类型
      */
     List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getPlanDelivery(ReplenishmentResultDTO replenishmentResultDTO, Set<String> strategyCodes,
-                                                                            CfgRuleStockUpDTO.StrategyResultDTO stockUpResult,
+                                                                            CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult,
                                                                             String sourceType,
                                                                             ReplenishmentInventoryTypeEnum inventoryTypeEnum,
                                                                             String type);
@@ -84,11 +84,11 @@ public interface InventoryService {
      *
      * @param replenishmentResultDTO 建议
      * @param replenishmentPlan      单据状态
-     * @param stockUpResult          备货配置
+     * @param expireTimeResult       时效配置
      * @param inventoryTypeEnum      库存类型
      */
     List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> getReplenishmentPlan(ReplenishmentResultDTO replenishmentResultDTO, Set<String> replenishmentPlan,
-                                                                                 CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, ReplenishmentInventoryTypeEnum inventoryTypeEnum);
+                                                                                 CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult, ReplenishmentInventoryTypeEnum inventoryTypeEnum);
 
     /**
      * 计算海外在途库存
@@ -134,10 +134,9 @@ public interface InventoryService {
     /**
      * 获取全部库存
      * @param inventoryResult 库存
-     * @param platformType    平台
      * @param calculationDate 计算日
      */
-    ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, String platformType, LocalDate calculationDate);
+    ReplenishmentInventoryDTO getAllInventoryQty(List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult, LocalDate calculationDate);
 
 
     /**

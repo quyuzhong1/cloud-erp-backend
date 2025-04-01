@@ -10,6 +10,10 @@ import java.util.List;
 public class CfgRuleStrategyDTO {
 
     /**
+     * 时效
+     */
+    private CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult;
+    /**
      * 备货
      */
     private CfgRuleStockUpDTO.StrategyResultDTO stockUpResult;

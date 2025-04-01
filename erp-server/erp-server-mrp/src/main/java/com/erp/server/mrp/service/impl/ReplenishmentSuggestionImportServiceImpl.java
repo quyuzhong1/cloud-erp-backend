@@ -359,9 +359,9 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      */
     private CfgRuleStockUpDTO.CustomUpdateDTO formatCfgRuleStockUpDTO (StockUpImportExcelDTO excelDTO,ReplenishmentSuggestionEntity entity) {
         CfgRuleStockUpDTO.CustomUpdateDTO resultDTO = new CfgRuleStockUpDTO.CustomUpdateDTO();
+        resultDTO.setIsBatch(true);
         resultDTO.setRefId(entity.getId());
         resultDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
-        resultDTO.setPlatformType(entity.getPlatformType());
         if (ObjectUtil.isNotEmpty(excelDTO.getProductionDays())) {
             resultDTO.setProductionDays(Integer.valueOf(excelDTO.getProductionDays()));
         }
@@ -568,7 +568,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 CfgRuleStockingRatioDTO.UpdateDTO updateDTO = formatCfgRuleStockUpDTO(importExcelDTO);
                 updateDTOList.add(updateDTO);
             }
-            cfgRuleStockingRatioService.update(updateDTOList,cfgRuleStockUpEntity.getId(), CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),Boolean.TRUE);
+            cfgRuleStockingRatioService.update(updateDTOList, cfgRuleStockUpEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(),Boolean.TRUE);
         }
         successList.removeAll(wrongList);
     }
@@ -686,15 +686,14 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
                 continue;
             }
             //销量主表
-            CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO = formatSalesQty(Optional.ofNullable(entity).orElse(new ReplenishmentSuggestionEntity()));
+            CfgRuleSalesQtyDTO.UpdateDTO updateDTO = formatSalesQty(Optional.ofNullable(entity).orElse(new ReplenishmentSuggestionEntity()));
             //默认销量
             List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatDefaultSalesQty(excelDTO);
             try {
                 //更新产品销量配置
-                String salesQtyId = cfgRuleSalesQtyService.update(updateDTO);
-
+                cfgRuleSalesQtyService.batchUpdate(updateDTO);
                 //添加默认配置
-                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyId,Boolean.FALSE);
+                cfgRuleSalesFormulaService.update(salesFormulaList, salesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), Boolean.TRUE);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
@@ -715,12 +714,13 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
      * @param entity
      * @return UpdateDetailDTO
      */
-    private CfgRuleSalesQtyDTO.UpdateDetailDTO  formatSalesQty (ReplenishmentSuggestionEntity entity) {
-        CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO = new CfgRuleSalesQtyDTO.UpdateDetailDTO();
-        updateDTO.setPlatformType(entity.getPlatformType());
+    private CfgRuleSalesQtyDTO.UpdateDTO  formatSalesQty (ReplenishmentSuggestionEntity entity) {
+        CfgRuleSalesQtyDTO.UpdateDTO updateDTO = new CfgRuleSalesQtyDTO.UpdateDTO();
+        updateDTO.setPlatform(entity.getPlatform());
         updateDTO.setRefId(entity.getId());
         updateDTO.setRefType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
         updateDTO.setIsCustom(Boolean.TRUE);
+        updateDTO.setIsBatch(Boolean.TRUE);
         return updateDTO;
     }
 
@@ -859,7 +859,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             }
             List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatDynamicSalesQty(excelDTO);
             try {
-                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+                cfgRuleSalesFormulaService.update(salesFormulaList, salesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), Boolean.TRUE);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
@@ -987,7 +987,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             }
             List<CfgRuleSalesFormulaDTO.UpdateDTO> salesFormulaList = formatFixedSalesQty(excelDTO);
             try {
-                cfgRuleSalesFormulaService.update(salesFormulaList,salesQtyEntity.getId(),Boolean.TRUE);
+                cfgRuleSalesFormulaService.update(salesFormulaList, salesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), Boolean.TRUE);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
@@ -1117,7 +1117,7 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             }
             List<CfgRuleSalesDenoisingDTO.UpdateDTO> updateDTOList = formatSalesDenoising(excelDTO);
             try {
-                cfgRuleSalesDenoisingService.update(updateDTOList,salesQtyEntity.getId(),Boolean.TRUE);
+                cfgRuleSalesDenoisingService.update(updateDTOList, salesQtyEntity, CfgRuleStockingRatioTypeEnum.CONVENTIONAL.getCode(), Boolean.TRUE);
             } catch (Exception e) {
                 errorMsgList.add(e.getMessage());
             }
