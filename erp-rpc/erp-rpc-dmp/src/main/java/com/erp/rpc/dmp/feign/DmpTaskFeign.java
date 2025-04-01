@@ -7,6 +7,7 @@ import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -269,4 +270,15 @@ public interface DmpTaskFeign {
 
     @PostMapping("feign/dmp/push/deleteBySourceId")
     boolean deletePushTaskBySourceId(@RequestBody String sourceId);
+
+    /**
+     * 获取推送记录
+     * @author zdy
+     * @date: 2025/04/01 12:00
+     * @param sourceCode
+     * @param outputClass
+     * @return Boolean
+     */
+    @GetMapping("feign/outputTaskRecord/getOutputTaskRecord")
+    DmpOutputTaskRecordEntity getOutputTaskRecord(@RequestParam(value = "sourceCode",required = false) String sourceCode, @RequestParam(value = "outputClass",required = false) String outputClass);
 }
