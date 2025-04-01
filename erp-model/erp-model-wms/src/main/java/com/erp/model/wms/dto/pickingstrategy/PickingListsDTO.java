@@ -268,6 +268,10 @@ public class PickingListsDTO {
          * 三方sku
          */
         private String thirdSku;
+        /**
+         * 客户PO号
+         */
+        private String customerPo;
 
     }
 
@@ -314,6 +318,10 @@ public class PickingListsDTO {
          * 明细来源Id
          */
         private String sourceDetailId;
+        /**
+         * 客户PO
+         */
+        private String customerPo;
 
         public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName) {
             this.skuId = detail.getSkuId();
