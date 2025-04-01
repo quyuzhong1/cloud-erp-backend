@@ -1031,7 +1031,7 @@ public class FullyManagedOrderController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出全平台销售订单信息")
     @PostMapping(value = "/exportExcel")
     public ApiResult exportExcel(@RequestBody SoB2cDTO.ExportParamDTO dto) {
-        Boolean flag = soB2cService.exportExcel(dto);
+        Boolean flag = fullyManagedOrderService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
 

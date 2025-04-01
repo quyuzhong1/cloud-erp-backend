@@ -1,7 +1,9 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -42,4 +44,18 @@ public interface FullyManagedOrderService extends SuperService<SoB2cEntity> {
      * @return
      */
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * 导出Excel
+     * @param dto
+     * @return
+     */
+    Boolean exportExcel(SoB2cDTO.ExportParamDTO dto);
+
+    /**
+     * 导出全托管订单
+     * @param dto
+     * @return
+     */
+    PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(PagingDTO<SoB2cDTO.ExportParamDTO> dto);
 }

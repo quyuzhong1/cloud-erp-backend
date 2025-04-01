@@ -52,6 +52,8 @@ public class ExportOmsFeignController {
     private ReportManagerService reportManagerService;
     @Resource
     private InvoiceInfoService invoiceInfoService;
+    @Resource
+    private FullyManagedOrderService fullyManagedOrderService;
 
     @Resource
     private SoPriceService soPriceService;
@@ -107,6 +109,11 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
         return soB2cService.exportSoB2C(dto);
+    }
+    @PostMapping("/exportFullyManagedOrder")
+    @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
+    public PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
+        return fullyManagedOrderService.exportFullyManagedOrder(dto);
     }
 
     @PostMapping("/soB2CDeclare")
