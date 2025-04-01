@@ -105,8 +105,8 @@ public enum BusinessNoTypeEnum {
     CODE_MOULD(90, "MJ","模具管理",BusinessNoConstant.MJ),
     CODE_N(81, "N","库龄批次号",BusinessNoConstant.N),
     CODE_INV(82, "INV","发票号",BusinessNoConstant.INV),
-    CODE_XSJM(83, "xsjm","销售价目编号", BusinessNoConstant.CGJM),
-    CODE_XSTJ(84, "xstj","销售价目调价编号", BusinessNoConstant.CGTJ),
+    CODE_XSJM(83, "xsjm","销售价目编号", BusinessNoConstant.XSJM),
+    CODE_XSTJ(84, "xstj","销售价目调价编号", BusinessNoConstant.XSTJ),
     CODE_XSBH(83, "XSBH","全托管订单",BusinessNoConstant.XSBH),
 
     ;

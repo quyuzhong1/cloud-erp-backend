@@ -154,6 +154,10 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
                 throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
             }
+            //校验区间到需要大于区间从
+            if (entity.getMaxQty().compareTo(entity.getMinQty()) < MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+            }
             //校验录入数据是否存在时间重叠
             for (int j = 0;j < list.size();j++) {
                 SoPriceDetailEntity detailEntity = list.get(j);

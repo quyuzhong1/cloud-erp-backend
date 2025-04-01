@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -10,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoPriceChangeDetailDTO;
+import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.entity.SoPriceChangeDetailEntity;
 import com.erp.model.oms.entity.SoPriceChangeEntity;
 import com.erp.model.oms.entity.SoPriceDetailEntity;
@@ -20,7 +22,10 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.SoPriceChangeDetailMapper;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SoPriceChangeDetailService;
+import com.erp.server.oms.service.SoPriceDetailService;
+import com.erp.server.oms.service.SoPriceHistoryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -75,13 +80,13 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         List<SoPriceChangeDetailDTO.ViewDTO> resultList = BeanMapper.copyList(list, SoPriceChangeDetailDTO.ViewDTO.class);
         List<String> changeDetailIdList = list.stream().map(SoPriceChangeDetailEntity::getId).collect(Collectors.toList());
         //销售价目详情表id
-        List<String> SoPriceDetailIds = resultList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getSoPriceDetailId).collect(Collectors.toList());
+        List<String> soPriceDetailIds = resultList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getSoPriceDetailId).collect(Collectors.toList());
         /**
          * 根据变更表id 获取到对应变更历史
          */
         List<SoPriceHistoryEntity> historyList = soPriceHistoryService.listByChangeDetailIdList(changeDetailIdList);
         //获取到对应的价目明细
-        List<SoPriceDetailEntity> SoPriceDetailList = soPriceDetailService.listByIds(SoPriceDetailIds);
+        List<SoPriceDetailEntity> soPriceDetailList = soPriceDetailService.listByIds(soPriceDetailIds);
 
         BigDecimal hundred = MathUtil.BigDecimal_100;
         List<String> currencyIdList = resultList.stream().map(SoPriceChangeDetailDTO.ViewDTO::getCurrency).collect(Collectors.toList());
@@ -91,7 +96,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             String priceDetailId = item.getSoPriceDetailId();
             SoPriceHistoryEntity historyEntity = historyList.stream().filter(h -> h.getChangeDetailId().equals(item.getId())).findFirst().orElse(null);
 
-            SoPriceDetailEntity priceDetailEntity = SoPriceDetailList.stream().filter(p -> p.getId().equals(priceDetailId)).findFirst().orElse(null);
+            SoPriceDetailEntity priceDetailEntity = soPriceDetailList.stream().filter(p -> p.getId().equals(priceDetailId)).findFirst().orElse(null);
             if (item.getTaxRate() != null) {
                 item.setTaxRate(item.getTaxRate().multiply(hundred));
             }
@@ -149,7 +154,24 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         if (CollectionUtils.isEmpty(soPriceChangeDetailList)) {
             return;
         }
+        //数据处理
         List<SoPriceChangeDetailEntity> addList = BeanMapper.copyList(soPriceChangeDetailList, SoPriceChangeDetailEntity.class);
+        handlePriceChangeDetail(soPriceChangeId,addList);
+        //数据验证
+        checkPriceChangeDetail(addList);
+        this.saveBatch(addList);
+    }
+    /**
+     * 处理销售价目变更明细
+     * @param soPriceChangeId
+     * @param addList
+     * @return void
+     */
+    private void handlePriceChangeDetail (String soPriceChangeId,List<SoPriceChangeDetailEntity> addList) {
+        //销售调价数据
+        List<String> soPriceDetailIdList = addList.stream().map(SoPriceChangeDetailEntity::getSoPriceDetailId).distinct().collect(Collectors.toList());
+        List<SoPriceDetailDTO.ViewDTO> viewList = soPriceDetailService.listBySoPriceDetailIds(soPriceDetailIdList);
+
         List<String> skuIds = addList.stream().map(SoPriceChangeDetailEntity::getSkuId).collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         for (SoPriceChangeDetailEntity item : addList) {
@@ -163,10 +185,11 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
                 BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
                 item.setTaxRate(rate);
             }
+            //更新销售报价的编码
+            viewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), item.getSoPriceDetailId())).findFirst().ifPresent(obj -> {
+                item.setSoPriceCode(obj.getPriceCode());
+            });
         }
-        //数据验证
-        checkPriceChangeDetail(addList);
-        this.saveBatch(addList);
     }
 
     /**
@@ -238,24 +261,9 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         List<String> deleteIdList = getDeleteIds(SoPriceChangeDetailList, dbList);
         List<SoPriceChangeDetailEntity> removeList = dbList.stream().filter(r -> deleteIdList.contains(r.getId())).collect(Collectors.toList());
         this.removeByIds(deleteIdList);
-        List<String> skuIds = SoPriceChangeDetailList.stream().map(SoPriceChangeDetailDTO.UpdateDTO::getSkuId).collect(Collectors.toList());
-        List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
-        List<SoPriceChangeDetailEntity> saveOrUpdateList = new ArrayList<>(SoPriceChangeDetailList.size());
-        for (SoPriceChangeDetailDTO.UpdateDTO item : SoPriceChangeDetailList) {
-            SoPriceChangeDetailEntity entity = new SoPriceChangeDetailEntity();
-            BeanMapper.copy(item, entity);
-            String skuId = item.getSkuId();
-            skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().ifPresent(skuVO -> entity.setSkuNo(skuVO.getSkuNo()));
-            entity.setMainId(SoPriceChangeId);
-            //税率
-            BigDecimal taxRate = item.getTaxRate();
-            if (taxRate != null) {
-                BigDecimal rate = taxRate.divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
-                entity.setTaxRate(rate);
-            }
-
-            saveOrUpdateList.add(entity);
-        }
+        //数据处理
+        List<SoPriceChangeDetailEntity> saveOrUpdateList = BeanMapper.copyList(SoPriceChangeDetailList, SoPriceChangeDetailEntity.class);
+        handlePriceChangeDetail(SoPriceChangeId,saveOrUpdateList);
 
         //数据验证
         checkPriceChangeDetail(saveOrUpdateList);
@@ -320,9 +328,9 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
         for (Map.Entry<String, List<SoPriceChangeDetailEntity>> entry :map.entrySet()) {
 
             List<SoPriceChangeDetailEntity> value = entry.getValue();
-            List<String> SoPriceDetailIdList = value.stream().map(SoPriceChangeDetailEntity::getSoPriceDetailId).collect(Collectors.toList());
+            List<String> soPriceDetailIdList = value.stream().map(SoPriceChangeDetailEntity::getSoPriceDetailId).collect(Collectors.toList());
 
-            List<SoPriceDetailEntity> list = updateList.stream().filter(obj -> SoPriceDetailIdList.contains(obj.getId())).collect(Collectors.toList());
+            List<SoPriceDetailEntity> list = updateList.stream().filter(obj -> soPriceDetailIdList.contains(obj.getId())).collect(Collectors.toList());
             //报价信息验证
             soPriceDetailService.checkSoPriceDetail(entry.getKey(),SoPriceChangeList.get(0).getSoOrgId(),list);
         }
@@ -374,6 +382,10 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
             //检验失效时间需要大于等于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
                 throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
+            }
+            //校验区间到需要大于区间从
+            if (entity.getMaxQty().compareTo(entity.getMinQty()) < MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
             }
         }
     }
