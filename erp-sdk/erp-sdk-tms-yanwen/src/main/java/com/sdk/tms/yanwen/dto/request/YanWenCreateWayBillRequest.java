@@ -38,7 +38,7 @@ public class YanWenCreateWayBillRequest {
     private Date dateOfReceipt;
 
     //交货仓/仓库代码，详细参考公共服务(查询交货仓列表)。若不传则默认取客户号所属仓库代码；
-    private String errorNoSet.add(excelDTO.getNo())Code;
+    private String companyCode;
 
     //拣货单信息/备注（打印标签选择打印拣货单显示此字段信息）
     private String remark;
