@@ -4,6 +4,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -50,4 +51,10 @@ public interface PackingTaskFeign {
      */
     @PostMapping("/feign/packingTask/listCartonBySourceCodes")
     List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(@RequestBody List<String> sourceCodes);
+
+    /**
+     * 根据来源ID查询装箱状态
+     */
+    @PostMapping("/feign/packingTask/getPackingStatusByFirstMileDelivery")
+    List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(@RequestBody FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

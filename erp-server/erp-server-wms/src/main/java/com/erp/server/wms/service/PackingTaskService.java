@@ -300,4 +300,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(List<String> sourceCodes);
 
     List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(List<String> sourceCodes);
+
+    List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

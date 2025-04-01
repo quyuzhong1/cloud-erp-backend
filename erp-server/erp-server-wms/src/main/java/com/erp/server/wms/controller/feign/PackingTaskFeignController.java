@@ -9,6 +9,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.service.PackingTaskService;
 import com.erp.server.wms.service.WmsCartonSpecService;
@@ -84,4 +85,11 @@ public class PackingTaskFeignController extends BaseController {
         return  listCartonBySourceCodes(sourceCodes);
     }
 
+    /**
+     * 根据来源ID查询装箱状态
+     */
+    @PostMapping("/feign/packingTask/getPackingStatusByFirstMileDelivery")
+    List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(@RequestBody FirstMileDeliveryEntity firstMileDeliveryEntity){
+        return packingTaskService.getPackingStatusByFirstMileDelivery(firstMileDeliveryEntity);
+    }
 }
