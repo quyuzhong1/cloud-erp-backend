@@ -414,6 +414,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO submitEntity(PurchasePriceEntity entity) {
         List<PurchasePriceEntity> list = Collections.singletonList(entity);
+
+        //校验附件信息
+        checkAttachment(entity.getId());
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -1146,5 +1149,18 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 dmpMqFeign.sendTask(resultList);
             }
         });
+    }
+
+    /**
+     * 校验附件必填
+     * @author will
+     * @date 2025/3/25 16:32
+     * @param bussinessId
+     */
+    private void checkAttachment (String bussinessId) {
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(bussinessId);
+        if (CollectionUtils.isEmpty(attachmentList)){
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"附件信息");
+        }
     }
 }

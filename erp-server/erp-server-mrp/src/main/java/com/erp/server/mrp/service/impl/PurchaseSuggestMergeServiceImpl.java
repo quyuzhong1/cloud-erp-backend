@@ -121,6 +121,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Autowired
     private PurchaseSuggestionMergeQueryHandler purchaseSuggestionMergeQueryHandler;
 
+    @Autowired
+    private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -220,7 +222,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO locking(String id) {
-        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.DRAFT.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_LOCKING);
         }
@@ -229,7 +231,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         this.updateById(old);
 
         // 操作日志
-        String msg = StrUtil.format("锁定了采购建议（合并）（合并）");
+        String msg = StrUtil.format("锁定了采购建议");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST_MERGE.getCode(), old.getId(), "锁定");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.LOCKING);
     }
@@ -237,7 +239,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO confirm(String id) {
-        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         if (!StrUtil.equals(old.getStatus(), SuggestStatusEnum.WAIT_CONFIRM.getCode())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_CONFIRM);
         }
@@ -252,7 +254,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         this.updateById(old);
 
         // 操作日志
-        String msg = StrUtil.format("确认了采购建议（合并）（合并）");
+        String msg = StrUtil.format("确认了采购建议");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST_MERGE.getCode(), old.getId(), "确认");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
@@ -260,9 +262,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id, String remark) {
-        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
+        List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> applicationDTOList = purchaseApplicationDetailFeign.listByMergeIdList(Collections.singletonList(id));
         //草稿和待确认支持作废
-        if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
+        if (CollectionUtils.isNotEmpty(applicationDTOList)) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_INVALID);
         }
         if (old.getInvalidStatus()) {
@@ -279,7 +282,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         this.updateById(old);
 
         // 操作日志
-        String msg = StrUtil.format("作废了采购建议（合并）（合并）");
+        String msg = StrUtil.format("作废了采购建议");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_SUGGEST_MERGE.getCode(), old.getId(), "作废");
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.CONFIRM);
     }
@@ -293,13 +296,13 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateRemark(String id, String remark) {
-        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         //草稿和待确认支持更新备注
         if (!Arrays.asList(SuggestStatusEnum.DRAFT.getCode(),SuggestStatusEnum.WAIT_CONFIRM.getCode()).contains(old.getStatus())) {
             throw new ServiceException(ApiError.ERROR_SUGGEST_UPDATE_REMARK);
         }
         // 操作日志备注
-        String msg = StrUtil.format("更新了采购建议（合并）（合并）备注，由【{}】更新为【{}】",old.getRemark(),remark);
+        String msg = StrUtil.format("更新了采购建议备注，由【{}】更新为【{}】",old.getRemark(),remark);
 
         //更新成作废状态
         old.setRemark(remark);
@@ -357,7 +360,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
     private void generatePurchaseSuggestMerge (ReplenishmentResultDTO replenishmentResultDTO,List<ReplenishmentResultDTO.PurchaseSuggestDTO> purchaseSuggests) {
         //无配置或者独立采购也直接返回
         CfgRuleOrderStrategyDTO.StrategyResultDTO orderResult = replenishmentResultDTO.getCfgRuleStrategy().getOrderResult();
-        if (ObjectUtil.isEmpty(orderResult) || Boolean.TRUE.equals(!orderResult.getIsMergeSku())) {
+        if (ObjectUtil.isEmpty(orderResult) || Boolean.FALSE.equals(orderResult.getIsMergeSku())) {
             return;
         }
         ReplenishmentResultDTO.BasicDTO replenishment = replenishmentResultDTO.getReplenishment();
@@ -475,7 +478,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Override
     public List<DeliverySuggestDTO.PurchaseSuggestBomDTO> listPurchaseSuggestBom(String id) {
-        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议（合并）（合并）"));
+        PurchaseSuggestMergeEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "采购建议"));
         List<String> sourceIdList = old.getSourceIdJson().stream().map(obj -> obj.toString()).collect(Collectors.toList());
         List<PurchaseSuggestEntity> purchaseSuggestList = purchaseSuggestService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(purchaseSuggestList)) {
@@ -566,6 +569,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         viewPushDTO.setApplyUserId(loginUser.getUid());
 
+        //查询配置是否拆分
+        CfgRuleOrderStrategyDTO.ViewDTO view = cfgRuleOrderStrategyService.view();
+        purchaseSuggestMergeList = splitPurchaseSuggest(purchaseSuggestMergeList, view);
+
         //产品信息
         List<String> skuIdList = purchaseSuggestMergeList.stream().map(PurchaseSuggestMergeEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuPackByIds(skuIdList);
@@ -608,6 +615,51 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         return viewPushDTO;
     }
 
+    /**
+     * 按bom查询
+     * @param purchaseSuggestMergeList
+     * @param view
+     * @return
+     */
+    private List<PurchaseSuggestMergeEntity> splitPurchaseSuggest (List<PurchaseSuggestMergeEntity> purchaseSuggestMergeList,CfgRuleOrderStrategyDTO.ViewDTO view) {
+        if (CollUtil.isEmpty(purchaseSuggestMergeList)) {
+            return Collections.emptyList();
+        }
+        //拆分并且无需集中采购则下推时拆分
+        if (!view.getIsSplit() || view.getIsMergeSku()) {
+            return purchaseSuggestMergeList;
+        }
+       //查询bom信息
+        List<String> skuIdList = purchaseSuggestMergeList.stream().map(PurchaseSuggestMergeEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+        if (CollectionUtils.isEmpty(bomChildrenSkuList)) {
+            return purchaseSuggestMergeList;
+        }
+        List<PurchaseSuggestMergeEntity> addList = new ArrayList<>();
+        for (PurchaseSuggestMergeEntity purchaseSuggestMergeEntity : purchaseSuggestMergeList) {
+            //bom信息
+            List<BomChildrenSkuDTO> childSkuList = bomChildrenSkuList.stream().filter(obj ->
+                    StrUtil.equals(obj.getParentSkuId(), purchaseSuggestMergeEntity.getSkuId())
+                            && StrUtil.equals(obj.getType(), BomTypeEnum.COMBINATION.getType())
+            ).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(childSkuList)) {
+                addList.add(purchaseSuggestMergeEntity);
+                continue;
+            }
+            //拆分数据
+            for (BomChildrenSkuDTO childrenSkuDTO : childSkuList) {
+                PurchaseSuggestMergeEntity addEntity = new PurchaseSuggestMergeEntity();
+                BeanMapperUtils.copy(purchaseSuggestMergeEntity, addEntity);
+                addEntity.setSkuId(childrenSkuDTO.getSkuId());
+                addEntity.setSuggestPurchaseQty(addEntity.getSuggestPurchaseQty() * childrenSkuDTO.getQuantity());
+                addEntity.setPurchaseStockUpQty(addEntity.getPurchaseStockUpQty() * childrenSkuDTO.getQuantity());
+                addEntity.setPlanPurchaseQty(addEntity.getPlanPurchaseQty() * childrenSkuDTO.getQuantity());
+                addList.add(addEntity);
+            }
+        }
+        return addList;
+    }
+
     @Override
     public void savePushPurchaseApplication(PurchaseSuggestMergeDTO.SavePushDTO dto) {
 
@@ -622,7 +674,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         purchaseApplicationDTO.setApplyDate(dto.getApplyDate());
         purchaseApplicationDTO.setApplyDeptId(dto.getApplyDeptId());
         purchaseApplicationDTO.setApplyUserId(dto.getApplyUserId());
-        purchaseApplicationDTO.setIsFirstMassProduct(dto.getIsFirstMassProduct());
+//        purchaseApplicationDTO.setIsFirstMassProduct(dto.getIsFirstMassProduct());
         purchaseApplicationDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode());
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();

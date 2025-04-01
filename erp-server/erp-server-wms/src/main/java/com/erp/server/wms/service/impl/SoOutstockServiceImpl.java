@@ -121,7 +121,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_OUT_STOCK;
 
@@ -811,7 +810,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soInfoToSdyDTO.setOperateEnum(operate);
             soInfoToSdyDTO.setDeliveryStatus(DeliveryStatusEnum.COMPLETE_SHIPMENT.getCode());
             soInfoFeign.sdyFieldOrderHandler(soInfoToSdyDTO);
-        } else {
+        } else if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())){
             soB2cFeign.syncSdyOrderHandler(entity.getSoId(), operate, entity.getSourceType());
         }
 
@@ -2750,7 +2749,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
         if(Objects.nonNull(soOutstock)
-        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform()) || PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform()) || PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform()))){
+        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform())
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(dto.getDictPlatform())
+                || PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform()))){
             return true;
         }
         String id = soOutstockService.addB2cSoOutstock(dto);

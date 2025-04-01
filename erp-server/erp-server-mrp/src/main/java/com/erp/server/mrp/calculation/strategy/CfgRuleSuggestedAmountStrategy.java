@@ -19,7 +19,7 @@ public class CfgRuleSuggestedAmountStrategy implements CfgRuleSettingStrategy<Cf
 
     @Override
     public List<CfgRuleCommonDTO.StrategyResultDTO> process(CfgRuleCommonDTO.StrategyDTO strategyDTO) {
-        return cfgRuleCommonService.getCfgRuleCommon(strategyDTO.getPlatformType(), CfgRuleCommonTypeEnum.SUGGEST.getCode());
+        return cfgRuleCommonService.getCfgRuleCommon(CfgRuleCommonTypeEnum.SUGGEST.getCode());
     }
 
     @Override

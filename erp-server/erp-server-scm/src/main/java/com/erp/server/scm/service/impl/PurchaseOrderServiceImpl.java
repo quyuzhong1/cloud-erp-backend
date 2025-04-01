@@ -37,6 +37,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -323,16 +324,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         BeanMapperUtils.copy(entity, dto);
 
+        //能否编辑
+        dto.setCanEdit(purchaseApplicationRefPoService.getPurchaseApplicationByPurchaseOrderId(id));
+
         // 采购员名称
         if(StrUtils.isNotEmpty(dto.getPurchaseUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
             if (ObjectUtils.isEmpty(purchaseUser)) {
                 dto.setPurchaseUserName(purchaseUser.getUserName());
             }
-        }
-        //新品首批
-        if (Objects.nonNull(dto.getIsFirstMassProduct())){
-            dto.setFirstMassProductName(dto.getIsFirstMassProduct() ? "是":"否");
         }
         //供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
@@ -376,6 +376,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
         details.forEach(obj -> {
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             obj.setTaxRate(MathUtil.multiply(obj.getTaxRate(), MathUtil.BigDecimal_100));
             obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
         });
@@ -989,7 +990,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateReceiveDTO.setBillDate(LocalDate.now());
             viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
-
+            viewGenerateReceiveDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewGenerateReceiveDTO.getFirstMassProduct()));
             Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             //补货数量
@@ -1026,7 +1027,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         viewDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
         viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
-        viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
         //采购供应商信息
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderEntity.getId());
@@ -1071,6 +1071,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     detailDTO.setOldPrice(detailEntity.getTaxPrice());
                     detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
                     detailDTO.setPrice(detailEntity.getTaxPrice());//退货单下推单采购订单-这里可以直接取采购订单含税单价
+                    detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                    detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                     detailDTOList.add(detailDTO);
                 }
             }else {
@@ -1083,6 +1085,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detailDTO.setOldQty(detailEntity.getPurchaseQty());
                 detailDTO.setOldPrice(detailEntity.getTaxPrice());
                 detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
+                detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                 detailDTOList.add(detailDTO);
             }
 
@@ -1137,6 +1141,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateStockInDTO.setPurchaseOrderCode(entity.getCode());
             viewGenerateStockInDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             viewGenerateStockInDTO.setDeliveryWarehouseName(entity.getDeliveryWarehouseName());
+            viewGenerateStockInDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+            viewGenerateStockInDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
             //供应商信息
             PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = supplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
@@ -1231,6 +1237,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId) {
         PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
         PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(purchaseOrderId);
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
@@ -1239,7 +1246,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         result.setWarehouseId(entity.getDeliveryWarehouseId());
         result.setWarehouseName(entity.getWarehouseName());
         //是否新品首批
-        Boolean isFirstMassProduct = entity.getIsFirstMassProduct();
+        boolean isFirstMassProduct = detailList.stream().anyMatch(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct()));
         //入库质检
         String qcType = QcTypeEnum.STOCK_IN.getCode();
         //是
@@ -1265,9 +1272,58 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             flag.setPurchaseOrderDetailId(item.getId());
             flag.setQty(item.getPurchaseQty());
             flag.setSkuId(skuId);
+
+            //入库质检
+            String detailQcType = QcTypeEnum.STOCK_IN.getCode();
+            //非首批：否
+            if (!item.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
+                detailQcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+            }
+            flag.setQcType(detailQcType);
+            flag.setIsInside(QcTypeEnum.getIsInsideByCode(detailQcType));
             productList.add(flag);
         }
         result.setProductList(productList);
+        return result;
+    }
+
+    @Override
+    public PurchaseOrderDTO.GetQcProductDTO getQcProductInfoByDetailId(String purchaseOrderDetailId) {
+        PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailService.getById(purchaseOrderDetailId);
+        if (ObjectUtils.isEmpty(detailEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
+        PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(detailEntity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        result.setSupplierId(entity.getPurchaseOrderSupplierDTO().getSupplierId());
+        result.setSupplierName(entity.getSupplierName());
+        result.setWarehouseId(entity.getDeliveryWarehouseId());
+        result.setWarehouseName(entity.getWarehouseName());
+        //入库质检
+        String qcType = QcTypeEnum.STOCK_IN.getCode();
+        //非首批：否
+        if (!detailEntity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
+            qcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+        }
+        Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
+        result.setQcType(qcType);
+        result.setIsInside(isInside);
+        //采购订单详情
+        String skuId = detailEntity.getSkuId();
+        List<String> skuIdList =Collections.singletonList(skuId);
+        List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
+        ProductVO.ProductPackVO flag = new ProductVO.ProductPackVO();
+        ProductVO.ProductPackVO find = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (find != null) {
+            BeanMapper.copy(find, flag);
+        }
+        flag.setPurchaseOrderDetailId(detailEntity.getId());
+        flag.setQty(detailEntity.getPurchaseQty());
+        flag.setSkuId(skuId);
+        result.setProductList(Collections.singletonList(flag));
         return result;
     }
 
@@ -3128,15 +3184,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
             return;
         }
+
+        List<com.erp.model.sys.entity.DictBasicEntity> dictBasicEntity = FeignQuery.create(com.erp.model.sys.entity.DictBasicEntity.class)
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getType,"url")
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getName,"logo")
+                .list();
+        //logo url地址
+        result.setLogoUrl(FastDFSClientUtil.publicUrl+"/"+dictBasicEntity.get(0).getValue());
         Map<String, Object> map = BeanUtil.beanToMap(result);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
         map.put("detail", detail);
         //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
 
-       byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
         String base = Base64.getEncoder().encodeToString(bytes);
         base64List.add("data:application/pdf;base64," + base);
-        PdfUtil.exportBase64ForPdf(response,base64List);
+        PdfUtil.exportBase64ForPdf(response, base64List);
     }
 
     @Override

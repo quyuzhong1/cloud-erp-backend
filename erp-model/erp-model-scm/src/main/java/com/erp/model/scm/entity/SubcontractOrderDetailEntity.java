@@ -194,6 +194,12 @@ public class SubcontractOrderDetailEntity extends BaseEntity<SubcontractOrderDet
     private Boolean isEndReceive;
 
     /**
+     * 新品首批
+     */
+    @TableField("first_mass_product")
+    private String firstMassProduct;
+
+    /**
      * 备注
      */
     @TableField("remark")

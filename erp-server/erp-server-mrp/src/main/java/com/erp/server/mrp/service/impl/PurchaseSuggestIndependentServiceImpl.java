@@ -285,7 +285,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
             //是否是组合品
             long count = bomChildrenSkuList.stream().filter(obj ->
                     CharSequenceUtil.equals(obj.getBomVersion(), listDTO.getBomVersion())
-                    && StrUtil.equals(obj.getSkuId(), listDTO.getSkuId())
+                    && StrUtil.equals(obj.getParentSkuId(), listDTO.getSkuId())
                     && BomTypeEnum.COMBINATION.getType().equals(obj.getType())
             ).count();
             listDTO.setIsCombination(count > MathUtil.ZERO ? Boolean.TRUE : Boolean.FALSE);

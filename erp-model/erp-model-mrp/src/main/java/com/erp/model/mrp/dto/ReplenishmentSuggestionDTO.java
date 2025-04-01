@@ -52,6 +52,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         @NotBlank(message = "建议类型不能为空")
         private String platformType;
+
+        /**
+         * 平台
+         */
+        private String platform;
         /**
          * sku类型
          */
@@ -60,6 +65,10 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+        /**
+         * 补货类型
+         */
+        private String replenishmentType;
 
         /**
          * 最近日期排序
@@ -123,8 +132,8 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 销量设置
          */
-        @Valid
-        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+//        @Valid
+//        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
 
     }
 
@@ -134,6 +143,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BatchUpdateRuleDTO {
+
+        /**
+         * 是否批量
+         */
+        private Boolean isBatch = false;
 
         /**
          * 主键ids
@@ -151,7 +165,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 销量设置
          */
         @Valid
-        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+        private CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO;
 
     }
 

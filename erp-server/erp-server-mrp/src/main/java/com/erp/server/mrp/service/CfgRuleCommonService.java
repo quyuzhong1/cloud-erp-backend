@@ -32,18 +32,16 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
      * 查询详情
      * @author will
      * @date 2024/8/26 9:19
-     * @param platformType
      * @return List<CfgRuleCommonDTO.ViewDTO>
      */
-    List<CfgRuleCommonDTO.ViewDTO> view(String platformType,String type);
+    List<CfgRuleCommonDTO.ViewDTO> view(String type);
 
     /**
      * 根据平台和类型获取建议或库存
      *
-     * @param platformType 平台类型
      * @param type         类型
      */
-    List<CfgRuleCommonDTO.StrategyResultDTO> getCfgRuleCommon(String platformType, String type);
+    List<CfgRuleCommonDTO.StrategyResultDTO> getCfgRuleCommon(String type);
 
     /**
      * 获取描述
@@ -62,5 +60,5 @@ public interface CfgRuleCommonService extends SuperService<CfgRuleCommonEntity> 
     /**
      * 获取时间建议范围
      */
-    String timeFrame(String platformType);
+    String timeFrame();
 }

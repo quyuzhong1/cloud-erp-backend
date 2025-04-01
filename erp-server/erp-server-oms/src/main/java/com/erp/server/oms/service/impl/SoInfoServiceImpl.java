@@ -794,9 +794,39 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //虚拟仓
         List<VirtualWarehouseEntity> virtualWarehouseList = FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
+        List<String> receiveAccountList = list.stream().map(SoInfoDTO.PagingViewDTO::getReceiveAccount).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<BankAccountEntity> bankAccountList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(receiveAccountList)) {
+            bankAccountList = bankAccountService.listByIds(receiveAccountList);
+        }
+        // 字典值获取
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        Map<String, List<DictBasicEntity>> dictBasicMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        List<DictBasicEntity> receiveMethodList = dictBasicMap.get(DictBasicTypeEnum.RECEIVE_METHOD.getType());
+
+        // 收款条件
+        List<KingdeeReceiptConditionEntity> receiveConditionList = kingdeeReceiptConditionService.list();
+
         //销售出库单列表
         List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
+            BankAccountEntity bankAccountEntity = bankAccountList.stream().filter(b -> CharSequenceUtil.equals(b.getId(), item.getReceiveAccount())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(bankAccountEntity)) {
+                item.setReceiveAccountName(bankAccountEntity.getAccountName());
+            }
+            DictBasicEntity dictBasicEntity = receiveMethodList.stream().filter(obj -> Objects.equals(obj.getValue(), item.getReceiveMethod())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+                item.setReceiveMethodName(dictBasicEntity.getName());
+            }
+            String addressTypeName = CustomerAddressTypeEnum.getName(item.getAddressType());
+            item.setAddressTypeName(addressTypeName);
+            KingdeeReceiptConditionEntity kingdeeReceiptConditionEntity = receiveConditionList.stream().filter(obj -> Objects.equals(obj.getId(), item.getReceiveCondition())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(kingdeeReceiptConditionEntity)) {
+                item.setReceiveConditionName(kingdeeReceiptConditionEntity.getName());
+            }
+            String deliveryModeName = DeliveryModeEnum.getName(item.getDeliveryMode());
+            item.setDeliveryModeName(deliveryModeName);
             List<String> curApproveName = processTaskManagementEntities.stream().filter(req -> req.getBusinessId().equals(item.getId()) && req.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)).map(ProcessTaskManagementEntity::getCurApproveName).distinct().collect(Collectors.toList());
             String userName = StringUtils.join(curApproveName, ",");
             item.setApproveUserName(userName);

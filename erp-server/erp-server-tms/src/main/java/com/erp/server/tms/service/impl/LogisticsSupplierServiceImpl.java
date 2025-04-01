@@ -435,6 +435,14 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
     }
 
     @Override
+    public List<LogisticsSupplierEntity> listByShortName(List<String> shortSupplierNameList) {
+        if(CollectionUtils.isEmpty(shortSupplierNameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(LogisticsSupplierEntity::getShortName, shortSupplierNameList).list();
+    }
+
+    @Override
     public PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto) {
         LogisticsSupplierDTO.ExportDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());

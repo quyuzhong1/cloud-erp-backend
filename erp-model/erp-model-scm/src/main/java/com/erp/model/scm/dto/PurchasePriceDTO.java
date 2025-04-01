@@ -1,8 +1,9 @@
 package com.erp.model.scm.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -179,6 +180,10 @@ public class PurchasePriceDTO implements Serializable {
          */
         @NotNull(message = "是否加急不能为空")
         private Boolean isUrgent = false;
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
 
         /**
          * 备注

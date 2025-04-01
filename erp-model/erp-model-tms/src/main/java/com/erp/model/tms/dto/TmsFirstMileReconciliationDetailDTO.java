@@ -194,7 +194,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
                 return "0".concat(this.getActualWeightUnit());
             }
             return actualWeight.setScale(2, RoundingMode.DOWN)
-                    .stripTrailingZeros().toString()
+                    .toString()
                     .concat(this.getActualWeightUnit());
         }
 
@@ -204,7 +204,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
                 return "0".concat(this.getBillingWeightUnit());
             }
             return billingWeight.setScale(2, RoundingMode.DOWN)
-                    .stripTrailingZeros().toString()
+                    .toString()
                     .concat(this.getBillingWeightUnit());
         }
 
@@ -214,7 +214,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
                 return "0".concat(this.getVolumeWeightUnit());
             }
             return volumeWeight.setScale(2, RoundingMode.DOWN)
-                    .stripTrailingZeros().toString()
+                    .toString()
                     .concat(this.getVolumeWeightUnit());
         }
     }

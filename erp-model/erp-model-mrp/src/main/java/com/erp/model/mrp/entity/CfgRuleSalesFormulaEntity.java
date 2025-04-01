@@ -81,6 +81,13 @@ public class CfgRuleSalesFormulaEntity extends BaseEntity<CfgRuleSalesFormulaEnt
     @TableField(value = "percent_json", jdbcType = JdbcType.OTHER)
     private JSONObject percentJson;
 
+
+    /**
+     * sku类型 新品/常规品
+     */
+    @TableField("sku_type")
+    private String skuType;
+
     /**
      * 百分比对象
      */

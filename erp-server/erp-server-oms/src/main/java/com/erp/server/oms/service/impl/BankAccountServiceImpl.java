@@ -117,6 +117,13 @@ public class BankAccountServiceImpl extends SuperServiceImpl<BankAccountMapper, 
     }
 
     @Override
+    public List<BankAccountEntity> listByAccountList(List<String> receiveAccountList) {
+        if (CollectionUtils.isEmpty(receiveAccountList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(BankAccountEntity::getBankAccountNo,receiveAccountList).list();
+    }
+    @Override
     public PagingVO<BankAccountDTO.PagingViewDTO> paging(PagingDTO<BankAccountDTO.PagingParamDTO> dto) {
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         BankAccountDTO.PagingParamDTO params = dto.getParams();
