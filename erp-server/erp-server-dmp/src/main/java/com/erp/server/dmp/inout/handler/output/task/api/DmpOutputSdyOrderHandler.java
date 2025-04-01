@@ -203,7 +203,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
             }
-            shudiyunB2cOrderDTO.setStatus("已创建");
+            if(dmpSoInfoEntity.getInvalidStatus() != null && dmpSoInfoEntity.getInvalidStatus()) {
+            	shudiyunB2cOrderDTO.setStatus("已删除");
+            }else {
+            	shudiyunB2cOrderDTO.setStatus("已创建");
+            }
 
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
 
