@@ -236,21 +236,21 @@ public class SyncSdyJob {
                         } else {
                             // 其他平台推送
                             // 原始同步数帝云
-                            syncSoB2cService.syncDataToSdy(soB2cEntity,
-                                    detailEntityList,
-                                    SyncOperateEnum.OPERATE_APPROVE.getCode(),
-                                    skuVOList,
-                                    bomChildrenSkuDTOS,
-                                    parentSkuList,
-                                    listingInfoEntities,
-                                    currencyList,
-                                    dictCurrencyEntities,
-                                    shopInfoList,
-                                    customerInfoList,
-                                    companyEntities,
-                                    dictBasicEntityList,
-                                    dictList
-                            );
+//                            syncSoB2cService.syncDataToSdy(soB2cEntity,
+//                                    detailEntityList,
+//                                    SyncOperateEnum.OPERATE_APPROVE.getCode(),
+//                                    skuVOList,
+//                                    bomChildrenSkuDTOS,
+//                                    parentSkuList,
+//                                    listingInfoEntities,
+//                                    currencyList,
+//                                    dictCurrencyEntities,
+//                                    shopInfoList,
+//                                    customerInfoList,
+//                                    companyEntities,
+//                                    dictBasicEntityList,
+//                                    dictList
+//                            );
                         }
                     }
                     // 未出库跳过
@@ -264,21 +264,21 @@ public class SyncSdyJob {
                     // 海外仓出库单出库推送
                     if (outstockEntityList.stream().anyMatch(e->e.getSoId().equalsIgnoreCase(soB2cEntity.getId()))){
                         // 原始同步数帝云
-                        syncSoB2cService.syncDataToSdy(soB2cEntity,
-                                detailEntityList,
-                                SyncOperateEnum.OPERATE_APPROVE.getCode(),
-                                skuVOList,
-                                bomChildrenSkuDTOS,
-                                parentSkuList,
-                                listingInfoEntities,
-                                currencyList,
-                                dictCurrencyEntities,
-                                shopInfoList,
-                                customerInfoList,
-                                companyEntities,
-                                dictBasicEntityList,
-                                dictList
-                        );
+//                        syncSoB2cService.syncDataToSdy(soB2cEntity,
+//                                detailEntityList,
+//                                SyncOperateEnum.OPERATE_APPROVE.getCode(),
+//                                skuVOList,
+//                                bomChildrenSkuDTOS,
+//                                parentSkuList,
+//                                listingInfoEntities,
+//                                currencyList,
+//                                dictCurrencyEntities,
+//                                shopInfoList,
+//                                customerInfoList,
+//                                companyEntities,
+//                                dictBasicEntityList,
+//                                dictList
+//                        );
                     }
                     // 未出库跳过
                     continue;
@@ -303,24 +303,24 @@ public class SyncSdyJob {
             List<SoB2cDeliveryDetailEntity> allDeliveryDetail = soB2cDeliveryDetailEntityList.stream().filter(e -> e.getMainId().equalsIgnoreCase(soB2cDeliveryEntity.getId())).collect(Collectors.toList());
             for (SoB2cDeliveryDetailEntity soB2cDeliveryDetailEntity : allDeliveryDetail) {
                 // 自发货推送
-                syncSoB2cService.hisSyncSelfDataToSdy(
-                        soB2cEntity,
-                        soB2cDetailEntityList,
-                        soB2cDeliveryEntity,
-                        allDeliveryDetail,
-                        soB2cDeliveryDetailEntity,
-                        SyncOperateEnum.OPERATE_APPROVE.getCode(),
-                        skuVOList,
-                        bomChildrenSkuDTOS,
-                        parentSkuList,
-                        listingInfoEntities,
-                        currencyList,
-                        dictCurrencyEntities,
-                        shopInfoList,
-                        customerInfoList,
-                        companyEntities,
-                        dictBasicEntityList,
-                        dictList);
+//                syncSoB2cService.hisSyncSelfDataToSdy(
+//                        soB2cEntity,
+//                        soB2cDetailEntityList,
+//                        soB2cDeliveryEntity,
+//                        allDeliveryDetail,
+//                        soB2cDeliveryDetailEntity,
+//                        SyncOperateEnum.OPERATE_APPROVE.getCode(),
+//                        skuVOList,
+//                        bomChildrenSkuDTOS,
+//                        parentSkuList,
+//                        listingInfoEntities,
+//                        currencyList,
+//                        dictCurrencyEntities,
+//                        shopInfoList,
+//                        customerInfoList,
+//                        companyEntities,
+//                        dictBasicEntityList,
+//                        dictList);
             }
         }
     }
@@ -333,24 +333,24 @@ public class SyncSdyJob {
         for (AliexpressDeliveryEntity aliexpressDeliveryEntity : aliexpressDeliveryList) {
             List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = detailAliexpressDeliveryList.stream().filter(e -> e.getMainId().equalsIgnoreCase(aliexpressDeliveryEntity.getId())).collect(Collectors.toList());
             for (AliexpressDeliveryDetailEntity aliexpressDeliveryDetailEntity : aliexpressDeliveryDetailEntityList) {
-                syncSoB2cService.hisSyncAliExpressDataToSdyFieldHandler(
-                        soB2cEntity,
-                        soB2cDetailEntityList,
-                        aliexpressDeliveryEntity,
-                        aliexpressDeliveryDetailEntityList,
-                        aliexpressDeliveryDetailEntity,
-                        SyncOperateEnum.OPERATE_APPROVE.getCode(),
-                        skuVOList,
-                        bomChildrenSkuDTOS,
-                        parentSkuList,
-                        listingInfoEntities,
-                        currencyList,
-                        dictCurrencyEntities,
-                        shopInfoList,
-                        customerInfoList,
-                        companyEntities,
-                        dictBasicEntityList,
-                        dictList);
+//                syncSoB2cService.hisSyncAliExpressDataToSdyFieldHandler(
+//                        soB2cEntity,
+//                        soB2cDetailEntityList,
+//                        aliexpressDeliveryEntity,
+//                        aliexpressDeliveryDetailEntityList,
+//                        aliexpressDeliveryDetailEntity,
+//                        SyncOperateEnum.OPERATE_APPROVE.getCode(),
+//                        skuVOList,
+//                        bomChildrenSkuDTOS,
+//                        parentSkuList,
+//                        listingInfoEntities,
+//                        currencyList,
+//                        dictCurrencyEntities,
+//                        shopInfoList,
+//                        customerInfoList,
+//                        companyEntities,
+//                        dictBasicEntityList,
+//                        dictList);
             }
         }
     }
