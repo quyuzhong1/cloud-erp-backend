@@ -148,11 +148,6 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						Object newSellerOrderAmount = promotionFeeMap.get("amount");
 						if (newSellerOrderAmount != null) {
 							dmpDataMap.put("afterTaxPayAmount", newSellerOrderAmount);
-							if (payAmount.compareTo(BigDecimal.ZERO) > 0){
-								// 税金 = 税前支付金额 - 税后支付金额
-								BigDecimal totalTaxFee = payAmount.subtract(new BigDecimal(newSellerOrderAmount.toString()));
-								dmpDataMap.put("totalTaxFee", totalTaxFee);
-							}
 						}
 					}
 
