@@ -128,10 +128,36 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						Map<String, Object> orderAmountMap = (Map) orderAmountObj;
 						Object amount = orderAmountMap.get("amount");
 						if (amount != null) {
-							dmpDataMap.put("totalDiscount", MathUtil.valueOf(amount).subtract(payAmount));
+//							dmpDataMap.put("totalDiscount", MathUtil.valueOf(amount).subtract(payAmount));
 							dmpDataMap.put("allAmount", amount);
 						}
 					}
+
+					// 总优惠金额
+					Object promotionFeeObj = detailData.get("promotion_fee");
+					if(promotionFeeObj != null) {
+						Map<String, Object> promotionFeeMap = (Map) promotionFeeObj;
+						Object promotionFee = promotionFeeMap.get("amount");
+						if (promotionFee != null) {
+							dmpDataMap.put("totalDiscount",promotionFee);
+						}
+					}
+
+					// 税后支付金额
+					Object newSellerOrderAmountObj = detailData.get("new_seller_order_amount");
+					if(newSellerOrderAmountObj != null) {
+						Map<String, Object> promotionFeeMap = (Map) newSellerOrderAmountObj;
+						Object newSellerOrderAmount = promotionFeeMap.get("amount");
+						if (newSellerOrderAmount != null) {
+							dmpDataMap.put("afterTaxPayAmount", newSellerOrderAmount);
+							if (payAmount.compareTo(BigDecimal.ZERO) > 0){
+								// 税金 = 税前支付金额 - 税后支付金额
+								BigDecimal totalTaxFee = payAmount.subtract(new BigDecimal(newSellerOrderAmount.toString()));
+								dmpDataMap.put("totalTaxFee", totalTaxFee);
+							}
+						}
+					}
+
 
 					//退款
 					Object refundInfoObj = detailData.get("refund_info");

@@ -22,6 +22,10 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -42,6 +46,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -162,10 +167,25 @@ public class SdyDataSyncJob {
                         .in(ProductDetailEntity::getId, parentSkuId)
                         .list();
             }
-            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
+            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
 
-            List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-            List<DictBasicEntity> dictList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
+            // 军区信息
+            List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+            // 国家信息
+            List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+            // 子区域信息
+            List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+            // 部门信息
+            List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
 
             for (SoOutstockEntity soOutstockEntity : list) {
                 List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailEntityList.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
@@ -181,8 +201,13 @@ public class SdyDataSyncJob {
                         parentSkuList,
                         soB2cEntities,
                         soInfoEntities,
+                        Collections.emptyList(),
                         dictBasicEntityList,
-                        dictList);
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList
+                );
             }
             currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
