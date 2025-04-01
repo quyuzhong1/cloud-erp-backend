@@ -395,6 +395,10 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
 
         //总优惠
         orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
+        // 税金
+        orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+        // 税后支付金额
+        orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
 
         //B2C销售订单买家信息表
         orderDTO.setReceiver(parseReceiver(dmpSoInfoEntity, dmpSoReceiverEntityList.get(0)));

@@ -213,7 +213,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
 
 
-            if (dmpSoInfoEntity.getSourceSystem().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            if (dmpSoInfoEntity.getSourceSystem().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
                 shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getAfterTaxAmount());
             } else {
                 shudiyunB2cOrderDTO.setBuyer_actual_payment(dmpSoInfoEntity.getPayAmount());

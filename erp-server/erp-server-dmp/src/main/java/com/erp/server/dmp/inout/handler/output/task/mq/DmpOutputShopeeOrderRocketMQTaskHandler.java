@@ -202,6 +202,11 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
 		// 订单状态
 		orderDTO.setIsCancel(dmpSoInfoEntity.getIsCancel());
 
+		// 税金
+		orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+		// 税后支付金额
+		orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
+
 		if(dmpSoReceiverEntity != null) {
         	PlatformOrderReceiverDTO receiver = PlatformOrderReceiverDTO.builder()
 	            .loginId(dmpSoReceiverEntity.getBuyerId())
