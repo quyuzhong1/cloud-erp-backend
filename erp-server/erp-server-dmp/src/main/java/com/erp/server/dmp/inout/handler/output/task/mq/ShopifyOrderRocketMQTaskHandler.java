@@ -351,6 +351,8 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setSyncKingdeeStatus("0");
         orderDTO.setInvalidStatus(Boolean.FALSE);
 
+        orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
+
         //付款状态
         if (dmpSoInfoEntity.getPayTime() != null) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
