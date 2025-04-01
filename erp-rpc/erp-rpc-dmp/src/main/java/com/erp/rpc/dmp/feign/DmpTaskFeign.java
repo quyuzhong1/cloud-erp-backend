@@ -72,6 +72,16 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getRate")
     BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
+    
+    /**
+     * 获取月份汇率
+     *
+     * @param date
+     * @param sourceCurrencyCode
+     * @return
+     */
+    @PostMapping("feign/getMonthRate")
+    BigDecimal getMonthRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
 
 
     /**

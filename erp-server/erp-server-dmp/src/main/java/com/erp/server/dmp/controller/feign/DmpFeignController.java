@@ -142,6 +142,18 @@ public class DmpFeignController extends BaseController {
     public BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode) {
         return biSettlementExchangeRateService.findByCurrencyAndDate(date, sourceCurrencyCode);
     }
+    
+    /**
+     * 获取月度汇率
+     *
+     * @param date
+     * @param sourceCurrencyCode
+     * @return
+     */
+    @PostMapping("/getMonthRate")
+    public BigDecimal getMonthRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode) {
+    	return biSettlementExchangeRateService.findByCurrencyAndMonth(date, sourceCurrencyCode);
+    }
 
     /**
      * 从DmpSyncTask中查询金蝶的单据编号
