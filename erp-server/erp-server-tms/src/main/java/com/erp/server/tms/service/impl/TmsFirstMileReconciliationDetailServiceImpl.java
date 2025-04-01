@@ -1514,18 +1514,19 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<FirstMileReconciliationStandardExcelDTO> successList,
             List<FirstMileReconciliationStandardExcelDTO> errorList) {
         List<FirstMileReconciliationStandardExcelDTO> resultList = new ArrayList<>();
-
+        //序号唯一的设置到结果集合里
+        List<FirstMileReconciliationStandardExcelDTO> singleEntryList = new ArrayList<>();
         // 重量校验：当存在一致的序号时，是否有装箱重量
         if (CollUtil.isNotEmpty(successList)) {
             Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
                     .collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
 
             //序号唯一的设置到结果集合里
-            List<FirstMileReconciliationStandardExcelDTO> singleEntryList = successMap.entrySet().stream()
+            singleEntryList = successMap.entrySet().stream()
                     .filter(entry -> entry.getValue().size() == 1)
                     .flatMap(entry -> entry.getValue().stream())
                     .collect(Collectors.toList());
-            resultList.addAll(singleEntryList);
+
 
             Map<String, List<FirstMileReconciliationStandardExcelDTO>> excelMap = successMap
                     .entrySet().stream()
@@ -1626,6 +1627,8 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 throw new ServiceException("处理重量和成本分摊失败，请稍后重试");
             }
         }
+
+        resultList.addAll(singleEntryList);
         return resultList;
     }
 
