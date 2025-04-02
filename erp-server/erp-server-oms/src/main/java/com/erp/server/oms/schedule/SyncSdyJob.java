@@ -20,11 +20,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -246,7 +242,7 @@ public class SyncSdyJob {
             List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
             // 部门信息
-            List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
             for (SoB2cEntity soB2cEntity : list) {
                 SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
@@ -386,7 +382,7 @@ public class SyncSdyJob {
                                       List<DictPartitionEntity> partitionEntityList,
                                       List<DictCountryEntity> countryEntityList,
                                       List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                      List<SysDepartmentDTO> deptList) {
+                                      List<SysDepartmentEntity> deptList) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryEntityMap.get(soB2cEntity.getId());
         if (CollectionUtils.isEmpty(soB2cDeliveryEntityList)){
             return;
@@ -439,7 +435,7 @@ public class SyncSdyJob {
                                         List<DictPartitionEntity> partitionEntityList,
                                         List<DictCountryEntity> countryEntityList,
                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                        List<SysDepartmentDTO> deptList
+                                        List<SysDepartmentEntity> deptList
     ) {
         List<AliexpressDeliveryEntity> aliexpressDeliveryList = aliexpressDeliveryMap.get(soB2cEntity.getId());
         if (CollectionUtils.isEmpty(aliexpressDeliveryList)){

@@ -28,6 +28,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -185,7 +186,7 @@ public class SdyDataSyncJob {
             List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
             // 部门信息
-            List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
             for (SoOutstockEntity soOutstockEntity : list) {
                 List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailEntityList.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
@@ -332,7 +333,7 @@ public class SdyDataSyncJob {
             List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
             // 部门信息
-            List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
             for (SoReturnInstockEntity entity : list) {
                 // 国家

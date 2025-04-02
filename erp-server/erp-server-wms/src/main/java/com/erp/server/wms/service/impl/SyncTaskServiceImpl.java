@@ -28,6 +28,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -1156,7 +1157,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
         // 部门信息
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -1300,7 +1301,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
         // 部门信息
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {

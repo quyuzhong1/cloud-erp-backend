@@ -8,10 +8,10 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.*;
 
 import java.util.List;
@@ -40,7 +40,7 @@ public interface SyncSoReturnInstockService {
                                                   List<DictPartitionEntity> partitionEntityList,
                                                   List<DictCountryEntity> countryEntityList,
                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                  List<SysDepartmentDTO> deptList
+                                                  List<SysDepartmentEntity> deptList
     );
 
     /**
@@ -65,7 +65,7 @@ public interface SyncSoReturnInstockService {
                        List<DictPartitionEntity> partitionEntityList,
                        List<DictCountryEntity> countryEntityList,
                        List<DictGlobalAreaEntity> dictGlobalEntityList,
-                       List<SysDepartmentDTO> deptList
+                       List<SysDepartmentEntity> deptList
     );
 
     /**

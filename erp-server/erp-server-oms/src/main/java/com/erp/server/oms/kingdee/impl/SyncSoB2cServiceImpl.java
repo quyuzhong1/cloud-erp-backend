@@ -15,6 +15,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -23,11 +24,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
@@ -84,7 +81,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                          List<DictPartitionEntity> partitionEntityList,
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                         List<SysDepartmentDTO> deptList
+                                                         List<SysDepartmentEntity> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -181,7 +178,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                      List<DictPartitionEntity> partitionEntityList,
                                      List<DictCountryEntity> countryEntityList,
                                      List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                     List<SysDepartmentDTO> deptList
+                                     List<SysDepartmentEntity> deptList
 
     ) {
         // 字典分组
@@ -375,21 +372,38 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
         }
 
+        // 国家编码
+        String countryCode = "";
+        // 国家名称
+        String countryName = "";
+        // 区域编码
+        String regionCode = "";
+        // 区域名称
+        String regionName = "";
+        // 军区编码
+        String militaryRegionCode = "";
+        // 军区名称
+        String militaryRegionName = "";
+        // 部门编码
+        String departmentCode = "";
+        // 部门名称
+        String departmentName= "";
+
         if (null != receiverEntity){
             String partitionId = receiverEntity.getPartitionId();
             DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(partitionId)).findFirst().orElse(null);
             if (null != dictPartitionEntity){
                 // 军区编码
-                shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
+                militaryRegionCode = dictPartitionEntity.getCode();
                 // 军区名称
-                shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
+                militaryRegionName = dictPartitionEntity.getName();
                 // 军区一级部门映射
                 DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
                 // 销售平台二级部门映射
                 List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).collect(Collectors.toList());
                 if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
                     List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-                    SysDepartmentDTO departmentDTO = deptList.stream().filter(e ->
+                    SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
                                     e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
                                             && deptLevel2Ids.contains(e.getId())
                             )
@@ -397,30 +411,46 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                             .orElse(null);
                     if (null != departmentDTO){
                         // 部门编码
-                        shudiyunB2cOrderDTO.setDepartment_code(departmentDTO.getCode());
+                        departmentCode = departmentDTO.getCode();
                         // 部门名称
-                        shudiyunB2cOrderDTO.setDepartment_name(departmentDTO.getName());
+                        departmentName = departmentDTO.getName();
                     }
                 }
             }
 
             if (StringUtils.isNotBlank(receiverEntity.getCountry())){
                 String country = receiverEntity.getCountry();
-                // 国家编码
-                shudiyunB2cOrderDTO.setCountry_code(country);
+                countryCode = country;
                 DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(country)).findFirst().orElse(null);
                 if (null != dictCountryEntity){
                     // 国家名称
-                    shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
+                    countryName = dictCountryEntity.getShortNameCn();
                     // 区域编码
-                    shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
+                    regionCode = dictCountryEntity.getSubregionCode();
                     // 区域名称
                     DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
                     if (null != dictGlobalAreaEntity){
-                        shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
+                        regionName = dictGlobalAreaEntity.getSubregionName();
                     }
                 }
             }
+
+            // 国家编码
+            shudiyunB2cOrderDTO.setCountry_code(countryCode);
+            // 国家名称
+            shudiyunB2cOrderDTO.setCountry(countryName);
+            // 区域编码
+            shudiyunB2cOrderDTO.setRegion_code(regionCode);
+            // 区域名称
+            shudiyunB2cOrderDTO.setRegion_name(regionName);
+            // 军区编码
+            shudiyunB2cOrderDTO.setMilitary_region_code(militaryRegionCode);
+            // 军区名称
+            shudiyunB2cOrderDTO.setMilitary_region_name(militaryRegionName);
+            // 部门编码
+            shudiyunB2cOrderDTO.setDepartment_code(departmentCode);
+            // 部门名称
+            shudiyunB2cOrderDTO.setDepartment_name(departmentName);
         }
     }
 
@@ -466,7 +496,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                               List<DictPartitionEntity> partitionEntityList,
                               List<DictCountryEntity> countryEntityList,
                               List<DictGlobalAreaEntity> dictGlobalEntityList,
-                              List<SysDepartmentDTO> deptList
+                              List<SysDepartmentEntity> deptList
     ) {
         for (SoB2cDetailEntity soB2cDetailEntity : detailEntityList) {
             if (StringUtils.isBlank(soB2cDetailEntity.getSkuId()) || StringUtils.isBlank(soB2cDetailEntity.getSkuNo())) {
@@ -596,7 +626,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                 List<DictPartitionEntity> partitionEntityList,
                                                                 List<DictCountryEntity> countryEntityList,
                                                                 List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                                List<SysDepartmentDTO> deptList
+                                                                List<SysDepartmentEntity> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -713,7 +743,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                    List<DictPartitionEntity> partitionEntityList,
                                                                    List<DictCountryEntity> countryEntityList,
                                                                    List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                                   List<SysDepartmentDTO> deptList
+                                                                   List<SysDepartmentEntity> deptList
     ) {
         ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
 
@@ -1055,7 +1085,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<DictPartitionEntity> partitionEntityList,
             List<DictCountryEntity> countryEntityList,
             List<DictGlobalAreaEntity> dictGlobalEntityList,
-            List<SysDepartmentDTO> deptList
+            List<SysDepartmentEntity> deptList
 
     ){
         Map<String, BigDecimal> deliveryDetailPriceMap = convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
@@ -1114,7 +1144,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<DictPartitionEntity> partitionEntityList,
             List<DictCountryEntity> countryEntityList,
             List<DictGlobalAreaEntity> dictGlobalEntityList,
-            List<SysDepartmentDTO> deptList
+            List<SysDepartmentEntity> deptList
     ) {
         // 计算自发货明细单价
         Map<String, BigDecimal> deliveryDetailPriceMap = convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList);

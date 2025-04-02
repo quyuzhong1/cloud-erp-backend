@@ -723,7 +723,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Collections.singletonList(entity.getCustomerId()));
 
         //部门信息
-//        SysDepartmentDTO dept = CharSequenceUtil.isNotBlank(deptId) ? sysUserFeign.getUserDeptById(deptId) : null;
+//        SysDepartmentEntity dept = CharSequenceUtil.isNotBlank(deptId) ? sysUserFeign.getUserDeptById(deptId) : null;
         //查询供应商信息
         SupplierEntity supplierEntity = null;
         if (CharSequenceUtil.isNotBlank(entity.getCarrierId())) {
@@ -1108,7 +1108,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                                                          List<DictPartitionEntity> partitionEntityList,
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                         List<SysDepartmentDTO> deptList) {
+                                                         List<SysDepartmentEntity> deptList) {
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
@@ -1198,7 +1198,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
             if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
                 List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-                SysDepartmentDTO departmentDTO = deptList.stream().filter(e ->
+                SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
                                 e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
                                         && deptLevel2Ids.contains(e.getId())
                         )
@@ -1375,7 +1375,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                               List<DictPartitionEntity> partitionEntityList,
                               List<DictCountryEntity> countryEntityList,
                               List<DictGlobalAreaEntity> dictGlobalEntityList,
-                              List<SysDepartmentDTO> deptList
+                              List<SysDepartmentEntity> deptList
     ) {
 
         for (SoOutstockDetailEntity detailEntity : detailEntities) {

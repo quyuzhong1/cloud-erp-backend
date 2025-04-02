@@ -20,10 +20,10 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
@@ -70,7 +70,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                                          List<DictPartitionEntity> partitionEntityList,
                                                          List<DictCountryEntity> countryEntityList,
                                                          List<DictGlobalAreaEntity> dictGlobalEntityList,
-                                                         List<SysDepartmentDTO> deptList
+                                                         List<SysDepartmentEntity> deptList
     ) {
 
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -255,7 +255,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
             if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
                 List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-                SysDepartmentDTO departmentDTO = deptList.stream().filter(e ->
+                SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
                                 e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
                                         && deptLevel2Ids.contains(e.getId())
                         )
@@ -295,7 +295,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                               List<DictPartitionEntity> partitionEntityList,
                               List<DictCountryEntity> countryEntityList,
                               List<DictGlobalAreaEntity> dictGlobalEntityList,
-                              List<SysDepartmentDTO> deptList
+                              List<SysDepartmentEntity> deptList
     ) {
         for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
