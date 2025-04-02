@@ -135,7 +135,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
         GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
         if (null != gatewayContext) {
             String data = gatewayContext.getRequestBody();
-            log.info("埋点接口待解析数据:{}", data);
+//            log.info("埋点接口待解析数据:{}", data);
             if (StringUtils.isNotBlank(data)) {
                 // 解析 JSON 获取 token 字段
                 try {
@@ -151,7 +151,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                         }
                         loginUser.setAccessToken(token);
                         request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
-                        log.info("埋点接口token解析成功:{}", data);
+//                        log.info("埋点接口token解析成功:{}", data);
                     }
                     log.warn("埋点接口未找到前端提交的token:{}", data);
                 } catch (Exception e) {
