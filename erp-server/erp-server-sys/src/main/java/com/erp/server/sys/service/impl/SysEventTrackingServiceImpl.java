@@ -50,7 +50,7 @@ public class SysEventTrackingServiceImpl extends SuperServiceImpl<SysEventTracki
         // 数据处理
         handleData(sysEventTrackingEntity, addDTO);
 
-        log.info("开始新增前端埋点事件记录");
+//        log.info("开始新增前端埋点事件记录");
         boolean save = super.save(sysEventTrackingEntity);
         if(!save) {
             throw new ServiceException("前端埋点事件记录保存失败");
