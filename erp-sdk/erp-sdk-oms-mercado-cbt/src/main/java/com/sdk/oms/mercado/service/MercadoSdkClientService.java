@@ -189,9 +189,9 @@ public class MercadoSdkClientService {
         String path = "/oauth/token?grant_type=refresh_token&client_id=%s&client_secret=%s&refresh_token=%s";
         ShopDTO.RefreshTokenDTO dto = new ShopDTO.RefreshTokenDTO();
         dto.setBaseUrl("https://api.mercadolibre.com");
-        dto.setClientId("3457166802805723");
-        dto.setClientSecret("QucvI4VWHO0w3AZftOElz5liVOurfjQG");
-        dto.setRefreshToken("TG-67c67d374499d20001e5286c-2201503196");
+        dto.setClientId("5344160433223219");
+        dto.setClientSecret("EmjY5QcfWZj54DoYjX2VeUu3XKrjIvk9");
+        dto.setRefreshToken("TG-67d91da9d5f83e00010dca5f-2119968271");
         String baseUrl = String.format(dto.getBaseUrl() + path, dto.getClientId(), dto.getClientSecret(), dto.getRefreshToken());
 
         //入参（无）

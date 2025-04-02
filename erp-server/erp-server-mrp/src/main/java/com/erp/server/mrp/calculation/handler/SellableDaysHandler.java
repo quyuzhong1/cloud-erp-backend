@@ -37,10 +37,6 @@ public class SellableDaysHandler extends AbstractSkuCalculationHandler {
 
     @Override
     public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
-        if  (replenishmentResultDTO.getReplenishment().getSkuId().equals("1619184278518632450") && replenishmentResultDTO.getReplenishment().getShopId().equals("1735117862084808706")) {
-            System.out.println("SellableDaysHandler.doHandle");
-
-        }
         CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
         ReplenishmentResultDTO.DetailDTO detail = replenishmentResultDTO.getReplenishmentDetail();
         List<ReplenishmentResultDTO.TimePeriodSalesEstimateDTO> estimates = replenishmentResultDTO.getAvgTimePeriodSalesEstimates();

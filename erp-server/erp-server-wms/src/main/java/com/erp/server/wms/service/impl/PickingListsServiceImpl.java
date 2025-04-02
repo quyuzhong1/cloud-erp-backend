@@ -434,14 +434,14 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //首先按照客户PO号做分组，相同PO号的明细组合在一起显示，按PO号升序排序
             //相同PO号的明细，按照现有规则，仓位升序排序
             //同一组PO号下，如果存在相同的SKU不同仓位，按照现有规则，需要将相同SKU明细组合在一起显示
-            LinkedHashMap<String, List<PickingListsDTO.PrintDetailView>> groupMap = views.stream()
+            List<PickingListsDTO.PrintDetailView> viewList = views.stream()
                     // 先按 CustomerPo 分组
                     .collect(Collectors.groupingBy(PickingListsDTO.PrintDetailView::getCustomerPo))
                     .values().stream()
                     // 平铺所有 CustomerPo 分组后的数据
                     .flatMap(customerPoViews -> customerPoViews.stream()
                             // 再按组合键分组并合并数量
-                            .collect(Collectors.groupingBy(v -> v.getThirdSku() + ":" + v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
+                            .collect(Collectors.groupingBy(v -> v.getCustomerPo() + v.getSkuNo() + ":" + v.getWarehouseId() + ":" + v.getWarehouseLocation(),
                                     Collectors.collectingAndThen(Collectors.toList(), list -> {
                                                 PickingListsDTO.PrintDetailView view = list.get(0);
                                                 view.setPickingQty(list.stream().mapToInt(PickingListsDTO.PrintDetailView::getPickingQty).sum());
@@ -451,18 +451,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             ))
                             .values().stream()
                     )
-                    // 按仓库位置排序
-                    .sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getWarehouseLocation))
-                    // 最终按 SkuNo 分组
-                    .collect(Collectors.groupingBy(e ->
-                            e.getCustomerPo() + ":" + e.getSkuNo(),
-                            LinkedHashMap::new,
-                            Collectors.toList()
-                    ));
-            //转换list形式
-            List<PickingListsDTO.PrintDetailView> viewList = groupMap.values()
-                    .stream()
-                    .flatMap(Collection::stream)
+                    .sorted(Comparator.comparing(PickingListsDTO.PrintDetailView::getCustomerPo)
+                            .thenComparing(PickingListsDTO.PrintDetailView::getWarehouseLocation)
+                    )
                     .collect(Collectors.toList());
             //相同sku去空格
             String currentSku = "";
@@ -815,10 +806,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
         List<String> soIds = noticeEntities.stream().map(SoDeliveryNoticeEntity::getSourceId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfos = new ArrayList<>();
-        List<SoDetailEntity> soDetailEntityList = new ArrayList<>();
         if (CollUtil.isNotEmpty(soIds)) {
             soInfos = soInfoFeign.listSoInfoByIds(soIds);
-            soDetailEntityList = soInfoFeign.listSoDetailByIds(soIds);
         }
         for (PickingListsEntity picking : pickingLists) {
             PickingListsDTO.PrintView printView = new PickingListsDTO.PrintView();
@@ -840,7 +829,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 printView.setHandlingUserName(soInfo.getCreateUserName());
             }
             List<PickingDetailEntity> details = detailList.stream().filter(v->v.getMainId().equals(picking.getId())).collect(Collectors.toList());
-            List<SoDetailEntity> finalSoDetailEntityList = soDetailEntityList;
             List<PickingListsDTO.PrintDetailView> views = details.stream().map(detail -> {
                 //匹配sku信息
                 SkuVO skuVO = skuVOList.stream()
@@ -860,12 +848,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                                 .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
                         view.setThirdSku(applicationDetail.getPlatformFnSku());
                     }
-                }else if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(picking.getSourceType())){
-                    SoDeliveryNoticeDetailEntity noticeDetail = noticeDetailEntities.stream().filter(v -> v.getId().equals(detail.getSourceDetailId()))
-                            .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST));
-                    finalSoDetailEntityList.stream().filter(v->v.getId().equals(noticeDetail.getSourceDetailId())).findFirst().ifPresent(v->{
-                        view.setCustomerPo(v.getCustomerPO());
-                    });
                 }
                 return view;
             }).collect(Collectors.toList());

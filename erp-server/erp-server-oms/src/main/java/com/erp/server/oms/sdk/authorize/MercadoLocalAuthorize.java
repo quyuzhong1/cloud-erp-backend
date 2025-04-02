@@ -25,7 +25,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
-import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
+import com.sdk.oms.mercadolocal.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercadolocal.dto.mercadolocal.PlatformMercadoRefreshTokenDTO;
 import com.sdk.oms.mercadolocal.dto.mercadolocal.PlatformMercadoTokenDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;

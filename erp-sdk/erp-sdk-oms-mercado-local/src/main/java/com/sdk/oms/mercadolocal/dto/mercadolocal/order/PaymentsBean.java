@@ -106,7 +106,7 @@ public class PaymentsBean {
     @JsonProperty("site_id")
     private String siteId;
     @JsonProperty("payer_id")
-    private int payerId;
+    private long payerId;
     @JsonProperty("order_id")
     private long orderId;
     @JsonProperty("currency_id")

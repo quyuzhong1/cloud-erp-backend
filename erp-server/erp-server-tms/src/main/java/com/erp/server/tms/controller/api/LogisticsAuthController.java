@@ -68,8 +68,10 @@ public class LogisticsAuthController extends BaseController {
         String logisticsPlatform = dto.getLogisticsPlatform();
         if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
-            authMap = logisticsAuthService.addShopeeShopAuth(authMap, logisticsPlatform);
+            authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
         }
         BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
         String id = result.getId();
@@ -126,7 +128,7 @@ public class LogisticsAuthController extends BaseController {
         String id = result.getId();
         if (StringUtils.isNotBlank(id)) {
             if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
-                authMap = logisticsAuthService.addShopeeShopAuth(authMap, logisticsPlatform);
+                authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
             }
             //先进行授权是否成功鉴权
             ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);

@@ -49,7 +49,7 @@ public enum PlatformDictEnum implements EnumMessage {
     KUAI_SHOU("kuaishou", "快手", "快手", "035"),
 
     MERCADOLIBRE("mercadolibre", "美客多-全球站", "美客多-全球站", "033"),
-    MERCADOLIBRE_LOCAL("mercadolibre_local", "美客多-本土站", "美客多-本土站", "333"),
+    MERCADOLIBRE_LOCAL("mercadolibreLocal", "美客多-本土站", "美客多-本土站", "333"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "032"),
     TIK_TOK_FULLY("TikTokFully", "TikTok全托管", "TikTok全托管", "032"),
     //物流平台
