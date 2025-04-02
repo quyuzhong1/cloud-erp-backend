@@ -62,7 +62,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                                          List<SoReturnEntity> soReturnEntityList,
                                                          List<SoReturnReceiveEntity> soReturnReceiveEntityList,
                                                          List<SoReturnEntity> receiveReturnList,
-                                                         String country,
+                                                         String countryCode,
                                                          String partitionId,
                                                          String dictPlatform,
                                                          List<DictBasicEntity> omsAllDictList,
@@ -227,26 +227,39 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNoInitial);
 
-        shudiyunB2cOrderDTO.setCountry_code(country);
-        DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(country)).findFirst().orElse(null);
+        // 国家编码
+        // 国家名称
+        String countryName = "";
+        // 区域编码
+        String regionCode = "";
+        // 区域名称
+        String regionName = "";
+        // 军区编码
+        String militaryRegionCode = "";
+        // 军区名称
+        String militaryRegionName = "";
+        // 部门编码
+        String departmentCode = "";
+        // 部门名称
+        String departmentName= "";
+
+        DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(countryCode)).findFirst().orElse(null);
         if (null != dictCountryEntity){
-            // 国家名称
-            shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
             // 区域编码
-            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
+            regionCode = dictCountryEntity.getSubregionCode();
             // 区域名称
             DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
             if (null != dictGlobalAreaEntity){
-                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
+                regionName = dictGlobalAreaEntity.getSubregionName();
             }
         }
 
         DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(partitionId)).findFirst().orElse(null);
         if (null != dictPartitionEntity){
             // 军区编码
-            shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
+            militaryRegionCode = dictPartitionEntity.getCode();
             // 军区名称
-            shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
+            militaryRegionName = dictPartitionEntity.getName();
             // 军区一级部门映射
             DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
             // 销售平台二级部门映射
@@ -262,12 +275,29 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                         .orElse(null);
                 if (null != departmentDTO){
                     // 部门编码
-                    shudiyunB2cOrderDTO.setDepartment_code(departmentDTO.getCode());
+                    departmentCode = departmentDTO.getCode();
                     // 部门名称
-                    shudiyunB2cOrderDTO.setDepartment_name(departmentDTO.getName());
+                    departmentName = departmentDTO.getName();
                 }
             }
         }
+        // 国家编码
+        shudiyunB2cOrderDTO.setCountry_code(countryCode);
+        // 国家名称
+        shudiyunB2cOrderDTO.setCountry(countryName);
+        // 区域编码
+        shudiyunB2cOrderDTO.setRegion_code(regionCode);
+        // 区域名称
+        shudiyunB2cOrderDTO.setRegion_name(regionName);
+        // 军区编码
+        shudiyunB2cOrderDTO.setMilitary_region_code(militaryRegionCode);
+        // 军区名称
+        shudiyunB2cOrderDTO.setMilitary_region_name(militaryRegionName);
+        // 部门编码
+        shudiyunB2cOrderDTO.setDepartment_code(departmentCode);
+        // 部门名称
+        shudiyunB2cOrderDTO.setDepartment_name(departmentName);
+
 
 
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
