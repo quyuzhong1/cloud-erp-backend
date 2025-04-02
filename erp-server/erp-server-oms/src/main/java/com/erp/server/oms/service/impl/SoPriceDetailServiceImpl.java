@@ -491,22 +491,29 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
      */
     @Override
     public SoPriceDetailDTO.ImportDTO importFile(MultipartFile excelFile, List<String> skuIds, HttpServletResponse response) {
-        //查询所有审核通过的sku
-        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
-        SoPriceDetailExcelListener excelListenerUtil = new SoPriceDetailExcelListener(skuList);
+
+        SoPriceDetailExcelListener excelListenerUtil = new SoPriceDetailExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), SoPriceDetailImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("导入错误！", e);
             throw new ServiceException(ApiError.ERROR_95124);
         }
+        //验证导入数据是否为空
+        List<SoPriceDetailImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+
         SoPriceDetailDTO.ImportDTO result = new SoPriceDetailDTO.ImportDTO();
         //导入数据处理
-        List<SoPriceDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
-
+        List<SoPriceDetailImportExcelDTO> successList = excelListenerUtil.getSuccessList();
         //导出错误数据
         List<SoPriceDetailImportExcelDTO> errorList = excelListenerUtil.getErrorList();
-        result.setSuccessList(successList);
+        //处理校验导入成功数据
+        List<SoPriceDetailDTO.AddDTO> addList = handleImportFile(successList, errorList);
+
+        result.setSuccessList(addList);
         String url = "";
         if (CollectionUtils.isNotEmpty(errorList)) {
             String fileName = "销售价目详情错误.xlsx";
@@ -518,7 +525,47 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
         result.setErrorUrl(url);
         return result;
     }
-
+    /**
+     * 导入数据处理
+     * @author will
+     * @date 2025/4/2 11:26
+     * @param successList
+     * @param errorList
+     * @return java.util.List<com.erp.model.oms.dto.SoPriceDetailDTO.AddDTO>
+     */
+    private List<SoPriceDetailDTO.AddDTO> handleImportFile(List<SoPriceDetailImportExcelDTO> successList, List<SoPriceDetailImportExcelDTO> errorList) {
+        if (CollectionUtils.isEmpty(successList)) {
+            return Collections.emptyList();
+        }
+        //查询所有审核通过的sku
+        List<SkuVO> skuList = plmTaskFeign.listApproveSku();
+        List<SoPriceDetailDTO.AddDTO> resultList = new ArrayList<>();
+        for (SoPriceDetailImportExcelDTO excelDTO : successList) {
+            SoPriceDetailDTO.AddDTO addDTO = new SoPriceDetailDTO.AddDTO();
+            //注解验证信息
+            List<String> errorMsgList = new ArrayList<>();
+            SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(excelDTO.getSkuNo())).findFirst().orElse(null);
+            if (Objects.isNull(skuEntity)) {
+                errorMsgList.add("未找到SKU信息");
+            }
+            //存在错误数据则直接返回
+            if (!errorMsgList.isEmpty()) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+            }
+            String effectiveDateStr = excelDTO.getEffectiveDateStr();
+            addDTO.setExpireDate(LocalDateUtil.parseStrToLocalDate(effectiveDateStr));
+            addDTO.setEffectiveDate(LocalDateUtil.parseStrToLocalDate(effectiveDateStr));
+            addDTO.setMinQty(Integer.valueOf(excelDTO.getMinQty()));
+            addDTO.setMaxQty(Integer.valueOf(excelDTO.getMaxQty()));
+            addDTO.setTaxPrice(MathUtil.valueOf(excelDTO.getTaxPrice()));
+            addDTO.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRate()));
+            addDTO.setSkuId(skuEntity.getSkuId());
+            addDTO.setSkuNo(skuEntity.getSkuNo());
+            resultList.add(addDTO);
+        }
+        return resultList;
+    }
 
     /**
      * 批量更改禁用状态
