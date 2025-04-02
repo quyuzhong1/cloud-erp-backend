@@ -210,7 +210,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public Map<String, String> addShopeeShopAuth(Map<String, String> authMap, String logisticsPlatform) {
+    public Map<String, String> addShopAuth(Map<String, String> authMap, String logisticsPlatform) {
         //获取oms已授权店铺
         ApiResult<List<ShopAuthEntity>> result = null;
         try {
@@ -218,6 +218,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
                 result = shopInfoFeign.getShopListByParam(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode(),"");
             }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.TIK_TOK.getCode());
+            }else if(LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.TIK_TOK_FULLY.getCode());
             }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
                 result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE.getCode());
             }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
@@ -259,6 +261,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
             appClientEnum = AppClientEnum.TIKTOK_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.TIKTOK_FULLY_ACCESS_TOKEN;
         }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
             appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
         }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
@@ -283,7 +287,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
             authMap.put("shopId",shopAuthEntity.getShopeeId());
             authMap.put("token",shopAuthEntity.getAccessToken());
             authMap.put("host",cfgAppClient.getUrl());
-        }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
+        }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());
         }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
             authMap.put("shopId",shopAuthEntity.getShopId());

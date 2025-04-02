@@ -163,35 +163,6 @@ public class FullyManagedOrderController extends BaseController {
         soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return success(add.getCode());
     }
-
-    /**
-     * 批量更新报关
-     * @param ids
-     * @return
-     */
-    @PostMapping("/batchUpdateDeclare")
-    public ApiResult<List<BatchResultDTO>> batchUpdateDeclare(@RequestBody List<String> ids){
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        for (String id : ids) {
-            BatchResultDTO submit;
-            try {
-                submit = soB2cService.declareRule(id, new HashMap<>(), Boolean.TRUE, true);
-            } catch (Exception e) {
-                log.error("全平台销售订单 批量更新报关异常", e);
-
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "全平台销售订单不存在, 批量更新报关失败");
-                    resultDTOS.add(submit);
-                    continue;
-                }
-                submit = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(submit);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
     /**
      * 修改
      *
@@ -722,12 +693,6 @@ public class FullyManagedOrderController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getIds().size()>100){
             throw new ServiceException("批量提交发货数据条数不能超过100");
-        }
-        //订单自动预报 不影响提交发货流程
-        try {
-            soB2cService.autoOrderForecast(dto.getIds());
-        }catch (Exception e){
-            log.error("订单自动预报",e);
         }
         for (String id : dto.getIds()) {
             BatchResultDTO result;
