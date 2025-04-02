@@ -25,10 +25,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
@@ -335,6 +332,9 @@ public class SdyDataSyncJob {
             // 部门信息
             List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
+            // 国家关联分区信息
+            List<CfgCountryPartitionEntity> countryPartitionEntityList = FeignQuery.create(CfgCountryPartitionEntity.class).list();
+
             for (SoReturnInstockEntity entity : list) {
                 // 国家
                 String country = "";
@@ -386,7 +386,8 @@ public class SdyDataSyncJob {
                         partitionEntityList,
                         countryEntityList,
                         dictGlobalEntityList,
-                        deptList
+                        deptList,
+                        countryPartitionEntityList
                 );
             }
             currentPage++;
