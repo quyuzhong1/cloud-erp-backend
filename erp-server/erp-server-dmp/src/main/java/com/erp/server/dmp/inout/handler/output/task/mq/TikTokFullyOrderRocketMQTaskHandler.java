@@ -195,18 +195,10 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         orderDTO.setLabelJson(label.toJSONString());
 
         JSONObject orderExtendJson = new JSONObject();
-        if (extendDataJson.containsKey("deliveryQty")) {
-            orderExtendJson.put("deliveryQty", extendDataJson.get("deliveryQty"));
-        }
-        if (extendDataJson.containsKey("receiveQty")) {
-            orderExtendJson.put("receiveQty", extendDataJson.get("receiveQty"));
-        }
-        if (extendDataJson.containsKey("instockQty")) {
-            orderExtendJson.put("instockQty", extendDataJson.get("instockQty"));
-        }
-        if (extendDataJson.containsKey("returnQty")) {
-            orderExtendJson.put("returnQty", extendDataJson.get("returnQty"));
-        }
+        orderExtendJson.put("deliveryQty", extendDataJson.containsKey("deliveryQty") && extendDataJson.get("deliveryQty") != null?extendDataJson.get("deliveryQty"):0);
+        orderExtendJson.put("receiveQty", extendDataJson.containsKey("receiveQty") && extendDataJson.get("receiveQty") != null?extendDataJson.get("receiveQty"):0);
+        orderExtendJson.put("instockQty", extendDataJson.containsKey("instockQty") && extendDataJson.get("instockQty") != null?extendDataJson.get("instockQty"):0);
+        orderExtendJson.put("returnQty", extendDataJson.containsKey("returnQty") && extendDataJson.get("returnQty") != null?extendDataJson.get("returnQty"):0);
         orderDTO.setExtendData(orderExtendJson.toJSONString());
 
         PlatformOrderExtendDTO platformOrderExtendDTO = new PlatformOrderExtendDTO();
