@@ -111,7 +111,6 @@
         SELECT
             spd.id,
             spd.sku_id,
-            spd.delivery_day,
             spd.min_qty,
             spd.max_qty,
             spd.currency,
