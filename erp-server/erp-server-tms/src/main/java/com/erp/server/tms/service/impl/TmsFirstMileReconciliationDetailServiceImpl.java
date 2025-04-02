@@ -1580,28 +1580,30 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<String> deliveryCodeList = resultList.stream()
                     .map(FirstMileReconciliationStandardExcelDTO::getSourceCode)
                     .collect(Collectors.toList());
+            List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS = packingTaskFeign.listCartonBySourceCodes(deliveryCodeList);
+            Map<String, BigDecimal> deliveryCodeWeightMap = calculateDeliveryCodeWeight(cfgSettingByAllocationSetting, listPackingCartonDTOS);
+            List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class)
+                    .eq(WarehouseEntity::getName, "东莞塘厦仓")
+                    .list();
+            if (CollUtil.isEmpty(warehouseList)) {
+                throw new ServiceException("未找到仓库信息");
+            }
 
+            List<BaseIdDTO.CodeDTO> companyByCodeList = sysUserFeign.listAccountingCompanyByCodeList(Collections.singletonList("113"));
+            if (CollUtil.isEmpty(companyByCodeList)) {
+                throw new ServiceException("未找到公司信息");
+            }
+
+            InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = buildQueryB2BDTO(listPackingCartonDTOS, warehouseList.get(0), companyByCodeList.get(0));
+            List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
+            if(CollUtil.isEmpty(skuCostDTOS)){
+                throw new ServiceException("sku成本不能为空");
+            }
             try {
-                List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS = packingTaskFeign.listCartonBySourceCodes(deliveryCodeList);
-                Map<String, BigDecimal> deliveryCodeWeightMap = calculateDeliveryCodeWeight(cfgSettingByAllocationSetting, listPackingCartonDTOS);
-
                 List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.FIRST_MILE.getCode());
                 Map<String, Set<String>> costCategoryMap = groupCostCategories(tmsCfgCostList);
 
-                List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class)
-                        .eq(WarehouseEntity::getName, "东莞塘厦仓")
-                        .list();
-                if (CollUtil.isEmpty(warehouseList)) {
-                    throw new ServiceException("未找到仓库信息");
-                }
-
-                List<BaseIdDTO.CodeDTO> companyByCodeList = sysUserFeign.listAccountingCompanyByCodeList(Collections.singletonList("113"));
-                if (CollUtil.isEmpty(companyByCodeList)) {
-                    throw new ServiceException("未找到公司信息");
-                }
-
-                InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = buildQueryB2BDTO(listPackingCartonDTOS, warehouseList.get(0), companyByCodeList.get(0));
-                Map<String, BigDecimal> skuCostMap = inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO).stream()
+                Map<String, BigDecimal> skuCostMap = skuCostDTOS.stream()
                         .filter(e -> e.getProductCost().compareTo(BigDecimal.ZERO) > 0)
                         .collect(Collectors.toMap(InventorySkuCostDTO.SkuCostDTO::getSkuId, InventorySkuCostDTO.SkuCostDTO::getProductCost));
 

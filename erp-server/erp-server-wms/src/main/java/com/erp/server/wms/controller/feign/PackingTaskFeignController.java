@@ -82,7 +82,7 @@ public class PackingTaskFeignController extends BaseController {
      */
     @PostMapping("/listCartonBySourceCodes")
     List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(@RequestBody List<String> sourceCodes){
-        return  listCartonBySourceCodes(sourceCodes);
+        return  packingTaskService.listCartonBySourceCodes(sourceCodes);
     }
 
     /**
