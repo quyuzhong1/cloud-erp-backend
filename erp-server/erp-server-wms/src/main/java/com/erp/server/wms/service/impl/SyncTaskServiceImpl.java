@@ -1081,12 +1081,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(b2cSoIds);
 
         // B2C收货信息
-        List<SoB2cReceiverEntity> soB2cReceiverEntityList = new LinkedList<>();
-        if (CollectionUtils.isEmpty(soB2cEntities)){
-            soB2cReceiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
                     .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
                     .list();
-        }
 
         //B2B订单
         List<SoOutstockEntity> b2bEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2B.getCode().equals(req.getOrderType())).collect(Collectors.toList());
@@ -1259,7 +1256,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SoB2cReceiverEntity> receiverEntityList = new LinkedList();
         // 查询B2C订单
         List<SoReturnInstockEntity> b2cReturnInstockList = instockGroupMap.get("B2C");
-        if (CollectionUtils.isEmpty(b2cReturnInstockList)){
+        if (CollectionUtils.isNotEmpty(b2cReturnInstockList)){
             List<String> b2cSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
                     .filter(StringUtils::isNotBlank)
                     .distinct()

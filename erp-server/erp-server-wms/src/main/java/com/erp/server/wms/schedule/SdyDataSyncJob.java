@@ -288,7 +288,7 @@ public class SdyDataSyncJob {
             List<SoB2cReceiverEntity> receiverEntityList = new LinkedList();
             // 查询B2C订单
             List<SoReturnInstockEntity> b2cReturnInstockList = instockGroupMap.get("B2C");
-            if (CollectionUtils.isEmpty(b2cReturnInstockList)){
+            if (CollectionUtils.isNotEmpty(b2cReturnInstockList)){
                 List<String> b2cSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
                         .filter(StringUtils::isNotBlank)
                         .distinct()
