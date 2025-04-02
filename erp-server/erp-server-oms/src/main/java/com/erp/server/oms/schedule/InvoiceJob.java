@@ -28,7 +28,7 @@ public class InvoiceJob {
     }
 
     @XxlJob("HandleUploadingJob")
-    public ReturnT<String> HandleUploadingJob() {
+    public ReturnT<String> HandleUploadingJob() throws Exception {
         invoiceInfoService.queryUploadingInvoice();
         return ReturnT.SUCCESS;
     }
