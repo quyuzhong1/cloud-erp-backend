@@ -10,6 +10,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -27,6 +28,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
@@ -80,9 +82,12 @@ import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
+import com.erp.server.wms.convert.SoB2cProcessingConverter;
 import com.erp.server.wms.mapper.SoB2cDeliveryMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
+import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyPrintSkuReq;
+import com.sdk.oms.tiktok.service.TikTokFullService;
 import feign.Request;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -107,6 +112,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_B2C_DELIVERY_ORDER;
@@ -204,6 +210,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private SoB2cDeliveryService soB2cDeliveryService;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private TikTokFullService tikTokFullService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -245,6 +253,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     private void matchTransferRule(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailList) {
         soB2cDeliveryEntity.setTransferWarehouseIds(CharSequenceUtil.EMPTY);
+        if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(soB2cDeliveryEntity.getDictPlatform())){
+            return;
+        }
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, soB2cDeliveryEntity.getSourceId()).list();
         if (CollUtil.isEmpty(receiverList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
@@ -403,6 +414,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO falseDelivery(String id) {
         SoB2cDeliveryEntity entity = this.getById(id);
+        if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+            throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGEDT_NOT_UPDATE, entity.getSoCode());
+        }
         //手动标发，已发货，取消发货的数据不允许操作手动标发
         if (SoB2cDeliveryStatusEnum.SHIPPED.getCode().equals(entity.getStatus())
                 || SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode().equals(entity.getStatus())) {
@@ -1200,6 +1214,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public BatchResultDTO falseDeliveryBySoId(String id) {
         //查询是否冻结
         SoB2cEntity soB2cEntity = soB2cFeign.getById(id);
+        if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(soB2cEntity.getDictPlatform())){
+            throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGEDT_NOT_UPDATE, soB2cEntity.getCode());
+        }
         if (soB2cEntity.getIsFrozen()) {
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
         }
@@ -1239,6 +1256,140 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         String msg = "【{}】更新了中转仓配置由【{}】改为【{}】";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "批量修改中转仓配置");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids) {
+        //待处理、已发货和取消发货单 状态，不允许在打印拣货单
+        List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
+        List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
+        List<String> codeList = deliveryEntityList.stream()
+                .filter(req -> SoB2cDeliveryStatusEnum.notPrint().contains(req.getStatus()))
+                .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(codeList)) {
+            throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
+        }
+        // 异常单生成波次异常状态，不允许在打印拣货单
+        List<String> codes = deliveryEntityList.stream()
+                .filter(req -> SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(req.getStatus()))
+                .filter(req -> AbnormalCauseEnum.GENERATION_WAVE.getCode().equals(req.getAbnormalCause()))
+                .map(SoB2cDeliveryEntity::getCode).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(codes)) {
+            throw new ServiceException(ApiError.ERROR_99122, CharSequenceUtil.join(",", codes));
+        }
+        //查询是否冻结
+        List<String> soIds = deliveryEntityList.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
+
+        for (SoB2cEntity soB2cEntity : soB2cEntities) {
+            if (soB2cEntity.getIsFrozen()) {
+                throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, soB2cEntity.getCode());
+            }
+            if (!PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(soB2cEntity.getDictPlatform())) {
+                throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_NOT_PRINT, soB2cEntity.getCode());
+            }
+        }
+        List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeDTOS = new ArrayList<>();
+        Map<String, SoB2cDeliveryEntity> deliveryEntityMap = deliveryEntityList.stream().collect(Collectors.toMap(SoB2cDeliveryEntity::getId, Function.identity()));
+        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntities.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+        Map<String, SoB2cDetailEntity> soB2cDetailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity()));
+        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntityList) {
+            SoB2cDeliveryDTO.PrintSkuBarcodeDTO printSkuBarcodeDTO = new SoB2cDeliveryDTO.PrintSkuBarcodeDTO();
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(detailEntity.getMainId());
+            if (Objects.isNull(soB2cDeliveryEntity)) {
+                continue;
+            }
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(soB2cDeliveryEntity.getSourceId());
+            if (Objects.isNull(soB2cEntity)) {
+                continue;
+            }
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(detailEntity.getSourceDetailId());
+            if (Objects.isNull(soB2cDetailEntity)) {
+                continue;
+            }
+            printSkuBarcodeDTO.setId(detailEntity.getMainId());
+            printSkuBarcodeDTO.setCode(soB2cDeliveryEntity.getCode());
+            printSkuBarcodeDTO.setSoId(soB2cEntity.getId());
+            printSkuBarcodeDTO.setSoCode(soB2cEntity.getCode());
+            printSkuBarcodeDTO.setPlatformCode(soB2cEntity.getPlatformCode());
+            printSkuBarcodeDTO.setSkuId(detailEntity.getSkuId());
+            printSkuBarcodeDTO.setSkuNo(detailEntity.getSkuNo());
+            printSkuBarcodeDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
+            printSkuBarcodeDTO.setQty(detailEntity.getDeliveryQty());
+            printSkuBarcodeDTOS.add(printSkuBarcodeDTO);
+        }
+        return printSkuBarcodeDTOS;
+    }
+
+    @Override
+    public void printSkuBarcodeConfirm(SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response) {
+        List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> detailList = dto.getDetailList();
+        if (CollectionUtils.isEmpty(detailList)) {
+            throw new ServiceException("确认打印详情不能为空");
+        }
+        Map<String, List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO>> platformCodeMap = detailList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.PrintSkuBarcodeDTO::getPlatformCode));
+        List<String> base64List = new ArrayList<>();
+        //循环获取打印信息
+        for (Map.Entry<String, List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO>> entry : platformCodeMap.entrySet()) {
+            String platformCode = entry.getKey();
+            List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeDTOList = entry.getValue();
+            TikTokFullyPrintSkuReq req = new TikTokFullyPrintSkuReq();
+            req.setSize(new TikTokFullyPrintSkuReq.SizeDTO("5","2","CENTIMETER"));
+            req.setStockupOrderCode(platformCode);
+            List<TikTokFullyPrintSkuReq.PlatformSkuItemsDTO> itemsDTOS = SoB2cProcessingConverter.INSTANCE.convertToPlatformSkuItemsDTO(printSkuBarcodeDTOList);
+            req.setPlatformSkuItems(itemsDTOS);
+            try {
+                String url = tikTokFullService.printSku(req, printSkuBarcodeDTOList.get(0).getShopId());
+                if (StrUtil.isNotBlank(url)) {
+                    String base64 = PdfUtil.convertPdfUrlToBase64(url, true);
+                    String prefix = "data:application/pdf;base64,";
+                    base64List.add(prefix + base64);
+                }
+            }catch (Exception e){
+                log.error("打印失败",e);
+            }
+        }
+        if(CollectionUtils.isEmpty(base64List)){
+            throw new ServiceException("未找到SKU条码数据");
+        }
+        try {
+            String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+
+            // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+            response.setContentType("application/pdf");
+            response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+            BASE64Decoder decoder = new BASE64Decoder();
+            try (OutputStream out = response.getOutputStream()) {
+                // 将 Base64 编码的字符串解码为字节数组
+                byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                // 将字节数组写入到响应输出流中
+                out.write(pdfBytes);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(ApiError.ERROR_PDF_MERGE_SKU_BARCODE);
+        }
+    }
+
+    @Override
+    public ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO) {
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        for (String id : idsDTO.getIds()) {
+            operateLogService.addModuleOperateLog("标记物流单已打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "SKU条码完成打印", loginUser.getUid(), loginUser.getUserName());
+        }
+
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(idsDTO.getIds());
+        for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
+            if(!deliveryEntity.getIsPrintSkuBarcode()){
+                this.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId());
+                operateLogService.addModuleOperateLog("完成SKU条码打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), deliveryEntity.getId(), "完成SKU条码打印", loginUser.getUid(), loginUser.getUserName());
+            }
+        }
+        return ApiResult.success();
     }
 
     @Override
@@ -1652,6 +1803,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Transactional(rollbackFor = Exception.class)
     public List<BaseResultDTO.AddDTO> generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
         List<SoB2cDeliveryEntity> b2cDelivery = listByIds(dto.getIds());
+        List<String> platformList = b2cDelivery.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        //校验平台列表中是否即包含托管订单有包含其他平台订单
+        if (platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+            throw new ServiceException(ApiError.ERROR_EXIST_FULLY_AND_NOT_FULLY_ORDER);
+        }
         boolean match = b2cDelivery.stream().allMatch(v -> SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(v.getStatus()));
         List<String> soIds = b2cDelivery.stream().map(SoB2cDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(soIds);
@@ -2300,6 +2456,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (ObjectUtil.isNotEmpty(platformDictEnum)){
                 record.setDictPlatformName(platformDictEnum.getName());
             }
+            //是否托管订单
+            record.setIsFullyManaged(PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(record.getDictPlatform()));
             //状态中文
             record.setStatusName(SoB2cDeliveryStatusEnum.getName(record.getStatus()));
             //拣货类型中文
