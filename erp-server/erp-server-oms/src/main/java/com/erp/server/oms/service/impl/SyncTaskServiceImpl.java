@@ -11,16 +11,14 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -606,7 +604,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
         // 部门信息
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
@@ -838,7 +836,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
         // 部门信息
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
         // 计算自发货明细单价
         Map<String, BigDecimal> deliveryDetailPriceMap = syncSoB2cService.convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
@@ -1021,7 +1019,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
 
         // 部门信息
-        List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
         // 计算自发货明细单价
         Map<String, BigDecimal> deliveryDetailPriceMap = syncSoB2cService.convertAllAliExpressDeliveryDetailPrice(allDeliveryDetailList, soB2cDetailEntityList, skuVOList);
 
