@@ -153,7 +153,7 @@ public class SysDeptFeignController extends BaseController {
     /**
      * 获取所有的部门信息
      */
-    @GetMapping("feign/dept/getDeptEntityList")
+    @GetMapping("/getDeptEntityList")
     public List<SysDepartmentEntity> getDeptEntityList(){
         return departmentService.lambdaQuery().list();
     }
