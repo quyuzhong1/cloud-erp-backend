@@ -246,6 +246,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             if ( null != cfgCountryPartitionEntity){
                 partitionId = cfgCountryPartitionEntity.getPartitionId();
             }
+            dictPlatform = customerInfo.getPlatformType();
         }
 
         String finalCountryCode = countryCode;
@@ -271,7 +272,8 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             // 军区一级部门映射
             DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
             // 销售平台二级部门映射
-            List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
+            String finalDictPlatform = dictPlatform;
+            List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPlatform)).collect(Collectors.toList());
 
             if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
                 List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
