@@ -1,5 +1,6 @@
 package com.common.business.utils;
 
+import cn.hutool.core.net.URLDecoder;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.lowagie.text.Document;
@@ -11,6 +12,7 @@ import lombok.Cleanup;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import sun.misc.BASE64Decoder;
@@ -19,6 +21,7 @@ import sun.misc.BASE64Encoder;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -202,28 +205,36 @@ public class PdfUtil {
         }
     }
 
-//    public static void main(String[] args) {
-//        String pdfUrl = "https://open-fs-va.tiktokshop.com/wsos_v2/oec_fulfillment_doc_tts/object/wsos67adaf28a29f8b05?expire=1739522222&skipCookie=true&timeStamp=1739435822&sign=b6ed190f6700177e41a76d27e2603956edb1381a02b8ee28bb8284f3d19e14dc"; // 替换为你的PDF文件URL
-//        try {
-//            String base64String = convertPdfUrlToBase64(pdfUrl);
-//            System.out.println("Base64 encoded PDF:\n" + base64String);
-//
-//            // 桌面路径（根据操作系统自动获取）
-//            String desktopPath = System.getProperty("user.home") + "/Desktop/output.pdf";
-//
-//            try {
-//                // 将Base64字符串解码为PDF文件并保存到桌面
-//                saveBase64ToPdf(base64String, desktopPath);
-//                System.out.println("PDF文件已保存到桌面: " + desktopPath);
-//            } catch (IOException e) {
-//                e.printStackTrace();
-//            }
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//    }
+    public static void main(String[] args) {
+        String pdfUrl = "https://p16-printer-pdf-sign-sg.fanczs.com/tos-alisg-i-js2nuampgw-sg/7734013ed8394effb63751812627f7dc?rk3s=8c7bcdf4\\u0026x-expires=1744080892\\u0026x-signature=6FuvE%2FtS3Kf4ggqXH91DHdrl0ws%3D"; // 替换为你的PDF文件URL
+        String decoded = StringEscapeUtils.unescapeJava(pdfUrl)
+                .replaceAll("%(?![0-9a-fA-F]{2})", "%25");
+        pdfUrl = URLDecoder.decode(decoded, StandardCharsets.UTF_8);
+        try {
+            String base64String = convertPdfUrlToBase64(pdfUrl,true);
+            System.out.println("Base64 encoded PDF:\n" + base64String);
 
-    public static String convertPdfUrlToBase64(String pdfUrl) throws IOException {
+            // 桌面路径（根据操作系统自动获取）
+            String desktopPath = System.getProperty("user.home") + "/Desktop/output.pdf";
+
+            try {
+                // 将Base64字符串解码为PDF文件并保存到桌面
+                saveBase64ToPdf(base64String, desktopPath);
+                System.out.println("PDF文件已保存到桌面: " + desktopPath);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String convertPdfUrlToBase64(String pdfUrl,boolean needEscape) throws IOException {
+        if(needEscape){
+            String decoded = StringEscapeUtils.unescapeJava(pdfUrl)
+                    .replaceAll("%(?![0-9a-fA-F]{2})", "%25");
+            pdfUrl = URLDecoder.decode(decoded, StandardCharsets.UTF_8);
+        }
         URL url = new URL(pdfUrl);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 

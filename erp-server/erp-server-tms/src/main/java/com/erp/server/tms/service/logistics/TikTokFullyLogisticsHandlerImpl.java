@@ -3,7 +3,9 @@ package com.erp.server.tms.service.logistics;
 
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
@@ -15,7 +17,10 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryReq;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryResp;
+import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyPrintDeliveryResp;
+import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -30,12 +35,6 @@ import java.util.*;
 @Component
 @LogisticsPlatformType(LogisticsPlatformEnum.TIK_TOK_FULLY)
 public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
-
-    @Resource
-    private DmpTaskFeign dmpTaskFeign;
-
-    @Resource
-    private ShopInfoFeign shopInfoFeign;
 
     @Resource
     private TikTokFullService tikTokFullService;
@@ -96,7 +95,30 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsGetLabelVOList) throws IOException {
-        return null;
+        LogisticsGetLabelVO logisticsGetLabelVO = logisticsGetLabelVOList.stream().filter(e -> Objects.nonNull(e.getAuthMap())).findFirst().orElse(null);
+        assert logisticsGetLabelVO != null;
+        Map<String, String> authMap = logisticsGetLabelVO.getAuthMap();
+        String shopId = authMap.get("shopId");
+        List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
+        for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
+            TikTokFullyPrintDeliveryResp tikTokFullyPrintDeliveryResp = tikTokFullService.printDelivery(shopId,vo.getTransportNo());
+            if(tikTokFullyPrintDeliveryResp.getCode()!=0){
+                return failure("获取标签失败,"+ tikTokFullyPrintDeliveryResp.getMessage());
+            }
+            if(StringUtils.isBlank(tikTokFullyPrintDeliveryResp.getData().getDocumentUrl())){
+                throw new ServiceException("获取标签失败");
+            }else{
+                String base64 = PdfUtil.convertPdfUrlToBase64(tikTokFullyPrintDeliveryResp.getData().getDocumentUrl(),true);
+                String prefix = "data:application/pdf;base64,";
+                LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
+                        .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
+                        .transportNoList(Collections.singletonList(vo.getTransportNo()))
+                        .trackNoList(Collections.singletonList(vo.getTrackNo()))
+                        .base64(prefix + base64).build();
+                resultList.add(response);
+            }
+        }
+        return success(resultList);
     }
 
     @Override
