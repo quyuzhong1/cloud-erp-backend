@@ -35,6 +35,7 @@ import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
 import com.erp.server.wms.service.SoReturnInstockDetailService;
 import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WmsPushMsgService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -250,12 +251,13 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             // 军区一级部门映射
             DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
             // 销售平台二级部门映射
-            DictBasicEntity sdyPlatformDeptEntity = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).findFirst().orElse(null);
+            List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
 
-            if (null != sdyPartitionDeptEntity && null != sdyPlatformDeptEntity){
+            if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
+                List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
                 SysDepartmentDTO departmentDTO = deptList.stream().filter(e ->
                                 e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
-                                        && e.getId().equalsIgnoreCase(sdyPlatformDeptEntity.getValue())
+                                        && deptLevel2Ids.contains(e.getId())
                         )
                         .findFirst()
                         .orElse(null);
