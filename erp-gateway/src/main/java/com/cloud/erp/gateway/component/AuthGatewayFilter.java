@@ -153,7 +153,7 @@ public class AuthGatewayFilter implements GlobalFilter, Order {
                         request.mutate().header("tokenUserInfo", URLEncoder.encode(JSON.toJSONString(loginUser), "UTF-8")).build();
 //                        log.info("埋点接口token解析成功:{}", data);
                     }
-                    log.warn("埋点接口未找到前端提交的token:{}", data);
+//                    log.warn("埋点接口未找到前端提交的token:{}", data);
                 } catch (Exception e) {
                     log.error("埋点接口解析token 失败:{}", ExceptionUtil.stacktraceToString(e));
                     e.printStackTrace();
