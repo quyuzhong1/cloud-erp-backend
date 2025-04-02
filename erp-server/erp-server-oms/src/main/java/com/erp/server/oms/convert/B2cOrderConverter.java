@@ -266,7 +266,8 @@ public interface B2cOrderConverter {
             @Mapping(target = "combinationDeclareType", source = "productDTO.combinationDeclareType"),
             @Mapping(target = "url", source = "soB2cDetail.imageUrl"),
             @Mapping(target = "price", source = "soB2cDeclareProductEntity.price"),
-            @Mapping(target = "currency", source = "soB2cDetail.currency")
+            @Mapping(target = "currency", source = "soB2cDetail.currency"),
+            @Mapping(target = "deliveryQty", ignore = true)
     })
     LogisticsProductVO convertDeclareProductVOByEntity(SoB2cDeclareProductEntity soB2cDeclareProductEntity, SoB2cDetailEntity soB2cDetail, LogisticsProductDTO.ProductDTO productDTO);
 
@@ -401,4 +402,41 @@ public interface B2cOrderConverter {
     @Mapping(target = "accessoriesCostCurrency", ignore = true)
     @Mapping(target = "accessoriesCost", ignore = true)
     SoB2cLogisticsDTO.AddDTO convertFullyManagedLogisticsDTO(FullyManagedImportExcelDTO fullyManagedImportExcelDTO);
+
+    @Mapping(target = "weight", ignore = true)
+    @Mapping(target = "url", ignore = true)
+    @Mapping(target = "sourceCountry", ignore = true)
+    @Mapping(target = "sourceCargo", ignore = true)
+    @Mapping(target = "skuName", ignore = true)
+    @Mapping(target = "scItemName", ignore = true)
+    @Mapping(target = "scItemId", ignore = true)
+    @Mapping(target = "scItemCode", ignore = true)
+    @Mapping(target = "remark", ignore = true)
+    @Mapping(target = "quantity", ignore = true)
+    @Mapping(target = "productPropertyId", ignore = true)
+    @Mapping(target = "productProperty", ignore = true)
+    @Mapping(target = "onlyBattery", ignore = true)
+    @Mapping(target = "isLiquid", ignore = true)
+    @Mapping(target = "isElectric", ignore = true)
+    @Mapping(target = "grossWeight", ignore = true)
+    @Mapping(target = "exemption", ignore = true)
+    @Mapping(target = "englishUsage", ignore = true)
+    @Mapping(target = "englishMaterial", ignore = true)
+    @Mapping(target = "distributionInfo", ignore = true)
+    @Mapping(target = "destDeclarePrice", ignore = true)
+    @Mapping(target = "destCurrencySymbol", ignore = true)
+    @Mapping(target = "destCurrency", ignore = true)
+    @Mapping(target = "deliveryQty", source = "qty")
+    @Mapping(target = "declareUnit", ignore = true)
+    @Mapping(target = "declarePrice", ignore = true)
+    @Mapping(target = "declareModel", ignore = true)
+    @Mapping(target = "declareEnglishName", ignore = true)
+    @Mapping(target = "declareElement", ignore = true)
+    @Mapping(target = "declareCurrencySymbol", ignore = true)
+    @Mapping(target = "declareCurrency", ignore = true)
+    @Mapping(target = "declareChineseName", ignore = true)
+    @Mapping(target = "customsCode", ignore = true)
+    @Mapping(target = "combinationDeclareType", ignore = true)
+    @Mapping(target = "childOrderId", ignore = true)
+    LogisticsProductVO convertProductVOByEntity(SoB2cDetailEntity detail);
 }

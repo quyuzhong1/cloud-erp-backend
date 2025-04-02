@@ -64,6 +64,21 @@ public class DropDownListController extends BaseController {
     }
 
     /**
+     * 销售平台下拉框
+     * @param key
+     * @return
+     */
+    @GetMapping("/dict/salesPlatform")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSalesPlatform(@RequestParam("key") String key) {
+        List<DictBasicDTO.ViewDTO> list = dictBasicService.listSalesPlatform(key);
+        //list 根据sort排序
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+    /**
      * 根据类型和子类型获取列表
      * @param type
      * @param subType

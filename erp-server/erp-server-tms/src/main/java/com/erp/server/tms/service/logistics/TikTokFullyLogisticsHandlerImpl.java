@@ -5,6 +5,8 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
 import com.erp.model.tms.vo.request.LogisticsOrderVO;
@@ -12,14 +14,13 @@ import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryReq;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryResp;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyPrintDeliveryResp;
-import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
+import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
+import com.sdk.tms.tiktok.service.TikTokShipperService;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -38,6 +39,8 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private TikTokFullService tikTokFullService;
+    @Resource
+    private TikTokShipperService tikTokShipperService;
 
     /**
      * 查询店铺
@@ -80,7 +83,33 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 .build());
 
     }
-
+    @Override
+    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
+        Map<String, String> authMap = chanelQueryVO.getAuthMap();
+        List<LogisticsSaleChannelEntity> resuletList = new ArrayList<>();
+        List<ShippingProvidersBean> providersBeanList = tikTokShipperService.sendTikTokLogisticsChannel(authMap.get("shopId"));
+        for (ShippingProvidersBean providerDTO : providersBeanList) {
+            LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity()
+                    .setCode(providerDTO.getId())
+                    .setPlatformChannelId(providerDTO.getId())
+                    .setCnName(providerDTO.getName())
+                    .setLogisticsPlatform(LogisticsPlatformEnum.TIK_TOK.getCode());
+            resuletList.add(logisticsSaleChannelEntity);
+        }
+        return success(resuletList);
+    }
+    @Override
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
+//        try {
+//            List<ShippingProviderDTO> providersBeanList = tikTokFullService.sendTikTokLogisticsChannel(authMap.get("shopId"));
+//            if(CollectionUtils.isEmpty(providersBeanList)){
+//                return failure("授权失败");
+//            }
+//        }catch (Exception e){
+//            return failure(e.getMessage());
+//        }
+        return success("授权成功");
+    }
     @Override
     public LogisticsPlatformEnum getPlatForm() {
         return LogisticsPlatformEnum.TIK_TOK_FULLY;
