@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONArray;
@@ -31,7 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * <p>
@@ -285,13 +287,6 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      */
     @Override
     public CfgSettingValueDTO.AllocationSettingDTO getCfgSettingByAllocationSetting() {
-        CfgSettingValueDTO.AllocationSettingDTO allocationSettingDTO = null;
-        List<CfgSettingEntity> cfgSettingEntities = this.listCfgSettingByKeys(Collections.singletonList(CfgSettingEnum.ALLOCATION_SETTING.getCode()));
-        if (CollUtil.isNotEmpty(cfgSettingEntities) && ObjectUtil.isEmpty(cfgSettingEntities.get(0).getDataJson())) {
-            allocationSettingDTO = JSONUtil.toBean(cfgSettingEntities.get(0).getDataJson(), CfgSettingValueDTO.AllocationSettingDTO.class);
-        } else {
-            allocationSettingDTO = getDefaultAllocationSetting();
-        }
-        return allocationSettingDTO;
+        return view().getAllocationSettingDTO();
     }
 }
