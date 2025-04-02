@@ -1,5 +1,6 @@
 package com.erp.server.mrp.calculation.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -1043,7 +1044,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
         //发货计划_补货计划下推
         Set<String> replenishmentDeliveryPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasDeliveryPlanByReplenishment());
-        if (!CollectionUtils.isEmpty(replenishmentDeliveryPlan)) {
+        if (!CollectionUtils.isEmpty(replenishmentDeliveryPlan) && CollUtil.isNotEmpty(replenishmentResultDTO.getOverseasWarehouseId())) {
             List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> planDelivery = getPlanDelivery(replenishmentResultDTO, replenishmentDeliveryPlan, cfgRuleStrategyDTO.getExpireTimeResult(),
                     CfgRuleInventoryNodeEnum.OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT.getCode(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
             if (!CollectionUtils.isEmpty(planDelivery)) {
@@ -1052,7 +1053,7 @@ public class InventoryServiceImpl implements InventoryService {
         }
         //发货计划_手动新增
         Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getOverseasDeliveryPlanByManual());
-        if (!CollectionUtils.isEmpty(codes)) {
+        if (!CollectionUtils.isEmpty(codes) && CollUtil.isNotEmpty(replenishmentResultDTO.getOverseasWarehouseId())) {
             List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> planDelivery = getPlanDelivery(replenishmentResultDTO, codes, cfgRuleStrategyDTO.getExpireTimeResult(),
                     CfgRuleInventoryNodeEnum.OVERSEAS_DELIVERY_PLAN_BY_REPLENISHMENT.getCode(), ReplenishmentInventoryTypeEnum.OVERSEAS_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.THIRD_WAREHOUSE.getCode());
             if (!CollectionUtils.isEmpty(planDelivery)) {
@@ -1081,6 +1082,10 @@ public class InventoryServiceImpl implements InventoryService {
      */
     private List<LocalInventoryDTO> getOverseasInTransitInventory(ReplenishmentResultDTO replenishmentResultDTO, CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult) {
         String calcDate = replenishmentResultDTO.getReplenishmentDetail().getCalcDate();
+        //海外仓未找到
+        if (CollectionUtils.isEmpty(replenishmentResultDTO.getOverseasWarehouseId())) {
+            return Collections.emptyList();
+        }
         //1、若已生成头程物流单，货件--发货单--头程物流单：
         //已生成头程物流单，且已下单，则预计到货日期 = 头程物流单的下单时间 + 头程物流单上的预计时效
         //已生成头程物流单，但未下单，则预计到货时间 = 发货单的发货时间 + 本地发FBA时效 + 海外仓入库时间
