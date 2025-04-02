@@ -88,7 +88,7 @@ public class PackingTaskFeignController extends BaseController {
     /**
      * 根据来源ID查询装箱状态
      */
-    @PostMapping("/feign/packingTask/getPackingStatusByFirstMileDelivery")
+    @PostMapping("/getPackingStatusByFirstMileDelivery")
     List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(@RequestBody FirstMileDeliveryEntity firstMileDeliveryEntity){
         return packingTaskService.getPackingStatusByFirstMileDelivery(firstMileDeliveryEntity);
     }
