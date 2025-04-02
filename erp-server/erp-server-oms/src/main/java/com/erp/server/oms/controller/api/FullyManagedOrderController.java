@@ -892,57 +892,6 @@ public class FullyManagedOrderController extends BaseController {
     }
 
     /**
-     *  仓库规则匹配测试方法
-     * @param id
-     * @return
-     */
-    @GetMapping("/getJson")
-    public ApiResult<Map<String, Object>> getJson(@RequestParam("id") String id) {
-        SoB2cDTO.RuleResultDTO logisticsRuleResult = soB2cService.warehouseRule(id, null,new HashMap<>());
-        System.out.println(JSONUtil.toJsonStr(logisticsRuleResult));
-        return success();
-
-    }
-    @GetMapping("/getSplitSku")
-    public ApiResult<List<SplitSkuDTO>> getSplitSku(@RequestParam("id") String id) {
-//        String soId = "1751895670669832193";
-        List<SplitSkuDTO> skusBySoInfo = soB2cService.getTransferDeclareProductBySoInfo(id);
-        System.out.println(JSONUtil.parse(skusBySoInfo));
-        return success(skusBySoInfo);
-
-    }
-
-    /**
-     * 手动标发
-     *
-     * @param dto
-     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.common.business.dto.base.BatchResultDTO>>
-     * @Author Luo_WG
-     * @Date 2023/12/13 19:29
-     **/
-    @PostMapping("/falseDelivery")
-    public ApiResult<List<BatchResultDTO>> falseDelivery(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO result;
-            try {
-                result = soB2cService.falseDelivery(id);
-            } catch (Exception e) {
-                log.error("b2c订单 手动标发失败", e);
-                SoB2cEntity entity = soB2cService.getById(id);
-                if (ObjectUtil.isEmpty(entity)) {
-                    result = BatchResultDTO.fail(id, id, "b2c订单不存在, 手动标发失败");
-                    resultDTOS.add(result);
-                    continue;
-                }
-                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-            }
-            resultDTOS.add(result);
-        }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-    }
-
-    /**
      * 验证是否缺货
      * @author Will
      * @date: 2024/3/12 18:39
