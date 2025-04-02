@@ -4,6 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
+
 @Component
 @Named("TypeConversionWorker")
 public class TypeConversionWorker {
@@ -17,4 +19,8 @@ public class TypeConversionWorker {
         return Integer.parseInt(str);
     }
 
+    @Named("getIsGift")
+    public Integer getIsGift(Boolean isGift) {
+        return Objects.isNull(isGift) || !isGift ? 2 : 1;
+    }
 }

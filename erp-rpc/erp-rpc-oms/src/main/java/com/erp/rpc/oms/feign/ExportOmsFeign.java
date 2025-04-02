@@ -30,6 +30,8 @@ public interface ExportOmsFeign {
 
     @PostMapping("/feign/export/soB2C")
     PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(Request.Options options, @RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
+    @PostMapping("/feign/export/exportFullyManagedOrder")
+    PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(Request.Options options, @RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
     @PostMapping("/feign/export/soB2CDeclare")
     PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(@RequestBody PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto);
     @PostMapping("/feign/export/soB2CProductSales")

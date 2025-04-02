@@ -3,6 +3,7 @@ package com.erp.server.oms.schedule;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.wrapper.FeignQuery;
+import com.erp.model.oms.dto.FullyManagedDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.sys.entity.CfgCountryPartitionEntity;
 import com.erp.model.sys.enums.DictValueEnum;
@@ -33,6 +34,8 @@ public class PartitionJob {
 
     @Resource
     private SoInfoService soInfoService;
+    @Resource
+    private SoB2cExtendService soB2cExtendService;
 
     @Value("${spring.cloud.nacos.discovery.namespace}")
     private String namespace;
@@ -42,6 +45,7 @@ public class PartitionJob {
         List<CfgCountryPartitionEntity> cfgCountryPartitionEntityList = FeignQuery.list(CfgCountryPartitionEntity.class);
         syncB2c(cfgCountryPartitionEntityList);
         syncB2b(cfgCountryPartitionEntityList);
+        syncFullyManaged(cfgCountryPartitionEntityList);
         return ReturnT.SUCCESS;
     }
 
@@ -77,6 +81,37 @@ public class PartitionJob {
             }
             if (pageData.getTotal() <= page* 100000L) {
                 XxlJobHelper.log("PartitionJob B2C同步军区 同步结束");
+                break;
+            }
+            page++;
+        }
+    }
+    private void syncFullyManaged(List<CfgCountryPartitionEntity> cfgCountryPartitionEntityList) {
+        int page = 1;
+        XxlJobHelper.log("PartitionJob 全托管订单同步军区 执行开始");
+        while (true) {
+            Page query = new Page(page, 100000);
+            XxlJobHelper.log("PartitionJob 全托管订单同步军区 第{}页", page);
+            IPage<SoB2cExtendEntity> pageData = soB2cExtendService.pagePartitionIsNull(query);
+            List<SoB2cExtendEntity> list = pageData.getRecords();
+            List<SoB2cExtendEntity> updateList = new ArrayList<>();
+            for (SoB2cExtendEntity soB2cExtendEntity : list) {
+                String country = soB2cExtendEntity.getShopCountry();
+                if(StringUtils.isBlank(country)){
+                    continue;
+                }
+                String finalCountry = country;
+                CfgCountryPartitionEntity cfgCountryPartitionEntity = cfgCountryPartitionEntityList.stream().filter(cfg -> cfg.getCountry().equals(finalCountry)).findFirst().orElse(null);
+                if(Objects.nonNull(cfgCountryPartitionEntity)){
+                    soB2cExtendEntity.setPartitionId(cfgCountryPartitionEntity.getPartitionId());
+                    updateList.add(soB2cExtendEntity);
+                }
+            }
+            if(CollectionUtils.isNotEmpty(updateList)){
+                soB2cExtendService.updateBatchById(updateList,5000);
+            }
+            if (pageData.getTotal() <= page* 100000L) {
+                XxlJobHelper.log("PartitionJob 全托管订单同步军区 同步结束");
                 break;
             }
             page++;

@@ -120,6 +120,7 @@ public class SoB2cController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
+        dto.getParams().setIsFullyManaged(Boolean.FALSE);
         return success(soB2cService.paging(dto));
     }
 

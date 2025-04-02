@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoB2cExtendMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoB2cExtendEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="required_delivery_time" property="requiredDeliveryTime" />
+       <result column="required_receive_time" property="requiredReceiveTime" />
+       <result column="delivery_warning_time" property="deliveryWarningTime" />
+       <result column="order_source_type" property="orderSourceType" />
+       <result column="warning_count" property="warningCount" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        main_id, required_delivery_time, required_receive_time, delivery_warning_time, order_source_type,warning_count
+    </sql>
+    <select id="pagePartitionIsNull" resultType="com.erp.model.oms.entity.SoB2cExtendEntity">
+        SELECT sbe.* ,si.dict_country_code as shopCountry
+        from so_b2c_extend sbe
+                 inner join so_b2c sb on sbe.main_id = sb.id
+                 left join shop_info si on si.is_deleted = false and si.id = sb.shop_id
+        where sbe.partition_id = '' and sbe.is_deleted = false and sb.is_deleted = false
+    </select>
+    <select id="fullyManagedOrderMsgWarning" resultType="com.erp.model.oms.dto.FullyManagedDTO$WarningDTO">
+        SELECT
+            sbe.main_id as id,
+            sb.code as code,
+            sb.platform_code as platformCode,
+            sbe.required_delivery_time as requiredDeliveryTime,
+            sbe.delivery_warning_time as deliveryWarningTime
+        from so_b2c_extend sbe
+        inner join so_b2c sb on sbe.main_id = sb.id and sb.is_deleted = false
+        where sbe.is_deleted = false AND sb.bill_status != 'shipped'
+        AND sbe.required_delivery_time IS NOT NULL
+        AND sbe.delivery_warning_time IS NOT NULL
+        AND sbe.delivery_warning_time >= NOW()
+        AND NOW() >= sbe.delivery_warning_time - ${offsetMinutes} * INTERVAL '1 minute'
+        <if test="platformList != null and platformList.size > 0">
+            AND sb.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+
+
+</mapper>
