@@ -100,14 +100,6 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
     }
     @Override
     public ApiResult<Object>authorization(Map<String, String> authMap) {
-//        try {
-//            List<ShippingProviderDTO> providersBeanList = tikTokFullService.sendTikTokLogisticsChannel(authMap.get("shopId"));
-//            if(CollectionUtils.isEmpty(providersBeanList)){
-//                return failure("授权失败");
-//            }
-//        }catch (Exception e){
-//            return failure(e.getMessage());
-//        }
         return success("授权成功");
     }
     @Override

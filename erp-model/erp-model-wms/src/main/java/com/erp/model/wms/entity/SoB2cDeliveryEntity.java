@@ -88,6 +88,11 @@ public class SoB2cDeliveryEntity extends BaseEntity<SoB2cDeliveryEntity> {
     */
     @TableField("is_print_picking")
     private Boolean isPrintPicking;
+    /**
+     * 是否打印SKU条码
+     */
+    @TableField("is_print_sku_barcode")
+    private Boolean isPrintSkuBarcode;
 
     /**
      * 是否打印物流单

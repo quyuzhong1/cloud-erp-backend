@@ -119,6 +119,8 @@ import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
+import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -362,6 +364,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private CustomerInfoService customerInfoService;
     @Resource
     private SoB2cExtendService soB2cExtendService;
+    @Resource
+    private TikTokFullService tikTokFullService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -2063,6 +2067,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        if (isFullyManagedOrder(entity.getDictPlatform())){
+            //检查平台状态
+            List<FullyOrderDTO.DataDTO.StockupOrdersDTO> stockupOrdersDTOS = tikTokFullService.listOrderByParam(entity.getShopId(), Collections.singletonList(entity.getPlatformCode()));
         }
         String soCode = entity.getCode();
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
