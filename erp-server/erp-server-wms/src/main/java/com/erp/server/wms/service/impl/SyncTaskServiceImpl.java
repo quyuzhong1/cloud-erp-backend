@@ -16,6 +16,7 @@ import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -25,10 +26,7 @@ import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.DictPartitionEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -1303,6 +1301,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         // 部门信息
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
+        // 国家关联分区信息
+        List<CfgCountryPartitionEntity> countryPartitionEntityList = FeignQuery.create(CfgCountryPartitionEntity.class).list();
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             // 国家
@@ -1332,7 +1332,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     }
                 }
             } else if ("B2C".equalsIgnoreCase(entity.getType())){
-                SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getMainId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
                 if (null != receiverEntity){
                     country = receiverEntity.getCountry();
                     partitionId = receiverEntity.getPartitionId();
@@ -1363,7 +1363,8 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     partitionEntityList,
                     countryEntityList,
                     dictGlobalEntityList,
-                    deptList
+                    deptList,
+                    countryPartitionEntityList
             ));
         }
         return resultList;
