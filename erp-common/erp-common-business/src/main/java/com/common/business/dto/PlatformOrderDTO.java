@@ -204,6 +204,17 @@ public class PlatformOrderDTO extends UniqueDto {
      * 卖家订单编号
      */
     private String sellerOrderCode;
+
+    /**
+     * 总税费
+     */
+    private BigDecimal totalTaxFee;
+
+    /**
+     * 总税后支付金额
+     */
+    private BigDecimal afterTaxAmount;
+
     /**
      * 订单明细
      */
@@ -229,6 +240,10 @@ public class PlatformOrderDTO extends UniqueDto {
      */
     private PlatformOrderReceiverDTO receiver;
 
+    /**
+     * 订单扩展表
+     */
+    private PlatformOrderExtendDTO extend;
 
     /**
      * 平台订单来源状态

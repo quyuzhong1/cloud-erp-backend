@@ -43,7 +43,7 @@ public class SysEventTrackingController extends BaseController {
     */
     @PostMapping(value = "/add", consumes = MediaType.TEXT_PLAIN_VALUE)
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody String data, HttpServletRequest request) {
-        log.warn("前端埋点事件记录:{}", data);
+//        log.warn("前端埋点事件记录:{}", data);
         SysEventTrackingDTO.AddDTO addDTO = JSONUtil.toBean(JSONUtil.toJsonStr(data), SysEventTrackingDTO.AddDTO.class);
         return success(sysEventTrackingService.add(addDTO));
     }

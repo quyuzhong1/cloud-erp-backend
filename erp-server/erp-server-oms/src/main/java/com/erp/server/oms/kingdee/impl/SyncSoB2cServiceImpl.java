@@ -236,8 +236,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
         }
 
+        if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
+        } else {
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
+        }
+        shudiyunB2cOrderDTO.setTaxation(soB2cEntity.getTotalTaxFee());
 
-        shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
         String customerId = "";
         ShopInfoEntity shopInfo = shopInfoList.stream().filter(req -> req.getId().equals(soB2cEntity.getShopId())).findFirst().orElse(null);
@@ -381,11 +386,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 // 军区一级部门映射
                 DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
                 // 销售平台二级部门映射
-                DictBasicEntity sdyPlatformDeptEntity = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
-                if (null != sdyPartitionDeptEntity && null != sdyPlatformDeptEntity){
+                List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).collect(Collectors.toList());
+                if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
+                    List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
                     SysDepartmentDTO departmentDTO = deptList.stream().filter(e ->
                                     e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
-                                            && e.getId().equalsIgnoreCase(sdyPlatformDeptEntity.getValue())
+                                            && deptLevel2Ids.contains(e.getId())
                             )
                             .findFirst()
                             .orElse(null);

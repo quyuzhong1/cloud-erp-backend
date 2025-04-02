@@ -7,6 +7,8 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -39,15 +41,13 @@ import com.erp.server.wms.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -273,9 +273,6 @@ public class SdyDataSyncJob {
             financialOrganization.addAll(list.stream().map(SoReturnInstockEntity::getSalesOrgId).distinct().collect(Collectors.toList()));
             List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
 
-            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType, DictBasicTypeEnum.SALES_PLATFORM.getType()).list();
-
-
             List<String> soReturnIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
             List<SoReturnEntity> soReturnEntityList = soReturnFeign.listByIds(soReturnIds);
 
@@ -285,21 +282,111 @@ public class SdyDataSyncJob {
             List<String> returnIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
             List<SoReturnEntity> receiveReturnList = soReturnFeign.listByIds(returnIds);
 
+            Map<String, List<SoReturnInstockEntity>> instockGroupMap = list.stream().collect(Collectors.groupingBy(SoReturnInstockEntity::getType));
+
+            List<SoB2cEntity> soB2cEntityList = new LinkedList();
+            List<SoB2cReceiverEntity> receiverEntityList = new LinkedList();
+            // 查询B2C订单
+            List<SoReturnInstockEntity> b2cReturnInstockList = instockGroupMap.get("B2C");
+            if (CollectionUtils.isNotEmpty(b2cReturnInstockList)){
+                List<String> b2cSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+                        .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                        .list();
+
+                soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
+                        .in(SoB2cEntity::getId, b2cSoIds)
+                        .list();
+            }
+
+            List<SoInfoEntity> soInfoEntityList = new LinkedList();
+            // 查询B2B订单
+            List<SoReturnInstockEntity> b2bReturnInstockList = instockGroupMap.get("B2B");
+            if (CollectionUtils.isEmpty(b2bReturnInstockList)){
+                List<String> b2bSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+                        .filter(StringUtils::isNotBlank)
+                        .distinct()
+                        .collect(Collectors.toList());
+                soInfoEntityList = FeignQuery.create(SoInfoEntity.class)
+                        .in(SoInfoEntity::getId, b2bSoIds)
+                        .list();
+            }
+
+            List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    )).list();
+
+            // 军区信息
+            List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+            // 国家信息
+            List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+            // 子区域信息
+            List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+            // 部门信息
+            List<SysDepartmentDTO> deptList = sysUserFeign.getDeptList();
+
             for (SoReturnInstockEntity entity : list) {
+                // 国家
+                String country = "";
+                // 分区
+                String partitionId = "";
+                // 平台
+                String dictPlatform = "";
+
+                if ("B2B".equalsIgnoreCase(entity.getType())){
+                    SoInfoEntity soInfoEntity = soInfoEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                    if (null != soInfoEntity){
+                        partitionId = soInfoEntity.getPartitionId();
+                        CustomerInfoEntity customerInfoEntity = customerInfoList.stream().filter(e -> e.getId().equalsIgnoreCase(soInfoEntity.getCustomerId())).findFirst().orElse(null);
+                        if (null != customerInfoEntity){
+                            country = customerInfoEntity.getCountryId();
+                            dictPlatform = customerInfoEntity.getPlatformType();
+                        }
+                    }
+                } else if ("B2C".equalsIgnoreCase(entity.getType())){
+                    SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                    if (null != receiverEntity){
+                        country = receiverEntity.getCountry();
+                        partitionId = receiverEntity.getPartitionId();
+                    }
+                    SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                    if (null != soB2cEntity){
+                        dictPlatform = soB2cEntity.getDictPlatform();
+                    }
+                }
+
                 List<SoReturnInstockDetailEntity> detailEntities = detailEntityList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
 
                 syncSoReturnInstockService.syncDataToSdy(entity,
-                        detailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode(),
+                        detailEntities,
+                        SyncOperateEnum.OPERATE_APPROVE.getCode(),
                         skuVOList,
                         bomChildrenSkuDTOS,
                         currencyList,
                         parentSkuList,
                         customerInfoList,
                         companyEntities,
-                        dictBasicEntityList,
                         soReturnEntityList,
                         soReturnReceiveEntityList,
-                        receiveReturnList);
+                        receiveReturnList,
+                        country,
+                        partitionId,
+                        dictPlatform,
+                        omsAllDictList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList
+                );
             }
             currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());

@@ -177,7 +177,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(StringUtils.isBlank(packageDocumentDTO.getData().getDocUrl())){
                 throw new ServiceException("获取标签失败");
             }else{
-                String base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl());
+                String base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(),false);
                 String prefix = "data:application/pdf;base64,";
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))

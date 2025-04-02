@@ -98,7 +98,7 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
 
             // 运费折扣税
             Object shippingDiscountTaxObj = dmpInputMongoChild.get("shippingDiscountTax");
-            if (null != promotionDiscountTaxObj){
+            if (null != shippingDiscountTaxObj){
                 Money shippingDiscountTax = JSON.parseObject(JSON.toJSONString(shippingDiscountTaxObj), Money.class);
                 dmpInputMongoChild.put("shippingDiscountTax", shippingDiscountTax.getAmount());
             }

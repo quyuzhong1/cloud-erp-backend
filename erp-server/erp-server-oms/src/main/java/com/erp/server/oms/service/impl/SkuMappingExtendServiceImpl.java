@@ -100,7 +100,7 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
                 .list();
 
         // 查询默认配置
-//        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(DictBasicEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
+//        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(CfgSettingEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
 //        if (CollectionUtils.isEmpty(defaultConfigList)){
 //            throw new ServiceException("默认SKU仓库发货配置缺失");
 //        }

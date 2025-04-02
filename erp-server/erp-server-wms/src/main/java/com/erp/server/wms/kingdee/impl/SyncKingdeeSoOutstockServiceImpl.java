@@ -1130,7 +1130,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         // 军区
         String partitionId = "";
         // 当前数帝云平台二级部门映射
-        DictBasicEntity sdyPlatformDeptEntity = null;
+        List<DictBasicEntity> sdyPlatformDeptEntityList = new LinkedList<>();
 
         String transactionSubType = "";
         String orderPlatformCode = entity.getSoCode();
@@ -1145,7 +1145,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 } else {
                     orderPlatformCode = soB2cEntity.getPlatformCode();
                 }
-                sdyPlatformDeptEntity = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).findFirst().orElse(null);
+                sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).collect(Collectors.toList());
             }
             SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(entity.getSoId())).findFirst().orElse(null);
             if (null != receiverEntity){
@@ -1164,7 +1164,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 partitionId = soInfoEntity.getPartitionId();
             }
             if(null != customerInfo){
-                sdyPlatformDeptEntity = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).findFirst().orElse(null);
+                sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
             }
         }
 
@@ -1196,11 +1196,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
             // 军区一级部门映射
             DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
-            if (null != sdyPartitionDeptEntity && null != sdyPlatformDeptEntity){
-                DictBasicEntity finialSdyPlatformDeptEntity = sdyPlatformDeptEntity;
+            if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
+                List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
                 SysDepartmentDTO departmentDTO = deptList.stream().filter(e ->
                                 e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
-                                && e.getId().equalsIgnoreCase(finialSdyPlatformDeptEntity.getValue())
+                                        && deptLevel2Ids.contains(e.getId())
                         )
                         .findFirst()
                         .orElse(null);

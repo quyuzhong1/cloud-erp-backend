@@ -2,7 +2,7 @@ package com.erp.model.oms.enums;
 
 /**
  * @author Lambda
- * @Classname DictBasicEnum
+ * @Classname CfgSettingEnum
 
  * @Date 2023-03-20 14:15
  * @Created by yl

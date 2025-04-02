@@ -8,6 +8,10 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.wms.entity.*;
 
 import java.util.List;
@@ -26,10 +30,18 @@ public interface SyncSoReturnInstockService {
                                                   List<ProductDetailEntity> parentSkuList,
                                                   List<CustomerInfoEntity> customerInfoList,
                                                   List<BaseIdDTO.CodeDTO> companyEntities,
-                                                  List<DictBasicEntity> dictBasicEntityList,
                                                   List<SoReturnEntity> soReturnEntityList,
                                                   List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                                                  List<SoReturnEntity> receiveReturnList);
+                                                  List<SoReturnEntity> receiveReturnList,
+                                                  String country,
+                                                  String partitionId,
+                                                  String dictPlatform,
+                                                  List<DictBasicEntity> omsAllDictList,
+                                                  List<DictPartitionEntity> partitionEntityList,
+                                                  List<DictCountryEntity> countryEntityList,
+                                                  List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                  List<SysDepartmentDTO> deptList
+    );
 
     /**
      * 同步数帝云
@@ -43,10 +55,18 @@ public interface SyncSoReturnInstockService {
                        List<ProductDetailEntity> parentSkuList,
                        List<CustomerInfoEntity> customerInfoList,
                        List<BaseIdDTO.CodeDTO> companyEntities,
-                       List<DictBasicEntity> dictBasicEntityList,
                        List<SoReturnEntity> soReturnEntityList,
                        List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                       List<SoReturnEntity> receiveReturnList);
+                       List<SoReturnEntity> receiveReturnList,
+                       String country,
+                       String partitionId,
+                       String dictPlatform,
+                       List<DictBasicEntity> omsAllDictList,
+                       List<DictPartitionEntity> partitionEntityList,
+                       List<DictCountryEntity> countryEntityList,
+                       List<DictGlobalAreaEntity> dictGlobalEntityList,
+                       List<SysDepartmentDTO> deptList
+    );
 
     /**
      * 同步数帝云

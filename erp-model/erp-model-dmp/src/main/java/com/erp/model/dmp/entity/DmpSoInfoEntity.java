@@ -9,7 +9,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -281,8 +280,8 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     /**
      * 总税后支付金额
      */
-    @TableField("after_tax_pay_amount")
-    private BigDecimal afterTaxPayAmount = BigDecimal.ZERO;
+    @TableField("after_tax_amount")
+    private BigDecimal afterTaxAmount = BigDecimal.ZERO;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
