@@ -85,7 +85,7 @@ public class PilotApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:pilotApplication:paging",
-            tableAlias = ""
+            tableAlias = "pa"
     )
     public ApiResult<List<PilotApplicationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(pilotApplicationService.tabList(dto));
@@ -102,7 +102,7 @@ public class PilotApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:pilotApplication:paging",
-            tableAlias = ""
+            tableAlias = "pa"
     )
     @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
     public ApiResult<PagingVO<PilotApplicationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PilotApplicationDTO.PagingParamDTO> dto) {

@@ -48,6 +48,9 @@
             <if test="approveUserId != null and approveUserId != ''">
                 and pa.approve_user_id = #{approveUserId}
             </if>
+            <if test="permissionSql!=null and permissionSql!=''">
+                ${permissionSql}
+            </if>
         </where>
     </select>
     <select id="listExportByIds" resultType="com.erp.model.plm.dto.PilotApplicationDTO$ListDTO">
@@ -118,6 +121,10 @@
         <where>
             ${params.sqlMap.default}
             and pad.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
