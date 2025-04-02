@@ -533,9 +533,25 @@ public class SyncSdyJob {
             List<String> soDetailIds = soDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
             List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
 
-            List<String> subPlatformType = customerInfoEntities.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-            List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, subPlatformType).list();
+            List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
 
+            // 军区信息
+            List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+            // 国家信息
+            List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+            // 子区域信息
+            List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+            // 部门信息
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
             for (SoInfoEntity soInfoEntity : list) {
                 List<SoDetailEntity> detailEntityList = soDetailEntities.stream().filter(req -> req.getMainId().equals(soInfoEntity.getId())).collect(Collectors.toList());
 
@@ -547,10 +563,13 @@ public class SyncSdyJob {
                         parentSkuList,
                         customerInfoEntities,
                         companyEntities,
-                        dictBasicEntityList,
                         currencyList,
                         soChangeDetailEntities,
-                        dictList
+                        omsAllDictList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList
                 );
             }
             currentPage++;
