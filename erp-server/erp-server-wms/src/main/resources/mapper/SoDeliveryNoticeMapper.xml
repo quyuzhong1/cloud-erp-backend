@@ -252,6 +252,7 @@
     <!-- 查询b2b订单流水 -->
     <select id="rebuildB2bVirtualFlow"
             resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
+        select b2b.* from (
         -- b2b销售订单冻结
         select
             sd.sku_id,
@@ -262,7 +263,7 @@
             si.code as source_code,
             si.id as source_id,
             sd.id as source_detail_id,
-            to_char(sd.frozen_time,'YYYY-MM-dd') as bill_date,
+            COALESCE(sd.frozen_time,sd.create_time) as bill_date,
             sd.frozen_qty as qty
         from so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
@@ -278,7 +279,7 @@
             sdn.code as source_code,
             sdn.id as source_id,
             sdnd.id as source_detail_id,
-            to_char(sdn.create_time,'YYYY-MM-dd') as bill_date,
+            sdn.create_time as bill_date,
             sdnd.delivery_qty as qty
         from so_delivery_notice sdn
         inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
@@ -294,7 +295,7 @@
             mi.id as source_id,
             mi.code as source_code,
             md.id as source_detail_id,
-            to_char(mi.approve_time,'YYYY-MM-dd') as bill_date,
+            mi.approve_time as bill_date,
             md.qty as qty
         from machine_info mi
         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'
@@ -312,7 +313,7 @@
             ti.id as source_id,
             ti.code as source_code,
             tid.id as source_detail_id,
-            to_char(ti.approve_time,'YYYY-MM-dd') as bill_date,
+            ti.approve_time as bill_date,
             tid.qty as qty
         from transfer_info ti
         inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
@@ -330,12 +331,13 @@
             so.id as source_id,
             so.code as source_code,
             sod.id as source_detail_id,
-            to_char(so.approve_time,'YYYY-MM-dd') as bill_date,
+            so.approve_time as bill_date,
             sod.actual_qty as qty
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
         inner join so_delivery_notice_detail sdnd on sdnd.id = sod.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sod.warehouse_id = sdn.warehouse_id
         where so.is_deleted = false and so.approve_status = 'approve'
+       ) b2b order by b2b.bill_date asc
     </select>
 </mapper>

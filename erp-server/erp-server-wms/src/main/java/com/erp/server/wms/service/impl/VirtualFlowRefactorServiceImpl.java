@@ -23,12 +23,10 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualTransRuleDTO;
-import com.erp.model.wms.entity.CfgVirtualTransRulesEntity;
-import com.erp.model.wms.entity.VirtualInventoryEntity;
-import com.erp.model.wms.entity.VirtualTransFlowEntity;
-import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.config.VirtualInventoryHelper;
@@ -36,13 +34,16 @@ import com.erp.server.wms.service.*;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -84,13 +85,23 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
     @Resource
     private VirtualInventoryHelper virtualInventoryHelper;
 
+    @Resource
+    private VirtualWarehouseAllocationService virtualWarehouseAllocationService;
+
+
+    @Resource
+    private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
+
     @Override
     public void rebuildFlow(String jobParam) {
         List<String> orderTypeList = CharSequenceUtil.isNotBlank(jobParam) ? Arrays.asList(jobParam.split(",")) :
                 Arrays.stream(CfgSettingOrderTypeEnum.values()).map(CfgSettingOrderTypeEnum::getCode).collect(Collectors.toList());
         log.info("VirtualFlowRefactorServiceImpl rebuildFlow start");
-        List<String> finalOrderTypeList = orderTypeList;
-        finalOrderTypeList.stream().parallel().forEach(obj -> {
+
+        //分货单
+        rebuildVirtualWarehouseAllocationFlow();
+
+        orderTypeList.forEach(obj -> {
             if ( CfgSettingOrderTypeEnum.B2B.getCode().equals(obj)) {
                 //b2b
                 rebuildB2bFlow();
@@ -106,6 +117,138 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         });
         log.info("VirtualFlowRefactorServiceImpl rebuildFlow end");
     }
+    /**
+     * 分货单
+     * @author will
+     * @date 2025/4/2 16:17
+     */
+    private void rebuildVirtualWarehouseAllocationFlow() {
+        List<VirtualWarehouseAllocationEntity> list =  virtualWarehouseAllocationService.rebuildVirtualWarehouseAllocationFlow();
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        for (VirtualWarehouseAllocationEntity allocationEntity : list) {
+            //查找所有明细
+            List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.listByMainIdList(Collections.singletonList(allocationEntity.getId()));
+            if (CollectionUtils.isNotEmpty(detailList)) {
+                String type = allocationEntity.getType();
+                switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
+                    case ALLOCATION:
+                        VirtualInventoryStockDTO.StockParamDTO allocationDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.IN_USABLE, detailList, allocationEntity);
+                        allocationDto.setIsSplitBom(Boolean.FALSE);
+                        ApplicationContextUtils.getBean(VirtualFlowRefactorServiceImpl.class).approve(allocationDto);
+                        break;
+                    case TRANSFER:
+                        VirtualInventoryStockDTO.TransferParamDTO dto = getTransferDTO(allocationEntity, detailList);
+                        ApplicationContextUtils.getBean(VirtualFlowRefactorServiceImpl.class).approveTransfer(dto);
+                        break;
+                    case CANCEL:
+                        VirtualInventoryStockDTO.StockParamDTO cancelDto = getCancelDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
+                        cancelDto.setIsSplitBom(Boolean.FALSE);
+                        ApplicationContextUtils.getBean(VirtualFlowRefactorServiceImpl.class).approve(cancelDto);
+                        break;
+                    default:
+                        throw new ServiceException(ApiError.ERROR_400);
+                }
+            }
+        }
+    }
+    /**
+     * 新增分货
+     * @author will
+     * @date 2025/4/2 16:35
+     * @param inUsable
+     * @param detailList
+     * @param allocationEntity
+     * @return com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.StockParamDTO
+     */
+    private static VirtualInventoryStockDTO.StockParamDTO getAllocationDto(VirtualInventoryBusinessTypeEnum inUsable, List<VirtualWarehouseAllocationDetailEntity> detailList, VirtualWarehouseAllocationEntity allocationEntity) {
+        VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+        allocationDto.setBusinessType(inUsable.getCode());
+        List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
+        detailList.forEach(detailDto -> {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(allocationEntity.getId());
+            outInStockDTO.setSourceCode(allocationEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
+            outInStockDTO.setSourceDetailId(detailDto.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailDto.getSkuId());
+            outInStockDTO.setSkuNo(detailDto.getSkuNo());
+            outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailDto.getToVirtualWarehouseId());
+            outInStockDTO.setQty(detailDto.getQty());
+            allocationParamList.add(outInStockDTO);
+        });
+        allocationDto.setParamList(allocationParamList);
+        return allocationDto;
+    }
+    /**
+     * 调拨分货
+     * @author will
+     * @date 2025/4/2 16:36
+     * @param allocationEntity
+     * @param detailList
+     * @return com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.TransferParamDTO
+     */
+    private static VirtualInventoryStockDTO.TransferParamDTO getTransferDTO(VirtualWarehouseAllocationEntity allocationEntity, List<VirtualWarehouseAllocationDetailEntity> detailList) {
+        VirtualInventoryStockDTO.TransferParamDTO dto = new VirtualInventoryStockDTO.TransferParamDTO();
+        dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_USABLE.getCode());
+        List<VirtualInventoryStockDTO.TransferStockDTO> paramList = new ArrayList<>();
+
+        detailList.forEach(detailDto -> {
+            VirtualInventoryStockDTO.TransferStockDTO outInStockDTO = new VirtualInventoryStockDTO.TransferStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(allocationEntity.getId());
+            outInStockDTO.setSourceCode(allocationEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
+            outInStockDTO.setSourceDetailId(detailDto.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailDto.getSkuId());
+            outInStockDTO.setSkuNo(detailDto.getSkuNo());
+            outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailDto.getFromVirtualWarehouseId());
+            outInStockDTO.setVirtualCurWarehouseId(detailDto.getFromVirtualWarehouseId());
+            outInStockDTO.setVirtualTargetWarehouseId(detailDto.getToVirtualWarehouseId());
+            outInStockDTO.setQty(detailDto.getQty());
+            paramList.add(outInStockDTO);
+        });
+        dto.setParamList(paramList);
+        return dto;
+    }
+
+    /**
+     * 取消发货
+     * @author will
+     * @date 2025/4/2 16:36
+     * @param inUsable
+     * @param detailList
+     * @param allocationEntity
+     * @return com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO.StockParamDTO
+     */
+    private static VirtualInventoryStockDTO.StockParamDTO getCancelDto(VirtualInventoryBusinessTypeEnum inUsable, List<VirtualWarehouseAllocationDetailEntity> detailList, VirtualWarehouseAllocationEntity allocationEntity) {
+        VirtualInventoryStockDTO.StockParamDTO allocationDto = new VirtualInventoryStockDTO.StockParamDTO();
+        allocationDto.setBusinessType(inUsable.getCode());
+        List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
+        detailList.forEach(detailDto -> {
+            VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSourceId(allocationEntity.getId());
+            outInStockDTO.setSourceCode(allocationEntity.getCode());
+            outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
+            outInStockDTO.setSourceDetailId(detailDto.getId());
+            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setSkuId(detailDto.getSkuId());
+            outInStockDTO.setSkuNo(detailDto.getSkuNo());
+            outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
+            outInStockDTO.setVirtualWarehouseId(detailDto.getFromVirtualWarehouseId());
+            outInStockDTO.setQty(detailDto.getQty());
+            allocationParamList.add(outInStockDTO);
+        });
+        allocationDto.setParamList(allocationParamList);
+        return allocationDto;
+    }
 
     /**
      * b2b流水
@@ -119,31 +262,30 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
        }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-        map.entrySet().stream().parallel().forEach(obj -> {
-            List<VirtualFlowRefactorDTO.OutInStockDTO> value = obj.getValue();
+        map.forEach((key, value) -> {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(params);
             //b2b需冻结
             if (SourceTypeEnum.SO_INFO.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode());
             }
             //发货通知单需冻结
             if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_HANDLE.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_HANDLE.getCode());
             }
             //加工单需出库
             if (SourceTypeEnum.MACHINE_INFO.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getCode());
             }
             //直接调拨单需出库
             if (SourceTypeEnum.TRANSFER_INFO.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             }
             //销售出库单需出库
             if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
             }
             //更新库存
             ApplicationContextUtils.getBean(VirtualFlowRefactorServiceImpl.class).approve(dto);
@@ -161,27 +303,26 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             return;
         }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId()).concat(obj.getBusinessType())));
-        map.entrySet().stream().parallel().forEach(obj -> {
-            List<VirtualFlowRefactorDTO.OutInStockDTO> value = obj.getValue();
+        map.forEach((key, value) -> {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(params);
             //b2c发货单需冻结
-            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(sourceType) && VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode().equals(value.get(0).getBusinessType())) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getType());
+            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(sourceType) && VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getType().equals(value.get(0).getBusinessType())) {
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY.getCode());
             }
             //发货通知单需冻结
-            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(sourceType) &&VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getCode().equals(value.get(0).getBusinessType())) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getType());
+            if (SourceTypeEnum.SO_B2C_DELIVERY.getCode().equals(sourceType) && VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getType().equals(value.get(0).getBusinessType())) {
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_B2C_DELIVERY_CANCEL.getCode());
             }
             //直接调拨单需出库
             if (SourceTypeEnum.TRANSFER_INFO.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             }
             //销售出库单需出库
             if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
             }
             //更新库存
             ApplicationContextUtils.getBean(VirtualFlowRefactorServiceImpl.class).approve(dto);
@@ -200,23 +341,22 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-        map.entrySet().stream().parallel().forEach(obj -> {
-            List<VirtualFlowRefactorDTO.OutInStockDTO> value = obj.getValue();
+        map.forEach((key, value) -> {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(params);
             //要货申请需冻结
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_HANDLE.getCode());
             }
             //加工单需出库
             if (SourceTypeEnum.MACHINE_INFO.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.MACHINE_INFO_CHILD_OUT.getCode());
             }
             //直接调拨单需出库
             if (SourceTypeEnum.TRANSFER_INFO.getCode().equals(sourceType)) {
-                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getType());
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             }
             //更新库存
             ApplicationContextUtils.getBean(VirtualFlowRefactorServiceImpl.class).approve(dto);
@@ -233,7 +373,137 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
 
 
-//---------------------------------------------------------------------------流水生成代码---------------------------------------------------------------------------------
+//---------------------------------------------------------------------------调拨流水---------------------------------------------------------------------------------
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void approveTransfer(VirtualInventoryStockDTO.TransferParamDTO dto) {
+        ValidatorUtil.validateEntity(dto);
+        this.approveTransfer(dto.getParamList(), dto.getRules(), VirtualInventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), CollUtil.isEmpty(dto.getRules()) ? true : false);
+    }
+
+    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void approveTransfer(List<T> paramList, List<VirtualTransRuleDTO.StockParamDTO> ruleList, VirtualInventoryBusinessTypeEnum businessType, Boolean byType) {
+        Stopwatch stopwatch = Stopwatch.createStarted();
+        log.warn("》》》库存交易按【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", JSON.toJSONString(paramList), businessType.getName());
+        // 1.验证参数
+        List<VirtualTransRuleDTO.StockParamDTO> stockParamList = ruleList;
+        //如果走配置则取已配置的规则
+        if(Objects.equals(byType,Boolean.TRUE)) {
+            stockParamList = this.wrapTransactionRule(businessType);
+        }
+        // 2.业务处理，同一个操作产生的交易流水使用同一个关联交易号
+        String transactionNo =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLS);
+        this.stockHandlerTransfer(paramList, businessType, stockParamList, transactionNo);
+
+        stopwatch.stop();
+        log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
+    }
+
+    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void stockHandlerTransfer(List<T> paramList, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo) {
+        // 获取忽略库存计算的sku
+        List<String> ignoreInventorySkuIds = this.getIgnoreSkuIds();
+        // 通过对sku id 仓库id 仓位 顺序执行, 避免多线程死锁
+        Comparator<VirtualInventoryStockDTO.StockBaseDTO> comparing = Comparator.comparing(VirtualInventoryStockDTO.StockBaseDTO::getSkuId)
+                .thenComparing(VirtualInventoryStockDTO.StockBaseDTO::getVirtualWarehouseId)
+                .thenComparing(VirtualInventoryStockDTO.StockBaseDTO::getWarehouseId)
+                .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode() : "");
+        paramList = paramList.stream().sorted(comparing).collect(Collectors.toList());
+        for(VirtualInventoryStockDTO.StockBaseDTO baseParam : paramList) {
+            // 当前仓出入库业务处理
+            VirtualInventoryStockDTO.TransferStockDTO param = (VirtualInventoryStockDTO.TransferStockDTO)baseParam;
+
+            VirtualInventoryStockDTO.TransferDTO curWareInOrOutStock = this.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryOperationModeEnum.APPROVE);
+            if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+                log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库", param.getSkuId(), param.getSkuNo());
+                continue;
+            }
+            // 目的仓出入库业务处理
+            VirtualInventoryStockDTO.TransferDTO targetWareInOrOutStock = this.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET, InventoryOperationModeEnum.APPROVE);
+            Stream.of(curWareInOrOutStock, targetWareInOrOutStock)
+                    .sorted(Comparator.comparing(VirtualInventoryStockDTO.TransferDTO::getWarehouseId)
+                            .thenComparing(x -> ObjectUtil.isNotEmpty(x.getVirtualWarehouseId()) ? x.getVirtualWarehouseId() : "")
+                            .thenComparing(x -> ObjectUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus().getCode(): "")
+                    ).forEach(wareInOrOutStock -> this.singleHandlerTransfer(wareInOrOutStock, businessType, transactionRuleParams, transactionNo));
+        }
+    }
+
+    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void singleHandlerTransfer(T baseParam, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo) {
+        VirtualInventoryStockDTO.TransferDTO param = (VirtualInventoryStockDTO.TransferDTO)baseParam;
+        // 状态
+        if(Objects.nonNull(param.getInventoryStatus())) {
+            // 参数传输了要改的状态
+            log.info("参数已传库存状态：【{}】，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】", param.getInventoryStatus().getName(), businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo());
+            InventoryModeEnum inventoryModeEnum = param.getInventoryMode();
+            ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum),()->new ServiceException(ApiError.ERROR_99999.code, "交易类型不能为空"));
+            // 转换成出入库参数
+            VirtualInventoryStockDTO.StockCoreDTO inOutStockCoreDTO = BeanMapperUtils.map(VirtualInventoryStockDTO.StockCoreDTO.class, param);
+            inOutStockCoreDTO.setOperationMode(InventoryOperationModeEnum.APPROVE);
+
+            if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) {
+                //入库
+                this.inStockCore(inOutStockCoreDTO, businessType, param.getInventoryStatus(), "",  transactionNo);
+            } else if (Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) {
+                // 出库
+                this.outStockCore(inOutStockCoreDTO, businessType, param.getInventoryStatus(), "", transactionNo);
+            }
+        } else {
+            if(CollUtil.isEmpty(transactionRuleParams)) {
+                throw new ServiceException(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+            }
+            log.info("参数未传库存状态，从配置读取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
+            // 判断当前仓是入库还是出库
+            transactionRuleParams = transactionRuleParams.stream().filter(r->Objects.equals(r.getWarehouseOption(), param.getWarehouseOptionEnum())).collect(Collectors.toList());
+            if(CollUtil.isEmpty(transactionRuleParams)) {
+                throw new ServiceException(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+            }
+            transactionRuleParams = transactionRuleParams.stream()
+                    .sorted(Comparator.comparing(inventoryStatus -> inventoryStatus.getInventoryStatus().getCode()))
+                    .collect(Collectors.toList());
+            for(VirtualTransRuleDTO.StockParamDTO transactionRule : transactionRuleParams) {
+                InventoryWarehouseOptionEnum inventoryWarehouseOptionEnum = transactionRule.getWarehouseOption();
+                ValidatorUtil.isTrue(Objects.nonNull(inventoryWarehouseOptionEnum), () -> new ServiceException(ApiError.ERROR_99033));
+                InventoryStatusEnum inventoryStatusEnum = transactionRule.getInventoryStatus();
+                ValidatorUtil.isTrue(Objects.nonNull(inventoryStatusEnum), () -> new ServiceException(ApiError.ERROR_99036));
+                InventoryModeEnum inventoryModeEnum = transactionRule.getTransactionMode();
+                ValidatorUtil.isTrue(Objects.nonNull(inventoryModeEnum), () -> new ServiceException(ApiError.ERROR_99038));
+                // 可能某个业务类型在同一个仓库即需要做入也需要做出，分别调用逻辑
+                VirtualInventoryStockDTO.StockCoreDTO inOutStockCoreDTO = BeanMapperUtils.map(VirtualInventoryStockDTO.StockCoreDTO.class, param);
+                inOutStockCoreDTO.setOperationMode(InventoryOperationModeEnum.APPROVE);
+                if(Objects.equals(InventoryModeEnum.IN_STOCK, inventoryModeEnum)) {
+                    // 入库
+                    this.inStockCore(inOutStockCoreDTO, businessType, inventoryStatusEnum, transactionRule.getId(), transactionNo);
+                } else if (Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) {
+                    // 出库
+                    this.outStockCore(inOutStockCoreDTO, businessType, inventoryStatusEnum,  transactionRule.getId(), transactionNo);
+                }
+            }
+        }
+    }
+
+    private  VirtualInventoryStockDTO.TransferDTO wrapInOutStockByTransfer(VirtualInventoryStockDTO.TransferStockDTO param, InventoryWarehouseOptionEnum warehouseOption, InventoryOperationModeEnum operationMode) {
+        VirtualInventoryStockDTO.TransferDTO transferDTO = new VirtualInventoryStockDTO.TransferDTO();
+
+        if(Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT)) {
+            transferDTO.setVirtualWarehouseId(param.getVirtualCurWarehouseId());
+        } else if (Objects.equals(warehouseOption, InventoryWarehouseOptionEnum.WAREHOUSE_TARGET)) {
+            transferDTO.setVirtualWarehouseId(param.getVirtualTargetWarehouseId());
+        }
+        transferDTO.setWarehouseId(param.getWarehouseId());
+        transferDTO.setSourceType(param.getSourceType());
+        transferDTO.setSourceId(param.getSourceId());
+        transferDTO.setSourceDetailId(param.getSourceDetailId());
+        transferDTO.setSourceCode(param.getSourceCode());
+        transferDTO.setBillDate(param.getBillDate());
+        transferDTO.setSkuId(param.getSkuId());
+        transferDTO.setSkuNo(param.getSkuNo());
+
+        transferDTO.setQty(param.getQty());
+        transferDTO.setOperationMode(operationMode);
+        transferDTO.setWarehouseOptionEnum(warehouseOption);
+        return transferDTO;
+    }
+
+//------------------------------------------------------------------------------------出入库审核--------------------------------------------------------
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void approve(VirtualInventoryStockDTO.StockParamDTO dto) {
@@ -243,8 +513,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if (CollUtil.isEmpty(outInStockList)) {
             outInStockList = dto.getParamList();
         }
-        VirtualInventoryStockService virtualInventoryStockService = virtualInventoryHelper.getInventoryService(InventoryBizTypeEnum.IN_OUT_STOCK);
-        virtualInventoryStockService.approve(outInStockList, dto.getRules(), VirtualInventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), CollUtil.isEmpty(dto.getRules()) ? true : false);
+        this.approve(outInStockList, dto.getRules(), VirtualInventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), CollUtil.isEmpty(dto.getRules()) ? true : false);
     }
 
     /**
@@ -415,10 +684,11 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }
         VirtualInventoryEntity virtualInventoryEntity = virtualInventoryService.addOrUpdate(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(), param.getSkuNo(), inventoryStatusEnum.getCode(),param.getQty());
         // 登记交易流水
-        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, virtualInventoryEntity, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
+        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, null, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
         transactionFlowDTO.setVirtualTransRuleId(transRuleId);
-        VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
+        virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
+        log.warn("入库成功，交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，入库数量：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName(), param.getQty());
     }
 
     public  void outStockCore (VirtualInventoryStockDTO.StockCoreDTO param, VirtualInventoryBusinessTypeEnum businessType, InventoryStatusEnum inventoryStatusEnum, String transRuleId,
@@ -434,23 +704,14 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             throw new ServiceException(ApiError.ERROR_99002);
         }
         // 待出库数量
-        Integer waitOutQty = param.getQty();
         log.info("交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，开始走出库逻辑", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), inventoryStatusEnum.getName(), param.getSkuNo());
 
         VirtualInventoryEntity found = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(), inventoryStatusEnum.getCode());
-
-        String inventoryStatusName = Optional.of(inventoryStatusEnum).map(InventoryStatusEnum::getName).orElse("");
-        // 仓库负库存是否允许
-        if(ObjectUtil.isNotEmpty(found) &&  found.getQty() < waitOutQty ) {
-            String errMsg = CharSequenceUtil.format(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.msg, param.getSkuNo(),virtualWarehouseEntity.getName(), warehouseInfo.getName(), inventoryStatusName,found.getQty(),param.getQty());
-            log.error(errMsg);
-            throw new ServiceException(ApiError.ERROR_VIRTUAL_INVENTORY_INSUFFICIENT.code, errMsg);
-        }
         // 登记交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
-        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, found, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
+        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, null, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
-        VirtualTransFlowEntity transFlowEntity = virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
-
+        virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
+        log.warn("出库成功，交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，入库数量：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName(), param.getQty());
     }
     /**
      * 验证枚举是否必填
@@ -483,6 +744,8 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @param qty
      * @param orgId
      * @return AddDTO
+     *
+     *
      */
     protected VirtualTransFlowDTO.AddDTO wrapTransactionFlow(VirtualInventoryStockDTO.StockCoreDTO param, VirtualInventoryEntity virtualInventoryEntity, VirtualInventoryBusinessTypeEnum businessType,
                                                              InventoryStatusEnum inventoryStatusEnum, Integer qty, String orgId) {
@@ -496,13 +759,12 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         virtualTransFlowDTO.setSourceId(param.getSourceId());
         virtualTransFlowDTO.setSourceCode(param.getSourceCode());
         virtualTransFlowDTO.setSourceDetailId(param.getSourceDetailId());
-        virtualTransFlowDTO.setVirtualInventoryId(virtualInventoryEntity.getId());
+        virtualTransFlowDTO.setVirtualInventoryId(CharSequenceUtil.format("{}-{}-{}-{}", param.getVirtualWarehouseId(), param.getWarehouseId(), param.getSkuId(),inventoryStatusEnum.getCode()));
         virtualTransFlowDTO.setDictInventoryStatus(inventoryStatusEnum.getCode());
         virtualTransFlowDTO.setDictBizType(businessType.getCode());
         virtualTransFlowDTO.setBillDate(param.getBillDate());
         virtualTransFlowDTO.setSourceType(param.getSourceType().getCode());
         virtualTransFlowDTO.setQty(qty);
-        virtualTransFlowDTO.setCurInventoryQty(virtualInventoryEntity.getAfterQty());
         virtualTransFlowDTO.setOperationMode(Objects.nonNull(param.getOperationMode()) ? param.getOperationMode().getCode() : "");
         return virtualTransFlowDTO;
     }

@@ -434,17 +434,18 @@
 
     <!-- 查询头程流水数据 -->
     <select id="rebuildFirstMileVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
+        select firstMile.* from (
         --要货申请冻结
         select
             rad.sku_id,
             rad.sku_no,
             rad.from_virtual_warehouse_id as virtual_warehouse_id,
-            rad.from_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
             'requisitionApplication' as source_type,
             ra.id as source_id,
             ra.code as source_code,
             rad.id as source_detail_id,
-            to_char(ra.handle_time,'YYYY-MM-dd') as bill_date,
+            ra.handle_time as bill_date,
             rad.virtual_frozen_qty as qty
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false and rad.from_virtual_warehouse_id != '' and ra.status in ('handleIng','handle')
@@ -455,12 +456,12 @@
             md.sku_id,
             md.sku_no,
             rad.from_virtual_warehouse_id as virtual_warehouse_id,
-            rad.from_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
             'machineInfo' as source_type,
             mi.id as source_id,
             mi.code as source_code,
             md.id as source_detail_id,
-            to_char(mi.approve_time,'YYYY-MM-dd') as bill_date,
+            mi.approve_time as bill_date,
             md.qty as qty
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'thirdWarehouse'  AND rad.from_virtual_warehouse_id != ''
@@ -476,12 +477,12 @@
             md.sku_id,
             md.sku_no,
             rad.from_virtual_warehouse_id as virtual_warehouse_id,
-            rad.from_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
             'machineInfo' as source_type,
             mi.id as source_id,
             mi.code as source_code,
             md.id as source_detail_id,
-            to_char(mi.approve_time,'YYYY-MM-dd') as bill_date,
+            mi.approve_time as bill_date,
             md.qty as qty
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'fba' AND rad.from_virtual_warehouse_id != ''
@@ -501,12 +502,12 @@
             tid.sku_id,
             tid.sku_no,
             rad.from_virtual_warehouse_id as virtual_warehouse_id,
-            rad.from_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
             'transferInfo' as source_type,
             ti.id as source_id,
             ti.code as source_code,
             tid.id as source_detail_id,
-            to_char(ti.approve_time,'YYYY-MM-dd') as bill_date,
+            ti.approve_time as bill_date,
             tid.qty as qty
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'thirdWarehouse'  AND rad.from_virtual_warehouse_id != ''
@@ -521,12 +522,12 @@
             tid.sku_id,
             tid.sku_no,
             rad.from_virtual_warehouse_id as virtual_warehouse_id,
-            rad.from_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
             'transferInfo' as source_type,
             ti.id as source_id,
             ti.code as source_code,
             tid.id as source_detail_id,
-            to_char(ti.approve_time,'YYYY-MM-dd') as bill_date,
+            ti.approve_time as bill_date,
             tid.qty as qty
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'fba' AND rad.from_virtual_warehouse_id != ''
@@ -539,5 +540,6 @@
         inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false
         inner join transfer_info ti on ti.id = tid.main_id and ti.is_deleted = false and ti.approve_status = 'approve'
         WHERE ra.is_deleted = false
+        ) firstMile order by firstMile.bill_date asc
     </select>
 </mapper>

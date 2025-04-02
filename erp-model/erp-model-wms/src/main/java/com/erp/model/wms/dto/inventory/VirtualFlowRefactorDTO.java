@@ -3,6 +3,7 @@ package com.erp.model.wms.dto.inventory;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -72,6 +73,7 @@ public class VirtualFlowRefactorDTO {
          * 单据日期
          */
         @NotNull(message = "单据日期不能为空")
+        @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate billDate;
 
         /**

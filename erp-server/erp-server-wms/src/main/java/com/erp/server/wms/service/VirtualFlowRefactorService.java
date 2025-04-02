@@ -17,4 +17,12 @@ public interface VirtualFlowRefactorService {
      * @param dto
      */
     void approve(VirtualInventoryStockDTO.StockParamDTO dto);
+
+    /**
+     * 调拨审核
+     * @author will
+     * @date 2025/4/2 16:38
+     * @param dto
+     */
+    void approveTransfer(VirtualInventoryStockDTO.TransferParamDTO dto);
 }
