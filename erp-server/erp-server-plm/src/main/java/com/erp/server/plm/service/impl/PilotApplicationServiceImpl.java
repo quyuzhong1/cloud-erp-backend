@@ -301,7 +301,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //待提交
         QueryWrapper<PilotApplicationEntity> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-        int waitSubmitCount = this.baseMapper.selectCount(queryWrapper);
+        int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null,param.getPermissionSql());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
         //待我审核
         //根据单据id查询审核流程
@@ -321,13 +321,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //不通过
         queryWrapper.clear();
         queryWrapper.eq("approve_status", ApproveStatusEnum.REJECT.getCode());
-        int rejectCount = this.baseMapper.selectCount(queryWrapper);
+        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null,param.getPermissionSql());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.REJECT.getCode(), PilotApplicationTabEnum.REJECT.getName(), rejectCount));
         //未下单
-        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null);
+        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null,param.getPermissionSql());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.NOT_ORDER.getCode(), PilotApplicationTabEnum.NOT_ORDER.getName(), notOrderCount));
         //已下单
-        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null);
+        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null,param.getPermissionSql());
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.ORDER.getCode(), PilotApplicationTabEnum.ORDER.getName(), orderCount));
         return list;
     }

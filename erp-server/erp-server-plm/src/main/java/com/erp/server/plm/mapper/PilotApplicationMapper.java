@@ -28,7 +28,7 @@ public interface PilotApplicationMapper extends BaseMapper<PilotApplicationEntit
      * @date: 2024-08-28
      * @author: tanmujin
      */
-    int tabList(@Param("approveStatus") String approveStatus, @Param("orderStatus") String orderStatus, @Param("approveUserId") String approveUserId);
+    int tabList(@Param("approveStatus") String approveStatus, @Param("orderStatus") String orderStatus, @Param("approveUserId") String approveUserId,@Param("permissionSql") String permissionSql);
 
     /**
      * 根据ids查询
