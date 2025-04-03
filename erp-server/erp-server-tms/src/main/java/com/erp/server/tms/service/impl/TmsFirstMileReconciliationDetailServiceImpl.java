@@ -1634,7 +1634,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     throw new ServiceException("sku成本不能为空");
                 }
                 Map<String, BigDecimal> skuCostMap = skuCostDTOS.stream()
-                        .collect(Collectors.toMap(InventorySkuCostDTO.SkuCostDTO::getSkuId, InventorySkuCostDTO.SkuCostDTO::getProductCost));
+                        .collect(Collectors.toMap(InventorySkuCostDTO.SkuCostDTO::getSkuId, InventorySkuCostDTO.SkuCostDTO::getProductCost,(o1,o2)->o1));
                 //计算发货单sku成本
                 Map<String, BigDecimal> deliveryCodeCostMap = calculateDeliveryCodeCost(listPackingCartonDTOS, skuCostMap);
                 resultList.forEach(e -> {

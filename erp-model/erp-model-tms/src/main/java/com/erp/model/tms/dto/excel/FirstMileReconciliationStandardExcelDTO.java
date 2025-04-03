@@ -70,7 +70,7 @@ public class FirstMileReconciliationStandardExcelDTO implements Serializable {
      * 币种
      */
     @ExcelProperty(value = "*币种", index = 8)
-    @FieldValid(fieldName = "币种", isNotBlank = true,enumClass = CurrencyEnum.class)
+    @FieldValid(fieldName = "币种", isNotBlank = true)
     private String currency;
 
     /**
