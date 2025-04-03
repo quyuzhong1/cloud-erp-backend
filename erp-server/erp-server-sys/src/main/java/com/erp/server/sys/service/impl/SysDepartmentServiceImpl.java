@@ -553,11 +553,10 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         if (CollectionUtils.isEmpty(list)){
             return Collections.emptyList();
         }
-        fillParentIds(list);
-        return list;
+        return fillParentIds(list);
     }
 
-    public void fillParentIds(List<SysDepartmentEntity> departments) {
+    public List<SysDepartmentEntity> fillParentIds(List<SysDepartmentEntity> departments) {
         // 构建 id -> SysDepartmentEntity 的映射，方便查找
         Map<String, SysDepartmentTreeDTO> map = baseMapper.findTree()
                 .stream()
@@ -569,6 +568,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                 sysDepartmentEntity.setPath(sysDepartmentTreeDTO.getPath());
             }
         }
+        return departments;
     }
 
 
