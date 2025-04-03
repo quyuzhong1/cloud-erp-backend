@@ -521,10 +521,14 @@ public class WmsCartonDTO {
          * 装箱任务id
          */
         private String taskId;
-        /**plmtaskFeign
-         * 发货单号
+        /**
+         * 来源单号
          */
         private String sourceCode;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
 
         private List<WmsCartonDetailDTO.BoxDTO> cartonDetailDTOList;
 
