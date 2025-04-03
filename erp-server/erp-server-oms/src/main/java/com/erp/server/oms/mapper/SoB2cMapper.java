@@ -270,4 +270,13 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param offsetMinutes
      */
     void updateTimeOutConfig(@Param("platformList") List<String> platformList, @Param("offsetMinutes") Integer offsetMinutes);
+
+    /**
+     * 根据参数据查询需要发货的订单
+     * @param billStatusList
+     * @param platformStatusList
+     * @param platformList
+     * @return
+     */
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(@Param("billStatusList") List<String> billStatusList, @Param("platformStatusList") List<String> platformStatusList, @Param("platformList") List<String> platformList);
 }
