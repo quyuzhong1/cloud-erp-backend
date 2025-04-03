@@ -13,6 +13,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
@@ -295,5 +296,14 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/uploadLabel")
     public ApiResult<Boolean> uploadLabel(@RequestBody @Validated List<PackageForecastDTO.UploadFileDTO> uploadFileDTOList) {
         return success(packageForecastService.uploadFileDTO(uploadFileDTOList));
+    }
+
+    /**
+     * 获取物流类型
+     */
+    @GetMapping("/getLogisticsType")
+    public ApiResult<List<DictBasicDTO.DropDownDTO>> getLogisticsType(@RequestParam("dictPlatform") String dictPlatform,
+                                                                      @RequestParam("shopId") String shopId) {
+        return success(packageForecastService.getLogisticsType(dictPlatform,shopId));
     }
 }

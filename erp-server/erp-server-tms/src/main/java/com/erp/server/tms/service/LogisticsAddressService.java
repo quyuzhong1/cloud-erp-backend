@@ -4,6 +4,7 @@ import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 
 import java.util.List;
 
@@ -83,11 +84,11 @@ public interface LogisticsAddressService extends SuperService<LogisticsAddressEn
 
     /**
      * 根据渠道和 类型获取到地址信息
+     *
      * @param type
-     * @param channelId
      * @return
      */
-    List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId,String shopId);
+    List<LogisticsAddressEntity> listByTypeAndShopId(LogisticsAddressTypeEnum type, String shopId);
 
     /**  根据渠道id 和店铺id  获取地址
      * @description
