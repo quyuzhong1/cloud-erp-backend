@@ -1450,6 +1450,16 @@ public enum ApiError implements Serializable {
     ERROR_92172(92172,"退货通知单明细不能为空"),
     ERROR_92173(92173,"退货签收单明细不能为空"),
     ERROR_92174(92174,"退货入库单明细不能为空"),
+    ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
+    ERROR_SO_PRICE_CHANGE_DATE(92177,"销售调价表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_NOT_FOUND_SO_PRICE_DETAIL(98099,"未找到采购价目明细"),
+    ERROR_SO_PRICE_ID_REPEAT(98100,"请选择同一销售价目表下明细进行变更"),
+    ERROR_SO_ORDER_ID_REPEAT(98101,"请选择同一销售订单下明细进行变更"),
+    SO_ORG_NOT_REPEAT(98113,"只有相同的销售组织可以批量变更报价"),
+    ERROR_INTERVAL_CUSTOMER_OVERLAP(98047,"该客户SKU区间存在重叠，不可提交"),
+    ERROR_INTERVAL_CUSTOMER_CHANGE_OVERLAP(98048,"与该客户SKU变更区间存在重叠，不可提交"),
+    ERROR_SO_PRICE_INTERVAL_SIZE(98050,"SKU【{}】区间从值不能大于区间到值"),
 
 
     /**
