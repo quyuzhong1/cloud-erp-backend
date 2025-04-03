@@ -5,6 +5,10 @@ import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.utils.PdfUtil;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.common.core.exception.ServiceException;
@@ -25,9 +29,9 @@ import com.sdk.oms.tiktok.dto.tiktok.packages.PackageDocumentDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.tms.tiktok.channel.provider.ShippingProvidersBean;
 import com.sdk.tms.tiktok.service.TikTokShipperService;
+import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -46,6 +50,9 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
     private TikTokFullService tikTokFullService;
     @Resource
     private TikTokShipperService tikTokShipperService;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     /**
      * 查询店铺
@@ -150,5 +157,19 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Override
     public ApiResult<List<LogisticsServiceResponseVO>> listLogisticsService(Map<String, String> authMap) {
         return ApiResult.error(-1, "功能未开放");
+    }
+
+    @Override
+    public List<Map<String, String>> getLogisticsAuthConfigByPlatform(String platform) {
+        ApiResult<List<ShopAuthEntity>> authShops = shopInfoFeign.getAuthShopByPlatformType(getPlatForm().getCode());
+        if (!authShops.isSuccess() || CollectionUtils.isEmpty(authShops.getData())) return Collections.emptyList();
+
+        List<Map<String, String>> mapList = new ArrayList<>(authShops.getData().size());
+        for (ShopAuthEntity shopAuth : authShops.getData()) {
+            Map<String, String> map = new HashMap<>();
+            map.put("shopId", shopAuth.getShopId());
+            mapList.add(map);
+        }
+        return mapList;
     }
 }

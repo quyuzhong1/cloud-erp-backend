@@ -51,10 +51,6 @@ public class TikTokFullyOrderApiInitHandler implements DmpInputApiInitHandler {
         if (ObjectUtil.isEmpty(shopInfoDTO)) {
             throw new ServiceException("TikTok全托管店铺id：" + nextLevelId + "未找到对应的店铺信息");
         }
-//        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
-//        shopInfoDTO.setClientSecret("530a7d739653179b07d7026a63cde31671f10f61");
-//        shopInfoDTO.setAccessToken("ROW_B6eCcQAAAABVlKa00W9Nne3pV522i3L6Ie04obpPK2d-5Rq9rL7jO0YSbotwLjpZ4DfljtV--ZI9dIDBdmztWivYPnUtt7dp");
-//        shopInfoDTO.setClientId("69p2ui5hr09sn");
         Integer pageSize = 50;
         //分页token
         String pageToken = "";
@@ -106,8 +102,8 @@ public class TikTokFullyOrderApiInitHandler implements DmpInputApiInitHandler {
             //拉取数据
             ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
             if (!Objects.equals(apiResult.getCode(), 200)) {
-                log.error("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}",
+                log.error("调用url={},入参params={}, TikTok全托管查询订单数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok全托管查询订单数据失败，返回值 responseMap={}",
                         sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
@@ -117,7 +113,7 @@ public class TikTokFullyOrderApiInitHandler implements DmpInputApiInitHandler {
                 orderDTO = JSON.parseObject(apiResult.getData(),new TypeReference<FullyOrderDTO>() {}.getType());
             } catch (Exception e) {
                 log.error("调用url={},入参params={}, 查询全托管订单数据解析失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 查询订单数据解析失败，返回值 responseMap={}",
+                throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 查询全托管订单数据解析失败，返回值 responseMap={}",
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 

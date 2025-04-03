@@ -42,6 +42,7 @@ import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
@@ -76,6 +77,7 @@ import com.erp.tms.aliexpress.util.ApiException;
 import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackageGroupsBean;
 import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackagePramDTO;
 import com.sdk.oms.tiktok.dto.tiktok.split.CombinePackageViewDTO;
+import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.oms.tiktok.service.TikTokPackageService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -161,6 +163,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     @Resource
     private WmsAttachmentService wmsAttachmentService;
+
+    @Resource
+    private TikTokFullService tikTokFullService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1244,5 +1249,14 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 throw new ServiceException(e.getMessage());
             }
         }
+    }
+
+    @Override
+    public List<DictBasicDTO.DropDownDTO> getLogisticsType(String dictPlatform, String shopId) {
+        if(!PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(dictPlatform)){
+            return new ArrayList<>();
+        }
+//        tikTokFullService.getLogisticsType()
+        return Collections.emptyList();
     }
 }
