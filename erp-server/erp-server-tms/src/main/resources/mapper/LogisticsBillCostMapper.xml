@@ -197,10 +197,9 @@
             c.reconciliation_status AS reconciliationStatus
         FROM
             logistics_bill AS b
-                LEFT JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
-                AND c.is_deleted = FALSE
+                inner JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
         WHERE
-            b.is_deleted = FALSE
+            b.is_deleted = FALSE AND c.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND b.outstock_id IN
             <foreach collection="ids" item="item" open="(" close=")" separator=",">
