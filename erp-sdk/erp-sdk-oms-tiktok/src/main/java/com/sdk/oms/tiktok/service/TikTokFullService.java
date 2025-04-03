@@ -8,7 +8,6 @@ import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -23,14 +22,8 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sdk.oms.tiktok.constant.TikTokConstant;
 import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.dto.tiktok.channel.delivery.DeliveryOptionsBean;
-import com.sdk.oms.tiktok.dto.tiktok.channel.delivery.DeliveryOptionsDTO;
-import com.sdk.oms.tiktok.dto.tiktok.channel.provider.ShippingProviderDTO;
-import com.sdk.oms.tiktok.dto.tiktok.channel.warehouses.WarehousesBean;
-import com.sdk.oms.tiktok.dto.tiktok.channel.warehouses.WarehousesDTO;
 import com.sdk.oms.tiktok.dto.tiktok.fully.*;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyDeliveryOrderDTO;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
@@ -44,7 +37,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
-import java.time.ZoneOffset;
 import java.util.*;
 
 /**
@@ -78,19 +70,21 @@ public class TikTokFullService {
         shopInfoDTO.setAccessToken("ROW_B6eCcQAAAABVlKa00W9Nne3pV522i3L6Ie04obpPK2d-5Rq9rL7jO0YSbotwLjpZ4DfljtV--ZI9dIDBdmztWivYPnUtt7dp");
         String url = TikTokConstant.URL;
         StringBuffer sb = new StringBuffer();
-        String path = "/gs_full_service_commodity/202407/supplier_addresses";
+        String path = "/gs_full_service_shipment/202410/shipping_providers/search";
         String toktikInfo = shopInfoDTO.getClientSecret();
 
-//        String pageToken = "2";
-        String pageSize = "50";
+        TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
+        tikTokFullyShippingProviderReq.setDeliveryMode("SELF_DELIVERY");
+        tikTokFullyShippingProviderReq.setDeliveryOrderCodes(Arrays.asList("POCYT2408210000023S01"));
+        tikTokFullyShippingProviderReq.setSenderContactId("5765611516297017604");
+        tikTokFullyShippingProviderReq.setDeliveryOption("SUPER_SPEEDY_EXPRESS");
+        tikTokFullyShippingProviderReq.setTotalWeight(new TikTokFullyShippingProviderReq.TotalWeightDTO("1240","GRAM"));
         // 定义查询参数
         Map<String, Object> params = new HashMap<>();
         params.put("access_token", shopInfoDTO.getAccessToken());
         params.put("app_key", shopInfoDTO.getClientId());
         String timestamp = System.currentTimeMillis() / 1000 + "";
         params.put("timestamp", timestamp);
-//        params.put("page_token", pageToken);
-        params.put("page_size", pageSize);
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>();
@@ -98,8 +92,8 @@ public class TikTokFullService {
         headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
 
         //请求body，平台用于计算签名
-        Map<String, Object> bodyMap = new HashMap<>();
-        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, "");
+
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(tikTokFullyShippingProviderReq));
         // 追加请求路径获取签名
         String sign = EncryptionUtils.generateSHA256(input, toktikInfo);
         //加入sign签名入参
@@ -112,11 +106,9 @@ public class TikTokFullService {
         sb.append("&app_key=" + shopInfoDTO.getClientId() + "");
         sb.append("&sign=" + sign + "");
         sb.append("&timestamp=" + timestamp + "");
-//        sb.append("&page_token=" + pageToken + "");
-        sb.append("&page_size=" + pageSize + "");
 
         //拉取数据
-        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), "", null, headerMap, RequestMethod.GET);
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(tikTokFullyShippingProviderReq), null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200)) {
             log.error("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}",
@@ -529,7 +521,7 @@ public class TikTokFullService {
         return stockupOrdersDTOList;
     }
     /**
-     * 查询送货单信息
+     * 查询商家地址
      * @param shopId 店铺id
      * @return
      */
@@ -615,5 +607,71 @@ public class TikTokFullService {
             }
         }
        return list;
+    }
+
+
+    /**
+     * 查询预约物流商和日期
+     * @param shopId 店铺id
+     * @return
+     */
+    public TikTokFullyShippingProviderResp searchShippingProvider(String shopId,TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq) {
+        if(StringUtil.isBlank(shopId)){
+            throw new ServiceException("店铺id不能为空");
+        }
+        TikTokShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(shopId);
+        String url = TikTokConstant.URL;
+        StringBuffer sb = new StringBuffer();
+        String path = "/gs_full_service_shipment/202410/shipping_providers/search";
+        String toktikInfo = shopInfoDTO.getClientSecret();
+
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("access_token", shopInfoDTO.getAccessToken());
+        params.put("app_key", shopInfoDTO.getClientId());
+        String timestamp = System.currentTimeMillis() / 1000 + "";
+        params.put("timestamp", timestamp);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("content-type", "application/json");
+        headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
+
+        //请求body，平台用于计算签名
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(tikTokFullyShippingProviderReq));
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSHA256(input, toktikInfo);
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //组装url
+        sb.append(url);
+        sb.append(path);
+        sb.append("?access_token=" + shopInfoDTO.getAccessToken() + "");
+        sb.append("&app_key=" + shopInfoDTO.getClientId() + "");
+        sb.append("&sign=" + sign + "");
+        sb.append("&timestamp=" + timestamp + "");
+
+        //拉取数据
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(tikTokFullyShippingProviderReq), null, headerMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200)) {
+            log.error("调用url={},入参params={}, TikTok全托管查询可用物流商与预约日期数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok全托管查询可用物流商与预约日期数据，返回值 responseMap={}",
+                    sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+
+        //解析数据
+        TikTokFullyShippingProviderResp orderDTO = null;
+        try {
+            orderDTO = JSON.parseObject(apiResult.getData(),new TypeReference<TikTokFullyShippingProviderResp>() {}.getType());
+        } catch (Exception e) {
+            log.error("调用url={},入参params={}, TikTok全托管查询可用物流商与预约日期数据，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok全托管查询可用物流商与预约日期数据，返回值 responseMap={}",
+                    url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        if(orderDTO.getCode()!=0){
+            throw new ServiceException("TikTok全托管查询可用物流商与预约日期数据失败:{}",orderDTO.getMessage());
+        }
+        return orderDTO;
     }
 }

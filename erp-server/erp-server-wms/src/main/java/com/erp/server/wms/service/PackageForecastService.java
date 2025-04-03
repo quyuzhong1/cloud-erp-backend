@@ -165,4 +165,10 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     void batchPrint(List<String> ids, HttpServletResponse response);
 
     List<DictBasicDTO.DropDownDTO> getLogisticsType(String dictPlatform, String shopId);
+
+    String getDeliveryPlatform(List<String> ids);
+
+    List<DictBasicDTO.DropDownDTO> getLogisticType(String platform);
+
+    PackageForecastDTO.ShippingProviderDTO searchShippingProvider(PackageForecastDTO.SearchShippingProviderDTO dto);
 }
