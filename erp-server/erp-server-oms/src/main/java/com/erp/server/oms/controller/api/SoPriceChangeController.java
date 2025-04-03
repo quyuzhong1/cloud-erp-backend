@@ -161,7 +161,7 @@ public class SoPriceChangeController extends BaseController {
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id,create_user_id",
-            menuCode = "oms:soPriceChange:priceChangeDetail",
+            menuCode = "oms:soPriceChange:view",
             serviceClass = SoPriceChangeService.class,
             keyIdName = "id")
     public ApiResult<SoPriceChangeDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {

@@ -106,30 +106,37 @@ public class SoPriceChangeExportExcelDTO implements Serializable {
     private LocalDate effectiveDate;
 
     /**
+     * 失效时间
+     */
+    @ColumnWidth(20)
+    @ExcelProperty(value = "失效时间", index = 12)
+    private LocalDate expireDate;
+
+    /**
      * 升降比例
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "升降比例", index = 12)
+    @ExcelProperty(value = "升降比例", index = 13)
     private String offsetRate;
 
     /**
      * 明细备注
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "明细备注", index = 13)
+    @ExcelProperty(value = "明细备注", index = 14)
     private String detailRemark;
 
     /**
      * 审核人（最新）
      */
-    @ExcelProperty(value = "审核人（最新）", index = 14)
+    @ExcelProperty(value = "审核人（最新）", index = 15)
     @ColumnWidth(20)
     private String approveUserName;
 
     /**
      * 审核完成时间
      */
-    @ExcelProperty(value = "审核完成时间", index = 15,converter= LocalDateStringConverter.class)
+    @ExcelProperty(value = "审核完成时间", index = 16,converter= LocalDateStringConverter.class)
     @ColumnWidth(20)
     private LocalDateTime approveTime;
 
@@ -137,14 +144,13 @@ public class SoPriceChangeExportExcelDTO implements Serializable {
      * 创建人
      */
     @ColumnWidth(10)
-    @ExcelProperty(value = "创建人", index = 16)
+    @ExcelProperty(value = "创建人", index = 17)
     private String createUserName;
 
     /**
      * 创建时间
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "创建时间", index = 17,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
 
