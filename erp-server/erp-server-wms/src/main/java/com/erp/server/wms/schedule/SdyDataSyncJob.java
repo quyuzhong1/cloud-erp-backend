@@ -291,13 +291,15 @@ public class SdyDataSyncJob {
                         .filter(StringUtils::isNotBlank)
                         .distinct()
                         .collect(Collectors.toList());
-                receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
-                        .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
-                        .list();
+                if (CollectionUtils.isNotEmpty(b2cSoIds)) {
+                    receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+                            .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                            .list();
 
-                soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
-                        .in(SoB2cEntity::getId, b2cSoIds)
-                        .list();
+                    soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
+                            .in(SoB2cEntity::getId, b2cSoIds)
+                            .list();
+                }
             }
 
             List<SoInfoEntity> soInfoEntityList = new LinkedList();
