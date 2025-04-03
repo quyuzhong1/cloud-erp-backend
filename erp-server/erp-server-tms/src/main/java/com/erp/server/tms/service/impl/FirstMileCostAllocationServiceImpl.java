@@ -913,7 +913,6 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private void setEndPeriodTransitCost(FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO, InitFirstMileAllocationDetailEntity initEntity, BigDecimal allocatedAmount) {
         BigDecimal midPeriodTransitCost = Objects.nonNull(detailEntity.getMidPeriodTransitCost()) ? detailEntity.getMidPeriodTransitCost() : BigDecimal.ZERO;
         //期末在途费用
-
         BigDecimal currentPeriodAllocatedCost = Objects.nonNull(detailEntity.getCurrentPeriodAllocatedCost()) ? detailEntity.getCurrentPeriodAllocatedCost() : BigDecimal.ZERO;
         BigDecimal mid = MathUtil.add(midPeriodTransitCost, currentPeriodAllocatedCost);
         if (!judgeReconciliationDTO.isCurrencyReconciliation()) {
@@ -921,7 +920,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             detailEntity.setEndPeriodTransitCost(BigDecimal.ZERO);
         } else {
             //期初数据是否存在
-            if(Objects.nonNull(initEntity)){
+            if(Objects.nonNull(initEntity) && initEntity.getInitTransitCost().compareTo(BigDecimal.ZERO) != 0){
                 //期初在途费用-冲期初-本期分摊费用
                 detailEntity.setEndPeriodTransitCost(MathUtil.subtract(initEntity.getInitTransitCost(), mid));
             }else {
@@ -950,10 +949,10 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             }
         } else if (currentPeriodAllocatedCostDTO.getJudgeReconciliationDTO().isCurrencyMonthReconciliation()) {
             //期初费用分摊全部为0
-            if (Objects.isNull(currentPeriodAllocatedCostDTO.getInitEntity()) || (BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitTransitCost()) == 0
+            if ((Objects.isNull(currentPeriodAllocatedCostDTO.getInitEntity()) || (BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitTransitCost()) == 0
                     && BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitTransitTariff()) == 0
                     && BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitEstimatedCost()) == 0
-                    && BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitEstimatedTariff()) == 0)){
+                    && BigDecimal.ZERO.compareTo(currentPeriodAllocatedCostDTO.getInitEntity().getInitEstimatedTariff()) == 0)) && currentPeriodAllocatedCostDTO.getReceiveQty() == 0 ){
                 currentPeriodAllocatedCostDTO.getDetailEntity().setCurrentPeriodAllocatedCost(BigDecimal.ZERO);
             }else if (currentPeriodAllocatedCostDTO.getReceiveQty() <= currentPeriodAllocatedCostDTO.getDeliveryQty()) {
                 //期初为暂估费用 且当月开始有实际账单
