@@ -18,6 +18,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -26,9 +27,8 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.MathUtil;
+import com.common.core.utils.*;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.SoPriceDTO;
 import com.erp.model.oms.dto.SoPriceDetailDTO;
 import com.erp.model.oms.dto.excel.ImportSoPriceExcelDTO;
@@ -637,6 +637,39 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        SoPriceExcelListener excelListener = new SoPriceExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), ImportSoPriceExcelDTO.class, excelListener).sheet(0).doRead();
+        } catch (Exception e) {
+            log.error("销售价目导入错误", e);
+            return Boolean.FALSE;
+        }
+        //导入数据处理
+        List<ImportSoPriceExcelDTO> successList = excelListener.getSuccessList();
+        //导出错误数据
+        List<ImportSoPriceExcelDTO> errorList = excelListener.getErrorList();
+        //处理校验导入成功数据
+        handleImportFile(successList, errorList);
+
+        if (errorList.size() > 0) {
+            String fileName = "销售价目导入错误信息";
+            ExcelUtil.export(fileName, "导入异常", errorList, ImportSoPriceExcelDTO.class, response);
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 导入数据处理
+     * @author will
+     * @date 2025/4/2 11:48
+     * @param successList
+     * @param errorList
+     */
+    private void handleImportFile (List<ImportSoPriceExcelDTO> successList, List<ImportSoPriceExcelDTO> errorList) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
         //用户信息
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         // 查询所有审核通过的产品信息
@@ -644,22 +677,120 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         // 组织
         List<BaseIdDTO> orgList = sysUserFeign.listAccountingCompany();
         //客户
-        List<CustomerInfoEntity> list = customerInfoService.list();
+        List<CustomerInfoEntity> customerList = customerInfoService.list();
 
-        SoPriceExcelListener excelListener = new SoPriceExcelListener(userList, skuList,list, orgList, soPriceDetailService, this);
-        try {
-            EasyExcel.read(excelFile.getInputStream(), ImportSoPriceExcelDTO.class, excelListener).sheet(0).doRead();
-        } catch (Exception e) {
-            log.error("销售价目导入错误", e);
-            return Boolean.FALSE;
+        Map<String, List<ImportSoPriceExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getSoOrgName())));
+
+        for (Map.Entry<String, List<ImportSoPriceExcelDTO>> entry : map.entrySet()) {
+            List<ImportSoPriceExcelDTO> value = entry.getValue();
+            ImportSoPriceExcelDTO excelDTO = value.get(0);
+            List<String> errorMsgList = new ArrayList<>();
+
+            SoPriceDTO.AddDTO addDTO = new SoPriceDTO.AddDTO();
+            String customerName = StrUtils.null2EmptyWithTrim(excelDTO.getCustomerName());
+            //客户信息
+            CustomerInfoEntity customerInfoEntity = customerList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), customerName)).findFirst().orElse(null);
+            if(Objects.isNull(customerInfoEntity)) {
+                errorMsgList.add("客户不存在");
+            } else {
+                addDTO.setCustomerId(customerInfoEntity.getId());
+            }
+            // 报价日期
+            String quotedDateStr = excelDTO.getQuotedDate();
+            if(StrUtils.isNotEmpty(quotedDateStr)) {
+                addDTO.setQuotedDate(LocalDateUtil.stringToLocalDateTime(quotedDateStr).toLocalDate());
+            }
+            // 定价员
+            String pricingUserName = excelDTO.getPricingUserName();
+            String userId = userList.stream().filter(r -> Objects.equals(pricingUserName, r.getUserName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getUserId())).orElse("");
+            if (StrUtils.isEmpty(userId)) {
+                errorMsgList.add("定价员不存在");
+            }
+            addDTO.setPricingUserId(userId);
+            // 销售组织
+            String soOrgName = excelDTO.getSoOrgName();
+            String orgId = orgList.stream().filter(r -> Objects.equals(soOrgName, r.getName())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+            if (StrUtils.isEmpty(orgId)) {
+                errorMsgList.add("销售组织不存在");
+            }
+            addDTO.setSoOrgId(orgId);
+            // 币制代码
+            addDTO.setCurrency("CNY");
+
+            List<SoPriceDetailDTO.AddDTO> detailList = Lists.newArrayList();
+            for (ImportSoPriceExcelDTO importExcelDTO : value) {
+                SoPriceDetailDTO.AddDTO detailDTO = new  SoPriceDetailDTO.AddDTO();
+                // 明细
+                String skuNo = importExcelDTO.getSkuNo();
+                SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(skuNo)).findFirst().orElse(null);
+                if (Objects.isNull(skuEntity)) {
+                    errorMsgList.add("sku编码错误");
+                } else {
+                    detailDTO.setSkuId(skuEntity.getSkuId());
+                    detailDTO.setSkuNo(skuNo);
+                }
+                // 区间从
+                String minQtyStr = importExcelDTO.getMinQty();
+                if(StrUtils.isNotEmpty(minQtyStr)) {
+                    detailDTO.setMinQty(Integer.valueOf(minQtyStr));
+                }
+                // 区间到
+                String maxQtyStr = importExcelDTO.getMaxQty();
+                if(StrUtils.isNotEmpty(maxQtyStr)) {
+                    detailDTO.setMaxQty(Integer.valueOf(maxQtyStr));
+                }
+                detailDTO.setTaxPrice(MathUtil.valueOf(importExcelDTO.getTaxPrice()));
+                if(detailDTO.getTaxPrice().compareTo(BigDecimal.ZERO) < 1) {
+                    errorMsgList.add("含税单价错误不能小于等于0");
+                }
+                detailDTO.setTaxRate(MathUtil.valueOf(importExcelDTO.getTaxRate()));
+                if(detailDTO.getTaxRate().compareTo(BigDecimal.ZERO) < 0) {
+                    errorMsgList.add("税率错误不能小于0");
+                }
+                // 生效时间
+                String effectiveDateStr = importExcelDTO.getEffectiveDate();
+                if(StrUtils.isNotEmpty(effectiveDateStr)) {
+                    detailDTO.setEffectiveDate(LocalDateUtil.stringToLocalDateTime(effectiveDateStr).toLocalDate());
+                }
+                // 失效时间
+                String expireDateStr = importExcelDTO.getExpireDate();
+                if(StrUtils.isNotEmpty(expireDateStr)) {
+                    detailDTO.setExpireDate(LocalDateUtil.stringToLocalDateTime(expireDateStr).toLocalDate());
+                }
+                if (ObjectUtil.isNotEmpty(detailDTO.getEffectiveDate()) && ObjectUtil.isNotEmpty(detailDTO.getExpireDate())) {
+                    if (detailDTO.getEffectiveDate().isAfter(detailDTO.getExpireDate())) {
+                        errorMsgList.add("生效日期不能大于失效日期");
+                    }
+                }
+                // 验证 区间从和区间到
+                if(Objects.nonNull(detailDTO.getMaxQty()) && Objects.nonNull(detailDTO.getMinQty())
+                        && detailDTO.getMaxQty().intValue() == detailDTO.getMinQty().intValue()) {
+                    errorMsgList.add("区间从，区间到两个值不能相同");
+                }
+                if(Objects.nonNull(detailDTO.getMaxQty()) && Objects.nonNull(detailDTO.getMinQty())
+                        && detailDTO.getMaxQty() < detailDTO.getMinQty()) {
+                    errorMsgList.add("区间从值不能大于区间到值");
+                }
+                if(CollUtil.isNotEmpty(errorMsgList)) {
+                    importExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(importExcelDTO);
+                    continue;
+                }
+                detailList.add(detailDTO);
+            }
+            if (CollUtil.isEmpty(detailList)) {
+                continue;
+            }
+            addDTO.setSoPriceDetailList(detailList);
+            try {
+                ApplicationContextUtils.getBean(SoPriceServiceImpl.class).add(addDTO);
+            } catch (Exception e) {
+                value.forEach(obj -> obj.setErrorMsg("1、" + e.getMessage()));
+                errorList.addAll(value);
+            }
         }
-        List<ImportSoPriceExcelDTO> errorList = excelListener.getErrorList();
-        if (errorList.size() > 0) {
-            String fileName = "销售价目导入错误信息";
-            ExcelUtil.export(fileName, "导入异常", errorList, ImportSoPriceExcelDTO.class, response);
-            return Boolean.FALSE;
-        }
-        return Boolean.TRUE;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -675,15 +806,15 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         // 修改的销售价目明细信息
         List<SoPriceDetailEntity> updateDetailList = Lists.newArrayList();
         for(SoPriceDTO.ImportAddDTO item : handList) {
-            SoPriceEntity SoPriceEntity = new SoPriceEntity();
-            SoPriceEntity.setCustomerId(item.getCustomerId());
-            SoPriceEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
-            SoPriceEntity.setQuotedDate(item.getQuotedDate());
-            SoPriceEntity.setPricingUserId(item.getPricingUserId());
-            SoPriceEntity.setPricingUserName(item.getPricingUserName());
-            SoPriceEntity.setSoOrgId(item.getSoOrgId());
-            SoPriceEntity.setSoOrgName(item.getSoOrgName());
-            SoPriceEntity.setCurrency(item.getCurrency());
+            SoPriceEntity soPriceEntity = new SoPriceEntity();
+            soPriceEntity.setCustomerId(item.getCustomerId());
+            soPriceEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+            soPriceEntity.setQuotedDate(item.getQuotedDate());
+            soPriceEntity.setPricingUserId(item.getPricingUserId());
+            soPriceEntity.setPricingUserName(item.getPricingUserName());
+            soPriceEntity.setSoOrgId(item.getSoOrgId());
+            soPriceEntity.setSoOrgName(item.getSoOrgName());
+            soPriceEntity.setCurrency(item.getCurrency());
             // 明细信息
             List<SoPriceDetailDTO.ImportSaveDTO> detailList = item.getDetailList();
             List<SoPriceDetailEntity> addItemList = Lists.newArrayList();
@@ -696,8 +827,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
                 }
                 BigDecimal taxRate = null;
                 if(Objects.nonNull(detailItem.getTaxRate())) {
-                    BigDecimal rate = detailItem.getTaxRate().divide(new BigDecimal("100"), 4, BigDecimal.ROUND_HALF_UP);
-                    taxRate = rate;
+                    taxRate = detailItem.getTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
                 }
                 if(CollUtil.isNotEmpty(detailItem.getIds())) {
                     for(String detailId : detailItem.getIds()) {
@@ -724,11 +854,11 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             if(CollUtil.isNotEmpty(addItemList)) {
                 //生成单号
                 String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CGJM);
-                SoPriceEntity.setCode(code);
+                soPriceEntity.setCode(code);
                 String id = IdWorker.getIdStr();
-                SoPriceEntity.setId(id);
-                addList.add(SoPriceEntity);
-                addItemList.stream().forEach(data->data.setMainId(id));
+                soPriceEntity.setId(id);
+                addList.add(soPriceEntity);
+                addItemList.forEach(data->data.setMainId(id));
                 addDetailList.addAll(addItemList);
             }
             if(CollUtil.isNotEmpty(updateItemList)) {

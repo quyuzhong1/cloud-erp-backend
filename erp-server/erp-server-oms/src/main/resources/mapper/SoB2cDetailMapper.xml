@@ -54,6 +54,10 @@
             #{item}
         </foreach>
     </update>
+    <update id="updateExtendData">
+        UPDATE so_b2c_detail SET extend_data = #{extendData}, update_time = now(),version = version + 1
+        WHERE  main_id = #{soId} and platform_sku_no = #{platformSkuNo}
+    </update>
     <!--查詢需要出库单要的数据-->
     <select id="listOutstockByMainId" resultType="com.erp.model.oms.dto.SoB2cDetailDTO$OutstockDTO">
            SELECT

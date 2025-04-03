@@ -1,15 +1,16 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.core.annotation.Alias;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -31,6 +32,125 @@ import java.util.Objects;
 @NoArgsConstructor
 public class PackageForecastDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class ProvidersAndCollectDTO{
+        /**
+         * 服务商编号
+         */
+        private String providerCode;
+        /**
+         * 服务商名称
+         */
+        private String providerName;
+
+        /**
+         * 预约日期集合
+         */
+        private List<CollectDataDTO> collectDataList;
+
+        @NoArgsConstructor
+        @Data
+        @AllArgsConstructor
+        public static class CollectDataDTO {
+
+            /**
+             * 揽收日期
+             */
+            private LocalDate collectDate;
+
+            /**
+             * 是否可以揽收
+             */
+            private Boolean canReserve;
+
+            /**
+             * 预约时间集合
+             */
+            private List<CollectTimeDTO> collectTimeDTOList;
+
+            @NoArgsConstructor
+            @Data
+            public static class CollectTimeDTO {
+
+                /**
+                 * 开始时间
+                 */
+                private LocalDateTime startTime;
+
+                /**
+                 * 结束时间
+                 */
+                private LocalDateTime endTime;
+                /**
+                 * 是否可以揽收
+                 */
+                private Boolean canReserve;
+            }
+        }
+
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class ReserveArrivedTimesDTO {
+
+        /**
+         * 日期
+         */
+        private LocalDate arrivedTime;
+        /**
+         * 是否可送货
+         */
+        private Boolean canReserve;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShippingProviderDTO{
+        /**
+         * 物流服务商+揽收日期
+         */
+        private List<ProvidersAndCollectDTO> shippingProviderList;
+        /**
+         * 预计送货到仓日期
+         */
+        private List<ReserveArrivedTimesDTO> reserveArrivedTimes;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchShippingProviderDTO{
+
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 揽收方式
+         */
+        @NotBlank(message = "揽收方式不能为空")
+        private String collectMode;
+
+        @Null(message = "总重量不能为空")
+        private Integer weight;
+
+        /**
+         * 物流类型
+         */
+        @NotBlank(message = "物流类型不能为空")
+        private String deliveryOption;
+
+        /**
+         * 揽收地址id
+         */
+        @NotBlank(message = "揽收地址id不能为空")
+        private String addressId;
+
+
+    }
     @Data
     @NoArgsConstructor
     public static class UploadFileViewDTO{
@@ -162,6 +282,11 @@ public class PackageForecastDTO implements Serializable {
          * 揽收地址id 来源 http://172.16.100.11:3002/project/128/interface/api/25783  type=collect
          */
         private String collectAddressId;
+
+        /**
+         * 物流类型
+         */
+        private String logisticType;
     }
 
     /**

@@ -338,13 +338,16 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> printPickingBill(List<String> ids) {
+    public SoB2cDeliveryDTO.PrintPickingMainDTO printPickingBill(List<String> ids) {
+        SoB2cDeliveryDTO.PrintPickingMainDTO printPickingMainDTO = new SoB2cDeliveryDTO.PrintPickingMainDTO();
         List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> resultList = new ArrayList<>();
         List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(ids);
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        List<PickingListsDTO.CombinationPrintDetailView> deliveryDetailList = deliveryService.getDeliveryDetail(deliveryIds);
+        printPickingMainDTO.setCombinationPrintDetailList(deliveryDetailList);
         List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds);
         if (CollUtil.isEmpty(printPickingViewList)) {
-            return Collections.emptyList();
+            return null;
         }
         Map<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> map = printPickingViewList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.PrintPickingViewDTO::getWaveCode));
         for (Map.Entry<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> entry : map.entrySet()) {
@@ -380,7 +383,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
                 operateLogService.addModuleOperateLog("波次完成拣货单打印，自动变更状态为拣货中", ModuleTypeEnum.WAVE_LIST.getCode(), id, "波次列表波次状态自动变更", loginUser.getUid(), loginUser.getUserName());
             }
         }
-        return resultList;
+        printPickingMainDTO.setPrintPickingMainViewDTOList(resultList);
+        return printPickingMainDTO;
     }
 
     @Override

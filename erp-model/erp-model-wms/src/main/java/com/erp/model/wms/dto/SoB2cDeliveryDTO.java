@@ -4,6 +4,7 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import lombok.*;
@@ -585,6 +586,22 @@ public class SoB2cDeliveryDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
+    public static class PrintPickingMainDTO{
+        /**
+         * 拣货单信息
+         */
+        private List<PrintPickingMainViewDTO> printPickingMainViewDTOList;
+        /**
+         * 发货清单
+         */
+        private List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailList;
+    }
+    /**
+     * 打印拣货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class PrintPickingMainViewDTO {
         /**
          * 波次号
@@ -651,6 +668,22 @@ public class SoB2cDeliveryDTO implements Serializable {
         }
     }
 
+    /**
+     * 打印拣货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintPickingDTO {
+        /**
+         * 拣货清单
+         */
+        private List<PrintPickingViewDTO> printPickingViewDTOList;
+        /**
+         * 发货清单
+         */
+        private List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailList;
+    }
 
     /**
      * 打印拣货单
@@ -1124,6 +1157,10 @@ public class SoB2cDeliveryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class PrintSkuBarcodeConfirmDTO {
+        /**
+         * 打印类型 /wms/dict/list?key=barcodeSize
+         */
+        private String barcodeSize;
         /**
          * 详情
          */

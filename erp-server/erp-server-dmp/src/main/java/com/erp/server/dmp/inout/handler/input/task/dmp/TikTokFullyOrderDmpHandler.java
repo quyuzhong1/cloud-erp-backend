@@ -122,7 +122,7 @@ public class TikTokFullyOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         extendDataMap.put("emergencyLevel",dmpDataMap.get("emergencyLevel") + "");
         extendDataMap.put("deliveryType",dmpDataMap.get("type") + "");
         extendDataMap.put("isDeliver",dmpDataMap.get("canDeliver") + "");
-        extendDataMap.put("deliveryQty",dmpDataMap.get("deliveryQuantity") + "");
+        extendDataMap.put("deliveryQty",dmpDataMap.get("deliveredQuantity") + "");
         extendDataMap.put("receiveQty",dmpDataMap.get("receivedQuantity") + "");
         extendDataMap.put("instockQty",dmpDataMap.get("inboundQuantity") + "");
         extendDataMap.put("returnQty",dmpDataMap.get("returnedQuantity") + "");

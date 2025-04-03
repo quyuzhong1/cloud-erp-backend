@@ -42,6 +42,11 @@ public class SoPriceDetailDTO implements Serializable {
         private String skuNo;
 
         /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
          * 最小数量
          */
 
@@ -500,6 +505,12 @@ public class SoPriceDetailDTO implements Serializable {
          * 生效时间
          */
         private LocalDate effectiveDate;
+
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
 
 
         /**

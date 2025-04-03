@@ -231,8 +231,11 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:printPickingView",
             tableAlias = "sbd"
     )
-    public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(soB2cDeliveryService.printPickingView(dto.getIds()));
+    public ApiResult<SoB2cDeliveryDTO.PrintPickingDTO> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        SoB2cDeliveryDTO.PrintPickingDTO printPickingDTO = new SoB2cDeliveryDTO.PrintPickingDTO();
+        printPickingDTO.setPrintPickingViewDTOList(soB2cDeliveryService.printPickingView(dto.getIds()));
+        printPickingDTO.setCombinationPrintDetailList(soB2cDeliveryService.getDeliveryDetail(dto.getIds()));
+        return success();
     }
 
     /**

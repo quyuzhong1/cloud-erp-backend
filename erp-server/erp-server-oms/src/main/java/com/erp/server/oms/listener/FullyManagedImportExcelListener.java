@@ -102,12 +102,6 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        //存在错误数据则直接返回
-        if (!errorMsgList.isEmpty()) {
-            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(excelDTO);
-            return;
-        }
         if (CharSequenceUtil.isNotBlank(excelDTO.getPayTimeStr())) {
             excelDTO.setPayTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getPayTimeStr()));
         }
@@ -124,7 +118,15 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
                 excelDTO.setLength(new BigDecimal(sizeArr[0]));
                 excelDTO.setWidth(new BigDecimal(sizeArr[1]));
                 excelDTO.setHeight(new BigDecimal(sizeArr[2]));
+            }else {
+                errorMsgList.add("包装尺寸格式错误");
             }
+        }
+        //存在错误数据则直接返回
+        if (!errorMsgList.isEmpty()) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(excelDTO);
+            return;
         }
         //数据校验是成功的
         dataList.add(excelDTO);

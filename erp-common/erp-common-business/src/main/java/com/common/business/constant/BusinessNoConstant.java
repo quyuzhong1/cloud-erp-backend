@@ -168,9 +168,9 @@ public interface BusinessNoConstant {
     //库龄批次号
     String N = "N";
     String INV = "INV";
+    String XSBH = "XSBH";
 
     String XSJM = "XSJM";
     String XSTJ = "XSTJ";
 
-    String XSBH = "XSBH";
 }

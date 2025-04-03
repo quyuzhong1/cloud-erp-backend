@@ -7,8 +7,6 @@ import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
-
 /**
  * 销售价目明细导入
  * @author will
@@ -32,7 +30,7 @@ public class SoPriceDetailImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "*区间-从", index = 1)
     @FieldValid(fieldName = "区间-从",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
-    private Integer  minQty;
+    private String  minQty;
 
     /**
      * 区间-到
@@ -40,7 +38,7 @@ public class SoPriceDetailImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "*区间-到", index = 2)
     @FieldValid(fieldName = "区间-到",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
-    private Integer  maxQty;
+    private String  maxQty;
 
     /**
      * 含税单价
@@ -48,7 +46,7 @@ public class SoPriceDetailImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "*含税单价", index = 3)
     @FieldValid(fieldName = "含税单价", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
-    private BigDecimal taxPrice;
+    private String taxPrice;
 
     /**
      * 税率
@@ -56,7 +54,7 @@ public class SoPriceDetailImportExcelDTO {
     @ColumnWidth(20)
     @ExcelProperty(value = "*税率", index = 4)
     @FieldValid(fieldName = "税率", isNotBlank = true, formatPattern = FieldFormatPatternTypeEnum.NUMBER)
-    private BigDecimal taxRate;
+    private String taxRate;
 
 
     /**

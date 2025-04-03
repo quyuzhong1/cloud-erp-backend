@@ -103,7 +103,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 打印拣货单
      * @param ids 波次号
      */
-    List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> printPickingBill(List<String> ids);
+    SoB2cDeliveryDTO.PrintPickingMainDTO printPickingBill(List<String> ids);
     /**
      * 更新波次列表状态
      * @author will

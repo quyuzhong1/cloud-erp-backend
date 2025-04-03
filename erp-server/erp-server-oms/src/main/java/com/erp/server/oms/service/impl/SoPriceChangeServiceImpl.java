@@ -676,7 +676,7 @@ public class SoPriceChangeServiceImpl extends SuperServiceImpl<SoPriceChangeMapp
             //含税单价
             excelDTO.setTaxPrice(item.getCurrencySymbol() + item.getTaxPrice().toString());
             //旧含税单价
-            excelDTO.setTaxPrice(item.getCurrencySymbol() + item.getOldTaxPrice().toString());
+            excelDTO.setOldTaxPrice(item.getCurrencySymbol() + item.getOldTaxPrice().toString());
             excelDTO.setApproveTime(item.getApproveTime());
             resultList.add(excelDTO);
         }

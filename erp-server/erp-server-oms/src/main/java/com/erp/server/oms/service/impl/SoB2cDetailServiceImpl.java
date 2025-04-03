@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -805,6 +806,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         entity.getCode(),detail.getSkuNo(), skuVO.getSkuNo(),detail.getWarehouseSkuNo(),warehouseSkuNo,detail.getAdvicePrice(),retailPrice,detail.getTaxCost(),actualTaxCost);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "编辑操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),CharSequenceUtil.format("操作成功由【{}】改为【{}】",detail.getSkuNo(), skuVO.getSkuNo()));
+    }
+
+    @Override
+    public void updateExtendData(String soId, String platformSkuCode, SoB2cDTO.ExtendDataDTO extendDataDTO) {
+        baseMapper.updateExtendData(soId,platformSkuCode, JSONUtil.toJsonStr(extendDataDTO));
     }
 
     /**
