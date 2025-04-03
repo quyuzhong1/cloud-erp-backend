@@ -552,6 +552,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             if (!errorMsgList.isEmpty()) {
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
                 errorList.add(excelDTO);
+                continue;
             }
             String effectiveDateStr = excelDTO.getEffectiveDateStr();
             addDTO.setExpireDate(LocalDateUtil.parseStrToLocalDate(effectiveDateStr));
@@ -562,6 +563,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
             addDTO.setTaxRate(MathUtil.valueOf(excelDTO.getTaxRate()));
             addDTO.setSkuId(skuEntity.getSkuId());
             addDTO.setSkuNo(skuEntity.getSkuNo());
+            addDTO.setProductName(skuEntity.getSkuName());
             resultList.add(addDTO);
         }
         return resultList;
