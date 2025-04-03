@@ -1042,6 +1042,7 @@ public enum ApiError implements Serializable {
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
     ORDER_IS_FULLY_MANAGEDT_NOT_UPDATE(92118,"全托管订单【{}】，无需标发"),
     ORDER_IS_FULLY_MANAGED_NOT_PRINT(92118,"订单【{}】不是全托管订单，禁止打印SKU条码"),
+    ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT(92118,"托管订单以及B2C订单不可同时打印"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货的数据不允许操作手动标发"),
     APPROVE_IS_FALSE_DELIVERY(92120,"审核通过且待发货的订单允许手动标发"),
     DISTRIBUTION_IS_FALSE_DELIVERY(92120,"配货中存在渠道和物流号的订单允许手动标发"),

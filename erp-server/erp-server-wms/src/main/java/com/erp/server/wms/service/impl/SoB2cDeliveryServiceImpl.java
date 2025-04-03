@@ -515,6 +515,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isNotEmpty(codeList)) {
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
         }
+        List<String> platformList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+            throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT);
+        }
         // 异常单生成波次异常状态，不允许在打印拣货单
         List<String> codes = deliveryEntityList.stream()
                 .filter(req -> SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode().equals(req.getStatus()))
@@ -633,7 +637,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //更新单据状态和拣货状态
-        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus(), Boolean.FALSE,Boolean.FALSE);
+        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus(), Boolean.FALSE,Boolean.FALSE,Boolean.FALSE);
         if (!update) {
             throw new ServiceException("取消打印拣货单");
         }
@@ -1330,6 +1334,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("确认打印详情不能为空");
         }
+        BarcodeSizeEnum barcodeSizeEnum = BarcodeSizeEnum.getByStatus(dto.getBarcodeSize());
         Map<String, List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO>> platformCodeMap = detailList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.PrintSkuBarcodeDTO::getPlatformCode));
         List<String> base64List = new ArrayList<>();
         //循环获取打印信息
@@ -1337,7 +1342,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             String platformCode = entry.getKey();
             List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeDTOList = entry.getValue();
             TikTokFullyPrintSkuReq req = new TikTokFullyPrintSkuReq();
-            req.setSize(new TikTokFullyPrintSkuReq.SizeDTO("5","2","CENTIMETER"));
+            req.setSize(new TikTokFullyPrintSkuReq.SizeDTO(barcodeSizeEnum.getWidth(),barcodeSizeEnum.getHeight(),barcodeSizeEnum.getUnit()));
             req.setStockupOrderCode(platformCode);
             List<TikTokFullyPrintSkuReq.PlatformSkuItemsDTO> itemsDTOS = SoB2cProcessingConverter.INSTANCE.convertToPlatformSkuItemsDTO(printSkuBarcodeDTOList);
             req.setPlatformSkuItems(itemsDTOS);
@@ -1392,6 +1397,98 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         return ApiResult.success();
+    }
+
+    @Override
+    public List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids) {
+        List<PickingListsDTO.CombinationPrintDetailView> list = new ArrayList<>();
+        List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
+        if (CollUtil.isEmpty(deliveryDetailEntityList)) {
+            return list;
+        }
+        //待处理、已发货和取消发货单 状态，不允许在打印拣货单
+        List<SoB2cDeliveryEntity> deliveryEntityList = this.listByIds(ids);
+        if (CollUtil.isEmpty(deliveryEntityList)) {
+            return list;
+        }
+        List<String> platformList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
+            return list;
+        }
+        if(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+            throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT);
+        }
+        List<String> soIds = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getSourceId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
+        Map<String, SoB2cDeliveryEntity> deliveryEntityMap = deliveryEntityList.stream().collect(Collectors.toMap(SoB2cDeliveryEntity::getId, Function.identity()));
+        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+        Map<String, SoB2cDetailEntity> soB2cDetailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity()));
+        for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailEntityList) {
+            PickingListsDTO.CombinationPrintDetailView view = new PickingListsDTO.CombinationPrintDetailView();
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(detailEntity.getMainId());
+            if (Objects.isNull(soB2cDeliveryEntity)) {
+                continue;
+            }
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(soB2cDeliveryEntity.getSourceId());
+            if (Objects.isNull(soB2cEntity)) {
+                continue;
+            }
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(detailEntity.getSourceDetailId());
+            if (Objects.isNull(soB2cDetailEntity)) {
+                continue;
+            }
+            view.setThirdSku(soB2cDetailEntity.getPlatformSkuNo());
+            view.setParentSku(soB2cDetailEntity.getSkuNo());
+            view.setParentSkuQty(detailEntity.getDeliveryQty());
+            list.add(view);
+        }
+        List<PickingListsDTO.CombinationPrintDetailView> combinationList = list.stream()
+                // 先按客户PO分组
+                .collect(Collectors.groupingBy(PickingListsDTO.CombinationPrintDetailView::getCustomerPo))
+                .values().stream()
+                // 对每个客户PO组处理
+                .flatMap(customerGroup -> customerGroup.stream()
+                        // 再按组合键分组
+                        .collect(Collectors.groupingBy(
+                                v -> v.getCustomerPo() + ":" + v.getThirdSku() + ":" + v.getParentSku() + ":" + v.getChildSku(),
+                                Collectors.collectingAndThen(Collectors.toList(), v -> {
+                                    PickingListsDTO.CombinationPrintDetailView view = v.get(0);
+                                    Integer totalParentQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getParentSkuQty).sum();
+                                    view.setParentSkuQty(totalParentQty);
+                                    if (CharSequenceUtil.isNotBlank(view.getChildSku())){
+                                        int totalChildQty = v.stream().mapToInt(PickingListsDTO.CombinationPrintDetailView::getChildSkuQty).sum();
+                                        view.setChildSkuQty(totalChildQty);
+                                    }
+                                    return view;
+                                })
+                        ))
+                        .values().stream()
+                )
+                .sorted(Comparator.comparing(PickingListsDTO.CombinationPrintDetailView::getCustomerPo)
+                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getThirdSku)
+                        .thenComparing(PickingListsDTO.CombinationPrintDetailView::getParentSku)
+                )
+                .collect(Collectors.toList());
+        //清空上层相同父sku
+        String currentParentSku = "";
+        Integer parentQty = 0;
+        for (PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView : combinationList) {
+            if(CharSequenceUtil.isBlank(currentParentSku)){
+                currentParentSku = combinationPrintDetailView.getParentSku();
+                parentQty = combinationPrintDetailView.getParentSkuQty();
+                continue;
+            }
+            if(combinationPrintDetailView.getParentSku().equals(currentParentSku) && parentQty.equals(combinationPrintDetailView.getParentSkuQty())){
+                combinationPrintDetailView.setParentSku("");
+                combinationPrintDetailView.setParentSkuQty(null);
+                combinationPrintDetailView.setThirdSku("");
+            }else{
+                currentParentSku = combinationPrintDetailView.getParentSku();
+                parentQty = combinationPrintDetailView.getParentSkuQty();
+            }
+        }
+        return combinationList;
     }
 
     @Override
@@ -1522,7 +1619,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //更新单据状态和拣货状态
-        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE);
+        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE);
         if (!update) {
             throw new ServiceException("完成打印失败");
         }
@@ -2315,13 +2412,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param status
      * @return Boolean
      */
-    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking,Boolean isPrintLogistics) {
+    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking,Boolean isPrintLogistics,Boolean isPrintSkuBarcode) {
         if (CollectionUtils.isEmpty(idList)) {
             return Boolean.FALSE;
         }
         return lambdaUpdate().in(SoB2cDeliveryEntity::getId,idList).set(SoB2cDeliveryEntity::getStatus,status)
                 .set(SoB2cDeliveryEntity::getIsPrintPicking,isPrintPicking)
                 .set(SoB2cDeliveryEntity::getIsPrintLogistic,isPrintLogistics)
+                .set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,isPrintSkuBarcode)
                 .set(isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,LocalDateTime.now())
                 .set(!isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,null)
                 .update();

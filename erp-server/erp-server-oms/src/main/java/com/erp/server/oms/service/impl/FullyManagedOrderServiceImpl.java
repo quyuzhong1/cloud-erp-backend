@@ -315,9 +315,10 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
      */
     private SoB2cDTO.AddDTO buildAddDTO(String key, List<FullyManagedImportExcelDTO> value, List<FullyManagedImportExcelDTO> errorList) {
         //平台列表
-        SoB2cEntity entity = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).one();
-        if (ObjectUtil.isNotEmpty(entity)) {
-            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】销售订单已存在【{}】",e.getDictPlatformName(), e.getPlatformCode(), entity.getCode())));
+        List<SoB2cEntity> entityList = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).list();
+        if (CollUtil.isNotEmpty(entityList)) {
+            List<String> codeList = entityList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
+            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】销售订单已存在【{}】",e.getDictPlatformName(), e.getPlatformCode(), CharSequenceUtil.join(",",codeList))));
             errorList.addAll(value);
             return null;
         }
@@ -330,7 +331,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
                             && e.getOrderSourceType().equals(value.get(0).getOrderSourceType())
                     );
             if (!flag){
-                value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】中订单金额/币别/下单时间/平台来源需要一致",e.getDictPlatformName(), e.getPlatformCode(), entity.getCode())));
+                value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】中订单金额/币别/下单时间/平台来源需要一致",e.getDictPlatformName(), e.getPlatformCode())));
                 errorList.addAll(value);
                 return null;
             }
