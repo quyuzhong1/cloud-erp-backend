@@ -547,4 +547,29 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
 
+    @Override
+    public List<SysDepartmentEntity> listByParentIds() {
+        List<SysDepartmentEntity> list = lambdaQuery().list();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        fillParentIds(list);
+        return list;
+    }
+
+    public void fillParentIds(List<SysDepartmentEntity> departments) {
+        // 构建 id -> SysDepartmentEntity 的映射，方便查找
+        Map<String, SysDepartmentTreeDTO> map = baseMapper.findTree()
+                .stream()
+                .collect(Collectors.toMap(SysDepartmentTreeDTO::getId, dept -> dept));
+
+        for (SysDepartmentEntity sysDepartmentEntity : departments) {
+            SysDepartmentTreeDTO sysDepartmentTreeDTO = map.get(sysDepartmentEntity.getId());
+            if (null != sysDepartmentTreeDTO){
+                sysDepartmentEntity.setPath(sysDepartmentTreeDTO.getPath());
+            }
+        }
+    }
+
+
 }

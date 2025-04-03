@@ -913,7 +913,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
         if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)) {
             List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
-            return deptList.stream().filter(e -> e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
+            return deptList.stream().filter(e -> e.getParentIds().contains(sdyPartitionDeptEntity.getValue())
                                     && deptLevel2Ids.contains(e.getId())
                     )
                     .findFirst()

@@ -155,6 +155,6 @@ public class SysDeptFeignController extends BaseController {
      */
     @GetMapping("/getDeptEntityList")
     public List<SysDepartmentEntity> getDeptEntityList(){
-        return departmentService.lambdaQuery().list();
+        return departmentService.listByParentIds();
     }
 }
