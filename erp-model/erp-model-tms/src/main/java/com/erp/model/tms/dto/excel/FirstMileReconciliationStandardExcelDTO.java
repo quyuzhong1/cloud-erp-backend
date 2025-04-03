@@ -82,9 +82,7 @@ public class FirstMileReconciliationStandardExcelDTO implements Serializable {
     @ExcelIgnore
     private String costId;
     @ExcelIgnore
-    private BigDecimal grossWeigh;
+    private BigDecimal grossWeigh = BigDecimal.ZERO;
     @ExcelIgnore
-    private BigDecimal weightRate;
-    @ExcelIgnore
-    private BigDecimal skuCost;
+    private BigDecimal skuCost = BigDecimal.ZERO;
 }

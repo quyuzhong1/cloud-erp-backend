@@ -524,6 +524,10 @@ public class WmsCartonSpecDTO implements Serializable {
     @NoArgsConstructor
     public static class NoPackingView {
         /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
          * 单据id
          */
         private String sourceId;

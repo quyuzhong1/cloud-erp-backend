@@ -2847,8 +2847,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
         for (WmsCartonSpecDTO.NoPackingView noPackingView : viewList) {
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntities.stream().filter(e -> e.getSourceCode().equals(noPackingView.getSourceCode())).findFirst().orElse(null);
-            noPackingView.setSourceCode(firstMileDeliveryEntity.getCode());
-            noPackingView.setSourceId(firstMileDeliveryEntity.getId());
+            noPackingView.setDeliveryCode(firstMileDeliveryEntity.getCode());
         }
         return viewList;
     }
@@ -2888,10 +2887,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
             listPackingCartonDTO.setTaskId(taskId);
             listPackingCartonDTO.setCartonDetailDTOList(boxDTOList);
+            listPackingCartonDTO.setSourceCode(sourceCode);
             listPackingCartonDTO.setCartonSpecDTOList(packingCartonSpecDTOList);
 
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntities.stream().filter(e -> e.getSourceCode().equals(packingTaskEntity.getSourceCode())).findFirst().orElse(null);
-            listPackingCartonDTO.setSourceCode(firstMileDeliveryEntity.getCode());
+            listPackingCartonDTO.setDeliveryCode(firstMileDeliveryEntity.getCode());
             resutlList.add(listPackingCartonDTO);
         }
 
