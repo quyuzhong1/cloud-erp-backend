@@ -1534,31 +1534,24 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .entrySet().stream()
                     .filter(entry -> entry.getValue().size() > 1)
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
             if (!excelMap.isEmpty()) {
                 //校验金额币种是否一致
                 for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : excelMap.entrySet()) {
                     List<FirstMileReconciliationStandardExcelDTO> value = entry.getValue();
-                    BigDecimal firstSkuCost = value.get(0).getSkuCost();
-                    boolean allSkuCostsEqual = value.stream().allMatch(excelDTO -> firstSkuCost.equals(excelDTO.getSkuCost()));
-                    if(Boolean.FALSE.equals(allSkuCostsEqual)){
-                        for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
-                            excelDTO.setErrorMsg("相同序号单据同费用项的费用金额不一致。");
-                            errorList.add(excelDTO);
-                        }
-                        break;
-                    }
+                    String firstCostValue = value.get(0).getCostValue();
+                    boolean allSkuCostsEqual = value.stream().allMatch(excelDTO -> firstCostValue.equals(excelDTO.getCostValue()));
                     String firstCurrency = value.get(0).getCurrency();
                     boolean allCurrencyEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getCurrency()));
-                    if(Boolean.FALSE.equals(allCurrencyEqual)){
+                    if(Boolean.FALSE.equals(allSkuCostsEqual)||Boolean.FALSE.equals(allCurrencyEqual)){
                         for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
-                            excelDTO.setErrorMsg("相同序号单据同费用项的币种不一致。");
+                            excelDTO.setErrorMsg("相同序号单据同费用项的费用金额或币种不一致。");
                             errorList.add(excelDTO);
                         }
-                        break;
+                        excelMap.remove(entry.getKey());
                     }
                 }
-
+            }
+            if (!excelMap.isEmpty()) {
                 List<String> deliveryCodeList = excelMap.values().stream()
                         .flatMap(List::stream)
                         .map(FirstMileReconciliationStandardExcelDTO::getSourceCode)
