@@ -27,4 +27,6 @@ public interface SoB2cRefMapper extends BaseMapper<SoB2cRefEntity> {
      * @return List<SoB2cRefEntity>
      */
     List<SoB2cRefEntity> listSourceByTargetIds(@Param("targetIdList") List<String> targetIdList,@Param("code") String code);
+
+    List<String> getAllSplitIds(@Param("soId") String soId);
 }

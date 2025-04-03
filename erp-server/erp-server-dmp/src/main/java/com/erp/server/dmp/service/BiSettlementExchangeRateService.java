@@ -20,6 +20,8 @@ public interface BiSettlementExchangeRateService  extends IService<BiSettlementE
      * @return
      */
     BigDecimal findByCurrencyAndDate(String date, String sourceCurrencyCode);
+    
+    BigDecimal findByCurrencyAndMonth(String date, String sourceCurrencyCode);
 
     /**
      * 根据日期、目标币别、来源币别查询汇率信息
