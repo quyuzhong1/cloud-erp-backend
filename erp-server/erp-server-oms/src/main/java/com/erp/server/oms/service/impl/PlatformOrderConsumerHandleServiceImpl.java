@@ -113,15 +113,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
-        // 跳过未作废的自发货无地址的订单
-        if ( notPlatformOrderNotExistAddress(dto)
-                && null != dto.getInvalidStatus()
-                && !dto.getInvalidStatus()
-        ) {
-            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
-            return;
-        }
-
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
