@@ -8,6 +8,7 @@ import com.sdk.oms.shopify.api.rest.model.ShopifyRefund;
 import com.sdk.oms.shopify.api.rest.model.ShopifyRefundLineItem;
 import com.sdk.wms.goodcang.dto.response.GoodCangReturnInstockResp;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -41,6 +42,11 @@ public class DmpInputGoodCangReturnInstockDetailDmpHandler extends DmpInputDoNex
             // 计算签收数量receive_qty
             jsonObject.put("receiveQty", receiveQty);
             // 获取更换后的sku
+            String returnReplacementSku = jsonObject.getOrDefault("return_replacement_sku", "").toString();
+            if (StringUtils.isNotBlank(returnReplacementSku)){
+                jsonObject.put("product_sku", returnReplacementSku);
+            }
+            // 最后上架后的sku
             JSONArray jsonArray = jsonObject.getJSONArray("sellable_detail");
             if (CollectionUtils.isNotEmpty(jsonArray)){
                 Object changeDetail = jsonArray.get(0);
