@@ -810,7 +810,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
                 List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
                 SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
-                                e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
+                                e.getPath().contains(sdyPartitionDeptEntity.getValue())
                                         && deptLevel2Ids.contains(e.getId())
                         )
                         .findFirst()
