@@ -113,6 +113,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     private ShopInfoService shopInfoService;
     @Resource
     private SoB2cExtendService soB2cExtendService;
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
@@ -843,6 +845,24 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             BigDecimal splitTotalAmount = BigDecimal.ZERO;
 
             List<SoB2cDetailDTO.AddDTO> detailList = new ArrayList<>();
+            //全托管平台重算真实售价和金额
+            List<SoPriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+                List<SoPriceDTO.PriceParamDTO> list = new ArrayList<>();
+                groupSplitSaveDTO.getDetailList().forEach(splitDetailSaveDTO -> {
+                    SoB2cDetailEntity detailEntity = oldDetailList.stream().filter(obj -> obj.getId().equals(splitDetailSaveDTO.getId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(detailEntity)) {
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                    }
+                    SoPriceDTO.PriceParamDTO priceParamDTO = new SoPriceDTO.PriceParamDTO();
+                    priceParamDTO.setSkuId(detailEntity.getSkuId());
+                    priceParamDTO.setDate(entity.getBillDate());
+                    priceParamDTO.setQty(splitDetailSaveDTO.getQty());
+                    priceParamDTO.setShopId(entity.getShopId());
+                    list.add(priceParamDTO);
+                });
+                priceDTOS = soPriceService.batchGetSoPrice(list);
+            }
             for (SoB2cDTO.SplitDetailSaveDTO splitDetailSaveDTO : groupSplitSaveDTO.getDetailList()) {
 
                 SoB2cDetailEntity detailEntity = oldDetailList.stream().filter(obj -> obj.getId().equals(splitDetailSaveDTO.getId())).findFirst().orElse(null);
@@ -866,6 +886,14 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 BeanMapperUtils.copy(detailEntity, addDetailDTO);
                 addDetailDTO.setQty(splitDetailSaveDTO.getQty());
                 addDetailDTO.setOperateDetailId(detailEntity.getId());
+                if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+                    SoPriceDTO.PriceDTO priceDTO = priceDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(priceDTO)) {
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_SPLIT_PRICE, entity.getCode(), detailEntity.getSkuNo());
+                    }
+                    addDetailDTO.setPrice(priceDTO.getTaxPrice());
+                    addDetailDTO.setTaxRate(priceDTO.getTaxRate());
+                }
                 detailList.add(addDetailDTO);
                 //累加拆分金额
                 splitTotalAmount = MathUtil.add(splitTotalAmount, MathUtil.multiply(detailEntity.getPrice(), splitDetailSaveDTO.getQty()));
