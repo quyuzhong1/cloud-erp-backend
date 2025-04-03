@@ -22,9 +22,10 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -47,6 +48,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
@@ -366,6 +368,60 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                                 if(subPlatformTypeDict != null) {
                                     shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getName());
                                     shudiyunB2cOrderDTO.setSubplatform_name(subPlatformTypeDict.getValue());
+                                }
+
+                                // 旺店通添加分区
+                                if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
+                                    // 国家编码
+                                    String countryCode = "CN";
+                                    // 军区编码
+                                    String militaryRegionCode = "china";
+
+                                    DictCountryEntity countryEntity = queryAndCacheDictCountryEntity(cacheMap, countryCode);
+
+                                    // 国家名称
+                                    String countryName = null == countryEntity ? "" : countryEntity.getShortNameCn();
+                                    // 区域编码
+                                    String regionCode = null == countryEntity ? "" : countryEntity.getSubregionCode();
+
+                                    DictGlobalAreaEntity dictGlobalAreaEntity = queryAndCacheDictGlobalAreaEntity(cacheMap, regionCode);
+                                    // 区域名称
+                                    String regionName = null == dictGlobalAreaEntity ? "" : dictGlobalAreaEntity.getSubregionName();
+
+                                    CfgCountryPartitionEntity cfgCountryPartitionEntity = queryAndCacheCfgCountryPartition(cacheMap, militaryRegionCode);
+                                    // 军区名称
+                                    String militaryRegionName = null == cfgCountryPartitionEntity ? "" : cfgCountryPartitionEntity.getPartitionName();
+                                    // 部门编码
+                                    String departmentCode = "";
+                                    // 部门名称
+                                    String departmentName= "";
+
+                                    if (null != cfgCountryPartitionEntity){
+                                        SysDepartmentEntity departmentDTO = queryAndCacheOmsDictBasic(cacheMap, militaryRegionCode, subPlatformType);
+                                        if (null != departmentDTO){
+                                            // 部门编码
+                                            departmentCode = departmentDTO.getCode();
+                                            // 部门名称
+                                            departmentName = departmentDTO.getName();
+                                        }
+                                    }
+
+                                    // 国家编码
+                                    shudiyunB2cOrderDTO.setCountry_code(countryCode);
+                                    // 国家名称
+                                    shudiyunB2cOrderDTO.setCountry(countryName);
+                                    // 区域编码
+                                    shudiyunB2cOrderDTO.setRegion_code(regionCode);
+                                    // 区域名称
+                                    shudiyunB2cOrderDTO.setRegion_name(regionName);
+                                    // 军区编码
+                                    shudiyunB2cOrderDTO.setMilitary_region_code(militaryRegionCode);
+                                    // 军区名称
+                                    shudiyunB2cOrderDTO.setMilitary_region_name(militaryRegionName);
+                                    // 部门编码
+                                    shudiyunB2cOrderDTO.setDepartment_code(departmentCode);
+                                    // 部门名称
+                                    shudiyunB2cOrderDTO.setDepartment_name(departmentName);
                                 }
                             }
                         }
@@ -756,5 +812,119 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
     }
 
+
+    private static DictCountryEntity queryAndCacheDictCountryEntity(Map<String, Map<String, Object>> cacheMap, String countryCode) {
+        Map<String, Object> countryInfoMap = cacheMap.get("countryInfo");
+        if(null == countryInfoMap) {
+            countryInfoMap = new HashMap<>();
+        }
+        DictCountryEntity countryEntity = null;
+        Object countryObj = countryInfoMap.get(countryCode);
+        if(null == countryObj) {
+            List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).eq(DictCountryEntity::getId, countryCode).list();
+            if(CollUtil.isNotEmpty(countryEntityList)) {
+                countryEntity = countryEntityList.get(0);
+            }
+        }else {
+            countryEntity = (DictCountryEntity) countryObj;
+        }
+        countryInfoMap.put(countryCode, countryEntity);
+        cacheMap.put("countryInfo", countryInfoMap);
+        return countryEntity;
+    }
+
+
+    private static DictGlobalAreaEntity queryAndCacheDictGlobalAreaEntity(Map<String, Map<String, Object>> cacheMap, String regionCode) {
+        Map<String, Object> dictGlobalAreaMap = cacheMap.get("dictGlobalArea");
+        if(null == dictGlobalAreaMap) {
+            dictGlobalAreaMap = new HashMap<>();
+        }
+        DictGlobalAreaEntity entity = null;
+        Object countryObj = dictGlobalAreaMap.get(regionCode);
+        if(null == countryObj) {
+            List<DictGlobalAreaEntity> countryEntityList = FeignQuery.create(DictGlobalAreaEntity.class).eq(DictGlobalAreaEntity::getId, regionCode).list();
+            if(CollUtil.isNotEmpty(countryEntityList)) {
+                entity = countryEntityList.get(0);
+            }
+        }else {
+            entity = (DictGlobalAreaEntity) countryObj;
+        }
+        dictGlobalAreaMap.put(regionCode, entity);
+        cacheMap.put("dictGlobalArea", dictGlobalAreaMap);
+        return entity;
+    }
+
+    private static CfgCountryPartitionEntity queryAndCacheCfgCountryPartition(Map<String, Map<String, Object>> cacheMap, String partitionCode) {
+        Map<String, Object> cfgCountryPartitionMap = cacheMap.get("cfgCountryPartition");
+        if(null == cfgCountryPartitionMap) {
+            cfgCountryPartitionMap = new HashMap<>();
+        }
+        CfgCountryPartitionEntity entity = null;
+        Object countryObj = cfgCountryPartitionMap.get(partitionCode);
+        if(null == countryObj) {
+            List<CfgCountryPartitionEntity> countryEntityList = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getPartitionCode, partitionCode).list();
+            if(CollUtil.isNotEmpty(countryEntityList)) {
+                entity = countryEntityList.get(0);
+            }
+        } else {
+            entity = (CfgCountryPartitionEntity) countryObj;
+        }
+        cfgCountryPartitionMap.put(partitionCode, entity);
+        cacheMap.put("cfgCountryPartition", cfgCountryPartitionMap);
+        return entity;
+    }
+
+
+    private SysDepartmentEntity queryAndCacheOmsDictBasic(Map<String, Map<String, Object>> cacheMap, String partitionCode, String dictPlatform) {
+        if (StringUtils.isBlank(partitionCode) || StringUtils.isBlank(dictPlatform)){
+            return null;
+        }
+        Map<String, Object> dictBasicMap = cacheMap.getOrDefault("omsDictBasic", new HashMap<>());
+        List<DictBasicEntity> sdyPartitionDeptList = new ArrayList<>();
+        List<DictBasicEntity> sdyPlatformDeptList = new ArrayList<>();
+        List<SysDepartmentEntity> deptList = new LinkedList<>();
+
+        Object level1ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+        Object level2ListObj = dictBasicMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+        Object deptListObj = dictBasicMap.get("deptList");
+        if (null == level2ListObj || null == level1ListObj || null == deptListObj) {
+            List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
+            if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
+                Map<String, List<DictBasicEntity>> groupMap = dictBasicEntityList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+                sdyPartitionDeptList = groupMap.get(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType());
+                sdyPlatformDeptList = groupMap.get(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType());
+                dictBasicMap.putAll(groupMap);
+            }
+            // 部门信息
+            deptList = sysUserFeign.getDeptEntityList();
+            if (CollectionUtils.isNotEmpty(deptList)){
+                dictBasicMap.put("deptList", deptList);
+            }
+            cacheMap.put("omsDictBasic", dictBasicMap);
+        } else {
+            sdyPartitionDeptList = (List<DictBasicEntity>) level1ListObj;
+            sdyPlatformDeptList = (List<DictBasicEntity>) level2ListObj;
+            deptList = (List<SysDepartmentEntity>) deptListObj;
+        }
+
+        // 军区一级部门映射
+        DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(partitionCode)).findFirst().orElse(null);
+        // 销售平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPlatform)).collect(Collectors.toList());
+        if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)) {
+            List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
+            return deptList.stream().filter(e -> e.getParentId().equalsIgnoreCase(sdyPartitionDeptEntity.getValue())
+                                    && deptLevel2Ids.contains(e.getId())
+                    )
+                    .findFirst()
+                    .orElse(null);
+        }
+        return null;
+    }
 
 }
