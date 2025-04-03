@@ -59,5 +59,5 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
 
     void retryInvoice();
 
-    void queryUploadingInvoice();
+    void queryUploadingInvoice() throws Exception;
 }

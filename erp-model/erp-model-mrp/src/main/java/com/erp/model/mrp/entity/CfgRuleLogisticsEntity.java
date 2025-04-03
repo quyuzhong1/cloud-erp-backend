@@ -46,11 +46,20 @@ public class CfgRuleLogisticsEntity extends BaseEntity<CfgRuleLogisticsEntity> {
     */
     @TableField("logistics_cycle_days")
     private Integer logisticsCycleDays;
+
     /**
-    * 备货id（cfg_rule_stock_up）
+    * 时效id
     */
-    @TableField("stock_up_id")
-    private String stockUpId;
+    @TableField("expire_time_id")
+    private String expireTimeId;
+
+
+
+    /**
+     * 平台类型(amazon Amazon、overseas 海外、internal 国内、b2b B2B)
+     */
+    @TableField("platform_type")
+    private String platformType;
 
     /**
      * 物流明细信息
@@ -65,8 +74,6 @@ public class CfgRuleLogisticsEntity extends BaseEntity<CfgRuleLogisticsEntity> {
     public static final String LOGISTICS_DAYS = "logistics_days";
 
     public static final String LOGISTICS_CYCLE_DAYS = "logistics_cycle_days";
-
-    public static final String STOCK_UP_ID = "stock_up_id";
 
     @Override
     public Serializable pkVal() {

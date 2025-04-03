@@ -30,15 +30,6 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
     Boolean batchUpdate(CfgRuleSalesQtyDTO.UpdateDTO dto);
 
     /**
-     * 修改
-     * @author will
-     * @date 2024/8/27 9:56
-     * @param updateDTO
-     * @return Boolean
-     */
-    String update(CfgRuleSalesQtyDTO.UpdateDetailDTO updateDTO);
-
-    /**
      * 查看详情
      * @author will
      * @date 2024/8/24 9:21
@@ -72,17 +63,16 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * 根据来源id查询
      * @author will
      * @date 2024/9/6 11:47
-     * @param platformType
      * @param refId
      * @return ViewDetailDTO
      */
-    CfgRuleSalesQtyDTO.ViewDetailDTO viewDetail(String platformType, String refId);
+    CfgRuleSalesQtyDTO.ViewDetailDTO viewDetail(String refId);
 
     /**
      * 获取默认销量配置
-     * @param platformType 平台类型
+     * @param platform 平台类型
      */
-    CfgRuleSalesQtyEntity getDefaultCfgRuleSalesQty(String platformType);
+    CfgRuleSalesQtyEntity getDefaultCfgRuleSalesQty(String platform);
 
     /**
      * 获取默认销量配置
@@ -106,4 +96,5 @@ public interface CfgRuleSalesQtyService extends SuperService<CfgRuleSalesQtyEnti
      * @param code
      */
     void syncCfgData(List<CfgRuleSalesFormulaCalcEntity> cfgRuleSalesFormulaList, List<CfgRuleSalesDenoisingCalcEntity> cfgRuleSalesDenoisingList, List<ReplenishmentSuggestionEntity> suggestionList, String code);
+
 }

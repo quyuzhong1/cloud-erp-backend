@@ -364,7 +364,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setRemark("");
 
-            shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoInfoEntity.getTradeStatus()));
+            shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getStatus()));
 
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getNum().intValue());
             shudiyunB2cOrderDTO.setUnit("PCS");

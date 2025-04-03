@@ -158,13 +158,14 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         orderDTO.setPayTime(dmpSoInfoEntity.getPayTime());
         
         // 订单金额
-        orderDTO.setAmount(dmpSoInfoEntity.getAllAmount());
+        orderDTO.setAmount(dmpSoInfoEntity.getPayAmount());
         // 币别（原币）
         orderDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
         orderDTO.setExchangeRate(BigDecimal.ONE);
         // 运费收入
         orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
         // 付款金额
         orderDTO.setPayAmount(dmpSoInfoEntity.getPayAmount());
         // 付款方式
@@ -201,6 +202,11 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
         orderDTO.setDetails(parseDetailDto(dmpSoDetailEntityList));
 		// 订单状态
 		orderDTO.setIsCancel(dmpSoInfoEntity.getIsCancel());
+
+		// 税金
+		orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+		// 税后支付金额
+		orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
 
 		if(dmpSoReceiverEntity != null) {
         	PlatformOrderReceiverDTO receiver = PlatformOrderReceiverDTO.builder()
@@ -277,7 +283,7 @@ public class DmpOutputShopeeOrderRocketMQTaskHandler extends DmpOutputRocketMQTa
             // 数量
             detailDTO.setQty(item.getQty());
             // 单价
-            detailDTO.setPrice(item.getSellPrice());
+            detailDTO.setPrice(item.getSellPriceOrigin());
             // 金额
             detailDTO.setAmount(item.getAfterAmount());
 

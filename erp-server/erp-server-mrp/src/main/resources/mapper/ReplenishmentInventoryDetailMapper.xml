@@ -30,7 +30,7 @@
             rid.warehouse_id,
             rid.virtual_warehouse_id,
             rid.warehouse_type,
-            rid.dict_platform,
+            sid.dict_platform,
             rid.channel_type,
             rid.channel_id_json,
             rid.inventory_allocate_type,

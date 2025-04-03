@@ -1318,6 +1318,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
         soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
 
+        Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
@@ -1336,7 +1338,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //推送数帝云
             for (SoOutstockEntity outstockEntity : list) {
-                syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, soOutstockDetailAllList, SyncOperateEnum.OPERATE_DELETE.getCode());
+                List<SoOutstockDetailEntity> detailEntityList = detailMap.get(outstockEntity.getId());
+                syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
 
         }
@@ -2749,7 +2752,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
         if(Objects.nonNull(soOutstock)
-        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform()) || PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform()) || PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform()))){
+        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform())
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform())
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(dto.getDictPlatform())
+                || PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform()))){
             return true;
         }
         String id = soOutstockService.addB2cSoOutstock(dto);

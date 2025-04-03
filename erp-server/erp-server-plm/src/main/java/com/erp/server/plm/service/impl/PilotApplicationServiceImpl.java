@@ -7,7 +7,6 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -295,13 +294,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     public List<PilotApplicationDTO.TabListDTO> tabList(PermissionsDTO param) {
         LoginUser user = UserContext.getNonLoginUser();
-        PilotApplicationDTO.PagingParamDTO searchParam = new PilotApplicationDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
         List<PilotApplicationDTO.TabListDTO> list = new ArrayList<>();
         //待提交
-        QueryWrapper<PilotApplicationEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-        int waitSubmitCount = this.baseMapper.selectCount(queryWrapper);
+        int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
         //待我审核
         //根据单据id查询审核流程
@@ -313,21 +308,17 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
         if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
             List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
-            queryWrapper.clear();
-            queryWrapper.in("id", ids);
-            waitMeApproveCount = this.baseMapper.selectCount(queryWrapper);
+            waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, null,param.getPermissionSql(), ids);
         }
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_ME_APPROVE.getCode(), PilotApplicationTabEnum.WAIT_ME_APPROVE.getName(), waitMeApproveCount));
         //不通过
-        queryWrapper.clear();
-        queryWrapper.eq("approve_status", ApproveStatusEnum.REJECT.getCode());
-        int rejectCount = this.baseMapper.selectCount(queryWrapper);
+        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.REJECT.getCode(), PilotApplicationTabEnum.REJECT.getName(), rejectCount));
         //未下单
-        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null);
+        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.NOT_ORDER.getCode(), PilotApplicationTabEnum.NOT_ORDER.getName(), notOrderCount));
         //已下单
-        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null);
+        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.ORDER.getCode(), PilotApplicationTabEnum.ORDER.getName(), orderCount));
         return list;
     }

@@ -8,15 +8,15 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
-import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
@@ -24,7 +24,6 @@ import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.server.oms.kingdee.*;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
@@ -38,7 +37,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -118,7 +116,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     @Resource
     private SoChangeDetailService soChangeDetailService;
     @Resource
-    private SoB2cDeliveryFeign soB2cDeliveryFeign;
+    private SoB2cReceiverService soB2cReceiverService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -524,6 +522,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             return resultList;
         }
 
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = soB2cReceiverService.listByMainIds(soIdList);
+        if (CollectionUtils.isEmpty(soB2cReceiverEntityList)) {
+            log.error("newSyncSdyDeliveryOrder >>>> 未找B2C销售订单收件人数据：soId={}", soIdList);
+            return resultList;
+        }
+
         List<String> ids = soB2cEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listByMainIds(ids);
 
@@ -579,12 +583,24 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         if (CollUtil.isNotEmpty(orgList)) {
             companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
         }
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                )).list();
 
-        List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
 
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
@@ -597,6 +613,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             }
             List<SoB2cDetailEntity> detailEntities = detailEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
             if (CollUtil.isEmpty(detailEntities)) {
+                continue;
+            }
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soB2cEntity)) {
                 continue;
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncSoB2cService.syncDataToSdyFieldHandler(soB2cEntity,
@@ -612,8 +632,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     shopInfoList,
                     customerInfoList,
                     companyEntities,
-                    dictBasicEntityList,
-                    dictList));
+                    receiverEntity,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList));
         }
         return resultList;
     }
@@ -658,17 +682,31 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         orgIdList.addAll(salesOrgIds);
         List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(orgIdList);
 
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-
         List<String> currencyIds = list.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIds);
 
         List<String> soDetailIds = soDetailEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
         List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
 
-        List<String> subPlatformType = customerInfoEntities.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, subPlatformType).list();
+        List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                )).list();
+
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
+
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             SoDetailEntity soDetailEntity = soDetailEntityList.stream().filter(req -> req.getId().equalsIgnoreCase(sourceId)).findFirst().orElse(null);
@@ -683,7 +721,22 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (CollUtil.isEmpty(detailEntityList)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.syncDataToSdyFieldHandler(soInfoEntity, soDetailEntity, detailEntityList, syncParamDetailDTO.getSyncOperate(), skuVOList, bomChildrenSkuDTOS, parentSkuList, customerInfoEntities, companyEntities, dictBasicEntityList, currencyList, soChangeDetailEntities, dictList));
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoService.syncDataToSdyFieldHandler(soInfoEntity,
+                    soDetailEntity,
+                    detailEntityList,
+                    syncParamDetailDTO.getSyncOperate(),
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    parentSkuList,
+                    customerInfoEntities,
+                    companyEntities,
+                    currencyList,
+                    soChangeDetailEntities,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList));
         }
         return resultList;
     }
@@ -729,6 +782,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(soDetailIds);
         if (CollectionUtils.isEmpty(soB2cDetailEntityList)) {
             log.error("newSyncSdySelfAddDeliveryOrder >>>> 未找B2C销售订单明细数据：soId={}", soIds);
+            return resultList;
+        }
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = soB2cReceiverService.listByMainIds(soIds);
+        if (CollectionUtils.isEmpty(soB2cReceiverEntityList)) {
+            log.error("newSyncSdySelfAddDeliveryOrder >>>> 未找B2C销售订单收件人数据：soId={}", soIds);
             return resultList;
         }
 
@@ -786,11 +844,24 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
         }
 
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                )).list();
 
-        List<String> platformTypeList = customerInfoList.stream().map(CustomerInfoEntity::getPlatformType).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
         // 计算自发货明细单价
         Map<String, BigDecimal> deliveryDetailPriceMap = syncSoB2cService.convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
@@ -813,6 +884,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (CollUtil.isEmpty(detailEntities)) {
                 continue;
             }
+
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soB2cEntity)) {
+                continue;
+            }
+
             resultList.put(syncParamDetailDTO.getDataId(), syncSoB2cService.syncSelfAddDataToSdyFieldHandler(
                     soB2cEntity,
                     detailEntities,
@@ -829,9 +906,13 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     shopInfoList,
                     customerInfoList,
                     companyEntities,
-                    dictBasicEntityList,
-                    dictList,
-                    deliveryDetailPriceMap
+                    deliveryDetailPriceMap,
+                    receiverEntity,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList
             ));
         }
         return resultList;
@@ -884,6 +965,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 .list();
         if (CollectionUtils.isEmpty(allDeliveryDetailList)) {
             log.error("newSyncSdyAliExpressDeliveryOrder >>>> 未找速卖通明细数据：id={}", mainIdList);
+            return resultList;
+        }
+
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = soB2cReceiverService.listByMainIds(soIds);
+        if (CollectionUtils.isEmpty(soB2cReceiverEntityList)) {
+            log.error("newSyncSdyAliExpressDeliveryOrder >>>> 未找B2C销售订单收件人数据：soId={}", soIds);
             return resultList;
         }
 
@@ -940,12 +1027,24 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
         }
 
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                )).list();
 
-        List<String> platformTypeList = customerInfoList.stream().map(CustomerInfoEntity::getPlatformType).distinct().collect(Collectors.toList());
-        List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
 
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
         // 计算自发货明细单价
         Map<String, BigDecimal> deliveryDetailPriceMap = syncSoB2cService.convertAllAliExpressDeliveryDetailPrice(allDeliveryDetailList, soB2cDetailEntityList, skuVOList);
 
@@ -967,6 +1066,10 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (CollUtil.isEmpty(detailEntities)) {
                 continue;
             }
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(soB2cEntity)) {
+                continue;
+            }
             resultList.put(syncParamDetailDTO.getDataId(), syncSoB2cService.syncAliExpressDataToSdyFieldHandler(
                     soB2cEntity,
                     detailEntities,
@@ -983,9 +1086,13 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     shopInfoList,
                     customerInfoList,
                     companyEntities,
-                    dictBasicEntityList,
-                    dictList,
-                    deliveryDetailPriceMap
+                    deliveryDetailPriceMap,
+                    receiverEntity,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList
                     ));
         }
         return resultList;

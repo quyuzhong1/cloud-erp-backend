@@ -113,15 +113,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
-        // 跳过未作废的自发货无地址的订单
-        if ( notPlatformOrderNotExistAddress(dto)
-                && null != dto.getInvalidStatus()
-                && !dto.getInvalidStatus()
-        ) {
-            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
-            return;
-        }
-
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
@@ -298,6 +289,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> platformSpuList = new LinkedList<>();
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){

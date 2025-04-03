@@ -9,6 +9,7 @@ import com.erp.model.mrp.entity.ReplenishmentInventoryDetailEntity;
 import com.erp.model.mrp.vo.InventoryDetailVO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -37,6 +38,6 @@ public interface ReplenishmentInventoryDetailService extends SuperService<Replen
      * @param replenishmentDetailId 建议明细id
      * @param calcVersion           计算版本
      */
-    void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion);
+    void saveInventoryDetail(List<ReplenishmentResultDTO.ReplenishmentInventoryDetailDTO> inventoryDetail, String replenishmentDetailId, String calcVersion, Map<String, List<String>> shopIdByPlatform);
 
 }

@@ -16,22 +16,7 @@
        <result column="logistics_method" property="logisticsMethod" />
        <result column="logistics_days" property="logisticsDays" />
        <result column="logistics_cycle_days" property="logisticsCycleDays" />
-       <result column="stock_up_id" property="stockUpId" />
     </resultMap>
-
-    <!-- 通用查询结果列 -->
-    <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        index, logistics_method, logistics_days, logistics_cycle_days, stock_up_id
-    </sql>
 
     <!-- 物流下拉 -->
     <select id="selectLogistics" resultType="com.erp.model.mrp.dto.CfgRuleLogisticsDTO$SelectLogisticsDTO">
@@ -40,9 +25,9 @@
             crl.logistics_method as logisticsMethod,
             crl.logistics_days as logisticsDays
         from cfg_rule_logistics crl
-        left join cfg_rule_stock_up crsu on crl.stock_up_id = crsu.id and crsu.is_deleted = false
+        left join cfg_rule_expire_time cret on crl.expire_time_id = cret.id and cret.is_deleted = false
         <where>
-            crl.is_deleted = false and crsu.platform_type = #{params.platformType} and (crsu.ref_id = #{params.replenishmentSuggestionId} or crsu.ref_id = '')
+            crl.is_deleted = false and crl.platform_type = #{params.platformType} and (cret.ref_id = #{params.replenishmentSuggestionId} or cret.ref_id = '')
         </where>
     </select>
 
