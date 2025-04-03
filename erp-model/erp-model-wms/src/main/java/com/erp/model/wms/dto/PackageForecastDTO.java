@@ -162,6 +162,11 @@ public class PackageForecastDTO implements Serializable {
          * 揽收地址id 来源 http://172.16.100.11:3002/project/128/interface/api/25783  type=collect
          */
         private String collectAddressId;
+
+        /**
+         * 物流类型
+         */
+        private String logisticType;
     }
 
     /**
