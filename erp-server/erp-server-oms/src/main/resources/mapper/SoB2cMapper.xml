@@ -1435,4 +1435,34 @@ SELECT DISTINCT so.* FROM so_b2c so
             </if>
         </where>
     </select>
+    <select id="listDeliveryOrderByParam" resultType="com.erp.model.oms.dto.SoB2cDTO$DeliveryDTO">
+        select
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform,
+        sb2c.platform_order_status,
+        sb2c.shop_id,
+        sb2cl.code as transportNo
+        from so_b2c sb2c
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        where sb2c.is_deleted = false
+        <if test="platformList!= null and platformList.size > 0">
+            and sb2c.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="billStatusList!= null and billStatusList.size > 0">
+            and sb2c.bill_status in
+            <foreach collection="billStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="platformStatusList!= null and platformStatusList.size > 0">
+            and sb2c.platform_order_status in
+            <foreach collection="platformStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>
