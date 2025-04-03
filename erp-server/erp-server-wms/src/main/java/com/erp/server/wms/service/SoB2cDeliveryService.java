@@ -10,6 +10,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
@@ -452,4 +453,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO);
+
+    /**
+     * 获取发货清单
+     * @param ids
+     * @return
+     */
+    List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
 }

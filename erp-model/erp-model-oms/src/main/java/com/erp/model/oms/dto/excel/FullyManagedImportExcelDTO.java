@@ -219,7 +219,7 @@ public class FullyManagedImportExcelDTO {
      * 真实售价
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "真实售价", index = 19)
+    @ExcelProperty(value = "*真实售价", index = 19)
     @FieldValid(fieldName = "真实售价",isNotBlank = true,formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
     private BigDecimal price;
 
@@ -228,8 +228,8 @@ public class FullyManagedImportExcelDTO {
      * 税率%
      */
     @ColumnWidth(20)
-    @ExcelProperty(value = "税率", index = 20)
-    @FieldValid(fieldName = "税率")
+    @ExcelProperty(value = "*税率", index = 20)
+    @FieldValid(fieldName = "税率",isNotBlank = true,formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
     private BigDecimal taxRate;
 
     /**
