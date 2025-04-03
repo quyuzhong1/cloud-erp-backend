@@ -711,7 +711,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 dto.setQuantity(bomChildrenSkuDTO.getQuantity());
             }
             //报价信息查询
-            if (ObjectUtils.isNotEmpty(dto.getIsGift()) && !dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId())) {
+            if (!dto.getIsGift() && StringUtils.isNotBlank(dto.getSupplierId()) && CharSequenceUtil.isNotBlank(dto.getParentId()) && MathUtil.compareTo(dto.getQty(), MathUtil.ZERO) > 0) {
                 //采购单价赋值
                 PurchasePriceDTO.PriceDTO viewDTO = viewDTOList.stream().filter(obj ->
                                 obj.getSkuId().equals(dto.getSkuId())
@@ -720,7 +720,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                                 && CharSequenceUtil.equals(obj.getPurchaseOrgId(),dto.getPurchaseOrgId()))
                         .findFirst().orElse(null);
                 if (ObjUtil.isEmpty(viewDTO)) {
-                    throw new ServiceException("SKU【%s】未找到数量【%s】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
+                    throw new ServiceException("SKU【{}】未找到数量【{}】的供应商报价信息",skuVO.getSkuNo(),dto.getQty());
                 }
                 dto.setPrice(viewDTO.getTaxPrice());
                 dto.setTaxRate(viewDTO.getTaxRate());
