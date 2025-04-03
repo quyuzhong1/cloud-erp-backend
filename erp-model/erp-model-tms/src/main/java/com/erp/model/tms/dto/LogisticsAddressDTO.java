@@ -369,6 +369,8 @@ public class LogisticsAddressDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO{
 
+        private String addressId;
+
         private String id;
 
         private String name;

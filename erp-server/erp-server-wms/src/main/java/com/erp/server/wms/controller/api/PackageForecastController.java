@@ -214,8 +214,6 @@ public class PackageForecastController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
-
     /**
      * 上传组包预报
      *
@@ -306,4 +304,31 @@ public class PackageForecastController extends BaseController {
                                                                       @RequestParam("shopId") String shopId) {
         return success(packageForecastService.getLogisticsType(dictPlatform,shopId));
     }
+
+    /**
+     * 查询发货平台
+     *  TikTokFully -- tiktok全托管
+     *  TikTok -- tiktok线上
+     *  AliExpress --速卖通
+     */
+    @PostMapping("/getDeliveryPlatform")
+    public ApiResult<String> getDeliveryPlatform(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        return success(packageForecastService.getDeliveryPlatform(dto.getIds()));
+    }
+    /**
+     * 获取物流类型
+     */
+    @GetMapping("/getLogisticType")
+    public ApiResult<List<DictBasicDTO.DropDownDTO>> getLogisticType(@RequestParam String platform) {
+        return success(packageForecastService.getLogisticType(platform));
+    }
+
+    /**
+     * 查询可用物流商和预约日期
+     */
+    @PostMapping("/searchShippingProvider")
+    public ApiResult<PackageForecastDTO.ShippingProviderDTO> searchShippingProvider(@RequestBody @Valid PackageForecastDTO.SearchShippingProviderDTO dto) {
+        return success(packageForecastService.searchShippingProvider(dto));
+    }
+
 }
