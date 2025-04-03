@@ -1184,14 +1184,22 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         String finalPartitionId = partitionId;
-        DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
+        DictPartitionEntity dictPartitionEntity = null;
+        if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
+            dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getCode().equalsIgnoreCase("china")).findFirst().orElse(null);
+            sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+        } else {
+            dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
+        }
+
         if (null != dictPartitionEntity){
             // 军区编码
             shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
             // 军区名称
             shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
             // 军区一级部门映射
-            DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
+            DictPartitionEntity finalDictPartitionEntity = dictPartitionEntity;
+            DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPartitionEntity.getCode())).findFirst().orElse(null);
             if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
                 List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
                 SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
