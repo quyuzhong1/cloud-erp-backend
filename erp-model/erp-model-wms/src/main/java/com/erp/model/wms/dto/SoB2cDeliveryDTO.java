@@ -569,6 +569,14 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 中转仓库名称
          */
         private String transferWarehouseNames;
+        /**
+         * 是否托管订单 true 是 false 否
+         */
+        private Boolean isFullyManaged;
+        /**
+         * 是否打印sku条码
+         */
+        private Boolean isPrintSkuBarcode;
     }
 
     /**
@@ -1061,6 +1069,65 @@ public class SoB2cDeliveryDTO implements Serializable {
         @NotNull(message = "是否添加库存")
         private Boolean isAddQty;
     }
-
-
+    /**
+     * 打印SKU条码
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintSkuBarcodeDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 发货单编码
+         */
+        private String code;
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         *销售订单编码
+         */
+        private String soCode;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 平台订单编码
+         */
+        private String platformCode;
+        /**
+         * 产品id
+         */
+        private String skuId;
+        /**
+         * 产品编码
+         */
+        private String skuNo;
+        /**
+         * 平台sku编码
+         */
+        private String platformSkuNo;
+        /**
+         * 发货数量
+         */
+        private Integer qty;
+    }
+    /**
+     * 打印SKU确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintSkuBarcodeConfirmDTO {
+        /**
+         * 详情
+         */
+        @NotEmpty(message = "详情不能为空")
+        private List<PrintSkuBarcodeDTO> detailList;
+    }
 }

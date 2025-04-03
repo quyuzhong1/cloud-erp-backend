@@ -1276,6 +1276,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 物流信息
          */
+        @Valid
         private SoB2cLogisticsDTO.AddDTO logisticsDTO;
         /**
          * 买家信息
@@ -3732,5 +3733,16 @@ public class SoB2cDTO implements Serializable {
          * 退货数量
          */
         private Integer returnQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryDTO{
+        private String id;
+        private String code;
+        private String dictPlatform;
+        private String platformOrderStatus;
+        private String shopId;
+        private String transportNo;
     }
 }

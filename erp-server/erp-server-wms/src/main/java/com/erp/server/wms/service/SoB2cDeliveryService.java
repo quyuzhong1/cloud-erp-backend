@@ -2,10 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -435,4 +432,24 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      */
     BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
 
+    /**
+     * 打印条码列表展示
+     * @param ids
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids);
+
+    /**
+     * 打印sku条码确认
+     * @param dto
+     * @param response
+     */
+    void printSkuBarcodeConfirm(SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response);
+
+    /**
+     * SKU打印完成
+     * @param idsDTO
+     * @return
+     */
+    ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO);
 }

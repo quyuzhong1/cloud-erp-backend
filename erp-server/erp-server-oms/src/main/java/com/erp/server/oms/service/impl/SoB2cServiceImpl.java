@@ -91,8 +91,8 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrderDetail;
@@ -119,6 +119,8 @@ import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
+import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -146,8 +148,10 @@ import java.net.SocketTimeoutException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -364,6 +368,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoB2cExtendService soB2cExtendService;
     @Resource
     private SyncSoB2cService syncSoB2cService;
+    @Resource
+    private TikTokFullService tikTokFullService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -2066,6 +2072,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        if (isFullyManagedOrder(entity.getDictPlatform())){
+            //检查平台状态
+            List<FullyOrderDTO.DataDTO.StockupOrdersDTO> stockupOrdersDTOS = tikTokFullService.listOrderByParam(entity.getShopId(), Collections.singletonList(entity.getPlatformCode()));
+        }
         String soCode = entity.getCode();
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_SUBMIT_DELIVERY, entity.getCode());
@@ -3335,7 +3345,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollectionUtils.isNotEmpty(soOutstockEntityList) && Objects.nonNull(soOutstockEntityList.get(0).getBillDate())) {
             logisticsDTO.setDeliveryTime(soOutstockEntityList.get(0).getBillDate().atStartOfDay());
         }
-        logisticsDTO.setActualShippingCost(logisticsBillCostFeign.getActualLogisticCost(soB2cEntity.getId()));
+//        logisticsDTO.setActualShippingCost(logisticsBillCostFeign.getActualLogisticCost(soB2cEntity.getId()));
         data.setLogisticsDTO(logisticsDTO);
         if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
             //扩展信息
@@ -9842,6 +9852,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soId);
             return Objects.nonNull(receiverEntity)? receiverEntity.getPartitionId():"";
         }
+    }
+
+    @Override
+    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList) {
+        if (CollUtil.isEmpty(platformList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList);
     }
 
 

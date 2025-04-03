@@ -1072,4 +1072,13 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     String getPartitionId(String soId, String platform);
+
+    /**
+     * 根据条件查询销售订单
+     * @param billStatusList
+     * @param platformStatusList
+     * @param platformList
+     * @return
+     */
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList);
 }

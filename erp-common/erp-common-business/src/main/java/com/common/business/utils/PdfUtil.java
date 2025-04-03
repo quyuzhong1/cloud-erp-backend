@@ -206,10 +206,7 @@ public class PdfUtil {
     }
 
     public static void main(String[] args) {
-        String pdfUrl = "https://p16-printer-pdf-sign-sg.fanczs.com/tos-alisg-i-js2nuampgw-sg/7734013ed8394effb63751812627f7dc?rk3s=8c7bcdf4\\u0026x-expires=1744080892\\u0026x-signature=6FuvE%2FtS3Kf4ggqXH91DHdrl0ws%3D"; // 替换为你的PDF文件URL
-        String decoded = StringEscapeUtils.unescapeJava(pdfUrl)
-                .replaceAll("%(?![0-9a-fA-F]{2})", "%25");
-        pdfUrl = URLDecoder.decode(decoded, StandardCharsets.UTF_8);
+        String pdfUrl = "https://p16-printer-pdf-sign-sg.fanczs.com/tos-alisg-i-js2nuampgw-sg/f772020e477b437ca9c9c99c8cc35400?rk3s=8c7bcdf4\\u0026x-expires=1744095025\\u0026x-signature=%2FT7pCYbSCLkxBe9LgrjifqcZTrA%3D";
         try {
             String base64String = convertPdfUrlToBase64(pdfUrl,true);
             System.out.println("Base64 encoded PDF:\n" + base64String);
