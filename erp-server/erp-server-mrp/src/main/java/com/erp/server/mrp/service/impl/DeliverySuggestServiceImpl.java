@@ -1014,8 +1014,8 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
         List<DictCountryEntity> countryList = CollectionUtils.isEmpty(countryCodeList) ? new ArrayList<>() : sysDictFeign.listCountryByIds(countryCodeList);
 
         //补货计划
-        List<String> idList = list.stream().map(DeliverySuggestDTO.ListDTO::getId).distinct().collect(Collectors.toList());
-        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = deliveryPlanFeign.listBySourceIdList(idList);
+        List<String> idList = list.stream().filter(obj -> SuggestStatusEnum.FINISH.getCode().equals(obj.getStatus())).map(DeliverySuggestDTO.ListDTO::getId).distinct().collect(Collectors.toList());
+        List<WmsDeliveryPlanDetailEntity> deliveryPlanDetailList = CollUtil.isEmpty(idList) ? Collections.emptyList() : deliveryPlanFeign.listBySourceIdList(idList);
         
         //平台数据
         List<String> platformList = list.stream().map(DeliverySuggestDTO.ListDTO::getPlatform).distinct().collect(Collectors.toList());
