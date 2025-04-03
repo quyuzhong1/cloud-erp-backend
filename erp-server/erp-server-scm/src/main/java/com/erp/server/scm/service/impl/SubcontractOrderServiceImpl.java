@@ -341,8 +341,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     @Override
     public BatchResultDTO submitEntity(SubcontractOrderEntity entity) {
        // 待提交或审核不通过并且未作废允许提交
-       long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-       if (count > 0) {
+       if (entity.getInvalidStatus() || ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus()) || ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
           throw new ServiceException(ApiError.ERROR_98010);
        }
         //提交流程
