@@ -67,6 +67,11 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 						if (StringUtils.isBlank(targetSku)){
 							targetSku = item.getOrDefault("item_sku", "").toString();
 						}
+						String skuName = item.getOrDefault("model_name", "").toString();
+						if (StringUtils.isBlank(targetSku)){
+							skuName = item.getOrDefault("item_name", "").toString();
+						}
+						copyProperties.put("skuName", skuName);
 						String targetId = item.getOrDefault("model_id", "").toString();
 						if (StringUtils.isBlank(targetId) || "0".equalsIgnoreCase(targetId)){
 							targetId = item.getOrDefault("item_id", "").toString();
@@ -76,9 +81,12 @@ public class DmpInputShopeeOrderDoChildDmpHandler extends DmpInputDoChildDmpHand
 						Object qtyObj = item.get("model_quantity_purchased");
 						copyProperties.put("qty", qtyObj);
 						Object priceObj = item.get("model_original_price");
-						copyProperties.put("sellPrice", priceObj);
-						if(qtyObj != null && priceObj != null) {
-							copyProperties.put("afterAmount", new BigDecimal(qtyObj.toString()).multiply(new BigDecimal(priceObj.toString())));
+						copyProperties.put("sellPriceOrigin", priceObj);
+						
+						Object sellPriceObj = item.get("model_discounted_price");
+						copyProperties.put("sellPrice", sellPriceObj);
+						if(qtyObj != null && sellPriceObj != null) {
+							copyProperties.put("afterAmount", new BigDecimal(qtyObj.toString()).multiply(new BigDecimal(sellPriceObj.toString())));
 						}
 						copyProperties.put("thirdDetailId", item.get("model_id"));
 						copyProperties.put("platformDetailId", item.get("order_item_id"));

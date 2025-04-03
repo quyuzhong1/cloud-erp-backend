@@ -203,7 +203,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
             }
-            shudiyunB2cOrderDTO.setStatus("已创建");
+            if(dmpSoInfoEntity.getInvalidStatus() != null && dmpSoInfoEntity.getInvalidStatus()) {
+            	shudiyunB2cOrderDTO.setStatus("已删除");
+            }else {
+            	shudiyunB2cOrderDTO.setStatus("已创建");
+            }
 
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
 
@@ -584,7 +588,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getPlatformSku());
             shudiyunB2cOrderDTO.setGoods_name(dmpSoDetailEntity.getSkuName());
 
-            if (dmpSoDetailEntity.getIsGift() && dmpSoDetailEntity.getIsGift() != null) {
+            BigDecimal sellPriceOrigin = dmpSoDetailEntity.getSellPriceOrigin();
+            if (sellPriceOrigin != null && BigDecimal.ZERO.compareTo(sellPriceOrigin) == 0) {
                 shudiyunB2cOrderDTO.setIs_gift(1);
             } else {
                 shudiyunB2cOrderDTO.setIs_gift(0);
