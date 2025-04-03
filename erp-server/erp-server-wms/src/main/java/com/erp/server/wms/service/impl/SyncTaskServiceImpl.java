@@ -1076,13 +1076,18 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         //B2C订单
         List<SoOutstockEntity> b2cEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2C.getCode().equals(req.getOrderType())).collect(Collectors.toList());
-        List<String> b2cSoIds = b2cEntity.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntities = soB2cFeign.listByIds(b2cSoIds);
+        List<String> b2cSoIds = b2cEntity.stream().map(req -> req.getSoId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 
-        // B2C收货信息
-        List<SoB2cReceiverEntity> soB2cReceiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+        List<SoB2cEntity> soB2cEntities = new ArrayList<>();
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(b2cSoIds)){
+            soB2cEntities = soB2cFeign.listByIds(b2cSoIds);
+            // B2C收货信息
+            soB2cReceiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
                     .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
                     .list();
+        }
+
 
         //B2B订单
         List<SoOutstockEntity> b2bEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2B.getCode().equals(req.getOrderType())).collect(Collectors.toList());
@@ -1260,13 +1265,15 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     .filter(StringUtils::isNotBlank)
                     .distinct()
                     .collect(Collectors.toList());
-            receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
-                    .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
-                    .list();
+            if (CollectionUtils.isNotEmpty(b2cSoIds)){
+                receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+                        .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                        .list();
 
-            soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
-                    .in(SoB2cEntity::getId, b2cSoIds)
-                    .list();
+                soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
+                        .in(SoB2cEntity::getId, b2cSoIds)
+                        .list();
+            }
         }
 
         List<SoInfoEntity> soInfoEntityList = new LinkedList();
