@@ -51,12 +51,6 @@
             </where>
             )
     </select>
-    <select id="getAllSplitIds" resultType="java.lang.String">
-
-        SELECT distinct target_id from so_b2c_ref where source_id IN (
-            SELECT source_id from so_b2c_ref where target_id = #{soId} and is_deleted =false
-        ) and type = 'split' and is_deleted =false
-    </select>
 
 
 </mapper>

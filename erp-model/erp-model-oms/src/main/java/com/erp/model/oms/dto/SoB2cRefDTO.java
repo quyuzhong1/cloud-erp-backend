@@ -1,15 +1,11 @@
 package com.erp.model.oms.dto;
 
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * B2C销售订单合并拆分关联表请求响应实体
@@ -21,25 +17,6 @@ import java.util.List;
 @NoArgsConstructor
 public class SoB2cRefDTO implements Serializable {
 
-
-    /**
-     * 拆单关联信息
-     */
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SplitCombinationDTO {
-
-        /**
-         * 销售订单
-         */
-        private List<SoB2cEntity> soB2cEntity;
-
-        /**
-         * 销售订单明细
-         */
-        private List<SoB2cDetailEntity> soB2cDetailEntityList;
-    }
 
 
 

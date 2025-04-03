@@ -8,21 +8,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.SoB2cRefDTO;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.server.oms.mapper.SoB2cRefMapper;
-import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cRefService;
-import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -39,13 +32,6 @@ import java.util.List;
 @Service
 public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cRefEntity> implements SoB2cRefService {
 
-    @Resource
-    @Lazy
-    private SoB2cService soB2cService;
-
-    @Resource
-    @Lazy
-    private SoB2cDetailService soB2cDetailService;
 
     @Override
     public Boolean add(List<SoB2cRefDTO.AddDTO> refList) {
@@ -121,19 +107,5 @@ public class SoB2cRefServiceImpl extends SuperServiceImpl<SoB2cRefMapper, SoB2cR
                 .or()
                 .in(SoB2cRefEntity::getTargetId,ids)
                 .list();
-    }
-
-    @Override
-    public SoB2cRefDTO.SplitCombinationDTO getSplitCombination(String soId) {
-        if(ObjectUtil.isEmpty(soId)){
-            return new SoB2cRefDTO.SplitCombinationDTO();
-        }
-        List<String> allSplitSoIds = this.baseMapper.getAllSplitIds(soId);
-        if(CollectionUtils.isEmpty(allSplitSoIds)){
-            return new SoB2cRefDTO.SplitCombinationDTO();
-        }
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(allSplitSoIds);
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(allSplitSoIds);
-        return new SoB2cRefDTO.SplitCombinationDTO(soB2cEntityList,soB2cDetailEntityList);
     }
 }
