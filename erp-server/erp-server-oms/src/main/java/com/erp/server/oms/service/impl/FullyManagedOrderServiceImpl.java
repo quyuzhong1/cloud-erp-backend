@@ -15,6 +15,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -501,7 +502,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         List<String> codeList = new ArrayList<>();
         List<String> codeAndParentSkuIdList = new ArrayList<>();
         for (SoB2cDTO.ExcelExportDTO exportDTO : records) {
-            exportDTO.setPlatformOrderStatusName(FullyManagedPlatformStatusEnum.getName(exportDTO.getPlatformOrderStatus()));
+            exportDTO.setPlatformOrderStatusName(FullyManagedPlatformStatusEnum.getErpNameByCode(exportDTO.getDictPlatform(),exportDTO.getPlatformOrderStatus()));
             //订单来源类型
             exportDTO.setOrderSourceTypeName(SoB2cExtendOrderSourceTypeEnum.getName(exportDTO.getOrderSourceType()));
             exportDTO.setInvalidTypeName(SoB2cInvalidTypeEnum.getName(exportDTO.getInvalidType()));
