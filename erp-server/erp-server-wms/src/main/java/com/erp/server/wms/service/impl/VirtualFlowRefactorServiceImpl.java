@@ -101,7 +101,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         //分货单
         rebuildVirtualWarehouseAllocationFlow();
 
-        orderTypeList.forEach(obj -> {
+        orderTypeList.parallelStream().forEach(obj -> {
             if ( CfgSettingOrderTypeEnum.B2B.getCode().equals(obj)) {
                 //b2b
                 rebuildB2bFlow();
@@ -345,9 +345,13 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         List<BomChildrenSkuDTO> bomChildList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.listBomChildBySkuIds(skuIdList);
         Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildList.stream().collect(Collectors.groupingBy(obj -> StrUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getParentSkuId())));
         List<VirtualFlowRefactorDTO.OutInStockDTO> singleList = list.stream().filter(obj -> {
-            //过滤组合品
             String key = StrUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getSkuId());
-            return CollUtil.isEmpty(bomMap.get(key));
+            //直接调拨单过滤组合品
+            if (SourceTypeEnum.TRANSFER_INFO.getCode().equals(obj.getSourceType().getCode()) && CollUtil.isNotEmpty(bomMap.get(key))) {
+                return Boolean.FALSE;
+            }
+
+            return Boolean.TRUE;
         }).collect(Collectors.toList());
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
