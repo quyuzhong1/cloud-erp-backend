@@ -5,8 +5,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.dmp.dto.AttachmentDTO;
 import com.erp.model.dmp.entity.AttachmentEntity;
-import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.server.dmp.mapper.AttachmentMapper;
 import com.erp.server.dmp.service.AttachmentService;
 import lombok.extern.slf4j.Slf4j;
@@ -36,12 +36,12 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      * 根据业务表id获取附件信息
      *
      * @param businessIds
-     * @return java.util.List<com.erp.model.scm.dto.AttachmentDTO.UpdateDTO>
+     * @return java.util.List<AttachmentDTO.UpdateDTO>
      * @author yl
      * @date 2023-03-20 10:27
      */
     @Override
-    public List<com.erp.model.scm.dto.AttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds) {
+    public List<AttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds) {
         List<AttachmentEntity> list = this.list(businessIds);
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }
@@ -101,19 +101,19 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
      * 根据业务表id 获取附件信息
      *
      * @param businessId
-     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @return AttachmentDTO.UpdateDTO
      * @author yl
      * @date 2023-03-27 9:37
      */
     @Override
-    public List<com.erp.model.scm.dto.AttachmentDTO.UpdateDTO> getByBusinessId(String businessId) {
+    public List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId) {
         LambdaQueryWrapper<AttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
         List<AttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
-        return BeanMapper.copyList(list, com.erp.model.scm.dto.AttachmentDTO.UpdateDTO.class);
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }
 
     /**

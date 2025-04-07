@@ -10,6 +10,7 @@ import com.sdk.wx.miniapp.response.WxTokenResponse;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -18,6 +19,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@Component
 public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
 
   @Value("${wx.appId}")
