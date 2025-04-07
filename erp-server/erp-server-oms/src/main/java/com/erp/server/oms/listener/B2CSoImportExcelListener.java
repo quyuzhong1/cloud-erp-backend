@@ -3,28 +3,17 @@ package com.erp.server.oms.listener;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.excel.B2CSoImportExcelDTO;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 
 /**
  * b2c 销售订单导入
  */
 public class B2CSoImportExcelListener extends AnalysisEventListener<B2CSoImportExcelDTO> {
-
-
-    Map<String, SoInfoDTO.AddDTO> map = new HashMap<>();
-
-    /**
-     * 错误的map
-     */
-    Map<String, String> errorMap = new HashMap<>();
 
     /**
      * 错误信息
@@ -58,7 +47,7 @@ public class B2CSoImportExcelListener extends AnalysisEventListener<B2CSoImportE
         List<String> errorMsgList = new ArrayList<>();
         Integer rowNumber = analysisContext.readSheetHolder().getApproximateTotalRowNumber();
         if (rowNumber > 5000) {
-            errorMsgList.add("导入最高限制5000条");
+            errorMsgList.add("导入最高支持5000条");
         }
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
@@ -97,6 +86,9 @@ public class B2CSoImportExcelListener extends AnalysisEventListener<B2CSoImportE
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+
+
+
 
     }
 

@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.enums.ConfirmStatusEnum;
 import com.common.core.entity.BaseEntity;
@@ -24,9 +25,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -51,6 +50,11 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
     private List<FirstMileReconciliationStandardExcelDTO> dataList = new ArrayList<>();
 
     /**
+     * 记录哪些序号有错误信息
+     */
+    private Set<String> errorNoSet = new HashSet<>();
+
+    /**
      * 成功信息
      */
     private List<FirstMileReconciliationStandardExcelDTO> successList = new ArrayList<>();
@@ -71,6 +75,8 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
     public void invoke(FirstMileReconciliationStandardExcelDTO excelDTO, AnalysisContext analysisContext) {
         List<String> errorMsgList = new ArrayList<>();
 
+
+
         //基础验证
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
@@ -89,6 +95,9 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
         if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
+            if(StringUtils.isNotBlank(excelDTO.getNo())){
+                errorNoSet.add(excelDTO.getNo());
+            }
             return;
         }
         //添加数据用于判断是否为空
@@ -164,6 +173,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                 msg.append("未匹配到物流单");
                 excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
+                errorNoSet.add(excelDTO.getNo());
                 continue;
             }
             //校验两个参数及以上都存在时。是否存在关联的多条物流单
@@ -198,6 +208,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                 msg.append("匹配不到物流单");
                 excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
+                errorNoSet.add(excelDTO.getNo());
                 continue;
 
             }
@@ -215,17 +226,20 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                 msg.append("存在多条物流单");
                 excelDTO.setErrorMsg(msg.toString());
                 errorList.add(excelDTO);
+                errorNoSet.add(excelDTO.getNo());
                 continue;
             }
             LogisticsBillEntity entity = entityList.get(0);
             if(Objects.isNull(entity)){
                 excelDTO.setErrorMsg("未找到物流单");
                 errorList.add(excelDTO);
+                errorNoSet.add(excelDTO.getNo());
                 continue;
             }
             estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
                 excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
                 errorList.add(excelDTO);
+                errorNoSet.add(excelDTO.getNo());
             });
             if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
                 continue;
@@ -235,6 +249,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
             statusList.add(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
             reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !statusList.contains(v.getStatus())).findFirst().ifPresent(v->{
                 excelDTO.setErrorMsg("实际账单状态{已确认/已对账/差异确认}，不能更新信息");
+                errorNoSet.add(excelDTO.getNo());
                 errorList.add(excelDTO);
             });
             if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
@@ -245,6 +260,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
             if(Objects.isNull(costEntity)){
                 excelDTO.setErrorMsg("未找到物流费用");
                 errorList.add(excelDTO);
+                errorNoSet.add(excelDTO.getNo());
                 continue;
             }
             excelDTO.setCostId(costEntity.getId());
@@ -257,7 +273,13 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
             if (CharSequenceUtil.isBlank(excelDTO.getTransportNo())){
                 excelDTO.setTransportNo(entity.getTransportNo());
             }
-            successList.add(excelDTO);
+
+            if(errorNoSet.contains(excelDTO.getNo())){
+                excelDTO.setErrorMsg("相同序号的数据存在错误，请检查");
+                errorList.add(excelDTO);
+            }else {
+                successList.add(excelDTO);
+            }
         }
     }
 }
