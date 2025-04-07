@@ -62,23 +62,93 @@ public class TikTokFullService {
     public void setRedisUtil(RedisUtil redisUtil) {
         TikTokFullService.redisUtil = redisUtil;
     }
-
+//    public static void main(String[] args) {
+//        TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
+//        shopInfoDTO.setClientId("69p2ui5hr09sn");
+//        shopInfoDTO.setClientSecret("530a7d739653179b07d7026a63cde31671f10f61");
+//        shopInfoDTO.setAccessToken("ROW_lRjjQQAAAABVlKa00W9Nne3pV522i3L6sdK-0G8TxjKf2e1tH6KTQ27ZEaLlhkCX4arYaho08cLhwoBcUzPlHjhNMIC3w6uN");
+//        String url = TikTokConstant.URL;
+//        StringBuffer sb = new StringBuffer();
+//        String path = "/gs_full_service_shipment/202410/shipping_providers/search";
+//        String toktikInfo = shopInfoDTO.getClientSecret();
+//
+//        TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
+//        tikTokFullyShippingProviderReq.setDeliveryMode("PLATFORM_DELIVERY");
+//        tikTokFullyShippingProviderReq.setDeliveryOrderCodes(Arrays.asList("POCYT2408210000023S01"));
+//        tikTokFullyShippingProviderReq.setSenderContactId("5765611516297017604");
+//        tikTokFullyShippingProviderReq.setDeliveryOption("SUPER_SPEEDY_EXPRESS");
+//        tikTokFullyShippingProviderReq.setTotalWeight(new TikTokFullyShippingProviderReq.TotalWeightDTO("1240","GRAM"));
+//        // 定义查询参数
+//        Map<String, Object> params = new HashMap<>();
+//        params.put("access_token", shopInfoDTO.getAccessToken());
+//        params.put("app_key", shopInfoDTO.getClientId());
+//        String timestamp = System.currentTimeMillis() / 1000 + "";
+//        params.put("timestamp", timestamp);
+//
+//        //设置请求头
+//        Map<String, String> headerMap = new HashMap<>();
+//        headerMap.put("content-type", "application/json");
+//        headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
+//
+//        //请求body，平台用于计算签名
+//
+//        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(tikTokFullyShippingProviderReq));
+//        // 追加请求路径获取签名
+//        String sign = EncryptionUtils.generateSHA256(input, toktikInfo);
+//        //加入sign签名入参
+//        params.put("sign", sign);
+//
+//        //组装url
+//        sb.append(url);
+//        sb.append(path);
+//        sb.append("?access_token=" + shopInfoDTO.getAccessToken() + "");
+//        sb.append("&app_key=" + shopInfoDTO.getClientId() + "");
+//        sb.append("&sign=" + sign + "");
+//        sb.append("&timestamp=" + timestamp + "");
+//
+//        //拉取数据
+//        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(tikTokFullyShippingProviderReq), null, headerMap, RequestMethod.POST);
+//        if (!Objects.equals(apiResult.getCode(), 200)) {
+//            log.error("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+//            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}",
+//                    sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+//        }
+//
+//        //解析数据
+//        TikTokFullyAddressResp orderDTO = null;
+//        try {
+//            orderDTO = JSON.parseObject(apiResult.getData(),new TypeReference<TikTokFullyAddressResp>() {}.getType());
+//        } catch (Exception e) {
+//            log.error("调用url={},入参params={}, TikTok全托管打印sku失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+//            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 查询订单数据解析失败，返回值 responseMap={}",
+//                    url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+//        }
+//        if(orderDTO.getCode()!=0){
+//            throw new ServiceException("TT全托管打印sku失败:{}",orderDTO.getMessage());
+//        }
+//    }
     public static void main(String[] args) {
         TikTokShopInfoDTO shopInfoDTO = new TikTokShopInfoDTO();
         shopInfoDTO.setClientId("69p2ui5hr09sn");
         shopInfoDTO.setClientSecret("530a7d739653179b07d7026a63cde31671f10f61");
-        shopInfoDTO.setAccessToken("ROW_B6eCcQAAAABVlKa00W9Nne3pV522i3L6Ie04obpPK2d-5Rq9rL7jO0YSbotwLjpZ4DfljtV--ZI9dIDBdmztWivYPnUtt7dp");
+        shopInfoDTO.setAccessToken("ROW_XAfl5gAAAABVlKa00W9Nne3pV522i3L6oO4UF5BTcu6oicbfEMg135EDc0ENdIfBlBgSVt4R-f5_y2kCm_KkNYy-IzYlnKyq");
         String url = TikTokConstant.URL;
+        TikTokFullyShippingReq tikTokFullyShippingReq = new TikTokFullyShippingReq();
+        tikTokFullyShippingReq.setDeliveryMode("PLATFORM_DELIVERY");
+        tikTokFullyShippingReq.setDeliveryOrderCodes(Arrays.asList("POCYT2408210000023S01"));
+        tikTokFullyShippingReq.setTotalWeight(new TikTokFullyShippingReq.TotalWeightDTO("1240","GRAM"));
+        tikTokFullyShippingReq.setShippingBoxQuantity(1);
+        tikTokFullyShippingReq.setSenderContactId("5765611516297017604");
+        tikTokFullyShippingReq.setLogistics(new TikTokFullyShippingReq.LogisticsDTO("SUPER_SPEEDY_EXPRESS","7338363325845407490","顺丰专线"));
+        TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
+        reserveInfoDTO.setPredictedPickupTime(1743955200);
+        reserveInfoDTO.setPredictedPickupGe(1744027200);
+        reserveInfoDTO.setPredictedPickupLt(1744034400);
+        tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         StringBuffer sb = new StringBuffer();
-        String path = "/gs_full_service_shipment/202410/shipping_providers/search";
+        String path = "/gs_full_service_shipment/202410/delivery_orders/reserve_ship";
         String toktikInfo = shopInfoDTO.getClientSecret();
 
-        TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
-        tikTokFullyShippingProviderReq.setDeliveryMode("SELF_DELIVERY");
-        tikTokFullyShippingProviderReq.setDeliveryOrderCodes(Arrays.asList("POCYT2408210000023S01"));
-        tikTokFullyShippingProviderReq.setSenderContactId("5765611516297017604");
-        tikTokFullyShippingProviderReq.setDeliveryOption("SUPER_SPEEDY_EXPRESS");
-        tikTokFullyShippingProviderReq.setTotalWeight(new TikTokFullyShippingProviderReq.TotalWeightDTO("1240","GRAM"));
         // 定义查询参数
         Map<String, Object> params = new HashMap<>();
         params.put("access_token", shopInfoDTO.getAccessToken());
@@ -92,8 +162,7 @@ public class TikTokFullService {
         headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
 
         //请求body，平台用于计算签名
-
-        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(tikTokFullyShippingProviderReq));
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(tikTokFullyShippingReq));
         // 追加请求路径获取签名
         String sign = EncryptionUtils.generateSHA256(input, toktikInfo);
         //加入sign签名入参
@@ -108,24 +177,24 @@ public class TikTokFullService {
         sb.append("&timestamp=" + timestamp + "");
 
         //拉取数据
-        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(tikTokFullyShippingProviderReq), null, headerMap, RequestMethod.POST);
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(tikTokFullyShippingReq), null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200)) {
-            log.error("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok查询订单数据失败，返回值 responseMap={}",
+            log.error("调用url={},入参params={}, TikTok全托管查询预约发货失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok全托管预约发货，返回值 responseMap={}",
                     sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }
 
         //解析数据
-        TikTokFullyAddressResp orderDTO = null;
+        TikTokFullyShippingResp orderDTO = null;
         try {
-            orderDTO = JSON.parseObject(apiResult.getData(),new TypeReference<TikTokFullyAddressResp>() {}.getType());
+            orderDTO = JSON.parseObject(apiResult.getData(),new TypeReference<TikTokFullyShippingResp>() {}.getType());
         } catch (Exception e) {
-            log.error("调用url={},入参params={}, TikTok全托管打印sku失败，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 查询订单数据解析失败，返回值 responseMap={}",
+            log.error("调用url={},入参params={}, TikTok全托管预约发货数据，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok全托管预约发货数据，返回值 responseMap={}",
                     url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
         }
         if(orderDTO.getCode()!=0){
-            throw new ServiceException("TT全托管打印sku失败:{}",orderDTO.getMessage());
+            throw new ServiceException("TikTok全托管预约发货失败:{}",orderDTO.getMessage());
         }
     }
     /**
@@ -671,6 +740,71 @@ public class TikTokFullService {
         }
         if(orderDTO.getCode()!=0){
             throw new ServiceException("TikTok全托管查询可用物流商与预约日期数据失败:{}",orderDTO.getMessage());
+        }
+        return orderDTO;
+    }
+
+    /**
+     * 预约发货
+     * @param shopId 店铺id
+     * @return
+     */
+    public TikTokFullyShippingResp shipment(String shopId,TikTokFullyShippingReq tikTokFullyShippingReq) {
+        if(StringUtil.isBlank(shopId)){
+            throw new ServiceException("店铺id不能为空");
+        }
+        TikTokShopInfoDTO shopInfoDTO = this.getShopInfoByShopId(shopId);
+        String url = TikTokConstant.URL;
+        StringBuffer sb = new StringBuffer();
+        String path = "/gs_full_service_shipment/202410/delivery_orders/reserve_ship";
+        String toktikInfo = shopInfoDTO.getClientSecret();
+
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("access_token", shopInfoDTO.getAccessToken());
+        params.put("app_key", shopInfoDTO.getClientId());
+        String timestamp = System.currentTimeMillis() / 1000 + "";
+        params.put("timestamp", timestamp);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>();
+        headerMap.put("content-type", "application/json");
+        headerMap.put("x-tts-access-token", shopInfoDTO.getAccessToken());
+
+        //请求body，平台用于计算签名
+        String input = EncryptionUtils.urlParamsSort(params, path, headerMap, toktikInfo, JSONUtil.toJsonStr(tikTokFullyShippingReq));
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSHA256(input, toktikInfo);
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //组装url
+        sb.append(url);
+        sb.append(path);
+        sb.append("?access_token=" + shopInfoDTO.getAccessToken() + "");
+        sb.append("&app_key=" + shopInfoDTO.getClientId() + "");
+        sb.append("&sign=" + sign + "");
+        sb.append("&timestamp=" + timestamp + "");
+
+        //拉取数据
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(tikTokFullyShippingReq), null, headerMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200)) {
+            log.error("调用url={},入参params={}, TikTok全托管查询预约发货失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok全托管预约发货，返回值 responseMap={}",
+                    sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+
+        //解析数据
+        TikTokFullyShippingResp orderDTO = null;
+        try {
+            orderDTO = JSON.parseObject(apiResult.getData(),new TypeReference<TikTokFullyShippingResp>() {}.getType());
+        } catch (Exception e) {
+            log.error("调用url={},入参params={}, TikTok全托管预约发货数据，返回值 responseMap={}", url + path, params.toString(), JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok全托管预约发货数据，返回值 responseMap={}",
+                    url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
+        }
+        if(orderDTO.getCode()!=0){
+            throw new ServiceException("TikTok全托管预约发货失败:{}",orderDTO.getMessage());
         }
         return orderDTO;
     }
