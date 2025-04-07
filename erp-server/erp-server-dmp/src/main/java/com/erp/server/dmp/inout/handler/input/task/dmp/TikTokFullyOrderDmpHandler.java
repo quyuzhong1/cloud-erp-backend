@@ -118,7 +118,7 @@ public class TikTokFullyOrderDmpHandler extends DmpInputDbConvertDmpHandler {
     }
 
     private void buildExtendData(TreeMap<String, Object> dmpDataMap) {
-        Map<String, String> extendDataMap = new HashMap<>();
+        Map<String, Object> extendDataMap = new HashMap<>();
         extendDataMap.put("emergencyLevel",dmpDataMap.get("emergencyLevel") + "");
         extendDataMap.put("deliveryType",dmpDataMap.get("type") + "");
         extendDataMap.put("isDeliver",dmpDataMap.get("canDeliver") + "");
@@ -131,13 +131,13 @@ public class TikTokFullyOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         if (requireShipTimeObj != null) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
             LocalDateTime requireShipTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(requireShipTimeObj + "")), ZoneId.systemDefault());
-            dmpDataMap.put("requiredDeliveryTime", requireShipTime);
+            extendDataMap.put("requiredDeliveryTime", requireShipTime);
         }
         Object requireArrivedTimeObj = dmpDataMap.get("requireArrivedTime");
         if (requireArrivedTimeObj != null) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
             LocalDateTime requireArrivedTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(requireArrivedTimeObj + "")), ZoneId.systemDefault());
-            dmpDataMap.put("requiredReceiveTime", requireArrivedTime);
+            extendDataMap.put("requiredReceiveTime", requireArrivedTime);
         }
         dmpDataMap.put("extendData", JSONUtil.toJsonStr(extendDataMap));
     }
