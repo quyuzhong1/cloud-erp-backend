@@ -529,6 +529,10 @@ public class WmsCartonDTO {
          * 发货单号
          */
         private String deliveryCode;
+        /**
+         * 称重状态(全部)
+         */
+        private String weightingStatus;
 
         private List<WmsCartonDetailDTO.BoxDTO> cartonDetailDTOList;
 
