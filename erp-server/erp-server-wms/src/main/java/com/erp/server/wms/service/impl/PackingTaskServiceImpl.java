@@ -2894,6 +2894,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             listPackingCartonDTO.setTaskId(taskId);
             listPackingCartonDTO.setCartonDetailDTOList(boxDTOList);
             listPackingCartonDTO.setSourceCode(sourceCode);
+            listPackingCartonDTO.setWeightingStatus(packingTaskEntity.getWeightingStatus());
             listPackingCartonDTO.setCartonSpecDTOList(packingCartonSpecDTOList);
 
             FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntities.stream().filter(e -> e.getSourceCode().equals(packingTaskEntity.getSourceCode())).findFirst().orElse(null);
