@@ -106,4 +106,18 @@ public enum FullyManagedPlatformStatusEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static String getErpNameByCode(String platform,String code) {
+        if (StringUtils.isBlank(platform) || StringUtils.isBlank(code)) {
+            return "";
+        }
+        if(PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(platform)){
+            for (TikTokStatusEnum statusEnum : TikTokStatusEnum.values()) {
+                if (code.equals(statusEnum.getCode())) {
+                    return statusEnum.getErpEnum().getName();
+                }
+            }
+        }
+        return "";
+    }
 }

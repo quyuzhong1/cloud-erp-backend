@@ -114,6 +114,8 @@ public class PackageForecastEntity extends BaseEntity<PackageForecastEntity> {
 
     @TableField("transfer_status")
     private String transferStatus;
+    @TableField(exist = false)
+    private String shopId;
 
     public static final String PACKAGE_FORECAST = "package_forecast";
 
