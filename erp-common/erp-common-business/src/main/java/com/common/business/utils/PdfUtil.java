@@ -206,7 +206,7 @@ public class PdfUtil {
     }
 
     public static void main(String[] args) {
-        String pdfUrl = "https://p16-printer-pdf-sign-sg.fanczs.com/tos-alisg-i-js2nuampgw-sg/f772020e477b437ca9c9c99c8cc35400?rk3s=8c7bcdf4\\u0026x-expires=1744095025\\u0026x-signature=%2FT7pCYbSCLkxBe9LgrjifqcZTrA%3D";
+        String pdfUrl = "https://p16-printer-pdf-sign-sg.fanczs.com/tos-alisg-i-js2nuampgw-sg/3a0c23f5c0a7493780e942573d4e21f1?rk3s=8c7bcdf4\\u0026x-expires=1744537712\\u0026x-signature=H6nSq74XJ%2FcNo5BSr91P4UOaMQ4%3D";
         try {
             String base64String = convertPdfUrlToBase64(pdfUrl,true);
             System.out.println("Base64 encoded PDF:\n" + base64String);
