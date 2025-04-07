@@ -769,7 +769,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         virtualTransFlowDTO.setSourceId(param.getSourceId());
         virtualTransFlowDTO.setSourceCode(param.getSourceCode());
         virtualTransFlowDTO.setSourceDetailId(param.getSourceDetailId());
-        virtualTransFlowDTO.setVirtualInventoryId(CharSequenceUtil.format("{}-{}-{}-{}", param.getVirtualWarehouseId(), param.getWarehouseId(), param.getSkuId(),inventoryStatusEnum.getCode()));
+        virtualTransFlowDTO.setVirtualInventoryId("");
         virtualTransFlowDTO.setDictInventoryStatus(inventoryStatusEnum.getCode());
         virtualTransFlowDTO.setDictBizType(businessType.getCode());
         virtualTransFlowDTO.setBillDate(param.getBillDate());
