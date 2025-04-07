@@ -123,6 +123,7 @@
             sbd.code as source_code,
             sbdd.id as source_detail_id,
             sbd.create_time as bill_date,
+            sbd.create_time as trade_time,
             sbdd.delivery_qty as qty,
             'so_b2c_delivery' as businessType
         from so_b2c_delivery sbd
@@ -141,6 +142,7 @@
             sbd.code as source_code,
             sbdd.id as source_detail_id,
             sbd.update_time as bill_date,
+            sbd.update_time as trade_time,
             sbdd.delivery_qty as qty,
             'so_b2c_delivery_cancel' as businessType
         from so_b2c_delivery sbd
@@ -159,6 +161,7 @@
             ti.code as source_code,
             tid.id as source_detail_id,
             ti.approve_time as bill_date,
+            ti.approve_time as trade_time,
             tid.qty as qty,
             '' as businessType
         from transfer_info ti
@@ -178,6 +181,7 @@
             so.code as source_code,
             sod.id as source_detail_id,
             so.approve_time as bill_date,
+            so.approve_time as trade_time,
             sod.actual_qty as qty,
             '' as businessType
         from so_outstock so
@@ -198,6 +202,7 @@
             so.code as source_code,
             sod.id as source_detail_id,
             so.approve_time as bill_date,
+            so.approve_time as trade_time,
             sod.actual_qty as qty,
             '' as businessType
         from so_outstock so

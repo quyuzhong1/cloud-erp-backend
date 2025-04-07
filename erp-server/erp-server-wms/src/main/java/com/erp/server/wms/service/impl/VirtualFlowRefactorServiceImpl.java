@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -168,17 +167,17 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
         detailList.forEach(detailDto -> {
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setBillDate(ObjectUtil.isEmpty(allocationEntity.getHandleDate()) ? allocationEntity.getCreateTime().toLocalDate(): allocationEntity.getHandleDate() );
             outInStockDTO.setSourceId(allocationEntity.getId());
             outInStockDTO.setSourceCode(allocationEntity.getCode());
             outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
             outInStockDTO.setSourceDetailId(detailDto.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSkuId(detailDto.getSkuId());
             outInStockDTO.setSkuNo(detailDto.getSkuNo());
             outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(detailDto.getToVirtualWarehouseId());
             outInStockDTO.setQty(detailDto.getQty());
+            outInStockDTO.setTradeTime(allocationEntity.getCreateTime());
             allocationParamList.add(outInStockDTO);
         });
         allocationDto.setParamList(allocationParamList);
@@ -199,12 +198,11 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
         detailList.forEach(detailDto -> {
             VirtualInventoryStockDTO.TransferStockDTO outInStockDTO = new VirtualInventoryStockDTO.TransferStockDTO();
-            outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSourceId(allocationEntity.getId());
             outInStockDTO.setSourceCode(allocationEntity.getCode());
             outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
             outInStockDTO.setSourceDetailId(detailDto.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setBillDate(ObjectUtil.isEmpty(allocationEntity.getHandleDate()) ? allocationEntity.getCreateTime().toLocalDate(): allocationEntity.getHandleDate());
             outInStockDTO.setSkuId(detailDto.getSkuId());
             outInStockDTO.setSkuNo(detailDto.getSkuNo());
             outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
@@ -212,6 +210,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             outInStockDTO.setVirtualCurWarehouseId(detailDto.getFromVirtualWarehouseId());
             outInStockDTO.setVirtualTargetWarehouseId(detailDto.getToVirtualWarehouseId());
             outInStockDTO.setQty(detailDto.getQty());
+            outInStockDTO.setTradeTime(allocationEntity.getCreateTime());
             paramList.add(outInStockDTO);
         });
         dto.setParamList(paramList);
@@ -233,17 +232,17 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         List<VirtualInventoryStockDTO.OutInStockDTO> allocationParamList = new ArrayList<>();
         detailList.forEach(detailDto -> {
             VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
-            outInStockDTO.setBillDate(LocalDate.now());
             outInStockDTO.setSourceId(allocationEntity.getId());
             outInStockDTO.setSourceCode(allocationEntity.getCode());
             outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION);
             outInStockDTO.setSourceDetailId(detailDto.getId());
-            outInStockDTO.setBillDate(LocalDate.now());
+            outInStockDTO.setBillDate(ObjectUtil.isEmpty(allocationEntity.getHandleDate()) ? allocationEntity.getCreateTime().toLocalDate(): allocationEntity.getHandleDate());
             outInStockDTO.setSkuId(detailDto.getSkuId());
             outInStockDTO.setSkuNo(detailDto.getSkuNo());
             outInStockDTO.setWarehouseId(detailDto.getWarehouseId());
             outInStockDTO.setVirtualWarehouseId(detailDto.getFromVirtualWarehouseId());
             outInStockDTO.setQty(detailDto.getQty());
+            outInStockDTO.setTradeTime(allocationEntity.getCreateTime());
             allocationParamList.add(outInStockDTO);
         });
         allocationDto.setParamList(allocationParamList);
@@ -763,6 +762,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         virtualTransFlowDTO.setDictInventoryStatus(inventoryStatusEnum.getCode());
         virtualTransFlowDTO.setDictBizType(businessType.getCode());
         virtualTransFlowDTO.setBillDate(param.getBillDate());
+        virtualTransFlowDTO.setTradeTime(param.getTradeTime());
         virtualTransFlowDTO.setSourceType(param.getSourceType().getCode());
         virtualTransFlowDTO.setQty(qty);
         virtualTransFlowDTO.setOperationMode(Objects.nonNull(param.getOperationMode()) ? param.getOperationMode().getCode() : "");

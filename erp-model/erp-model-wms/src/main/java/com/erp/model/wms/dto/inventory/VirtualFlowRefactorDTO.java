@@ -10,6 +10,8 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 /**
  * 流水重构DTO
  * @author will
@@ -75,6 +77,11 @@ public class VirtualFlowRefactorDTO {
         @NotNull(message = "单据日期不能为空")
         @JsonFormat(pattern = "yyyy-MM-dd")
         private LocalDate billDate;
+
+        /**
+         * 交易时间
+         */
+        private LocalDateTime tradeTime;
 
         /**
          * 原单明细id

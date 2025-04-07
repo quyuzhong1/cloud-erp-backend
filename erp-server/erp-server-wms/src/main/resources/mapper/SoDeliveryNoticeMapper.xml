@@ -260,10 +260,11 @@
             si.virtual_warehouse_id,
             si.warehouse_id,
             'soInfo' as source_type,
-            si.code as source_code,
             si.id as source_id,
+            si.code as source_code,
             sd.id as source_detail_id,
             COALESCE(sd.frozen_time,sd.create_time) as bill_date,
+            COALESCE(sd.frozen_time,sd.create_time) as trade_time,
             sd.frozen_qty as qty
         from so_info si
         inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
@@ -276,10 +277,11 @@
             sdn.virtual_warehouse_id,
             sdn.warehouse_id,
             'soDeliveryNotice' as source_type,
-            sdn.code as source_code,
             sdn.id as source_id,
+            sdn.code as source_code,
             sdnd.id as source_detail_id,
             sdn.create_time as bill_date,
+            sdn.create_time as trade_time,
             sdnd.delivery_qty as qty
         from so_delivery_notice sdn
         inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
@@ -296,6 +298,7 @@
             mi.code as source_code,
             md.id as source_detail_id,
             mi.approve_time as bill_date,
+            mi.approve_time as trade_time,
             md.qty as qty
         from machine_info mi
         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'
@@ -314,6 +317,7 @@
             ti.code as source_code,
             tid.id as source_detail_id,
             ti.approve_time as bill_date,
+            ti.approve_time as trade_time,
             tid.qty as qty
         from transfer_info ti
         inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
@@ -332,6 +336,7 @@
             so.code as source_code,
             sod.id as source_detail_id,
             so.approve_time as bill_date,
+            so.approve_time as trade_time,
             sod.actual_qty as qty
         from so_outstock so
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
