@@ -71,11 +71,10 @@
                 sbdd.warehouse_id,
                 sbdd.warehouse_name
         from wave_list wl
-        where wl.is_deleted = false
         left join wave_list_detail wld on wl.id = wld.main_id and wld.is_deleted = false
         left join so_b2c_delivery sbd on sbd.id = wld.delivery_id and sbd.is_deleted = false
         left join so_b2c_delivery_detail sbdd on sbdd.main_id = sbd.id and sbdd.is_deleted = false
-        where is_deleted = false
+        where wl.is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
