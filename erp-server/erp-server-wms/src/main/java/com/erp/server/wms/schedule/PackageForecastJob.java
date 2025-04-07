@@ -138,6 +138,11 @@ public class PackageForecastJob {
                                 .map(TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO.LogisticsSubOrdersDTO::getTrackingNumber)
                                 .collect(Collectors.toList());
                         String transportNo = String.join(",", transportNoList);
+                        List<String> subLogisticCodeList = logisticsOrder.getLogisticsSubOrders().stream()
+                                .map(TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO.LogisticsSubOrdersDTO::getCode)
+                                .collect(Collectors.toList());
+                        String subLogisticCode = String.join(",", subLogisticCodeList);
+                        packageForecast.setPlatformPackageNo(subLogisticCode);
                         packageForecast.setTransportNo(transportNo);
                         packageForecast.setHandoverStatus(logisticsOrder.getStatus());
                         updateList.add(packageForecast);

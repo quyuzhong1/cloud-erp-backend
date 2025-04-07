@@ -202,6 +202,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         orderExtendJson.put("receiveQty", extendDataJson.containsKey("receiveQty") && extendDataJson.get("receiveQty") != null?extendDataJson.get("receiveQty"):0);
         orderExtendJson.put("instockQty", extendDataJson.containsKey("instockQty") && extendDataJson.get("instockQty") != null?extendDataJson.get("instockQty"):0);
         orderExtendJson.put("returnQty", extendDataJson.containsKey("returnQty") && extendDataJson.get("returnQty") != null?extendDataJson.get("returnQty"):0);
+        orderExtendJson.put("orderQty", extendDataJson.containsKey("stockupQty") && extendDataJson.get("stockupQty") != null?extendDataJson.get("stockupQty"):0);
         orderDTO.setExtendData(orderExtendJson.toJSONString());
 
         PlatformOrderExtendDTO platformOrderExtendDTO = new PlatformOrderExtendDTO();
