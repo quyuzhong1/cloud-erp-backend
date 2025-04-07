@@ -272,8 +272,11 @@ public class PackageForecastDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 揽收方式  来源 http://172.16.100.11:3002/project/92/interface/api/13147   type=collectMode
+         * 发货平台
          */
+        @NotBlank(message = "发货平台不能为空")
+        private String deliveryPlatform;
+
         @NotBlank(message = "揽收方式不能为空")
         private String collectMode;
 
@@ -287,6 +290,48 @@ public class PackageForecastDTO implements Serializable {
          * 物流类型
          */
         private String logisticType;
+
+        /**
+         * 发货箱数
+         */
+        private Integer totalBox;
+
+        /**
+         * 发货重量
+         */
+        private Integer deliveryWeight;
+
+        /**
+         * 服务商编号
+         */
+        private String providerCode;
+        /**
+         * 服务商名称
+         */
+        private String providerName;
+        /**
+         * 预约揽收日期
+         */
+        private LocalDate collectDate;
+
+        /**
+         * 预约揽收开始时间
+         */
+        private LocalDateTime startTime;
+
+        /**
+         * 预约揽收结束时间
+         */
+        private LocalDateTime endTime;
+
+        /**
+         * 预计送货日期
+         */
+        private LocalDate deliveryTime;
+        /**
+         * 预计送货到仓日期
+         */
+        private LocalDate arrivedTime;
     }
 
     /**
