@@ -1,12 +1,19 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.model.wms.entity.PackageForecastEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
+import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyLogisticResp;
+import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +22,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -35,6 +40,11 @@ public class PackageForecastJob {
     @Resource
     private PackageForecastDetailService packageForecastDetailService;
 
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private TikTokFullService tikTokFullService;
     /**
      * 同步组包订单详情
      */
@@ -59,11 +69,95 @@ public class PackageForecastJob {
             XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
             return;
         }
-        //查询需要查询的订单
-        orders.forEach(packageForecastEntity -> {
-            packageForecastService.queryAliExpressInfo(packageForecastEntity);
-            XxlJobHelper.log("syncPackageForecastInfo update : {}", packageForecastEntity.getHandoverNo());
+        List<String> mainIds = orders.stream()
+                .map(PackageForecastEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainIds(mainIds);
+        List<String> soIds = detailEntityList.stream()
+                .map(PackageForecastDetailEntity::getSoId)
+                .distinct()
+                .collect(Collectors.toList());
+        Map<String,List<PackageForecastDetailEntity>> detailMap = detailEntityList.stream()
+                .collect(Collectors.groupingBy(PackageForecastDetailEntity::getMainId));
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<PackageForecastDetailEntity> tiktokFullyDetailList = new ArrayList<>();
+        List<PackageForecastEntity> tiktokFullyList = new ArrayList<>();
+        //处理速卖通
+        detailMap.forEach((mainId,detailList)->{
+            PackageForecastEntity packageForecast = orders.stream()
+                    .filter(packageForecastEntity -> packageForecastEntity.getId().equals(mainId))
+                    .findFirst()
+                    .orElse(null);
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream()
+                    .filter(soB2cEntity1 -> soB2cEntity1.getId().equals(detailList.get(0).getSoId()))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(packageForecast) || Objects.isNull(soB2cEntity)){
+                return;
+            }
+            if(soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
+                packageForecastService.queryAliExpressInfo(packageForecast);
+                XxlJobHelper.log("syncPackageForecastInfo update : {}", packageForecast.getHandoverNo());
+            }
+
+            if(soB2cEntity.getDictPlatform().equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
+                packageForecast.setShopId(soB2cEntity.getShopId());
+                tiktokFullyList.add(packageForecast);
+                tiktokFullyDetailList.addAll(detailList);
+            }
         });
+        List<PackageForecastEntity> updateList = new ArrayList<>();
+        List<PackageForecastDetailEntity> updateDetailList = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(tiktokFullyList) && CollectionUtils.isNotEmpty(tiktokFullyDetailList)){
+            List<String> allHandoverNos = tiktokFullyList.stream()
+                    .map(PackageForecastEntity::getHandoverNo)
+                    .filter(StrUtils::isNotEmpty)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(allHandoverNos)){
+                return;
+            }
+            String shopId = tiktokFullyList.get(0).getShopId();
+            List<List<String>> handoverNoList = ListUtil.partition(allHandoverNos,50);
+            for (List<String> handoverNos : handoverNoList) {
+                try {
+                    TikTokFullyLogisticResp tikTokFullyLogisticResp = tikTokFullService.queryLogistics(shopId,handoverNos);
+                    List<TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO> logisticsOrders = tikTokFullyLogisticResp.getData().getLogisticsOrders();
+                    for (TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO logisticsOrder : logisticsOrders) {
+                        PackageForecastEntity packageForecast = tiktokFullyList.stream()
+                                .filter(packageForecastEntity -> packageForecastEntity.getHandoverNo().equals(logisticsOrder.getCode()))
+                                .findFirst()
+                                .orElse(null);
+                        if(Objects.isNull(packageForecast)){
+                            continue;
+                        }
+                        List<PackageForecastDetailEntity> detailEntityList1 = tiktokFullyDetailList.stream()
+                                .filter(packageForecastDetailEntity -> packageForecastDetailEntity.getMainId().equals(packageForecast.getId()))
+                                .collect(Collectors.toList());
+                        detailEntityList1.forEach(v->v.setHandoverStatus(logisticsOrder.getStatus()));
+                        //返回的运单号可能有多个，拼接起来
+                        List<String> transportNoList = logisticsOrder.getLogisticsSubOrders().stream()
+                                .map(TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO.LogisticsSubOrdersDTO::getTrackingNumber)
+                                .collect(Collectors.toList());
+                        String transportNo = String.join(",", transportNoList);
+                        packageForecast.setTransportNo(transportNo);
+                        packageForecast.setHandoverStatus(logisticsOrder.getStatus());
+                        updateList.add(packageForecast);
+                        updateDetailList.addAll(detailEntityList1);
+                    }
+                }catch (Exception e){
+                    log.error("查询tiktok全托管异常 : ",e);
+                    XxlJobHelper.log("查询tiktok全托管异常 : ",e );
+                }
+            }
+        }
+        if(CollectionUtils.isNotEmpty(updateList)){
+            packageForecastService.updateBatchById(updateList);
+        }
+        if(CollectionUtils.isNotEmpty(updateDetailList)){
+            packageForecastDetailService.updateBatchById(updateDetailList);
+        }
         XxlJobHelper.log("syncPackageForecastInfo end : {}", LocalDateTime.now());
     }
 }
