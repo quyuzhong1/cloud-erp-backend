@@ -343,7 +343,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         //直接调拨单只出单品sku
         List<String> skuIdList = list.stream().filter(obj ->SourceTypeEnum.TRANSFER_INFO.getCode().equals(obj.getSourceType().getCode())).map(VirtualFlowRefactorDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.listBomChildBySkuIds(skuIdList);
-        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildList.stream().collect(Collectors.groupingBy(obj -> StrUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getSkuId())));
+        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildList.stream().collect(Collectors.groupingBy(obj -> StrUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getParentSkuId())));
         List<VirtualFlowRefactorDTO.OutInStockDTO> singleList = list.stream().filter(obj -> {
             //过滤组合品
             String key = StrUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getSkuId());
