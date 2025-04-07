@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
@@ -89,7 +90,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         virtualTransFlowEntity.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
-        virtualTransFlowEntity.setTradeTime(LocalDateTime.now());
+        virtualTransFlowEntity.setTradeTime(ObjectUtil.isEmpty(virtualTransFlowEntity.getTradeTime()) ? LocalDateTime.now() : virtualTransFlowEntity.getTradeTime());
         virtualTransFlowEntity.setVirtualTransRuleId(StrUtils.null2EmptyWithTrim(virtualTansRuleId));
         Integer qty = addDTO.getQty();
         if(Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) {
