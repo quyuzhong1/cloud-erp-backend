@@ -93,13 +93,13 @@ public class TikTokFullyProductRocketMQTaskHandler extends DmpOutputRocketMQTask
     	
     	product.setPlatform(dmpProductInfoEntity.getSourcePlatform());
         // 平台sku no
-        product.setPlatformProductNo(dmpSkuInfoEntity.getSpuId());
+        product.setPlatformProductNo(dmpSkuInfoEntity.getSkuId());
         // 平台sku 名
         String spuName = dmpProductInfoEntity.getSpuName();
 		product.setPlatformProductName(spuName);
         String skuNo = dmpSkuInfoEntity.getSkuNo();
 		product.setPlatformSkuNo(StringUtils.isBlank(skuNo)? "" : skuNo);
-
+		product.setProductSpec(dmpSkuInfoEntity.getSpuId());
         product.setPlatformSkuName(spuName);
         // 类型 platform 平台  warehouse 仓库
         product.setPlatformType("platform");

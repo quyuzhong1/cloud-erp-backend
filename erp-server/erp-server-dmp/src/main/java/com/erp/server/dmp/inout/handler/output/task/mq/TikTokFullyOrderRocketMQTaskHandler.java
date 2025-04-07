@@ -257,7 +257,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         detailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSku());
 
         //平台产品id
-        detailDTO.setPlatformSpuNo(soDetailEntity.getPlatformSpuNo());
+        detailDTO.setPlatformSpuNo(soDetailEntity.getThirdDetailId());
 
         // 库存sku编号
         detailDTO.setWarehouseName("");
