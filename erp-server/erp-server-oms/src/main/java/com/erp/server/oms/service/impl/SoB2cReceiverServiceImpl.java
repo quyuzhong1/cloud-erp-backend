@@ -379,8 +379,8 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         Map<String, SoB2cReceiverEntity> soB2cReceiverMap = soB2cReceiverList.stream().collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, t -> t, (oldValue, newValue) -> oldValue));
 
         //国家字段只能填入国家二字码或三字码，且与系统基础数据做匹配校验，系统不存在时提示：国家信息不存在
-        List<String> countryNames = successList.stream().map(B2CCustomerImportExcelDTO::getCountryName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-        List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryNames);
+        List<String> countrys = successList.stream().map(B2CCustomerImportExcelDTO::getCountry).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countrys);
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (oldValue, newValue) -> oldValue));
 
         //买家信息字段导入时，以表格导入字段为准，但是如果导入表格字段为空时，则该字段不做更新
@@ -403,7 +403,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
             SoB2cReceiverEntity b2cReceiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
             if (ObjectUtils.isEmpty(b2cReceiverEntity)) {
-                excelDTO.setErrorMsg("国家信息不存在");
+                excelDTO.setErrorMsg("客户信息不存在");
                 errorList.add(excelDTO);
                 continue;
             }
