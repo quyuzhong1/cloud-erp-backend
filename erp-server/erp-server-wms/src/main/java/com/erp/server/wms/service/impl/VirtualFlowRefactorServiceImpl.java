@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson2.JSON;
 import com.common.business.config.DocNoGenHelper;
@@ -338,7 +339,17 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
+
+        //直接调拨单只出单品sku
+        List<String> skuIdList = list.stream().filter(obj ->SourceTypeEnum.TRANSFER_INFO.getCode().equals(obj.getSourceType().getCode())).map(VirtualFlowRefactorDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildList.stream().collect(Collectors.groupingBy(obj -> StrUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getSkuId())));
+        List<VirtualFlowRefactorDTO.OutInStockDTO> singleList = list.stream().filter(obj -> {
+            //过滤组合品
+            String key = StrUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getSkuId());
+            return CollUtil.isEmpty(bomMap.get(key));
+        }).collect(Collectors.toList());
+        Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
         map.forEach((key, value) -> {
             String sourceType = value.get(0).getSourceType().getCode();
