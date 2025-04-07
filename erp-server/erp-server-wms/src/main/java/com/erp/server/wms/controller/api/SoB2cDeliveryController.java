@@ -254,7 +254,7 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 取消打印拣货单
-     * 1.24。2版本调整为取消打印（拣货单，物流单）
+     * 1.24。2版本调整为取消打印（拣货单，物流单，SKU条码）
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG

@@ -147,7 +147,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             operateLogList.add(addModuleOperateLogDTO);
         });
         soB2cService.updateBatchById(soB2cEntityList);
-
+        //清除异常
+        soB2cErrorService.deleteByMainIds(dto.getIds());
 
         operateLogService.batchAddModuleOperateLog(operateLogList);
 

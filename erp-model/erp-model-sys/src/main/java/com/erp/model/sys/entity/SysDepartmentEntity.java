@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 部门表
@@ -63,5 +65,10 @@ public class SysDepartmentEntity implements Serializable {
 	@TableField("sync_kingdee_id")
 	private String syncKingdeeId;
 
+	/**
+	 * 所有上级IDS
+	 */
+	@TableField(exist = false)
+	private String path = "";
 
 }

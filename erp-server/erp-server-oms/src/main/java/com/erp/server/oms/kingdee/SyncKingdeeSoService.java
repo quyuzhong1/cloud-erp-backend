@@ -11,6 +11,10 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.sys.entity.DictGlobalAreaEntity;
+import com.erp.model.sys.entity.DictPartitionEntity;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 
 /**
  * @author Lambda
@@ -42,10 +46,13 @@ public interface SyncKingdeeSoService {
                                                   List<ProductDetailEntity> parentSkuList,
                                                   List<CustomerInfoEntity> customerInfoEntities,
                                                   List<BaseIdDTO.CodeDTO> companyEntities,
-                                                  List<DictBasicEntity> dictBasicEntityList,
                                                   List<CurrencyDTO.ViewDTO> currencyList,
                                                   List<SoChangeDetailEntity> soChangeDetailEntityList,
-                                                  List<DictBasicEntity> dictList);
+                                                  List<DictBasicEntity> dictList,
+                                                  List<DictPartitionEntity> partitionEntityList,
+                                                  List<DictCountryEntity> countryEntityList,
+                                                  List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                  List<SysDepartmentEntity> deptList);
 
     /**
      * 同步数帝云
@@ -63,10 +70,13 @@ public interface SyncKingdeeSoService {
                        List<ProductDetailEntity> parentSkuList,
                        List<CustomerInfoEntity> customerInfoEntities,
                        List<BaseIdDTO.CodeDTO> companyEntities,
-                       List<DictBasicEntity> dictBasicEntityList,
                        List<CurrencyDTO.ViewDTO> currencyList,
                        List<SoChangeDetailEntity> soChangeDetailEntities,
-                       List<DictBasicEntity> dictList
+                       List<DictBasicEntity> omsAllDictList,
+                       List<DictPartitionEntity> partitionEntityList,
+                       List<DictCountryEntity> countryEntityList,
+                       List<DictGlobalAreaEntity> dictGlobalEntityList,
+                       List<SysDepartmentEntity> deptList
     );
 
 }
