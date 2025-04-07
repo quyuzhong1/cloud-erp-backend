@@ -439,6 +439,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String printLogisticName;
         /**
+         * 打印sku条码状态 中文
+         */
+        private String printSkuBarcodeName;
+        /**
          * 是否验货【可排序】
          */
         private Boolean isInspection;

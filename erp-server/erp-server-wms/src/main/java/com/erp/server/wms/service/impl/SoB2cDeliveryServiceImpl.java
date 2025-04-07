@@ -2193,7 +2193,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
-        if (CollUtil.isEmpty(receiverList)) {
+        if (CollUtil.isEmpty(receiverList) && !PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
         }
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
@@ -2606,7 +2606,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             record.setWeighName(record.getIsWeigh()? WeightEnum.YES.getName(): WeightEnum.NO.getName());
             record.setPrintPickingName(record.getIsPrintPicking()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
             record.setPrintLogisticName(record.getIsPrintLogistic()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
-
+            if(PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(record.getDictPlatform())){
+                record.setPrintSkuBarcodeName(Objects.nonNull(record.getIsPrintSkuBarcode()) && record.getIsPrintSkuBarcode()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
+            }else {
+                record.setPrintSkuBarcodeName("无需打印");
+            }
             //手动标发标记
             if(!record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()) && record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
                 record.setTag("发");
