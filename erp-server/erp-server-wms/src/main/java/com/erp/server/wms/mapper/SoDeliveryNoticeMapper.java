@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -64,5 +65,11 @@ public interface SoDeliveryNoticeMapper extends BaseMapper<SoDeliveryNoticeEntit
      * @param ignoreInventorySkus 忽略得sku
      */
     IPage<SoDeliveryNoticeDTO.PickingViewDTO> pagingPicking(@Param("page") Page<SoDeliveryNoticeDTO.PickingViewDTO> page,@Param("id") String id,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
-
+    /**
+     * b2b虚拟仓流水
+     * @author will
+     * @date 2025/3/31 11:31
+     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
+     */
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 }

@@ -159,4 +159,11 @@ public interface VirtualWarehouseAllocationService extends SuperService<VirtualW
      * @param dto
      */
     void updateIsStatistics(VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto);
+    /**
+     * 查询已处理分货数据
+     * @author will
+     * @date 2025/4/2 16:27
+     * @return java.util.List<com.erp.model.wms.entity.VirtualWarehouseAllocationEntity>
+     */
+    List<VirtualWarehouseAllocationEntity> rebuildVirtualWarehouseAllocationFlow();
 }
