@@ -5,6 +5,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -19,7 +20,7 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.entity.DictCurrencyEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
@@ -78,6 +79,8 @@ public class SyncSdyJob {
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
     @Resource
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
 
 
     @XxlJob("syncSdySoB2c")
@@ -149,11 +152,6 @@ public class SyncSdyJob {
             if (CollUtil.isNotEmpty(orgList)) {
                 companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
             }
-            List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-            List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-
-            List<String> platformTypeList = customerInfoList.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-            List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, platformTypeList).list();
 
             List<String> skuNos = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
             List<String> skuIds = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -224,7 +222,34 @@ public class SyncSdyJob {
                         .list();
             }
 
+            List<SoB2cReceiverEntity> soB2cReceiverEntityList = soB2cReceiverService.listByMainIds(soIds);
+
+            List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
+
+            // 军区信息
+            List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+            // 国家信息
+            List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+            // 子区域信息
+            List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+            // 部门信息
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
+
             for (SoB2cEntity soB2cEntity : list) {
+                SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(receiverEntity)) {
+                    XxlJobHelper.log("===========数据异常：未找到SoB2cReceiverEntity：{}", soB2cEntity.getCode());
+                    continue;
+                }
                 List<SoB2cDetailEntity> detailEntityList = soB2cDetailEntityList.stream().filter(req -> req.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
                 // 平台仓订单(平台销售出库单)
                 if (soB2cEntity.hasPlatformWarehouseOrder()) {
@@ -232,7 +257,26 @@ public class SyncSdyJob {
                     if (outstockEntityList.stream().anyMatch(e->e.getSoId().equalsIgnoreCase(soB2cEntity.getId()))){
                         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
                             // 速卖通推送
-                            syncAliExpressDelivery(soB2cEntity, aliexpressDeliveryMap, detailAliexpressDeliveryList, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS, parentSkuList, listingInfoEntities, currencyList, dictCurrencyEntities, shopInfoList, customerInfoList, companyEntities, dictBasicEntityList, dictList);
+                            syncAliExpressDelivery(soB2cEntity,
+                                    aliexpressDeliveryMap,
+                                    detailAliexpressDeliveryList,
+                                    soB2cDetailEntityList,
+                                    skuVOList,
+                                    bomChildrenSkuDTOS,
+                                    parentSkuList,
+                                    listingInfoEntities,
+                                    currencyList,
+                                    dictCurrencyEntities,
+                                    shopInfoList,
+                                    customerInfoList,
+                                    companyEntities,
+                                    receiverEntity,
+                                    omsAllDictList,
+                                    partitionEntityList,
+                                    countryEntityList,
+                                    dictGlobalEntityList,
+                                    deptList
+                            );
                         } else {
                             // 其他平台推送
                             // 原始同步数帝云
@@ -248,8 +292,12 @@ public class SyncSdyJob {
                                     shopInfoList,
                                     customerInfoList,
                                     companyEntities,
-                                    dictBasicEntityList,
-                                    dictList
+                                    receiverEntity,
+                                    omsAllDictList,
+                                    partitionEntityList,
+                                    countryEntityList,
+                                    dictGlobalEntityList,
+                                    deptList
                             );
                         }
                     }
@@ -276,8 +324,12 @@ public class SyncSdyJob {
                                 shopInfoList,
                                 customerInfoList,
                                 companyEntities,
-                                dictBasicEntityList,
-                                dictList
+                                receiverEntity,
+                                omsAllDictList,
+                                partitionEntityList,
+                                countryEntityList,
+                                dictGlobalEntityList,
+                                deptList
                         );
                     }
                     // 未出库跳过
@@ -285,7 +337,25 @@ public class SyncSdyJob {
                 }
                 // 自发货出库
                 if (outstockEntityList.stream().anyMatch(e->e.getSoId().equalsIgnoreCase(soB2cEntity.getId()))){
-                    selfAddSoB2cDelivery(soB2cEntity, soB2cDeliveryEntityMap, soB2cDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS, parentSkuList, listingInfoEntities, currencyList, dictCurrencyEntities, shopInfoList, customerInfoList, companyEntities, dictBasicEntityList, dictList);
+                    selfAddSoB2cDelivery(soB2cEntity,
+                            soB2cDeliveryEntityMap,
+                            soB2cDeliveryDetailEntityList,
+                            soB2cDetailEntityList,
+                            skuVOList,
+                            bomChildrenSkuDTOS,
+                            parentSkuList,
+                            listingInfoEntities,
+                            currencyList,
+                            dictCurrencyEntities,
+                            shopInfoList,
+                            customerInfoList,
+                            companyEntities,
+                            receiverEntity,
+                            omsAllDictList,
+                            partitionEntityList,
+                            countryEntityList,
+                            dictGlobalEntityList,
+                            deptList);
                 }
             }
             currentPage++;
@@ -294,7 +364,25 @@ public class SyncSdyJob {
     }
 
 
-    private void selfAddSoB2cDelivery(SoB2cEntity soB2cEntity, Map<String, List<SoB2cDeliveryEntity>> soB2cDeliveryEntityMap, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntityList, List<SoB2cDetailEntity> soB2cDetailEntityList, List<SkuVO> skuVOList, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, List<ProductDetailEntity> parentSkuList, List<ListingInfoEntity> listingInfoEntities, List<CurrencyDTO.ViewDTO> currencyList, List<DictCurrencyEntity> dictCurrencyEntities, List<ShopInfoEntity> shopInfoList, List<CustomerInfoEntity> customerInfoList, List<BaseIdDTO.CodeDTO> companyEntities, List<DictBasicEntity> dictBasicEntityList, List<DictBasicEntity> dictList) {
+    private void selfAddSoB2cDelivery(SoB2cEntity soB2cEntity,
+                                      Map<String, List<SoB2cDeliveryEntity>> soB2cDeliveryEntityMap,
+                                      List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntityList,
+                                      List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                      List<SkuVO> skuVOList,
+                                      List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                      List<ProductDetailEntity> parentSkuList,
+                                      List<ListingInfoEntity> listingInfoEntities,
+                                      List<CurrencyDTO.ViewDTO> currencyList,
+                                      List<DictCurrencyEntity> dictCurrencyEntities,
+                                      List<ShopInfoEntity> shopInfoList,
+                                      List<CustomerInfoEntity> customerInfoList,
+                                      List<BaseIdDTO.CodeDTO> companyEntities,
+                                      SoB2cReceiverEntity receiverEntity,
+                                      List<DictBasicEntity> omsAllDictList,
+                                      List<DictPartitionEntity> partitionEntityList,
+                                      List<DictCountryEntity> countryEntityList,
+                                      List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                      List<SysDepartmentEntity> deptList) {
         List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryEntityMap.get(soB2cEntity.getId());
         if (CollectionUtils.isEmpty(soB2cDeliveryEntityList)){
             return;
@@ -319,13 +407,36 @@ public class SyncSdyJob {
                         shopInfoList,
                         customerInfoList,
                         companyEntities,
-                        dictBasicEntityList,
-                        dictList);
+                        receiverEntity,
+                        omsAllDictList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList);
             }
         }
     }
 
-    private void syncAliExpressDelivery(SoB2cEntity soB2cEntity, Map<String, List<AliexpressDeliveryEntity>> aliexpressDeliveryMap, List<AliexpressDeliveryDetailEntity> detailAliexpressDeliveryList, List<SoB2cDetailEntity> soB2cDetailEntityList, List<SkuVO> skuVOList, List<BomChildrenSkuDTO> bomChildrenSkuDTOS, List<ProductDetailEntity> parentSkuList, List<ListingInfoEntity> listingInfoEntities, List<CurrencyDTO.ViewDTO> currencyList, List<DictCurrencyEntity> dictCurrencyEntities, List<ShopInfoEntity> shopInfoList, List<CustomerInfoEntity> customerInfoList, List<BaseIdDTO.CodeDTO> companyEntities, List<DictBasicEntity> dictBasicEntityList, List<DictBasicEntity> dictList) {
+    private void syncAliExpressDelivery(SoB2cEntity soB2cEntity,
+                                        Map<String, List<AliexpressDeliveryEntity>> aliexpressDeliveryMap,
+                                        List<AliexpressDeliveryDetailEntity> detailAliexpressDeliveryList,
+                                        List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                        List<SkuVO> skuVOList,
+                                        List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                        List<ProductDetailEntity> parentSkuList,
+                                        List<ListingInfoEntity> listingInfoEntities,
+                                        List<CurrencyDTO.ViewDTO> currencyList,
+                                        List<DictCurrencyEntity> dictCurrencyEntities,
+                                        List<ShopInfoEntity> shopInfoList,
+                                        List<CustomerInfoEntity> customerInfoList,
+                                        List<BaseIdDTO.CodeDTO> companyEntities,
+                                        SoB2cReceiverEntity receiverEntity,
+                                        List<DictBasicEntity> omsAllDictList,
+                                        List<DictPartitionEntity> partitionEntityList,
+                                        List<DictCountryEntity> countryEntityList,
+                                        List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                        List<SysDepartmentEntity> deptList
+    ) {
         List<AliexpressDeliveryEntity> aliexpressDeliveryList = aliexpressDeliveryMap.get(soB2cEntity.getId());
         if (CollectionUtils.isEmpty(aliexpressDeliveryList)){
             return;
@@ -349,8 +460,12 @@ public class SyncSdyJob {
                         shopInfoList,
                         customerInfoList,
                         companyEntities,
-                        dictBasicEntityList,
-                        dictList);
+                        receiverEntity,
+                        omsAllDictList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList);
             }
         }
     }
@@ -418,9 +533,25 @@ public class SyncSdyJob {
             List<String> soDetailIds = soDetailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
             List<SoChangeDetailEntity> soChangeDetailEntities = soChangeDetailService.listBySoDetailIdList(soDetailIds);
 
-            List<String> subPlatformType = customerInfoEntities.stream().map(req -> req.getPlatformType()).distinct().collect(Collectors.toList());
-            List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").in(DictBasicEntity::getName, subPlatformType).list();
+            List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                    .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                            DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                            DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                    ))
+                    .list();
 
+            // 军区信息
+            List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+            // 国家信息
+            List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+            // 子区域信息
+            List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+            // 部门信息
+            List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
             for (SoInfoEntity soInfoEntity : list) {
                 List<SoDetailEntity> detailEntityList = soDetailEntities.stream().filter(req -> req.getMainId().equals(soInfoEntity.getId())).collect(Collectors.toList());
 
@@ -432,10 +563,13 @@ public class SyncSdyJob {
                         parentSkuList,
                         customerInfoEntities,
                         companyEntities,
-                        dictBasicEntityList,
                         currencyList,
                         soChangeDetailEntities,
-                        dictList
+                        omsAllDictList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList
                 );
             }
             currentPage++;
