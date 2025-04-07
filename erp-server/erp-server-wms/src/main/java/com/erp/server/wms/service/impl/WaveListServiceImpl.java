@@ -338,7 +338,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);
         for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
             if(!deliveryEntity.getIsPrintLogistic()){
-                deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId());
+                deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId()).update();
                 operateLogService.addModuleOperateLog("验货完成自动打印SKU条码", ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), deliveryEntity.getId(), "SKU条码打印", loginUser.getUid(), loginUser.getUserName());
             }
         }
@@ -376,7 +376,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);
         for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
             if(!deliveryEntity.getIsPrintLogistic()){
-                deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintLogistic,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId());
+                deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintLogistic,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId()).update();
                 operateLogService.addModuleOperateLog("验货完成自动打印物流单", ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), deliveryEntity.getId(), "物流单打印", loginUser.getUid(), loginUser.getUserName());
             }
         }

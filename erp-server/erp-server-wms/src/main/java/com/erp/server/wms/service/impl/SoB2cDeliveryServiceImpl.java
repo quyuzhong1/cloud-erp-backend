@@ -1405,13 +1405,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO) {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         for (String id : idsDTO.getIds()) {
-            operateLogService.addModuleOperateLog("标记物流单已打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "SKU条码完成打印", loginUser.getUid(), loginUser.getUserName());
+            operateLogService.addModuleOperateLog("标记SKU条码已打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "SKU条码完成打印", loginUser.getUid(), loginUser.getUserName());
         }
 
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(idsDTO.getIds());
         for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
             if(!deliveryEntity.getIsPrintSkuBarcode()){
-                this.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId());
+                this.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId()).update();
                 operateLogService.addModuleOperateLog("完成SKU条码打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), deliveryEntity.getId(), "完成SKU条码打印", loginUser.getUid(), loginUser.getUserName());
             }
         }
