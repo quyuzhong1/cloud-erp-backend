@@ -1,8 +1,8 @@
 package com.erp.server.dmp.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.dmp.dto.AttachmentDTO;
 import com.erp.model.dmp.entity.AttachmentEntity;
-import com.erp.model.scm.dto.AttachmentDTO;
 
 import java.util.List;
 
@@ -22,9 +22,9 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      * @author yl
      * @date 2023-03-20 10:27
      * @param businessIds
-     * @return java.util.List<com.erp.model.scm.dto.AttachmentDTO.UpdateDTO>
+     * @return java.util.List<AttachmentDTO.UpdateDTO>
      */
-    List<com.erp.model.scm.dto.AttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds);
+    List<AttachmentDTO.UpdateDTO> getByBusinessIds(List<String> businessIds);
 
 
     /**
@@ -54,9 +54,9 @@ public interface AttachmentService extends SuperService<AttachmentEntity> {
      * @author yl
      * @date 2023-03-27 9:37
      * @param businessId
-     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @return AttachmentDTO.UpdateDTO
      */
-    List<com.erp.model.scm.dto.AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
+    List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
 
 
     /**
