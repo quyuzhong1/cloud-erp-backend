@@ -1964,6 +1964,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 addDTO.setName("手动生成波次");
 //                addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
                 addDTO.setWaveType(dto.getWaveType());
+                addDTO.setIsFullyManaged(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()));
                 addDTOS.add(waveListService.add(addDTO));
             }
             return addDTOS;

@@ -83,7 +83,14 @@ public class WaveListController extends BaseController {
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> list = waveListService.printLogisticsWaybillPreview(param);
         return ApiResult.success(list);
     }
-
+    /**
+     * 打印SKU条码预览
+     */
+    @PostMapping("/printSkuBarcodeView")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO>> printSkuBarcodeView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> list = waveListService.printSkuBarcodeView(dto.getIds());
+        return ApiResult.success(list);
+    }
     /**
      * tabList
      */
@@ -100,7 +107,13 @@ public class WaveListController extends BaseController {
     public ApiResult<?> printFinish(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
         return waveListService.printFinish(idsDTO);
     }
-
+    /**
+     * 完成打印（SKU条码）
+     */
+    @PostMapping("/printFinishSkuBarcode")
+    public ApiResult<?> printFinishSkuBarcode(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        return waveListService.printFinishSkuBarcode(idsDTO);
+    }
     /**
      * 手动标记波次状态为完成
      * @author jack
