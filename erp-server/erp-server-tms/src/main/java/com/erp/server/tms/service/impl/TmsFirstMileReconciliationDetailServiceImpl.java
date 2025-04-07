@@ -1538,13 +1538,26 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 //校验金额币种是否一致
                 for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : excelMap.entrySet()) {
                     List<FirstMileReconciliationStandardExcelDTO> value = entry.getValue();
-                    String firstCostValue = value.get(0).getCostValue();
+                    FirstMileReconciliationStandardExcelDTO dto = value.get(0);
+                    //费用金额
+                    String firstCostValue = dto.getCostValue();
                     boolean allSkuCostsEqual = value.stream().allMatch(excelDTO -> firstCostValue.equals(excelDTO.getCostValue()));
-                    String firstCurrency = value.get(0).getCurrency();
+                    //币种
+                    String firstCurrency = dto.getCurrency();
                     boolean allCurrencyEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getCurrency()));
-                    if(Boolean.FALSE.equals(allSkuCostsEqual)||Boolean.FALSE.equals(allCurrencyEqual)){
+                    //实际实重
+                    String actualWeight = dto.getActualWeight();
+                    boolean allActualWeightEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getActualWeight()));
+                    //实际体积重
+                    String volumeWeight = dto.getVolumeWeight();
+                    boolean allVolumeWeightEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getVolumeWeight()));
+                    if(Boolean.FALSE.equals(allSkuCostsEqual)
+                            ||Boolean.FALSE.equals(allCurrencyEqual)
+                            ||Boolean.FALSE.equals(allActualWeightEqual)
+                            ||Boolean.FALSE.equals(allVolumeWeightEqual)
+                    ){
                         for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
-                            excelDTO.setErrorMsg("相同序号单据同费用项的费用金额或币种不一致。");
+                            excelDTO.setErrorMsg("相同序号单据的实际实重，实际体积重，费用项，费用金额，币种不一致。");
                             errorList.add(excelDTO);
                         }
                         excelMap.remove(entry.getKey());
@@ -1771,6 +1784,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
             BigDecimal leftActualWeight = BigDecimal.ZERO;
             BigDecimal leftCostValue = BigDecimal.ZERO;
+            BigDecimal leftVolumeWeight= BigDecimal.ZERO;
             for (int i = 0; i < value.size(); i++) {
                 FirstMileReconciliationStandardExcelDTO excelDTO = value.get(i);
                 BigDecimal weightRate = excelDTO.getGrossWeigh().divide(totalWeightByCode, 4, RoundingMode.DOWN);
@@ -1779,15 +1793,22 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 BigDecimal actualWeight = MathUtil.getBigDecimalByStr(excelDTO.getActualWeight());
                 //费用金额
                 BigDecimal costValue = MathUtil.getBigDecimalByStr(excelDTO.getCostValue());
+                //实际体积重
+                BigDecimal volumeWeight = MathUtil.getBigDecimalByStr(excelDTO.getVolumeWeight());
 
                 if (i == value.size() - 1) {
                     excelDTO.setActualWeight(actualWeight.subtract(leftActualWeight).toString());
                     excelDTO.setCostValue(costValue.subtract(leftCostValue).toString());
+                    excelDTO.setVolumeWeight(volumeWeight.subtract(leftVolumeWeight).toString());
                 } else {
+                    //根据分摊方式计算实重
                     BigDecimal dtoActualWeight = actualWeight.multiply(weightRate).setScale(4, RoundingMode.DOWN);
                     leftActualWeight = leftActualWeight.add(dtoActualWeight);
                     excelDTO.setActualWeight(dtoActualWeight.toString());
-
+                    //根据分摊方式计算实际体积重
+                    BigDecimal dtoVolumeWeight = volumeWeight.multiply(weightRate).setScale(4, RoundingMode.DOWN);
+                    leftVolumeWeight = leftVolumeWeight.add(dtoVolumeWeight);
+                    excelDTO.setVolumeWeight(dtoVolumeWeight.toString());
                     //根据分摊方式计算费用金额
                     BigDecimal dtoCostValue = setCostValueByCostCategory(allocationType,costValue,weightRate,excelDTO.getSkuCost() , totalCostByCode);
                     leftCostValue = leftCostValue.add(dtoCostValue);
