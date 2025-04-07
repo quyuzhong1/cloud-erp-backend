@@ -135,7 +135,7 @@ public class B2CCustomerImportExcelDTO {
      */
     
     @ColumnWidth(30)
-    @ExcelProperty(value = "收件地址1")
+    @ExcelProperty(value = "收货地址1")
     @FieldValid(fieldName = "收件人地址1",maxLength = 255)
     private String firstAddress;
 
@@ -144,7 +144,7 @@ public class B2CCustomerImportExcelDTO {
      */
     
     @ColumnWidth(30)
-    @ExcelProperty(value = "收件地址2")
+    @ExcelProperty(value = "收货地址2")
     @FieldValid(fieldName = "收件人地址2",maxLength = 255)
     private String secondAddress;
 
