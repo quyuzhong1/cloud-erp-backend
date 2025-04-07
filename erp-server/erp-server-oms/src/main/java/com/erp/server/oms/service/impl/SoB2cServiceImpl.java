@@ -570,7 +570,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //新增全托管附属信息
             soB2cExtendService.add(addDTO.getExtendDTO(),soB2cEntity);
             //物流信息同步新增运单号
-            addDTO.getLogisticsDTO().setCode(addDTO.getLogisticsDTO().getTrackNo());
+            if (CharSequenceUtil.isBlank(addDTO.getLogisticsDTO().getCode())){
+                addDTO.getLogisticsDTO().setCode(addDTO.getLogisticsDTO().getTrackNo());
+            }
+            if (CharSequenceUtil.isBlank(addDTO.getLogisticsDTO().getTrackNo())){
+                addDTO.getLogisticsDTO().setTrackNo(addDTO.getLogisticsDTO().getCode());
+            }
         }else {
             if(Objects.isNull(addDTO.getReceiverDTO())){
                 throw new ServiceException("订单买家信息不能为空");
@@ -1091,6 +1096,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String dictPlatform = soB2cEntity.getDictPlatform();
         if (isFullyManagedOrder(dictPlatform)){
             soB2cExtendService.update(updateDTO.getExtendDTO(), soB2cEntity);
+            //物流信息同步新增运单号
+            if (CharSequenceUtil.isBlank(updateDTO.getLogisticsDTO().getCode())){
+                updateDTO.getLogisticsDTO().setCode(updateDTO.getLogisticsDTO().getTrackNo());
+            }
+            if (CharSequenceUtil.isBlank(updateDTO.getLogisticsDTO().getTrackNo())){
+                updateDTO.getLogisticsDTO().setTrackNo(updateDTO.getLogisticsDTO().getCode());
+            }
         }else {
             //是否新增b2c客户
             CustomerB2cEntity customer = customerB2cService.getByIdOrName(updateDTO.getReceiverDTO().getCustomerId());
@@ -2070,6 +2082,20 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isFullyManagedOrder(entity.getDictPlatform())){
             //检查平台状态
             List<FullyOrderDTO.DataDTO.StockupOrdersDTO> stockupOrdersDTOS = tikTokFullService.listOrderByParam(entity.getShopId(), Collections.singletonList(entity.getPlatformCode()));
+            if (CollUtil.isNotEmpty(stockupOrdersDTOS)) {
+                FullyOrderDTO.DataDTO.StockupOrdersDTO stockupOrdersDTO = stockupOrdersDTOS.stream().filter(e -> e.getCode().equals(entity.getPlatformCode())).findFirst().orElse(null);
+                String status = Objects.nonNull(stockupOrdersDTO) ? stockupOrdersDTO.getStatus() : "";
+                //更新订单平台状态
+                if (CharSequenceUtil.isNotBlank(status)){
+                    String code = FullyManagedPlatformStatusEnum.getErpCodeByCode(PlatformDictEnum.TIK_TOK_FULLY.getCode(), status);
+                    if (!code.equals(entity.getBillStatus())){
+                        this.updatePlatformStatus(entity, status);
+                    }
+                    if (FullyManagedPlatformStatusEnum.TikTokStatusEnum.INVAILD.getCode().equals(status)){
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_PLATFORM_ORDER_STATUS_ERROR, entity.getCode());
+                    }
+                }
+            }
         }
         String soCode = entity.getCode();
         if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equals(entity.getBillStatus())) {
@@ -2184,7 +2210,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             generateSoB2cDeliveryBill(entity, list, logisticsEntity, warehouseManageType);
         }
         this.updateBillStatus(id, SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED);
-        String submitDelivery = SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode();
         //删除异常订单信息
         soB2cErrorService.removeAllTypeErrorOrder(id);
 
@@ -2192,6 +2217,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = "B2C销售订单【{}】提交发货";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
+    }
+
+    private void updatePlatformStatus(SoB2cEntity entity, String status) {
+        if (Objects.isNull(entity) ||  CharSequenceUtil.isBlank(status)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoB2cEntity::getId,entity.getId()).set(SoB2cEntity::getPlatformOrderStatus,status).update();
+        String msg = "销售订单【{}】平台订单状态由【{}】变更为【{}】";
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode(), entity.getPlatformOrderStatus(), status), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
+
     }
 
     private void checkLogisticsParam(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
@@ -5953,8 +5988,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 entity.setInvalidType(SoB2cInvalidTypeEnum.ENUM_AUTOMATIC.getCode());
             }
             // 生成单号
-            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
-            entity.setCode(code);
+            String businessNo = "";
+            if (isFullyManagedOrder(dto.getDictPlatform())){
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBH);
+            }else {
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+            }
+            entity.setCode(businessNo);
             boolean save = false;
             try {
                 save = this.save(entity);

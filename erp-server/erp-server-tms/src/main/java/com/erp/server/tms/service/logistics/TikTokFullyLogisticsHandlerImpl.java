@@ -130,7 +130,7 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
         String shopId = authMap.get("shopId");
         List<LogisticsPrintLabelResponse> resultList = new ArrayList<>();
         for (LogisticsGetLabelVO vo : logisticsGetLabelVOList) {
-            TikTokFullyPrintDeliveryResp tikTokFullyPrintDeliveryResp = tikTokFullService.printDelivery(shopId,vo.getTransportNo());
+            TikTokFullyPrintDeliveryResp tikTokFullyPrintDeliveryResp = tikTokFullService.printDelivery(vo.getTransportNo(), shopId);
             if(tikTokFullyPrintDeliveryResp.getCode()!=0){
                 return failure("获取标签失败,"+ tikTokFullyPrintDeliveryResp.getMessage());
             }
