@@ -26,7 +26,9 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -204,10 +206,14 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
 
         PlatformOrderExtendDTO platformOrderExtendDTO = new PlatformOrderExtendDTO();
         if (extendDataJson.containsKey("requiredDeliveryTime")) {
-            platformOrderExtendDTO.setRequiredDeliveryTime((LocalDateTime)extendDataJson.get("requiredDeliveryTime"));
+            LocalDateTime requiredDeliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(extendDataJson.get("requiredDeliveryTime") + "")), ZoneId.systemDefault());
+
+            platformOrderExtendDTO.setRequiredDeliveryTime(requiredDeliveryTime);
         }
         if (extendDataJson.containsKey("requiredReceiveTime")) {
-            platformOrderExtendDTO.setRequiredReceiveTime((LocalDateTime)extendDataJson.get("requiredReceiveTime"));
+            LocalDateTime requiredReceiveTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(extendDataJson.get("requiredReceiveTime") + "")), ZoneId.systemDefault());
+
+            platformOrderExtendDTO.setRequiredReceiveTime(requiredReceiveTime);
         }
         if (extendDataJson.containsKey("orderSourceType")) {
             platformOrderExtendDTO.setOrderSourceType(extendDataJson.getString("orderSourceType"));
@@ -259,7 +265,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         // 库存是否扣除
         detailDTO.setWarehouseId("");
         // 数量
-        detailDTO.setQty(soDetailEntityList.size());
+        detailDTO.setQty(soDetailEntity.getQty());
 
         // 金额
         BigDecimal salePrice = soDetailEntityList.stream().map(req -> req.getAfterAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);

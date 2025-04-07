@@ -130,14 +130,12 @@ public class TikTokFullyOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         Object requireShipTimeObj = dmpDataMap.get("requireShipTime");
         if (requireShipTimeObj != null) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-            LocalDateTime requireShipTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(requireShipTimeObj + "")), ZoneId.systemDefault());
-            extendDataMap.put("requiredDeliveryTime", requireShipTime);
+            extendDataMap.put("requiredDeliveryTime", requireShipTimeObj);
         }
         Object requireArrivedTimeObj = dmpDataMap.get("requireArrivedTime");
         if (requireArrivedTimeObj != null) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-            LocalDateTime requireArrivedTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.parseLong(requireArrivedTimeObj + "")), ZoneId.systemDefault());
-            extendDataMap.put("requiredReceiveTime", requireArrivedTime);
+            extendDataMap.put("requiredReceiveTime", requireArrivedTimeObj);
         }
         dmpDataMap.put("extendData", JSONUtil.toJsonStr(extendDataMap));
     }
