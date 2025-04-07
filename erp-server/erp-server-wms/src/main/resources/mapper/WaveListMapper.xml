@@ -48,7 +48,7 @@
         </if>
     </select>
     <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
-        select wl.id,
+        select  wl.id,
                 wl.create_time,
                 wl.update_time,
                 wl.create_user_name,
@@ -66,8 +66,11 @@
                 wl.picking_time,
                 wl.print_time,
                 wl.is_out_stock,
+                wl.is_fully_managed,
                 wl.picking_print_status,
-                wl.picking_print_time
+                wl.sku_barcode_print_status,
+                wl.picking_print_time,
+                wl.sku_barcode_print_time
         from wave_list wl
         where wl.is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">

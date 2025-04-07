@@ -1048,6 +1048,7 @@ public enum ApiError implements Serializable {
     DISTRIBUTION_IS_FALSE_DELIVERY(92120,"配货中存在渠道和物流号的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】未生成波次，不允许操作"),
+    ERROR_NOT_IS_FULLY_MANAGED_ORDER(92122,"存在非全托管订单不能打印sku条码"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
