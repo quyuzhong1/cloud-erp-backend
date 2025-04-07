@@ -88,7 +88,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
             if (CollectionUtils.isNotEmpty(jsonArray)){
                 orderIdList = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
             }
-            Boolean cfgParseByMarketplaceId = jsonObject.getBoolean("parseByMarketplaceId");
+            Boolean cfgParseByMarketplaceId = jsonObject.getBoolean("hasParseByMarketplaceId");
             if (null != cfgParseByMarketplaceId){
                 hasParseByMarketplaceId = cfgParseByMarketplaceId;
             }
@@ -214,6 +214,9 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         if (parseByMarketplaceId) {
             // 根据站点判断店铺ID
             AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(entity.getMarketplaceId());
+            if (null == shopNameDTO){
+                ServiceException.runError("未找到店铺站点:账号={}, 站点={}", shopInfoDTO.getPlatformShopCode(), entity.getMarketplaceId());
+            }
             json.put("shopId", shopNameDTO.getShopId());
             json.put("shopName", shopNameDTO.getShopName());
             return json;
