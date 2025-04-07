@@ -228,6 +228,11 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         //扩展字段
         orderDTO.setExtendData(dmpSoInfoEntityList.get(0).getExtendData());
 
+        // 税金
+        orderDTO.setTotalTaxFee(dmpSoInfoEntityList.get(0).getTotalTaxFee());
+        // 税后支付金额
+        orderDTO.setAfterTaxAmount(dmpSoInfoEntityList.get(0).getAfterTaxAmount());
+
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntityList, dmpSoDetailEntityList);
         orderDTO.setDetails(details);

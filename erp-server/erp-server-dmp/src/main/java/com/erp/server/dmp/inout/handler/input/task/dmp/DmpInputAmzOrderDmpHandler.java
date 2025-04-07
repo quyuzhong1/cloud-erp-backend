@@ -97,6 +97,37 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     .map(e -> new BigDecimal(e.getPromotionDiscount().getAmount()))
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+            BigDecimal totalItemTax = orderItemList.stream()
+                    .filter(e-> null != e.getItemTax())
+                    .filter(e-> null != e.getItemTax().getAmount())
+                    .map(e -> new BigDecimal(e.getItemTax().getAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalShippingTax = orderItemList.stream()
+                    .filter(e-> null != e.getShippingTax())
+                    .filter(e-> null != e.getShippingTax().getAmount())
+                    .map(e -> new BigDecimal(e.getShippingTax().getAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalGiftWrapTax = orderItemList.stream()
+                    .filter(e-> null != e.getBuyerInfo())
+                    .filter(e-> null != e.getBuyerInfo().getGiftWrapTax())
+                    .filter(e-> null != e.getBuyerInfo().getGiftWrapTax().getAmount())
+                    .map(e -> new BigDecimal(e.getBuyerInfo().getGiftWrapTax().getAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            BigDecimal totalPromotionDiscountTax = orderItemList.stream()
+                    .filter(e-> null != e.getPromotionDiscountTax())
+                    .filter(e-> null != e.getPromotionDiscountTax().getAmount())
+                    .map(e -> new BigDecimal(e.getPromotionDiscountTax().getAmount()))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+//            BigDecimal totalShippingDiscountTax = orderItemList.stream()
+//                    .filter(e-> null != e.getShippingDiscountTax())
+//                    .filter(e-> null != e.getShippingDiscountTax().getAmount())
+//                    .map(e -> new BigDecimal(e.getShippingDiscountTax().getAmount()))
+//                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 String orderStatus = sourceOrder.getOrderStatus();
                 dmpDataMap.put("platformOriginalStatus", orderStatus);
@@ -154,6 +185,10 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 // 未付款无付款时间
                 dmpDataMap.put("payTime", "payment".equalsIgnoreCase(sourceOrder.convertPayStatus()) ? null : purchaseLocalDateTime);
+
+                // 总税
+                BigDecimal totalTaxFee = totalItemTax.add(totalShippingTax).add(totalGiftWrapTax).add(totalPromotionDiscountTax);
+                dmpDataMap.put("totalTaxFee", totalTaxFee);
 
             }
         }

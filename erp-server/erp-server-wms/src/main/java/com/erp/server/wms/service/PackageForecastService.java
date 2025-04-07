@@ -171,4 +171,6 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     List<DictBasicDTO.DropDownDTO> getLogisticType(String platform);
 
     PackageForecastDTO.ShippingProviderDTO searchShippingProvider(PackageForecastDTO.SearchShippingProviderDTO dto);
+
+    BatchResultDTO uploadTikTokFully(PackageForecastDTO.UploadDTO dto);
 }
