@@ -169,4 +169,6 @@ public interface BusinessNoConstant {
     //库龄批次号
     String N = "N";
     String INV = "INV";
+    //售后
+    String SHSQ = "SHSQ";
 }

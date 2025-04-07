@@ -11,7 +11,7 @@ public interface WxMiniAppService {
    */
   String getAccessToken();
 
-  WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode) throws Exception;
+  WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode);
 
 
 }

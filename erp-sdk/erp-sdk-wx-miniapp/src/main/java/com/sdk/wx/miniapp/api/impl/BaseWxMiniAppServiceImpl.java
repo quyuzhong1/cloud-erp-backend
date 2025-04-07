@@ -55,9 +55,9 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
 
 
   @Override
-  public  WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode) throws Exception {
+  public  WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode) {
     if(StringUtil.isBlank(jsCode)){
-      throw new Exception("jsCode不能为空");
+        return null;
     }
 
     String url = String.format(WxConstants.BASE_URL + WxConstants.JSCODE_TO_SESSION, APPID, APPSECRET,jsCode);
