@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -419,6 +420,10 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             BeanMapper.copy(excelDTO, b2cReceiverEntity);
             resultList.add(b2cReceiverEntity);
         }
-        this.saveOrUpdateBatch(resultList);
+        if(CollUtil.isNotEmpty(resultList)){
+            //批量更新
+            this.updateBatchById(resultList);
+
+        }
     }
 }
