@@ -79,7 +79,7 @@ public class AfterSaleOpenApi {
      * @Author jack
      * @since 2025-04-07
      */
-    @OpenApi("/getRepairRecord")
+    @OpenApi("/getRepairHistory")
     public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody @Validated AfterSaleDTO.ThridUserDTO dto){
         return afterSaleFeign.getRepairHistory(dto);
     }
