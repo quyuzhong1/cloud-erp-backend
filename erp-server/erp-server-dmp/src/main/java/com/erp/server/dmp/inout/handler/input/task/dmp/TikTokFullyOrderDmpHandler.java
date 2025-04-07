@@ -126,6 +126,7 @@ public class TikTokFullyOrderDmpHandler extends DmpInputDbConvertDmpHandler {
         extendDataMap.put("receiveQty",dmpDataMap.get("receivedQuantity") + "");
         extendDataMap.put("instockQty",dmpDataMap.get("inboundQuantity") + "");
         extendDataMap.put("returnQty",dmpDataMap.get("returnedQuantity") + "");
+        extendDataMap.put("stockupQty",dmpDataMap.get("stockupQuantity") + "");
         extendDataMap.put("orderSourceType",dmpDataMap.get("source") + "");
         Object requireShipTimeObj = dmpDataMap.get("requireShipTime");
         if (requireShipTimeObj != null) {
