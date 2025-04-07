@@ -235,7 +235,7 @@ public class SoB2cDeliveryController extends BaseController {
         SoB2cDeliveryDTO.PrintPickingDTO printPickingDTO = new SoB2cDeliveryDTO.PrintPickingDTO();
         printPickingDTO.setPrintPickingViewDTOList(soB2cDeliveryService.printPickingView(dto.getIds()));
         printPickingDTO.setCombinationPrintDetailList(soB2cDeliveryService.getDeliveryDetail(dto.getIds()));
-        return success();
+        return success(printPickingDTO);
     }
 
     /**

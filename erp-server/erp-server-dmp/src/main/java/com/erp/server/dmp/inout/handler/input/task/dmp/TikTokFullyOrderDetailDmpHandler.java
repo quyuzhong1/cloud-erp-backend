@@ -38,6 +38,7 @@ public class TikTokFullyOrderDetailDmpHandler extends DmpInputDoNextDmpHandler {
                 dmpDataMap.put("platformDetailId", dmpDataMap.get("platformSkuCode"));
                 dmpDataMap.put("platformSku", dmpDataMap.get("externalSkuCode"));
                 dmpDataMap.put("platformSpuNo", dmpDataMap.get("platformSpuCode"));
+                dmpDataMap.put("qty",dmpDataMap.get("stockupQuantity"));
                 buildExtendData(dmpDataMap);
             }
         }

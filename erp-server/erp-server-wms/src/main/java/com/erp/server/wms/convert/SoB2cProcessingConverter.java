@@ -27,7 +27,7 @@ public interface SoB2cProcessingConverter {
     SoB2cProcessingEntity addToEntity(SoB2cProcessingDTO.AddOrUpdateDTO addOrUpdateDTO);
 
     @Mapping(target = "quantity", source = "qty")
-    @Mapping(target = "code", source = "platformSkuNo")
+    @Mapping(target = "code", source = "platformSpuNo")
     TikTokFullyPrintSkuReq.PlatformSkuItemsDTO convertToPlatformSkuItemsDTO(SoB2cDeliveryDTO.PrintSkuBarcodeDTO printSkuBarcodeDTO);
     List<TikTokFullyPrintSkuReq.PlatformSkuItemsDTO> convertToPlatformSkuItemsDTO(List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeDTOList);
 }
