@@ -30,6 +30,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -123,7 +124,12 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<DmpPushTaskEntity> syncDataToKingdee(CustomerInfoEntity entity, String operate) {
-        Map<String, Object> resultMap = this.newSyncDataToKingdee(entity, operate);
+    	Map<String, Object> resultMap = null;
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		resultMap = DmpOutputConstant.getQuerySyncMap();
+    	}else {
+    		resultMap = this.newSyncDataToKingdee(entity, operate);
+    	}
         List<DmpPushTaskEntity> contractPushEnityLsit = new ArrayList<>();
         //生成任务
         DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);

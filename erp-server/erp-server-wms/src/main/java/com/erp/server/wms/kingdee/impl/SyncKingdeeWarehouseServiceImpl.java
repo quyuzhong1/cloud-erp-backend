@@ -247,7 +247,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
         wmsPushMsgEntity.setSyncOperate(operate);
-        if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
         	wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
         }else {
         	wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
