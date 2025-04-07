@@ -37,12 +37,20 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -1607,5 +1615,31 @@ public class SoB2cController extends BaseController {
     @PostMapping("/uploadLogisticLabel")
     public ApiResult<String> uploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) throws IOException {
         return success(soB2cService.uploadLogisticLabel(dto));
+    }
+
+    /**
+     * 下载B2C客户更新模板
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载B2C客户更新模板")
+    @GetMapping("/exportB2cCustomerUpdateTemplate")
+    public void exportB2cCustomerUpdateTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/b2cCustomerUpdateTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
