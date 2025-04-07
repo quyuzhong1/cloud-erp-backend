@@ -1518,17 +1518,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         List<FirstMileReconciliationStandardExcelDTO> singleEntryList = new ArrayList<>();
         // 重量校验：当存在一致的序号时，是否有装箱重量
         if (CollUtil.isNotEmpty(successList)) {
-//            Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
-//                    .collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
             Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
-                    .collect(Collectors.groupingBy(e -> e.getNo() + ":" + e.getCostName()));
+                    .collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
+//            Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
+//                    .collect(Collectors.groupingBy(e -> e.getNo() + ":" + e.getCostName()));
 
             //序号唯一的设置到结果集合里
             singleEntryList = successMap.entrySet().stream()
                     .filter(entry -> entry.getValue().size() == 1)
                     .flatMap(entry -> entry.getValue().stream())
                     .collect(Collectors.toList());
-
 
             Map<String, List<FirstMileReconciliationStandardExcelDTO>> excelMap = successMap
                     .entrySet().stream()
@@ -1551,10 +1550,14 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     //实际体积重
                     String volumeWeight = dto.getVolumeWeight();
                     boolean allVolumeWeightEqual = value.stream().allMatch(excelDTO -> volumeWeight.equals(excelDTO.getVolumeWeight()));
+                    //费用项
+                    String costName = dto.getCostName();
+                    boolean allCostNameEqual = value.stream().allMatch(excelDTO -> costName.equals(excelDTO.getCostName()));
                     if(Boolean.FALSE.equals(allSkuCostsEqual)
                             ||Boolean.FALSE.equals(allCurrencyEqual)
                             ||Boolean.FALSE.equals(allActualWeightEqual)
                             ||Boolean.FALSE.equals(allVolumeWeightEqual)
+                            ||Boolean.FALSE.equals(allCostNameEqual)
                     ){
                         for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
                             excelDTO.setErrorMsg("相同序号单据的实际实重，实际体积重，费用项，费用金额，币种不一致。");
@@ -1573,8 +1576,13 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         .collect(Collectors.toList());
 
                 try {
+                    //未装箱清单
                     Map<String, WmsCartonSpecDTO.NoPackingView> noPackingViewsMap = packingTaskFeign.checkCartonWeightBySourceCodes(deliveryCodeList).stream()
                             .collect(Collectors.toMap(WmsCartonSpecDTO.NoPackingView::getDeliveryCode, t -> t, (t1, t2) -> t1));
+
+                    //装箱清单的重量信息
+                    Map<String, WmsCartonDTO.ListPackingCartonDTO> listPackingCartonMap = packingTaskFeign.listCartonBySourceCodes(deliveryCodeList).stream()
+                            .collect(Collectors.toMap(WmsCartonDTO.ListPackingCartonDTO::getDeliveryCode, t -> t, (t1, t2) -> t1));
 
                     for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : excelMap.entrySet()) {
                         boolean hasUnpacked = false;
@@ -1583,6 +1591,11 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             if (noPackingView != null && CollUtil.isNotEmpty(noPackingView.getDetailList())) {
                                 hasUnpacked = true;
                                 break;
+                            }
+
+                            WmsCartonDTO.ListPackingCartonDTO packingCartonDTO = listPackingCartonMap.get(excelDTO.getSourceCode());
+                            if(null != packingCartonDTO){
+
                             }
                         }
 
@@ -1655,25 +1668,21 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 });
             }
 
-            try {
-                resultList.forEach(e -> {
-                    e.setGrossWeigh(deliveryCodeWeightMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO));
-                });
+            resultList.forEach(e -> {
+                e.setGrossWeigh(deliveryCodeWeightMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO));
+            });
 
-                Map<String, List<FirstMileReconciliationStandardExcelDTO>> groupByNoAndCostNameMap = resultList.stream()
-                        .collect(Collectors.groupingBy(e -> e.getNo() + ":" + e.getCostName()));
+            Map<String, List<FirstMileReconciliationStandardExcelDTO>> groupByNoAndCostNameMap = resultList.stream()
+                    .collect(Collectors.groupingBy(e -> e.getNo() + ":" + e.getCostName()));
 
-                allocateWeightsAndCosts(groupByNoAndCostNameMap, costCategoryMap, cfgSettingByAllocationSetting, hasCost );
+            allocateWeightsAndCosts(groupByNoAndCostNameMap, costCategoryMap, cfgSettingByAllocationSetting, hasCost);
 
-                List<FirstMileReconciliationStandardExcelDTO> multipleEntryList = groupByNoAndCostNameMap.values().stream()
-                        .flatMap(List::stream)
-                        .collect(Collectors.toList());
+            List<FirstMileReconciliationStandardExcelDTO> multipleEntryList = groupByNoAndCostNameMap.values().stream()
+                    .flatMap(List::stream)
+                    .collect(Collectors.toList());
 
-                resultList.addAll(multipleEntryList);
-            } catch (Exception e) {
-                log.error("处理重量和成本分摊时发生错误", e);
-                throw new ServiceException("处理重量和成本分摊失败，请稍后重试");
-            }
+            resultList.addAll(multipleEntryList);
+
         }
 
         resultList.addAll(singleEntryList);
