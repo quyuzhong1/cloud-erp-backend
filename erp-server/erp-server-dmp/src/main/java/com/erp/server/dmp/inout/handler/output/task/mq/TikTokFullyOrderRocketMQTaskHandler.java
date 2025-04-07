@@ -188,8 +188,8 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         if (extendDataJson.containsKey("deliveryType")) {
             label.put("deliveryType", extendDataJson.get("deliveryType"));
         }
-        if (extendDataJson.containsKey("priorityLevel")) {
-            label.put("priorityLevel", extendDataJson.get("priorityLevel"));
+        if (extendDataJson.containsKey("emergencyLevel")) {
+            label.put("priorityLevel", extendDataJson.get("emergencyLevel"));
         }
 
         if (extendDataJson.containsKey("isDeliver")) {

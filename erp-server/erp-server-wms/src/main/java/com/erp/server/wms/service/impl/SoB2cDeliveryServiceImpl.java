@@ -1408,13 +1408,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO) {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         for (String id : idsDTO.getIds()) {
-            operateLogService.addModuleOperateLog("标记物流单已打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "SKU条码完成打印", loginUser.getUid(), loginUser.getUserName());
+            operateLogService.addModuleOperateLog("标记SKU条码已打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), id, "SKU条码完成打印", loginUser.getUid(), loginUser.getUserName());
         }
 
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = this.listByIds(idsDTO.getIds());
         for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
             if(!deliveryEntity.getIsPrintSkuBarcode()){
-                this.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId());
+                this.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId()).update();
                 operateLogService.addModuleOperateLog("完成SKU条码打印", ModuleTypeEnum.SO_B2C_DELIVERY_INTERCEPT.getCode(), deliveryEntity.getId(), "完成SKU条码打印", loginUser.getUid(), loginUser.getUserName());
             }
         }
@@ -1967,6 +1967,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 addDTO.setName("手动生成波次");
 //                addDTO.setWaveType(PickingWaveTypeEnum.MIXED_WAVE.getCode());
                 addDTO.setWaveType(dto.getWaveType());
+                addDTO.setIsFullyManaged(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()));
                 addDTOS.add(waveListService.add(addDTO));
             }
             return addDTOS;
@@ -2194,7 +2195,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         }
 
         List<SoB2cReceiverEntity> receiverList = FeignQuery.create(SoB2cReceiverEntity.class).eq(SoB2cReceiverEntity::getMainId, entity.getSourceId()).list();
-        if (CollUtil.isEmpty(receiverList)) {
+        if (CollUtil.isEmpty(receiverList) && !PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
         }
         if (CharSequenceUtil.isNotBlank(entity.getTransferWarehouseIds())){
@@ -2607,7 +2608,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             record.setWeighName(record.getIsWeigh()? WeightEnum.YES.getName(): WeightEnum.NO.getName());
             record.setPrintPickingName(record.getIsPrintPicking()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
             record.setPrintLogisticName(record.getIsPrintLogistic()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
-
+            if(PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(record.getDictPlatform())){
+                record.setPrintSkuBarcodeName(Objects.nonNull(record.getIsPrintSkuBarcode()) && record.getIsPrintSkuBarcode()? PrintPickingEnum.YES.getName(): PrintPickingEnum.NO.getName());
+            }else {
+                record.setPrintSkuBarcodeName("无需打印");
+            }
             //手动标发标记
             if(!record.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getCode()) && record.getShipmentMark().equals(ShipmentMarkTypeEnum.MANUAL.getCode())){
                 record.setTag("发");

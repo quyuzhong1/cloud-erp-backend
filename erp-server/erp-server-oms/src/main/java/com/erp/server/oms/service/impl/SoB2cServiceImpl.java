@@ -3912,7 +3912,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 data.setIsDeliver(labelJsonDTO.getIsDeliver());
             }
             if (isFullyManaged) {
-                data.setPlatformOrderStatusName(FullyManagedPlatformStatusEnum.getName(data.getPlatformOrderStatus()));
+                data.setPlatformOrderStatusName(FullyManagedPlatformStatusEnum.getErpNameByCode(data.getDictPlatform(),data.getPlatformOrderStatus()));
                 //扩展信息
                 String extendData = data.getExtendData();
                 if (StringUtils.isNotBlank(extendData)) {
