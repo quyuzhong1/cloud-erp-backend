@@ -418,6 +418,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 excelDTO.setCountryName(countryMap.get(excelDTO.getCountry()));
             }
             BeanMapper.copy(excelDTO, b2cReceiverEntity);
+            b2cReceiverEntity.setName(excelDTO.getCustomerName());
             resultList.add(b2cReceiverEntity);
         }
         if(CollUtil.isNotEmpty(resultList)){
