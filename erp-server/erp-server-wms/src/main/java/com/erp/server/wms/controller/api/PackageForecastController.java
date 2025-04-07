@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -28,7 +29,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -223,23 +226,28 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/upload")
     public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Valid PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = packageForecastService.upload(id, dto.getCollectMode(), dto.getCollectAddressId());
-            } catch (Exception e) {
-                log.error("组包预报上传消失败===>{}", e);
-                PackageForecastEntity entity = packageForecastService.getById(id);
-                if (Objects.isNull(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
+        if(dto.getDeliveryPlatform().equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
+            BatchResultDTO batchResultDTO = packageForecastService.uploadTikTokFully(dto);
+            return success(Arrays.asList(batchResultDTO));
+        }else{
+            for (String id : dto.getIds()) {
+                BatchResultDTO deleteResult;
+                try {
+                    deleteResult = packageForecastService.upload(id, dto.getCollectMode(), dto.getCollectAddressId());
+                } catch (Exception e) {
+                    log.error("组包预报上传消失败===>{}", e);
+                    PackageForecastEntity entity = packageForecastService.getById(id);
+                    if (Objects.isNull(entity)) {
+                        deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
+                        resultDTOS.add(deleteResult);
+                        continue;
+                    }
+                    deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                resultDTOS.add(deleteResult);
             }
-            resultDTOS.add(deleteResult);
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
