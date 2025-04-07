@@ -56,7 +56,10 @@ public class OpenApiController {
         log.warn("平台上传接口统一请求报文：{},文件名:{}" , JSON.toJSONString(input),file.getOriginalFilename());
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-        String referer = request.getHeader("Referer");
+        String referer = request.getHeader("appId");
+        if(StringUtils.isBlank(referer)) {
+        	referer = request.getHeader("Referer");
+        }
         if(StringUtils.isBlank(referer)) {
             referer = request.getHeader("referer");
         }
@@ -102,7 +105,10 @@ public class OpenApiController {
     @PostMapping("/service")
     @ResponseBody
     public ApiResult<Object> service(@Validated @RequestBody OpenApiReqDTO req, HttpServletRequest request){
-    	String referer = request.getHeader("Referer");
+    	String referer = request.getHeader("appId");
+        if(StringUtils.isBlank(referer)) {
+        	referer = request.getHeader("Referer");
+        }
     	if(StringUtils.isBlank(referer)) {
     		referer = request.getHeader("referer");
     	}
