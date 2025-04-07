@@ -144,4 +144,18 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 格努波次id删除拣货单
      */
     void cleanPickingList( WaveListEntity waveListEntity);
+
+    /**
+     * 打印条码预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids);
+
+    /**
+     * 完成sku条码打印
+     * @param idsDTO
+     * @return
+     */
+    ApiResult<?> printFinishSkuBarcode(BaseIdsDTO.IdsDTO idsDTO);
 }
