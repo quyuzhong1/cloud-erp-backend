@@ -3912,6 +3912,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 String extendData = data.getExtendData();
                 if (StringUtils.isNotBlank(extendData)) {
                     SoB2cDTO.ExtendDataDTO extendDataDTO = JSONUtil.toBean(extendData, SoB2cDTO.ExtendDataDTO.class);
+                    data.setOrderQty(extendDataDTO.getOrderQty());
                     data.setDeliveryQty(extendDataDTO.getDeliveryQty());
                     data.setReceiveQty(extendDataDTO.getReceiveQty());
                     data.setInstockQty(extendDataDTO.getInstockQty());
@@ -3952,7 +3953,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (CollectionUtils.isEmpty(detailList)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
             }
-            data.setOrderQty(detailList.stream().mapToInt(SoB2cDetailEntity::getQty).sum());
             List<String> warehouseList = detailList.stream().map(SoB2cDetailEntity::getWarehouseId).collect(Collectors.toList());
             long warehouseCount = overseasProviderWarehouseList.stream().filter(o -> warehouseList.contains(o.getWarehouseId())).count();
             Boolean isOverseasProviderWarehouse = warehouseCount > 0;
