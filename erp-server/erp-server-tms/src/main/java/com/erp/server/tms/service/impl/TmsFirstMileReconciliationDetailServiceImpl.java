@@ -1547,10 +1547,10 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     boolean allCurrencyEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getCurrency()));
                     //实际实重
                     String actualWeight = dto.getActualWeight();
-                    boolean allActualWeightEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getActualWeight()));
+                    boolean allActualWeightEqual = value.stream().allMatch(excelDTO -> actualWeight.equals(excelDTO.getActualWeight()));
                     //实际体积重
                     String volumeWeight = dto.getVolumeWeight();
-                    boolean allVolumeWeightEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getVolumeWeight()));
+                    boolean allVolumeWeightEqual = value.stream().allMatch(excelDTO -> volumeWeight.equals(excelDTO.getVolumeWeight()));
                     if(Boolean.FALSE.equals(allSkuCostsEqual)
                             ||Boolean.FALSE.equals(allCurrencyEqual)
                             ||Boolean.FALSE.equals(allActualWeightEqual)
