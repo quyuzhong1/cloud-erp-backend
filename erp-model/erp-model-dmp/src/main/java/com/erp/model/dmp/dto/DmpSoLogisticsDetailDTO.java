@@ -43,6 +43,11 @@ public class DmpSoLogisticsDetailDTO implements Serializable {
         private String mainId;
 
         /**
+        * 第三方物流id
+        */
+        private String thirdLogisticsId;
+
+        /**
         * 第三方物流明细id
         */
         private String thirdLogisticsDetailId;
@@ -130,6 +135,13 @@ public class DmpSoLogisticsDetailDTO implements Serializable {
         @NotBlank(message = "主表id不能为空")
         @Size(max = 64,message = "主表id最大长度不能超过64位")
         private String mainId;
+
+        /**
+        * 第三方物流id
+        */
+        @NotBlank(message = "第三方物流id不能为空")
+        @Size(max = 64,message = "第三方物流id最大长度不能超过64位")
+        private String thirdLogisticsId;
 
         /**
         * 第三方物流明细id

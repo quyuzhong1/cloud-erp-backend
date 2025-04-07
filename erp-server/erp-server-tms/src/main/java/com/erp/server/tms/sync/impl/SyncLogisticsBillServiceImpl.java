@@ -6,6 +6,8 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
+import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -97,6 +99,56 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
     }
 
+    @Override
+    public Map<String, Object> syncNewDataToSdyFieldHandler(LogisticsBillEntity entity,
+                                                         LogisticsBillDetailEntity logisticsBillDetailEntity,
+                                                         String operate,
+                                                         List<LogisticsChannelEntity> logisticsChannelEntities,
+                                                         List<LogisticsSupplierEntity> logisticsSupplierEntities) {
+
+        LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> req.getId().equals(entity.getChannelId())).findFirst().orElse(null);
+        String supplierName = "";
+        if (Objects.nonNull(channelEntity)) {
+            LogisticsSupplierEntity supplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(channelEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(supplierEntity)) {
+                supplierName = supplierEntity.getSupplierName();
+            }
+        }
+
+        DmpSoLogisticsDTO.ViewDTO viewDto = new DmpSoLogisticsDTO.ViewDTO();
+
+        String thirdLogisticsId = entity.getId();
+		viewDto.setThirdLogisticsId(thirdLogisticsId);
+        String bizNo = CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo();
+        viewDto.setThirdLogisticsCode(bizNo);
+        viewDto.setThirdCreateTime(entity.getCreateTime());
+        viewDto.setThirdUpdateTime(entity.getUpdateTime());
+        viewDto.setDeliveryTime(entity.getDeliveryTime());
+        viewDto.setOutstockCode(entity.getOutstockCode());
+
+        if (CharSequenceUtil.isBlank(supplierName)) {
+        	viewDto.setLogisticCompanyName("无");
+        } else {
+        	viewDto.setLogisticCompanyName(supplierName);
+        }
+
+        if (channelEntity != null && CharSequenceUtil.isNotBlank(channelEntity.getMainId())) {
+        	viewDto.setLogisticCompanyCode(channelEntity.getMainId());
+        } else {
+        	viewDto.setLogisticCompanyCode("无");
+        }
+        
+        DmpSoLogisticsDetailDTO.ViewDTO detail = new DmpSoLogisticsDetailDTO.ViewDTO();
+        detail.setThirdLogisticsId(thirdLogisticsId);
+        detail.setThirdLogisticsDetailId(logisticsBillDetailEntity.getId());
+        detail.setThirdDetailCreateTime(logisticsBillDetailEntity.getCreateTime());
+        detail.setThirdDetailUpdateTime(logisticsBillDetailEntity.getUpdateTime());
+        detail.setTrackStatus(LogisticTrackStatusEnum.getName(logisticsBillDetailEntity.getTrackStatus()));
+        detail.setDataStatus(new ShudiyunB2cOrderDTO().sdyStatusHandle(operate, entity.getVersion(), logisticsBillDetailEntity.getVersion()));
+
+        viewDto.setDetailList(Arrays.asList(detail));
+        return BeanUtil.beanToMap(viewDto);
+    }
 
     @Override
     public void syncDataToSdy(LogisticsBillEntity entity,

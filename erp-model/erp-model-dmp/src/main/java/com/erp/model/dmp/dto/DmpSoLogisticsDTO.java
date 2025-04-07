@@ -1,6 +1,8 @@
 package com.erp.model.dmp.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -112,7 +114,10 @@ public class DmpSoLogisticsDTO implements Serializable {
         */
         private String nextLevelId;
 
-
+        /**
+         * 明细数据
+         */
+        private List<DmpSoLogisticsDetailDTO.ViewDTO> detailList; 
     }
 
     /**

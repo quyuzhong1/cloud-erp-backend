@@ -13,6 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="main_id" property="mainId" />
+       <result column="third_logistics_id" property="thirdLogisticsId" />
        <result column="third_logistics_detail_id" property="thirdLogisticsDetailId" />
        <result column="third_detail_create_time" property="thirdDetailCreateTime" />
        <result column="third_detail_update_time" property="thirdDetailUpdateTime" />
@@ -36,7 +37,7 @@
         update_user_id,
         version,
         is_deleted,
-        main_id, third_logistics_detail_id, third_detail_create_time, third_detail_update_time, track_status, data_status, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
+        main_id, third_logistics_id, third_logistics_detail_id, third_detail_create_time, third_detail_update_time, track_status, data_status, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
     </sql>
 
 

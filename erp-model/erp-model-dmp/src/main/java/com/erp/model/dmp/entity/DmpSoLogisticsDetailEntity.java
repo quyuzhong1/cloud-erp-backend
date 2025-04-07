@@ -31,6 +31,11 @@ public class DmpSoLogisticsDetailEntity extends BaseEntity<DmpSoLogisticsDetailE
     @TableField("main_id")
     private String mainId;
     /**
+    * 第三方物流id
+    */
+    @TableField("third_logistics_id")
+    private String thirdLogisticsId;
+    /**
     * 第三方物流明细id
     */
     @TableField("third_logistics_detail_id")
@@ -83,6 +88,8 @@ public class DmpSoLogisticsDetailEntity extends BaseEntity<DmpSoLogisticsDetailE
 
 
     public static final String MAIN_ID = "main_id";
+
+    public static final String THIRD_LOGISTICS_ID = "third_logistics_id";
 
     public static final String THIRD_LOGISTICS_DETAIL_ID = "third_logistics_detail_id";
 
