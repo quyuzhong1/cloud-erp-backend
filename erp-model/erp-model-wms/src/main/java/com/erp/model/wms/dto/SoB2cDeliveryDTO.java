@@ -1146,9 +1146,29 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String platformSkuNo;
         /**
+         * 平台spu
+         */
+        private String platformSpuNo;
+        /**
          * 发货数量
          */
         private Integer qty;
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+        /**
+         * 渠道名称
+         */
+        private String logisticsChannelName;
+        /**
+         * 物流单号
+         */
+        private String transportNo;
     }
     /**
      * 打印SKU确认
