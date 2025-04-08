@@ -1,16 +1,18 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -18,6 +20,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
@@ -84,6 +87,8 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
     private ShopInfoService shopInfoService;
     @Resource
     private SysDictFeign sysDictFeign;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
 
     @Override
     public Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, SoB2cEntity soB2cEntity) {
@@ -333,25 +338,22 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         if (CollectionUtils.isEmpty(successList)) {
             return;
         }
-
         //销售单号和平台订单号不能同时为空，其余字段非必填
         //销售单号和平台订单号同时存在时，以销售单号为准导入
         List<String> codeList = new ArrayList<>();
         List<String> platformCodeList = new ArrayList<>();
         for (B2CCustomerImportExcelDTO excelDTO : successList) {
-            if (StringUtils.isBlank(excelDTO.getCode()) && StringUtils.isBlank(excelDTO.getPlatformCode())) {
-                excelDTO.setErrorMsg("销售单号和平台订单号不能同时为空");
-                errorList.add(excelDTO);
-                continue;
-            }
             if (StringUtils.isNotBlank(excelDTO.getCode())) {
                 codeList.add(excelDTO.getCode());
             }else if (StringUtils.isNotBlank(excelDTO.getPlatformCode())) {
                 platformCodeList.add(excelDTO.getPlatformCode());
             }
         }
-
         if(CollectionUtils.isEmpty(codeList) && CollectionUtils.isEmpty(platformCodeList)){
+            successList.forEach(e -> {
+                e.setErrorMsg("销售单号和平台订单号不能同时为空");
+                errorList.add(e);
+            });
             return;
         }
         // 构建动态查询条件
@@ -367,6 +369,10 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         }
         List<SoB2cEntity> list = soB2cEntityLambdaQueryChainWrapper.list();
         if(CollectionUtils.isEmpty(list)){
+            successList.forEach(e -> {
+                e.setErrorMsg("销售订单不存在");
+                errorList.add(e);
+            });
             return;
         }
         Map<String, SoB2cEntity> codeMap = list.stream().collect(Collectors.toMap(SoB2cEntity::getCode, t -> t, (oldValue, newValue) -> oldValue));
@@ -386,45 +392,93 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         //买家信息字段导入时，以表格导入字段为准，但是如果导入表格字段为空时，则该字段不做更新
         List<SoB2cReceiverEntity> resultList = new ArrayList<>();
         for (B2CCustomerImportExcelDTO excelDTO : successList) {
-            SoB2cEntity soB2cEntity;
-            if(StringUtils.isNotBlank(excelDTO.getCode()) && codeMap.containsKey(excelDTO.getCode())){
-                soB2cEntity = codeMap.get(excelDTO.getCode());
-            }else if(StringUtils.isNotBlank(excelDTO.getPlatformCode()) && platformCodeMap.containsKey(excelDTO.getPlatformCode())){
-                soB2cEntity = platformCodeMap.get(excelDTO.getPlatformCode());
+            List<String> errorMsgList = new ArrayList<>();
+            SoB2cEntity soB2cEntity = null;
+            if(StringUtils.isNotBlank(excelDTO.getCode())){
+                if(codeMap.containsKey(excelDTO.getCode())){
+                    soB2cEntity = codeMap.get(excelDTO.getCode());
+                }else {
+                    errorMsgList.add("销售单号不存在");
+                }
+            }else if(StringUtils.isNotBlank(excelDTO.getPlatformCode())){
+                if(platformCodeMap.containsKey(excelDTO.getPlatformCode())){
+                    soB2cEntity = platformCodeMap.get(excelDTO.getPlatformCode());
+                }else {
+                    errorMsgList.add("平台订单号不存在");
+                }
             }else {
+                excelDTO.setErrorMsg("销售单号和平台订单号不能同时为空");
+                errorList.add(excelDTO);
                 continue;
             }
             //订单只有待提交、审核不通过时允许导入更新
             if(!soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.REJECT)){
-                excelDTO.setErrorMsg("订单只有待提交、审核不通过时允许导入更新");
-                errorList.add(excelDTO);
-                continue;
+                errorMsgList.add("订单只有待提交、审核不通过时允许导入更新");
             }
-
-            SoB2cReceiverEntity b2cReceiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
-            if (ObjectUtils.isEmpty(b2cReceiverEntity)) {
-                excelDTO.setErrorMsg("客户信息不存在");
-                errorList.add(excelDTO);
-                continue;
-            }
-
             //国家
             if(StringUtils.isNotBlank(excelDTO.getCountry())){
                 if(!countryMap.containsKey(excelDTO.getCountry())){
-                    excelDTO.setErrorMsg("【"+excelDTO.getCountry() + "】国家信息不存在");
-                    errorList.add(excelDTO);
-                    continue;
+                    errorMsgList.add("国家信息不存在");
+                }else {
+                    excelDTO.setCountryName(countryMap.get(excelDTO.getCountry()));
                 }
-                excelDTO.setCountryName(countryMap.get(excelDTO.getCountry()));
             }
-            BeanMapper.copy(excelDTO, b2cReceiverEntity);
-            b2cReceiverEntity.setName(excelDTO.getCustomerName());
-            resultList.add(b2cReceiverEntity);
-        }
-        if(CollUtil.isNotEmpty(resultList)){
-            //批量更新
-            this.updateBatchById(resultList);
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
+                errorList.add(excelDTO);
+            }else{
+                //如果买家名为空，则使用收件人名
+                if(StringUtils.isBlank(excelDTO.getCustomerName())){
+                    excelDTO.setCustomerName(excelDTO.getReceiverName());
+                }
 
+                SoB2cReceiverEntity b2cReceiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
+                if (ObjectUtils.isEmpty(b2cReceiverEntity)) {
+                    //新增买家信息
+                    b2cReceiverEntity = new SoB2cReceiverEntity();
+                    BeanMapper.copy(excelDTO, b2cReceiverEntity);
+                    b2cReceiverEntity.setName(excelDTO.getCustomerName());
+
+                    String customerId = saveB2cCustomer(excelDTO, soB2cEntity);
+                    b2cReceiverEntity.setCustomerId(customerId);
+                    this.save(b2cReceiverEntity);
+                }else{
+                    //如果存在买家信息，则更新
+                    BeanMapper.copy(excelDTO, b2cReceiverEntity);
+                    //获取客户表id ，如果客户id为空则新增客户
+                    if(StringUtils.isBlank(b2cReceiverEntity.getCustomerId())
+                            || !b2cReceiverEntity.getName().equals(excelDTO.getCustomerName())
+                    ){
+                        String customerId = saveB2cCustomer(excelDTO, soB2cEntity);
+                        b2cReceiverEntity.setCustomerId(customerId);
+                    }
+                    b2cReceiverEntity.setName(excelDTO.getCustomerName());
+                    this.updateById(b2cReceiverEntity);
+
+                    // 记录主单操作日志
+                    log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
+                    String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
+                    operateLogService.addModuleOperateLogByObj(soB2cReceiverMap.get(soB2cEntity.getId()), b2cReceiverEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
+                }
+
+            }
         }
+    }
+
+    private String saveB2cCustomer(B2CCustomerImportExcelDTO excelDTO, SoB2cEntity soB2cEntity) {
+        CustomerB2cEntity dto = new CustomerB2cEntity();
+        String customerId = IdWorker.getIdStr();
+        dto.setId(customerId);
+        dto.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC));
+        dto.setPlatformType(soB2cEntity.getDictPlatform());
+        dto.setName(excelDTO.getCustomerName());
+        dto.setCountryId(excelDTO.getCountry());
+        dto.setCurrency(soB2cEntity.getCurrency());
+        dto.setSourceId(soB2cEntity.getId());
+        dto.setSourceType("soB2c");
+        dto.setApproveStatus(ApproveStatusEnum.APPROVE);
+        customerB2cService.save(dto);
+        return customerId;
     }
 }
