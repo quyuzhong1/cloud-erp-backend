@@ -46,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -81,6 +82,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private CfgSettingService cfgSettingService;
     @Resource
     private WxMiniAppService wxMiniAppService;
+    @Resource
+    private DmpSoInfoService dmpSoInfoService;
 
 
 
@@ -94,15 +97,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
 
         //第三方用户id为空的情况下，则新增用户
-        if(StringUtils.isNotBlank(addDTO.getThridUserId())) {
+        if(StringUtils.isBlank(addDTO.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
             thridUserInfoEntity.setUsername(addDTO.getUsername());
             thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
             thridUserInfoEntity.setType("selfAdd");
             thridUserInfoService.save(thridUserInfoEntity);
-            addDTO.setThridUserId(thridUserInfoEntity.getId());
+            afterSaleEntity.setThridUserId(thridUserInfoEntity.getId());
         }
         log.info("开始新增售后申请单");
+        afterSaleEntity.setBillDate(LocalDate.now());
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHSQ);
         afterSaleEntity.setCode(code);
@@ -143,14 +147,17 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         //保存附件
         List<AfterSaleDTO.AttachmentDTO> attachmentList = addDTO.getAttachmentList();
-        for (AfterSaleDTO.AttachmentDTO attachmentDTO : attachmentList) {
-            AttachmentEntity entity = new AttachmentEntity();
-            entity.setAttachName(attachmentDTO.getAttachName());
-            entity.setAttachUrl(attachmentDTO.getAttachUrl());
-            entity.setType("after_sale");
-            entity.setBusinessId(afterSaleEntity.getId());
-            attachmentService.save(entity);
+        if(CollUtil.isNotEmpty(attachmentList)){
+            for (AfterSaleDTO.AttachmentDTO attachmentDTO : attachmentList) {
+                AttachmentEntity entity = new AttachmentEntity();
+                entity.setAttachName(attachmentDTO.getAttachName());
+                entity.setAttachUrl(attachmentDTO.getAttachUrl());
+                entity.setType("after_sale");
+                entity.setBusinessId(afterSaleEntity.getId());
+                attachmentService.save(entity);
+            }
         }
+
 
         return new BaseResultDTO.AddDTO(afterSaleEntity.getId(), code);
     }
@@ -195,17 +202,19 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
         afterSaleDetailService.saveOrUpdateBatch(detailList);
 
-        //保存附件
-        List<AfterSaleDTO.AttachmentDTO> attachmentList = updateDTO.getAttachmentList();
         // 删除明细数据
         attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
-        for (AfterSaleDTO.AttachmentDTO attachmentDTO : attachmentList) {
-            AttachmentEntity entity = new AttachmentEntity();
-            entity.setAttachName(attachmentDTO.getAttachName());
-            entity.setAttachUrl(attachmentDTO.getAttachUrl());
-            entity.setType("after_sale");
-            entity.setBusinessId(afterSaleEntity.getId());
-            attachmentService.save(entity);
+        //保存附件
+        List<AfterSaleDTO.AttachmentDTO> attachmentList = updateDTO.getAttachmentList();
+        if(CollUtil.isNotEmpty(attachmentList)){
+            for (AfterSaleDTO.AttachmentDTO attachmentDTO : attachmentList) {
+                AttachmentEntity entity = new AttachmentEntity();
+                entity.setAttachName(attachmentDTO.getAttachName());
+                entity.setAttachUrl(attachmentDTO.getAttachUrl());
+                entity.setType("after_sale");
+                entity.setBusinessId(afterSaleEntity.getId());
+                attachmentService.save(entity);
+            }
         }
         return Boolean.TRUE;
     }
@@ -570,7 +579,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (StringUtils.isBlank(value)) {
             throw new ServiceException("售后维修节点配置不存在");
         }
-        return JSONUtil.toList(value, AfterSaleDTO.NodeDTO.class);
+        // 解析 JSON 字符串为 List<AfterSaleDTO.NodeDTO>
+        List<AfterSaleDTO.NodeDTO> nodeList = JSONUtil.toList(JSONUtil.parseObj(value).getJSONArray("nodeList"), AfterSaleDTO.NodeDTO.class);
+        return nodeList;
     }
 
     /**
@@ -673,5 +684,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         return wxMiniAppService.jsCode2SessionInfo(jsCode);
     }
 
+    @Override
+    public List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode) {
+        if(StringUtil.isEmpty(platformCode)){
+            return Collections.emptyList();
+        }
+        return dmpSoInfoService.listDetailByPlatformCode(platformCode);
+    }
 
 }

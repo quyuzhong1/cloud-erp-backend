@@ -1,10 +1,11 @@
 package com.erp.server.dmp.service;
+
+import com.common.business.dto.base.*;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.AfterSaleDTO;
-import com.common.business.vo.PagingVO;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 
 import javax.servlet.http.HttpServletResponse;
@@ -164,4 +165,6 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     String getAccessToken();
 
     WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode);
+
+    List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode);
 }

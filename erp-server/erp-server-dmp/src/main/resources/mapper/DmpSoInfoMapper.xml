@@ -70,4 +70,44 @@
         AND si.is_deleted = false
         AND sd.main_id IS NULL
     </select>
+
+    <select id="listDetailByPlatformCode" resultType="com.erp.model.dmp.dto.AfterSaleDTO$DropDownDTO" parameterType="java.lang.String">
+        SELECT
+            si.id,
+            sd.id as detailId,
+            sd.sku_id as goodsId,
+            sd.sku_no as goodsNo,
+            sd.sku_name as goodsName,
+            sd.qty,
+            si.source_platform as thirdType
+        FROM
+            dmp_so_info si
+                LEFT JOIN dmp_so_detail sd ON sd.main_id = si.ID and sd.is_deleted = FALSE
+        where
+            si.is_deleted = FALSE
+        <if test="null != platformCode and platformCode != ''">
+            AND si.platformCode  = #{platformCode}
+        </if>
+        order by sd.create_time desc
+        union ALL
+        SELECT
+        si.id,
+        sd.id as detailId,
+        '' as goodsId,
+        sd.goods_no as goodsNo,
+        sd.goods_name as goodsName,
+        sd.num as qty,
+        'wdt' as thirdType
+        FROM
+        dmp_so_original_info si
+        LEFT JOIN dmp_so_original_detail sd ON sd.main_id = si.ID and sd.is_deleted = FALSE
+        where
+        si.is_deleted = FALSE
+        and si.platform_code ='25020492694977441'
+        <if test="null != platformCode and platformCode != ''">
+            AND si.platformCode  = #{platformCode}
+        </if>
+        order by detailId desc
+    </select>
+
 </mapper>

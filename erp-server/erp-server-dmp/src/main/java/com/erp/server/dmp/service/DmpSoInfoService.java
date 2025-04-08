@@ -1,4 +1,5 @@
 package com.erp.server.dmp.service;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -47,5 +48,13 @@ public interface DmpSoInfoService extends SuperService<DmpSoInfoEntity> {
      * 领星导入
      */
     void lxSoUpdate();
+
+    /**
+     *
+     * 根据平台订单号查询明细
+     * @param platformCode
+     * @return
+     */
+    List<AfterSaleDTO.DropDownDTO> listDetailByPlatformCode(String platformCode);
 
 }
