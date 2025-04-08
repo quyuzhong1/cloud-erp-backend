@@ -1455,7 +1455,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     private TikTokFullyShippingProviderReq buildReq(PackageForecastDTO.SearchShippingProviderDTO dto, List<String> deliveryCodes) {
         TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
         tikTokFullyShippingProviderReq.setDeliveryOption(dto.getDeliveryOption());
-        tikTokFullyShippingProviderReq.setDeliveryMode(dto.getCollectMode());
+        if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
+            tikTokFullyShippingProviderReq.setDeliveryMode("SELF_DELIVERY");
+        }else{
+            tikTokFullyShippingProviderReq.setDeliveryMode("PLATFORM_DELIVERY");
+        }
         tikTokFullyShippingProviderReq.setSenderContactId(dto.getAddressId());
         tikTokFullyShippingProviderReq.setDeliveryOrderCodes(deliveryCodes);
         tikTokFullyShippingProviderReq.setTotalWeight(new TikTokFullyShippingProviderReq.TotalWeightDTO(String.valueOf(dto.getWeight()),"GRAM"));
