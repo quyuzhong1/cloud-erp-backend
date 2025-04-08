@@ -3,13 +3,18 @@ package com.erp.model.oms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -84,7 +89,7 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class FindTabDTO extends PermissionsDTO {
 
-        @StateEnumValue(strValues = {"platform", "warehouse"}, message = "类型有误")
+        @StateEnumValue(strValues = {"platform", "warehouse","customer"}, message = "类型有误")
         private String type;
 
 
@@ -183,6 +188,91 @@ public class SkuMappingDTO implements Serializable {
 
     }
 
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddCustomerRequest {
+        /**
+         * json数据
+         */
+        @Valid
+        private AddCustomerDTO dto;
+        /**
+         * 文件
+         */
+        private MultipartFile file;
+    }
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddCustomerDTO {
+
+        /**
+         * skuMappingId
+         */
+        @NotBlank(message = "skuMappingId不能为空",groups = {UpdateGroup.class})
+        private String skuMappingId;
+        /**
+         * 客户id
+         */
+        @NotBlank(message = "客户id不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private String customerId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuid不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private String skuId;
+
+        /**
+         * 客户sku
+         */
+        @NotBlank(message = "客户sku不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private String platformSkuNo;
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 客户产品名称
+         */
+        private String platformSkuName;
+        /**
+         * 图片url，更新时如果没变更传
+         */
+        private String productImageUrl;
+
+
+    }
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CustomerPagingParamDTO extends SortDTO {
+
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        private String type;
+
+        private boolean isExport;
+    }
 
     /**
      * 更改sku
@@ -505,6 +595,116 @@ public class SkuMappingDTO implements Serializable {
 
 
     /**
+     * 客户sku分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CustomerPagingViewDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * listingId
+         */
+        private String listingId;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
+
+        /**
+         * 客户Id
+         */
+        private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 图片
+         */
+        private String productImageUrl;
+        /**
+         * 图片byte
+         */
+        private byte[] imageByte;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 客户产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
+
+        /**
+         * 产品sku
+         */
+        private String productSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 匹配结果
+         */
+        private String matchResult;
+
+        /**
+         * 匹配结果
+         */
+        private String matchResultStr;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime updateTime;
+
+        private LocalDateTime effectiveTime;
+    }
+
+
+    /**
      * 分页数据
      */
     @Data
@@ -624,6 +824,70 @@ public class SkuMappingDTO implements Serializable {
         private LocalDateTime expireTime;
     }
 
+
+    @Data
+    @NoArgsConstructor
+    public static class CustomerInventorySkuInfoDTO {
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 对应库存信息
+         */
+        private List<InnerCustomerInventorySkuInfoDTO> innerCustomerInventorySkuInfoDTOS;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InnerCustomerInventorySkuInfoDTO {
+
+        /**
+         * skumapping Id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuId
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 是否有效
+         */
+        private Boolean isEffective;
+
+        /**
+         * 启用时间
+         */
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 实体仓实际库存
+         */
+        private Integer actualQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
+
+        /**
+         * 实体仓实际库存 - 虚拟仓冻结库存
+         */
+        private Integer stock;
+
+    }
     @Data
     @NoArgsConstructor
     public static class ProductSkuInfoDTO {
@@ -851,6 +1115,10 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListSkuDTO {
+        /**
+         * 店铺id
+         */
+        private String shopId;
         /**
          * 产品skuId
          */
@@ -1137,6 +1405,34 @@ public class SkuMappingDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class CustomerInventorySkuParamDTO {
+
+
+        /**
+         * 客户id
+         */
+        @NotBlank(message = "客户id不能为空")
+        private String customerId;
+
+        /**
+         * 客户Sku
+         */
+        @NotEmpty(message = "平台sku不能为空")
+        private List<String> platformSkuNoList;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+    }
 
     @Data
     @NoArgsConstructor
@@ -1239,6 +1535,7 @@ public class SkuMappingDTO implements Serializable {
         private String mappingId;
         private String dictPlatform;
         private String productSkuId;
+        //产品SKU
         private String productSkuNo;
         private String productName;
         private String type;
@@ -1246,9 +1543,13 @@ public class SkuMappingDTO implements Serializable {
         private String warehouseName;
         private String isExpire;
         private String listingId;
+        //客户id
+        private String customerId;
+        //平台SKU
         private String platformSkuNo;
         private String platformSkuName;
         private String platformName;
+        //条码
         private String thirdBarcode;
         private String platformSpuNo;
         private String platformSpuName;

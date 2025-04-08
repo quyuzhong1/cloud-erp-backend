@@ -1,18 +1,22 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cAbnormalService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
@@ -20,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -50,7 +55,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
 
     @Resource
-    private DmpInoutTaskFeign dmpInoutTaskFeign;
+    private OperateLogService operateLogService;
 
 
     @Override
@@ -76,7 +81,7 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         // 重试逻辑
         switch (soB2cErrorTypeEnum) {
             case SUBMIT_DELIVERY:
-                resultDTOList.add(soB2cService.submitDelivery(id));
+                resultDTOList.add(soB2cService.submitDelivery(id, ""));
                 break;
             case SIGN_DELIVERY:
                 resultDTOList.add(soB2cErrorService.retryFalseDelivery(id));
@@ -85,7 +90,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
                 resultDTOList.add(soB2cService.getLogisticsCode(id, Boolean.TRUE));
                 break;
             case GENERATE_OUTSTOCK:
-                soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
+                Boolean flag = soOutstockFeign.afreshGenerateB2cOutstock(Arrays.asList(id));
+                BatchResultDTO outStockResultDTO = flag ? BatchResultDTO.success(id, soB2cEntity.getCode(), "重试成功") : BatchResultDTO.fail(id, soB2cEntity.getCode(), "重试失败");
+                resultDTOList.add(outStockResultDTO);
                 break;
             case INTERCEPT_SUCCESS:
                 resultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "拦截成功，无需重试"));
@@ -117,14 +124,33 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
     }
 
     @Override
-    public void clearAbnormal(List<String> ids) {
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(ids);
+    @Transactional(rollbackFor = Exception.class)
+    public void clearAbnormal(SoB2cAbnormalDTO.ClearAbnormalDTO dto) {
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(dto.getIds());
         if(CollectionUtils.isEmpty(soB2cEntityList)){
             return;
         }
         List<String> codes = soB2cEntityList.stream().map(SoB2cEntity::getCode).collect(Collectors.toList());
-        soB2cEntityList.forEach(v->v.setSignOrderError(""));
+        String msg = CharSequenceUtil.format("用户【{}】清除订单异常，备注【{}】", UserContext.getDefaultLoginUser().getUserName(),dto.getRemark());
+        List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
+        soB2cEntityList.forEach(v->{
+            v.setSignOrderError("");
+            //清除异常 -- 暂时只针对拉取失败的类型
+            soB2cErrorService.removeErrorOrder(v.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+
+            OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = OperateLogDTO.AddModuleOperateLogDTO.builder()
+                    .content(msg)
+                    .businessId(v.getId())
+                    .moduleType(ModuleTypeEnum.SO_B2C.getCode())
+                    .operation("清除异常")
+                    .build();
+            operateLogList.add(addModuleOperateLogDTO);
+        });
         soB2cService.updateBatchById(soB2cEntityList);
+
+
+        operateLogService.batchAddModuleOperateLog(operateLogList);
+
         log.error("清除异常销售订单异常：{}", JSON.toJSONString(codes));
     }
 

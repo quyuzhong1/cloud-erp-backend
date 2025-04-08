@@ -73,13 +73,33 @@
         vw.name as virtualWarehouseName
     </sql>
 
-    <!-- 删除 -->
-    <delete id="deleteByIdList">
-        DELETE FROM so_b2b_processing WHERE is_deleted = false
-        and id in
-        <foreach collection="removeIds" open="(" close=")" item="item" separator=",">
-            #{item}
-        </foreach>
+    <!-- 删除多余b2c订单 -->
+    <delete id="deleteB2bOrder">
+        DELETE FROM so_b2b_processing where is_deleted = false and bill_date >= #{startDate}
+    </delete>
+
+    <!-- 删除b2b订单 -->
+    <delete id="deleteB2bProcessing">
+        DELETE FROM so_b2b_processing sbp
+        where sbp.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and  sbp.id in
+            <foreach collection="params.ids" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.soDetailIdList != null and params.soDetailIdList.size > 0">
+            and  sbp.so_detail_id in
+            <foreach collection="params.soDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.deliveryNoticeDetailIdList != null and params.deliveryNoticeDetailIdList.size > 0">
+            and  sbp.delivery_notice_detail_id in
+            <foreach collection="params.deliveryNoticeDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
     </delete>
 
     <!-- 分页查询 -->
@@ -116,6 +136,7 @@
     <!-- b2b销售订单 -->
     <select id="listSoB2bProcessing" resultType="com.erp.model.wms.entity.SoB2bProcessingEntity">
         select
+            si.create_time as billDate,
             si.id as soId,
             si.code as soCode,
             si.approve_status as soApproveStatus,
@@ -143,7 +164,7 @@
         left join so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.invalid_status = false
         where si.is_deleted = false and si.invalid_status = false and si.virtual_warehouse_id != ''
         <if test="startDate != null">
-            and si.create_time > #{startDate}
+            and si.create_time >= #{startDate}
         </if>
         union all
         (WITH deliveryNoticeDetail as (
@@ -155,6 +176,7 @@
         where sdn.invalid_status = false  group by sdnd.source_detail_id
         )
         select
+            si.create_time as billDate,
             si.id as soId,
             si.code as soCode,
             si.approve_status as soApproveStatus,
@@ -169,7 +191,7 @@
             si.warehouse_id as warehouseId,
             si.virtual_warehouse_id as virtualWarehouseId,
             sd.frozen_time as frozenTime,
-            sd.qty - COALESCE(totalDeliveryQty,0) as frozenQty,
+            sd.frozen_qty as frozenQty,
             '' as outstockOrderId,
             '' as outstockOrderStatus,
             0 as outstockQty,
@@ -181,7 +203,7 @@
         inner join deliveryNoticeDetail dnd on sd.id = dnd.source_detail_id
         where si.is_deleted = false and si.invalid_status = false and sd.qty  > dnd.totalDeliveryQty and si.virtual_warehouse_id != ''
         <if test="startDate != null">
-            and si.create_time > #{startDate}
+            and si.create_time >= #{startDate}
         </if>
         )
     </select>

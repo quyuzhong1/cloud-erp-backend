@@ -1,14 +1,15 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,17 +17,20 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.PdfUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
@@ -40,10 +44,8 @@ import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
-import com.erp.model.wms.entity.PackageForecastDetailEntity;
-import com.erp.model.wms.entity.PackageForecastEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -71,6 +73,10 @@ import com.erp.tms.aliexpress.model.order.response.BaseResult;
 import com.erp.tms.aliexpress.model.order.response.ErrorResponse;
 import com.erp.tms.aliexpress.service.AliExpressHandoverService;
 import com.erp.tms.aliexpress.util.ApiException;
+import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackageGroupsBean;
+import com.sdk.oms.tiktok.dto.tiktok.packages.CombinePackagePramDTO;
+import com.sdk.oms.tiktok.dto.tiktok.split.CombinePackageViewDTO;
+import com.sdk.oms.tiktok.service.TikTokPackageService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -79,8 +85,13 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -139,11 +150,17 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     private SoOutstockService soOutstockService;
 
     @Resource
+    private TikTokPackageService tikTokPackageService;
+
+    @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource(name ="packAsyncExecutor")
     private ThreadPoolTaskExecutor packAsyncExecutor;
+
+    @Resource
+    private WmsAttachmentService wmsAttachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -399,6 +416,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
                 aliExpressCancel(logisticsPlatform, entity);
             }
+            if (logisticsPlatform.equals(PlatformDictEnum.TIK_TOK.getCode())) {
+                tikTokCancel(logisticsPlatform, entity);
+            }
             entity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
             this.updateById(entity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传");
@@ -409,6 +429,26 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传");
         }
 
+    }
+
+    private void tikTokCancel(String logisticsPlatform, PackageForecastEntity entity) {
+        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
+        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(shopIds)){
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        if (shopIds.size() > 1){
+            throw new ServiceException("TikTok不支持多店铺取消组包");
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
+        String packageId = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getPlatformPackageId).filter(StringUtils::isNotBlank).findFirst().orElse(null);
+        if (StringUtils.isBlank(packageId)){
+            throw new ServiceException("TikTok包裹号为空");
+        }
+        List<String> orderIds = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).collect(Collectors.toList());
+        tikTokPackageService.uncombinePackage(shopIds.get(0),entity.getPlatformPackageNo(),orderIds);
     }
 
 
@@ -580,11 +620,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (!uploadStatusList.contains(uploadStatus)) {
             throw new ServiceException("仅待上传/上传失败/已取消可操作");
         }
-        //物流地址
-        LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
-        if (Objects.isNull(addressEntity)) {
-            throw new ServiceException("揽收地址不存在");
-        }
         //物流商
         String supplierId = entity.getLogisticsSupplierId();
         LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthBySupplierId(supplierId);
@@ -592,19 +627,33 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("物流商不存在");
         }
         try {
-            String addressName = addressEntity.getName();
             entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
             entity.setCollectMode(collectMode);
             entity.setCollectAddressId(collectAddressId);
-            entity.setCollectAddress(addressName);
             String logisticsPlatform = authDTO.getLogisticsPlatform();
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                if(StringUtils.isBlank(collectAddressId)){
+                    throw new ServiceException("揽收地址不能为空");
+                }
+                //物流地址
+                LogisticsAddressEntity addressEntity = logisticsFeign.getLogisticsAddressById(collectAddressId);
+                if (Objects.isNull(addressEntity)) {
+                    throw new ServiceException("揽收地址不存在");
+                }
+                String addressName = addressEntity.getName();
+                entity.setCollectAddress(addressName);
                 addBigPackage(logisticsPlatform, entity, addressEntity);
                 //针对待揽收状态  异步拉取速卖通的数据
                 CompletableFuture.runAsync(() -> {
                     this.syncAliExpressInfo(entity);
                 }, packAsyncExecutor);
+                this.updateById(entity);
+                return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
+            }else if (logisticsPlatform.equals(PlatformDictEnum.TIK_TOK.getCode())) {
+                String newPackageId = this.tikTokMergePackage(entity);
+                entity.setHandoverNo(newPackageId);
+                entity.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
                 this.updateById(entity);
                 return BatchResultDTO.success(entity.getId(), entity.getCode(), "上传成功");
             }else{
@@ -624,6 +673,36 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
 
     }
 
+    private String tikTokMergePackage(PackageForecastEntity entity) {
+        List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
+        List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+        List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isEmpty(shopIds)){
+            throw new ServiceException("销售订单店铺未找到");
+        }
+        if (shopIds.size() > 1){
+            throw new ServiceException("TikTok不支持多店铺组包预报");
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
+        String packageId = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getPlatformPackageId).filter(StringUtils::isNotBlank).findFirst().orElse(null);
+        if (StringUtils.isBlank(packageId)){
+            throw new ServiceException("TikTok包裹号为空");
+        }
+        List<String> orderIds = soB2cEntityList.stream().map(SoB2cEntity::getPlatformCode).collect(Collectors.toList());
+        CombinePackagePramDTO combinePackagePramDTO = new CombinePackagePramDTO();
+        List<CombinePackageGroupsBean> combinePackageGroupsBeanList = new ArrayList<>();
+        CombinePackageGroupsBean combinePackageGroupsBean = new CombinePackageGroupsBean();
+        combinePackageGroupsBean.setId(packageId);
+        combinePackageGroupsBean.setOrderIds(orderIds);
+        combinePackageGroupsBeanList.add(combinePackageGroupsBean);
+        combinePackagePramDTO.setCombinablePackages(combinePackageGroupsBeanList);
+        CombinePackageViewDTO combinePackageViewDTO = tikTokPackageService.combinePackage(shopIds.get(0),combinePackagePramDTO);
+        if(combinePackageViewDTO.getCode()!=0){
+            throw new ServiceException("TIKTOK组包失败，{}",combinePackageViewDTO.getMessage());
+        }
+        return combinePackageViewDTO.getData().getPackages().get(0).getId();
+    }
     @Override
     public String print(String id) {
         PackageForecastEntity entity = this.getById(id);
@@ -649,9 +728,22 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
                 base64 = aliExpressPrint(logisticsPlatform, entity);
+            }else{
+                List<WmsAttachmentDTO.UpdateDTO> updateDTOS = wmsAttachmentService.getByBusinessIds(Collections.singletonList(id));
+                if (CollectionUtils.isNotEmpty(updateDTOS)) {
+                    WmsAttachmentDTO.UpdateDTO updateDTO = updateDTOS.get(0);
+                    String url = updateDTO.getAttachUrl();
+                    InputStream inputStream = FastDFSClientUtil.getInputStream(url);
+                    base64 = PdfUtil.base64ForPdf(inputStream);
+                    String prefix = "data:application/pdf;base64,";
+                    base64 = prefix + base64;
+                }else{
+                    return "";
+                }
             }
         } catch (Exception e) {
             log.error("打印失败>>>>>>>{}", e);
+            throw new ServiceException(e.getMessage());
         }
         if (CharSequenceUtil.isNotBlank(base64)) {
             entity.setPrintStatus(PackagePrintStatusEnum.CANCEL.getCode());
@@ -1053,5 +1145,104 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         //处理分页数据
         fillExportPaging(page.getRecords());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean uploadFileDTO(List<PackageForecastDTO.UploadFileDTO> uploadFileDTOList) {
+        if(CollectionUtils.isEmpty(uploadFileDTOList)){
+            return true;
+        }
+        List<String> ids = uploadFileDTOList.stream().map(PackageForecastDTO.UploadFileDTO::getId).collect(Collectors.toList());
+        List<PackageForecastEntity> packageForecastEntityList = this.listByIds(ids);
+
+        List<String> supplierIds = packageForecastEntityList.stream().map(PackageForecastEntity::getLogisticsSupplierId).collect(Collectors.toList());
+        List<LogisticsSupplierDTO.AuthDTO> authDTOList = logisticsAuthFeign.listAuthBySupplierId(supplierIds);
+        wmsAttachmentService.batchRemoveAttachment(ids);
+        List<WmsAttachmentEntity> wmsAttachmentEntities = new ArrayList<>();
+        List<PackageForecastEntity> updateList = new ArrayList<>();
+        for (PackageForecastDTO.UploadFileDTO fileDTO : uploadFileDTOList) {
+            PackageForecastEntity entity = packageForecastEntityList.stream().filter(v -> v.getId().equals(fileDTO.getId())).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
+            }
+            //物流商
+            LogisticsSupplierDTO.AuthDTO authDTO = authDTOList.stream().filter(v -> v.getMainId().equals(entity.getLogisticsSupplierId())).findFirst().orElse(null);
+            if (Objects.isNull(authDTO)) {
+                throw new ServiceException("物流商不存在");
+            }
+            String logisticsPlatform = authDTO.getLogisticsPlatform();
+            if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                throw new ServiceException("速卖通不支持上传文件");
+            }
+            entity.setTransportNo(fileDTO.getTransportNo());
+            updateList.add(entity);
+            WmsAttachmentEntity wmsAttachmentEntity = new WmsAttachmentEntity();
+            wmsAttachmentEntity.setAttachUrl(fileDTO.getAttachDTO().getAttachUrl());
+            wmsAttachmentEntity.setAttachName(fileDTO.getAttachDTO().getAttachName());
+            wmsAttachmentEntity.setBusinessId(entity.getId());
+            wmsAttachmentEntity.setType(PackageForecastEntity.PACKAGE_FORECAST);
+            wmsAttachmentEntities.add(wmsAttachmentEntity);
+
+        }
+        wmsAttachmentService.saveBatch(wmsAttachmentEntities);
+        this.updateBatchById(updateList);
+        return true;
+    }
+
+    @Override
+    public List<PackageForecastDTO.UploadFileViewDTO> uploadLabelView(List<String> ids) {
+        List<PackageForecastEntity> packageForecastEntityList = this.listByIds(ids);
+        List<PackageForecastDTO.UploadFileViewDTO> uploadFileViewDTOList = BeanUtil.copyToList(packageForecastEntityList, PackageForecastDTO.UploadFileViewDTO.class);
+        List<String> businessIds = packageForecastEntityList.stream().map(PackageForecastEntity::getId).collect(Collectors.toList());
+        List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(businessIds);
+        uploadFileViewDTOList.forEach(v->{
+            WmsAttachmentDTO.UpdateDTO updateDTO = attachmentList.stream().filter(t->t.getBusinessId().equals(v.getId())).findFirst().orElse(new WmsAttachmentDTO.UpdateDTO());
+            AttachDTO attachDTO = new AttachDTO();
+            attachDTO.setAttachName(updateDTO.getAttachName());
+            attachDTO.setAttachUrl(updateDTO.getAttachUrl());
+            v.setAttachDTO(attachDTO);
+        });
+        return uploadFileViewDTOList;
+    }
+
+    @Override
+    public void batchPrint(List<String> ids, HttpServletResponse response) {
+        List<PackageForecastEntity> packageForecastEntityList = this.listByIds(ids);
+        List<String> errorCodeList = new ArrayList<>();
+        List<String> base64List = new ArrayList<>();
+        for (PackageForecastEntity entity : packageForecastEntityList) {
+            String base64 = this.print(entity.getId());
+            if(StringUtils.isEmpty(base64)){
+                errorCodeList.add(entity.getCode());
+            }else{
+                base64List.add(base64);
+            }
+        }
+        if(CollectionUtils.isNotEmpty(errorCodeList)){
+            throw new ServiceException("组包预报批量打印失败,单号:{},未上传标签",errorCodeList);
+        }
+        if(CollectionUtils.isNotEmpty(base64List)){
+            try {
+                String newMergePdfBase64 = PdfUtil.getNewMergePdfBase64(base64List);
+
+                // 设置响应头，告诉浏览器返回的是一个 PDF 文件
+                response.setContentType("application/pdf");
+                response.setHeader("Content-Disposition", "inline; filename=\"filename.pdf\""); // 设置 PDF 的显示方式和文件名
+                BASE64Decoder decoder = new BASE64Decoder();
+                try (OutputStream out = response.getOutputStream()) {
+                    // 将 Base64 编码的字符串解码为字节数组
+                    byte[] pdfBytes = decoder.decodeBuffer(newMergePdfBase64);
+                    // 将字节数组写入到响应输出流中
+                    out.write(pdfBytes);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+            } catch (Exception e) {
+                log.error("组包预报批量打印打印失败>>>>>>>", e);
+                throw new ServiceException(e.getMessage());
+            }
+        }
     }
 }

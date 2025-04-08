@@ -203,6 +203,15 @@ public class SoDetailDTO implements Serializable {
          * 虚拟仓缺货数量
          */
         private Integer virtualScarceQty;
+        /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
 
         /**
          * 可出数量
@@ -549,6 +558,7 @@ public class SoDetailDTO implements Serializable {
          */
         private Boolean isClose;
 
+        private String platformSkuNo;
         /**
          * 采购单价
          */
@@ -822,6 +832,11 @@ public class SoDetailDTO implements Serializable {
          */
         private String remark;
 
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
 
     }
 

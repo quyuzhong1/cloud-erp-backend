@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -189,9 +190,11 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             resultMap.put("type",type.getValue());
         }
         //仓库负责人
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            resultMap.put("chargeCode",findUserDTO.getCode());
+        if (CharSequenceUtil.isNotBlank(entity.getChargeId())){
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                resultMap.put("chargeCode",findUserDTO.getCode());
+            }
         }
         //查询仓位
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Collections.singletonList(entity.getId()));

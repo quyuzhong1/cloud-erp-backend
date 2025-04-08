@@ -48,7 +48,8 @@ public enum PlatformDictEnum implements EnumMessage {
     CDISCOUNT("Cdiscount", "Cdiscount", "Cdiscount", "034"),
     KUAI_SHOU("kuaishou", "快手", "快手", "035"),
 
-    MERCADOLIBRE("mercadolibre", "美客多", "美客多", "033"),
+    MERCADOLIBRE("mercadolibre", "美客多-全球站", "美客多-全球站", "033"),
+    MERCADOLIBRE_LOCAL("mercadolibreLocal", "美客多-本土站", "美客多-本土站", "333"),
     TIK_TOK("TikTok", "TikTok", "TikTok", "032"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "41"),
@@ -64,11 +65,13 @@ public enum PlatformDictEnum implements EnumMessage {
     IML("iml", "艾姆勒", "艾姆勒", "50"),
     WDT("wdt", "旺店通", "旺店通", "51"),
     QI_MEN("qimen", "奇门", "奇门", "52"),
-    TE_MU("TeMu", "TEMU", "拼多多海外版", "034"),
+    // 拼多多海外版
+    TE_MU("TeMu", "TEMU", "TEMU", "034"),
     ANTU("antu", "安兔", "安兔", "53"),
     LING_XING("lingxing", "领星", "领星", "54"),
-    RAKUTEN("Rakuten", "乐天", "乐天", "55"),
-    EBAY("eBay", "eBay", "eBay", "56"),
+    RAKUTEN("Rakuten", "乐天", "乐天", "037"),
+    EBAY("eBay", "eBay", "eBay", "036"),
+    SPT("spt", "速派通", "速派通", "55"),
 
 
     CUSTOMIZE("customize", "自定义平台", "自定义平台", ""),

@@ -7,7 +7,6 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -295,13 +294,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     public List<PilotApplicationDTO.TabListDTO> tabList(PermissionsDTO param) {
         LoginUser user = UserContext.getNonLoginUser();
-        PilotApplicationDTO.PagingParamDTO searchParam = new PilotApplicationDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
         List<PilotApplicationDTO.TabListDTO> list = new ArrayList<>();
         //待提交
-        QueryWrapper<PilotApplicationEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-        int waitSubmitCount = this.baseMapper.selectCount(queryWrapper);
+        int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
         //待我审核
         //根据单据id查询审核流程
@@ -313,21 +308,17 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
         if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
             List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
-            queryWrapper.clear();
-            queryWrapper.in("id", ids);
-            waitMeApproveCount = this.baseMapper.selectCount(queryWrapper);
+            waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, null,param.getPermissionSql(), ids);
         }
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_ME_APPROVE.getCode(), PilotApplicationTabEnum.WAIT_ME_APPROVE.getName(), waitMeApproveCount));
         //不通过
-        queryWrapper.clear();
-        queryWrapper.eq("approve_status", ApproveStatusEnum.REJECT.getCode());
-        int rejectCount = this.baseMapper.selectCount(queryWrapper);
+        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.REJECT.getCode(), PilotApplicationTabEnum.REJECT.getName(), rejectCount));
         //未下单
-        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null);
+        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.NOT_ORDER.getCode(), PilotApplicationTabEnum.NOT_ORDER.getName(), notOrderCount));
         //已下单
-        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null);
+        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null,param.getPermissionSql(), null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.ORDER.getCode(), PilotApplicationTabEnum.ORDER.getName(), orderCount));
         return list;
     }
@@ -935,34 +926,101 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //校验包装信息是否完整
         validateProductSize(entity.getId());
         //校验是否有采购价目表
-        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        validatePurchasePriceDetail(entity.getId());
+
+    }
+
+    private void validatePurchasePriceDetail(String id) {
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().in(PilotApplicationDetailEntity::getMainId, id).list();
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_95281);
+        }
+        List<String> skuIdList = detailList.stream().map(PilotApplicationDetailEntity::getSkuId).collect(Collectors.toList());
+        Map<String, List<BomDTO.BomSku>> singleBomMap = bomSkuService.getSingleBomInfo(skuIdList).stream()
+                .collect(Collectors.groupingBy(BomDTO.BomSku::getParentSkuId));
+
         for (PilotApplicationDetailEntity detailEntity : detailList) {
-            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
-            priceSearchDTO.setSkuId(detailEntity.getSkuId());
-            priceSearchDTO.setSkuNo(detailEntity.getSkuNo());
-            priceSearchDTO.setSupplierId(detailEntity.getMainSupplierId());
-            priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty());
-            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO> taxPriceList;
-            try {
-                taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
-            } catch (Exception e) {
-                throw new ServiceException("尚未提交供应商采购价目表，请联系采购开发提交后提审: sku：{}，数量：{}", detailEntity.getSkuNo(), detailEntity.getApplyQty());
-            }
-            boolean flag = false;
-            for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
-                if (detailEntity.getApplyQty() >= priceViewDTO.getMinQty() && detailEntity.getApplyQty() <= priceViewDTO.getMaxQty()) {
-                    flag = true;
-                    break;
-                }
-            }
-            if (!flag) {
-                throw new ServiceException("尚未提交供应商采购价目表，请联系采购开发提交后提审: sku：{}，数量：{}", detailEntity.getSkuNo(), detailEntity.getApplyQty());
+            if(singleBomMap.containsKey(detailEntity.getSkuId())){//校验SKU为父级时，且存在BOM类型为单品BOM时，无需校验当前SKU，校验子SKU是否存在报价
+                // 校验子 SKU 是否存在报价
+                validateChildSkuPrices(detailEntity, singleBomMap);
+            }else {
+                // 校验当前 SKU 是否存在报价
+                validateSkuPrice(detailEntity);
             }
         }
     }
 
-    private void validateProductSize(String id) {
+    private void validateChildSkuPrices(PilotApplicationDetailEntity detailEntity, Map<String, List<BomDTO.BomSku>> singleBomMap) {
+        List<BomDTO.BomSku> skuList = singleBomMap.get(detailEntity.getSkuId());
+        StringBuilder error = new  StringBuilder();
+        StringBuilder ruleError = new  StringBuilder();
+        for (BomDTO.BomSku childSku : skuList) {
+            PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+            priceSearchDTO.setSkuId(childSku.getSkuId());
+            priceSearchDTO.setSkuNo(childSku.getSkuNo());
+            priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty() * childSku.getQty());
+            List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>  taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+            if (CollUtil.isEmpty(taxPriceList)) {
+                error.append("sku：");
+                error.append(priceSearchDTO.getSkuNo());
+                error.append(",");
+                error.append("数量：");
+                error.append(priceSearchDTO.getPurchaseQty());
+                error.append(";");
+            }else {
+                Boolean flag = false;
+                for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+                    if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
+                        flag = true;
+                        break;
+                    }
+                }
+                if(!flag){
+                    ruleError.append("sku：");
+                    ruleError.append(priceSearchDTO.getSkuNo());
+                    ruleError.append(",");
+                    ruleError.append("数量：");
+                    ruleError.append(priceSearchDTO.getPurchaseQty());
+                    ruleError.append(";");
+                }
+            }
+        }
+        if(StringUtils.isNotBlank(error.toString())){
+            throw new ServiceException(ApiError.ERROR_95288, error.toString());
+        }
+        if(StringUtils.isNotBlank(ruleError.toString())){
+            throw new ServiceException(ApiError.ERROR_95289, ruleError.toString());
+        }
+    }
 
+    private void validateSkuPrice(PilotApplicationDetailEntity detailEntity) {
+        PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO priceSearchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO();
+        priceSearchDTO.setSkuId(detailEntity.getSkuId());
+        priceSearchDTO.setSkuNo(detailEntity.getSkuNo());
+        priceSearchDTO.setSupplierId(detailEntity.getMainSupplierId());
+        priceSearchDTO.setPurchaseQty(detailEntity.getApplyQty());
+        List<PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO>  taxPriceList;
+        try {
+            taxPriceList = purchasePriceDetailFeign.getTaxPrice(priceSearchDTO);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+        }
+        if (CollUtil.isEmpty(taxPriceList)) {
+            throw new ServiceException(ApiError.ERROR_95282, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+        }
+        boolean flag = false;
+        for (PurchasePriceDetailDTO.PurchaseTaxPriceViewDTO priceViewDTO : taxPriceList) {
+            if (priceSearchDTO.getPurchaseQty() >= priceViewDTO.getMinQty() && priceSearchDTO.getPurchaseQty() <= priceViewDTO.getMaxQty()) {
+                flag = true;
+                break;
+            }
+        }
+        if (!flag) {
+            throw new ServiceException(ApiError.ERROR_95288, priceSearchDTO.getSkuNo(), priceSearchDTO.getPurchaseQty());
+        }
+    }
+
+    private void validateProductSize(String id) {
         List<PilotApplicationDetailEntity> list = pilotApplicationDetailService.list(Wrappers.<PilotApplicationDetailEntity>lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, id));
         List<String> skuIdList = list.stream().map(PilotApplicationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductPackEntity> productPackList = productPackService.findBySkuIds(skuIdList);
@@ -1026,7 +1084,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         return this.addAndSubmit(applicationDTOList, false);
     }
 
-    private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList, List<PilotApplicationDetailEntity> padList, Map<String, String> isExistMap) {
+    private PurchaseApplicationDTO.AddDTO getPurchaseApplicationAddDTO(List<PilotApplicationDTO.PushPurchaseApplicationDTO> applicationDTOList, List<PilotApplicationDetailEntity> padList) {
         LoginUser loginUser = UserContext.getNonLoginUser();
         FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(loginUser.getUid());
         List<String> warehouseIds = applicationDTOList.stream().map(item -> item.getToWarehouseId()).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -1055,6 +1113,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             purchaseDTO.setPurchaseApplicationId("");
             purchaseDTO.setSourceDetailId(dto.getDetailId());
             purchaseDTO.setRemark(dto.getRemark());
+            purchaseDTO.setFirstMassProduct(dto.getFirstMassProduct());
             detailList.add(purchaseDTO);
             //更新采购申请数量
             PilotApplicationDetailEntity pilotApplicationDetailEntity = padList.stream().filter(r -> r.getId().equals(dto.getDetailId())).findFirst().orElse(null);
@@ -1073,26 +1132,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         paramDto.setApplyDate(LocalDate.now());
         paramDto.setApplyUserId(findUserDTO.getUserId());
         paramDto.setApplyDeptId(findUserDTO.getDepartmentId());
-
-        //是否新品首批
-        // 首先过滤并收集 SKU ID
-        List<String> skuIds = padList.stream()
-                .map(PilotApplicationDetailEntity::getSkuId)
-                .filter(StringUtils::isNotBlank)
-                .distinct()
-                .collect(Collectors.toList());
-        // 使用一个布尔值来判断是否存在 SKU ID
-        boolean isExist = skuIds.stream().anyMatch(isExistMap::containsKey);
-        // 同一批次里就包含了重复sku，则判断为否
-        if (isExist) {
-            paramDto.setIsFirstMassProduct(Boolean.FALSE);
-        } else {
-            // 如果不存在，则调用数据库检查
-            boolean isNew = purchaseApplicationDetailFeign.existBySkuIds(skuIds);
-            paramDto.setIsFirstMassProduct(isNew);
-        }
-        // 将所有 SKU ID 放入 isExistMap 中
-        skuIds.forEach(v -> isExistMap.put(v, ""));
         paramDto.setDetails(detailList);
         paramDto.setSourceId(sourceId);
         paramDto.setSourceCode(sourceCode);
@@ -1272,11 +1311,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<BatchResultDTO> resultList = new ArrayList<>();
         Map<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> map = applicationDTOList.stream().collect(Collectors.groupingBy(item -> item.getId()));
         Map<String, List<PilotApplicationDetailEntity>> detailMap = detailList.stream().collect(Collectors.groupingBy(PilotApplicationDetailEntity::getMainId));
-        Map<String, String> isNewMap = new HashMap<>();
         for (Map.Entry<String, List<PilotApplicationDTO.PushPurchaseApplicationDTO>> entry : map.entrySet()) {
             PilotApplicationEntity entity = entityList.stream().filter(item -> item.getId().equals(entry.getKey())).findFirst().orElse(new PilotApplicationEntity());
             //以试产量产订单为维度下推采购订单
-            PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(entry.getValue(), detailMap.get(entity.getId()), isNewMap);
+            PurchaseApplicationDTO.AddDTO paramDto = getPurchaseApplicationAddDTO(entry.getValue(), detailMap.get(entity.getId()));
             BatchResultDTO resultDTO;
             if (submit) {
                 resultDTO = purchaseApplicationFeign.addAndSubmit(paramDto);

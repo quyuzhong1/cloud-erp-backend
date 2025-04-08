@@ -1,9 +1,7 @@
 package com.erp.model.plm.dto;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -304,6 +302,11 @@ public class ProductDetailDTO implements Serializable {
          * 是否组合品
          */
         private Boolean isCombination;
+
+        /**
+         * 保险属性
+         */
+        private String insuranceProperty;
     }
 
     /**
@@ -410,5 +413,55 @@ public class ProductDetailDTO implements Serializable {
          */
         private String eanNo;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuChangeFieldsDTO {
+
+        private String productId;
+
+        private String name;
+
+        private String skuNo;
+
+        private String chargeId;
+
+        private String chargeName;
+
+        private List<SkuChangeInfoDTO> productBasicChangeField;
+
+        private List<SkuChangeInfoDTO> productPackChangeField;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuChangeInfoDTO {
+
+        private String fieldName;
+
+        private String oldValue;
+
+        private String newValue;
+
+
+    }
+
+    /**
+     * 通知DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class NoticeDTO {
+        private String productId;
+        private String name;
+        private String chargeId;
+        private String chargeName;
+        private String skuNo;
+        private List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField;
+        private List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField;
+    }
+
 
 }

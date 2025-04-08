@@ -148,14 +148,32 @@ public class LogisticsBillCostDTO implements Serializable {
          */
         private BigDecimal estimatedShippingCost;
         /**
+         * 预估运费币别符号
+         */
+        private String estimatedShippingCostCurrencySymbol;
+        
+        private String estimatedShippingCostStr;
+        /**
          * 预估关税费用
          */
         private BigDecimal estimatedDeclareCost;
+        /**
+         * 预估关税费用币别符号
+         */
+        private String estimatedDeclareCostCurrencySymbol;
+        
+        private String estimatedDeclareCostStr;
 
         /**
          * 预估其他费用
          */
         private BigDecimal estimatedOtherCost;
+        /**
+         * 预估其他费用币别符号
+         */
+        private String estimatedOtherCostCurrencySymbol;
+        
+        private String estimatedOtherCostStr;
 
 
         /**
@@ -167,21 +185,43 @@ public class LogisticsBillCostDTO implements Serializable {
          * 实际运费（物流商）【可排序】
          */
         private BigDecimal actualShippingCost;
+        /**
+         * 实际运费币别符号
+         */
+        private String actualShippingCostCurrencySymbol;
+        
+        private String actualShippingCostStr;
 
         /**
          * 实际报关费
          */
         private BigDecimal actualDeclareCost;
+        /**
+         * 实际报关费币别符号
+         */
+        private String actualDeclareCostCurrencySymbol;
+        
+        private String actualDeclareCostStr;
 
         /**
          * 实际其他费
          */
         private BigDecimal actualOtherCost;
+        /**
+         * 实际其他费币别符号
+         */
+        private String actualOtherCostCurrencySymbol;
+        
+        private String actualOtherCostStr;
 
         /**
          * 运费差异【可排序】
          */
         private BigDecimal diffShippingCost;
+        
+        private String diffShippingCostCurrencySymbol = "¥";
+        
+        private String diffShippingCostStr;
 
         /**
          * 平台【可排序】
@@ -303,11 +343,23 @@ public class LogisticsBillCostDTO implements Serializable {
          * 预估可抵扣税金
          */
         private BigDecimal estimatedDeductibleTax;
+        /**
+         * 预估可抵扣税金币别
+         */
+        private String estimatedDeductibleTaxCurrencySymbol;
+        
+        private String estimatedDeductibleTaxStr;
 
         /**
          * 实际可抵扣税金
          */
         private BigDecimal actualDeductibleTax;
+        /**
+         * 实际可抵扣税金币别
+         */
+        private String actualDeductibleTaxCurrencySymbol;
+        
+        private String actualDeductibleTaxStr;
         
         private String logisticsBillDetailId;
 
@@ -515,6 +567,11 @@ public class LogisticsBillCostDTO implements Serializable {
     	 * 物流单号
     	 */
     	private String trackNo;
+    	
+    	/**
+    	 * 费用分类
+    	 */
+    	private String dictCostCategory;
     }
     
     /**
@@ -535,10 +592,16 @@ public class LogisticsBillCostDTO implements Serializable {
     	private BigDecimal billingWeightLogistics;
     	
     	/**
-    	 * 币别
+    	 * 实际金额币别
     	 */
+    	@NotBlank(message = "实际金额币别不能为空")
     	private String currency;
     	
+    	/**
+    	 * 预估金额币别
+    	 */
+    	@NotBlank(message = "预估金额币别不能为空")
+    	private String estimatedCurrency;
     }
     
     /**
@@ -855,5 +918,14 @@ public class LogisticsBillCostDTO implements Serializable {
         private String currency;
         private BigDecimal exchangeRate;
         private LocalDateTime createTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BillCostNoBillDTO {
+        private String id;
+        private String logisticsBillId;
+        private String logisticsBillDetailId;
     }
 }

@@ -172,6 +172,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         Boolean addResult = this.save(soChange);
         if (addResult) {
             //添加日志
+            SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+            dto.getDetailList().forEach(v->{
+                v.setCurrency(soInfo.getCurrency());
+                v.setCurrencySymbol(soInfo.getCurrencySymbol());
+            });
             soChangeDetailService.addDetailList(id, dto.getDetailList());
             String content = String.format("新增了一个{%s}-销售变更单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), id, "新增操作");
@@ -231,6 +236,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         Boolean updateResult = this.updateById(soChange);
         if (updateResult) {
+            SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soChange.getSoId());
+            dto.getDetailList().forEach(v->{
+                v.setCurrency(soInfo.getCurrency());
+                v.setCurrencySymbol(soInfo.getCurrencySymbol());
+            });
             operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
             soChangeDetailService.updateDetailList(id, dto.getDetailList());
             return id;
@@ -1029,6 +1039,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         list.forEach(obj -> {
             String sellerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
                     map(SoInfoEntity::getSellerId).findFirst().orElse("");
+            String customerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
+                    map(SoInfoEntity::getCustomerId).findFirst().orElse("");
+            obj.setCustomerId(customerId);
             if (StringUtils.isNotBlank(sellerId)) {
                 ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
                 startDTO.setBusinessId(obj.getId());

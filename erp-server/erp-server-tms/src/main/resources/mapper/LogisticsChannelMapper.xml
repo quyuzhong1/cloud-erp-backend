@@ -49,7 +49,7 @@
         main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, fee_rule,
         max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model,
         is_ioss_prepay, is_api_sign, is_api_insurance,disabled,paper_size,source_id,source_type,sync_source_id,max_length,size_unit,
-        max_width,max_height,declare_code_type,delivery_type,undeliverable_decision
+        max_width,max_height,declare_code_type,delivery_type,undeliverable_decision,is_platform_ship
     </sql>
 
     <select id="listLogisticsChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ListSelectDTO">
@@ -203,17 +203,21 @@
     <select id="getWarnReportByChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$WarnReportDTO">
         select
         lc.name as channelName,
-        count(DISTINCT lb.id) as total
+        count(lbd.id) as total
         from logistics_bill_detail lbd
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
         LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
-        where lbd.track_status not in('sign','manualComplete','systemComplete')
+        where lbd.track_status not in('sign','manualComplete','systemComplete','deliveryFail')
+        and (lbd.track_no != '' or lb.transport_no != '')
         and lbd.is_deleted = false AND lc.name != ''
+        <if test="query.updateTime != null">
+            and lbd.update_time &lt; #{query.updateTime}
+        </if>
         <if test="query.trackTime != null">
-            and lbd.update_time &lt; #{query.trackTime}
+            and lbd.track_time > #{query.trackTime}
         </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
-            and lb.order_type in ('B2B','B2C')
+            and lb.order_type in ('B2B','B2C','AfterSale')
         </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
             and lb.order_type = 'firstMile'

@@ -38,6 +38,14 @@
         is_deleted,
         reconciliation_status, channel_id, logistics_bill_id, actual_weight, volume_weight, billing_weight, estimated_shipping_cost , billing_weight_logistics, actual_shipping_cost, diff_shipping_cost, currency, remark
     </sql>
+    <update id="updateShopChargeId">
+        update logistics_bill_cost lbc
+        set shop_charge_id = #{userId},shop_charge_name = #{userName},update_time = NOW()
+        FROM  logistics_bill lb
+        WHERE lb.id = lbc.logistics_bill_id
+          and lb.is_deleted = false
+          and lbc.is_deleted = false and lb.shop_id = #{shopId}
+    </update>
 
     <!-- tab列表 -->
     <select id="listCount" resultType="java.lang.Integer">
@@ -189,10 +197,9 @@
             c.reconciliation_status AS reconciliationStatus
         FROM
             logistics_bill AS b
-                LEFT JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
-                AND c.is_deleted = FALSE
+                inner JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
         WHERE
-            b.is_deleted = FALSE
+            b.is_deleted = FALSE AND c.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND b.outstock_id IN
             <foreach collection="ids" item="item" open="(" close=")" separator=",">
@@ -228,6 +235,15 @@
         WHERE lbc.is_deleted = FALSE
             AND lb.order_type = 'firstMile'
           AND lbc.exchange_rate = 0
+    </select>
+    <select id="selectLogisticsBillCostNoBill"
+            resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$BillCostNoBillDTO">
+        SELECT
+            lbc.id,lbc.logistics_bill_id,lbc.logistics_bill_detail_id
+        FROM logistics_bill_cost lbc
+        LEFT JOIN logistics_bill lb on lb.id = lbc.logistics_bill_id and lb.is_deleted = false
+        where lbc.is_deleted = false and lb.id is null
+        ORDER BY lbc.create_time desc
     </select>
 
 

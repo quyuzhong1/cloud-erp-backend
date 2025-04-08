@@ -1,9 +1,10 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -28,6 +29,7 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
@@ -58,18 +60,15 @@ import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.query.QcInfoQueryHandler;
 import com.erp.server.wms.service.*;
 import com.erp.server.wms.utils.QcUtils;
-import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Service;
@@ -198,6 +197,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
+
     /**
      * 保存 质检单
      *
@@ -206,7 +208,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean add(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity add(QcInfoDTO.SaveOrUpdateDTO dto) {
         //质检单
         QcInfoEntity bill = new QcInfoEntity();
         String code = "";
@@ -218,11 +220,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
            compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
            compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
         }
-
+        QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
             billId = IdWorker.getIdStr();
         } else {
-            QcInfoEntity qc = this.getById(billId);
+            qc = this.getById(billId);
             if (Objects.isNull(qc)) {
                 throw new ServiceException(ApiError.ERROR_99015);
             }
@@ -300,8 +302,53 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             qcReportDetailService.add(billId, dto.getReportDetailList());
             //质检备注暂存
             qcRemarkService.add(billId, dto.getRemarkList());
+            //操作日志
+            if (Objects.isNull(qc)) {
+                operateLogService.addModuleOperateLog(String.format("新增了质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
+            }else {
+                addQcLog(qc, bill, billId);
+            }
+            return bill;
+        } else {
+            return null;
         }
-        return result;
+    }
+
+    private void addQcLog(QcInfoEntity qc, QcInfoEntity bill, String billId) {
+        QcLogDTO oldQcLog = new QcLogDTO();
+        QcLogDTO newQcLog = new QcLogDTO();
+        BeanMapper.copy(qc, oldQcLog);
+        BeanMapper.copy(bill, newQcLog);
+
+        List<String> warehouseIdList = new ArrayList<>();
+        warehouseIdList.add(qc.getWarehouseId());
+        warehouseIdList.add(bill.getWarehouseId());
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(warehouseIdList);
+        if(CollUtil.isNotEmpty(warehouseList)){
+            WarehouseEntity warehouseEntity = warehouseList.stream().filter(s -> s.getId().equals(oldQcLog.getWarehouseId())).findFirst().orElse(null);
+            if(Objects.nonNull(warehouseEntity)){
+                oldQcLog.setWarehouseName(warehouseEntity.getName());
+            }
+            warehouseEntity = warehouseList.stream().filter(s -> s.getId().equals(newQcLog.getWarehouseId())).findFirst().orElse(null);
+            if(Objects.nonNull(warehouseEntity)){
+                newQcLog.setWarehouseName(warehouseEntity.getName());
+            }
+        }
+        List<String> supplierIdList = new ArrayList<>();
+        supplierIdList.add(qc.getSupplierId());
+        supplierIdList.add(bill.getSupplierId());
+        List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
+        if(CollUtil.isNotEmpty(supplierList)){
+            SupplierEntity supplierEntity = supplierList.stream().filter(s -> s.getId().equals(oldQcLog.getSupplierId())).findFirst().orElse(null);
+            if(Objects.nonNull(supplierEntity)){
+                oldQcLog.setSupplierName(supplierEntity.getName());
+            }
+            supplierEntity = supplierList.stream().filter(s -> s.getId().equals(newQcLog.getSupplierId())).findFirst().orElse(null);
+            if(Objects.nonNull(supplierEntity)){
+                newQcLog.setSupplierName(supplierEntity.getName());
+            }
+        }
+        operateLogService.addModuleOperateLogByObj(oldQcLog, newQcLog, ModuleTypeEnum.QC_ORDER.getCode(), billId, "", "");
     }
 
     @Override
@@ -444,7 +491,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean finish(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity finish(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
         if (Objects.isNull(bill)) {
@@ -540,9 +587,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(billId));
-            operateLogService.addModuleOperateLog(String.format("新增了一个质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "新增操作");
+            operateLogService.addModuleOperateLog(String.format("质检单【%s】完成质检操作", code), ModuleTypeEnum.QC_ORDER.getCode(), billId, "完成质检");            return bill;
+        } else {
+            return null;
         }
-        return result;
     }
 
     /**
@@ -565,7 +613,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //是否存在权限
         Boolean isExist = isExistAuth(billIdList, "wms:qcBill:updateProductPack", "qc_user_id");
-        if (!isExist) {
+        if (Boolean.FALSE.equals(isExist)) {
             return;
         }
         //采购信息
@@ -573,7 +621,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (CollectionUtils.isEmpty(poIdList)) {
             return;
         }
-        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(poIdList);
 
         //质检产品信息
         List<String> qcIdList = qcInfoEntityList.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
@@ -582,16 +630,19 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<ProductPackDTO> productPactList = new ArrayList<>();
 
         for (QcInfoEntity qcInfoEntity :  qcInfoEntityList) {
-            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(qcInfoEntity.getPurchaseOrderId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-                continue;
-            }
-            if (!purchaseOrderEntity.getIsFirstMassProduct()) {
-                continue;
-            }
             QcProductEntity qcProductEntity = qcProductList.stream().filter(obj -> obj.getMainId().equals(qcInfoEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(qcProductEntity)) {
                 throw new ServiceException(ApiError.ERROR_99015);
+            }
+            PurchaseOrderDetailEntity entity = purchaseOrderDetailList.stream().filter(v -> v.getPurchaseOrderId().equals(qcInfoEntity.getPurchaseOrderId()))
+                    .filter(v -> v.getSkuId().equals(qcProductEntity.getSkuId()))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            if (FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(entity.getFirstMassProduct())) {
+                continue;
             }
             long count = productPactList.stream().filter(obj -> obj.getSkuId().equals(qcProductEntity.getSkuId())).count();
             if (count > 0) {
@@ -600,9 +651,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
-            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(qcProductEntity.getProductLength()));
-            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(qcProductEntity.getProductWidth()));
-            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(qcProductEntity.getProductHeight()));
+            //非首批 回填plm
+            if(StringUtils.isNotBlank(entity.getFirstMassProduct()) && !entity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())){
+                productPackDTO.setProductLength(LengthConverterUtil.cmToMm(qcProductEntity.getProductLength()));
+                productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(qcProductEntity.getProductWidth()));
+                productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(qcProductEntity.getProductHeight()));
+            }
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
@@ -746,9 +800,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         SysDepartmentUserNumberDTO depart = sysUserFeign.getDeptByUserId(userId);
         dto.setStockInDeptId(depart.getDepartmentId());
         //生成结果
-        String createResultId = poInstockService.addAndSubmit(dto);
+        PoInstockEntity entity = poInstockService.addAndSubmit(dto);
+        String createResultId = entity.getId();
         if (CharSequenceUtil.isNotBlank(createResultId)) {
-            PoInstockEntity entity = poInstockService.getById(createResultId);
+//            PoInstockEntity entity = poInstockService.getById(createResultId);
             poInstockService.approve(entity,ApproveTypeEnum.PASS.getStatus(),"", null);
         }
     }
@@ -819,12 +874,18 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean draft(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity draft(QcInfoDTO.SaveOrUpdateDTO dto) {
         //质检单
         QcInfoEntity bill = new QcInfoEntity();
         String billId = dto.getId();
+        QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
             billId = IdWorker.getIdStr();
+        } else {
+            qc = this.getById(billId);
+            if (Objects.isNull(qc)) {
+                throw new ServiceException(ApiError.ERROR_99015);
+            }
         }
         BeanMapper.copy(dto, bill);
         bill.setId(billId);
@@ -865,14 +926,24 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //质检产品 暂存
             qcProductService.add(billId, dto.getQcProduct(), skuId);
             //质检信息 暂存
-            qcResultService.add(billId, dto.getQcInfo());
+            qcResultService.add(billId,dto.getQcInfo());
             //质检报告 暂存
             qcReportDetailService.add(billId, dto.getReportDetailList());
             //质检备注暂存
             qcRemarkService.add(billId, dto.getRemarkList());
+
+            //操作日志
+            if (Objects.isNull(qc)) {
+//                operateLogService.addModuleOperateLog(String.format("新增了质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
+                operateLogService.addModuleOperateLog("新增了暂存质检单", ModuleTypeEnum.QC_ORDER.getCode(), billId, "暂存");
+            }else {
+                addQcLog(qc, bill, billId);
+            }
             operateLogService.addModuleOperateLog("新增了一个暂存质检单", ModuleTypeEnum.QC_ORDER.getCode(), billId, "暂存操作");
+            return bill;
+        } else {
+            return null;
         }
-        return result;
     }
 
 
@@ -886,7 +957,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean exemption(QcInfoDTO.SaveOrUpdateDTO dto) {
+    public QcInfoEntity exemption(QcInfoDTO.SaveOrUpdateDTO dto) {
         String id = dto.getId();
         QcInfoEntity bill = this.getById(id);
         if (Objects.isNull(bill)) {
@@ -979,9 +1050,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             //异步发送通知
             qcResultService.sendQcResultMsg(Collections.singletonList(id));
             //操作日志
+            operateLogService.addModuleOperateLog(String.format("完成免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), id, "免检");
             operateLogService.addModuleOperateLog(String.format("完成一个免检质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(), id, "新增操作");
+            return bill;
+        } else {
+            return null;
         }
-        return result;
     }
 
     private void checkPurchaseOrderDetailId(String purchaseOrderId, String purchaseOrderDetailId) {
@@ -997,7 +1071,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     /**
      * 批量完成质检单
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 15:37
@@ -1005,19 +1079,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean batchFinish(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
+    public BatchResultDTO finish(QcInfoEntity entity) {
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
-        List<QcInfoEntity> qcList = this.listByIds(ids);
-        if (CollectionUtils.isEmpty(qcList)) {
-            throw new ServiceException(ApiError.ERROR_99015);
-        }
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99018);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
+
         //批量检查
         batchCheckQcQty(qcList, false);
         LocalDateTime now = LocalDateTime.now();
@@ -1034,7 +1104,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("质检单【%s】完成操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "完成操作");
+        operateLogService.batchAddModuleOperateLog("质检单【%s】完成质检操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "完成质检");
         Boolean result = this.updateBatchById(qcList);
         if (result) {
             //自动完成入库单
@@ -1045,9 +1115,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
             //新品首批回填SKU的尺寸信息
             updateProductPack(ids);
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
         }
-        return result;
-
     }
 
 
@@ -1060,15 +1131,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchExemption(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO batchExemption(QcInfoEntity entity) {
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         long count = qcList.stream().filter(s -> !Arrays.asList(QcBillStatusEnum.DRAFT.getCode(),QcBillStatusEnum.WAIT_QC.getCode()).contains(s.getQcStatus().getCode())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_99020);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         //批量检查
         batchCheckQcQty(qcList, true);
         LocalDateTime now = LocalDateTime.now();
@@ -1096,27 +1165,27 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("质检单【%s】免检操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "免检操作");
-        return result;
-
+        operateLogService.batchAddModuleOperateLog("质检单【%s】免检操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "免检");
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+        }
     }
 
 
     /**
      * 批量取消 质检单
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 17:13
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchCancel(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO batchCancel(QcInfoEntity entity) {
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         String qcStatus = QcBillStatusEnum.WAIT_QC.getCode();
         long count = qcList.stream().filter(s -> !s.getQcStatus().getCode().equals(qcStatus)).count();
         if (count > 0) {
@@ -1128,23 +1197,29 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("质检单【%s】取消操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "取消操作");
-        return this.updateBatchById(qcList);
+        operateLogService.batchAddModuleOperateLog("质检单【%s】取消操作", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "取消质检");
+        boolean result = this.updateBatchById(qcList);
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        }
     }
 
 
     /**
      * 删除质检单
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 17:21
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO delete(QcInfoEntity entity) {
+        List<String> ids = Collections.singletonList(entity.getId());
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         List<String> statusList = new ArrayList<>(3);
         statusList.add(QcBillStatusEnum.DRAFT.getCode());
         statusList.add(QcBillStatusEnum.WAIT_QC.getCode());
@@ -1156,28 +1231,33 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //删除操作日志
         String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的质检单", UserContext.getDefaultLoginUser().getUserName(), qcList.stream().map(QcInfoEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除操作");
+        operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "删除");
         Boolean result = this.removeByIds(ids);
         qcResultService.removeByMainIds(ids);
         qcRemarkService.removeByMainIds(ids);
         qcReportDetailService.removeByMainIds(ids);
         qcProductService.removeByMainIds(ids);
-        return result;
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        }
     }
 
 
     /**
      * 撤销
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-04-20 17:30
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
-        List<QcInfoEntity> qcList = this.listByIds(ids);
+    public BatchResultDTO cancelProcess(QcInfoEntity entity) {
+        List<String> ids = Collections.singletonList(entity.getId());
+        List<QcInfoEntity> qcList = Collections.singletonList(entity);
         List<String> statusList = new ArrayList<>(2);
         statusList.add(QcBillStatusEnum.EXEMPTION.getCode());
         statusList.add(QcBillStatusEnum.FINISH_QC.getCode());
@@ -1204,8 +1284,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         qcList.forEach(q -> q.setQcStatus(waitQc));
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("质检单【%s】取消流程", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "取消流程操作");
-        return this.updateBatchById(qcList);
+        operateLogService.batchAddModuleOperateLog("质检单【%s】撤销质检", ModuleTypeEnum.QC_ORDER.getCode(), pairList, "撤销质检");
+        boolean result = this.updateBatchById(qcList);
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        }
     }
 
 
@@ -1238,7 +1323,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("质检单【%s】分配质检员" + userInfo.getUserName(), ModuleTypeEnum.QC_ORDER.getCode(), pairList, "分配操作");
+        operateLogService.batchAddModuleOperateLog("分配了质检员【%s】" + userInfo.getUserName(), ModuleTypeEnum.QC_ORDER.getCode(), pairList, "分配质检员");
         return this.updateBatchById(qcList);
     }
 
@@ -1269,7 +1354,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         //操作日志
         List<Pair<String, String>> pairList = qcList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("质检单【%s】更新处理措施" + handleModeName, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "更新处理措施操作");
+        operateLogService.batchAddModuleOperateLog("更新了处理措施为【%s】" + handleModeName, ModuleTypeEnum.QC_ORDER.getCode(), pairList, "更新处理措施");
         return qcResultService.updateHandleMode(ids, handleModeDict);
     }
 
@@ -2148,8 +2233,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<String> billIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).collect(Collectors.toList());
             List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
             List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-            List<String> billIds = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).distinct().collect(Collectors.toList());
-            List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(billIds);
+            List<String> purchaseOrderIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getPurchaseOrderId).distinct().collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIdList);
 
             List<String> productIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getProductId).collect(Collectors.toList());
 
@@ -2179,10 +2264,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 qcDailyReportDTO.setSkuNo(skuNo);
 
                 // 是否新品
-                Boolean isFirstMassProduct = poList.stream().filter(p -> p.getId().equals(item.getPurchaseOrderId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(Boolean.FALSE);
-                qcDailyReportDTO.setIsFirstMassProduct(isFirstMassProduct);
-                qcDailyReportDTO.setFirstMassProductName(Objects.equals(qcDailyReportDTO.getIsFirstMassProduct(), Boolean.TRUE) ? ProductTypeEnum.NEW_PRODUCTS.getName() : ProductTypeEnum.OLD_PRODUCTS.getName());
+                PurchaseOrderDetailEntity entity = purchaseOrderDetailEntities.stream().filter(v -> v.getPurchaseOrderId().equals(item.getPurchaseOrderId()))
+                        .filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+                qcDailyReportDTO.setFirstMassProduct(entity.getFirstMassProduct());
+                qcDailyReportDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(entity.getFirstMassProduct()));
 
                 String supplierId = item.getSupplierId();
                 String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).
@@ -2376,8 +2461,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public List<SysUserInfoEntity> listQcUser() {
-        List<SysUserInfoEntity> sysUserInfoEntities = sysUserFeign.listUserByDept("品质中心");
-        return sysUserInfoEntities;
+
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingEnum.QC_USER.getCode());
+        if (ObjectUtils.isEmpty(cfgSettingEntity)) {
+            throw new ServiceException("未配置质检员，请联系IT处理");
+        }
+        CfgSettingValueDTO.QcUserDTO dto = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.QcUserDTO.class);
+        return sysUserFeign.listUserByDept(dto.getName());
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -2410,9 +2500,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 qcRemarkEntity.setRemark(dto.getRemark());
                 qcRemarkService.save(qcRemarkEntity);
             }
+            //操作日志
+            operateLogService.addModuleOperateLog(String.format("质检单【%s】完成复检抽检操作", qcInfoEntity.getCode()), ModuleTypeEnum.QC_ORDER.getCode(), id, "复检抽检");
         });
         // 更新质检复检抽检结果
         qcResultService.updateQcSampleResult(dto.getIds(), dto.getQcSampleResult());
+
     }
 
     @Override

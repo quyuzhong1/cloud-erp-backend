@@ -1,6 +1,7 @@
 package com.erp.server.oms.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -35,7 +36,7 @@ public interface SoB2cDeclareProductService extends SuperService<SoB2cDeclarePro
     * @param dto
     * @return
     */
-    Boolean update(SoB2cDeclareProductDTO.UpdateDTO dto);
+    BatchResultDTO update(SoB2cDeclareProductDTO.UpdateDTO dto);
 
     /**
      * 根据销售订单id获取申报信息

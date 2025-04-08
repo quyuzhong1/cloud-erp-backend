@@ -4,8 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.ParamData;
@@ -19,21 +17,16 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.sdk.oms.amz.spapi.model.orders.Order;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
 import com.erp.server.dmp.service.DmpSoReceiverService;
-import com.sdk.oms.mercado.dto.MercadoOrderDTO;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -163,6 +156,7 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     String status = String.valueOf(statusObj);
 
                     dmpDataMap.put("invalidStatus", this.convertCancel(status));
+                    dmpDataMap.put("isCancel", this.convertCancel(status));
                     dmpDataMap.put("orderStatus", this.convertOrderStatus(status, logisticType));
                     dmpDataMap.put("deliveryStatus", this.convertBillStatus(status, logisticType));
 
@@ -171,8 +165,10 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                     dmpDataMap.put("platformOriginalStatus", orderStatus);
                     if ("invalid".equalsIgnoreCase(orderStatus)) {
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                     } else if ("cancelled".equalsIgnoreCase(orderStatus)) {
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                     }
 
                     //买家备注
@@ -196,20 +192,22 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                             OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(feedbackList.get(0).get("dateCreated")), formatter);
                             // 转换为 LocalDateTime
                             dmpDataMap.put("payTime", offsetDateTime.toLocalDateTime());
+                            dmpDataMap.put("payStatus", Boolean.TRUE);
 
                             dmpDataMap.put("currencyCode", feedbackList.get(0).get("currencyId"));
                             BigDecimal totalPaidAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("totalPaidAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("payAmount", totalPaidAmount);
                             BigDecimal transactionAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("transactionAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("allAmount", transactionAmount);
-                            BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
-                            dmpDataMap.put("shippingCost", shippingAmount);
+                            BigDecimal shippingAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("shippingCost"))).reduce(BigDecimal.ZERO, BigDecimal::add);
+                            dmpDataMap.put("shippingAmount", shippingAmount);
                             BigDecimal totalDiscount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("couponAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             dmpDataMap.put("totalDiscount", totalDiscount);
 
                             BigDecimal taxesAmount = feedbackList.stream().map(req -> MathUtil.valueOf(req.get("taxesAmount"))).reduce(BigDecimal.ZERO, BigDecimal::add);
                             lableMap.put("taxesAmount", taxesAmount);
 
+                            dmpDataMap.put("totalTaxFee", taxesAmount);
                         }
                     }
 
@@ -219,6 +217,8 @@ public class MercadoOrderDmpHandler extends MercadoDmpHandler {
                         List<Map<String, Object>> orderItemsList = (List<Map<String, Object>>) orderItemsObj;
                         if (CollectionUtil.isNotEmpty(orderItemsList)) {
                             dmpDataMap.put("exchangeRate", orderItemsList.get(0).get("baseExchangeRate"));
+                            BigDecimal allAmount = orderItemsList.stream().map(req -> MathUtil.valueOf(req.get("fullUnitPrice")).multiply(MathUtil.valueOf(req.get("quantity")))).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                            dmpDataMap.put("allAmount", allAmount);
                         }
                     }
 

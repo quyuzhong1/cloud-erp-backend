@@ -1,6 +1,7 @@
 package com.erp.server.mrp.utils;
 
 import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
+import com.erp.model.mrp.enums.MetricsTypeEnum;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -131,7 +132,7 @@ public class DataDifferenceCalculator {
         result.MAPEScore = errorToScore(mape);
 
         // R^2 如果 < 0 => 0，否则取原值（也可根据需求改进）
-        result.R2Score = r2.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : r2;
+        result.R2Score = r2.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : r2.multiply(new BigDecimal(100));
 
         return result;
     }
@@ -140,13 +141,31 @@ public class DataDifferenceCalculator {
      * 扩展方法：对【多列预测值】 vs. 【单列实际值】分别进行比较
      *
      * @param actual      实际值列表
+     * @param metricsType MetricsTypeEnum 预测类型
      */
     public static void compareMultiplePredictions(
             List<CalcSalesInfoDimDTO.LineDTO> calcList,
-            List<BigDecimal> actual) {
+            List<BigDecimal> actual, String metricsType) {
+        MetricsTypeEnum metricsTypeEnum = MetricsTypeEnum.getEnum(metricsType);
         for (CalcSalesInfoDimDTO.LineDTO dto : calcList) {
             MetricsResult mr = computeMetrics(dto.getQty(), actual, dto.getName());
-            dto.setSimilarity(mr.getMAPEScore());
+            switch (metricsTypeEnum) {
+                case R2:
+                    dto.setSimilarity(mr.getR2Score());
+                    break;
+                case MAE:
+                    dto.setSimilarity(mr.getMAEScore());
+                    break;
+                case MSE:
+                    dto.setSimilarity(mr.getMSEScore());
+                    break;
+                case MAPE:
+                    dto.setSimilarity(mr.getMAPEScore());
+                    break;
+                case RMSE:
+                    dto.setSimilarity(mr.getRMSEScore());
+                    break;
+            }
         }
     }
 }

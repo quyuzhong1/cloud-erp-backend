@@ -1,13 +1,11 @@
 package com.erp.model.wms.entity;
 
-import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -26,12 +24,6 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 @TableName(value = "wms_virtual_detail_msg")
 public class WmsVirtualDetailMsgEntity extends BaseEntity<WmsVirtualDetailMsgEntity> {
-
-    /**
-    * json数据
-    */
-    @TableField(value = "data_json" , jdbcType = JdbcType.OTHER)
-    private JSONObject dataJson;
     /**
     * 备注
     */

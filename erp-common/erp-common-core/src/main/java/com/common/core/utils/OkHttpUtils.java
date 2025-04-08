@@ -1,6 +1,7 @@
 package com.common.core.utils;
 
 import com.alibaba.fastjson.JSONObject;
+import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 
@@ -8,6 +9,7 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -86,6 +88,13 @@ public class OkHttpUtils {
      */
     public static String doPostJsonBase64(String url, String paramsJson, Map<String, String> headers) {
         Call call = createPostJsonCall(url, paramsJson, headers);
+        return executeBase64(call);
+    }
+    /**
+     * 获取post 请求 以json
+     */
+    public static String doGetJsonBase64(String url, Map<String, Object> paramsJson, Map<String, String> headers) {
+        Call call = createGetCall(url, paramsJson, headers);
         return executeBase64(call);
     }
     /**
@@ -319,6 +328,12 @@ public class OkHttpUtils {
         try {
             ResponseBody body = call.execute().body();
             if (body != null) {
+                MediaType mediaType = body.contentType();
+                String subtype = Objects.nonNull(mediaType) ? mediaType.subtype() : "";
+                if ("json".equals(subtype)){
+                    respStr = body.string();
+                    throw new ServiceException("面单获取文件格式错误:{}",respStr);
+                }
                 byte[] bytes = body.bytes();
                 respStr = Base64.getEncoder().encodeToString(bytes);
             }

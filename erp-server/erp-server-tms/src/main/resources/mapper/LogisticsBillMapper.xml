@@ -79,7 +79,7 @@
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
         <where>
             ${params.sqlMap.default}
-            and lb.is_deleted=false and lb.order_type in ('B2B','B2C')
+            and lb.is_deleted=false and lb.order_type in ('B2B','B2C','AfterSale')
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
@@ -146,7 +146,7 @@
         LEFT JOIN  logistics_bill_detail lbd ON lbd.main_id=lb.id and (lbd.is_deleted=false or lbd.is_deleted is null)
         LEFT JOIN  logistics_channel lc ON lc.id=lb.channel_id and lc.is_deleted=false
         WHERE  lb.is_deleted=false
-        and lb.order_type in ('B2B','B2C')
+        and lb.order_type in ('B2B','B2C','AfterSale')
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
@@ -230,17 +230,6 @@
     </select>
 
     <select id="firstMilePaging" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$PagingVO">
-        with tms_cost as (
-        select lbc.logistics_bill_id,
-        SUM(CASE WHEN tcd.TYPE = 'estimated' THEN tcd.cost_value ELSE 0 END) AS estimatedFee,
-        SUM(CASE WHEN tcd.TYPE = 'actual' THEN tcd.cost_value ELSE 0 END) AS actualFee
-        from tms_cost_detail tcd
-        inner join logistics_bill_cost lbc on lbc.id = tcd.main_id
-        where tcd.is_deleted = false and lbc.is_deleted = false
-        GROUP BY
-        lbc.logistics_bill_id
-        ),
-        tms_logistics as (
         SELECT lb.id,
         lb.shop_id as  shopId,
         lb.outstock_id as outstockId,
@@ -263,12 +252,17 @@
         lbd.sign_time as  signTime,
         lb.ship_time as  shipTime,
         lb.remark,
-        lb.create_time as createTime,
+		lb.create_time as createTime,
+        fpt.packing_status as packingStatus,
+        fmb.status as estimatedStatus,
+        case when (exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id limit 1)) then 'done' else 'toDo' end as weightAllocationStatus,
         case when lb.ship_time is not  null then FLOOR(EXTRACT(EPOCH FROM (now()-lb.ship_time))/3600)
         else FLOOR(EXTRACT(EPOCH FROM (now()-lb.order_time))/3600) end  as actualHour
         from
         logistics_bill lb
         inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
+        left join first_mile_estimated_bill fmb on fmb.logistics_bill_id = lb.id and fmb.is_deleted = false
+        left join foreign_packing_task fpt on (fpt.source_id = lb.outstock_id or fpt.source_id = lb.source_id) and fpt.is_deleted = false
         where ${params.sqlMap.default}
         and lb.order_type = #{params.orderType}
         and lb.is_deleted =false
@@ -277,34 +271,6 @@
             ${params.permissionSql}
         </if>
         order by lb.create_time desc
-        )
-        SELECT 	  tl.id,
-        shopId,
-        outstockId,
-        transportNo,
-        counterNo,
-        carrierId,
-        businessCode,
-        outstockCode,
-        tl.detailId,
-        trackNo,
-        logisticsStatus,
-        logisticsTrack ,
-        invoicesStatus,
-        shippingMethod,
-        logisticsChannelId,
-        logisticsSupplierId,
-        shopName,
-        country,
-        orderTime,
-        signTime,
-        remark,
-        actualHour,
-        tc.estimatedFee,
-        tc.actualFee,
-        tl.createTime
-        from tms_logistics tl
-        left join tms_cost tc on tl.id = tc.logistics_bill_id
     </select>
     <select id="firstMileView" resultType="com.erp.model.tms.dto.TmsFirstMileLogisticDTO$ViewDTO">
         SELECT lb.id,
@@ -678,10 +644,48 @@
     <select id="queryToSdy" resultType="com.erp.model.tms.entity.LogisticsBillEntity">
         SELECT DISTINCT so.* FROM logistics_bill so
         LEFT JOIN logistics_bill_detail sod ON so.id = sod.main_id
-        WHERE so.create_time >= #{startTime}
-        AND so.create_time &lt;= #{endTime}
+        WHERE so.delivery_time >= #{startTime}
+        AND so.delivery_time &lt;= #{endTime}
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
         LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+    <select id="selectLogisticsBillNoOutstock" resultType="com.erp.model.tms.dto.LogisticsBillDTO$NoOutstockDTO"
+            parameterType="java.lang.String">
+        SELECT lb.id,lb.outstock_id,lb.outstock_code
+        FROM logistics_bill lb
+        <if test="orderType == 'B2B' or orderType == 'B2C'">
+            LEFT JOIN foreign_so_outstock so on lb.outstock_id = so.id and so.is_deleted = false
+            where lb.is_deleted = false and lb.order_type in ('B2B','B2C','AfterSale')
+            and so.id is null
+        </if>
+        <if test="orderType == 'firstMile'">
+            LEFT JOIN wms_first_mile_delivery wfmd on lb.outstock_id = wfmd.id and wfmd.is_deleted = FALSE
+            where lb.is_deleted = false and lb.order_type in ('firstMile')
+            and wfmd.id is null
+        </if>
+
+    </select>
+    <select id="selectNoLogisticsBillDetailByBill"
+            resultType="com.erp.model.tms.entity.LogisticsBillEntity">
+        SELECT lb.*
+        FROM logistics_bill lb
+        LEFT JOIN logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
+        where lb.is_deleted = false and lbd.id is null
+        ORDER BY lb.create_time desc
+    </select>
+    <select id="countTotalWeight" resultType="com.common.business.dto.TabListDTO">
+        SELECT
+            CASE WHEN fmwa.logistics_bill_id IS NULL THEN 'toDo' ELSE 'done' END AS tabFlag,
+            COUNT(lb.id) AS count
+        FROM
+        logistics_bill lb
+        LEFT JOIN (SELECT DISTINCT logistics_bill_id FROM first_mile_weight_allocation where is_deleted = false) fmwa ON lb.id = fmwa.logistics_bill_id
+        where lb.is_deleted = false and lb.order_type = #{orderType}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        GROUP BY tabFlag
     </select>
 </mapper>

@@ -70,4 +70,15 @@ public interface CalcSalesInfoDimMapper extends BaseMapper<CalcSalesInfoDimEntit
      * @param params 参数
      */
     Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@Param("page") Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> page,@Param("params") CalcSalesInfoDimDTO.ParamDTO params,  @Param("uid") String uid);
+
+    /**
+     * 获取翻页参数
+     * @param params 参数
+     */
+    List<CalcSalesInfoDimDTO.DataIdPageDTO> dataIdPage(@Param("params") CalcSalesInfoDimDTO.ParamDTO params);
+
+    /**
+     * 导出
+     */
+    Page<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(@Param("page") Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> page,@Param("params") CalcSalesInfoDimDTO.ParamDTO params,  @Param("uid") String uid);
 }

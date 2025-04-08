@@ -7,6 +7,7 @@ import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -369,6 +370,7 @@ public class QcResultDTO {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UpdateHandleModeDTO {
 
         /**
@@ -456,10 +458,14 @@ public class QcResultDTO {
         private String qcStatus;
 
         /**
-         * 是否新品首批
-         * true 是
+         * 新品首批
          */
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
+
+        /**
+         * 采购单明细id
+         */
+        private String purchaseOrderDetailId;
 
         /**
          * 采购订单code

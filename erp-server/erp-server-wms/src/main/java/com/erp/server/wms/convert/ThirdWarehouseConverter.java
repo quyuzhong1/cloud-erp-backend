@@ -2,14 +2,19 @@ package com.erp.server.wms.convert;
 
 import com.erp.model.tms.dto.ShippingCalculationDTO;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
-import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
+import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
+import com.sdk.wms.antu.dto.request.AntuUploadFileReq;
 import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
+import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import com.sdk.wms.goodcang.dto.request.GoodCangCalculateDeliveryFeeReq;
+import com.sdk.wms.goodcang.dto.request.GoodCangUploadFileReq;
+import com.sdk.wms.goodcang.dto.request.GoodCangUploadOrderLabelReq;
 import com.sdk.wms.goodcang.dto.response.GoodCangCalculateDeliveryFeeResp;
+import com.sdk.wms.goodcang.dto.response.GoodCangUploadFileResp;
+import com.sdk.wms.goodcang.dto.response.GoodCangUploadOrderLabelResp;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -66,8 +71,10 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "channelCode", source = "shippingMethod")
     @Mapping(target = "channelNameEn", source = "shippingName")
     @Mapping(target = "channelName", source = "shippingNameCn")
+    @Mapping(target = "effectiveTime", source = "invalid")
+    @Mapping(target = "effectiveTimeStr", source = "invalid")
     ThirdWarehouseCalculateFeeResponse antuResToThirdWarehouseResponse(AntuCalculateFeeResp antuCalculateFeeResp);
-    List<ThirdWarehouseCalculateFeeResponse> antuResToThirdWarehouseResponse(List<AntuCalculateFeeResp> antuCalculateFeeRespList);
+    List<ThirdWarehouseCalculateFeeResponse>  antuResToThirdWarehouseResponse(List<AntuCalculateFeeResp> antuCalculateFeeRespList);
 
     @Mapping(target = "state", source = "province")
     @Mapping(target = "smCode", source = "channelCode")
@@ -90,4 +97,27 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "otherCostDTO", ignore = true)
     ShippingCalculationDTO.ListDTO responseToShippingDTO(ThirdWarehouseCalculateFeeResponse response);
     List<ShippingCalculationDTO.ListDTO> responseToShippingDTO(List<ThirdWarehouseCalculateFeeResponse> responseList);
+    @Mapping(target = "fileType", constant = "pdf")
+    @Mapping(target = "module", constant = "order_label")
+    @Mapping(target = "fileData", source = "fileData", qualifiedByName = "replacePdf")
+    AntuUploadFileReq reqToAntuUpdateFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
+    ThirdWarehouseUploadFileResponse antuResToThirdWarehouseUploadFileResponse(AntuUploadFileResp antuCalculateFeeRespList);
+
+    @Mapping(target = "useFor", constant = "ORDER_LABEL_ATTACHMENT")
+    @Mapping(target = "file", source = "fileData", qualifiedByName = "replacePdf")
+    @Mapping(target = "fileName", source = "orderCode", qualifiedByName = "getPdfFileName")
+    GoodCangUploadFileReq reqToGoodCangUploadFileReq(ThirdWarehouseUploadFileReq uploadFileReq);
+
+    @Mapping(target = "url", ignore = true)
+    @Mapping(target = "attachId", source = "attachmentId")
+    ThirdWarehouseUploadFileResponse goodCangResToThirdWarehouseUploadFileResponse(GoodCangUploadFileResp goodCangUploadFileResp);
+
+    @Mapping(target = "trackingNumber", source = "trackNo")
+    @Mapping(target = "packageAreaCode", ignore = true)
+    @Mapping(target = "labelInfo.labelImageType", constant = "3")
+    @Mapping(target = "labelInfo.labelIdList", source = "fileIdList")
+    @Mapping(target = "labelInfo.labelUrlList", source = "fileUrlList")
+    GoodCangUploadOrderLabelReq reqToGoodCangUploadOrderLabelReq(ThirdWarehouseUploadOrderLabelReq uploadFileReq);
+
+    ThirdWarehouseUploadOrderLabelResponse googCangResToThirdWarehouseUploadOrderLabelResponse(GoodCangUploadOrderLabelResp resp);
 }

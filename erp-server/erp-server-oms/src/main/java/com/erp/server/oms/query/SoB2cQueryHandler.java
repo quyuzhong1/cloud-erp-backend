@@ -169,13 +169,13 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     }
                     isFirst = false;
                     if (valueStr.equals("platformWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment' or sb2c.label_json ~ 'fulfilled_by_shopee')");
                     }
                     if (valueStr.equals("transitWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'drop_off' or sb2c.label_json ~ 'cross_docking')");
+                        sb.append(" (sb2c.label_json ~ 'drop_off' or sb2c.label_json ~ 'cross_docking' or sb2c.label_json ~ 'dropoff' or sb2c.label_json ~ 'pickup')");
                     }
                     if (valueStr.equals("selfDelivery")) {
-                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json !~ ('AFN|cainiaoInternationalWarehouse|WFSFulfilled|3PLFulfilled|fulfillment|fulfilled_by_shopee'))");
                     }
                 }
             }
@@ -187,13 +187,13 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     }
                     isFirst = false;
                     if (valueStr.equals("platformWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json !~ ('AFN|cainiaoInternationalWarehouse|WFSFulfilled|3PLFulfilled|fulfillment|fulfilled_by_shopee'))");
                     }
                     if (valueStr.equals("transitWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json !~ 'drop_off' and sb2c.label_json !~ 'cross_docking')");
+                        sb.append(" (sb2c.label_json !~ ('drop_off|cross_docking|dropoff|pickup'))");
                     }
                     if (valueStr.equals("selfDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment' or sb2c.label_json ~ 'fulfilled_by_shopee')");
                     }
                 }
             }
@@ -265,6 +265,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
             super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
         }
         //待审核
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {
@@ -272,6 +273,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
             super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
         }
         //配货中
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {

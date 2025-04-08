@@ -263,6 +263,9 @@ public class SpElServerImpl implements SpElServer {
                         case STARTS_WITH:
                             content = convertToStartsWithObjExpression(field,value);
                             break;
+                        case LIKE:
+                            content = convertToContainsObjExpression(field,value);
+                            break;
                     }
                 }
                 expression.append(content).append(" ");
@@ -518,6 +521,9 @@ public class SpElServerImpl implements SpElServer {
                         case STARTS_WITH:
                             content = convertToStartsWithObjExpression(field,value);
                             break;
+                        case LIKE:
+                            content = convertToContainsObjExpression(field,value);
+                            break;
                     }
                 }
                 expression.append(content).append(" ");
@@ -637,6 +643,16 @@ public class SpElServerImpl implements SpElServer {
         expression.append("(").append(value).append(")");
         return expression.toString();
     }
+    /**
+     *对象表达式 包含
+     */
+    private String convertToContainsObjExpression(String field,String value) {
+        StringBuilder expression = new StringBuilder();
+        expression.append("['").append(field).append("']");
+        expression.append(".contains");
+        expression.append("(").append("'").append(value).append("'").append(")");
+        return expression.toString();
+    }
 
     /**
      * 获取到 传值为map 的 表达式
@@ -700,6 +716,9 @@ public class SpElServerImpl implements SpElServer {
                         case STARTS_WITH:
                             content = convertToStartsWithObjExpression(field,value);
                             break;
+                        case LIKE:
+                            content = convertToContainsObjExpression(field,value);
+                            break;
                     }
                 }
                 expression.append(content).append(" ");
@@ -719,38 +738,58 @@ public class SpElServerImpl implements SpElServer {
         spElDTO.setSpElAddFieldList(addFieldList);
         return spElDTO;
     }
+//    public static void main(String[] args) {
+//        SpElServerImpl spElServer=new SpElServerImpl();
+//        ExpressionParser parser = new SpelExpressionParser();
+//        BigDecimal ss=new BigDecimal("2");
+//        String conditionExpression = "( ['packageWeight'].startsWith(pa) )";
+//
+//        List<ConditionElement> conditionList=new ArrayList<>();
+//        ConditionElement conditionElement=new ConditionElement();
+//        conditionElement.setCompare("contains");
+//        conditionElement.setField("packageWeight");
+//        conditionElement.setLeftBracket("(");
+//        conditionElement.setLogic("");
+//        conditionElement.setRightBracket(")");
+//        conditionElement.setValue("2.00");
+//        conditionElement.setValueType("BigDecimal");
+//        conditionList.add(conditionElement);
+//        Map<String, Object> map = new HashMap<>();
+//
+//        List<Map<String,Object>> list=new ArrayList<>();
+//        Map<String,Object> m1=new HashMap<>();
+//        m1.put("packageWeight",2.0);
+//
+//        Map<String,Object> m2=new HashMap<>();
+//        m2.put("packageWeight",2.0);
+//        list.add(m1);
+//        list.add(m2);
+//        List<Double> list1=new ArrayList<>();
+//        list1.add(2.000000);
+//       // list1.add(new BigDecimal("2.100000"));
+//        map.put("packageWeightList",list1);
+//        Boolean result1=spElServer. matchExpression(conditionExpression, map);
+//    }
+
     public static void main(String[] args) {
-        SpElServerImpl spElServer=new SpElServerImpl();
+        String range = "123~456";
+        String[] parts = range.split("~");
+        String startPrefix = parts[0];
+        String endPrefix = parts[1];
+
+        String testInput = "37"; // 测试数据
+
+        // 如果需要更复杂的逻辑，可以通过SpEL动态构建和评估表达式
         ExpressionParser parser = new SpelExpressionParser();
-        BigDecimal ss=new BigDecimal("2");
-        String conditionExpression = "( ['packageWeight'].startsWith(pa) )";
+        StandardEvaluationContext context = new StandardEvaluationContext();
+        context.setVariable("testInput", testInput);
+        context.setVariable("startPrefix", startPrefix);
+        context.setVariable("endPrefix", endPrefix);
 
-        List<ConditionElement> conditionList=new ArrayList<>();
-        ConditionElement conditionElement=new ConditionElement();
-        conditionElement.setCompare("contains");
-        conditionElement.setField("packageWeight");
-        conditionElement.setLeftBracket("(");
-        conditionElement.setLogic("");
-        conditionElement.setRightBracket(")");
-        conditionElement.setValue("2.00");
-        conditionElement.setValueType("BigDecimal");
-        conditionList.add(conditionElement);
-        Map<String, Object> map = new HashMap<>();
+        // 示例SpEL表达式，这里仅为演示如何将变量传入SpEL表达式
+        String spelExpression = "#testInput.startsWith(#startPrefix) or #testInput.endsWith(#endPrefix) or (#testInput.compareTo(#endPrefix) < 0 and #testInput.compareTo(#startPrefix) > 0)";
+        Boolean spelResult = parser.parseExpression(spelExpression).getValue(context, Boolean.class);
 
-        List<Map<String,Object>> list=new ArrayList<>();
-        Map<String,Object> m1=new HashMap<>();
-        m1.put("packageWeight",2.0);
-
-        Map<String,Object> m2=new HashMap<>();
-        m2.put("packageWeight",2.0);
-        list.add(m1);
-        list.add(m2);
-        List<Double> list1=new ArrayList<>();
-        list1.add(2.000000);
-       // list1.add(new BigDecimal("2.100000"));
-        map.put("packageWeightList",list1);
-        Boolean result1=spElServer. matchExpression(conditionExpression, map);
+        System.out.println("SpEL evaluation result: " + spelResult);
     }
-
-
 }

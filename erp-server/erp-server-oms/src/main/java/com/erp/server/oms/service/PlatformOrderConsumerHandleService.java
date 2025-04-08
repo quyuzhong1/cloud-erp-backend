@@ -27,4 +27,6 @@ public interface PlatformOrderConsumerHandleService {
      */
 
     SoB2cDTO.PullOrderResultDTO checkAndSaveAll(PlatformOrderDTO dto);
+
+    Boolean tiktokSplit(PlatformOrderDTO dto);
 }

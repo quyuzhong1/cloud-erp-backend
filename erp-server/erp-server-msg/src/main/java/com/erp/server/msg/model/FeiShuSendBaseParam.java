@@ -337,6 +337,7 @@ public class FeiShuSendBaseParam extends BaseNoticeMsgParam {
                  * TextDTO
                  */
                 @NoArgsConstructor
+                @AllArgsConstructor
                 @Data
                 public static class TextDTO {
 

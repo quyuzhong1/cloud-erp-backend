@@ -177,6 +177,16 @@ public class WmsAttachmentServiceImpl extends SuperServiceImpl<WmsAttachmentMapp
     }
 
     @Override
+    public void batchRemoveAttachment(List<String> businessIds) {
+        if(CollectionUtils.isEmpty(businessIds)){
+            return;
+        }
+        LambdaQueryWrapper<WmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(WmsAttachmentEntity::getBusinessId, businessIds);
+        this.remove(queryWrapper);
+    }
+
+    @Override
     public void addByWarehouseEquipment(WmsAttachmentDTO.AddDTO dto) {
         String fileName = dto.getFileName();
         String url = dto.getUrl();

@@ -1,5 +1,7 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -11,30 +13,35 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProductInfoMapper;
+import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -67,6 +74,7 @@ import java.util.stream.Collectors;
 import static com.alibaba.excel.EasyExcelFactory.write;
 import static com.alibaba.excel.EasyExcelFactory.writerSheet;
 import static com.alibaba.fastjson.JSON.toJSONString;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
 
 /**
  * <p>
@@ -206,7 +214,19 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Resource
     private ApplicationCategoryService applicationCategoryService;
 
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
+
+    @Resource
+    private SyncLingXingProductDetailService syncLingXingProductDetailService;
+
+    @Resource
+    private RedisUtil redisUtil;
+
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 查询 分类id 下有多少产品
@@ -376,6 +396,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-17 11:17
      */
     @Override
+    @Transactional
     public Boolean updateCategory(MoveCategoryDTO dto) {
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
         if (Objects.isNull(category)) {
@@ -383,8 +404,31 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         List<ProductInfoEntity> list = new ArrayList<>();
 
+        //查所有父级类及本身
+        List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(dto.getCategoryId());
+        String categoryNames = CollUtil.isEmpty(basicCategoryList) ? "" : basicCategoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.joining("/"));
+
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
+        Map<String, List<ProductDetailEntity>> detailMap = productDetailService.lambdaQuery().in(ProductDetailEntity::getProductId, dto.getProductIds()).list().stream().collect(Collectors.groupingBy(ProductDetailEntity::getProductId));
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
+            ProductInfoDTO productInfoDTO = new  ProductInfoDTO();
+            BeanMapper.copy(productInfoEntity, productInfoDTO);
+            productInfoDTO.setCategory(basicCategoryList.get(0).getName());
+            productInfoDTO.setCategoryId(dto.getCategoryId());
+            List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = productDetailService.getProductBasicChangeField(productInfoDTO, productInfoEntity);
+            //发送通知
+            for (ProductDetailEntity productDetailEntity : detailMap.get(productInfoEntity.getId())) {
+                ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+                noticeDTO.setProductId(productInfoEntity.getId());
+                noticeDTO.setName(productInfoEntity.getName());
+                noticeDTO.setChargeId(productInfoEntity.getChargeId());
+                noticeDTO.setChargeName(productInfoEntity.getChargeName());
+                noticeDTO.setSkuNo(productDetailEntity.getSkuNo());
+                noticeDTO.setProductBasicChangeField(productBasicChangeField);
+                noticeDTOList.add(noticeDTO);
+            }
+
             productInfoEntity.setCategory(category.getName());
             productInfoEntity.setCategoryId(dto.getCategoryId());
             list.add(productInfoEntity);
@@ -398,12 +442,41 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
-                    .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
+                    .setOperation("更新产品分类").setContent(CharSequenceUtil.format("对SPU【{}】更新产品分类为【{}】",productInfoEntity.getSpuNo(),categoryNames)));
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            //发送通知
+            productDetailService.handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+
         }
         return Boolean.TRUE;
+    }
+
+    //推送至金蝶、旺店通、领星
+    private void sendPushTask(List<String> productIdList,String operate ){
+        //只同步审核通过的
+        List<ProductDetailEntity> productDetailEntities = productDetailService.listSkuByProductIds(productIdList)
+                .stream()
+                .filter(v -> v.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode()))
+                .collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(productDetailEntities)){
+            //增加缓存清除
+            List<String> productDetailIdList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO,productDetailIdList.toArray());
+
+            //审核通过发送金蝶
+            productDetailService.sendPushTask(productDetailEntities, operate);
+            //审核通过发送旺店通
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntities);
+            //审核通过发送领星
+            syncLingXingProductDetailService.syncDataToLingxing(productDetailEntities);
+        }
     }
 
 
@@ -497,10 +570,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -550,7 +623,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @param deptIdList
      * @return List<String>
      */
-    private List<String> handleDept(List<String> deptIdList) {
+    @Override
+    public List<String> handleDept(List<String> deptIdList) {
         if (CollectionUtils.isEmpty(deptIdList)) {
             return Collections.EMPTY_LIST;
         }
@@ -586,10 +660,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //我的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -620,10 +694,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //收藏的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO<>();
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
         IPage<ProductShowDTO> pageData = baseMapper.collect(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
@@ -939,10 +1013,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return dataList;
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return dataList;
+//        }
         dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         return dataList;
     }
@@ -2049,9 +2123,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchEstablish(ProductInfoDTO.IdsDateDto dto) {
-        List<String> productIdList = dto.getIds();
-        LocalDate projectInitDate = dto.getLocalDate();
+    public Boolean batchEstablish(List<String> productIdList, LocalDate projectInitDate) {
         List<ProductInfoEntity> productInfoList = this.listByIds(productIdList);
         Integer suspendCode = ApprovalStatusEnum.SUSPEND.getCode();
         Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
@@ -2384,91 +2456,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean allExport(ProductSearchDTO.ExportDTO params) {
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-
-        params.setPermissionSql(params.getPermissionSql());
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-        //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
-        //两个都是
-        if (size == 2) {
-            List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listAllTaskExport(params, categoryIdList);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuilder sb = new StringBuilder();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                return Boolean.FALSE;
-            }
-
-
-        }
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
-                fillPagingDb(list);
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
-
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listAllTaskExport(params, categoryIdList);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-
-            }
-        }
-
-        return Boolean.TRUE;
-
+        params.setExportType("2");
+        return commonExport(params);
     }
 
 
@@ -2482,92 +2471,75 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean myProjectExport(ProductSearchDTO.ExportDTO params) {
+        params.setExportType("0");
+        return commonExport(params);
+    }
 
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
+    private Boolean commonExport(ProductSearchDTO.ExportDTO params) {
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        StringBuilder builder = new StringBuilder();
+        builder.append("产品开发导出").append(date);
 
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        params.setCategoryIdList(categoryIdList);
+
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        params.setUserId(userId);
+        if(CollUtil.isNotEmpty(params.getProductIds())){
+            params.setIds(params.getProductIds());
+        }
+        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_PLM_PRODUCT.getCode(), params);
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public PagingVO<ProductShowDTO> exportProductShow(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        String exportType = dto.getParams().getExportType();
+        //分类id
+        String categoryId = dto.getParams().getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = UserContext.getDefaultLoginUser().getUid();
 
-
-        //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
-        //两个都是
-        if (size == 2) {
-            List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuilder sb = new StringBuilder();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                return Boolean.FALSE;
-            }
-        }
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                //我的项目
-                List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
-                fillPagingDb(list);
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
-            //任务导出
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
+        //我的项目
+        Page<ProductSearchDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<ProductShowDTO> pageData = baseMapper.listMyProjectExport(query,dto.getParams(), categoryIdList, userId);
+        if(exportType.equals("0")){
+            pageData = baseMapper.listMyProjectExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("1")){
+            pageData = baseMapper.collectExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("2")){
+            pageData = baseMapper.listAllExport(query,dto.getParams(), categoryIdList);
         }
 
+        fillPagingDb(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
 
-        return Boolean.TRUE;
-
+    @Override
+    public PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProductTaskExcelDTO(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        String exportType = dto.getParams().getExportType();
+        //分类id
+        String categoryId = dto.getParams().getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        Page<ProductSearchDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<TaskExportDTO.ProductTaskExcelDTO> pageData = null;
+        if(exportType.equals("0")){
+            pageData = baseMapper.listMyProjectTaskExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("1")){
+            pageData = baseMapper.collectTaskExport(query,dto.getParams(),categoryIdList,userId);
+        }else if(exportType.equals("2")){
+            pageData = baseMapper.listAllTaskExport(query,dto.getParams(), categoryIdList);
+        }
+        for (TaskExportDTO.ProductTaskExcelDTO item : pageData.getRecords()) {
+            Integer status = item.getStatus();
+            String statusName = TaskStateEnum.getName(status);
+            item.setTaskStatusName(statusName);
+        }
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -2580,93 +2552,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean collectExport(ProductSearchDTO.ExportDTO params) {
-
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-        //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
-
-        //两个都是
-        if (size == 2) {
-            //收藏的项目
-            List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuilder sb = new StringBuilder();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                return Boolean.FALSE;
-            }
-        }
-
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                //我的项目
-                List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
-                fillPagingDb(list);
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
-            //任务导出
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    return Boolean.FALSE;
-                }
-            }
-        }
-
-
-        return Boolean.TRUE;
-
+        params.setExportType("1");
+        return commonExport(params);
     }
 
     @Override
@@ -2680,6 +2567,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     }
 
     @Override
+    @Transactional
     public Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto) {
 
         List<ProductInfoEntity> list = new ArrayList<>();
@@ -2701,10 +2589,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
 
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
-                    .setOperation("应用分类变更").setContent("转移应用分类[应用分类]由[" + oldName+ "]改为[" + applicationMap.get(dto.getApplicationCategoryId()) + "]"));
+                    .setOperation("更新应用分类").setContent(CharSequenceUtil.format("对SPU【{}】更新应用分类为【{}】",productInfoEntity.getSpuNo(),applicationMap.get(dto.getApplicationCategoryId()))));
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }

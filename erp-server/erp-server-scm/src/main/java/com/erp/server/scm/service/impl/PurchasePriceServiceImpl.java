@@ -72,6 +72,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_PRICE;
 
@@ -144,7 +145,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public String add(PurchasePriceDTO.AddDTO dto) {
+    public PurchasePriceEntity add(PurchasePriceDTO.AddDTO dto) {
         //供应商id
         String supplierId = dto.getSupplierId();
         SupplierEntity supplier = supplierService.getById(supplierId);
@@ -186,10 +187,10 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             //添加日志
             String content = String.format("新增了一个{%s}-采购价目-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), id, "新增操作");
-            return id;
+            return purchasePrice;
 
         }
-        return "";
+        return null;
     }
 
 
@@ -270,7 +271,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String updatePurchasePrice(PurchasePriceDTO.UpdateDTO dto) {
+    public PurchasePriceEntity updatePurchasePrice(PurchasePriceDTO.UpdateDTO dto) {
         String id = dto.getId();
         PurchasePriceEntity purchasePrice = this.getById(id);
         if (Objects.isNull(purchasePrice)) {
@@ -316,9 +317,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             attachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, id);
             //修改明细
             priceDetailService.updatePriceDetail(id, dto.getPurchasePriceDetailList());
-            return id;
+            return purchasePrice;
         }
-        return "";
+        return null;
     }
 
     /**
@@ -332,13 +333,14 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(PurchasePriceDTO.AddDTO dto) {
-        String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+    public PurchasePriceEntity addAndSubmit(PurchasePriceDTO.AddDTO dto) {
+        PurchasePriceEntity entity = this.add(dto);
+        if (null == entity) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submitApprove(Arrays.asList(id));
-        return result;
+        entity = this.getById(entity.getId());
+        this.submitEntity(entity);
+        return entity;
     }
 
 
@@ -353,19 +355,20 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean updateAndSubmit(PurchasePriceDTO.UpdateDTO dto) {
-        String id = this.updatePurchasePrice(dto);
-        if (StringUtils.isBlank(id)) {
+    public PurchasePriceEntity updateAndSubmit(PurchasePriceDTO.UpdateDTO dto) {
+        PurchasePriceEntity entity = this.updatePurchasePrice(dto);
+        if (null == entity) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submitApprove(Arrays.asList(id));
+        this.submitEntity(entity);
+        return entity;
     }
 
 
     /**
      * 批量删除采购价目信息
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-27 12:04
@@ -373,36 +376,35 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean deleteByIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<PurchasePriceEntity> purchasePriceList = this.listByIds(ids);
+    public BatchResultDTO deleteEntity(PurchasePriceEntity entity) {
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        long count = purchasePriceList.stream().filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
+        long count = Stream.of(entity).filter(p -> !p.getApproveStatus().getStatus().equals(waitSubmitStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         //删除价目表
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
             String content = "删除价目表[%s]";
-            List<Pair<String, String>> pairList = purchasePriceList.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+            List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "删除");
             attachmentService.deleteByBusinessIds(ids);
 
             //发送金蝶
-            sendPushTask(purchasePriceList,SyncOperateEnum.OPERATE_DELETE.getCode());
+            sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         }
-        return result;
     }
 
 
     /**
      * 采购价目表 提交审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-27 12:11
@@ -410,11 +412,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean submitApprove(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<PurchasePriceEntity> list = this.listByIds(ids);
+    public BatchResultDTO submitEntity(PurchasePriceEntity entity) {
+        List<PurchasePriceEntity> list = Collections.singletonList(entity);
+
+        //校验附件信息
+        checkAttachment(entity.getId());
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -447,9 +449,11 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
             batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.PURCHASE_PRICE.getCode(), rejectPairList, "状态变更");
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
         }
 
-        return result;
     }
 
     /**
@@ -518,7 +522,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     /**
      * 取消流程
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-27 14:04
@@ -526,13 +530,13 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
-        List<PurchasePriceEntity> list = this.listByIds(ids);
+    public BatchResultDTO cancelProcessEntity(PurchasePriceEntity entity) {
         String approveIngStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
+        long count = Stream.of(entity).filter(s -> !s.getApproveStatus().getStatus().equals(approveIngStatus)).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
 
         //撤销现有流程
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -546,16 +550,16 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
 
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(waitSubmitStatus));
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(waitSubmitStatus));
         if (result) {
             String content = String.format("状态由[%s]变更为[%s] ", ApproveStatusEnum.APPROVE_ING.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
-            List<Pair<String, String>> pairList = list.stream().
+            List<Pair<String, String>> pairList = Stream.of(entity).
                     map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             batchAddModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), pairList, "取消流程");
-
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
         }
-
-        return result;
     }
 
 
@@ -1061,10 +1065,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     }
 
     @Override
-    public Boolean updateOutPlatformCode(List<String> ids, String outPlatformCode) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Boolean.TRUE;
-        }
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateOutPlatformCode(PurchasePriceEntity entity, String outPlatformCode) {
+        List<String> ids = Collections.singletonList(entity.getId());
         this.lambdaUpdate()
                 .in(PurchasePriceEntity::getId, ids)
                 .set(PurchasePriceEntity::getVoucherNo, outPlatformCode)
@@ -1073,7 +1076,7 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             String content = StrUtil.format("更新外部平台单号为：{}", outPlatformCode);
             moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), v, "更新外部平台单号");
         });
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
     }
 
     /**
@@ -1146,5 +1149,18 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                 dmpMqFeign.sendTask(resultList);
             }
         });
+    }
+
+    /**
+     * 校验附件必填
+     * @author will
+     * @date 2025/3/25 16:32
+     * @param bussinessId
+     */
+    private void checkAttachment (String bussinessId) {
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(bussinessId);
+        if (CollectionUtils.isEmpty(attachmentList)){
+            throw new ServiceException(ApiError.TIME_NOT_NULL,"附件信息");
+        }
     }
 }

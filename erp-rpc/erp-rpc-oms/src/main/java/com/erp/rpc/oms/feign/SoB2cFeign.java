@@ -4,6 +4,7 @@ import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
+import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.UpdateStateDTO;
@@ -678,11 +679,13 @@ public interface SoB2cFeign {
 
     /**
      * 同步速递云线上订单/配货单
+     *
      * @param soId
      * @param operateEnum
+     * @param sourceType
      */
     @GetMapping("feign/soB2c/syncSdyOrderHandler")
-    void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum);
+    void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum, @RequestParam("sourceType") String sourceType);
 
     /**
      * 同步销售出库单的单据日期
@@ -691,4 +694,20 @@ public interface SoB2cFeign {
      */
     @GetMapping("feign/soB2c/writeBackSoOutstockDate")
     void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate);
+    /**
+     * 销售订单审核
+     *
+     * @param dto
+     * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     **/
+    @PostMapping("feign/soB2c/approve")
+    List<BatchResultDTO> approve(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * 查询订单关联的拆分信息
+     **/
+    @PostMapping("feign/soB2c/getSplitCombination")
+    SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId);
 }

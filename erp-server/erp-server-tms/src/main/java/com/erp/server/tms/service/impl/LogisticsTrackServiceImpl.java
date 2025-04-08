@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.crypto.digest.DigestUtil;
@@ -14,6 +15,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.convert.TrackDataConverter;
 import com.erp.server.tms.mapper.LogisticsTrackMapper;
@@ -145,6 +147,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }
             String status = item.getStatus();
             String statusName = LogisticTrackStatusEnum.getName(status);
+            if (CharSequenceUtil.isBlank(statusName)){
+                FmLogisticTrackStatusEnum fmLogisticTrackStatusEnum = FmLogisticTrackStatusEnum.getNameByCode(status);
+                statusName = Objects.nonNull(fmLogisticTrackStatusEnum) ?fmLogisticTrackStatusEnum.getName() :CharSequenceUtil.EMPTY;
+            }
             item.setStatusName(statusName);
         }
         viewDTO.setList(resultList);
@@ -160,7 +166,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         }
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.platformToTrack(dto.getDetails());
         //设置唯一值
-        newList.forEach(e-> {e.setMd5(getDataMd5(e,dto.getTrackNo()));e.setTrackNo(dto.getTrackNo());});
+        newList.forEach(e-> {e.setTrackNo(dto.getTrackNo());e.setMd5(getDataMd5(e));});
         //增量数据库记录
         this.saveIncrementTrackData(dto.getTrackNo(), newList);
         //获取最新记录
@@ -182,7 +188,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             return;
         }
         String code = LogisticTrackStatusEnum.SYSTEM_COMPLETE.getCode();
-//        LocalDateTime trackTime = LocalDateTime.now();
         //集合分区
         List<List<String>> partition = Lists.partition(trackNoList, MathUtil.NUMBER_100);
         partition.forEach(e -> logisticsBillDetailService.batchUpdateTrackStatus(e,code,null, null));
@@ -202,7 +207,7 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         //数据转换
         List<LogisticsTrackEntity> newList = TrackDataConverter.INSTANCE.convertWebHookToEntity(trackingDetails);
         //设置唯一值
-        newList.forEach(e-> {e.setMd5(getDataMd5(e,trackNo));e.setTrackNo(trackNo);});
+        newList.forEach(e-> {e.setTrackNo(trackNo);e.setMd5(getDataMd5(e));});
         //获取最新记录
         LogisticsTrackEntity maxTrack = newList.stream().max(Comparator.comparing(LogisticsTrackEntity::getTrackTime)).orElse(null);
         //增量数据库记录
@@ -227,14 +232,12 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             }
         }
     }
-
     /**
      * 获取唯一值
      * @param trackingDetail
-     * @param trackNo
      * @return
      */
-    private String getDataMd5(LogisticsTrackEntity trackingDetail, String trackNo) {
+    private String getDataMd5(LogisticsTrackEntity trackingDetail) {
         String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
         return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
     }
@@ -244,6 +247,6 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
      * 新增修改处理数据
      */
     private void handleData(LogisticsTrackEntity logisticsTrackEntity) {
-        
+        logisticsTrackEntity.setMd5(getDataMd5(logisticsTrackEntity));
     }
 }

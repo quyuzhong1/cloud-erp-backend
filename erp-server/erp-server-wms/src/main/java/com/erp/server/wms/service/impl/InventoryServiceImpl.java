@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -11,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -60,7 +60,6 @@ import org.apache.poi.xssf.usermodel.XSSFCellStyle;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -74,7 +73,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY_AGE;
 
 /**
  * @Classname: InventoryServiceImpl
@@ -472,13 +472,34 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<InventoryDTO.PagingViewDTO> pageData = new Page<>();
-        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
+        AdvanceQueryDTO advanceQueryDTO = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
+        if (null == advanceQueryDTO){
+            ServiceException.runError("advanceQueryDTOList.field=dimension不能为空");
+        }
+        pagingParamDTO.getParams().setDimension(advanceQueryDTO.getValue().toString());
+        if (InventorySearchDimensionEnum.WAREHOUSE.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            // 检查不支持库区
+            boolean hasAreaName = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().anyMatch(e -> "wl.area_name".equalsIgnoreCase(e.getField()));
+            if (hasAreaName){
+                ServiceException.runError("【按仓库】不支持库区查询");
+            }
+            List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
+            pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             pageData = this.baseMapper.page(query, pagingParamDTO.getParams());
         }
-        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode())) {
+        if (InventorySearchDimensionEnum.WAREHOUSE_AREA.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
+            pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             pageData = this.baseMapper.pageByArea(query, pagingParamDTO.getParams());
         }
-        if (pagingParamDTO.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode())) {
+        if (InventorySearchDimensionEnum.WAREHOUSE_LOCATION.getCode().equalsIgnoreCase(pagingParamDTO.getParams().getDimension())) {
+            // 检查不支持库区
+            boolean hasAreaName = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().anyMatch(e -> "wl.area_name".equalsIgnoreCase(e.getField()));
+            if (hasAreaName){
+                ServiceException.runError("【按仓位】不支持库区查询");
+            }
+            List<AdvanceQueryDTO> newQuery = pagingParamDTO.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).collect(Collectors.toList());
+            pagingParamDTO.getParams().setAdvanceQueryDTOList(newQuery);
             if(CharSequenceUtil.isNotBlank(pagingParamDTO.getParams().getWarehouseLocationName())){
                 List<WarehouseLocationEntity> list = warehouseLocationService.listByLocationName(pagingParamDTO.getParams().getWarehouseLocationName());
                 if(!list.isEmpty()){
@@ -1314,6 +1335,11 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     public PagingVO<InventoryDTO.PagingViewDTO> getInventoryPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         // 如果是否选导出处理
         dealExportParams(dto.getParams());
+        AdvanceQueryDTO advanceQueryDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(e -> "dimension".equalsIgnoreCase(e.getField())).findFirst().orElse(null);
+        if (null == advanceQueryDTO){
+            ServiceException.runError("advanceQueryDTOList.field=dimension不能为空");
+        }
+        dto.getParams().setDimension(advanceQueryDTO.getValue().toString());
         InventoryDTO.SearchParamDTO searchParamDTO = BeanMapperUtils.map(InventoryDTO.SearchParamDTO.class, dto.getParams());
         Page<InventoryDTO.PagingViewDTO> dataList = new Page<>(dto.getPage(), dto.getPageSize());
         if (dto.getParams().getDimension().equals(InventorySearchDimensionEnum.WAREHOUSE.getCode())) {
@@ -1414,9 +1440,26 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         List<LinkedHashMap> resultList = fillInventoryAgePageData(page.getRecords(), userRangeList);
         LinkedHashMap headMap = (LinkedHashMap) resultList.get(0).get("head");
         List<LinkedHashMap<String ,Object>> convertDataList = (List<LinkedHashMap<String ,Object>>) resultList.get(0).get("data");
+        List<LinkedHashMap<String ,Object>> lastDataList = new LinkedList<>();
+        for (LinkedHashMap<String, Object> data : convertDataList) {
+            LinkedHashMap<String, Object> sortedData = new LinkedHashMap<>();
+            // 按照指定的顺序插入字段
+            sortedData.put("skuNo", data.get("skuNo"));
+            sortedData.put("productName", data.get("productName"));
+            sortedData.put("spuNo", data.get("spuNo"));
+            sortedData.put("saleStateName", data.get("saleStateName"));
+            sortedData.put("warehouseName", data.get("warehouseName"));
+            sortedData.put("orgName", data.get("orgName"));
+            sortedData.put("warehouseLocation", data.get("warehouseLocation"));
+            sortedData.put("realInventory", data.get("realInventory"));
+            sortedData.put("usableInventory", data.get("usableInventory"));
+            sortedData.put("1-2天", data.get("1-2天"));
+            sortedData.put("2天以上", data.get("2天以上"));
+            lastDataList.add(sortedData);
+        }
         DynamicExcelDTO excelDTO = new DynamicExcelDTO();
         excelDTO.setHeaders(headMap);
-        excelDTO.setData(convertDataList);
+        excelDTO.setData(lastDataList);
         return new PagingVO<>(Collections.singletonList(excelDTO), (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
@@ -1426,5 +1469,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             return new ArrayList<>();
         }
         return lambdaQuery().eq(InventoryEntity::getWarehouseId, warehouseId).lt(InventoryEntity::getQty,0).list();
+    }
+
+    @Override
+    public List<InventoryEntity> listInventoryBySkuNos(List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().select(InventoryEntity::getId,InventoryEntity::getSkuId,InventoryEntity::getSkuNo, InventoryEntity::getQty,
+                        InventoryEntity::getWarehouseId,InventoryEntity::getDictInventoryStatus, InventoryEntity::getWarehouseLocation)
+                .in(InventoryEntity::getSkuNo, skuNoList).list();
     }
 }

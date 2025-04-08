@@ -274,6 +274,12 @@ public class VirtualTransFlowDTO implements Serializable {
         private LocalDate billDate;
 
         /**
+         * 交易时间
+         */
+        private LocalDateTime tradeTime;
+
+
+        /**
          * sku id
          */
         private String skuId;

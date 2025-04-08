@@ -45,8 +45,6 @@ public class BaseDropDownDTO implements Serializable {
          * 值
          */
         private String value;
-
-
     }
 
 
@@ -57,6 +55,7 @@ public class BaseDropDownDTO implements Serializable {
          * 编码
          */
         private String code;
+        private String type;
         /**
          * 值
          */
@@ -89,6 +88,8 @@ public class BaseDropDownDTO implements Serializable {
          * 启用/禁用
          */
         private Boolean disabled;
+
+        private String type;
         public DisabledDTO(String code, String value, Boolean disabled) {
             this.setCode(code);
             this.setValue(value);

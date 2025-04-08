@@ -1,7 +1,6 @@
 package com.erp.model.wms.dto;
 
 import cn.hutool.json.JSONObject;
-import com.erp.model.wms.entity.VirtualTransFlowEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -91,11 +90,6 @@ public class WmsVirtualDetailMsgDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 流水数据
-        */
-        private VirtualTransFlowEntity transFlowEntity;
-
-        /**
         * 备注
         */
         @NotBlank(message = "备注不能为空")
@@ -126,11 +120,51 @@ public class WmsVirtualDetailMsgDTO implements Serializable {
     public static class ParamDTO {
         /**
          * 业务id
-         * @author will
-         * @date 2024/12/27 18:10
-         * @param null
-         * @return null
          */
         private List<String> businessIdList;
+    }
+
+
+    /**
+     * 列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 操作时间
+         */
+        private LocalDateTime tradeTime;
+
+        /**
+         * waitHandle待处理，success成功，fail失败，doing进行中
+         */
+        private String status;
+
+        /**
+         * 业务id
+         */
+        private String businessId;
+        /**
+         * sku
+         */
+        private String skuId;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
     }
 }

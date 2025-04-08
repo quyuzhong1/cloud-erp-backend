@@ -747,14 +747,14 @@ public class ReplenishmentResultDTO {
             return entity;
         }
 
-        public static FbaInTransitDetailDTO buildFbaInTransitDetailDTO(ReplenishmentInventoryDTO.FbaInTransitDTO fbaInTransitDTO, CfgRuleStockUpDTO.StrategyResultDTO stockUpResult, String calcVersion) {
+        public static FbaInTransitDetailDTO buildFbaInTransitDetailDTO(ReplenishmentInventoryDTO.FbaInTransitDTO fbaInTransitDTO, CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult, String calcVersion) {
             FbaInTransitDetailDTO dto = new FbaInTransitDetailDTO();
             dto.setSourceId(fbaInTransitDTO.getSourceId());
             dto.setSourceCode(fbaInTransitDTO.getSourceCode());
             dto.setSourceType(fbaInTransitDTO.getSourceType());
             dto.setStatus(fbaInTransitDTO.getStatus());
             dto.setDeliveryDate(fbaInTransitDTO.getDeliveryDate());
-            dto.setEstimateSalesDate(fbaInTransitDTO.getEstimateSalesDate().plusDays(stockUpResult.getLogisticsResult().getLogisticsDays()).plusDays(stockUpResult.getInstockDays()));
+            dto.setEstimateSalesDate(fbaInTransitDTO.getEstimateSalesDate().plusDays(expireTimeResult.getLogisticsResult().getLogisticsDays()).plusDays(expireTimeResult.getInstockDays()));
             dto.setDeclareQty(fbaInTransitDTO.getDeclareQty());
             dto.setDeliveryQty(fbaInTransitDTO.getDeliveryQty());
             dto.setReceiveQty(fbaInTransitDTO.getReceiveQty());
@@ -1291,6 +1291,14 @@ public class ReplenishmentResultDTO {
             dto.setPercentJson(formulaResult.getPercentJson());
             return dto;
         }
+
+        public static SalesEstimateDTO buildSalesEstimateDTO(LocalDate calcDate, BigDecimal saleQty) {
+            SalesEstimateDTO dto = new SalesEstimateDTO();
+            dto.setDate(calcDate);
+            dto.setSalesQty(saleQty);
+            dto.setMonth(calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            return dto;
+        }
     }
 
     @Getter
@@ -1667,11 +1675,6 @@ public class ReplenishmentResultDTO {
         private JSONArray channelIdJson;
 
         /**
-         * 库存分配类型
-         */
-        private String inventoryAllocateType;
-
-        /**
          * 总数量
          */
         private Integer totalQty;
@@ -1701,12 +1704,10 @@ public class ReplenishmentResultDTO {
             entity.setWarehouseType(dto.getWarehouseType());
             entity.setChannelType(dto.getChannelType());
             entity.setChannelIdJson(dto.getChannelIdJson());
-            entity.setInventoryAllocateType(dto.getInventoryAllocateType());
             entity.setTotalQty(dto.getTotalQty());
             entity.setPlatformQty(dto.getPlatformQty());
             entity.setCalcVersion(calcVersion);
             entity.setSourceType(dto.getSourceType());
-            entity.setDictPlatform(dto.getDictPlatform());
             return entity;
         }
 
@@ -1719,7 +1720,6 @@ public class ReplenishmentResultDTO {
             dto.setWarehouseType(result.getWarehouseType());
             dto.setChannelType(result.getChannelType());
             dto.setChannelIdJson(result.getChannelIdJson());
-            dto.setInventoryAllocateType(result.getInventoryAllocateType());
             dto.setTotalQty(inventoryDTO.getQty());
             dto.setSourceType(inventoryDTO.getSourceType());
             dto.setPlatformQty(platformQty);

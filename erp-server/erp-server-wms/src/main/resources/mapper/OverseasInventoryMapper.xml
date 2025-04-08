@@ -86,7 +86,8 @@
         </if>
         <!--不显示0库存-->
         <if test="params.hasNotZero !=null and params.hasNotZero ">
-            AND (oi.deliver_onway_qty > 0
+            AND (
+            oi.deliver_onway_qty > 0
             OR oi.pending_qty > 0
             OR oi.sellable_qty > 0
             OR oi.unsellable_qty > 0
@@ -94,7 +95,9 @@
             OR oi.onway_qty > 0
             OR oi.lack_qty > 0
             OR oi.frozen_qty > 0
-            OR oi.shipped_qty > 0)
+            OR oi.shipped_qty > 0
+            OR oi.sale_return_in_transit_qty > 0
+            )
         </if>
 
         <!--权限-->
@@ -113,7 +116,7 @@
         opw.is_deleted = false AND opw.disabled = false AND
     </sql>
     <sql id="where_sql">
-        oi.is_deleted = false	AND ( ( op.auth_status = 'already' ) OR ( oi.dict_platform = 'AliExpress' ) )
+        ${params.sqlMap.default} and oi.is_deleted = false	AND ( ( op.auth_status = 'already' ) OR ( oi.dict_platform = 'AliExpress' ) )
         <if test="params.skuNoList!=null and params.skuNoList.size > 0">
             AND oi.sku_no IN
             <foreach collection="params.skuNoList" item="skuNo" open="(" separator="," close=")">
@@ -167,7 +170,6 @@
         <!--不显示0库存-->
         <if test="params.hasNotZero !=null and params.hasNotZero ">
             AND (
-            (
             oi.deliver_onway_qty > 0
             OR oi.pending_qty > 0
             OR oi.sellable_qty > 0
@@ -177,8 +179,8 @@
             OR oi.lack_qty > 0
             OR oi.frozen_qty > 0
             OR oi.shipped_qty > 0
-            )
-            OR ( oi.dict_platform = 'AliExpress' )
+            OR oi.shipped_qty > 0
+            OR oi.sale_return_in_transit_qty > 0
             )
         </if>
         <!--权限-->
@@ -196,7 +198,7 @@
     <select id="paging" resultType="com.erp.model.wms.dto.OverseasInventoryDTO$ListDTO">
         SELECT
         oi.id,
-        oi.create_time,
+        oi.create_time as createTime,
         oi.update_time as updateTime,
         oi.create_user_name,
         oi.create_user_id,
@@ -238,7 +240,7 @@
         INNER JOIN warehouse_mapping wm ON w.ID = wm.warehouse_id
         AND wm.is_deleted = FALSE
         WHERE
-        w.is_deleted = FALSE
+            w.is_deleted = FALSE
         AND wm.dict_Platform = 'AliExpress') as w  on oi.NAME = w.thirdWarehouseName and oi.dict_platform = 'AliExpress'
         <where>
             <include refid="where_sql"/>
@@ -311,7 +313,7 @@
         INNER JOIN warehouse_mapping wm ON w.ID = wm.warehouse_id
         AND wm.is_deleted = FALSE
         WHERE
-        w.is_deleted = FALSE
+            w.is_deleted = FALSE
         AND wm.dict_Platform = 'AliExpress') as w  on oi.NAME = w.thirdWarehouseName and oi.dict_platform = 'AliExpress'
         <where>
             <include refid="where_sql"/>

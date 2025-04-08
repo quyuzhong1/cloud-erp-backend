@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -7,11 +9,11 @@ import com.common.business.dto.WalmartShipDTO;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -19,9 +21,10 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -180,13 +183,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO getLogisticsCode(String id, Boolean isDelivery);
     /**
+     * @param id
+     * @param channelId
+     * @return BatchResultDTO
      * @description: 提交发货
      * @author Will
      * @date: 2023/8/18 16:49
-     * @param id
-     * @return BatchResultDTO
      */
-    BatchResultDTO submitDelivery(String id);
+    BatchResultDTO submitDelivery(String id, String channelId);
     /**
      * @description: 发货拦截
      * @author Will
@@ -250,23 +254,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
-    /**
-     * 报表管理 销售统计
-     * @author yl
-     * @date 2023-09-01 11:19
-     * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
-     */
-    PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
 
-    /**
-     * 导出 销售统计
-     * @author yl
-     * @date 2023-09-04 16:39
-     * @param dto
-     * @return java.lang.Boolean
-     */
-    Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO dto);
     /**
      * @description: 查看财务信息
      * @author Will
@@ -900,17 +888,21 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 校验是否缺货状态
+     *
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
      * @param skuId
      * @param warehouseId
      * @param qty
+     * @param skuMappingDTOList
+     * @param warehouseList
+     * @param bomChildrenSkuDTOList
      * @return
      */
     Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
                             List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
-                            String skuId, String warehouseId, Integer qty);
+                            SoB2cDetailEntity soDetailEntity, String warehouseId, Integer qty, List<ListingInfoWithSkuMappingDTO> skuMappingDTOList, List<WarehouseDTO.UpdateDTO> warehouseList, List<BomChildrenSkuDTO> bomChildrenSkuDTOList);
 
 
     void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration,Boolean isUpdateTransferStatus);
@@ -971,11 +963,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(PagingDTO<SoB2cDTO.ExportParamDTO> dto);
 
     /**
-     * 导出销售额
-     * @param dto 参数
-     */
-    PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
-    /**
      * 查询所有虚拟仓B2C销售订单数据
      * @author will
      * @date 2024/9/26 17:11
@@ -1032,14 +1019,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void updateOverEstimatedShipCost(String b2cSoId, Boolean isOverEstimatedShipCost);
 
-    /**
-     * 同步数帝云
-     * @param soId
-     * @param operateEnum
-     */
-    void syncSdyOrderHandler(String soId, String operateEnum);
-
-    List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset);
+    List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset, List<String> platformList);
     /**
      * 同步销售出库单的单据日期
      * @param soId
@@ -1048,4 +1028,33 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void writeBackSoOutstockDate(String soId, String soOutstockDate);
 
     String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
+
+    /**
+     * 获取物流面单
+     *
+     * @param entity
+     * @param soB2cLogisticsEntity
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+
+    /**
+     * 销售统计
+     */
+    IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    /**
+     * 销售统计导出查询
+     */
+    Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    /**
+     * 根据店铺更新未配置vat的订单
+     *
+     * @param shopId
+     * @param enableTime
+     * @param vatInvoiceStatus
+     * @return
+     */
+    void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 }

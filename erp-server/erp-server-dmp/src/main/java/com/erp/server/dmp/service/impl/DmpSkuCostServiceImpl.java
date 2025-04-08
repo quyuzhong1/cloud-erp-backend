@@ -1,23 +1,23 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.RedisService;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RedisKeyConstant;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -27,18 +27,21 @@ import com.erp.server.dmp.mapper.DmpSkuCostMapper;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSkuCostCustomService;
 import com.erp.server.dmp.service.DmpSkuCostService;
-import com.common.business.service.impl.SuperServiceImpl;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -56,6 +59,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
+    @Autowired
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
@@ -73,6 +77,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
 
     @Resource
     private DictBasicService dictBasicService;
+
     /**
      * 同步采购单sku成本信息
      * @Author Luo_WG
@@ -180,10 +185,70 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
     @Override
     public List<DmpSkuCostEntity> listRedisBySkuNoList (List<String> skuNoList) {
         if (CollectionUtils.isEmpty(skuNoList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
+        }
+        //根据sku编码查询bom数据
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuNos(skuNoList);
+
+        List<String> allSkuIdList = new ArrayList<>(skuNoList);
+        if (CollUtil.isNotEmpty(bomChildrenSkuList)) {
+            List<String> childSkuNoList = bomChildrenSkuList.stream().distinct().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
+            allSkuIdList.addAll(childSkuNoList);
+        }
+        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildrenSkuList.stream()
+                .collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
+
+        List<DmpSkuCostEntity> childDmpSkuCostList = getChildDmpSkuCostEntity(allSkuIdList);
+        if (CollUtil.isEmpty(childDmpSkuCostList)) {
+            return Collections.emptyList();
+        }
+        Map<String, DmpSkuCostEntity> costMap = childDmpSkuCostList.stream()
+                .collect(Collectors.toMap(DmpSkuCostEntity::getSkuNo,Function.identity()));
+
+        List<DmpSkuCostEntity> returnList = new ArrayList<>();
+        for (String skuNo : skuNoList) {
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomMap.get(skuNo);
+            //非组合品
+            if (CollUtil.isEmpty(bomChildrenSkuDTOS)) {
+                DmpSkuCostEntity thisCostEntity = costMap.get(skuNo);
+                if (ObjectUtil.isNotEmpty(thisCostEntity)) {
+                    returnList.add(thisCostEntity);
+                }
+                continue;
+            }
+            //组合品
+            DmpSkuCostEntity parentCostEntity = new DmpSkuCostEntity();
+            BigDecimal totalCost = BigDecimal.ZERO;
+            BigDecimal totalNotTaxCost = BigDecimal.ZERO;
+            for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuDTOS) {
+                DmpSkuCostEntity childCostEntity = costMap.get(childrenSkuDTO.getSkuNo());
+                //含税成本
+                BigDecimal childCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(childCostEntity.getCostPrice(), childrenSkuDTO.getQuantity());
+                totalCost = totalCost.add(childCost);
+                //不含税成本
+                BigDecimal childNotTaxCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(childCostEntity.getNotTaxCostPrice(), childrenSkuDTO.getQuantity());
+                totalNotTaxCost = totalNotTaxCost.add(childNotTaxCost);
+            }
+            parentCostEntity.setCostPrice(totalCost);
+            parentCostEntity.setNotTaxCostPrice(totalNotTaxCost);
+            parentCostEntity.setSkuId(bomChildrenSkuDTOS.get(0).getParentSkuId());
+            parentCostEntity.setSkuNo(skuNo);
+            returnList.add(parentCostEntity);
+        }
+        return returnList;
+    }
+
+    /**
+     * 查询子级sku的成本
+     * @param skuNoList
+     * @return
+     */
+    private List<DmpSkuCostEntity> getChildDmpSkuCostEntity (List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            return Collections.emptyList();
         }
         //sku编码去重
-       List<String> distSkuNoList = skuNoList.stream().distinct().collect(Collectors.toList());
+        List<String> distSkuNoList = skuNoList.stream().distinct().collect(Collectors.toList());
 
         //返回结果集
         List<DmpSkuCostEntity> resultList = new ArrayList<>();

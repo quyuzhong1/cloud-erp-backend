@@ -1,4 +1,5 @@
 package com.erp.server.wms.service;
+
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -111,7 +112,7 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param deliveryDetailIdList
      * @return List<VirtualTransFlowEntity>
      */
-    List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList);
+    List<VirtualTransFlowEntity> listBySourceIdList(List<String> deliveryDetailIdList);
     /**
      * 查询虚拟仓即时库存id
      * @author will
@@ -170,4 +171,12 @@ public interface VirtualTransFlowService extends SuperService<VirtualTransFlowEn
      * @param remark
      */
     void updateRemark(String id, String remark);
+    /**
+     *
+     * @Auther will
+     * @Date 2025/2/12 09:40
+     * @param entity
+     * @return VirtualTransFlowEntity
+     */
+    VirtualTransFlowEntity getUnApprovedTxnFlowBySource(VirtualTransFlowEntity entity);
 }

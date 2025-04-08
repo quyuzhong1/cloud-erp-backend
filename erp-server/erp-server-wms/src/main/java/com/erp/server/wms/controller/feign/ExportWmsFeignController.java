@@ -164,7 +164,8 @@ public class ExportWmsFeignController {
     @Resource
     private VirtualTransFlowDetailService virtualTransFlowDetailService;
 
-
+    @Resource
+    private VirtualWarehouseService virtualWarehouseService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -575,7 +576,7 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/stocktakingTaskDetail")
-    public PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(@RequestBody PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(@RequestBody PagingDTO<StocktakingTaskDTO.BaseIdDTO> dto) {
         return stocktakingTaskDetailService.exportStocktakingTaskDetail(dto);
     }
 
@@ -767,7 +768,7 @@ public class ExportWmsFeignController {
     @PostMapping("/exportFirstMileProcessing")
     @WebAdvanceQuery
     public PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(@RequestBody PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto){
-        return firstMileProcessingService.paging(dto);
+        return firstMileProcessingService.exportPaging(dto);
     }
 
     /**
@@ -822,5 +823,14 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(@RequestBody PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto){
         return fbaTransitCalculateReportService.paging(dto);
+    }
+
+    /**
+     * 导出虚拟仓库设置
+     */
+    @PostMapping("/exportVirtualWarehouse")
+    @WebAdvanceQuery
+    public PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(@RequestBody PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto){
+        return virtualWarehouseService.exportVirtualWarehouse(dto);
     }
 }

@@ -51,11 +51,15 @@ import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.sys.feign.KingdeeFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.*;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.kingdee.SyncKingdeeCustomerService;
 import com.erp.server.oms.mapper.CustomerInfoMapper;
@@ -101,6 +105,11 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_CUSTOMER;
 @Slf4j
 public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper, CustomerInfoEntity> implements CustomerInfoService {
 
+    @Resource
+    private CommonService commonService;
+
+    @Resource
+    private SysDictFeign sysDictFeign;
 
     @Resource
     private CustomerContactService customerContactService;
@@ -129,6 +138,9 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     private SysUserFeign sysUserFeign;
 
     @Resource
+    private UserInfoFeign userInfoFeign;
+
+    @Resource
     private SyncKingdeeCustomerService syncKingdeeCustomerService;
 
 
@@ -154,6 +166,11 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
     @Resource
     private KingdeeFeign kingdeeFeign;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
+
+    @Resource
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
     /**
      * 获取到分组的id 集合
      *
@@ -442,10 +459,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         all.setSearchType(SearchType.ALL);
         resultList.add(all);
         //待审核
-        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
         CustomerDTO.TabListDTO waitApprove = new CustomerDTO.TabListDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        //需要审核的业务ids
+        List<String> businessIds = commonService.listProcessCurBusinessIds(SourceTypeEnum.CUSTOMER_INFO.getCode());
+        int waitApproveCount = 0;
+        if(CollectionUtils.isNotEmpty(businessIds)){
+            List<CustomerInfoEntity> customerInfoEntities = this.listByIds(businessIds);
+            customerInfoEntities = customerInfoEntities.stream().filter(v->v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)).collect(Collectors.toList());
+            waitApproveCount = customerInfoEntities.size();
+        }
         waitApprove.setCount(waitApproveCount);
         waitApprove.setSearchType(SearchType.WAIT_APPROVE);
         resultList.add(waitApprove);
@@ -512,7 +534,13 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(countryList)){
             countryMap = countryList.stream().collect(Collectors.toMap(DictCountryDTO.ListDTO::getId, DictCountryDTO.ListDTO::getNameCn));
         }
+        //销售部门id
+        List<String> salesDeptIdList = list.stream().map(CustomerDTO.PagingViewDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
         for (CustomerDTO.PagingViewDTO item : list) {
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             ApproveStatusEnum approveStatus = item.getApproveStatus();
             item.setApproveStatusName(approveStatus.getName());
             String groupId = item.getGroupId();
@@ -597,7 +625,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         view.setAreaName(areaName);
         view.setSubregionName(subregionName);
         if(CharSequenceUtil.isNotBlank(view.getSellerId())){
-            SysUserDTO user = sysUserFeign.getSysUserById(view.getSellerId());
+            SysUserInfoEntity user = userInfoFeign.info(view.getSellerId());
             view.setSellerName(Objects.nonNull(user) ? user.getRealName() : CharSequenceUtil.EMPTY);
         }
         if (CharSequenceUtil.isNotBlank(customer.getSalesDeptId())){
@@ -672,6 +700,10 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         String code = customer.getCode();
 
+        if(!customer.getCountryId().equals(dto.getCountryId()) &&
+                (customer.getPlatformType().equals(PlatformDictEnum.AMAZON.getCode()) ||customer.getPlatformType().equals(PlatformDictEnum.SHOPEE.getCode()) )){
+            throw new ServiceException("B2B客户平台归属为shopee和亚马逊时，国家字段不允许修改");
+        }
         //旧的
         CustomerInfoEntity old = new CustomerInfoEntity();
 
@@ -723,7 +755,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         
         shopInfoService.lambdaUpdate()
 	        .eq(ShopInfoEntity::getCustomerId, id)
-	        .set(ShopInfoEntity::getDictCountryCode, customer.getCountryId())
+//	        .set(ShopInfoEntity::getDictCountryCode, customer.getCountryId())
 	        .set(ShopInfoEntity::getDictAreaCode, FeignQuery.getById(DictCountryEntity.class, customer.getCountryId()).getRegionCode())
 	        .set(ShopInfoEntity::getSettlementCurrency, customer.getCurrency())
 	        .set(ShopInfoEntity::getTradeCurrency, customer.getTradeCurrency())
@@ -847,6 +879,20 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             customerSellerService.batchSellerHistory(list, LocalDate.now());
             //发送金蝶
             sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            List<String> countryIdList = list.stream().map(CustomerInfoEntity::getCountryId).collect(Collectors.toList());
+            List<DictCountryEntity> countryList = sysDictFeign.listCountryByIds(countryIdList);
+            list.forEach(customer->{
+                DictCountryEntity dictCountryEntity = countryList.stream().filter(d -> d.getId().equals(customer.getCountryId())).findFirst().orElse(null);
+                if(Objects.nonNull(dictCountryEntity)){
+                    shopInfoService.lambdaUpdate()
+                            .eq(ShopInfoEntity::getCustomerId, customer.getId())
+                            .set(ShopInfoEntity::getDictCountryCode, customer.getCountryId())
+                            .set(ShopInfoEntity::getCountryName, dictCountryEntity.getNameCn())
+                            .update();
+                }
+
+            });
+
         }
 
         return Boolean.TRUE;
@@ -2204,8 +2250,14 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
         if(CollectionUtils.isNotEmpty(customerCategoryList)){
             customerCategoryMap = customerCategoryList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
         }
+        //销售部门id
+        List<String> salesDeptIdList = records.stream().map(CustomerDTO.PagingExportDTO::getSalesDeptId).distinct().collect(Collectors.toList());
+        List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(salesDeptIdList);
 
         for (CustomerDTO.PagingExportDTO item : records) {
+            String deptName = departmentList.stream().filter(d -> d.getId().equals(item.getSalesDeptId())).
+                    map(SysDepartmentEntity::getName).findFirst().orElse("");
+            item.setSalesDeptName(deptName);
             Boolean disabled = item.getDisabled();
             String disabledName = disabled ? "停用" : "启用";
             item.setDisabledName(disabledName);
@@ -2321,5 +2373,33 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
         }
 
+    }
+
+    @Override
+    public VirtualWarehouseDTO.VwDTO getVirtualWarehouseByCustomerId(CustomerDTO.VirtualDTO dto) {
+        CustomerInfoEntity customerInfoEntity = this.getById(dto.getCustomerId());
+        if (null == customerInfoEntity){
+            return new VirtualWarehouseDTO.VwDTO();
+        }
+        if(StringUtils.isNotBlank(customerInfoEntity.getCountryId()) ){
+            String country = customerInfoEntity.getCountryId();
+            String partitionId = sysPartitionFeign.getPartitionByCountry(country);
+            VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+            platformDTO.setDictPlatform(customerInfoEntity.getPlatformType());
+            platformDTO.setWarehouseIdList(Arrays.asList(dto.getWarehouseId()));
+            platformDTO.setRelationId("");
+            platformDTO.setPartitionId(partitionId);
+            List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+            if (CollectionUtils.isEmpty(virtualWarehouseList)) {
+                return new VirtualWarehouseDTO.VwDTO();
+            }
+            VirtualWarehouseRelationEntity virtualWarehouseRelationEntity = virtualWarehouseList.get(0);
+            List<VirtualWarehouseEntity> virtualWarehouseEntities = wmsVirtualWarehouseFeign.listByIds(Arrays.asList(virtualWarehouseRelationEntity.getVirtualWarehouseId()));
+            if(CollectionUtils.isNotEmpty(virtualWarehouseEntities)){
+                VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntities.get(0);
+                return new VirtualWarehouseDTO.VwDTO(virtualWarehouseEntity.getId(),virtualWarehouseEntity.getDisabled(),virtualWarehouseEntity.getCode(),virtualWarehouseEntity.getName());
+            }
+        }
+        return new VirtualWarehouseDTO.VwDTO();
     }
 }

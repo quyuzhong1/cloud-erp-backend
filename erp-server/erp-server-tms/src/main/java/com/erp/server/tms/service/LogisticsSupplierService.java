@@ -88,6 +88,7 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
      * @return List<DisabledDTO>
      */
     List<BaseDropDownDTO.DisabledDTO> listAll(Boolean filterDisabled);
+    List<BaseDropDownDTO.DisabledDTO> listAllShort(Boolean filterDisabled);
 
     /**
      * 更改启用禁用状态
@@ -124,6 +125,8 @@ public interface LogisticsSupplierService extends SuperService<LogisticsSupplier
     LogisticsSupplierDTO.ViewDTO detail(String id);
 
     List<LogisticsSupplierEntity> listByName(List<String> supplierNameList);
+
+    List<LogisticsSupplierEntity> listByShortName(List<String> shortSupplierNameList);
 
     PagingVO<LogisticsSupplierDTO.PagingViewDTO> exportLogisticsSupplier(PagingDTO<LogisticsSupplierDTO.ExportDTO> dto);
 

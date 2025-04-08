@@ -152,10 +152,18 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         dto.setFirstTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setFirstOtherTaxFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setFirstOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+        dto.setFirstOrgId(CharSequenceUtil.EMPTY);
+        dto.setFirstWarehouseId(CharSequenceUtil.EMPTY);
 
         dto.setPackageShippingCost(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
         dto.setPackageTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setPackageOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+        dto.setPackageOrgId(CharSequenceUtil.EMPTY);
+        dto.setPackageWarehouseId(CharSequenceUtil.EMPTY);
+
+        dto.setTransferTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
+        dto.setTransferOrgId(CharSequenceUtil.EMPTY);
+        dto.setTransferWarehouseId(CharSequenceUtil.EMPTY);
         return dto;
     }
 

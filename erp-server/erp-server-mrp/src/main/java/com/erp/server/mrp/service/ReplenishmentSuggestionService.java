@@ -8,9 +8,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.vo.*;
 
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -135,16 +137,25 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
     BatchResultDTO restoreReplenishment(String id, String replenishmentRemark);
 
     /**
+     * 批量暂不补货
+     *
+     * @param ids                 建议id
+     * @param replenishmentRemark 备注
+     */
+    void batchRestockingReplenishment(List<String> ids, String replenishmentRemark);
+
+    /**
      * 批量设置规则
      *
      * @param id
      * @param stockUpUpdateDTO
      * @param salesQtyUpdateDTO
+     * @param isBatch
      * @return BatchResultDTO
      * @author will
      * @date 2024/8/29 15:57
      */
-    BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO);
+    BatchResultDTO batchUpdateRule(String id, CfgRuleStockUpDTO.CustomUpdateDTO stockUpUpdateDTO, CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO, Boolean isBatch);
 
     /**
      * 恢复规则设置
@@ -324,22 +335,20 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * 查询需要计算的数据
      *
      * @param platformType    平台
-     * @param salesQtyType    计算类型
-     * @param orderType       订单类型
+     * @param cfgRuleSalesQtyList    销量配置
      * @param calculationDate 计算日
      */
-    List<ReplenishmentResultDTO> listAllCalculationData(String platformType, String salesQtyType, JSONArray orderType, LocalDate calculationDate);
+    List<ReplenishmentResultDTO> listAllCalculationData(String platformType, List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList, LocalDate calculationDate);
 
     /**
      * 根据数据类型和订单类型查询历史销量
      *
-     * @param replenishmentIds 建议主表id
-     * @param salesQtyType     销量数据类型
-     * @param orderType        订单类型
+     * @param suggestionList 建议主表id
+     * @param cfgRuleSalesQtyList        订单类型
      * @param startDate        开始时间
      * @param endDate          结束时间
      */
-    List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<String> replenishmentIds, String salesQtyType, JSONArray orderType, LocalDate startDate, LocalDate endDate);
+    List<ReplenishmentResultDTO.SalesHistoryDTO> listSalesHistory(List<ReplenishmentSuggestionEntity> suggestionList, List<CfgRuleSalesQtyEntity> cfgRuleSalesQtyList, LocalDate startDate, LocalDate endDate);
 
     /**
      * 根据数据类型和订单类型查询历史销量
@@ -435,4 +444,18 @@ public interface ReplenishmentSuggestionService extends SuperService<Replenishme
      * @param dto 参数
      */
     ReplenishmentSuggestionDTO.ExportResultDTO exportSuggestCalcData(BaseIdDTO dto);
+
+    /**
+     * 通过店铺和sku查询建议id
+     * @param shopIdList 店铺id
+     * @param skuIdList  skuid
+     */
+    List<ReplenishmentSuggestionEntity> listByShopIdAndSkuId(List<String> shopIdList, List<String> skuIdList);
+
+    /**
+     * 临时导出
+     * @param exportSalesDTO 导出
+     * @param response 响应
+     */
+    void exportSales(ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response);
 }

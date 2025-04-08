@@ -6,11 +6,10 @@ import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
@@ -20,6 +19,7 @@ import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -68,6 +68,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cSplitService soB2cSplitService;
+
+    @Resource
+    private SyncSoB2cService syncSoB2cService;
 
 
     /**
@@ -889,8 +892,16 @@ public class SoB2cFeignController extends BaseController {
      * @param operateEnum
      */
     @GetMapping("/syncSdyOrderHandler")
-    public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum) {
-        soB2cService.syncSdyOrderHandler(soId, operateEnum);
+    public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum, @RequestParam("sourceType") String sourceType) {
+        SoB2cEntity soB2cEntity = this.getById(soId);
+        if (null == soB2cEntity){
+            ServiceException.runError("未找到B2C销售订单:{}", soId);
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
+        if (CollectionUtils.isEmpty(soB2cDetailEntityList)){
+            ServiceException.runError("未找到B2C销售订单明细:{}", soId);
+        }
+        syncSoB2cService.syncSdyOrderHandler(soB2cEntity, soB2cDetailEntityList, operateEnum, sourceType);
     }
 
     /**
@@ -901,5 +912,35 @@ public class SoB2cFeignController extends BaseController {
     @GetMapping("/writeBackSoOutstockDate")
     public void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate) {
         soB2cService.writeBackSoOutstockDate(soId, soOutstockDate);
+    }
+
+    /**
+     * 销售订单审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/approve")
+    public List<BatchResultDTO> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            try {
+                resultDTOS.add(soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), null, ""));
+            }catch (Exception e){
+                log.error("B2B销售订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 查询订单关联的拆分信息
+     * */
+    @PostMapping("/getSplitCombination")
+    public SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId) {
+        return soB2cRefService.getSplitCombination(soId);
     }
 }

@@ -29,6 +29,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -131,10 +132,11 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
     public List<OverseasHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate) {
         List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = overseasProviderFeign.listAllMatch();
         Map<String, String> warehouseCodeMap = listWithWarehouseDTOS.stream()
-                .collect(Collectors.toMap(OverseasProviderDTO.ListWithWarehouseDTO::getPlatformWarehouseCode, OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId));
-        List<OverseasHistoryInventoryEntity> list = baseMapper.listByStartDateAndEndDate(startDate, endDate, warehouseCodeMap.keySet());
+                .collect(Collectors.toMap(v -> v.getCode() + "-" + v.getPlatformWarehouseCode(), OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId));
+        Set<String> warehouseCodes = listWithWarehouseDTOS.stream().map(OverseasProviderDTO.ListWithWarehouseDTO::getPlatformWarehouseCode).collect(Collectors.toSet());
+        List<OverseasHistoryInventoryEntity> list = baseMapper.listByStartDateAndEndDate(startDate, endDate, warehouseCodes);
         for (OverseasHistoryInventoryEntity entity : list) {
-            entity.setWarehouseId(warehouseCodeMap.get(entity.getWarehouseCode()));
+            entity.setWarehouseId(warehouseCodeMap.get(entity.getDictPlatform() + "-" + entity.getWarehouseCode()));
         }
         return list;
     }

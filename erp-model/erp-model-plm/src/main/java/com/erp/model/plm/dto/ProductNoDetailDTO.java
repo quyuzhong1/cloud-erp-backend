@@ -224,5 +224,4 @@ public class ProductNoDetailDTO {
      * 应用分类名
      */
     private String applicationCategoryName;
-
 }

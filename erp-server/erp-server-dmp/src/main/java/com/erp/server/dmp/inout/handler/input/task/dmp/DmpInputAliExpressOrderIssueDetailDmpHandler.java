@@ -59,7 +59,9 @@ public class DmpInputAliExpressOrderIssueDetailDmpHandler extends DmpInputAliExp
 							resultDmpInputMongoChild.put("buyer_login_id" , dmpInputMongoChild.get("buyer_login_id"));
 							resultDmpInputMongoChild.put("issue_id" , dmpInputMongoChild.get("id"));
 							resultDmpInputMongoChild.put("skuId" , dmpInputMongoChild.get("product_id"));
+							resultDmpInputMongoChild.put("skuNo" , dmpInputMongoChild.get("product_id"));
 							resultDmpInputMongoChild.put("detailStatus" , dmpInputMongoChild.get("issue_status"));
+							resultDmpInputMongoChild.put("returnOriginalType" , dmpInputMongoChild.get("reverse_detail_status"));
 							resultDmpInputMongoChild.put("returnLogisticsCompany" , dmpInputMongoChild.get("buyer_return_logistics_company"));
 							resultDmpInputMongoChild.put("returnLogisticsNo" , dmpInputMongoChild.get("buyer_return_logistics_lp_no"));
 							resultDmpInputMongoChild.put("platformDetailId" , dmpInputMongoChild.get("buyer_return_no"));

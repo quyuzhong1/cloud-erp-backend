@@ -209,6 +209,16 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 费用合计【可排序】
          */
         private BigDecimal totalCost;
+        
+        /**
+         * 费用合计币种
+         */
+        private String totalCostCurrency = "CNY";
+        
+        /**
+         * 费用合计币种符号
+         */
+        private String totalCostCurrencySymbol = "¥";
 
         /**
          * 审核不通过原因【可排序】
@@ -219,21 +229,61 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 实际物流费用【可排序】
          */
         private BigDecimal actualShippingCost;
+        
+        /**
+         * 实际物流费用币种
+         */
+        private String actualShippingCostCurrency = "CNY";
+        
+        /**
+         * 实际物流费用币种符号
+         */
+        private String actualShippingCostCurrencySymbol = "¥";
 
         /**
          * 实际报关费【可排序】
          */
         private BigDecimal actualDeclareCost;
+        
+        /**
+         * 实际报关费币种
+         */
+        private String actualDeclareCostCurrency = "CNY";
+        
+        /**
+         * 实际报关费币种符号
+         */
+        private String actualDeclareCostCurrencySymbol = "¥";
 
         /**
          * 实际其他费【可排序】
          */
         private BigDecimal actualOtherCost;
+        
+        /**
+         * 实际其他费币种
+         */
+        private String actualOtherCostCurrency = "CNY";
+        
+        /**
+         * 实际其他费币种符号
+         */
+        private String actualOtherCostCurrencySymbol = "¥";
 
         /**
          * 实际其他税费【可排序】
          */
         private BigDecimal actualOtherTaxCost;
+        
+        /**
+         * 实际其他税费币种
+         */
+        private String actualOtherTaxCostCurrency = "CNY";
+        
+        /**
+         * 实际其他税费币种符号
+         */
+        private String actualOtherTaxCostCurrencySymbol = "¥";
 
         /**
          * 实际计费重【可排序】
@@ -378,6 +428,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 审核不通过原因
          */
         private String reason;
+        /**
+         * 明细数量
+         */
+        private Integer detailCount;
 
         /**
          * 明细列表

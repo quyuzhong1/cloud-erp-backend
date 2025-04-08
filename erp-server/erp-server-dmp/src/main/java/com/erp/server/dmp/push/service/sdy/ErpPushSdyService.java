@@ -1,22 +1,26 @@
 package com.erp.server.dmp.push.service.sdy;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.http.HttpUtil;
+import java.util.List;
+
+import javax.annotation.Resource;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.MDC;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
-import java.util.List;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.http.HttpUtil;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * @author Administrator
@@ -46,18 +50,46 @@ public class ErpPushSdyService {
 			url = "/" + url;
 		}
 		url = sdyUrl + url;
-		
-		String requestData = parseObject.getString(REQUEST_DATA);
-		ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
 
-		requestData = isDeletedHandler(dto);
-		if (CharSequenceUtil.isBlank(requestData)) {
-			return ApiResult.success("{}");
+		String requestData = "";
+		String data = parseObject.getString(REQUEST_DATA);
+		if (data.startsWith("[") && data.endsWith("]")) {
+			// 如果 ext 是数组
+			JSONArray extArray = JSON.parseArray(data);
+			JSONObject object = new JSONObject();
+			object.put("count", extArray.size());
+			object.put("list", extArray);
+			object.put("trace_id", MDC.get("traceId"));
+			requestData = object.toJSONString();
+		} else {
+			requestData = data;
 		}
 
-		log.info("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
-		String responseData = HttpUtil.post(url, requestData);
-		log.info("请求数帝云响应报文：{}" , responseData);
+		boolean is429 = true;
+		String responseData = "";
+		int i = 0;
+		while(is429) {
+			log.warn("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
+			responseData = HttpUtil.post(url, requestData);
+			log.warn("请求数帝云响应报文：{}" , responseData);
+			if(StringUtils.isNotBlank(responseData)) {
+				Integer code = JSON.parseObject(responseData).getInteger("code");
+				if(code != null && 429 == code) {
+					try {
+						Thread.sleep(1000);
+						log.warn("数帝云限流次数={}" , i);
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
+				}else {
+					is429 = false;
+				}
+			}
+			i = i + 1;
+			if(i > 10) {
+				is429 = false;
+			}
+		}
 		JSONObject responseObject = null;
 		try {
 			responseObject = JSON.parseObject(responseData);

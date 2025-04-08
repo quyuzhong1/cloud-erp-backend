@@ -42,6 +42,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
@@ -193,6 +194,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         Map<String,Integer> qtyMap = new HashMap<>();
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
@@ -235,6 +239,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         qtyMap.put(key,0);
                         obj.setPackingQty(obj.getPackingQty());
                     }
+                }
+                //中转仓名称
+                if (CharSequenceUtil.isNotBlank(obj.getTransferWarehouseIds())){
+                    StringBuilder sb = new StringBuilder();
+                    List<String> split = CharSequenceUtil.split(obj.getTransferWarehouseIds(), ",");
+                    for (String s : split) {
+                        sb.append(warehouseMap.get(s)).append(",");
+                    }
+                    obj.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
                 }
             });
         }
@@ -768,16 +781,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
     /**
      * 下推销售出库单
      *
-     * @param id id
+     * @param id           id
+     * @param deliveryDate
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public BatchResultDTO generateSoDeliverySave(String id) {
+    public BatchResultDTO generateSoDeliverySave(String id, LocalDate deliveryDate) {
         SoDeliveryNoticeEntity entity = getById(id);
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98063);
         }
+        //更新发货通知单实际发货日期
+        updateDeliveryDate(id, deliveryDate);
+        entity.setActualDeliveryDate(Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now());
         SoInfoEntity soInfoEntity = soInfoFeign.getSoInfoById(entity.getSourceId());
         if (!ApproveStatusEnum.APPROVE.getStatus().equals(soInfoEntity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_99105);
@@ -789,21 +806,20 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
         List<String> noInventorySkuIds = noInventorySku.stream().map(SkuVO::getSkuId).collect(Collectors.toList());
         List<SoDeliveryNoticeDetailEntity> entityList = soDeliveryNoticeDetailService.listNoInventoryOrPicking(id, noInventorySkuIds);
-        entityList = entityList.stream().filter(v -> Boolean.FALSE.equals(v.getIsClose())).collect(Collectors.toList());
-//        long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
-//        if (closeCount > 0) {
-//            throw new ServiceException(ApiError.ERROR_98068);
-//        }
         boolean allNoInventorySku = Boolean.FALSE;
         if(CollectionUtils.isNotEmpty(entityList)){
             allNoInventorySku = entityList.stream().allMatch(v -> noInventorySkuIds.contains(v.getSkuId()));
-        }else {
-            throw new ServiceException(ApiError.ERROR_98068);
+
+            long closeCount = entityList.stream().filter(SoDeliveryNoticeDetailEntity::getIsClose).count();
+            if (closeCount > 0) {
+                throw new ServiceException(ApiError.ERROR_98068);
+            }
         }
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(Collections.singletonList(id));
         if (Boolean.FALSE.equals(allNoInventorySku) && CollectionUtils.isEmpty(views)) {
             throw new ServiceException(ApiError.ERROR_99101, entity.getCode());
         }
+
         List<SoDeliveryNoticeDetailEntity> soDeliveryNoticeDetailEntityList = soDeliveryNoticeDetailService.listDetailByMainId(entity.getId());
         //包含组合产品的发货通知单，必须有关联的下推的加工组装单且加工单审核通过
         List<String> skuIds = soDeliveryNoticeDetailEntityList.stream().map(SoDeliveryNoticeDetailEntity::getSkuId).collect(Collectors.toList());
@@ -896,6 +912,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         return BatchResultDTO.success(outId, "", "下推成功");
     }
 
+    private void updateDeliveryDate(String id, LocalDate deliveryDate) {
+        if (CharSequenceUtil.isBlank(id)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoDeliveryNoticeEntity::getId, id)
+                .set(SoDeliveryNoticeEntity::getActualDeliveryDate, Objects.nonNull(deliveryDate) ? deliveryDate : LocalDate.now())
+                .update();
+    }
+
     /**
      * 生成调拨单
      *
@@ -954,7 +979,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         }
         TransferInfoDTO.AddDTO transferDto = new TransferInfoDTO.AddDTO();
         transferDto.setType(TransferTypeEnum.CROSS_ORG.getCode());
-        transferDto.setBillDate(LocalDate.now());
+        transferDto.setBillDate(Objects.nonNull(entity.getActualDeliveryDate()) ? entity.getActualDeliveryDate() : LocalDate.now());
         transferDto.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         transferDto.setInOrgId(toWarehouse.getOrgId());
         transferDto.setOutOrgId(fromWarehouse.getOrgId());
@@ -1706,6 +1731,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
         for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews.getRecords()) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
@@ -1722,6 +1750,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
             pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
+            //中转仓名称
+            if (CharSequenceUtil.isNotBlank(pagingView.getTransferWarehouseIds())){
+                StringBuilder sb = new StringBuilder();
+                List<String> split = CharSequenceUtil.split(pagingView.getTransferWarehouseIds(), ",");
+                for (String s : split) {
+                    sb.append(warehouseMap.get(s)).append(",");
+                }
+                pagingView.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
+            }
         }
         return new PagingVO<>(pagingViews);
     }
@@ -1883,5 +1920,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow() {
+        return baseMapper.rebuildB2bVirtualFlow();
     }
 }

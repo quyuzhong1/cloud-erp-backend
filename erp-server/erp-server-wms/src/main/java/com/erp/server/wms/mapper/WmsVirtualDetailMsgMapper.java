@@ -1,8 +1,11 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
+import com.erp.model.wms.entity.WmsVirtualDetailMsgEntity;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +18,11 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface WmsVirtualDetailMsgMapper extends BaseMapper<WmsVirtualDetailMsgEntity> {
-
+    /**
+     * 查询任务表
+     * @author will
+     * @date 2025/2/18 11:57
+     * @return java.util.List<com.erp.model.wms.entity.WmsVirtualDetailMsgEntity>
+     */
+    List<WmsVirtualDetailMsgDTO.ListDTO> listFirstVirtualDetailMsg();
 }

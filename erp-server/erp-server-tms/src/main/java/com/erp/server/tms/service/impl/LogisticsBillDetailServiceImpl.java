@@ -181,14 +181,10 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         addLogisticsTrack(detailEntity,trackTime,trackDesc);
 
         //推送数帝云
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
-                //同步速递云运单
-                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
-            }
-        });
+        if (detailEntity.getSignTime() != null) {
+            LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
+            logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
+        }
 
         //操作日志
         String msg = CharSequenceUtil.format("用户【{}】从【{}】变更为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), oldTrackStatusName, newTrackStatusName);
@@ -197,51 +193,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
     }
 
     @Override
-    public PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query) {
-        Page<LogisticsBillDetailEntity> page = new Page<>();
-        page.setSize(query.getSize());
-        page.setCurrent(query.getCurrent());
-        IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
-        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
-    }
-
-    @Override
-    public PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query) {
-        Page<LogisticsTrackDTO.UpdateTrackDTO> page = new Page<>();
-        page.setSize(query.getSize());
-        page.setCurrent(query.getCurrent());
-        IPage<LogisticsTrackDTO.UpdateTrackDTO> result = baseMapper.getTrackDtoPage(page, query);
-        buildTrackData(result.getRecords());
-        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
-    }
-
-    @Override
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return baseMapper.listTrackDto(query);
-    }
-
-    /**
-     * 回填数据
-     * @param records
-     */
-    private void buildTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
-        if (CollectionUtils.isEmpty(records)){
-            return;
-        }
-        List<String> carrierIds = records.stream().filter(e -> StringUtils.isNotEmpty(e.getCarrierId())).map(LogisticsTrackDTO.UpdateTrackDTO::getCarrierId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(carrierIds)){
-            return;
-        }
-        List<LogisticsCarrierEntity> carrierEntityList = logisticsCarrierService.listByIds(carrierIds);
-        records.forEach(updateTrackDTO -> {
-            LogisticsCarrierEntity carrier = carrierEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(updateTrackDTO.getCarrierId())
-                    && e.getId().equals(updateTrackDTO.getCarrierId())).findFirst().orElse(null);
-            if (Objects.nonNull(carrier)){
-                updateTrackDTO.setCarrierCode(carrier.getCarrierCode());
-            }else {
-                updateTrackDTO.setCarrierId(updateTrackDTO.getCarrierId());
-            }
-        });
     }
 
     @Override
@@ -338,7 +291,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         }
         LocalDateTime trackTime = logisticsTrackEntity.getTrackTime();
         //根据跟踪号查询更新
-        this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo()).ne(LogisticsBillDetailEntity::getTrackStatus,logisticsTrackEntity.getStatus())
+        this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo())
                 .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
                 .set(LogisticsBillDetailEntity::getTrackStatus, logisticsTrackEntity.getStatus())
                 .set(LogisticsBillDetailEntity::getTrackTime, trackTime)
@@ -354,9 +307,10 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         LogisticsBillDetailEntity detailEntity = lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo()).last(SqlConstants.LIMIT_1).one();
         if (ObjectUtil.isNotEmpty(detailEntity)) {
             LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
-
-            //同步速递云运单
-            logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(logisticsTrackEntity.getStatus()));
+            if (detailEntity.getSignTime() != null) {
+                //同步速递云运单
+                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(logisticsTrackEntity.getStatus()));
+            }
         }
     }
 
@@ -385,6 +339,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         }
         errorList.forEach(e ->{
             this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status)
+                    .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                    .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
                     .set(LogisticsBillDetailEntity::getRegisterResult, e.getErrorMsg())
                     .eq(LogisticsBillDetailEntity::getId, e.getId()).update();
         });
@@ -398,6 +354,8 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         //根据跟踪号进行的更新
         sucessList.forEach(e ->{
             this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status)
+                    .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                    .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
                     .set(CharSequenceUtil.isNotBlank(e.getPlatformOrderNo()), LogisticsBillDetailEntity::getPlatformOrderNo, e.getPlatformOrderNo())
                     .eq(LogisticsBillDetailEntity::getTrackNo, e.getTrackNo()).ne(LogisticsBillDetailEntity::getRegisterStatus, status).update();
         });

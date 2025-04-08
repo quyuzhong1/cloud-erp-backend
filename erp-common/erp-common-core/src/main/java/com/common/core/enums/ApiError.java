@@ -115,7 +115,8 @@ public enum ApiError implements Serializable {
     ERROR_NAME_EXIST(1062,"名称【{}】已存在"),
     ERROR_EXCEL_EXPORT_SIZE(1060,"导出数据已超过50000条，请进行条件筛选后导出"),
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
-
+    ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
+    ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
     /**
      * 警告信息 从800 开始
      */
@@ -538,6 +539,12 @@ public enum ApiError implements Serializable {
     ERROR_95274(95274, "%s已催办，间隔时间30min内请勿重复操作"),
     ERROR_95280(95280,"【{}】属性已被使用，则不允许被删除"),
     ERROR_95285(95285,"单据已作废，不支持编辑功能"),
+    ERROR_95286(95286,"SKU存在【{}】库存，产品属性不允许变更"),
+    ERROR_95287(95287, "当选择<产品信息变更>时，需选择<变更内容>，最少1项"),
+    ERROR_95281(95281,"试产量产详情不存在"),
+    ERROR_95282(95282,"获取供应商采购价目表失败: sku：{}，数量：{}"),
+    ERROR_95288(95288,"尚未提交供应商采购价目表，请联系采购开发提交后提审:{}"),
+    ERROR_95289(95289,"供应商采购价目表不存在，请联系采购开发提交后提审:{}"),
     /**
      * TMS 错误
      * 从96000 开始
@@ -993,7 +1000,7 @@ public enum ApiError implements Serializable {
     SKU_NOT_MAPPING_PLATFORM_SKU(99126,"sku【{}】无平台sku映射关系，请绑定第三方sku后操作"),
     THIRD_WAREHOUSE_INTERFACE_EXCEPTION(99129,"调用第三方仓接口异常"),
     APPROVE_ING_IS_PACKING(99130,"待审核的数据才可以上传装箱数据"),
-    OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE(99131,"已下推海外仓入库单【{}】，不允许修改装箱数据"),
+    OVERSEAS_WAREHOUSE_INBOUND_EXIST_NOT_UPDATE(99131,"已下推海外仓入库单【{}】，不允许修改删除装箱数据"),
     NOT_PACKING_NOT_EXPORT(99132,"只有已装箱状态的发货单可以查看/导出装箱数据"),
     WAIT_HANDLE_HANDLE(99133,"待处理状态的要货单才能处理"),
     HANDLE_ING_FINISH(99134,"单号【{}】处理中状态的要货单才能完成"),
@@ -1022,6 +1029,7 @@ public enum ApiError implements Serializable {
     IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
+    ERROR_PDF_SO_MERGE(92115,"打印面单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
@@ -1073,7 +1081,8 @@ public enum ApiError implements Serializable {
     ERROR_92148(92148,"SKU【{}】不可超过本箱已装箱数量【{}】"),
     ERROR_92149(92149,"SKU【{}】在关联单中没有记录"),
     ERROR_92150(92150,"SKU【{}】在装箱中没有记录不能移出"),
-    ERROR_92251(92251,"关联单号已审核，不支持编辑修改删除"),
+    ERROR_92251(92251,"关联单号已审核，不支持编辑删除"),
+    ERROR_PACKING_DELIVERY_CHECK(92251,"发货单已审核且装箱任务状态(已装箱且已称重)时，不支持编辑删除"),
     ERROR_92252(92252,"装箱中SKU【{}】FnSku【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
     ERROR_92266(92266,"装箱中SKU【{}】累计装箱数量【{}】不可大于发货数量【{}】"),
     ERROR_92253(92253,"装箱中SKU累计装箱数量不可大于拣货数量"),
@@ -1186,10 +1195,15 @@ public enum ApiError implements Serializable {
     ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
+    ERROR_SO_DETAIL_NOT_EXIST(92248,"销售订单明细未找到"),
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),
     ERROR_INVENTORY_NOT_EXIST(92250, "仓库:【{}】,SKU:【{}】,库存状态:【{}】,库存不存在"),
+    WAREHOUSE_AREA_NOT_EXIST(92251, "库区信息不存在"),
+    WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
+    WAREHOUSE_AREA_USED(92253, "库区被使用后，库存类型禁止修改"),
+    WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1406,7 +1420,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_ORDER_SPLIT_ON_WAREHOUSE(92149,"订单下的明细仓库一致，无法按仓库拆分"),
     ERROR_SO_B2C_LOGISTICS_PLATFORM_NOT_NULL(92150,"B2C销售订单【{}】物流下单平台不能为空"),
     ERROR_SO_B2C_HAS_DIFF_CHANNEL_NOT_DISTRIBUTION(92117,"B2C销售订单【{}】不能设置多个渠道"),
-    ERROR_92151(92151,"启用日期不能大于上个映射关系的开始时间【{}】"),
+    ERROR_92151(92151,"启用日期不能早于上个映射关系的开始时间【{}】"),
     ERROR_92152(92152,"销售订单【{}】明细中sku不能全部为空"),
     ERROR_SO_B2C_LOGISTICS_MAPPING_NOT_NULL(92153,"【{}】所属的平台【{}】没有配置【{}】的标发信息，不允许提交发货"),
     ERROR_92154(92154,"销售订单【{}】只能在待提交和审核不通过状态更换发货SKU"),
@@ -1539,10 +1553,10 @@ public enum ApiError implements Serializable {
     ERROR_IN_WAREHOUSELOCATION_NOT_FOUND(94102,"上架仓位不存在"),
 
 
-    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于包装长度"),
-    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于包装宽度"),
-    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于包装高度"),
-    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于净重"),
+    ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"箱规长度必须大于等于包装长度"),
+    ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
+    ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
+    ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 
@@ -1575,8 +1589,10 @@ public enum ApiError implements Serializable {
     ERROR_HIS_SALES_IS_DIFFERENT(97032,"选中的数据，历史销量不一致，无法进行比较"),
     ERROR_VERIFY_START_CALC_DATE(97033,"试算开始日期不能晚于当前日期"),
     ERROR__VERIFY_END_CALC_DATE(97034,"试算结束日期不能晚于试算开始日期"),
-    ERROR__VERIFY_END_DATE(97034,"结束日期不能晚于选中数据最小试算结束日期"),
-    ERROR__VERIFY_START_DATE(97034,"开始日期不能早于选中数据试算开始日期"),
+    ERROR__VERIFY_CALC_DATE(97035,"试算结束日期,试算开始日期不能相差一年"),
+    ERROR__VERIFY_END_DATE(97036,"结束日期不能晚于选中数据最小试算结束日期"),
+    ERROR__VERIFY_START_DATE(97037,"开始日期不能早于选中数据试算开始日期"),
+    ERROR__CALC_SIZE(97038,"一个模板下，以“SKU*店铺”计算，最多支持999999条任务"),
 
 
 

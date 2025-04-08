@@ -25,7 +25,6 @@ import com.erp.model.dmp.kingdee.item.KingdeeDeliveryDetailItemEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.model.wms.dto.SyncKingdeeDTO;
@@ -42,6 +41,8 @@ import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPartitionFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -49,6 +50,7 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.rocketmq.sync.SyncB2CSoOutstockService;
 import com.erp.server.wms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -58,6 +60,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
+import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -102,6 +105,13 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
+
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
@@ -189,12 +199,23 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class , timeoutMills = 180000)
     @DistributeLocker(keyName = "entity.code")
     public void syncWdtSoOutStock(WdtSoOutStockDTO entity) {
         SoOutstockEntity soOutstockEntity = soOutstockService.getOne(Wrappers.<SoOutstockEntity>lambdaQuery()
                 .eq(SoOutstockEntity::getThirdCode, entity.getThirdCode()));
         //单据已经存在
         if (ObjectUtil.isNotEmpty(soOutstockEntity)) {
+            if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
+                //旺店通已作废，ERP反审核删除并同步金蝶
+                if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
+                    soOutstockService.disApprove(soOutstockEntity,true);
+                }
+                soOutstockService.delete(Collections.singletonList(soOutstockEntity.getId()));
+            }
+            return;
+        }
+        if(StringUtils.isNotBlank(entity.getStatus()) && entity.getStatus().equals("2")){
             return;
         }
         //不需要管的sku
@@ -247,6 +268,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             soOutstock.setSellerId(customerInfo.getSellerId());
             soOutstock.setSellerName(customerInfo.getSellerName());
             soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
+            soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
+            soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
         }
         //销售组织
         soOutstock.setSalesOrgId(shopInfo.getSalesOrgId());
@@ -329,6 +352,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         //保存销售出库单详情
         soOutstockDetailService.saveBatch(detailList);
         //根据销售出库单创建物流单和自发货费用
+        soOutstock.setId(id);
         soOutstockService.saveLogisticsBill(soOutstock);
         //扣减库存
         InventoryInOutStockRuleDTO inventoryInOutStockDTO = getInventoryInOutStockRuleDTO(inOutStockList);
@@ -345,8 +369,18 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
             }
             inventoryTransCoreService.approveByRule(inventoryInOutStockDTO);
         }
+
+
         //推送金蝶
         sendPushTask(soOutstock);
+
+        //推送数帝云
+        this.syncToSdy(soOutstock, SyncOperateEnum.OPERATE_APPROVE.getCode());
+    }
+    private void syncToSdy(SoOutstockEntity entity, String operate) {
+        //推送数帝云
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        syncKingdeeSoOutstockService.syncDataToSdy(entity, soOutstockDetailEntityList, operate);
     }
 
     private static void buildInOutStock(String id, SoOutstockDetailEntity detailEntity, SoOutstockEntity soOutstock, String virtualWarehouseId, List<InOutStockDTO> inOutStockList) {
@@ -441,7 +475,13 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         result.setFlagId(flagId);
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         if (CollUtil.isNotEmpty(customerInfoEntityList)) {
-            soOutstock.setCustomerId(customerInfoEntityList.get(0).getId());
+            CustomerInfoEntity customerInfo = customerInfoEntityList.get(0);
+            soOutstock.setCustomerId(customerInfo.getId());
+            soOutstock.setSellerId(customerInfo.getSellerId());
+            soOutstock.setSellerName(customerInfo.getSellerName());
+            soOutstock.setSalesDeptId(customerInfo.getSalesDeptId());
+            soOutstock.setSalesOrgId(customerInfo.getUseOrgId());
+            soOutstock.setSalesOrgName(customerInfo.getUseOrgName());
         }
         soOutstock.setCustomerName(customerName);
         //单据编号
@@ -568,7 +608,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         platformDTO.setWarehouseIdList(warehouseIdList);
         if(StringUtils.isNotBlank(customerId)){
             CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class,customerId);
-            if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.GL.getCode())){
+            if(Objects.nonNull(customerInfo) && StringUtils.isNotBlank(customerInfo.getCountryId()) && !customerInfo.getCountryId().equals(DictValueEnum.ALL.getCode())){
                 country = customerInfo.getCountryId();
             }
         }

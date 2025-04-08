@@ -113,7 +113,8 @@ public class SupplierDeliveryOrderServiceImpl implements SupplierDeliveryOrderSe
             if(Objects.nonNull(firstDTO.getBillDate())){
                 addDTO.setBillDate(firstDTO.getBillDate());
             }
-            String id = warehouseReceiveService.add(addDTO);
+            WarehouseReceiveEntity entity = warehouseReceiveService.add(addDTO);
+            String id = entity.getId();
             if(firstDTO.isAutoSubmit()){
                 if(!warehouseReceiveService.submit(Collections.singletonList(id))){
                     throw new ServiceException("提交审核失败");

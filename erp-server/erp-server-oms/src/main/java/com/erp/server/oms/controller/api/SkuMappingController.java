@@ -3,14 +3,14 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -19,15 +19,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
-import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.scm.dto.OperateLogDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.erp.server.oms.service.SkuMappingRuleService;
@@ -44,7 +40,6 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * SKU对照表管理
@@ -121,6 +116,38 @@ public class SkuMappingController extends BaseController {
         PagingVO<SkuMappingDTO.WarehousePagingViewDTO> pagingVO = skuMappingService.warehousePaging(dto);
         return success(pagingVO);
     }
+    /**
+     * 客户SKU 分页
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/customerPaging")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SkuMappingDTO.CustomerPagingViewDTO>> customerPaging(@RequestBody @Validated PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
+        PagingVO<SkuMappingDTO.CustomerPagingViewDTO> pagingVO = skuMappingService.customerPaging(dto);
+        return success(pagingVO);
+    }
+    /**
+     * 新增客户SKU
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/addCustomer")
+    public ApiResult<String> addCustomer(@ModelAttribute @Validated(value = {AddGroup.class}) SkuMappingDTO.AddCustomerRequest dto) {
+        return success(skuMappingService.addCustomer(dto));
+    }
+    /**
+     * 更新客户SKU
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/updateCustomer")
+    public ApiResult<String> updateCustomer(@ModelAttribute @Validated(value = {UpdateGroup.class}) SkuMappingDTO.AddCustomerRequest dto) {
+        return success(skuMappingService.updateCustomer(dto));
+    }
 
 
     /**
@@ -171,6 +198,17 @@ public class SkuMappingController extends BaseController {
     @WebAdvanceQuery
     public ApiResult exportWarehouseSku(@RequestBody @Valid SkuMappingDTO.ExportWarehouseSkuDTO dto) {
         Boolean result = skuMappingService.exportWarehouseSku(dto);
+        return result ? success() : failure();
+    }
+    /**
+     * 导出客户sku 对照表
+     *
+     * @return
+     */
+    @PostMapping("/exportCustomerSku")
+    @WebAdvanceQuery
+    public ApiResult exportCustomerSku(@RequestBody @Valid SkuMappingDTO.CustomerPagingParamDTO dto) {
+        Boolean result = skuMappingService.exportCustomerSku(dto);
         return result ? success() : failure();
     }
 
@@ -410,6 +448,14 @@ public class SkuMappingController extends BaseController {
     @PostMapping("/listSkuBySkuNos")
     public ApiResult<List<SkuMappingDTO.ProductSkuInfoDTO>> listSkuBySkuNos(@RequestBody SkuMappingDTO.SkuParamDTO skuParamDTO) {
         return this.success(skuMappingService.listSkuBySkuNos(skuParamDTO));
+    }
+
+    /**
+     * 填写客户sku返回匹配的erp sku 和对应的实体仓实际库存-虚拟仓冻结库存
+     */
+    @PostMapping("/getErpSkuByCustomerSku")
+    public ApiResult<List<SkuMappingDTO.CustomerInventorySkuInfoDTO>> getErpSkuByCustomerSku(@RequestBody @Validated SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO) {
+        return this.success(skuMappingService.getErpSkuByCustomerSku(skuParamDTO));
     }
 
 //    /**

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.WmsVirtualDetailMsgDTO;
 import com.erp.model.wms.entity.VirtualTransFlowDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -46,13 +47,22 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      */
     Boolean exportExcel(VirtualTransFlowDetailDTO.SearchParamDTO dto);
     /**
+     * 定时任务处理虚拟仓数据
+     * @author will
+     * @date 2024/12/10 12:28
+     * @param list
+     * @return Boolean
+     */
+    void consumeMsgJob(List<WmsVirtualDetailMsgDTO.ListDTO> list);
+    /**
      * 消费
      * @author will
      * @date 2024/12/10 12:28
-     * @param virtualTransFlowEntity
+     * @param businessId
+     * @param msgId
      * @return Boolean
      */
-    Boolean consumeMessage(VirtualTransFlowEntity virtualTransFlowEntity,String msgId);
+    Boolean consumeMessage(String businessId,String msgId);
     /**
      * 查询虚拟仓库存明细id集合
      * @author will
@@ -95,4 +105,26 @@ public interface VirtualTransFlowDetailService extends SuperService<VirtualTrans
      * @param value
      */
     void handleAddTransFlowDetail(List<VirtualTransFlowEntity> value);
+    /**
+     * 更新库存流水明细数据
+     * @Auther will
+     * @Date 2025/1/19 10:26
+     * @param entity
+     * @return void
+     */
+    void updateHandleVirtualTransFlow(VirtualTransFlowEntity entity);
+    /**
+     * 按sku显示冻结库存差异
+     * @author will
+     * @date 2025/2/19 19:29
+     * @return java.util.List<com.erp.model.wms.dto.VirtualTransFlowDetailDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualTransFlowDetailDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+    /**
+     * 按汇总显示冻结库存差异
+     * @author will
+     * @date 2025/2/19 19:29
+     * @return java.util.List<com.erp.model.wms.dto.VirtualTransFlowDetailDTO.SendNoticeTotalDTO>
+     */
+    List<VirtualTransFlowDetailDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

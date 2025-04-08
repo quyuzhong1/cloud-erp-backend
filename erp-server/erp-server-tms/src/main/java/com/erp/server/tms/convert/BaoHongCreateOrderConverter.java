@@ -50,6 +50,8 @@ public interface BaoHongCreateOrderConverter {
             @Mapping(target = "productTitleEn", source = "logisticsProductVO.declareEnglishName"),
             @Mapping(target = "opQuantity", source = "logisticsProductVO.quantity"),
             @Mapping(target = "purposeDeclaredValue", source = "logisticsProductVO.destDeclarePrice", qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "salePrice", source = "logisticsProductVO.price", qualifiedByName = "bigDecimalToStr"),
+            @Mapping(target = "saleCurrencyCode", source = "logisticsProductVO.currency"),
     })
     ProductDeatil LogisticsProductVOToProductDeatil(LogisticsProductVO logisticsProductVO);
     List<ProductDeatil> LogisticsProductVOToProductDeatil(List<LogisticsProductVO> logisticsProductVO);

@@ -3,6 +3,8 @@ package com.erp.server.mrp.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
@@ -10,11 +12,9 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDTO;
 import com.erp.model.mrp.dto.CfgRuleWarehouseDetailDTO;
 import com.erp.model.mrp.entity.CfgPlatformMappingEntity;
-import com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity;
 import com.erp.model.mrp.entity.CfgRuleWarehouseEntity;
-import com.erp.model.mrp.enums.CfgRuleInventoryAllocateTypeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
 import com.erp.model.mrp.enums.CfgRuleWarehouseTypeEnum;
-import com.erp.model.mrp.enums.PlatformMappingTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
@@ -27,14 +27,12 @@ import com.erp.server.mrp.service.CfgRuleWarehouseService;
 import com.erp.server.mrp.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * <p>
@@ -64,11 +62,10 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    @CacheEvict(cacheNames = "cache:mrp:getWarehouse", allEntries = true, beforeInvocation = true)
     public Boolean update(CfgRuleWarehouseDTO.UpdateDTO updateDTO) {
         CfgRuleWarehouseEntity cfgRuleWarehouseEntity =  BeanMapperUtils.map(CfgRuleWarehouseEntity.class, updateDTO);
         //旧数据
-        CfgRuleWarehouseEntity old = this.getByPlatformType(updateDTO.getPlatformType());
+        CfgRuleWarehouseEntity old = this.getOne(Wrappers.emptyWrapper());
         if (ObjectUtil.isNotEmpty(old)) {
             cfgRuleWarehouseEntity.setId(old.getId());
         }
@@ -82,13 +79,13 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         }
 
         //添加本地仓设置
-        cfgRuleWarehouseDetailService.update(updateDTO.getCfgLocalWarehouseList(),cfgRuleWarehouseEntity.getId(), CfgRuleWarehouseTypeEnum.LOCAL.getCode(),Boolean.FALSE);
+        cfgRuleWarehouseDetailService.update(getWarehouseList(updateDTO.getCfgLocalWarehouseList()), cfgRuleWarehouseEntity.getId(), CfgRuleWarehouseTypeEnum.LOCAL.getCode(),Boolean.FALSE);
 
         //本地虚拟仓设置
         cfgRuleWarehouseDetailService.update(updateDTO.getCfgLocalVirtualWarehouseList(),cfgRuleWarehouseEntity.getId(), CfgRuleWarehouseTypeEnum.LOCAL.getCode(),Boolean.TRUE);
 
         //添加海外仓设置
-        cfgRuleWarehouseDetailService.update(updateDTO.getCfgOverseasWarehouseList(),cfgRuleWarehouseEntity.getId(),CfgRuleWarehouseTypeEnum.OVERSEAS.getCode(),Boolean.FALSE);
+        cfgRuleWarehouseDetailService.update(getWarehouseList(updateDTO.getCfgOverseasWarehouseList()), cfgRuleWarehouseEntity.getId(),CfgRuleWarehouseTypeEnum.OVERSEAS.getCode(),Boolean.FALSE);
 
         // 记录主单操作日志
         log.info("编辑 开始记录仓库（规则设置）日志数据，id：【{}】", cfgRuleWarehouseEntity.getId());
@@ -96,20 +93,42 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         return Boolean.TRUE;
     }
 
+    /**
+     * 拍平数据
+     * @param cfgWarehouseList 参数
+     */
+    private static List<CfgRuleWarehouseDetailDTO.UpdateDTO> getWarehouseList(List<CfgRuleWarehouseDetailDTO.WarehouseUpdateDTO> cfgWarehouseList) {
+        return cfgWarehouseList.stream()
+                .map(v -> v.getWarehousePlatform().stream()
+                        .map(e -> {
+                            CfgRuleWarehouseDetailDTO.UpdateDTO dto = new CfgRuleWarehouseDetailDTO.UpdateDTO();
+                            dto.setWarehouseId(v.getWarehouseId());
+                            dto.setChannelType(e.getChannelType());
+                            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(e.getChannelType())) {
+                                dto.setChannelIdList(e.getPlatformList());
+                            } else {
+                                dto.setChannelIdList(e.getShopIdList());
+                                dto.setDictPlatform(e.getPlatformList().stream().findFirst().orElse(null));
+                            }
+                            return dto;
+                        }).collect(Collectors.toList())).flatMap(Collection::stream)
+                .collect(Collectors.toList());
+    }
+
     @Override
-    public CfgRuleWarehouseDTO.ViewDTO view(String platformType) {
+    public CfgRuleWarehouseDTO.ViewDTO view() {
         CfgRuleWarehouseDTO.ViewDTO viewDTO = new CfgRuleWarehouseDTO.ViewDTO();
-        CfgRuleWarehouseEntity oldEntity = this.getByPlatformType(platformType);
+        CfgRuleWarehouseEntity oldEntity = this.getOne(Wrappers.emptyWrapper());
         if (ObjectUtil.isEmpty(oldEntity)) {
             return viewDTO;
         }
         BeanMapperUtils.copy(oldEntity,viewDTO);
         //仓库设置明细
-        List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listViewByMainIdList(Arrays.asList(oldEntity.getId()));
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listViewByMainIdList(Collections.singletonList(oldEntity.getId()));
         //本地仓设置(实体仓数据)
         List<CfgRuleWarehouseDetailDTO.ViewDTO> localWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.LOCAL.getCode()) && CharSequenceUtil.isBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(localWarehouseList)) {
-            viewDTO.setCfgLocalWarehouseList(localWarehouseList);
+            viewDTO.setCfgLocalWarehouseList(getWarehouseView(localWarehouseList));
         }
         //本地仓设置(虚拟仓数据)
         List<CfgRuleWarehouseDetailDTO.ViewDTO> localVirtualWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.LOCAL.getCode()) && CharSequenceUtil.isNotBlank(obj.getVirtualWarehouseId())).collect(Collectors.toList());
@@ -120,35 +139,60 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         //海外仓设置
         List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgOverseasWarehouseList = cfgRuleWarehouseDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.OVERSEAS.getCode())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(cfgOverseasWarehouseList)) {
-            viewDTO.setCfgOverseasWarehouseList(cfgOverseasWarehouseList);
+            viewDTO.setCfgOverseasWarehouseList(getWarehouseView(cfgOverseasWarehouseList));
         }
         handleCfgRuleWarehouseView(viewDTO);
         return viewDTO;
     }
 
-
     /**
-     * 根据平台类型查询
-     * @author will
-     * @date 2024/8/24 15:50
-     * @param platformType
-     * @return CfgRuleWarehouseEntity
+     * 组装显示数据
+     * @param warehouseList 仓库
      */
-    @Override
-    public CfgRuleWarehouseEntity getByPlatformType (String platformType) {
-        return lambdaQuery().eq(CfgRuleWarehouseEntity::getPlatformType,platformType)
-                .last("limit 1")
-                .one();
+    private List<CfgRuleWarehouseDetailDTO.WarehouseViewDTO> getWarehouseView(List<CfgRuleWarehouseDetailDTO.ViewDTO> warehouseList) {
+        return warehouseList.stream()
+                .collect(Collectors.groupingBy(v -> new CfgRuleWarehouseDetailDTO.WarehouseGroupDTO(v.getWarehouseId(), v.getWarehouseName()))).entrySet().stream()
+                .map(entry -> {
+                    CfgRuleWarehouseDetailDTO.WarehouseViewDTO warehouseViewDTO = new CfgRuleWarehouseDetailDTO.WarehouseViewDTO();
+                    warehouseViewDTO.setWarehouseId(entry.getKey().getWarehouseId());
+                    warehouseViewDTO.setWarehouseName(entry.getKey().getWarehouseName());
+                    List<CfgRuleWarehouseDetailDTO.WarehousePlatformDTO> platformList = new ArrayList<>();
+                    boolean isAllPlatform = entry.getValue().stream().allMatch(v -> VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(v.getChannelType()) && CollectionUtils.isEmpty(v.getChannelIdList()));
+                    if (isAllPlatform) {
+                        CfgRuleWarehouseDetailDTO.WarehousePlatformDTO platformDTO = new CfgRuleWarehouseDetailDTO.WarehousePlatformDTO();
+                        platformDTO.setChannelType(VitualWarehouseChannelTypeEnum.PLATFORM.getCode());
+                        platformDTO.setShopIdList(Collections.singletonList(""));
+                        platformDTO.setPlatformList(Collections.singletonList(""));
+                        platformList.add(platformDTO);
+                    } else {
+                        for (CfgRuleWarehouseDetailDTO.ViewDTO dto : entry.getValue()) {
+                            CfgRuleWarehouseDetailDTO.WarehousePlatformDTO platformDTO = new CfgRuleWarehouseDetailDTO.WarehousePlatformDTO();
+                            if (VitualWarehouseChannelTypeEnum.PLATFORM.getCode().equals(dto.getChannelType())) {
+                                platformDTO.setChannelType(VitualWarehouseChannelTypeEnum.PLATFORM.getCode());
+                                platformDTO.setPlatformList(dto.getChannelIdList());
+                                platformDTO.setShopIdList(Collections.singletonList(""));
+                            } else {
+                                platformDTO.setShopIdList(dto.getChannelIdList());
+                                platformDTO.setPlatformList(Collections.singletonList(dto.getDictPlatform()));
+                                platformDTO.setChannelType(VitualWarehouseChannelTypeEnum.SHOP.getCode());
+                            }
+                            platformList.add(platformDTO);
+                        }
+                    }
+                    warehouseViewDTO.setWarehousePlatform(platformList);
+                    return warehouseViewDTO;
+                })
+                .collect(Collectors.toList());
     }
 
+
     @Override
-    @CacheEvict(cacheNames = "cache:mrp:getWarehouse", allEntries = true, beforeInvocation = true)
-    public void refreshVirtual(String platformType) {
-        CfgRuleWarehouseEntity ruleWarehouseEntity = getByPlatformType(platformType);
+    public void refreshVirtual() {
+        CfgRuleWarehouseEntity ruleWarehouseEntity = getOne(Wrappers.emptyWrapper());
         if (ObjectUtil.isEmpty(ruleWarehouseEntity)) {
             throw new ServiceException("暂无仓库配置项，请先保存后配置虚拟仓");
         }
-        List<CfgPlatformMappingEntity> platformMappingList = cfgPlatformMappingService.listByPlatformType(PlatformMappingTypeEnum.getByPlatformType(platformType));
+        List<CfgPlatformMappingEntity> platformMappingList = cfgPlatformMappingService.listByEffective();
         if (CollectionUtils.isEmpty(platformMappingList)) {
             throw new ServiceException("平台映射表未配置，不支持配置虚拟仓");
         }
@@ -160,19 +204,14 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
 
     @Override
     public Boolean getIsEnableOverseas(String platformType) {
-        //是否存在海外仓
-        CfgRuleWarehouseEntity cfgRuleWarehouseEntity = this.getByPlatformType(platformType);
-        Boolean isEnableOverseas = Boolean.FALSE;
-        if (ObjectUtil.isNotEmpty(cfgRuleWarehouseEntity) && Boolean.TRUE.equals(cfgRuleWarehouseEntity.getIsEnableOverseas())) {
-            isEnableOverseas = Boolean.TRUE;
-        }
-        return isEnableOverseas;
+        //FBA默认关闭
+        return !CfgRulePlatformTypeEnum.AMAZON.getCode().equals(platformType);
     }
 
     @Override
     public CfgRuleWarehouseDTO.WarehouseShopDTO checkShop(CfgRuleWarehouseDTO.UpdateDTO dto) {
         CfgRuleWarehouseDTO.WarehouseShopDTO resultDTO = new CfgRuleWarehouseDTO.WarehouseShopDTO();
-        List<CfgPlatformMappingEntity> cfgPlatformMappingList = cfgPlatformMappingService.listByPlatformType(PlatformMappingTypeEnum.getByPlatformType(dto.getPlatformType()));
+        List<CfgPlatformMappingEntity> cfgPlatformMappingList = cfgPlatformMappingService.listByEffective();
         if (CollectionUtils.isEmpty(cfgPlatformMappingList)) {
             return resultDTO;
         }
@@ -182,45 +221,45 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         if (CollectionUtils.isEmpty(list)) {
             return new CfgRuleWarehouseDTO.WarehouseShopDTO();
         }
-
         if (Boolean.FALSE.equals(dto.getIsEnableVirtual())) {
             List<String> shopNameList = handleCheckShop(dto.getCfgLocalWarehouseList(), list);
             if (CollectionUtils.isNotEmpty(shopNameList)) {
                 resultDTO.setShopNameList(shopNameList);
             }
         }
+
         if (Boolean.TRUE.equals(dto.getIsEnableVirtual())) {
-            List<String> virtualShopNameList = handleCheckShop(dto.getCfgLocalVirtualWarehouseList(),list);
+            List<String> virtualShopNameList = handleCheckVirtualShop(dto.getCfgLocalVirtualWarehouseList(),list);
             if (CollectionUtils.isNotEmpty(virtualShopNameList)) {
                 resultDTO.setVirtualShopNameList(virtualShopNameList);
             }
         }
-        if (Boolean.TRUE.equals(dto.getIsEnableOverseas())) {
-            List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(),list);
-            if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
-                resultDTO.setOverseasShopNameList(overseasShopNameList);
-            }
+        //海外仓排除亚马逊
+        List<ShopInfoEntity> shopInfoList = list.stream().filter(v -> !PlatformDictEnum.AMAZON.getCode().equals(v.getDictPlatform())).collect(Collectors.toList());
+        List<String> overseasShopNameList = handleCheckShop(dto.getCfgOverseasWarehouseList(), shopInfoList);
+        if (CollectionUtils.isNotEmpty(overseasShopNameList)) {
+            resultDTO.setOverseasShopNameList(overseasShopNameList);
         }
         return resultDTO;
     }
 
     @Override
-    public List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO> listOverseasWarehouse(String platformType) {
-        CfgRuleWarehouseEntity oldEntity = this.getByPlatformType(platformType);
+    public List<CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO> listOverseasWarehouse() {
+        CfgRuleWarehouseEntity oldEntity = getOne(Wrappers.emptyWrapper());
         if (ObjectUtil.isEmpty(oldEntity)) {
             return Collections.emptyList();
         }
         //仓库设置明细
-        List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listViewByMainIdList(Arrays.asList(oldEntity.getId()));
+        List<CfgRuleWarehouseDetailDTO.ViewDTO> cfgRuleWarehouseDetailList = cfgRuleWarehouseDetailService.listViewByMainIdList(Collections.singletonList(oldEntity.getId()));
         //海外仓设置
         return cfgRuleWarehouseDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseType(), CfgRuleWarehouseTypeEnum.OVERSEAS.getCode()))
                 .map(obj -> new CfgRuleWarehouseDetailDTO.OverseasWarehouseDTO(obj.getWarehouseId(),obj.getWarehouseName())).distinct().collect(Collectors.toList());
     }
 
     @Override
-    public Boolean getIsEnableVirtual(String platformType) {
+    public Boolean getIsEnableVirtual() {
         //是否存在海外仓
-        CfgRuleWarehouseEntity cfgRuleWarehouseEntity = this.getByPlatformType(platformType);
+        CfgRuleWarehouseEntity cfgRuleWarehouseEntity = getOne(Wrappers.emptyWrapper());
         Boolean isEnableOverseas = Boolean.FALSE;
         if (ObjectUtil.isNotEmpty(cfgRuleWarehouseEntity) && Boolean.TRUE.equals(cfgRuleWarehouseEntity.getIsEnableVirtual())) {
             isEnableOverseas = Boolean.TRUE;
@@ -236,7 +275,7 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
      * @param shopList
      * @return List<String>
      */
-    private List<String> handleCheckShop (List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgList,List<ShopInfoEntity> shopList) {
+    private List<String> handleCheckVirtualShop (List<CfgRuleWarehouseDetailDTO.UpdateDTO> cfgList,List<ShopInfoEntity> shopList) {
         if (CollectionUtils.isEmpty(cfgList)) {
             return Collections.emptyList();
         }
@@ -254,6 +293,37 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         return shopList.stream().filter(obj -> !shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
     }
 
+
+    /**
+     * 处理验证店铺数据
+     * @author will
+     * @return List<String>
+     */
+    private List<String> handleCheckShop(List<CfgRuleWarehouseDetailDTO.WarehouseUpdateDTO> cfgLocalWarehouseList, List<ShopInfoEntity> shopList) {
+        if (CollectionUtils.isEmpty(cfgLocalWarehouseList)) {
+            return Collections.emptyList();
+        }
+        List<String> shopIdList = new ArrayList<>();
+        for (CfgRuleWarehouseDetailDTO.WarehouseUpdateDTO updateDTO : cfgLocalWarehouseList) {
+            for (CfgRuleWarehouseDetailDTO.WarehousePlatformDTO dto : updateDTO.getWarehousePlatform()) {
+                if (CharSequenceUtil.equals(VitualWarehouseChannelTypeEnum.SHOP.getCode(), dto.getChannelType())) {
+                    //按店铺
+                    shopIdList.addAll(dto.getShopIdList());
+                } else {
+                    //按平台
+                    List<String> platformShopIdList;
+                    if (CollectionUtils.isNotEmpty(dto.getPlatformList()) && !"".equals(dto.getPlatformList().get(0))) {
+                        platformShopIdList = shopList.stream().filter(obj -> dto.getPlatformList().contains(obj.getDictPlatform())).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                    } else {
+                        platformShopIdList = shopList.stream().map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
+                    }
+                    shopIdList.addAll(platformShopIdList);
+                }
+            }
+        }
+        return shopList.stream().filter(obj -> !shopIdList.contains(obj.getId())).map(ShopInfoEntity::getName).distinct().collect(Collectors.toList());
+    }
+
     /**
      * 虚拟仓数据刷新处理
      * @author will
@@ -266,12 +336,6 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         if (CollectionUtils.isEmpty(list)) {
             return resultList;
         }
-        List<String> warehouseIdList = list.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<String> virtualWarehouseIdList = list.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getVirtualWarehouseId).distinct().collect(Collectors.toList());
-        List<String> dictPlatformList = list.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getDictPlatform).distinct().collect(Collectors.toList());
-        //虚拟仓数据
-        List<CfgRuleWarehouseDetailEntity> virtualList = cfgRuleWarehouseDetailService.listRefreshVirtual(warehouseIdList, virtualWarehouseIdList, dictPlatformList, CfgRuleWarehouseTypeEnum.LOCAL.getCode());
-
         /**
          * 根据实体仓、虚拟仓、平台合并
          */
@@ -279,18 +343,11 @@ public class CfgRuleWarehouseServiceImpl extends SuperServiceImpl<CfgRuleWarehou
         for (Map.Entry<String, List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO>> entry : map.entrySet()) {
             List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> value = entry.getValue();
             VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO virtualWarehouseDTO = value.get(0);
-            //库存分配类型
-            String inventoryAllocateType = virtualList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), virtualWarehouseDTO.getWarehouseId())
-                            && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), virtualWarehouseDTO.getVirtualWarehouseId())
-                            && CharSequenceUtil.equals(obj.getDictPlatform(), virtualWarehouseDTO.getDictPlatform()))
-                    .map(CfgRuleWarehouseDetailEntity::getInventoryAllocateType).findFirst().orElse("");
-
             CfgRuleWarehouseDetailDTO.UpdateDTO updateDTO = new CfgRuleWarehouseDetailDTO.UpdateDTO();
             updateDTO.setWarehouseId(virtualWarehouseDTO.getWarehouseId());
             updateDTO.setVirtualWarehouseId(virtualWarehouseDTO.getVirtualWarehouseId());
             updateDTO.setChannelType(virtualWarehouseDTO.getType());
             updateDTO.setDictPlatform(virtualWarehouseDTO.getDictPlatform());
-            updateDTO.setInventoryAllocateType(CharSequenceUtil.isBlank(inventoryAllocateType) ? CfgRuleInventoryAllocateTypeEnum.AUTO_ALLOCATION.getCode() : inventoryAllocateType);
             //店铺数据
             List<String> relationIdList = value.stream().map(VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO::getRelationIdList).filter(CollectionUtils::isNotEmpty).flatMap(List::stream).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             updateDTO.setChannelIdList(relationIdList);

@@ -14,10 +14,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
@@ -34,6 +31,7 @@ import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.enums.PilotPushPurchaseStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.*;
@@ -151,7 +149,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             return new PagingVO<>(pageData);
         }
         //数据处理
-        doOpHandlePurchaseApplication(records,false);
+        doOpHandlePurchaseApplication(records);
         return new PagingVO<>(pageData);
     }
 
@@ -203,7 +201,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     @Override
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
-    public String add(PurchaseApplicationDTO.AddDTO dto) {
+    public PurchaseApplicationEntity add(PurchaseApplicationDTO.AddDTO dto) {
         PurchaseApplicationEntity entity = new PurchaseApplicationEntity();
         BeanMapperUtils.copy(dto,entity);
         //处理数据id
@@ -219,7 +217,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //新增明细
             purchaseApplicationDetailService.add(dto.getDetails(),entity.getId());
         }
-        return entity.getId();
+        return entity;
     }
 
     @Override
@@ -378,6 +376,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             SkuPurchaseDTO.PurchaseInfo skuPurchase = skuPurchaseMap.getOrDefault(entity.getSkuId(), new SkuPurchaseDTO.PurchaseInfo());
             dto.setPurchaseUserId(skuPurchase.getPurchaseUserId());
             dto.setPurchaseUserName(skuPurchase.getPurchaseUserName());
+            dto.setFirstMassProduct(entity.getFirstMassProduct());
+            dto.setFirstMassProductName(FirstMassProductTypeEnum.getName(entity.getFirstMassProduct()));
             dto.setSupplierId(skuPurchase.getSupplierId());
             dto.setSupplierName(skuPurchase.getSupplierName());
             //预计交货日期
@@ -455,7 +455,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             addDTO.setPurchaseDate(LocalDate.now());
             addDTO.setDeliveryWarehouseId(value.get(0).getDestWarehouseId());
             addDTO.setPurchaseUserId(value.get(0).getPurchaseUserId());
-            addDTO.setIsFirstMassProduct(entity.getIsFirstMassProduct());
 
             //采购订单供应商信息
             PurchaseOrderSupplierDTO.AddDTO supplierDTO = new PurchaseOrderSupplierDTO.AddDTO();
@@ -507,6 +506,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 addDetailDTO.setPurchaseApplicationId(generatePurchaseOrderDTO.getId());
                 addDetailDTO.setPurchaseApplicationDetailId(generatePurchaseOrderDTO.getPurchaseApplicationDetailId());
                 addDetailDTO.setRemark(generatePurchaseOrderDTO.getDetailRemark());
+                addDetailDTO.setFirstMassProduct(generatePurchaseOrderDTO.getFirstMassProduct());
                 details.add(addDetailDTO);
             }
             addDTO.setDetails(details);
@@ -575,15 +575,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
+    public BatchResultDTO delete(PurchaseApplicationEntity entity) {
         //待提交允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
-
+        List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
 
         //采购申请单明细数据
@@ -618,41 +616,33 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //删除操作日志
         moduleOperateLogService.removeByBusinessIds(ids);
         //删除主表数据
-        return this.removeByIds(ids);
-    }
-
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
-        //待提交并且未作废允许提交
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()) ).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98032);
+        boolean result = this.removeByIds(ids);
+        if (result){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+        } else {
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         }
-
-        log.info("采购申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-        //启动流程 TODO
-
-        //更新审核状态
-        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
-        //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
-        return Boolean.TRUE;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(PurchaseApplicationDTO.AddDTO dto) {
+    public BatchResultDTO submit(String id) {
+        //根据ids查询
+        PurchaseApplicationEntity entity = getById(id);
+        return this.submitEntity(entity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO addAndSubmit(PurchaseApplicationDTO.AddDTO dto) {
         //新增
-        String id = this.add(dto);
-        if (StringUtils.isBlank(id)) {
+        PurchaseApplicationEntity entity = this.add(dto);
+        if (StringUtils.isBlank(entity.getId())) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        entity = this.getById(entity.getId());
         //提交
-        return this.submit(Arrays.asList(id));
+        return this.submitEntity(entity);
     }
 
     @Override
@@ -678,14 +668,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
-        //根据ids查询
-        List<PurchaseApplicationEntity> list = getList(ids);
+    public BatchResultDTO cancelProcess(PurchaseApplicationEntity entity) {
 
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus()) ).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购申请单撤销流程，ids=【{}】", ids);
 
         //撤销现有流程
@@ -694,9 +683,9 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //更新单据为待提交
         updateApproveStatusForDisApprove(ids,ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购申请单【%s】取消流程", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"取消流程操作");
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
@@ -705,7 +694,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()));
+        BatchResultDTO resultDTO = this.submit(dto.getId());
+        return resultDTO.getSuccess();
     }
 
     @Override
@@ -800,6 +790,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             viewDTO.setQty(viewDTO.getToPushdownQty());
             viewDTO.setDeliveryQty(viewDTO.getToPushdownQty());
             viewDTO.setSourceType(SourceTypeEnum.PURCHASE_APPLICATION.getCode());
+            viewDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
             //报价信息
             PurchasePriceDTO.PriceDTO priceDTO = viewDTOList.stream().filter(obj -> obj.getSkuId().equals(viewDTO.getSkuId())
                             && obj.getSupplierId().equals(supplierId)
@@ -841,6 +832,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewGenerateDTO.setCurrency(null);
                 viewGenerateDTO.setCurrencySymbol(null);
                 viewGenerateDTO.setAmount(null);
+                viewGenerateDTO.setFirstMassProduct(viewDTO.getFirstMassProduct());
+                viewGenerateDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewDTO.getFirstMassProduct()));
                 viewGenerateDTO.setIndex(index);
                 index++;
                 generateChildList.add(viewGenerateDTO);
@@ -936,7 +929,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             //委外订单主表数据
             SubcontractOrderDTO.AddDTO addDTO = BeanMapperUtils.map(SubcontractOrderDTO.AddDTO.class, subcontractOrderDTO);
             addDTO.setBillDate(LocalDate.now());
-            addDTO.setIsFirstMassProduct(purchaseApplicationEntity.getIsFirstMassProduct());
             addDTO.setSubcontractOrgId(subcontractOrderDTO.getPurchaseOrgId());
             addDTO.setPurchaserId(userInfo.getUid());
             addDTO.setDeptId(findUserDTO.getDepartmentId());
@@ -948,7 +940,6 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 SubcontractOrderDetailDTO.AddDTO detail = BeanMapperUtils.map(SubcontractOrderDetailDTO.AddDTO.class, generateDetailDTO);
                 PurchaseApplicationDetailEntity purchaseApplicationDetailEntity = purchaseApplicationDetailList.stream().filter(obj -> obj.getId().equals(generateDetailDTO.getSourceDetailId())).findFirst().orElse(new PurchaseApplicationDetailEntity());
                 detail.setIsUrgent(purchaseApplicationDetailEntity.getIsUrgent());
-
                 //委外订单子件SKU
                 List<PurchaseApplicationDTO.GenerateSubcontractOrderDTO> generateChildList = generateDetailDTO.getChildList();
                 List<SubcontractOrderDetailDTO.AddDTO> childList = new ArrayList<>();
@@ -1002,7 +993,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         Page<PurchaseApplicationDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理
-            doOpHandlePurchaseApplication(page.getRecords(),true);
+            doOpHandlePurchaseApplication(page.getRecords());
         }
         return new PagingVO<>(page);
     }
@@ -1249,7 +1240,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
      * @date: 2023/4/19 17:57
      * @param records
      */
-    private void doOpHandlePurchaseApplication(List<PurchaseApplicationDTO.ListDTO> records,boolean isExport){
+    private void doOpHandlePurchaseApplication(List<PurchaseApplicationDTO.ListDTO> records){
         if (CollectionUtils.isEmpty(records)) {
             return;
         }
@@ -1321,7 +1312,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     obj.setIsConstitute(Boolean.TRUE);
                 }
             }
-
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             obj.setCreatePoTypeName(CreatePoTypeEnum.getName(obj.getCreatePoType()));
             obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
             if(obj.getCreatePoType().equals(CreatePoTypeEnum.CLOSED.getStatus())){
@@ -1329,9 +1320,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }else{
                 obj.setWaitQty(obj.getApplyQty() - (Objects.isNull(obj.getRealPurchaseQty())?0:obj.getRealPurchaseQty()));
             }
-            if(isExport){
-                obj.setIsFirstMassProductStr(obj.getIsFirstMassProduct()?"是":"否");
-            }
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             //采购建议数据
             if (SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode().equals(obj.getSourceType())) {
                 List<PurchaseSuggestMergeDTO.PushSourceDTO> pushSourceList = BeanUtil.copyToList(obj.getSourceJson(), PurchaseSuggestMergeDTO.PushSourceDTO.class);
@@ -1379,5 +1368,25 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
         }
         return records;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submitEntity(PurchaseApplicationEntity entity) {
+        //待提交并且未作废允许提交
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus()) ).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98032);
+        }
+        List<String> ids = Collections.singletonList(entity.getId());
+        log.info("采购申请单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //启动流程 TODO
+
+        //更新审核状态
+        updateApproveStatus(ids,ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 }

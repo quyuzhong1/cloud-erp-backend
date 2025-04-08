@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
@@ -30,7 +31,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param dto
      * @return com.erp.model.scm.entity.PurchasePriceChangeEntity
      */
-    String add(PurchasePriceChangeDTO.AddDTO dto);
+    PurchasePriceChangeEntity add(PurchasePriceChangeDTO.AddDTO dto);
 
     /**
      * 提交并审核
@@ -39,7 +40,7 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean addAndSubmit(PurchasePriceChangeDTO.AddDTO dto);
+    PurchasePriceChangeEntity addAndSubmit(PurchasePriceChangeDTO.AddDTO dto);
 
     /**
      * 采购价目变更详情
@@ -77,6 +78,8 @@ public interface PurchasePriceChangeService extends SuperService<PurchasePriceCh
      * @return java.lang.Boolean
      */
     Boolean submitApprove(List<String> ids,Boolean isStartProcess);
+
+    void sendMsg(List<String> idList, ApproveStatusEnum approveStatus,String comment);
 
     /**
      * 采购价目变更 审核

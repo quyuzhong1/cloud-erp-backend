@@ -20,10 +20,10 @@ import javax.annotation.Resource;
 
 @Component
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC,
-        selectorExpression = "wdt_product_detail_tag",
-        consumerGroup = RocketMqConsumerGroup.SYNC_WDT_PRODUCT_DETAIL,
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.SYNC_WANGDIAN_ERP_TOPIC,
+//        selectorExpression = "wdt_product_detail_tag",
+//        consumerGroup = RocketMqConsumerGroup.SYNC_WDT_PRODUCT_DETAIL,
+//        consumeMode = ConsumeMode.ORDERLY)
 public class WangDianProductDetailConsumer<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
     @Resource
     private DmpPushTaskService dmpPushTaskService;

@@ -147,5 +147,14 @@ public class TransferLogisticsCreateOrderReq {
          * 目的海关申报单价
          */
         protected String purposeDeclaredValue;
+
+        /**
+         * 真实售价
+         */
+        private BigDecimal price;
+        /**
+         * 售价原币种
+         */
+        private String currency;
     }
 }

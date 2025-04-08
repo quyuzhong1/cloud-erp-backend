@@ -62,17 +62,32 @@ public class TmsCostDetailDTO implements Serializable {
         /**
          * 预估费用
          */
-        private BigDecimal estimatedFee;
+        private BigDecimal estimatedFee = BigDecimal.ZERO;
+        
+        /**
+         * 预估转换人民币费用
+         */
+        private BigDecimal estimatedFeeExchange = BigDecimal.ZERO;
+        
+        /**
+         * 预估费用币种
+         */
+        private String estimatedCurrency;
 
         /**
          * 实际费用
          */
-        private BigDecimal actualFee;
+        private BigDecimal actualFee = BigDecimal.ZERO;
+        
+        /**
+         * 实际费用币种
+         */
+        private String actualCurrency;
 
         /**
          * 差异
          */
-        private BigDecimal feeDifference;
+        private BigDecimal feeDifference = BigDecimal.ZERO;
 
     }
 
@@ -135,7 +150,7 @@ public class TmsCostDetailDTO implements Serializable {
     public static class DetailDTO {
     	
     	/**
-    	 * 费用类型id  http://172.16.100.11:3002/project/128/interface/api/31391  dictCostAttribution=selfDeliver
+    	 * 费用类型id  http://172.16.100.11:3002/project/128/interface/api/34948  dictCostAttribution=selfDeliver
     	 */
     	@NotNull(message = "费用类型不能为空")
     	private String cfgCostId;
@@ -230,6 +245,11 @@ public class TmsCostDetailDTO implements Serializable {
          * 来源类型，SourceTypeEnum枚举
          */
         private String sourceType;
+        
+        /**
+         * 币别
+         */
+        private String currency;
     }
 
 

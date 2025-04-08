@@ -1,9 +1,11 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -11,7 +13,10 @@ import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeApplicationCategorySe
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeCategoryService;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeProductDetailService;
+import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
 import com.erp.server.plm.service.*;
+import com.sdk.third.lingxing.dto.ProductInfo;
+import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -70,6 +75,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private SyncKingdeeApplicationCategoryService syncKingdeeApplicationCategoryService;
+    @Resource
+    private SyncLingXingProductDetailService syncLingXingProductDetailService;
+
+    @Resource
+    private ProductInfoService productInfoService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -216,6 +226,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 break;
             case PRODUCT_DETAIL:
                 resultList = newSyncProductDetail(sourceDetailList);
+                break;
             case SDY_PRODUCT_DETAIL:
             	resultList = newSyncSdyProductDetail(sourceDetailList);
                 break;
@@ -318,7 +329,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     		log.error("syncProductDetail >>>> 未找到数据！");
     		return resultList;
     	}
-    	for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+        List<String> productIds = list.stream().map(ProductDetailEntity::getProductId).distinct().collect(Collectors.toList());
+        Map<String, ProductInfoEntity> productMap = productInfoService.listByIds(productIds)
+                .stream()
+                .collect(Collectors.toMap(BaseEntity::getId, e -> e));
+
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
     		String sourceId = syncParamDetailDTO.getSourceId();
     		ProductDetailEntity poroductDetailEntity = list.stream().filter(obj -> {
     			return obj.getId().equals(sourceId);
@@ -326,7 +342,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     		if (ObjectUtils.isEmpty(poroductDetailEntity)) {
     			continue;
     		}
-    		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeProductDetailService.newSyncDataToSdy(poroductDetailEntity, syncParamDetailDTO.getSyncOperate()));
+    		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeProductDetailService.newSyncDataToSdy(poroductDetailEntity, productMap.get(poroductDetailEntity.getProductId()), syncParamDetailDTO.getSyncOperate()));
     	}
     	return resultList;
     }
@@ -372,7 +388,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(productDetailEntity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeProductDetailService.newSyncDataToSdy(productDetailEntity, syncParamDetailDTO.getSyncOperate()));
+            ProductInfo productInfo = syncLingXingProductDetailService.convertProductInfo(productDetailEntity);
+            Map<String, Object> dataMap = JSONUtil.parseObj(productInfo);
+            resultList.put(syncParamDetailDTO.getDataId(), dataMap);
         }
         return resultList;
     }

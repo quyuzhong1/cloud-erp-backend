@@ -81,4 +81,14 @@ public class ProductArchiveDTO implements Serializable {
      * 产品创建时间
      */
     private LocalDateTime productCreateTime;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updateTime;
+
+    /**
+     * 更新时间
+     */
+    private LocalDateTime createTime;
 }

@@ -88,12 +88,4 @@ public interface LogisticsBaseService {
      * @param authMap
      */
     void syncLogisticsAddress(Map<String, String> authMap);
-
-    /**
-     * 清洗mongodb 物流轨迹数据
-     * @param platformType
-     * @param records
-     * @param transportType
-     */
-    void processMongoTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records, String transportType);
 }

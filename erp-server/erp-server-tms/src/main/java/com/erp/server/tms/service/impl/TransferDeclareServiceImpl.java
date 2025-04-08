@@ -639,7 +639,13 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
         LocalDateTime localDateTime = LocalDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String format = localDateTime.format(formatter);
-        stringBuffer.append("深圳市优篮子科技有限公司+").append(format);
+        CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
+        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("name"))){
+            String name = declareSetting.getDataJson().get("name").toString();
+            stringBuffer.append(name).append("+").append(format);
+        }else{
+            throw new ServiceException("报关主体配置信息为空");
+        }
         Integer count = this.lambdaQuery().likeRight(TransferDeclareEntity::getInstockRefCode,stringBuffer.toString()).count();
         if (Objects.isNull(count)){
             stringBuffer.append(StringUtils.leftPad("1",4, "0"));
@@ -1098,7 +1104,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 		Map<String, String> feeTypeSettingMaps = new HashMap<>();
 		AllocationSettingDTO allocationSettingDTO = JSON.parseObject(byKey.getDataJson().toJSONString(0), AllocationSettingDTO.class);
 		String transferAllocation = allocationSettingDTO.getTransferAllocation();
-		AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
+        String transferOrgId = allocationSettingDTO.getTransferOrgId();
+        String transferWarehouseId = allocationSettingDTO.getTransferWarehouseId();
+        AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
 		for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
 			if(AllocationFeeTypeEnum.SHIPPING_COST == allocationFeeTypeEnum) {
 				feeTypeSettingMaps.put(allocationFeeTypeEnum.getCode(), allocationSettingDTO.getTransferShippingCost());
@@ -1162,20 +1170,27 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 				if(!wareIdOrgIdMaps.isEmpty()) {
 					inventorySkuCostEntityList = inventorySkuCostService.lambdaQuery().eq(InventorySkuCostEntity::getAllocatedMonth, parse)
 							.eq(InventorySkuCostEntity::getStatus, "approve")
-							.in(InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+                            .in(CharSequenceUtil.isBlank(transferOrgId),InventorySkuCostEntity::getCompanyId, wareIdOrgIdMaps.values())
+                            .eq(CharSequenceUtil.isNotBlank(transferOrgId),InventorySkuCostEntity::getCompanyId, transferOrgId)
 							.list();
 				}
 				Map<String, InventorySkuCostEntity> idEntityMaps = new HashMap<>();
 				if(CollUtil.isNotEmpty(inventorySkuCostEntityList)) {
 					idEntityMaps = inventorySkuCostEntityList.stream().collect(Collectors.toMap(InventorySkuCostEntity::getId, j -> j));
-					List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery().in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
-						.in(InventorySkuCostDetailEntity::getSkuId , dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList())).list();
+                    List<String> warehouseIds = outstockIdWareHouseIdMap.values().stream().collect(Collectors.toList());
+                    List<String> skuIds = dealSoOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+                    List<InventorySkuCostDetailEntity> inventorySkuCostDetailEntityList = inventorySkuCostDetailService.lambdaQuery()
+                            .in(InventorySkuCostDetailEntity::getMainId, idEntityMaps.keySet())
+                            .in(CharSequenceUtil.isBlank(transferWarehouseId) && CollUtil.isNotEmpty(warehouseIds),InventorySkuCostDetailEntity::getWarehouseId, warehouseIds)
+                            .eq(CharSequenceUtil.isNotBlank(transferWarehouseId), InventorySkuCostDetailEntity::getWarehouseId, transferWarehouseId)
+                            .in(InventorySkuCostDetailEntity::getSkuId ,skuIds).list();
 					if(CollUtil.isNotEmpty(inventorySkuCostDetailEntityList)) {
 						for(InventorySkuCostDetailEntity j : inventorySkuCostDetailEntityList) {
 							InventorySkuCostEntity inventorySkuCostEntity = idEntityMaps.get(j.getMainId());
-							String companyId = inventorySkuCostEntity.getCompanyId();
-							String skuId = j.getSkuId();
-							unInventorySkuCostMap.put(companyId + "_" + skuId, j);
+                            String companyId = CharSequenceUtil.isBlank(transferOrgId) ? inventorySkuCostEntity.getCompanyId() : transferOrgId;
+							String warehouseId = CharSequenceUtil.isBlank(transferWarehouseId) ? j.getWarehouseId() : transferWarehouseId;
+                            String skuId = j.getSkuId();
+							unInventorySkuCostMap.put(companyId + "_" + warehouseId + "_" + skuId, j);
 						}
 					}
 				}
@@ -1189,8 +1204,9 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					for(SoOutstockDetailEntity soOutstockDetailEntity : dealSoOutstockDetailEntityList) {
 						String skuId = soOutstockDetailEntity.getSkuId();
 						Integer actualQty = soOutstockDetailEntity.getActualQty();
-						String orgId = wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()));
-						InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+                        String orgId = CharSequenceUtil.isBlank(transferOrgId) ? wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId())) : transferOrgId;
+                        String warehouseId = CharSequenceUtil.isBlank(transferWarehouseId) ? outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()) : transferWarehouseId;
+                        InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
 						if(inventorySkuCostDetailEntity != null) {
 							totalSkuCost = totalSkuCost.add(inventorySkuCostDetailEntity.getProductCost().multiply(new BigDecimal(actualQty)));
 						}
@@ -1214,13 +1230,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 					String skuNo = soOutstockDetailEntity.getSkuNo();
 					transferDeclareCostAllocationEntity.setSkuNo(skuNo);
 					transferDeclareCostAllocationEntity.setOutstockDetailId(soOutstockDetailEntity.getId());
-					
-					String orgId = wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()));
+
+                    String orgId = CharSequenceUtil.isBlank(transferOrgId) ? wareIdOrgIdMaps.get(outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId())) : transferOrgId;
 					String orgName = orgIdNameMaps.get(orgId);
 					
 					Integer actualQty = soOutstockDetailEntity.getActualQty();
 					BigDecimal skuCostPre = BigDecimal.ZERO;
-					InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + skuId);
+                    String warehouseId = CharSequenceUtil.isBlank(transferWarehouseId) ? outstockIdWareHouseIdMap.get(soOutstockDetailEntity.getMainId()) : transferWarehouseId;
+                    InventorySkuCostDetailEntity inventorySkuCostDetailEntity = unInventorySkuCostMap.get(orgId + "_" + warehouseId + "_" + skuId);
 					if(inventorySkuCostDetailEntity != null) {
 						BigDecimal skuCost = inventorySkuCostDetailEntity.getProductCost();
 						if(totalSkuCost.compareTo(BigDecimal.ZERO) != 0 && skuCost != null) {
@@ -1270,13 +1287,14 @@ public class TransferDeclareServiceImpl extends SuperServiceImpl<TransferDeclare
 							costViewDTOList = new ArrayList<>();
 						}
 						BigDecimal costValueSum = costViewDTOList.stream().map(CostViewDTO::getCostValue).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-						String allocatedCurrency = mainIdCurrencyMap.get(t.getMainId());
-						if(StringUtils.isBlank(allocatedCurrency)) {
-							allocatedCurrency = "CNY";
-						}
-//						if(CollUtil.isNotEmpty(costViewDTOList)) {
-//							allocatedCurrency = costViewDTOList.get(0).getCurrency();
+//						String allocatedCurrency = mainIdCurrencyMap.get(t.getMainId());
+//						if(StringUtils.isBlank(allocatedCurrency)) {
+//							allocatedCurrency = "CNY";
 //						}
+						String allocatedCurrency = "CNY";
+						if(CollUtil.isNotEmpty(costViewDTOList)) {
+							allocatedCurrency = costViewDTOList.get(0).getCurrency();
+						}
 						String key = reportDate + "_" + allocatedCurrency;
 						BigDecimal rate = rateMap.get(key);
 						if(rate == null) {

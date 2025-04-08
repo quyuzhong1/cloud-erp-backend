@@ -28,9 +28,9 @@ public class AliexpressDeliveryFeignController extends BaseController {
      * @param dto
      * @return com.common.business.dto.base.BaseResultDTO.AddDTO
      **/
-    @PostMapping("/add")
-    public BaseResultDTO.AddDTO add(@RequestBody AliexpressDeliveryDTO.AddDTO dto) {
-        return aliexpressDeliveryService.add(dto);
+    @PostMapping("/addOrUpdate")
+    public BaseResultDTO.AddDTO addOrUpdate(@RequestBody AliexpressDeliveryDTO.AddDTO dto) {
+        return aliexpressDeliveryService.addOrUpdate(dto);
     }
 
     /**

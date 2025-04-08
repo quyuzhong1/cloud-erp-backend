@@ -501,6 +501,12 @@ public class PilotApplicationDTO implements Serializable {
          * 计划交期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+
         /**
          * 备注
          */

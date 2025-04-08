@@ -204,6 +204,28 @@ public class NoticeMessageConstant implements Serializable {
     public static final String AUDIT_PILOT_PRESS_CONTENT = "**通知类型：**%s\n**产品经理：**%s\n**SKU：**%s";
 
 
+    /**
+     * 产品信息变更通知
+     */
+//    public static final String PRODUCT_CHANGE_TITLE = "产品信息变更通知";
+    public static final String PRODUCT_CHANGE_CONTENT_START = "SKU：%s\n变更内容：\n";
+//    public static final String PRODUCT_CHANGE_CHARGE_CONTENT = "·产品经理：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_CATEGORY_CONTENT = "·产品分类：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_PRODUCTLENGTH_CONTENT = "·包装尺寸长：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_PRODUCTWIDTH_CONTENT = "·包装尺寸宽：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_PRODUCTHEIGHT_CONTENT = "·包装尺寸高：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_GROSSWEIGHT_CONTENT = "·毛重：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_NETWEIGHT_CONTENT = "·净重：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_BOXLENGTH_CONTENT = "·箱规长：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_BOXWIDTH_CONTENT = "·箱规宽：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_BOXHEIGHT_CONTENT = "·箱规高：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_BOXWEIGHT_CONTENT = "·单箱重量：从【%s】变更成【%s】\n";
+//    public static final String PRODUCT_CHANGE_BOXQTY_CONTENT = "·单箱数量：从【%s】变更成【%s】\n";
+    public static final String PRODUCT_CHANGE_CONTENT = "·%s：从【%s】变更成【%s】\n";
+    public static final String PRODUCT_CHANGE_CONTENT_END = "操作人：%s\n操作时间：%s\n";
+
+
+
 
 
 

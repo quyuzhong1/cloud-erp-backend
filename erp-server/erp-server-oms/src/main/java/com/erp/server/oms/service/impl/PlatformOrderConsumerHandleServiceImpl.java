@@ -4,11 +4,12 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
-import com.common.business.enums.*;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
@@ -104,19 +105,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private SyncSoB2cService syncSoB2cService;
 
+    @Resource
+    private SoB2cSplitService soB2cSplitService;
 
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
-        // 跳过未作废的自发货无地址的订单
-        if ( notPlatformOrderNotExistAddress(dto)
-                && null != dto.getInvalidStatus()
-                && !dto.getInvalidStatus()
-        ) {
-            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
-            return;
-        }
-
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
@@ -224,6 +220,17 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 newPlatformRefundOrderConsumerService.handle(JSON.toJSONString(e));
             });
         }
+        //亚马逊平台仓订单已发货生成发票
+        if (isShipped  && hasPlatformWarehouse && PlatformDictEnum.AMAZON.getCode().equals(mainEntity.getDictPlatform())) {
+            List<InvoiceInfoEntity> invoiceInfoEntities = invoiceInfoService.listBySoIds(Collections.singletonList(mainEntity.getId()));
+            if (CollectionUtils.isEmpty(invoiceInfoEntities)){
+                try {
+                    invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                }catch (Exception e){
+                    log.error("亚马逊订单已发货生成发票异常：{}",e.getMessage());
+                }
+            }
+        }
     }
 
 
@@ -282,6 +289,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         List<String> platformSpuList = new LinkedList<>();
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
@@ -380,13 +388,160 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
 
         //如果是已支付的订单
-        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) ) {
+//        if (SoB2cPayStatusEnum.ENUM_PAID.getCode().equals(mainEntity.getPayStatus()) ) {
+//            //同步数帝云
+//            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
+//            syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+//        }
+        // 已支付订单在出库时推送
+        // 已取消订单推送?
+        if (mainEntity.getIsCancel()) {
             //同步数帝云
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(mainEntity.getId());
-            syncSoB2cService.syncDataToSdy(mainEntity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_UPDATE.getCode());
+            syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
-
         return resultDTO;
+    }
+
+    @Override
+    public Boolean tiktokSplit(PlatformOrderDTO dto) {
+        List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCodeList(Arrays.asList(dto.getPlatformCode()),dto.getDictPlatform(),dto.getShopId(),"");
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            return true;
+        }
+        soB2cEntityList = soB2cEntityList.stream().filter(v->!v.getInvalidStatus()).collect(Collectors.toList());
+        List<String> ids = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(ids);
+        //过滤掉包裹号为空的订单
+        detailList = detailList.stream().filter(v->StringUtils.isNotBlank(v.getPlatformPackageId())).collect(Collectors.toList());
+        List<String> filterSoIds = detailList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        soB2cEntityList = soB2cEntityList.stream().filter(v->filterSoIds.contains(v.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soB2cEntityList)){
+            return true;
+        }
+        List<String> dtoPackageIds = dto.getDetails().stream().map(PlatformOrderDetailDTO::getPlatformPackageId).distinct().collect(Collectors.toList());
+        List<String> soPackageIds = detailList.stream().map(SoB2cDetailEntity::getPlatformPackageId).distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(dtoPackageIds) || CollectionUtils.isEmpty(soPackageIds)){
+            return true;
+        }
+        if (dtoPackageIds.size() != soPackageIds.size() || !new HashSet<>(dtoPackageIds).containsAll(soPackageIds)){
+            if(!soB2cEntityList.isEmpty() && dtoPackageIds.size() > 1){
+                SoB2cEntity soB2cEntity = soB2cEntityList.get(0);
+                if(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
+                    soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"tiktok平台拆单，ERP更新拆单信息失败:{订单已提交发货，无法拆单}","","","");
+                    return false;
+                }
+                SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soB2cEntity.getId());
+                if(StringUtils.isNotBlank(soB2cLogisticsEntity.getCode())){
+                    try {
+                        BatchResultDTO batchResultDTO = soB2cLogisticsService.cancelLogistic(soB2cEntity.getId(),Arrays.asList(soB2cEntity),Arrays.asList(soB2cLogisticsEntity),true);
+                        if(!batchResultDTO.getSuccess()){
+                            soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP取消物流单失败，无法更新拆单信息:"+batchResultDTO.getMsg(),"","","");
+                            return false;
+                        }
+                    }catch (Exception e){
+                        soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单，ERP取消物流单失败，无法更新拆单信息:"+e.getMessage(),"","","");
+                        throw new ServiceException(e.getMessage());
+                    }
+                }
+                //erp已做了拆分，先取消拆单
+                if(soB2cEntityList.size() > 1){
+                    try {
+                        //做取消拆分
+                        BatchResultDTO batchResultDTO = soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
+                        if(!batchResultDTO.getSuccess()){
+                            soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+batchResultDTO.getMsg(),"","","");
+                            return false;
+                        }
+                    }catch (Exception e){
+                        soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+e.getMessage(),"","","");
+                        throw new ServiceException(e.getMessage());
+                    }
+                }
+                //做拆分，根据package拆分
+                SoB2cDTO.SplitSaveDTO splitSaveDTO = new SoB2cDTO.SplitSaveDTO();
+                splitSaveDTO.setId(soB2cEntity.getId());
+                splitSaveDTO.setIsSyncPlatform(false);
+                Map<String,List<PlatformOrderDetailDTO>> packageIdMap = dto.getDetails().stream().collect(Collectors.groupingBy(PlatformOrderDetailDTO::getPlatformPackageId));
+                List<SoB2cDTO.GroupSplitSaveDTO> groupList = new ArrayList<>();
+                List<SoB2cDetailEntity> finalDetailList = detailList;
+                packageIdMap.forEach((k, v) -> {
+                    SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = new SoB2cDTO.GroupSplitSaveDTO();
+                    List<SoB2cDTO.SplitDetailSaveDTO> splitDetailList = new ArrayList<>();
+                    v.forEach(e -> {
+                        SoB2cDTO.SplitDetailSaveDTO splitDetailSaveDTO = new SoB2cDTO.SplitDetailSaveDTO();
+                        SoB2cDetailEntity soB2cDetailEntity = finalDetailList.stream().filter(d -> d.getPlatformSkuNo().equals(e.getPlatformSkuNo())).findFirst().orElse(null);
+                        if(Objects.isNull(soB2cDetailEntity)){
+                            return;
+                        }
+                        splitDetailSaveDTO.setQty(e.getQty());
+                        splitDetailSaveDTO.setId(soB2cDetailEntity.getId());
+                        splitDetailList.add(splitDetailSaveDTO);
+                    });
+                    groupSplitSaveDTO.setDetailList(splitDetailList);
+                    groupList.add(groupSplitSaveDTO);
+                });
+                splitSaveDTO.setGroupList(groupList);
+                SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO;
+                try {
+                    //做取消拆分
+                    splitSaveResultDTO = soB2cSplitService.splitSave(splitSaveDTO);
+                }catch (Exception e){
+                    soB2cErrorService.generateErrorOrder(soB2cEntity.getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台拆单-ERP拆单失败，"+e.getMessage(),"","","");
+                    throw new ServiceException(e.getMessage());
+                }
+                //更新拆分后的packageId
+                List<String> splitSoIds = splitSaveResultDTO.getSoB2cIds();
+                if(CollectionUtils.isNotEmpty(splitSoIds)){
+                    List<SoB2cDetailEntity> splitDetailList = soB2cDetailService.listByMainIds(splitSoIds);
+                    //key platformLineNumber val: platformPackageId
+                    Map<String,String> linePackageMap = dto.getDetails().stream().collect(Collectors.toMap(PlatformOrderDetailDTO::getPlatformLineNumber,PlatformOrderDetailDTO::getPlatformPackageId,(v1,v2)->v1));
+                    splitDetailList.forEach(v->{
+                        v.setPlatformPackageId(linePackageMap.get(v.getPlatformLineNumber()));
+                        v.setSourceDetailId(v.getPlatformSkuNo()+linePackageMap.get(v.getPlatformLineNumber()));
+                    });
+                    soB2cDetailService.updateBatchById(splitDetailList);
+                }
+                return false;
+            }else if(soB2cEntityList.size() > 1 && dtoPackageIds.size()  == 1){
+                //做取消拆分
+                BatchResultDTO batchResultDTO;
+                try {
+                    //做取消拆分
+                    batchResultDTO = soB2cSplitService.cancelSplit(soB2cEntityList.get(0).getId(), false);
+                    if(!batchResultDTO.getSuccess()){
+                        soB2cErrorService.generateErrorOrder(soB2cEntityList.get(0).getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+batchResultDTO.getMsg(),"","","");
+                        return false;
+                    }
+                }catch (Exception e){
+                    soB2cErrorService.generateErrorOrder(soB2cEntityList.get(0).getId(),SoB2cErrorTypeEnum.OTHER.getCode(),"平台取消拆单-ERP取消拆单失败，"+e.getMessage(),"","","");
+                    throw new ServiceException(e.getMessage());
+                }
+                //更新拆分后的packageId
+                String cancelSplitSoIds = batchResultDTO.getId();
+                if(StringUtils.isNotBlank(cancelSplitSoIds)){
+                    List<SoB2cDetailEntity> cancelSplitDetailList = soB2cDetailService.listByMainId(cancelSplitSoIds);
+                    //key platformLineNumber val: platformPackageId
+                    Map<String,String> linePackageMap = dto.getDetails().stream().collect(Collectors.toMap(PlatformOrderDetailDTO::getPlatformLineNumber,PlatformOrderDetailDTO::getPlatformPackageId,(v1,v2)->v1));
+                    cancelSplitDetailList.forEach(v->{
+                        v.setPlatformPackageId(linePackageMap.get(v.getPlatformLineNumber()));
+                        v.setSourceDetailId(v.getPlatformSkuNo()+linePackageMap.get(v.getPlatformLineNumber()));
+                    });
+
+                    soB2cDetailService.updateBatchById(cancelSplitDetailList);
+                }
+                return false;
+            }else{
+                //更新包裹号
+                for (SoB2cDetailEntity soB2cDetailEntity : detailList) {
+                    soB2cDetailEntity.setPlatformPackageId(dtoPackageIds.get(0));
+                    soB2cDetailEntity.setSourceDetailId(soB2cDetailEntity.getPlatformSkuNo()+dtoPackageIds.get(0));
+                }
+                soB2cDetailService.updateBatchById(detailList);
+                return false;
+            }
+        }
+        //如果是已经做了拆单，不允许更新订单
+        return soB2cEntityList.size() <= 1;
     }
 
     private List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList) {

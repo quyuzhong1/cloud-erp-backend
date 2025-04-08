@@ -252,7 +252,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     private Pair<String,String> setBooleanValue (CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
         String trueValue = "是";
         String falseValue = "否";
-        String booleanValue = fieldEntity.getBooleanValue();
+        String booleanValue = fieldEntity.getValue();
         if (StringUtils.isNotBlank(booleanValue)) {
             String[] booleanValues = booleanValue.split("\\|");
             trueValue = booleanValues[0];

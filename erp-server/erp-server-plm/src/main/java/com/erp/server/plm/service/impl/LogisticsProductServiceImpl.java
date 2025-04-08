@@ -398,14 +398,22 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
     @Override
     public List<LogisticsProductDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<LogisticsProductDTO.TabListDTO> list = new ArrayList<>();
+        Integer allCount = this.baseMapper.listCount(new LogisticsProductDTO.PagingParamDTO());
+        LogisticsProductDTO.TabListDTO allTab = new LogisticsProductDTO.TabListDTO();
+        allTab.setTabFlag("all");
+        allTab.setTabFlagName("全部");
+        allTab.setCount(allCount);
+        list.add(allTab);
+
         LogisticsProductDTO.TabListDTO tab = new LogisticsProductDTO.TabListDTO();
         List<String> fieldList = listField();
         Integer approvalStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
         String permissionSql = dto.getPermissionSql();
         Integer updateCount = baseMapper.logisticsProductUpdateCount(approvalStatus, fieldList, permissionSql);
-        tab.setType("update");
+        tab.setTabFlag("update");
+        tab.setTabFlagName("更新");
         tab.setCount(updateCount);
-        list.add(tab);
+
         PageListTypeEnum[] values = PageListTypeEnum.values();
         for (PageListTypeEnum item : values) {
             LogisticsProductDTO.PagingParamDTO searchParamDTO = new LogisticsProductDTO.PagingParamDTO();
@@ -420,9 +428,11 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
                 count = this.baseMapper.listCount(searchParamDTO);
             }
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
-            resultDTO.setType(item.getCode());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
+        list.add(tab);
         return list;
     }
 
@@ -474,6 +484,8 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             return Collections.emptyList();
         }
         List<LogisticsProductDTO.ProductDTO> list = baseMapper.listLogisticsProduct(skuIdList,skuNoList);
+        List<String> skuNoList1 = list.stream().map(LogisticsProductDTO.ProductDTO::getSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<DmpSkuCostEntity> skuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList1);
         //属性
         List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.DECLARE_PROPERTY.getCode());
         for (LogisticsProductDTO.ProductDTO item : list) {
@@ -495,6 +507,10 @@ public class LogisticsProductServiceImpl extends SuperServiceImpl<ProductDetailM
             //是否纯电
             BasicDictEntity batteryDict = dictEntityList.stream().filter(e -> Objects.nonNull(e) && e.getValue().contains("纯电")).findFirst().orElse(null);
             item.setOnlyBattery(Objects.nonNull(batteryDict) ? Boolean.TRUE : Boolean.FALSE);
+
+            Map<String, BigDecimal> map = getSkuCost(skuCostList, item.getSkuId());
+            item.setActualTaxCost(map.get("actualTaxCost"));
+            item.setActualNoTaxCost(map.get("actualNoTaxCost"));
         }
         return list;
     }

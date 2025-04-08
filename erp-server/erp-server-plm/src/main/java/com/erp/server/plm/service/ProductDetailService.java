@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -9,6 +10,8 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -215,9 +218,18 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return String
+     **/
+    String inportExcel(ProductNoSpecDTO productNoSpecDTO);
+
+    /**
+     * @Description 新增无规格sku信息 并推送金蝶
+     * @Author jack
+     * @Date 2025-02-07
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
      * @return java.lang.Boolean
      **/
-    Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO);
+    Boolean inportExcelAndSync(ProductNoSpecDTO productNoSpecDTO,ProductDetailEntity productBy);
 
     /**
      * 导出excel的sku数据
@@ -228,6 +240,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Date 2022/10/9 11:49
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
+
+    PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO>productSkuExcelDTO );
 
     /**
      * 根据sku id集合
@@ -653,7 +667,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param response
      * @return java.lang.Boolean
      **/
-    Boolean importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+    ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
 
 
     /**
@@ -847,5 +861,17 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param excelFile 文件
      * @param response 响应
      */
-    void importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
+    ExcelImportFsDTO.UrlDTO importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * @description: 推送金蝶
+     * @param list
+     */
+    void sendPushTask (List<ProductDetailEntity> list, String operate);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO, ProductInfoEntity oldEntity);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO, ProductPackEntity oldEntity);
+
+    void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList, Boolean isTransaction);
 }

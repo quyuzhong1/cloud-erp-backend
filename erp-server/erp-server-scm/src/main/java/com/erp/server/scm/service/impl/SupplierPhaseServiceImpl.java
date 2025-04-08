@@ -9,6 +9,7 @@ import com.common.business.constant.SearchType;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -16,6 +17,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.model.scm.dto.SupplierPhaseDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -32,10 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -319,13 +318,14 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
         SupplierPhaseDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        String searchType = params.getSearchType();
-        List<String> statusList = new ArrayList<>();
-        //待我审核
-        if (searchType.equals(SearchType.WAIT_APPROVE)) {
-            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
-        }
-        IPage pageData = baseMapper.paging(query, params, statusList);
+//        String searchType = params.getSearchType();
+//        List<String> statusList = new ArrayList<>();
+//        //待我审核
+//        if (searchType.equals(SearchType.WAIT_APPROVE)) {
+//            statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+//        }
+//        IPage pageData = baseMapper.paging(query, params, statusList);
+        IPage pageData = baseMapper.paging(query, params, null);
         List<SupplierPhaseDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(pageData);
@@ -546,5 +546,25 @@ public class SupplierPhaseServiceImpl extends SuperServiceImpl<SupplierPhaseMapp
 
     }
 
+    @Override
+    public List<SupplierPhaseDTO.TabFlagDTO> tabList(PermissionsDTO dto) {
+        List<SupplierPhaseDTO.TabFlagDTO> resultList = new ArrayList<>(2);
+        List<SupplierPhaseDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
+        int allCount = approveCountList.stream().mapToInt(SupplierPhaseDTO.ApproveCountDTO::getCount).sum();
+        SupplierPhaseDTO.TabFlagDTO all = new SupplierPhaseDTO.TabFlagDTO();
+        all.setCount(allCount);
+        all.setTabFlag("all");
+        all.setTabFlagName("全部");
+        resultList.add(all);
+        //待审核
+        SupplierPhaseDTO.TabFlagDTO waitApprove = new SupplierPhaseDTO.TabFlagDTO();
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitApprove.setCount(waitApproveCount);
+        waitApprove.setTabFlag(ApproveStatusEnum.APPROVE_ING.getStatus());
+        waitApprove.setTabFlagName("待审核");
+        resultList.add(waitApprove);
+        return resultList;
+    }
 
 }

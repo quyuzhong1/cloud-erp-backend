@@ -29,7 +29,7 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<VirtualInventoryAgeDTO.ListDTO> paging(Page<VirtualInventoryAgeDTO.SearchParamDTO> page,@Param("params") VirtualInventoryAgeDTO.SearchParamDTO params);
+    IPage<VirtualInventoryAgeDTO.ListDTO> paging(Page<VirtualInventoryAgeDTO.SearchParamDTO> page,@Param("params") VirtualInventoryAgeDTO.SearchParamDTO params,@Param("frozenIsDiff") Boolean frozenIsDiff);
     /**
      * 历史库龄
      * @author will
@@ -66,4 +66,18 @@ public interface VirtualInventoryDetailMapper extends BaseMapper<VirtualInventor
      * @return List<VirtualInventoryDetailEntity>
      */
     List<VirtualInventoryDetailEntity> getByOutParam(@Param("skuId")String skuId,@Param("warehouseId") String warehouseId,@Param("virtualWarehouseId") String virtualWarehouseId);
+    /**
+     * 按SKU查询库龄差异
+     * @author will
+     * @date 2025/2/20 11:51
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryAgeDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+    /**
+     * 按汇总查询库龄差异
+     * @author will
+     * @date 2025/2/20 11:51
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryAgeDTO.SendNoticeTotalDTO>
+     */
+    List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

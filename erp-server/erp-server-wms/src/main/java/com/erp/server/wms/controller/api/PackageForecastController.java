@@ -11,6 +11,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
@@ -19,10 +20,12 @@ import com.erp.server.wms.query.PackageForecastQueryHandler;
 import com.erp.server.wms.service.PackageForecastDetailService;
 import com.erp.server.wms.service.PackageForecastService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -154,10 +157,22 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/print")
     public ApiResult<String> print(@RequestBody @Valid BaseIdDTO dto) {
         String resultBase64 = packageForecastService.print(dto.getId());
+        if(StringUtils.isEmpty(resultBase64)){
+            throw new ServiceException("未上传标签");
+        }
         return success(resultBase64);
 
     }
-
+    /**
+     * 批量打印面单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/batchPrint")
+    public void batchPrint(@RequestBody @Valid BaseIdsDTO.IdsDTO dto, HttpServletResponse response) {
+        packageForecastService.batchPrint(dto.getIds(),response);
+    }
     /**
      * 取消
      *
@@ -264,4 +279,21 @@ public class PackageForecastController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 上传组包标签View
+     * @return
+     */
+    @PostMapping("/uploadLabelView")
+    public ApiResult<List<PackageForecastDTO.UploadFileViewDTO>> uploadLabelView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(packageForecastService.uploadLabelView(dto.getIds()));
+    }
+
+    /**
+     * 上传组包标签
+     * @return
+     */
+    @PostMapping("/uploadLabel")
+    public ApiResult<Boolean> uploadLabel(@RequestBody @Validated List<PackageForecastDTO.UploadFileDTO> uploadFileDTOList) {
+        return success(packageForecastService.uploadFileDTO(uploadFileDTOList));
+    }
 }

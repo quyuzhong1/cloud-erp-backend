@@ -46,6 +46,8 @@
         sb2c.package_status as packageStatus,
         sb2c.transfer_status as transferStatus,
         sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
         sb2c.amount as amount,
         sb2c.currency as currency,
         sb2c.exchange_rate as exchangeRate,
@@ -102,7 +104,8 @@
         sb2c.is_out_of_range_delivery as isOutOfRangeDelivery,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        sb2c.vat_invoice_status as vatInvoiceStatus
     </sql>
 
     <!-- 通用查询结果列 -->
@@ -133,6 +136,8 @@
         sb2c.is_change_sku as isChangeSku,
         sb2c.is_not_outbound as isNotOutbound,
         sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
         sb2cd.id as detailId,
         sb2cd.platform_spu_no as platformSpuNo,
         sb2cd.platform_sku_no as platformSkuNo,
@@ -167,6 +172,7 @@
         sb2cl.width,
         sb2cl.height,
         sb2cl.ioss_tax_no,
+        sb2cl.logistic_type,
         sb2cr.login_id as loginId,
         sb2cr.name as buyerName,
         sb2cr.email,
@@ -271,7 +277,9 @@
         JOIN shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = ''
+            ${params.sqlMap.default} and sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            and sb2c.bill_status not in('waitShipped','shipped')
+            and sb2c.is_not_merge = false and sb2cl.code = ''
             and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
             and sb2c.dict_platform not in ('Shopee', 'mercadolibre')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
@@ -334,7 +342,9 @@
         JOIN shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = ''
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            and sb2c.bill_status not in('waitShipped','shipped')
+            and sb2c.is_not_merge = false and sb2cl.code = ''
             and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
             and sb2c.dict_platform not in ('Shopee', 'mercadolibre')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
@@ -420,7 +430,9 @@
         left outer join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and sb2cl.code = ''
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            and sb2c.bill_status not in('waitShipped','shipped')
+            and sb2c.is_not_merge = false and sb2cl.code = ''
             and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
             and sb2c.dict_platform not in ('Shopee', 'mercadolibre')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
@@ -504,7 +516,7 @@
         LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
         AND sbd.is_deleted = FALSE
         WHERE
-        sb.is_deleted = FALSE
+        ${params.sqlMap.default} and sb.is_deleted = FALSE
         <if test="params.skuNo!=null and params.skuNo!=''">
             AND ((
             sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
@@ -556,7 +568,7 @@
         LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
         AND sbd.is_deleted = FALSE
         WHERE
-        sb.is_deleted = FALSE
+        ${params.sqlMap.default} and sb.is_deleted = FALSE
         <if test="params.skuNo!=null and params.skuNo!=''">
             AND ((
             sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
@@ -901,12 +913,14 @@
             sb2cl.logistics_channel_name as logisticsChannelName,
             sb2c.pay_time as payTime,
             sbe.message,
-            sbe.signOrderErrorTime
+            sbe.signOrderErrorTime,
+        sbe.id as errorId,
+        sbe.type as errorType
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
@@ -935,12 +949,14 @@
             sb2cl.logistics_channel_name as logisticsChannelName,
             sb2c.pay_time as payTime,
             sbe.message,
-            sbe.signOrderErrorTime
+            sbe.signOrderErrorTime,
+        sbe.id as errorId,
+        sbe.type as errorType
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
@@ -1154,15 +1170,43 @@
         platform_package_id = #{platformPackageId}
         WHERE id = #{id}
     </update>
+    <update id="updateFbaNotVatInvoice">
+        UPDATE so_b2c sb2c
+        SET vat_invoice_status = #{vatInvoiceStatus},update_time = NOW(),version = sb2c.version + 1
+        WHERE sb2c.is_deleted = FALSE
+          and sb2c.bill_status = 'shipped'
+          and sb2c.label_json ~ 'AFN'
+          and sb2c.vat_invoice_status = ''
+          and sb2c.shop_id = #{shopId} and sb2c.platform_order_create_time >= #{enableTime}
+    </update>
 
     <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">
-        SELECT DISTINCT so.* FROM so_b2c so
+        select * from (
+SELECT DISTINCT so.* FROM so_b2c so
         LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
-        WHERE so.bill_date >= #{startDate}
-        AND so.bill_date &lt;= #{endDate}
-        AND so.approve_status = 'approve'
+        WHERE so.approve_status = 'approve'
         AND so.is_deleted = FALSE
         AND sod.is_deleted = FALSE
+        AND (so.pay_time >= #{startDate} AND so.pay_time &lt; #{endDate})
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+union all
+SELECT DISTINCT so.* FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        AND so.pay_time is null and so.platform_order_create_time >= #{startDate} AND so.platform_order_create_time &lt; #{endDate}) t
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

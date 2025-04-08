@@ -79,7 +79,7 @@ public class SoB2cAbnormalController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量重试")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量重试", keyIdName = "ids")
     @PostMapping(value = "/batchRetry")
     public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
@@ -107,14 +107,14 @@ public class SoB2cAbnormalController extends BaseController {
 
 
     /**
-     * 清楚异常
+     * 清除异常
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "清楚异常")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "清除异常")
     @PostMapping(value = "/clearAbnormal")
-    public ApiResult<?> clearAbnormal(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        soB2cAbnormalService.clearAbnormal(dto.getIds());
+    public ApiResult<?> clearAbnormal(@RequestBody @Validated SoB2cAbnormalDTO.ClearAbnormalDTO dto) {
+        soB2cAbnormalService.clearAbnormal(dto);
         return success();
     }
 }

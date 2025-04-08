@@ -55,10 +55,10 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_fba_shipment_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_fba_shipment_consumer",
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
+//        selectorExpression = "third_system_fba_shipment_tag",
+//        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_fba_shipment_consumer",
+//        consumeMode = ConsumeMode.ORDERLY)
 public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
@@ -202,6 +202,9 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
      * @param currentShopEntity
      */
     private void checkAndSetCountryWithShop(FbaShipmentEntity entity, PlatformFbaShipmentDTO dto, ShopInfoEntity currentShopEntity) {
+        // 补充来源名称
+        entity.setShopName(currentShopEntity.getName());
+        dto.setShopName(currentShopEntity.getName());
         // 查询仓库中心对应国家
         String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
         // 没有配置处理

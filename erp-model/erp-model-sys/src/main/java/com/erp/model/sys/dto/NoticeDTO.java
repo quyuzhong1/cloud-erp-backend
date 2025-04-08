@@ -162,7 +162,7 @@ public class NoticeDTO implements Serializable {
         /**
          * 业务模块
          */
-        @NotBlank(message = "业务模块不能为空")
+//        @NotBlank(message = "业务模块不能为空")
         private String module;
 
         /**

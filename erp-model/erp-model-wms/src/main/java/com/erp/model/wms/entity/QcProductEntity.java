@@ -109,6 +109,7 @@ public class QcProductEntity extends BaseEntity<QcProductEntity> {
     private String variantProperty;
 
 
+
     public static final String MIAN_ID = "mian_id";
 
     public static final String SKU_ID = "sku_id";

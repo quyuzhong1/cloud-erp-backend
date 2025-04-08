@@ -73,6 +73,11 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("paper_size")
     private String paperSize;
     /**
+     * 是否推送海外仓面单
+     */
+    @TableField("is_push_label")
+    private Boolean isPushLabel;
+    /**
     * 纸张长
     */
     @TableField("paper_length")
@@ -217,6 +222,18 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
      */
     @TableField("shipment_over_limit_rate")
     private BigDecimal shipmentOverLimitRate;
+
+    /**
+     * 是否平台发货  true代表物流下单后后续无需平台标发
+     */
+    @TableField("is_platform_ship")
+    private Boolean isPlatformShip;
+
+    /**
+     * 配送商类型
+     */
+    @TableField("carrier_type")
+    private String carrierType;
 
     public static final String MAIN_ID = "main_id";
 

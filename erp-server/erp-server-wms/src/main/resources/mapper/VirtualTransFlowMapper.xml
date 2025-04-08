@@ -49,6 +49,14 @@
         vtf.virtual_inventory_id, vtf.org_id, vtf.warehouse_id, vtf.virtual_warehouse_id, vtf.dict_inventory_status, vtf.bill_date, vtf.sku_id, vtf.sku_no, vtf.source_type, vtf.source_id, vtf.source_code, vtf.source_detail_id, vtf.dict_biz_type, vtf.user_id, vtf.trade_time, vtf.qty, vtf.cur_inventory_qty, vtf.virtual_trans_rule_id, vtf.operation_mode, vtf.transaction_no, vtf.is_unapproved
     </sql>
 
+    <!-- 清空数据 -->
+    <delete id="cleanALlData">
+        delete from virtual_trans_flow_detail;
+        delete from virtual_inventory_detail;
+        delete from virtual_inventory_detail_his;
+        delete from virtual_inventory_his;
+    </delete>
+
     <!-- 虚拟库存流水总数查询 -->
     <select id="pagingCount" resultType="java.lang.Integer">
         select
@@ -212,8 +220,18 @@
         select
             <include refid="Base_Column_List" />
         from virtual_trans_flow vtf where is_deleted = false and is_unapproved = false
-        and ((dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
-                 or ((dict_inventory_status = 'usable' and 0 > qty  and source_type in ('virtualWarehouseAllocation','soOutstock')) or (dict_inventory_status = 'frozen' and 0 > qty and source_type in ('machineInfo','transferInfo','soOutstock'))))
+        and ((
+            (source_type = '' and ((dict_inventory_status = 'usable' ) or (dict_inventory_status = 'frozen' and 0 > qty)) )
+                or (dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
+                or (
+                    (dict_inventory_status = 'usable' and 0 > qty  and source_type in ('virtualWarehouseAllocation','soOutstock'))
+                     or (dict_inventory_status = 'frozen' and 0 > qty and (source_type in ('machineInfo','transferInfo','soOutstock') or (source_type = 'soB2cDelivery' and dict_biz_type = '06')) )
+                    )
+            )
+        or (
+        (dict_inventory_status = 'usable' and qty > 0  and source_type in ('soOutstock') and operation_mode = 'unApprove')
+        or (dict_inventory_status = 'frozen' and qty > 0 and source_type in ('machineInfo','transferInfo','soOutstock') and operation_mode = 'unApprove')
+        ))
         <if test="dto.ids != null and dto.ids.size > 0">
             and vtf.id in
             <foreach collection="dto.ids" open="(" close=")" separator="," item="item" >
@@ -223,5 +241,6 @@
         <if test="dto.startDate != null">
             and vtf.bill_date >= #{dto.startDate}
         </if>
+        order by vtf.trade_time asc
     </select>
 </mapper>

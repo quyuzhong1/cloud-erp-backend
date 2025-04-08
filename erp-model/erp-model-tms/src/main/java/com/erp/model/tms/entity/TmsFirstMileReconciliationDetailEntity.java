@@ -153,20 +153,40 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("shipping_cost")
     private BigDecimal shippingCost;
     /**
+     * 运费用币别
+     */
+    @TableField("shipping_cost_currency")
+    private String shippingCostCurrency;
+    /**
      * 报关费用
      */
     @TableField("declare_cost")
     private BigDecimal declareCost;
+    /**
+     * 报关费用币别
+     */
+    @TableField("declare_cost_currency")
+    private String declareCostCurrency;
     /**
      * 其他费用
      */
     @TableField("other_cost")
     private BigDecimal otherCost;
     /**
+     * 其他费用币别
+     */
+    @TableField("other_cost_currency")
+    private String otherCostCurrency;
+    /**
      * 其他税费
      */
     @TableField("other_tax_cost")
     private BigDecimal otherTaxCost;
+    /**
+     * 其他税费币别
+     */
+    @TableField("other_tax_currency")
+    private String otherTaxCurrency;
     /**
      * 备注
      */

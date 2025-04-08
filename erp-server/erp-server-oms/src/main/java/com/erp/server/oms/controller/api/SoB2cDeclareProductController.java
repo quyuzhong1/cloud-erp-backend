@@ -8,20 +8,20 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.SoB2cDeclareProductDTO;
+import com.erp.model.oms.entity.SoB2cDeclareProductEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.server.oms.service.SoB2cDeclareProductService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -98,7 +98,7 @@ public class SoB2cDeclareProductController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/batchUpdate")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "B2C销售订单申报产品信息表批量修改")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "B2C销售订单申报产品信息表批量修改")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "oms:soB2cDeclareProduct:batchUpdate",
@@ -109,12 +109,7 @@ public class SoB2cDeclareProductController extends BaseController {
         for (SoB2cDeclareProductDTO.UpdateDTO dto : dtoList) {
             BatchResultDTO submit = null;
             try {
-                Boolean result = soB2cDeclareProductService.update(dto);
-                if (result){
-                    submit = new BatchResultDTO();
-                    submit.setSuccess(Boolean.TRUE);
-                    submit.setMsg("操作成功");
-                }
+                submit = soB2cDeclareProductService.update(dto);
             } catch (Exception e) {
                 log.error("B2C销售订单 批量更新报关异常", e);
 
@@ -141,5 +136,15 @@ public class SoB2cDeclareProductController extends BaseController {
     public ApiResult exportExcel(@RequestBody @Validated SoB2cDeclareProductDTO.ListDTO dto) {
         Boolean flag = soB2cDeclareProductService.exportExcel(dto);
         return flag ? success() : failure();
+    }
+
+    /**
+     * 详情
+     */
+    @GetMapping("/view")
+    @LogViewService
+    public ApiResult<SoB2cDeclareProductEntity> view(@RequestParam(value = "id") String id) {
+        SoB2cDeclareProductEntity entity = soB2cDeclareProductService.getById(id);
+        return success(entity);
     }
 }

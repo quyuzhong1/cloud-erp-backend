@@ -67,6 +67,9 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
     @Resource
     private WmsVirtualDetailMsgService wmsVirtualDetailMsgService;
 
+    @Resource
+    private VirtualTransFlowDetailService virtualTransFlowDetailService;
+
     /**
      * 允许录入负数的库存业务单据（临时打开）
      */
@@ -209,7 +212,6 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             if (CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.MACHINE_INFO.getCode())
                     || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.TRANSFER_INFO.getCode())
                     || CharSequenceUtil.equals(transFlowEntity.getSourceType(),InventorySourceTypeEnum.SO_OUTSTOCK.getCode())) {
-                transFlowEntity.setParentVirtualTransFlowId(txnFlow.getId());
                 addWmsVirtualDetailMsg(transFlowEntity);
             }
         });
@@ -270,8 +272,8 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
             if (!CharSequenceUtil.equals(InventorySourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),param.getSourceType().getCode())) {
                  return;
             }
-            //入库添加本地任务表数据
-            addWmsVirtualDetailMsg(transFlowEntity);
+            //入库同步生成库龄数据
+            virtualTransFlowDetailService.updateHandleVirtualTransFlow(transFlowEntity);
         }
     }
 
@@ -284,7 +286,6 @@ public abstract class AbstractVirtualInventoryServiceImpl implements VirtualInve
     private void addWmsVirtualDetailMsg (VirtualTransFlowEntity transFlowEntity) {
         //入库添加本地任务表数据
         WmsVirtualDetailMsgDTO.AddDTO addDTO = new WmsVirtualDetailMsgDTO.AddDTO();
-        addDTO.setTransFlowEntity(transFlowEntity);
         addDTO.setRemark("虚拟仓库存出入库");
         addDTO.setTradeTime(transFlowEntity.getTradeTime());
         addDTO.setStatus(VirtualDetailMsgStatusEnum.WAIT_HANDLE.getCode());

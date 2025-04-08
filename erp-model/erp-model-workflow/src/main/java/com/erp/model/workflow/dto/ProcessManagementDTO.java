@@ -1,6 +1,9 @@
 package com.erp.model.workflow.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
@@ -481,6 +484,7 @@ public class ProcessManagementDTO {
     }
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TransferBatchDTO {
         @NotNull(message = "id不能为空")
         @Size(min = 1, message = "id不能为空")
@@ -656,7 +660,7 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
-    public static class SearchDTO{
+    public static class SearchDTO extends SortDTO {
 
         private List<String> businessNames;
 
@@ -666,6 +670,15 @@ public class ProcessManagementDTO {
 
         private String processName;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     @Data
@@ -681,6 +694,16 @@ public class ProcessManagementDTO {
         private String processName;
 
         private List<String> ids;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
     @Data
@@ -786,6 +809,11 @@ public class ProcessManagementDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
 
     }
 

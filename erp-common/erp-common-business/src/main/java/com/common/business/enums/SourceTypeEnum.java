@@ -98,6 +98,7 @@ public enum SourceTypeEnum {
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
     SDY_SKU_MAPPING( "sdy_skuMapping", "sku映射","sku_mapping"),
+    CFG_VAT_INVOICE( "cfgVatInvoice", "VAT发票设置","cfg_vat_invoice"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
@@ -198,6 +199,8 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_FILE("thirdWarehouseUploadFile", "第三方仓上传附件","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL("thirdWarehouseUploadOrderLabel", "第三方仓上传面单","dmp_push_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_ORDER("transferLogisticsCreateOrder", "物流报关商创建订单","dmp_push_task"),
@@ -238,6 +241,9 @@ public enum SourceTypeEnum {
     SDY_SO_OUTSTOCK("sdySoOutstock", "速帝云销售出库订单","so_outstock"),
     SDY_SO_RETURN_INSTOCK("sdySoReturnInstock", "速帝云退货入库单","so_return_instock"),
     SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
+    SDY_SELF_DELIVERY_ORDER("sdySelfDeliveryOrder", "速帝云自发货配货单","so_b2c_delivery"),
+    SDY_ALIEXPRESS_DELIVERY_ORDER("sdyAliExpressDeliveryOrder", "速帝云速卖通配货单","aliexpress_delivery"),
+
     ;
 
     /**

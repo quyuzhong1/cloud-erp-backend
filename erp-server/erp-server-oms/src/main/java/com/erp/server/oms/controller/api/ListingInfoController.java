@@ -86,4 +86,12 @@ public class ListingInfoController extends BaseController {
         PagingVO<ListingInfoDTO.PageDTO> list = listingInfoService.paging(dto);
         return success(list);
     }
+
+    /**
+     * 平台sku+类型模糊搜索
+     **/
+    @PostMapping("/searchByKey")
+    public ApiResult<List<ListingInfoDTO.SearchResultDTO>> searchByKey(@RequestBody @Valid ListingInfoDTO.SearchParamDTO dto) {
+        return success(listingInfoService.searchByKey(dto));
+    }
 }

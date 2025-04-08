@@ -54,10 +54,10 @@
         </if>
         order by
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
-            case when tl.name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
-            when tl.name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
-            when tl.name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
-            end , tl.name,
+            case when tl.channel_name ILIKE concat(#{params.searchKeyword}::text,'%') THEN 1
+            when tl.channel_name ILIKE concat('%',#{params.searchKeyword}::text) THEN 2
+            when tl.channel_name ILIKE concat('%',#{params.searchKeyword}::text,'%') THEN 3
+            end , tl.channel_name,
         </if>
         thirdLogisticsName desc
         ) a

@@ -76,9 +76,19 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     
     List<DmpOutputTaskRecordEntity> getOutputErrorTask(@Param("systemId") String systemId , @Param("size") String size);
     
-    void dmpOutputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    void dmpOutputMoveToHistoryTable(@Param("conditionSql") String conditionSql);
     
-    void dmpRelationMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    List<String> getDmpOutputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
     
-    void dmpInputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    void dmpOutputNoRecordMoveToHistoryTable(@Param("conditionSql") String conditionSql);
+    
+    List<String> getDmpOutputNoRecordMoveToHistoryTable();
+    
+    void dmpRelationMoveToHistoryTable(@Param("fileConditionSql") String fileConditionSql , @Param("dmpConditionSql") String dmpConditionSql);
+    
+    void dmpInputMoveToHistoryTable(@Param("conditionSql") String conditionSql);
+
+    List<DmpOutputTaskRecordEntity> queryBySourceCodeAndCfgOutputId(@Param("sourceCode") String sourceCode, @Param("cfgOutputId") String cfgOutputId);
+
+    DmpOutputTaskRecordEntity getOutputTaskRecord(@Param("sourceCode") String sourceCode, @Param("outputClass") String outputClass);
 }

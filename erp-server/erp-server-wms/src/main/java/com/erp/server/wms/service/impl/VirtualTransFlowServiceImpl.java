@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
@@ -89,7 +90,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
 
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         virtualTransFlowEntity.setUserId(Objects.nonNull(loginUser) ? loginUser.getUid() : "");
-        virtualTransFlowEntity.setTradeTime(LocalDateTime.now());
+        virtualTransFlowEntity.setTradeTime(ObjectUtil.isEmpty(virtualTransFlowEntity.getTradeTime()) ? LocalDateTime.now() : virtualTransFlowEntity.getTradeTime());
         virtualTransFlowEntity.setVirtualTransRuleId(StrUtils.null2EmptyWithTrim(virtualTansRuleId));
         Integer qty = addDTO.getQty();
         if(Objects.equals(InventoryModeEnum.OUT_STOCK, inventoryModeEnum)) {
@@ -188,11 +189,11 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
     }
 
     @Override
-    public List<VirtualTransFlowEntity> listBySourceDetailIdList(List<String> deliveryDetailIdList) {
-        if (CollUtil.isEmpty(deliveryDetailIdList)) {
-            throw new ServiceException("B2C发货单明细id不能为空");
+    public List<VirtualTransFlowEntity> listBySourceIdList(List<String> deliveryIdList) {
+        if (CollUtil.isEmpty(deliveryIdList)) {
+            throw new ServiceException("B2C发货单明细不能为空");
         }
-        return  lambdaQuery().in(VirtualTransFlowEntity::getSourceDetailId,deliveryDetailIdList)
+        return  lambdaQuery().in(VirtualTransFlowEntity::getSourceId,deliveryIdList)
                 .eq(VirtualTransFlowEntity::getDictBizType,VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode())
                 .list();
     }
@@ -219,7 +220,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .collect(Collectors.toList());
         Integer virtualQty = this.baseMapper.getVirtualQty(virtualInvId, startDate);
         // 重算库存流水
-        overrideFlowByVirtualInventoryId(flowList, ObjUtil.isNull(virtualQty) ? MathUtil.ZERO : virtualQty);
+        overrideFlowByVirtualInventoryId(flowList, MathUtil.valueOfZero(virtualQty));
         log.info("###VirtualTransFlowServiceImpl:::overrideVirtualTransFlow 库存流水重算完成 virtualInvId={}, end_time={}",  virtualInvId, LocalDateTime.now());
     }
 
@@ -256,12 +257,26 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
         if (CollUtil.isEmpty(virtualTransFlowList)) {
             return;
         }
+        //清空数据
+        baseMapper.cleanALlData();
         virtualTransFlowDetailService.handleAddTransFlowDetail(virtualTransFlowList);
     }
 
     @Override
     public void updateRemark(String id, String remark) {
         lambdaUpdate().eq(VirtualTransFlowEntity::getId,id).set(VirtualTransFlowEntity::getRemark,remark).update();
+    }
+
+    @Override
+    public VirtualTransFlowEntity getUnApprovedTxnFlowBySource(VirtualTransFlowEntity entity) {
+        return   lambdaQuery()
+                .eq(VirtualTransFlowEntity::getSourceType, entity.getSourceType())
+                .eq(VirtualTransFlowEntity::getSourceDetailId, entity.getSourceDetailId())
+                .eq(VirtualTransFlowEntity::getSkuId, entity.getSkuId())
+                .eq(VirtualTransFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
+                .le(VirtualTransFlowEntity::getTradeTime, entity.getTradeTime())
+                .last("limit 1")
+                .one();
     }
 
     /**

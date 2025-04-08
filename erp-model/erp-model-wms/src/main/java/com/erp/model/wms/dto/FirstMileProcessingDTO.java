@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,10 @@ public class FirstMileProcessingDTO implements Serializable {
     @NoArgsConstructor
     public static class ListDTO {
         /**
+         * index
+         */
+        private String indexId;
+        /**
          * 主键id【可排序】
          */
         private String id;
@@ -97,6 +102,7 @@ public class FirstMileProcessingDTO implements Serializable {
          * 头程发货单审核状态名称
          */
         private String deliveryApproveStatusName;
+
         /**
          * 发货数量【可排序】
          */
@@ -182,6 +188,10 @@ public class FirstMileProcessingDTO implements Serializable {
          * 标签,outstock出库,frozen发货冻结,unShipped七日未发
          */
         private List<String> labelList;
+        /**
+         * 明细信息
+         */
+        private List<FirstMileProcessingDetailDTO.ListDTO> detailList;
     }
 
     /**
@@ -466,8 +476,34 @@ public class FirstMileProcessingDTO implements Serializable {
         @NotNull(message = "批准数量不能为空")
         private Integer approveQty;
 
+        /**
+         * 单据日期
+         */
+        private LocalDate billDate;
 
+        /**
+         * 明细数据
+         */
+        private List<FirstMileProcessingDetailDTO.AddOrUpdateDTO> detailList;
     }
 
-
+    /**
+     * 删除dto
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeleteDTO {
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+        /**
+         * 要货申请明细id
+         */
+        private List<String> requisitionApplicationDetailIdList;
+        /**
+         * 头程发货单明细id
+         */
+        private List<String> firstMileDeliveryDetailIdList;
+    }
 }

@@ -492,7 +492,7 @@ public class VirtualInventoryDTO implements Serializable {
         /**
          * 库存状态
          */
-        private String dictInventoryStatus;
+        private List<String> dictInventoryStatusList;
     }
 
     @Data
@@ -674,6 +674,11 @@ public class VirtualInventoryDTO implements Serializable {
          * 虚拟仓可用库存
          */
         private Integer virtualUsableQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
     }
 
 

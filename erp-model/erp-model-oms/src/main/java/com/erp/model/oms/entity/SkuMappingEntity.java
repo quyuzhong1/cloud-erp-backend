@@ -139,7 +139,7 @@ public class SkuMappingEntity extends BaseEntity<SkuMappingEntity> {
         }
         this.shopId = shopId;
         this.dictPlatform = platformDictEnum.getCode();
-        this.platformName = platformDictEnum.getName();
+        this.platformName = platformDictEnum.getDesc();
         this.productSkuId = "";
         this.productSkuNo = "";
         this.productName = "";

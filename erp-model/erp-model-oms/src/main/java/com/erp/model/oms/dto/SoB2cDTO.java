@@ -1,6 +1,5 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -283,6 +282,14 @@ public class SoB2cDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * vat发票状态
+         */
+        private String vatInvoiceStatus;
+        /**
+         * vat发票状态名称
+         */
+        private String vatInvoiceStatusName;
 
         /**
          * 单据编码
@@ -346,6 +353,18 @@ public class SoB2cDTO implements Serializable {
          * 作废状态（false未作废，true已作废）
          */
         private Boolean invalidStatus;
+        /**
+         * 作废备注
+         */
+        private String invalidRemark;
+        /**
+         * 作废类型
+         */
+        private String invalidType;
+        /**
+         * 作废类型名称
+         */
+        private String invalidTypeName;
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包
@@ -690,6 +709,11 @@ public class SoB2cDTO implements Serializable {
          * ioss税号
          */
         private String iossTaxNo;
+
+        /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
     }
 
     @Data
@@ -719,6 +743,14 @@ public class SoB2cDTO implements Serializable {
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
+        /**
+         * 发货类型
+         */
+        private String deliveryType;
     }
 
     @Data
@@ -802,6 +834,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
         /**
          * 销售单号
          */
@@ -1481,7 +1517,16 @@ public class SoB2cDTO implements Serializable {
         private Boolean isDelivery;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class GetLogisticsLabel {
 
+        /**
+         * 主表id集合
+         */
+        @NotEmpty(message = "选择数据不能为空")
+        private List<String> ids;
+    }
     /**
      * 运费估算要的参数
      */
@@ -1627,6 +1672,16 @@ public class SoB2cDTO implements Serializable {
          */
         private List<String> countryIdList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -1711,6 +1766,11 @@ public class SoB2cDTO implements Serializable {
          * 主表信息
          */
         private List<MergeMainDTO> mainList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data
@@ -2071,6 +2131,10 @@ public class SoB2cDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 是否同步平台
+         */
+        private Boolean isSyncPlatform = true;
         /**
          * 明细信息
          */
@@ -2474,6 +2538,24 @@ public class SoB2cDTO implements Serializable {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubmitDeliveryDTO {
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 海外仓交运渠道
+         */
+        private String channelId;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -2557,6 +2639,18 @@ public class SoB2cDTO implements Serializable {
          * 作废状态
          */
         private Boolean invalidStatus;
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
+        /**
+         * 作废类型
+         */
+        private String invalidType;
+        /**
+         * 作废类型名称
+         */
+        private String invalidTypeName;
         /**
          * 是否冻结
          */
@@ -2830,6 +2924,10 @@ public class SoB2cDTO implements Serializable {
          * 物流跟踪单
          */
         private String logisticsCode;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
 
         /**
          * 买家自选物流名称

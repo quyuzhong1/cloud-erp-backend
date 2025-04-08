@@ -108,4 +108,6 @@ public interface BasicCategoryService extends IService<BasicCategoryEntity> {
     List<BasicCategoryTreeDTO> categoryGradeDown();
 
     List<BasicCategoryDTO> getCategoryByPid(String pid);
+
+    String getParentName(String categoryId);
 }

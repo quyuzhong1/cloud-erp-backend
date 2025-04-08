@@ -30,15 +30,12 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StopWatch;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -77,27 +74,21 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
     /**
     * 修改
     */
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean addOrUpdate(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
+    public Boolean addOrUpdate(List<SoB2cProcessingDTO.AddOrUpdateDTO> list,LocalDate startDate) {
+        //删除多余b2c订单
+        baseMapper.deleteB2cOrder(startDate);
+
         if (CollUtil.isEmpty(list)) {
-            log.warn("删除数据！size= {}",list.size());
-            lambdaUpdate().remove();
             return Boolean.TRUE;
         }
         // 数据处理
         List<SoB2cProcessingEntity> soB2cProcessingList =  handleData(list);
-        List<SoB2cProcessingEntity> addList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getId())).collect(Collectors.toList());
-        List<SoB2cProcessingEntity> updateList = soB2cProcessingList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId()) && !obj.getIsDiff()).collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(addList)) {
-            log.warn("新增数据！size= {}",addList.size());
-            super.saveBatch(addList);
+        if (CollUtil.isEmpty(soB2cProcessingList)) {
+            log.warn("B2C虚拟仓订单数据处理为空！");
+            return Boolean.TRUE;
         }
-        if (CollUtil.isNotEmpty(updateList)) {
-            log.warn("更新数据！size= {}",updateList.size());
-            super.updateBatchById(updateList);
-        }
-        return Boolean.TRUE;
+        return super.saveBatch(soB2cProcessingList);
     }
 
     @Override
@@ -133,7 +124,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
          */
         //查询加工单数据
         List<String> deliveryIdList = list.stream().map(SoB2cProcessingEntity::getDeliveryId).distinct().collect(Collectors.toList());
-        List<List<String>> sourceDetailIdListPartition = Lists.partition(deliveryIdList, 50000);
+        List<List<String>> sourceIdListPartition = Lists.partition(deliveryIdList, 50000);
 
         //查询发货单出库流水
         List<VirtualTransFlowEntity> virtualTransFlowList = new ArrayList<>();
@@ -142,16 +133,16 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         //销售出库单数据
         List<SoB2bProcessingDTO.ResponseDTO> soOutstockList = new ArrayList<>();
         //分页查询数据
-        for (List<String> sourceDetailIdPartition : sourceDetailIdListPartition) {
-            List<VirtualTransFlowEntity> virtualTransFlowPageList = virtualTransFlowService.listBySourceDetailIdList(sourceDetailIdPartition);
+        for (List<String> sourceIdPartition : sourceIdListPartition) {
+            List<VirtualTransFlowEntity> virtualTransFlowPageList = virtualTransFlowService.listBySourceIdList(sourceIdPartition);
             if (CollectionUtils.isNotEmpty(virtualTransFlowPageList)) {
                 virtualTransFlowList.addAll(virtualTransFlowPageList);
             }
-            List<SoB2bProcessingDTO.ResponseDTO> transferPageList = transferInfoDetailService.listTransferBySourceIdList(sourceDetailIdPartition);
+            List<SoB2bProcessingDTO.ResponseDTO> transferPageList = transferInfoDetailService.listTransferBySourceIdList(sourceIdPartition);
             if (CollectionUtils.isNotEmpty(transferPageList)) {
                 transferList.addAll(transferPageList);
             }
-            List<SoB2bProcessingDTO.ResponseDTO> soOutstockPageList = soOutstockDetailService.listSoOutstockBySourceIdList(sourceDetailIdPartition);
+            List<SoB2bProcessingDTO.ResponseDTO> soOutstockPageList = soOutstockDetailService.listSoOutstockBySourceIdList(sourceIdPartition);
             if (CollectionUtils.isNotEmpty(soOutstockPageList)) {
                 soOutstockList.addAll(soOutstockPageList);
             }
@@ -175,7 +166,7 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
         result.forEach(addList::addAll);
         stopWatch.stop();
         log.warn("数据处理成功，耗时，time = {}",stopWatch.prettyPrint());
-        ApplicationContextUtils.getBean(SoB2cProcessingServiceImpl.class).addOrUpdate(addList);
+        ApplicationContextUtils.getBean(SoB2cProcessingServiceImpl.class).addOrUpdate(addList,startDate);
         log.warn("数据更新成功!");
     }
     /**
@@ -232,24 +223,24 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
             return;
         }
         //直接调拨单
-        SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj ->
+        List<SoB2bProcessingDTO.ResponseDTO> transferResponseDTOList = transferList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryId())
                                 && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
                                 && CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId())
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
-                .findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(transferResponseDTO)) {
-            handleOutstock (entity,transferResponseDTO, SourceTypeEnum.TRANSFER_INFO.getCode());
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(transferResponseDTOList)) {
+            handleOutstock (entity,transferResponseDTOList, SourceTypeEnum.TRANSFER_INFO.getCode());
             return;
         }
         //销售出库单
-        SoB2bProcessingDTO.ResponseDTO soOutstockResponseDTO = soOutstockList.stream().filter(obj ->
+        List<SoB2bProcessingDTO.ResponseDTO> soOutstockResponseDTOList = soOutstockList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryId())
                                 && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
                                 &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryDetailId()))
-                .findFirst().orElse(null);
-        if (ObjectUtil.isNotEmpty(soOutstockResponseDTO)) {
-            handleOutstock (entity,soOutstockResponseDTO, SourceTypeEnum.SO_OUTSTOCK.getCode());
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(soOutstockResponseDTOList)) {
+            handleOutstock (entity,soOutstockResponseDTOList, SourceTypeEnum.SO_OUTSTOCK.getCode());
         }
     }
 
@@ -259,79 +250,35 @@ public class SoB2cProcessingServiceImpl extends SuperServiceImpl<SoB2cProcessing
      * @author will
      * @date 2024/12/19 20:56
      * @param entity
-     * @param responseDTO
+     * @param responseDTOList
      * @param sourceType
      */
-    private void handleOutstock (SoB2cProcessingEntity entity, SoB2bProcessingDTO.ResponseDTO responseDTO,String sourceType) {
+    private void handleOutstock (SoB2cProcessingEntity entity, List<SoB2bProcessingDTO.ResponseDTO> responseDTOList,String sourceType) {
+        SoB2bProcessingDTO.ResponseDTO responseDTO = responseDTOList.get(0);
+        Integer totalQty = responseDTOList.stream().map(SoB2bProcessingDTO.ResponseDTO::getQty).reduce(MathUtil.ZERO, MathUtil::add);
         entity.setOutstockOrderId(responseDTO.getId());
         entity.setOutstockOrderStatus(responseDTO.getApproveStatus());
-        entity.setOutstockQty(responseDTO.getQty());
+        entity.setOutstockQty(totalQty);
         entity.setOutstockOrderCode(responseDTO.getCode());
         entity.setOutstockOrderTime(responseDTO.getApproveTime());
         entity.setOutstockOrderType(sourceType);
-        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(responseDTO.getQty()));
+        entity.setFrozenQty(MathUtil.valueOfZero(entity.getFrozenQty()) - MathUtil.valueOfZero(totalQty));
     }
 
     /**
     * 新增修改处理数据
     */
     private List<SoB2cProcessingEntity> handleData(List<SoB2cProcessingDTO.AddOrUpdateDTO> list) {
-        //查询已存在的数据，判断哪些需要删除和更新
-        List<SoB2cProcessingEntity> oldList = this.list();
-
         List<SoB2cProcessingEntity> newList = new ArrayList<>();
         for (SoB2cProcessingDTO.AddOrUpdateDTO addOrUpdateDTO :list) {
             if (ObjectUtil.isEmpty(addOrUpdateDTO)) {
                 continue;
             }
             SoB2cProcessingEntity entity = SoB2cProcessingConverter.INSTANCE.addToEntity(addOrUpdateDTO);
-            //旧数据
-            SoB2cProcessingEntity old = oldList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryDetailId(), addOrUpdateDTO.getDeliveryDetailId())
-                    && CharSequenceUtil.equals(obj.getSkuId(),addOrUpdateDTO.getSkuId())).findFirst().orElse(null);
-            if (ObjUtil.isNotNull(old)) {
-                //校验数据是否一样
-                boolean isDiff = CharSequenceUtil.equals(entity.toString(), old.toString());
-                entity.setIsDiff(isDiff);
-                entity.setId(old.getId());
-            }
             newList.add(entity);
-        }
-        List<String> deleteIds = getDeleteIds(newList, oldList);
-        if (CollUtil.isNotEmpty(deleteIds)) {
-            log.warn("删除数据！size= {}",deleteIds.size());
-            List<List<String>> detailIdListPartition = Lists.partition(deleteIds, 50000);
-            //查询加工单数据
-            for (List<String> removeIds : detailIdListPartition) {
-                this.baseMapper.deleteByIdList(removeIds);
-            }
         }
         return newList;
     }
-
-    /**
-     * 查询需要删除的数据
-     */
-    private List<String> getDeleteIds(List<SoB2cProcessingEntity> newList, List<SoB2cProcessingEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
-                map(SoB2cProcessingEntity::getId).collect(Collectors.toList());
-        List<String> oldIds = oldList.stream().map(SoB2cProcessingEntity::getId).collect(Collectors.toList());
-        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
-    }
-
-    /**
-     * 根据发货单明细id查询
-     * @author will
-     * @date 2024/12/20 10:17
-     * @param deliveryDetailIdList
-     * @return List<SoB2bProcessingEntity>
-     */
-    private List<SoB2cProcessingEntity> listByDeliveryDetailIdList (List<String> deliveryDetailIdList) {
-        if (CollUtil.isEmpty(deliveryDetailIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return lambdaQuery().in(SoB2cProcessingEntity::getDeliveryDetailId,deliveryDetailIdList).list();
-    }
-
 
     /**
      * 分页查询

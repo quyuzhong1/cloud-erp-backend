@@ -15,10 +15,14 @@
         from logistics_bill_detail lbd
         inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
         LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
-        where lbd.track_status not in('sign','manualComplete','systemComplete')
+        where lbd.track_status not in('sign','manualComplete','systemComplete','deliveryFail')
+        and (lbd.track_no != '' or lb.transport_no != '')
         and lbd.is_deleted = false
+        <if test="query.trackTime != null">
+            and lbd.track_time > #{query.trackTime}
+        </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
-            and lb.order_type in ('B2B','B2C')
+            and lb.order_type in ('B2B','B2C','AfterSale')
         </if>
         <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
             and lb.order_type = 'firstMile'
@@ -44,8 +48,8 @@
                 #{item}
             </foreach>
         </if>
-        ORDER BY lbd.update_time
-         LIMIT #{query.size} OFFSET (#{query.current} -1) * #{query.size}
+        ORDER BY lbd.update_time,lbd.version
+        LIMIT #{query.size}
     </select>
 
 </mapper>

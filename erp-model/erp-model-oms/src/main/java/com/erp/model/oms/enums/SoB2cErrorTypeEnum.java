@@ -26,6 +26,8 @@ public enum SoB2cErrorTypeEnum {
     GENERATE_TRANSFER_INFO("generateTransferInfo",  "生成直接调拨单"),
     VIRTUAL_FREEZE_QTY("virtualFreezeQty",  "扣减虚拟冻结库存"),
     ORDER_FETCH("orderFetch",  "订单拉取失败"),
+    GET_LOGISTICS_LABEL("getLogisticsLabel",  "获取物流面单异常"),
+    OTHER("other",  "其他异常"),
     ;
     /**
      * 类型
@@ -56,6 +58,16 @@ public enum SoB2cErrorTypeEnum {
         return "";
     }
 
+    public static boolean needPrompt(String code) {
+        for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
+            if (typeEnum.getCode().equals(code) && (typeEnum.equals(SIGN_DELIVERY) || typeEnum.equals(GET_LOGISTICS_CODE) || typeEnum.equals(ORDER_FORECAST)
+                    || typeEnum.equals(THIRD_WAREHOUSE_OUT_EXCEPTION)
+                    || typeEnum.equals(SUBMIT_DELIVERY))) {
+                return true;
+            }
+        }
+        return false;
+    }
     public static SoB2cErrorTypeEnum getEnum(String code) {
         for (SoB2cErrorTypeEnum typeEnum : SoB2cErrorTypeEnum.values()) {
             if (typeEnum.getCode().equals(code)) {

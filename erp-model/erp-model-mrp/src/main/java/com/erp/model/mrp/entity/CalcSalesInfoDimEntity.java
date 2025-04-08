@@ -81,12 +81,32 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     */
     @TableField("remark")
     private String remark;
-
     /**
-     * 相似度
+     * MAE
      */
-    @TableField("similarity")
-    private BigDecimal similarity;
+    @TableField("mae_score")
+    private BigDecimal maeScore;
+    /**
+     * MSE
+     */
+    @TableField("mse_score")
+    private BigDecimal mseScore;
+    /**
+     * RMSE
+     */
+    @TableField("rmse_score")
+    private BigDecimal rmseScore;
+    /**
+     * MAPE
+     */
+    @TableField("mape_score")
+    private BigDecimal mapeScore;
+    /**
+     * R2
+     */
+    @TableField("r2_score")
+    private BigDecimal r2Score;
+
 
     /**
      * 历史数据base
@@ -94,6 +114,43 @@ public class CalcSalesInfoDimEntity extends BaseEntity<CalcSalesInfoDimEntity> {
     @TableField("his_data_md5")
     private String hisDataMd5;
 
+    /**
+     * 状态
+     */
+    @TableField("status")
+    private String status;
+
+    /**
+     * 序号
+     */
+    @TableField("serial_no")
+    private String serialNo;
+
+    /**
+     * MAE
+     */
+    @TableField("month_mae_score")
+    private BigDecimal monthMaeScore;
+    /**
+     * MSE
+     */
+    @TableField("month_mse_score")
+    private BigDecimal monthMseScore;
+    /**
+     * RMSE
+     */
+    @TableField("month_rmse_score")
+    private BigDecimal monthRmseScore;
+    /**
+     * MAPE
+     */
+    @TableField("month_mape_score")
+    private BigDecimal monthMapeScore;
+    /**
+     * R2
+     */
+    @TableField("month_r2_score")
+    private BigDecimal monthR2Score;
 
     public static final String SKU_ID = "sku_id";
 

@@ -72,7 +72,7 @@ public class DmpOutputUtils{
 		}
 		boolean update = dmpOutputTaskRecordService.lambdaUpdate()
 			.eq(DmpOutputTaskRecordEntity::getId, id)
-			.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+			.ne(!"金蝶".equals(systemName), DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 			.set(DmpOutputTaskRecordEntity::getStatus, status)
 			.set(errorCount != null , DmpOutputTaskRecordEntity::getErrorCount, errorCount)
 			.set(StringUtils.isNotBlank(responseData) , DmpOutputTaskRecordEntity::getResponseData, responseData)

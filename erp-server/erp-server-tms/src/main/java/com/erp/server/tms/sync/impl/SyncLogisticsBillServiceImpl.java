@@ -40,7 +40,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> req.getId().equals(entity.getChannelId())).findFirst().orElse(null);
         String supplierName = "";
         if (Objects.nonNull(channelEntity)) {
-            LogisticsSupplierEntity supplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(channelEntity.getId())).findFirst().orElse(null);
+            LogisticsSupplierEntity supplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(channelEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isNotEmpty(supplierEntity)) {
                 supplierName = supplierEntity.getSupplierName();
             }
@@ -75,6 +75,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         } else {
             shudiyunB2cOrderDTO.setLogistics_delivery_time(localDateTime.format(LocalDateTime.now()));
         }
+
         shudiyunB2cOrderDTO.setDelivery_number(entity.getOutstockCode());
 
         if (CharSequenceUtil.isBlank(supplierName)) {
@@ -110,7 +111,6 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             if (CharSequenceUtil.isBlank(sourceCode)) {
                 continue;
             }
-
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
@@ -133,7 +133,6 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             if (CharSequenceUtil.isBlank(sourceCode)) {
                 continue;
             }
-
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());

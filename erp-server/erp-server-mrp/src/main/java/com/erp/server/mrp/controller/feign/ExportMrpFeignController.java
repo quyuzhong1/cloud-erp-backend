@@ -205,6 +205,16 @@ public class ExportMrpFeignController {
         return calcSalesInfoDimService.exportMrpSalesCalcList(dto);
     }
 
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    @PostMapping("/exportMrpSalesCalcTemplateList")
+    @WebAdvanceQuery
+    public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto){
+        return calcSalesInfoDimService.exportMrpSalesCalcTemplateList(dto);
+    }
+
 
     /**
      * 导出库存预测依据

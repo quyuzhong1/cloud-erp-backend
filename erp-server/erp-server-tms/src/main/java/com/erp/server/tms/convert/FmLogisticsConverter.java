@@ -58,6 +58,7 @@ public interface FmLogisticsConverter {
             @Mapping(target = "shippingMethod", source = "addDTO.shippingMethod"),
             @Mapping(target = "logisticsSupplierId", source = "addDTO.logisticsSupplierId"),
             @Mapping(target = "remark", source = "addDTO.remark"),
+            @Mapping(target = "shipmentType", expression = "java(com.erp.model.tms.enums.ShipmentTypeEnum.FIRST_MILE_DELIVER.getCode())"),
     })
     LogisticsBillEntity addLogisticsBill(FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDTO, TmsFirstMileLogisticDTO.CommonDTO addDTO);
 

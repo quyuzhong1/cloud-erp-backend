@@ -69,4 +69,10 @@ public interface CfgRuleCalcService extends SuperService<CfgRuleCalcEntity> {
      * @param params 参数
      */
     List<CfgRuleCalcDTO.SkuDTO> hasSalesSkuByShop(List<String> params);
+
+    /**
+     * tab
+     * @param dto 参数
+     */
+    List<CfgRuleCalcDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

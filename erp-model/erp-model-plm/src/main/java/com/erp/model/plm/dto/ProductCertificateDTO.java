@@ -1,6 +1,7 @@
 package com.erp.model.plm.dto;
 
 import com.alibaba.fastjson.annotation.JSONField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @description: 产品证书表
@@ -104,6 +106,11 @@ public class ProductCertificateDTO implements Serializable {
          * 更新时间【可排序】
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 创建时间【可排序】
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -147,6 +154,16 @@ public class ProductCertificateDTO implements Serializable {
        * 备注
        */
       private String remark;
+
+      /**
+       * 页面高级查询
+       */
+      private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+      /**
+       * sqlMap 默认key default
+       */
+      private Map<String, String> sqlMap;
 
     }
 

@@ -20,15 +20,13 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
-import com.erp.model.tms.vo.request.ChanelQueryVO;
-import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
-import com.erp.model.tms.vo.request.LogisticsOrderVO;
-import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
+import com.erp.model.tms.vo.request.*;
+import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
 import com.erp.model.tms.vo.response.LogisticsPrintLabelResponse;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
@@ -58,11 +56,10 @@ import java.util.stream.Collectors;
 @Component
 @LogisticsPlatformType(LogisticsPlatformEnum.SHOPEE)
 public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
-
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
     @Resource
     private ShopeeLogisticsService shopeeLogisticsService;
-    @Resource
-    private ShopeeFeign shopeeFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -91,7 +88,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("partnerId", cfgAppClient.getClientId());
         map.put("host", cfgAppClient.getUrl());
         if (StringUtils.isNotBlank(shopId)) {
-            ApiResult<ShopAuthEntity> shopAuth = shopeeFeign.getShopeeShopById(shopId);
+            ApiResult<ShopAuthEntity> shopAuth = shopInfoFeign.getShopAuthById(shopId);
             if (Objects.nonNull(shopAuth)) {
                 map.put("shopId", shopAuth.getData().getShopeeId());
                 map.put("token", shopAuth.getData().getAccessToken());
@@ -145,7 +142,7 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
             logisticsOperateService.pullOperateLog("",
                     orderSn, BusinessTypeEnum.GET_TRACK_NUMBER.getCode(), LogisticsPlatformEnum.SHOPEE.getCode(),
                     RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(baseRequest), e.getMessage());
-            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】标记发货异常请求异常:{}",orderSn,e.getMessage()));
+            throw new ServiceException(CharSequenceUtil.format("虾皮【{}】获取跟踪号异常请求异常:{}",orderSn,e.getMessage()));
         }
     }
 
@@ -419,7 +416,10 @@ public class ShopeeLogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
         return shippingDocumentParameter;
     }
-
+    @Override
+    public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> cancelOrderVOList)  {
+        return ApiResult.success();
+    }
     /**
      * 授权判断
      * @param authMap

@@ -3,17 +3,21 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -34,6 +38,7 @@ import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.CfgSettingVirtualEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryAgeAuthTitleEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryAgeTitleEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.wms.mapper.VirtualInventoryDetailMapper;
@@ -112,7 +117,8 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     public PagingVO<VirtualInventoryAgeDTO.ListDTO> paging(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         dto.getParams().setDate(LocalDate.now().minusDays(1L));
-        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        AdvanceQueryDTO frozenIsDiffDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "frozenIsDiff")).findFirst().orElse(new AdvanceQueryDTO());
+        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams(),(Boolean)frozenIsDiffDTO.getValue());
         // 填充名称
         fillPageData(pageData.getRecords());
         return new PagingVO<>(pageData);
@@ -227,7 +233,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
                 ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
             } else {
-                ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                ageDateInterval = CharSequenceUtil.format("({},{}]天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
             }
             boolean equals = StrUtil.equals(daysInterval, ageDateInterval);
             if(!equals) {
@@ -253,7 +259,8 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
     public PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         dto.getParams().setDate(LocalDate.now().minusDays(1L));
-        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams());
+        AdvanceQueryDTO frozenIsDiffDTO = dto.getParams().getAdvanceQueryDTOList().stream().filter(obj -> StrUtil.equals(obj.getField(), "frozenIsDiff")).findFirst().orElse(new AdvanceQueryDTO());
+        IPage<VirtualInventoryAgeDTO.ListDTO> pageData = this.baseMapper.paging(dto.page(), dto.getParams(),(Boolean) frozenIsDiffDTO.getValue());
         fillPageData(pageData.getRecords());
         // 标题及值赋值
         List<LinkedHashMap> resultList = fillVirtualInventoryAgePageData(pageData.getRecords());
@@ -265,6 +272,21 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         return new PagingVO<>(Collections.singletonList(excelDTO), (int) pageData.getTotal(), dto.getPageSize(), dto.getCurrPage());
     }
 
+    @Override
+    public List<VirtualInventoryAgeDTO.SendNoticeSkuDTO> listDiffSkuSendNotice() {
+        return baseMapper.listDiffSkuSendNotice();
+    }
+
+    @Override
+    public List<VirtualInventoryAgeDTO.SendNoticeTotalDTO> listDiffTotalSendNotice() {
+        return baseMapper.listDiffTotalSendNotice();
+    }
+
+    @Override
+    public Boolean diffExportExcel(VirtualInventoryAgeDTO.SearchParamDTO dto) {
+        return null;
+    }
+
     /**
      * 导出数据处理
      * @author will
@@ -273,6 +295,9 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
      * @return List<LinkedHashMap>
      */
     private List<LinkedHashMap> fillVirtualInventoryAgePageData(List<VirtualInventoryAgeDTO.ListDTO> list) {
+        //人员
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+
 
         List<LinkedHashMap> resultList = Lists.newArrayList();
         LinkedHashMap<String, Object> resultMap = Maps.newLinkedHashMap();
@@ -284,32 +309,52 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
         // 结果集
         List<LinkedHashMap> convertDataList = Lists.newArrayListWithExpectedSize(mapList.size());
 
+        //权限控制字段
+        List<String> codes = Arrays.stream(VirtualInventoryAgeAuthTitleEnum.values()).map(VirtualInventoryAgeAuthTitleEnum::getCode).collect(Collectors.toList());
+
         // 公共标题字段
         Arrays.asList(VirtualInventoryAgeTitleEnum.values()).forEach(inventoryAgeTitleEnum -> {
-            headMap.put(inventoryAgeTitleEnum.getCode(), inventoryAgeTitleEnum.getName());
+            //表头判断是否是超级管理员
+            if (Boolean.FALSE.equals(userInfo.getIsSupper()) && codes.contains(inventoryAgeTitleEnum.getCode())) {
+                return;
+            }
+            headMap.put(inventoryAgeTitleEnum.getCode(),inventoryAgeTitleEnum.getName());
         });
-        List<String> titleList = Arrays.stream(VirtualInventoryAgeTitleEnum.values()).map(obj -> obj.getCode()).collect(Collectors.toList());
+        //动态字段
+        List<String> titleList = Arrays.stream(VirtualInventoryAgeTitleEnum.values()).map(VirtualInventoryAgeTitleEnum::getCode).collect(Collectors.toList());
 
         // 动态字段标题
-        List<String> cfgHeadList = getCfgHead();
+        List<Pair<String,String>> cfgHeadList = getCfgHeadExport();
+
         if (CollUtil.isNotEmpty(cfgHeadList)) {
-            cfgHeadList.forEach(obj -> headMap.put(obj, obj));
+            cfgHeadList.stream().forEach(obj -> headMap.put(obj.getValue(), obj.getValue()));
         }
         // 结果集字段转驼峰
         if (CollUtil.isNotEmpty(mapList)) {
             mapList.forEach(record -> {
                 LinkedHashMap<String, Object> convertMap = new LinkedHashMap<>();
                 headMap.forEach((fieldKey, fieldVal) -> {
-                    String camelKey = StrUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
+                    //判断是否是超级管理员
+                    if (Boolean.FALSE.equals(userInfo.getIsSupper()) && codes.contains(fieldKey)) {
+                       return;
+                    }
+                    String camelKey = CharSequenceUtil.toCamelCase(StrUtils.null2EmptyWithTrim(fieldKey));
                     //动态表头值
                     if (!titleList.contains(fieldKey)) {
                         Map<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = (Map)record.get("map");
-                        VirtualInventoryAgeDTO.VirtualIntervalDTO virtualIntervalDTO = BeanUtil.toBean(map.get(fieldKey),VirtualInventoryAgeDTO.VirtualIntervalDTO.class) ;
-                        convertMap.put(fieldKey.toString(), virtualIntervalDTO.getQty());
+                        //动态字段取值
+                        String heandKey = cfgHeadList.stream().filter(obj -> obj.getValue().equals(fieldKey)).map(Pair::getKey).findFirst().orElse("");
+
+                        VirtualInventoryAgeDTO.VirtualIntervalDTO virtualIntervalDTO = BeanUtil.toBean(map.get(heandKey),VirtualInventoryAgeDTO.VirtualIntervalDTO.class) ;
+                        if (fieldKey.toString().contains("数量")) {
+                            convertMap.put(fieldKey.toString(), virtualIntervalDTO.getQty());
+                        } else {
+                            convertMap.put(fieldKey.toString(), virtualIntervalDTO.getRatio());
+                        }
                         return;
                     }
-                    //固定表头值
-                    convertMap.put(fieldVal.toString(),record.get(camelKey));
+                    Object camelValue = record.get(camelKey);
+                    convertMap.put(fieldKey.toString(),camelValue);
                 });
                 convertDataList.add(convertMap);
             });
@@ -377,9 +422,51 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
                 ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
             } else {
-                ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                ageDateInterval = CharSequenceUtil.format("({},{}]天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
             }
             headList.add(ageDateInterval);
+        }
+        return headList;
+    }
+
+    @Override
+    public List<Pair<String,String>> getCfgHeadExport() {
+        List<Pair<String,String>> headList = new ArrayList<>();
+        //查询库龄分析配置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(CfgSettingVirtualEnum.INVENTORY_AGE_STATISTICS.getCode());
+        if (ObjectUtil.isEmpty(cfgSettingEntity) || ObjectUtil.isEmpty(cfgSettingEntity.getDataJson())) {
+            return Collections.emptyList();
+        }
+        CfgSettingVirtualValueDTO.InventoryAgeTO inventoryAgeTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingVirtualValueDTO.InventoryAgeTO.class);
+        List<CfgSettingVirtualValueDTO.InventoryAgeDateTO> list = inventoryAgeTO.getList();
+
+        //数量
+        for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
+            String pagingInterval = "";
+            String ageDateInterval = "";
+            //区间字段
+            if (ObjectUtil.isNull(inventoryAgeDateTO.getEndDays())) {
+                pagingInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
+                ageDateInterval = CharSequenceUtil.format("D > {}，数量", inventoryAgeDateTO.getStartDays());
+            } else {
+                pagingInterval = CharSequenceUtil.format("({},{}]天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                ageDateInterval = CharSequenceUtil.format("{} < D <= {}，数量", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+            }
+            headList.add(new Pair<>(pagingInterval,ageDateInterval));
+        }
+        //占比
+        for (CfgSettingVirtualValueDTO.InventoryAgeDateTO inventoryAgeDateTO :list) {
+            String pagingInterval = "";
+            String ageDateInterval = "";
+            //区间字段
+            if (ObjectUtil.isNull(inventoryAgeDateTO.getEndDays())) {
+                pagingInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
+                ageDateInterval = CharSequenceUtil.format("D > {}，占比", inventoryAgeDateTO.getStartDays());
+            } else {
+                pagingInterval = CharSequenceUtil.format("({},{}]天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                ageDateInterval = CharSequenceUtil.format("{} < D <= {}，占比", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+            }
+            headList.add(new Pair<>(pagingInterval,ageDateInterval));
         }
         return headList;
     }
@@ -444,7 +531,6 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
             //差异
             boolean isDiff = MathUtil.compareTo(listDTO.getAvgInventoryAge(), listDTO.getBackAvgInventoryAge()) != MathUtil.ZERO;
             listDTO.setIsDiff(isDiff?"是":"否");
-
             HashMap<String, VirtualInventoryAgeDTO.VirtualIntervalDTO> map = new HashMap<>();
             //总数量
             Integer totalQty = virtualInventoryHisList.stream().filter(obj ->
@@ -459,7 +545,7 @@ public class VirtualInventoryDetailServiceImpl extends SuperServiceImpl<VirtualI
                 if (ObjUtil.isNull(inventoryAgeDateTO.getEndDays())) {
                     ageDateInterval = CharSequenceUtil.format("{}以上", inventoryAgeDateTO.getStartDays());
                 } else {
-                    ageDateInterval = CharSequenceUtil.format("{}~{}天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
+                    ageDateInterval = CharSequenceUtil.format("({},{}]天", inventoryAgeDateTO.getStartDays(), inventoryAgeDateTO.getEndDays());
                 }
                 Integer qty = virtualInventoryHisList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSkuId(),listDTO.getSkuId())

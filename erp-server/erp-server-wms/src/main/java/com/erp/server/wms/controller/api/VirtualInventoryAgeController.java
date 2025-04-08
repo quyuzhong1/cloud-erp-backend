@@ -86,6 +86,20 @@ public class VirtualInventoryAgeController extends BaseController {
         return flag == true ? success() : failure();
     }
 
+    /**
+     * 库龄分析差异导出excel
+     * @author will
+     * @date 2024/12/3 18:02
+     * @param dto
+     * @return ApiResult
+     */
+    @PostMapping("/diffExportExcel")
+    @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
+    public ApiResult diffExportExcel(@RequestBody VirtualInventoryAgeDTO.SearchParamDTO dto) {
+        Boolean flag = virtualInventoryDetailService.diffExportExcel(dto);
+        return flag == true ? success() : failure();
+    }
+
 
     /**
      * 列表弹框分页

@@ -235,9 +235,6 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             }
         }
 
-        //是否是新品首批
-        resultMap.put("isFirstMassProduct",entity.getIsFirstMassProduct());
-
         //变更明细
         List<PurchaseChangeDetailEntity> detailList = purchaseChangeDetailService.listByPurchaseChangeIds(Arrays.asList(entity.getId()));
         if (CollectionUtils.isEmpty(detailList)) {
@@ -274,6 +271,8 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             jsonObject.set("purchaseOrgCode",purchaseOrgCode);
             //明细备注
             jsonObject.set("detailRemark",detailEntity.getRemark());
+            //新品首批
+            jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
             //来源单号
             jsonObject.set("sourceCode",purchaseOrderEntity.getCode());
             //采购明细

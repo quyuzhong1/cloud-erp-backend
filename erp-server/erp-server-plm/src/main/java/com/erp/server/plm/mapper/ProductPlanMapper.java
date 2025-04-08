@@ -3,6 +3,8 @@ package com.erp.server.plm.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.TabListDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.erp.model.plm.dto.ProductPlanApprovalTrendDTO;
 import com.erp.model.plm.dto.ProductPlanGroupSerachDTO;
 import com.erp.model.plm.dto.ProductPlanSearchDTO;
@@ -10,6 +12,7 @@ import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.ProductPlanEntity;
 import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanVO;
+import jnr.ffi.annotations.In;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -92,4 +95,9 @@ public interface ProductPlanMapper  extends BaseMapper<ProductPlanEntity> {
      * @return List<ProductPlanApprovalTrendDTO>
      */
     List<ProductPlanApprovalTrendDTO> countCompleteTrend(@Param("params")ProductPlanGroupSerachDTO params, @Param("startTime")LocalDateTime thisYearStart, @Param("endTime")LocalDateTime thisYearEnd);
+
+    /**
+     * 统计
+     */
+    Integer tabList(@Param("params") ProductPlanSearchDTO params);
 }

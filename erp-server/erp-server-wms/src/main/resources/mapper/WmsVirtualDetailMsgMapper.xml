@@ -12,7 +12,6 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="data_json" property="dataJson"  typeHandler="com.erp.server.wms.handler.ObjectJsonHandler"  />
        <result column="remark" property="remark" />
        <result column="trade_time" property="tradeTime" />
        <result column="status" property="status" />
@@ -20,17 +19,28 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        data_json, remark, trade_time, status
+        wvdm.id,
+        wvdm.create_user_id,
+        wvdm.create_user_name,
+        wvdm.create_time,
+        wvdm.update_user_id,
+        wvdm.update_user_name,
+        wvdm.update_time,
+        wvdm.version,
+        wvdm.is_deleted,
+        wvdm.remark, wvdm.trade_time, wvdm.status,wvdm.business_id
     </sql>
+
+    <!-- 查询任务表数据 -->
+    <select id="listFirstVirtualDetailMsg" resultType="com.erp.model.wms.dto.WmsVirtualDetailMsgDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+            ,vtf.sku_id,vtf.warehouse_id,vtf.virtual_warehouse_id
+        from wms_virtual_detail_msg wvdm
+        inner join virtual_trans_flow vtf on wvdm.business_id = vtf.id and vtf.is_deleted = false
+        where wvdm.is_deleted = false and wvdm.status in ('waitHandle', 'fail', 'doing')
+        order by wvdm.trade_time asc;
+    </select>
 
 
 </mapper>

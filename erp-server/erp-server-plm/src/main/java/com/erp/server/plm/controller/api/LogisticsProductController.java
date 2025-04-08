@@ -7,6 +7,7 @@ package com.erp.server.plm.controller.api;/**
  */
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -19,6 +20,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.server.plm.query.LogisticsProductQueryHandler;
 import com.erp.server.plm.service.LogisticsProductService;
 import com.erp.server.plm.service.ProductLogisticsService;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +65,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     public ApiResult<PagingVO<LogisticsProductDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.PagingVO> pagingVO = logisticsProductService.paging(dto);
         return success(pagingVO);
@@ -89,6 +92,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @PostMapping("/update/paging")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     public ApiResult<PagingVO<LogisticsProductDTO.UpdatePagingDTO>> updatePaging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.UpdatePagingDTO> pagingVO = logisticsProductService.updatePaging(dto);
         return success(pagingVO);
@@ -250,6 +254,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流产品信息")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     @PostMapping("/export")
     public ApiResult<Object> exportExcel(@RequestBody @Valid LogisticsProductDTO.ExportDTO dto) {
         Boolean result = logisticsProductService.exportExcel(dto);

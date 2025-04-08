@@ -143,6 +143,8 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         resultMap.put("id", entity.getId());
         //其他出库单号
         resultMap.put("code", entity.getCode());
+        // 三方单号
+        resultMap.put("thirdCode", entity.getThirdCode());
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
         //删除操作

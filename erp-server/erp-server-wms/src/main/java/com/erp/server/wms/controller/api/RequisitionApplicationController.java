@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -14,9 +16,11 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.entity.RequisitionApplicationChangeEntity;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
@@ -57,6 +61,9 @@ public class RequisitionApplicationController extends BaseController {
 
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
+
+    @Resource
+    private FirstMileDeliveryService firstMileDeliveryService;
 
     /**
     * 新增
@@ -511,6 +518,11 @@ public class RequisitionApplicationController extends BaseController {
         List<RequisitionApplicationEntity> entityList = requisitionApplicationService.listByIds(dto.getIds());
         List<String> sourceCodes = entityList.stream().map(RequisitionApplicationEntity::getCode).distinct().collect(Collectors.toList());
         List<String> sourceIds = entityList.stream().map(RequisitionApplicationEntity::getId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList =firstMileDeliveryService.listBySourceIds(sourceIds);
+        List<String> deliveryCodes = firstMileDeliveryEntityList.stream().map(FirstMileDeliveryEntity::getCode).distinct().collect(Collectors.toList());
+        if(CollectionUtils.isNotEmpty(deliveryCodes)){
+            sourceCodes.addAll(deliveryCodes);
+        }
         List<PackingTaskEntity> packingTaskEntityList = packingTaskService.listBySourceCodes(sourceCodes);
         List<PickingListsDTO.SourceView> pickingList = pickingListsService.listBySourceIds(sourceIds);
         List<RequisitionApplicationChangeEntity> allChangeEntityList = requisitionApplicationChangeService.listNotHandleByBusinessIds(dto.getIds());
@@ -526,6 +538,15 @@ public class RequisitionApplicationController extends BaseController {
                 if(Objects.nonNull(packingTaskEntity)){
                     result.add(BatchResultDTO.fail(id,entity.getCode(),"已生成装箱任务不可重复生成"));
                     continue;
+                }
+                List<FirstMileDeliveryEntity> firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(id)).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(firstMileDeliveryEntity)){
+                    List<String> deliveyCodeList = firstMileDeliveryEntity.stream().map(FirstMileDeliveryEntity::getCode).collect(Collectors.toList());
+                    packingTaskEntity = packingTaskEntityList.stream().filter(v->deliveyCodeList.contains(v.getSourceCode())).findFirst().orElse(null);
+                    if(Objects.nonNull(packingTaskEntity)){
+                        result.add(BatchResultDTO.fail(id,entity.getCode(), StrUtil.format("关联的发货单{}已生成装箱任务不可重复生成",deliveyCodeList)));
+                        continue;
+                    }
                 }
                 PickingListsDTO.SourceView sourceView = pickingList.stream().filter(v->v.getSourceId().equals(id)).findFirst().orElse(null);
                 if(Objects.isNull(sourceView)){
@@ -601,7 +622,11 @@ public class RequisitionApplicationController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "批量导入Excel")
     @PostMapping("/importFile")
     public ApiResult<RequisitionApplicationDTO.ImportDTO> importFile(@ModelAttribute @Validated RequisitionApplicationDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
-        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getFbaBindShipmentViewDTOS(),response);
+        List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS = excelImportDTO.getFbaBindShipmentViewDTOS();
+        if (CharSequenceUtil.isNotBlank(excelImportDTO.getId())){
+            fbaBindShipmentViewDTOS = requisitionApplicationService.fbaBindShipmentView(excelImportDTO.getId());
+        }
+        RequisitionApplicationDTO.ImportDTO dto = requisitionApplicationService.importFile(excelImportDTO.getExcelFile(),fbaBindShipmentViewDTOS,response);
         return success(dto);
     }
     /**
@@ -644,5 +669,18 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/printFnskuBillConfirm")
     public void printFnskuBillConfirm(@RequestBody @Validated RequisitionApplicationDTO.PrintFnskuBillConfirmDTO dto , HttpServletResponse response) {
         requisitionApplicationService.printFnskuBillConfirm(dto,response);
+    }
+
+    /**
+     * 关联发货计划添加产品
+     * @param
+     * @Author jack
+     * @Date 2024/10/16
+     * @return void
+     **/
+    @PostMapping("/pagingSkuByDeliveryPlan")
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO>> pagingSkuByDeliveryPlan(@RequestBody @Validated PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto) {
+        return success(requisitionApplicationService.pagingSkuByDeliveryPlan(dto));
     }
 }

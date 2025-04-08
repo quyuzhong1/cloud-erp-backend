@@ -37,6 +37,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
@@ -112,6 +113,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
 
@@ -322,16 +324,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         BeanMapperUtils.copy(entity, dto);
 
+        //能否编辑
+        dto.setCanEdit(purchaseApplicationRefPoService.getPurchaseApplicationByPurchaseOrderId(id));
+
         // 采购员名称
         if(StrUtils.isNotEmpty(dto.getPurchaseUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
             if (ObjectUtils.isEmpty(purchaseUser)) {
                 dto.setPurchaseUserName(purchaseUser.getUserName());
             }
-        }
-        //新品首批
-        if (Objects.nonNull(dto.getIsFirstMassProduct())){
-            dto.setFirstMassProductName(dto.getIsFirstMassProduct() ? "是":"否");
         }
         //供应商信息
         PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(id);
@@ -375,6 +376,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
         details.forEach(obj -> {
+            obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             obj.setTaxRate(MathUtil.multiply(obj.getTaxRate(), MathUtil.BigDecimal_100));
             obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
         });
@@ -461,14 +463,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean delete(List<String> ids) {
-        //根据ids查询
-        List<PurchaseOrderEntity> list = getList(ids);
+    public BatchResultDTO delete(PurchaseOrderEntity entity) {
         //待提交允许删除
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98009);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
 
         log.info("采购申请单删除，ids=【{}】", JSONUtil.toJsonStr(ids));
         //删除供应商数据
@@ -476,8 +477,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //删除明细数据
         purchaseOrderDetailService.removeByPurchaseOrderIds(ids);
         //同步到WMS
-        List<PurchaseOrderEntity> entityList = lambdaQuery().in(PurchaseOrderEntity::getId, ids).list();
-        entityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
+//        List<PurchaseOrderEntity> entityList = lambdaQuery().in(PurchaseOrderEntity::getId, ids).list();
+//        entityList.forEach(req -> req.setIsDeleted(Boolean.TRUE));
 //        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), entityList, IdUtil.simpleUUID());
         //删除主表数据
         this.removeByIds(ids);
@@ -489,8 +490,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         moduleOperateLogService.removeByBusinessIds(ids);
 
         //发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_DELETE.getCode());
-        return Boolean.TRUE;
+        sendPushTask(Collections.singletonList(entity), SyncOperateEnum.OPERATE_DELETE.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -669,14 +670,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean cancelProcess(List<String> ids) {
-        //根据ids查询
-        List<PurchaseOrderEntity> list = getList(ids);
-
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
+    public BatchResultDTO cancelProcess(PurchaseOrderEntity entity) {
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         log.info("采购订单撤销流程，ids=【{}】", ids);
 
         //撤销现有流程
@@ -692,13 +691,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //更新单据为待提交
         updateApproveStatus(ids, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("采购订单【%s】取消流程", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "取消流程操作");
         //同步到WMS
-        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
+//        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
 //        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
-
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
     @Override
@@ -869,21 +867,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "提交操作");
         //同步到WMS
-        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
+//        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
 //        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
         return Boolean.TRUE;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto) {
+    public BatchResultDTO addAndSubmit(PurchaseOrderDTO.AddDTO dto) {
         //新增
         PurchaseOrderEntity purchaseOrderEntity = this.add(dto);
         if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        purchaseOrderEntity = this.getById(purchaseOrderEntity.getId());
         //提交
-        return this.submit(Arrays.asList(purchaseOrderEntity.getId()),Boolean.TRUE);
+        return this.submitEntity(purchaseOrderEntity, Boolean.TRUE);
     }
 
     @Override
@@ -920,18 +919,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean invalid(List<String> ids, String reason) {
-        //根据ids查询
-        List<PurchaseOrderEntity> list = getList(ids);
+    public BatchResultDTO invalid(PurchaseOrderEntity entity, String reason) {
         //非待提交和审核不通过不能作废
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
+        long count = Stream.of(entity).filter(obj -> !ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())).count();
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_98005);
         }
-        long invalidCount = list.stream().filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        long invalidCount = Stream.of(entity).filter(obj -> InvalidStatusEnum.VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
         if (invalidCount > 0) {
             throw new ServiceException(ApiError.ERROR_98012);
         }
+        List<String> ids = Collections.singletonList(entity.getId());
         //验证存货核算是否关账
         /*List<InventoryClosedRecordDTO.ClosedParamDTO> closedParamList = list.stream().flatMap(obj -> Stream.of(new InventoryClosedRecordDTO.ClosedParamDTO(obj.getReceiveOrgId(),obj.getPurchaseDate())
                         ,new InventoryClosedRecordDTO.ClosedParamDTO(obj.getPurchaseOrgId(),obj.getPurchaseDate()))).
@@ -946,12 +944,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //删除采购申请单和订单关联表数据
         purchaseApplicationRefPoService.removeByPurchaseOrderIds(ids);
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("作废了一个采购订单【%s】，作废原因：".concat(reason), ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "作废操作");
 
         //发送金蝶
-        sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
-        return Boolean.TRUE;
+        sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_INVALID.getCode());
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
     }
 
 
@@ -992,7 +990,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateReceiveDTO.setBillDate(LocalDate.now());
             viewGenerateReceiveDTO.setReceiveUserId(userInfo.getUid());
             viewGenerateReceiveDTO.setReceiveUserName(userInfo.getUserName());
-
+            viewGenerateReceiveDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(viewGenerateReceiveDTO.getFirstMassProduct()));
             Integer receiveQty = receiveQtyList.stream().filter(obj -> obj.getSkuId().equals(viewGenerateReceiveDTO.getSkuId()) && obj.getPurchaseOrderDetailId().equals(viewGenerateReceiveDTO.getPurchaseOrderDetailId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             viewGenerateReceiveDTO.setReceiveQty(receiveQty);
             //补货数量
@@ -1029,7 +1027,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         viewDTO.setPurchaseOrderId(purchaseOrderEntity.getId());
         viewDTO.setPurchaseOrgId(purchaseOrderEntity.getPurchaseOrgId());
         viewDTO.setReceiveOrgId(purchaseOrderEntity.getReceiveOrgId());
-        viewDTO.setIsFirstMassProduct(purchaseOrderEntity.getIsFirstMassProduct());
         viewDTO.setDeliveryWarehouseId(purchaseOrderEntity.getDeliveryWarehouseId());
         //采购供应商信息
         PurchaseOrderSupplierEntity supplierEntity = purchaseOrderSupplierService.getByPurchaseOrderId(purchaseOrderEntity.getId());
@@ -1074,6 +1071,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                     detailDTO.setOldPrice(detailEntity.getTaxPrice());
                     detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
                     detailDTO.setPrice(detailEntity.getTaxPrice());//退货单下推单采购订单-这里可以直接取采购订单含税单价
+                    detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                    detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                     detailDTOList.add(detailDTO);
                 }
             }else {
@@ -1086,6 +1085,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 detailDTO.setOldQty(detailEntity.getPurchaseQty());
                 detailDTO.setOldPrice(detailEntity.getTaxPrice());
                 detailDTO.setOldAmount(detailEntity.getPurchaseAmount());
+                detailDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+                detailDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
                 detailDTOList.add(detailDTO);
             }
 
@@ -1140,6 +1141,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             viewGenerateStockInDTO.setPurchaseOrderCode(entity.getCode());
             viewGenerateStockInDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             viewGenerateStockInDTO.setDeliveryWarehouseName(entity.getDeliveryWarehouseName());
+            viewGenerateStockInDTO.setFirstMassProduct(detailEntity.getFirstMassProduct());
+            viewGenerateStockInDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(detailEntity.getFirstMassProduct()));
             //供应商信息
             PurchaseOrderSupplierEntity purchaseOrderSupplierEntity = supplierList.stream().filter(obj -> obj.getPurchaseOrderId().equals(detailEntity.getPurchaseOrderId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(purchaseOrderSupplierEntity)) {
@@ -1234,6 +1237,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     public PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId) {
         PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
         PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(purchaseOrderId);
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(purchaseOrderId);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_98025);
         }
@@ -1242,7 +1246,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         result.setWarehouseId(entity.getDeliveryWarehouseId());
         result.setWarehouseName(entity.getWarehouseName());
         //是否新品首批
-        Boolean isFirstMassProduct = entity.getIsFirstMassProduct();
+        boolean isFirstMassProduct = detailList.stream().anyMatch(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct()));
         //入库质检
         String qcType = QcTypeEnum.STOCK_IN.getCode();
         //是
@@ -1268,9 +1272,58 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             flag.setPurchaseOrderDetailId(item.getId());
             flag.setQty(item.getPurchaseQty());
             flag.setSkuId(skuId);
+
+            //入库质检
+            String detailQcType = QcTypeEnum.STOCK_IN.getCode();
+            //非首批：否
+            if (!item.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
+                detailQcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+            }
+            flag.setQcType(detailQcType);
+            flag.setIsInside(QcTypeEnum.getIsInsideByCode(detailQcType));
             productList.add(flag);
         }
         result.setProductList(productList);
+        return result;
+    }
+
+    @Override
+    public PurchaseOrderDTO.GetQcProductDTO getQcProductInfoByDetailId(String purchaseOrderDetailId) {
+        PurchaseOrderDetailEntity detailEntity = purchaseOrderDetailService.getById(purchaseOrderDetailId);
+        if (ObjectUtils.isEmpty(detailEntity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        PurchaseOrderDTO.GetQcProductDTO result = new PurchaseOrderDTO.GetQcProductDTO();
+        PurchaseOrderDTO.GetOneDTO entity = this.getPurchaseOrder(detailEntity.getPurchaseOrderId());
+        if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98025);
+        }
+        result.setSupplierId(entity.getPurchaseOrderSupplierDTO().getSupplierId());
+        result.setSupplierName(entity.getSupplierName());
+        result.setWarehouseId(entity.getDeliveryWarehouseId());
+        result.setWarehouseName(entity.getWarehouseName());
+        //入库质检
+        String qcType = QcTypeEnum.STOCK_IN.getCode();
+        //非首批：否
+        if (!detailEntity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())) {
+            qcType = QcTypeEnum.NEW_PRODUCT_STOCK_IN.getCode();
+        }
+        Boolean isInside = QcTypeEnum.getIsInsideByCode(qcType);
+        result.setQcType(qcType);
+        result.setIsInside(isInside);
+        //采购订单详情
+        String skuId = detailEntity.getSkuId();
+        List<String> skuIdList =Collections.singletonList(skuId);
+        List<ProductVO.ProductPackVO> skuList = plmTaskFeign.getProductPackBySkuIds(skuIdList);
+        ProductVO.ProductPackVO flag = new ProductVO.ProductPackVO();
+        ProductVO.ProductPackVO find = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
+        if (find != null) {
+            BeanMapper.copy(find, flag);
+        }
+        flag.setPurchaseOrderDetailId(detailEntity.getId());
+        flag.setQty(detailEntity.getPurchaseQty());
+        flag.setSkuId(skuId);
+        result.setProductList(Collections.singletonList(flag));
         return result;
     }
 
@@ -3131,15 +3184,22 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             log.info("获取fastdfs文件为空==========》地址：" + fileTemplateEntity.getUrl());
             return;
         }
+
+        List<com.erp.model.sys.entity.DictBasicEntity> dictBasicEntity = FeignQuery.create(com.erp.model.sys.entity.DictBasicEntity.class)
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getType,"url")
+                .eq(com.erp.model.sys.entity.DictBasicEntity::getName,"logo")
+                .list();
+        //logo url地址
+        result.setLogoUrl(FastDFSClientUtil.publicUrl+"/"+dictBasicEntity.get(0).getValue());
         Map<String, Object> map = BeanUtil.beanToMap(result);
         JRBeanCollectionDataSource detail = new JRBeanCollectionDataSource(result.getDetails());
         map.put("detail", detail);
         //JasperHelperUtil.export(FileTypeEnum.PDF.getCode(), "pfd", inputStream, map, result.getDetails());
 
-       byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
+        byte[] bytes = JasperHelperUtil.exportToPdfStream(inputStream, map, Arrays.asList(result));
         String base = Base64.getEncoder().encodeToString(bytes);
         base64List.add("data:application/pdf;base64," + base);
-        PdfUtil.exportBase64ForPdf(response,base64List);
+        PdfUtil.exportBase64ForPdf(response, base64List);
     }
 
     @Override
@@ -3216,5 +3276,32 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 dmpMqFeign.sendTask(resultList);
             }
         });
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess) {
+        //待提交或审核不通过并且未作废允许提交
+        long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
+        if (count > 0) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        List<PurchaseOrderEntity> list = Collections.singletonList(entity);
+        //校验必填信息
+        checkRequiredData(list, Collections.singletonList(entity.getId()));
+
+        List<String> ids = Collections.singletonList(entity.getId());
+        log.info("采购订单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        if (isStartProcess) {
+            //提交流程
+            startProcess(list);
+        }
+        //更新审核状态
+        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        //操作日志
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 }

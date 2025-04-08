@@ -4,31 +4,20 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
-import com.common.business.utils.CollectionUtils;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
-import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.MapUtil;
-import com.erp.model.dmp.entity.DmpLogisticInfoEntity;
 import com.erp.model.dmp.entity.DmpSoReturnDetailEntity;
 import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoReturnDetailService;
 import com.erp.server.dmp.service.DmpSoReturnInfoService;
-import com.sdk.oms.mercado.constant.MercadoConstant;
-import com.sdk.oms.mercado.dto.mercado.order.OrderDTO;
-import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
-import com.sdk.oms.mercado.dto.mercado.order.OrdersBean;
-import com.sdk.oms.mercado.dto.mercado.returnOrder.ReturnDTO;
+import com.sdk.oms.mercadolocal.constant.MercadoConstant;
+import com.sdk.oms.mercadolocal.dto.mercadolocal.order.OrderViewDTO;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -128,7 +117,7 @@ public class MercadoReturnDmpHandler extends DmpInputDbConvertDmpHandler {
                     OrderViewDTO orderDTO = JSONUtil.toBean(JSONUtil.toJsonStr(JSONUtil.toJsonStr(map)), OrderViewDTO.class);
                     dmpDataMap.put("allAmount", orderDTO.getPaidAmount());
                     dmpDataMap.put("currencyCode", orderDTO.getCurrencyId());
-                    dmpDataMap.put("buyerName", orderDTO.getBuyer().getFirstName()+" "+orderDTO.getBuyer().getLastName());
+                    dmpDataMap.put("buyerName", orderDTO.getBuyer().getNickname());
                     dmpDataMap.put("exchangeRate", orderDTO.getOrderItems().get(0).getBaseExchangeRate());
                 }
             }

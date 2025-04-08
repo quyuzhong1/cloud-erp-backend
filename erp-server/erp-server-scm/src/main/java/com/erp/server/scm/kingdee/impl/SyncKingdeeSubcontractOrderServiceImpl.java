@@ -160,8 +160,6 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
                 resultMap.put("purchaseUserCode", findUserDTO.getCode());
             }
         }
-        //是否是新品首批
-        resultMap.put("isFirstMassProduct",entity.getIsFirstMassProduct());
 
 
         //采购明细
@@ -205,6 +203,8 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             jsonObject.set("qty",detailEntity.getQty());
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             jsonObject.set("price",detailEntity.getPrice());
+            //新品首批
+            jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
             //单据日期
             jsonObject.set("billDate",LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 

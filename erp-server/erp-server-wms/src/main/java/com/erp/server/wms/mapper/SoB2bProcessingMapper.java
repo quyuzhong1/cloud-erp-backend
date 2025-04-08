@@ -39,10 +39,17 @@ public interface SoB2bProcessingMapper extends BaseMapper<SoB2bProcessingEntity>
      */
     List<SoB2bProcessingEntity> listSoB2bProcessing(@Param("startDate") LocalDate startDate);
     /**
-     * 删除
-     * @author will
-     * @date 2025/1/3 18:26
-     * @param removeIds
+     * 删除多余b2c订单
+     * @Auther will
+     * @Date 2025/2/6 16:32
      */
-    void deleteByIdList(@Param("removeIds")List<String> removeIds);
+    void deleteB2bOrder(@Param("startDate") LocalDate startDate);
+    /**
+     * 删除b2b销售订单跟踪数据
+     * @author will
+     * @date 2025/2/18 10:05
+     * @param params
+     * @return java.lang.Boolean
+     */
+    Boolean deleteB2bProcessing(@Param("params") SoB2bProcessingDTO.DeleteDTO params);
 }

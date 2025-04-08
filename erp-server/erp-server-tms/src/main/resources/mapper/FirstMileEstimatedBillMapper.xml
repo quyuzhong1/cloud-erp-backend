@@ -34,7 +34,7 @@
         FROM
             wms_first_mile_delivery fd
         LEFT JOIN wms_first_mile_delivery_detail fdd ON fdd.main_id = fd.ID AND fdd.is_deleted =FALSE
-                LEFT JOIN wms_overseas_warehouse_inbound owi ON owi.source_id = fd.ID AND owi.is_deleted = FALSE
+                LEFT JOIN wms_overseas_warehouse_inbound owi ON owi.source_id = fd.ID AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
         WHERE
             fd.is_deleted = FALSE
         ) AS fd ON lb.outstock_id = fd.ID
@@ -160,7 +160,8 @@
         select fmeb.logistics_bill_id logisticsBillId,
                tcc.dict_cost_attribution dictCostAttribution,
                tcc.dict_cost_category dictCostCategory,
-               sum(tcd.cost_value) costValue
+               sum(tcd.cost_value) costValue,
+			   max(tcd.currency) currency
         from first_mile_estimated_bill fmeb
                  inner join logistics_bill_cost lbc on fmeb.logistics_bill_id = lbc.logistics_bill_id
                  left join tms_cost_detail tcd on lbc.id = tcd.main_id and tcd.is_deleted = false

@@ -9,7 +9,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -150,7 +149,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 运费收入
     */
     @TableField("shipping_amount")
-    private BigDecimal shippingAmount;
+    private BigDecimal shippingAmount = BigDecimal.ZERO;
     /**
     * 平台费
     */
@@ -253,6 +252,36 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
      */
     @TableField("vat_cost")
     private BigDecimal vatCost;
+    
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    
+    /**
+     * 实际运费
+     */
+    @TableField("actual_shipping_fee")
+    private BigDecimal actualShippingFee = BigDecimal.ZERO;
+     
+    /**
+     * 预估运费
+     */
+    @TableField("estimated_shipping_fee")
+    private BigDecimal estimatedShippingFee = BigDecimal.ZERO;
+
+    /**
+     * 总税费
+     */
+    @TableField("total_tax_fee")
+    private BigDecimal totalTaxFee = BigDecimal.ZERO;
+
+    /**
+     * 总税后支付金额
+     */
+    @TableField("after_tax_amount")
+    private BigDecimal afterTaxAmount = BigDecimal.ZERO;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

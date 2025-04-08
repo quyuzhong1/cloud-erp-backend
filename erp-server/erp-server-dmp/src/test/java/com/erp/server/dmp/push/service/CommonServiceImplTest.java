@@ -1,8 +1,10 @@
 package com.erp.server.dmp.push.service;
 
+import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import org.apache.groovy.util.Maps;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,6 +27,9 @@ public class CommonServiceImplTest {
     @Resource
     private com.erp.server.dmp.push.service.kingdee.KingdeeCommonService KingdeeCommonService;
 
+    @Resource
+    private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+
     @Test
     public void test(){
         PlatformEntity platformEntity = KingdeeCommonService.getPlatformEntity(PlatformEnum.KINGDEE.getDesc());
@@ -35,4 +40,9 @@ public class CommonServiceImplTest {
         System.out.println(maps);
     }
 
+    @Test
+    public void setImlOutboundHandler(){
+        List<DmpOutputTaskRecordEntity> list = dmpOutputTaskRecordService.queryBySourceCodeAndCfgOutputId("XSDD250327000069_2784", "1853691191233632850");
+        System.out.println(list);
+    }
 }

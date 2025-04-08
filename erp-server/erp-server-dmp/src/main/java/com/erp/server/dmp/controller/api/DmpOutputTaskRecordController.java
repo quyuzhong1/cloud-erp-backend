@@ -9,6 +9,7 @@ import com.common.business.wrapper.QueryTypeEnum;
 import com.erp.model.dmp.dto.DmpOutputTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
+import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
@@ -189,10 +190,11 @@ public class DmpOutputTaskRecordController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @PostMapping(value = "/batchSync")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "重新同步")
     public ApiResult batchSync(@RequestBody BaseIdsDTO.IdsDTO dto) {
         dmpOutputTaskRecordService.lambdaUpdate()
                 .set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.TRUE)
-                .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+                .set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.INIT.getCode())
                 .in(DmpOutputTaskRecordEntity::getId, dto.getIds())
                 .update();
 

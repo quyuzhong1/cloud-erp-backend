@@ -94,6 +94,11 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 加工单子件出库，减冻结
      */
     MACHINE_INFO_CHILD_OUT("machine_info_child_out", "17","加工单子件出库"),
+
+    /**
+     * 发货通知单处理类型
+     */
+    SO_DELIVERY_NOTICE_HANDLE("so_delivery_notice_handle", "18","发货通知单处理减少可用、添加冻结"),
     ;
 
     private String code;

@@ -12,6 +12,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
@@ -19,6 +20,7 @@ import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -75,11 +77,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 手动发货
      *
      * @param id
+     * @param deliveryDate
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2023/12/13 19:26
      **/
-    BatchResultDTO manualDelivery(String id);
+    BatchResultDTO manualDelivery(String id, LocalDate deliveryDate);
 
     /**
      * 手动标发
@@ -190,12 +193,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 发货
      *
      * @param
+     * @param deliveryDate
      * @return
      * @description
      * @author Lambda
      * @create 2023-12-29 10:37
      */
-    BatchResultDTO delivery(String id, String deliveryType);
+    BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate);
 
     /**
      * 生成销售出库单
@@ -431,5 +435,11 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
-
+    /**
+     * 查询b2c流水
+     * @author will
+     * @date 2025/3/31 11:56
+     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
+     */
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
 }

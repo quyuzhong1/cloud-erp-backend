@@ -6,10 +6,7 @@ import com.erp.rpc.tms.feign.CfgSettingFeign;
 import com.erp.server.plm.rocketmq.sync.dmp.SyncProductService;
 import com.erp.server.plm.rocketmq.sync.scm.ScmSyncProductService;
 import com.erp.server.plm.rocketmq.sync.wms.WmsSyncProductService;
-import com.erp.server.plm.service.NoticeMessageService;
-import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.ProductInfoService;
-import com.erp.server.plm.service.ProductLogisticsService;
+import com.erp.server.plm.service.*;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +58,9 @@ public class PlmJob {
     @Resource
     private DmpTaskFeign dmpTaskFeign;
 
+    @Resource
+    private MouldRefCalcQtyService mouldRefCalcQtyService;
+
     /**
      * 生成发送任务预警通知 每天17:00
      */
@@ -91,5 +91,13 @@ public class PlmJob {
             productDetailService.resetDestDeclarePrice(details, Boolean.FALSE);
         }
         XxlJobHelper.log("recalDestDeclarePrice end : {}", LocalDateTime.now());
+    }
+
+    /**
+     * 模具返还数量计算
+     */
+    @XxlJob("calcRefundQty")
+    public void calcRefundQty() {
+        mouldRefCalcQtyService.calcRefundQty();
     }
 }

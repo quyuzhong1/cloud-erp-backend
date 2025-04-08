@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.sdy;
 
+import com.alibaba.fastjson.JSONArray;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +10,9 @@ import com.common.core.controller.vo.ApiResult;
 
 import cn.hutool.http.HttpUtil;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Administrator
@@ -35,11 +39,23 @@ public class SdyCommonService {
 			url = "/" + url;
 		}
 		url = sdyUrl + url;
-		
-		String requestData = parseObject.getString(REQUEST_DATA);
-		log.info("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
+
+		String requestData = "";
+		String data = parseObject.getString(REQUEST_DATA);
+		if (data.startsWith("[") && data.endsWith("]")) {
+			// 如果 ext 是数组
+			JSONArray extArray = JSON.parseArray(data);
+			JSONObject object = new JSONObject();
+			object.put("count", extArray.size());
+			object.put("list", extArray);
+			requestData = object.toJSONString();
+		} else {
+			requestData = data;
+		}
+
+		log.warn("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
 		String responseData = HttpUtil.post(url, requestData);
-		log.info("请求数帝云响应报文：{}" , responseData);
+		log.warn("请求数帝云响应报文：{}" , responseData);
 		JSONObject responseObject = null;
 		try {
 			responseObject = JSON.parseObject(responseData);

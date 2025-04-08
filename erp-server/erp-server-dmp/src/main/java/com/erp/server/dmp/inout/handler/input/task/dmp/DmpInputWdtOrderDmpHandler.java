@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,10 @@ public class DmpInputWdtOrderDmpHandler extends DmpInputWdtDmpHandler{
 				Object status = dmpDataMap.get("status");
 				if(status != null) {
 					dmpDataMap.put("trade_status", "110".equals(status.toString()) ? "approve" : status);
+				}
+				Object pay_time = dmpDataMap.get("payTime");
+				if(pay_time != null && StringUtils.isNotBlank(pay_time.toString())) {
+					dmpDataMap.put("payStatus", true);
 				}
 				Object platform_id = dmpDataMap.get("sourcePlatform");
 				if(platform_id != null) {
