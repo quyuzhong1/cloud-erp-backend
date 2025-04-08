@@ -173,4 +173,6 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
     PackageForecastDTO.ShippingProviderDTO searchShippingProvider(PackageForecastDTO.SearchShippingProviderDTO dto);
 
     BatchResultDTO uploadTikTokFully(PackageForecastDTO.UploadDTO dto);
+
+    List<BatchResultDTO> confirmDelivery(List<String> ids);
 }

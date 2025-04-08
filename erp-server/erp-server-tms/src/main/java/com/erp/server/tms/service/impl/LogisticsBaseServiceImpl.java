@@ -642,6 +642,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     .findFirst()
                     .orElse(new LogisticsAddressEntity());
             logisticsAddressEntity.setShopId(shopId);
+            logisticsAddressEntity.setName(addressesDTO.getContactName());
             logisticsAddressEntity.setType(LogisticsAddressTypeEnum.COLLECT);
             logisticsAddressEntity.setContact(addressesDTO.getContactName());
             logisticsAddressEntity.setAddressFirst(addressesDTO.getFullAddress());

@@ -218,7 +218,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
             return Collections.emptyList();
         }
         List<LogisticsAddressEntity> addressList =
-                this.lambdaQuery().select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
+                this.lambdaQuery().select(LogisticsAddressEntity::getAddressId,LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
                 .eq(LogisticsAddressEntity::getType,dto.getType())
                 .in(LogisticsAddressEntity::getShopId, dto.getShopIds())
                 .list();
