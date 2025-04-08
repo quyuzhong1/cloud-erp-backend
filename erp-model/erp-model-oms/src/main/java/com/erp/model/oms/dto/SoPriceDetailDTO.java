@@ -193,6 +193,16 @@ public class SoPriceDetailDTO implements Serializable {
          * 销售数量
          */
         private Integer soQty;
+
+        /**
+         * 失效时间
+         */
+        private LocalDate expireDate;
+
+        /**
+         * 生效时间
+         */
+        private LocalDate effectiveDate;
     }
 
     @Data
