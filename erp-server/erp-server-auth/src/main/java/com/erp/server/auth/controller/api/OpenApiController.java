@@ -56,12 +56,15 @@ public class OpenApiController {
         log.warn("平台上传接口统一请求报文：{},文件名:{}" , JSON.toJSONString(input),file.getOriginalFilename());
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-        String referer = request.getHeader("Referer");
+        String referer = request.getHeader("appId");
+        if(StringUtils.isBlank(referer)) {
+        	referer = request.getHeader("Referer");
+        }
         if(StringUtils.isBlank(referer)) {
             referer = request.getHeader("referer");
         }
         if(StringUtils.isBlank(referer)) {
-            return ApiResult.error(500, "请求头referer不能为空");
+            return ApiResult.error(500, "请求头appId或referer不能为空");
         }
         if (CollectionUtils.isEmpty(fileMap) || 1 != fileMap.size()){
             return ApiResult.error(500, "仅能上传一个文件");
@@ -102,12 +105,15 @@ public class OpenApiController {
     @PostMapping("/service")
     @ResponseBody
     public ApiResult<Object> service(@Validated @RequestBody OpenApiReqDTO req, HttpServletRequest request){
-    	String referer = request.getHeader("Referer");
+    	String referer = request.getHeader("appId");
+        if(StringUtils.isBlank(referer)) {
+        	referer = request.getHeader("Referer");
+        }
     	if(StringUtils.isBlank(referer)) {
     		referer = request.getHeader("referer");
     	}
     	if(StringUtils.isBlank(referer)) {
-    		return ApiResult.error(500, "请求头referer不能为空");
+    		return ApiResult.error(500, "请求头appId或referer不能为空");
     	}
     	log.warn("{}平台接口统一请求报文：{}" , referer , JSON.toJSONString(req));
     	
