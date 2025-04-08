@@ -10,10 +10,7 @@ import com.erp.server.dmp.service.AfterSaleService;
 import com.erp.server.dmp.service.ThridUserInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -41,8 +38,8 @@ public class AfterSaleFeignController extends BaseController {
      * @date: 2025-04-06
      */
     @PostMapping("/addThridUser")
-    public BaseResultDTO.AddDTO addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto) {
-        return thridUserInfoService.add(dto);
+    public ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto) {
+        return success(thridUserInfoService.add(dto));
     }
     /**
      * 新增
@@ -72,11 +69,21 @@ public class AfterSaleFeignController extends BaseController {
      * 获取寄修历史
      * @author jack
      * @date:  2025-04-06
-     * @return ApiResult
+     * @return ApiResultwo
      */
     @PostMapping("/getRepairHistory")
     public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
         return success(afterSaleService.getRepairHistory(dto));
+    }
+
+    /**
+     * 根据订单编号查询明细
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("feign/afterSale/getDetailByPlatformCode")
+    ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
+        return success(afterSaleService.getDetailByPlatformCode(platformCode));
     }
 
 }

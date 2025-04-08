@@ -564,6 +564,40 @@ public class AfterSaleDTO implements Serializable {
 
     }
 
+    /**
+     * 微信小程序输出结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO{
 
+        /**
+         *dmp_so_info / dmp_so_original_info 主键
+         */
+        private String id;
+        /**
+         *dmp_so_detail/dmp_so_original_detail 主键
+         */
+        private String detailId;
+        /**
+         *
+         */
+        private String skuId;
+
+        /**
+         *
+         */
+        private String skuNo;
+
+        /**
+         *
+         */
+        private Integer skuName;
+        /**
+         *
+         */
+        private String qty;
+
+    }
 
 }

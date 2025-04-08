@@ -8,8 +8,10 @@ import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -27,8 +29,8 @@ public interface AfterSaleFeign {
      * @author jack
      * @date: 2025-04-06
      */
-    @PostMapping("/addThridUser")
-    BaseResultDTO.AddDTO addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto);
+    @PostMapping("feign/afterSale/addThridUser")
+    ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto);
 
 
     /**
@@ -38,7 +40,7 @@ public interface AfterSaleFeign {
      * @param dto
      * @return ApiResult<String>
      */
-    @PostMapping("/add")
+    @PostMapping("feign/afterSale/add")
     ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto);
     /**
      *
@@ -46,13 +48,20 @@ public interface AfterSaleFeign {
      * @Author jack
      * @since 2025-04-07
      **/
-    @PostMapping("/getRepairRecord")
+    @PostMapping("feign/afterSale/getRepairRecord")
     ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody  @Validated  AfterSaleDTO.ProgressDTO dto);
     /**
      * 获取寄修历史
      * @Author jack
      * @since 2025-04-07
      */
-    @PostMapping("/getRepairHistory")
+    @PostMapping("feign/afterSale/getRepairHistory")
     ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody  @Validated  AfterSaleDTO.ThridUserDTO dto);
+    /**
+     * 根据订单编号查询明细
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("feign/afterSale/getDetailByPlatformCode")
+    ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode);
 }

@@ -23,7 +23,7 @@ import java.util.List;
  * @author jack
  * @since 2025-04-06
  */
-@OpenApi("/afterSale")
+@OpenApi
 public class AfterSaleOpenApi {
 
     @Resource
@@ -33,12 +33,22 @@ public class AfterSaleOpenApi {
 
 
     /**
+     * 根据订单编号查询明细
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @OpenApi("getDetailByPlatformCode")
+    public ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
+        return afterSaleFeign.getDetailByPlatformCode(platformCode);
+    }
+
+    /**
      * 新增寄修用户
      * @Author jack
      * @since 2025-04-07
      */
-    @OpenApi("/addThridUser")
-    public BaseResultDTO.AddDTO addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto){
+    @OpenApi("addThridUser")
+    public ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto){
         return afterSaleFeign.addThridUser(dto);
     }
 
@@ -48,7 +58,7 @@ public class AfterSaleOpenApi {
      * @Author jack
      * @since 2025-04-07
      */
-    @OpenApi("/listSalesPlatform")
+    @OpenApi("listSalesPlatform")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSalesPlatform(@RequestParam("key") String key){
         return omsDropDownFeign.list(key);
     }
@@ -59,7 +69,7 @@ public class AfterSaleOpenApi {
      * @Author jack
      * @since 2025-04-07
      */
-    @OpenApi("/add")
+    @OpenApi("add")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto){
         return afterSaleFeign.add(dto);
     }
@@ -69,7 +79,7 @@ public class AfterSaleOpenApi {
      * @Author jack
      * @since 2025-04-07
      */
-    @OpenApi("/getRepairRecord")
+    @OpenApi("getRepairRecord")
     public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody @Valid AfterSaleDTO.ProgressDTO dto) {
         return afterSaleFeign.getRepairRecord(dto);
     }
@@ -79,7 +89,7 @@ public class AfterSaleOpenApi {
      * @Author jack
      * @since 2025-04-07
      */
-    @OpenApi("/getRepairHistory")
+    @OpenApi("getRepairHistory")
     public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody @Validated AfterSaleDTO.ThridUserDTO dto){
         return afterSaleFeign.getRepairHistory(dto);
     }
