@@ -168,7 +168,7 @@ public class SyncSdyJob {
                         .list();
                 aliexpressDeliveryMap  = aliexpressDeliveryList.stream().collect(Collectors.groupingBy(AliexpressDeliveryEntity::getSoId));
                 if (!CollectionUtils.isEmpty(aliexpressDeliveryList)) {
-                    List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                    List<String> mainIds = aliexpressDeliveryList.stream().map(BaseEntity::getId).collect(Collectors.toList());
                     detailAliexpressDeliveryList = FeignQuery.create(AliexpressDeliveryDetailEntity.class)
                             .in(AliexpressDeliveryDetailEntity::getMainId, mainIds)
                             .list();
