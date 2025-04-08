@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -376,7 +377,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
             return;
         }
         Map<String, SoB2cEntity> codeMap = list.stream().collect(Collectors.toMap(SoB2cEntity::getCode, t -> t, (oldValue, newValue) -> oldValue));
-        Map<String, SoB2cEntity> platformCodeMap = list.stream().collect(Collectors.toMap(SoB2cEntity::getPlatformCode, t -> t, (oldValue, newValue) -> oldValue));
+//        Map<String, SoB2cEntity> platformCodeMap = list.stream().collect(Collectors.toMap(SoB2cEntity::getPlatformCode, t -> t, (oldValue, newValue) -> oldValue));
 
         // 订单id集合
         List<String> idList = list.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
@@ -390,31 +391,31 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(DictCountryEntity::getId, DictCountryEntity::getNameCn, (oldValue, newValue) -> oldValue));
 
         //买家信息字段导入时，以表格导入字段为准，但是如果导入表格字段为空时，则该字段不做更新
-        List<SoB2cReceiverEntity> resultList = new ArrayList<>();
         for (B2CCustomerImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
-            SoB2cEntity soB2cEntity = null;
+            List<SoB2cEntity> soB2cList = new ArrayList<>();
             if(StringUtils.isNotBlank(excelDTO.getCode())){
                 if(codeMap.containsKey(excelDTO.getCode())){
-                    soB2cEntity = codeMap.get(excelDTO.getCode());
+                    SoB2cEntity soB2cEntity = codeMap.get(excelDTO.getCode());
+                    soB2cList.add(soB2cEntity);
                 }else {
-                    errorMsgList.add("销售单号不存在");
+                    excelDTO.setErrorMsg("销售单号不存在");
+                    errorList.add(excelDTO);
+                    continue;
                 }
             }else if(StringUtils.isNotBlank(excelDTO.getPlatformCode())){
-                if(platformCodeMap.containsKey(excelDTO.getPlatformCode())){
-                    soB2cEntity = platformCodeMap.get(excelDTO.getPlatformCode());
-                }else {
-                    errorMsgList.add("平台订单号不存在");
+                soB2cList = list.stream().filter(e -> e.getPlatformCode().equals(excelDTO.getPlatformCode())).collect(Collectors.toList());
+                if(CollUtil.isEmpty(soB2cList)){
+                    excelDTO.setErrorMsg("平台订单号不存在");
+                    errorList.add(excelDTO);
+                    continue;
                 }
             }else {
                 excelDTO.setErrorMsg("销售单号和平台订单号不能同时为空");
                 errorList.add(excelDTO);
                 continue;
             }
-            //订单只有待提交、审核不通过时允许导入更新
-            if(!soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.REJECT)){
-                errorMsgList.add("订单只有待提交、审核不通过时允许导入更新");
-            }
+
             //国家
             if(StringUtils.isNotBlank(excelDTO.getCountry())){
                 if(!countryMap.containsKey(excelDTO.getCountry())){
@@ -423,45 +424,52 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                     excelDTO.setCountryName(countryMap.get(excelDTO.getCountry()));
                 }
             }
+            for (SoB2cEntity soB2cEntity : soB2cList) {
+                //订单只有待提交、审核不通过时允许导入更新
+                if(!soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.REJECT)){
+                    errorMsgList.add("【"+soB2cEntity.getCode() + "】订单只有待提交、审核不通过时允许导入更新");
+                }
+            }
             if (CollectionUtils.isNotEmpty(errorMsgList)) {
                 List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
                 excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
                 errorList.add(excelDTO);
-            }else{
-                //如果买家名为空，则使用收件人名
-                if(StringUtils.isBlank(excelDTO.getCustomerName())){
-                    excelDTO.setCustomerName(excelDTO.getReceiverName());
-                }
+            }else {
+                for (SoB2cEntity soB2cEntity : soB2cList) {
+                    //如果买家名为空，则使用收件人名
+                    if (StringUtils.isBlank(excelDTO.getCustomerName())) {
+                        excelDTO.setCustomerName(excelDTO.getReceiverName());
+                    }
 
-                SoB2cReceiverEntity b2cReceiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
-                if (ObjectUtils.isEmpty(b2cReceiverEntity)) {
-                    //新增买家信息
-                    b2cReceiverEntity = new SoB2cReceiverEntity();
-                    BeanMapper.copy(excelDTO, b2cReceiverEntity);
-                    b2cReceiverEntity.setName(excelDTO.getCustomerName());
+                    SoB2cReceiverEntity b2cReceiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
+                    if (ObjectUtils.isEmpty(b2cReceiverEntity)) {
+                        //新增买家信息
+                        b2cReceiverEntity = new SoB2cReceiverEntity();
+                        BeanMapper.copy(excelDTO, b2cReceiverEntity);
+                        b2cReceiverEntity.setName(excelDTO.getCustomerName());
 
-                    String customerId = saveB2cCustomer(excelDTO, soB2cEntity);
-                    b2cReceiverEntity.setCustomerId(customerId);
-                    this.save(b2cReceiverEntity);
-                }else{
-                    //如果存在买家信息，则更新
-                    BeanMapper.copy(excelDTO, b2cReceiverEntity);
-                    //获取客户表id ，如果客户id为空则新增客户
-                    if(StringUtils.isBlank(b2cReceiverEntity.getCustomerId())
-                            || !b2cReceiverEntity.getName().equals(excelDTO.getCustomerName())
-                    ){
                         String customerId = saveB2cCustomer(excelDTO, soB2cEntity);
                         b2cReceiverEntity.setCustomerId(customerId);
+                        this.save(b2cReceiverEntity);
+                    } else {
+                        //如果存在买家信息，则更新
+                        BeanMapper.copy(excelDTO, b2cReceiverEntity);
+                        //获取客户表id ，如果客户id为空则新增客户
+                        if (StringUtils.isBlank(b2cReceiverEntity.getCustomerId())
+                                || !b2cReceiverEntity.getName().equals(excelDTO.getCustomerName())
+                        ) {
+                            String customerId = saveB2cCustomer(excelDTO, soB2cEntity);
+                            b2cReceiverEntity.setCustomerId(customerId);
+                        }
+                        b2cReceiverEntity.setName(excelDTO.getCustomerName());
+                        this.updateById(b2cReceiverEntity);
+
+                        // 记录主单操作日志
+                        log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
+                        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
+                        operateLogService.addModuleOperateLogByObj(soB2cReceiverMap.get(soB2cEntity.getId()), b2cReceiverEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
                     }
-                    b2cReceiverEntity.setName(excelDTO.getCustomerName());
-                    this.updateById(b2cReceiverEntity);
-
-                    // 记录主单操作日志
-                    log.info("编辑 开始记录B2C销售订单表日志数据，单号：【{}】", soB2cEntity.getCode());
-                    String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), "B2C销售订单表");
-                    operateLogService.addModuleOperateLogByObj(soB2cReceiverMap.get(soB2cEntity.getId()), b2cReceiverEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
                 }
-
             }
         }
     }
