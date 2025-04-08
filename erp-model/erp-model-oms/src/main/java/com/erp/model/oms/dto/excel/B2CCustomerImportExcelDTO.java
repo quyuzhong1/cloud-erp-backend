@@ -101,8 +101,8 @@ public class B2CCustomerImportExcelDTO {
      */
     
     @ColumnWidth(30)
-    @ExcelProperty(value = "收货人")
-    @FieldValid(fieldName = "收货人",maxLength = 255)
+    @ExcelProperty(value = "*收货人")
+    @FieldValid(fieldName = "收货人",isNotBlank = true,maxLength = 255)
     private String receiverName;
     /**
      * 邮编
