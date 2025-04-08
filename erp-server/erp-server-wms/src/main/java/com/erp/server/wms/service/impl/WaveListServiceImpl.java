@@ -78,6 +78,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         entity.setPickingType(dto.getPickingType());
         entity.setStatus(WaveStatusEnum.AWAIT_PICK.getCode());
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
+        entity.setIsFullyManaged(dto.getIsFullyManaged());
         this.save(entity);
 
         List<String> pickCartTypeIdList = dto.getPickCartTypeIdList();
@@ -372,6 +373,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         }
 
         List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(idsDTO.getIds());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_1031);
+        }
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);
         for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
