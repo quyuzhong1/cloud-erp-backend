@@ -30,10 +30,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * 组包预报表
@@ -228,7 +225,7 @@ public class PackageForecastController extends BaseController {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         if(dto.getDeliveryPlatform().equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
             BatchResultDTO batchResultDTO = packageForecastService.uploadTikTokFully(dto);
-            return success(Arrays.asList(batchResultDTO));
+            return batchResultDTO.getSuccess()?success(Collections.singletonList(batchResultDTO)):failure(Collections.singletonList(batchResultDTO));
         }else{
             for (String id : dto.getIds()) {
                 BatchResultDTO deleteResult;
