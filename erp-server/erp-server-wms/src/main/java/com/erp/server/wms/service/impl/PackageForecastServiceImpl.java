@@ -1314,7 +1314,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if(allSoB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().count() > 1){
             throw new ServiceException("组包预报单明细数据平台不一致");
         }
-        return allSoB2cEntityList.get(0).getDictPlatform();
+        String platform = allSoB2cEntityList.get(0).getDictPlatform();
+        if(!platform.equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())
+                && !platform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())
+                && !platform.equals(PlatformDictEnum.TIK_TOK.getCode())){
+            throw new ServiceException("非tiktok,tiktok全托管，速卖通平台无需上传");
+        }
+        return platform;
     }
 
     @Override
