@@ -1433,7 +1433,12 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return list;
         }
         List<String> platformList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (!platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
+        boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        boolean allNotMatch = platformList.stream().noneMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        if (!allMatch && !allNotMatch) {
+            throw new ServiceException(ApiError.ERROR_EXIST_FULLY_AND_NOT_FULLY_ORDER);
+        }
+        if (!allMatch){
             return list;
         }
         if(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
@@ -1925,8 +1930,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public List<BaseResultDTO.AddDTO> generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
         List<SoB2cDeliveryEntity> b2cDelivery = listByIds(dto.getIds());
         List<String> platformList = b2cDelivery.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        //校验平台列表中是否即包含托管订单有包含其他平台订单
-        if (platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+        //校验平台列表中是否全部都是全托管订单或者非全托管订单
+        boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        boolean allNotMatch = platformList.stream().noneMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        if (!allMatch && !allNotMatch) {
             throw new ServiceException(ApiError.ERROR_EXIST_FULLY_AND_NOT_FULLY_ORDER);
         }
         boolean match = b2cDelivery.stream().allMatch(v -> SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(v.getStatus()));
