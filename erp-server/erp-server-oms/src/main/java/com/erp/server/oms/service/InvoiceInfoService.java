@@ -6,9 +6,11 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
+import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import java.util.List;
@@ -106,8 +108,28 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return ViewCceDTO
      */
     InvoiceInfoDTO.ViewCceDTO viewCce(String id);
-
-    String exportXml(InvoiceInfoDTO.@Valid PagingParamDTO dto);
-
-    String exportPdf(InvoiceInfoDTO.@Valid PagingParamDTO dto);
+    /**
+     * 导出xml
+     * @author will
+     * @date 2025/4/8 11:30
+     * @param dto
+     * @return Resource
+     */
+    Resource exportXml(InvoiceInfoDTO.@Valid PagingParamDTO dto);
+    /**
+     * 导出pdf
+     * @author will
+     * @date 2025/4/8 11:30
+     * @param dto
+     * @return Resource
+     */
+    Resource exportPdf(InvoiceInfoDTO.@Valid PagingParamDTO dto);
+    /**
+     * 生成发票校验
+     * @author will
+     * @date 2025/4/8 14:22
+     * @param ids
+     * @return List<CheckGenerateInvoiceDTO>
+     */
+    List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids);
 }

@@ -11,6 +11,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
+import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.server.oms.service.InvoiceInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -95,6 +96,19 @@ public class InvoiceInfoController extends BaseController {
     }
 
     /**
+     * 生成发票校验
+     * @author will
+     * @date 2025/4/8 14:22
+     * @param dto
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @PostMapping("/checkGenerateInvoice")
+    public ApiResult<List<InvoiceTaxDTO.CheckGenerateInvoiceDTO>> checkGenerateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> list = invoiceInfoService.checkGenerateInvoice(dto.getIds());
+        return  success(list);
+    }
+
+    /**
      * 上传发票
      */
     @PostMapping("/uploadInvoice")
@@ -122,9 +136,8 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/exportXml")
-    public ApiResult<String> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
-        String xmlUrl = invoiceInfoService.exportXml(dto);
-        return success(xmlUrl);
+    public ApiResult<Resource> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        return success(invoiceInfoService.exportXml(dto));
     }
 
     /**
@@ -135,9 +148,8 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/exportPdf")
-    public ApiResult<String> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
-        String pdfUrl = invoiceInfoService.exportPdf(dto);
-        return success(pdfUrl);
+    public ApiResult<Resource> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        return success(invoiceInfoService.exportPdf(dto));
     }
 
     /**

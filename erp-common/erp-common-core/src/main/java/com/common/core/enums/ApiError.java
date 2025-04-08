@@ -1444,6 +1444,9 @@ public enum ApiError implements Serializable {
     ERROR_92172(92172,"退货通知单明细不能为空"),
     ERROR_92173(92173,"退货签收单明细不能为空"),
     ERROR_92174(92174,"退货入库单明细不能为空"),
+    ERROR_INVOICE_NOT_EXIST(92175,"发票信息不存在"),
+    ERROR_INVOICE_DETAIL_NOT_EXIST(92176,"发票明细不存在"),
+    ERROR_INVOICE_TAX_NOT_EXIST(92177,"税务信息不存在"),
 
 
     /**

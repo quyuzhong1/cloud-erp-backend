@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -151,7 +152,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private VirtualInventoryFeign virtualInventoryFeign;
     @Resource
     private InventoryFeign inventoryFeign;
-
+    @Resource
+    private InvoiceTaxService invoiceTaxService;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -440,6 +442,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!listingInfoService.updateById(listing)) {
             throw new ServiceException("[listing] 更新失败");
         }
+        //更新发票税务信息
+        if (ObjectUtil.isNotEmpty(dto.getTaxCodeDTO())) {
+            dto.getTaxCodeDTO().setListingId(listing.getId());
+            InvoiceTaxDTO.UpdateDTO updateDTO = BeanUtil.toBean(dto, InvoiceTaxDTO.UpdateDTO.class);
+            invoiceTaxService.addOrUpdate(updateDTO);
+        }
         // 无修改
         if (skuMapping.getProductSkuId().equalsIgnoreCase(productSkuId) && dto.getEffectiveTime().equals(skuMapping.getEffectiveTime())) {
             // 检查仓库发货配置
@@ -493,6 +501,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(skuMapping.getDictPlatform())){
             listingInfoService.handleAliExpress(addSkuMaping,skuVOList.get(0),listing);
         }
+
         operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(),  CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
         return BatchResultDTO.success(addSkuMaping.getId(), addSkuMaping.getId(), "更改sku对照表成功");
     }

@@ -31,5 +31,26 @@
         hs_code, desc, country
     </sql>
 
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.oms.dto.DictInvoiceHsDTO$ListDTO">
+            select
+                <include refid="Base_Column_List"/>
+            from dict_invoice_hs dih
+            <where>
+                ${params.sqlMap.default}
+                and dih.is_delete = false
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+                ORDER BY
+                <if test="params.sortList != null and params.sortList.size > 0">
+                    <foreach collection="params.sortList" item="item" separator="," close=",">
+                        ${item.field} ${item.sort}
+                    </foreach>
+                </if>
+                dih.id desc
+            </where>
+    </select>
+
 
 </mapper>

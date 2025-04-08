@@ -2,6 +2,8 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -89,8 +91,11 @@ public class DictInvoiceHsServiceImpl extends SuperServiceImpl<DictInvoiceHsMapp
     }
 
     @Override
-    public PagingVO<DictInvoiceHsDTO.ListDTO> paging(PagingDTO<DictInvoiceHsDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<DictInvoiceHsDTO.ListDTO> paging(PagingDTO<DictInvoiceHsDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DictInvoiceHsDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        return new PagingVO(pageData);
     }
 
 

@@ -30,29 +30,29 @@ public class InvoiceTaxController extends BaseController {
 
 
     /**
-    * 修改
+    * 新增或修改
     * @author will
     * @date:  2025-04-07
     * @param dto
     * @return ApiResult
     */
-    @PostMapping("/update")
-    public ApiResult<String> update(@RequestBody @Validated InvoiceTaxDTO.UpdateDTO dto) {
-        invoiceTaxService.update(dto);
+    @PostMapping("/addOrUpdate")
+    public ApiResult<String> addOrUpdate(@RequestBody @Validated InvoiceTaxDTO.UpdateDTO dto) {
+        invoiceTaxService.addOrUpdate(dto);
         return success();
     }
 
 
     /**
-     * 根据业务id（销售订单id）查询详情
+     * 根据业务id查询详情
      * @author will
      * @date 2025/4/7 16:41
-     * @param businessId
+     * @param listingId
      * @return ApiResult<VirtualWarehouseAllocationDTO.ViewDTO>
      */
     @GetMapping("/view")
     @LogViewService
-    public ApiResult<InvoiceTaxDTO.ViewDTO> view(@RequestParam(value = "businessId") String businessId) {
-        return success(invoiceTaxService.view(businessId));
+    public ApiResult<InvoiceTaxDTO.ViewDTO> view(@RequestParam(value = "listingId") String listingId) {
+        return success(invoiceTaxService.view(listingId));
     }
 }

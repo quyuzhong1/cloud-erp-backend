@@ -19,7 +19,17 @@ import java.io.Serializable;
 @NoArgsConstructor
 public class InvoiceTaxDTO implements Serializable {
 
-
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CheckGenerateInvoiceDTO extends  ViewDTO{
+        /**
+         * 是否生成税务信息
+         */
+        private Boolean isGenerateInvoiceTax;
+    }
 
 
     /**
@@ -33,6 +43,10 @@ public class InvoiceTaxDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
 
         /**
         * listing表id
