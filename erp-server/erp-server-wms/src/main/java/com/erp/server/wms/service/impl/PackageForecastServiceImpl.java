@@ -1361,7 +1361,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("揽收地址不存在");
         }
         String addressName = addressEntity.getName();
-        tikTokFullyShippingReq.setSenderContactId(dto.getCollectAddressId());
+        tikTokFullyShippingReq.setSenderContactId(dto.getAddressId());
         if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
             tikTokFullyShippingReq.setDeliveryMode("SELF_DELIVERY");
             TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();

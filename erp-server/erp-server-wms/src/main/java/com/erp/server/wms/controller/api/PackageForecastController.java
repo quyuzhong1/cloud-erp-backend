@@ -338,5 +338,4 @@ public class PackageForecastController extends BaseController {
     public ApiResult<PackageForecastDTO.ShippingProviderDTO> searchShippingProvider(@RequestBody @Valid PackageForecastDTO.SearchShippingProviderDTO dto) {
         return success(packageForecastService.searchShippingProvider(dto));
     }
-
 }

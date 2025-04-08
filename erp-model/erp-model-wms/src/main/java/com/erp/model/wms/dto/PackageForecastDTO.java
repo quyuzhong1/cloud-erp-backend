@@ -279,11 +279,15 @@ public class PackageForecastDTO implements Serializable {
         @NotBlank(message = "揽收方式不能为空")
         private String collectMode;
 
-
         /**
          * 揽收地址id 来源 http://172.16.100.11:3002/project/128/interface/api/25783  type=collect
          */
         private String collectAddressId;
+
+        /**
+         *  第三方地址id
+         */
+        private String addressId;
 
         /**
          * 物流类型
