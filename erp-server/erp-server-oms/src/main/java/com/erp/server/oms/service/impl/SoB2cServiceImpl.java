@@ -4365,25 +4365,28 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (SourceTypeEnum.SELF_ADD.getCode().equals(soB2cEntity.getSourceType()) && StringUtils.isBlank(soB2cEntity.getTransactionSubType())) {
             throw new ServiceException(ApiError.TRANSACTION_SUB_TYPE_NOT_NULL, soB2cEntity.getCode());
         }
-
-        soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
-        soB2cEntity.setCreateTime(ObjectUtils.isEmpty(soB2cEntity.getCreateTime()) ? LocalDateTime.now() : soB2cEntity.getCreateTime());
-        if (StringUtils.isNotBlank(soB2cEntity.getCurrency())) {
-            BigDecimal exchangeRate = dmpTaskFeign.getRate(soB2cEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
-            if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
-                throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, soB2cEntity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
-            }
-            soB2cEntity.setExchangeRate(null == exchangeRate ? BigDecimal.ZERO : exchangeRate);
-        }
-
         //店铺
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
         if (ObjectUtils.isEmpty(shopInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_92058);
         }
+        soB2cEntity.setBillDate(ObjectUtils.isEmpty(soB2cEntity.getBillDate()) ? LocalDate.now() : soB2cEntity.getBillDate());
+        soB2cEntity.setCreateTime(ObjectUtils.isEmpty(soB2cEntity.getCreateTime()) ? LocalDateTime.now() : soB2cEntity.getCreateTime());
+        LocalDateTime createTime = soB2cEntity.getCreateTime();
+        //全托管订单设置币种
+        if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
+            soB2cEntity.setCurrency(shopInfoEntity.getTradeCurrency());
+            createTime = soB2cEntity.getPayTime();
+        }
+        if (StringUtils.isNotBlank(soB2cEntity.getCurrency())) {
+            BigDecimal exchangeRate = dmpTaskFeign.getRate(createTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            if (MathUtil.compareTo(exchangeRate, MathUtil.ZERO) == MathUtil.ZERO && exchangeRateThrow) {
+                throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, createTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), soB2cEntity.getCurrency());
+            }
+            soB2cEntity.setExchangeRate(null == exchangeRate ? BigDecimal.ZERO : exchangeRate);
+        }
         soB2cEntity.setOrgId(shopInfoEntity.getSalesOrgId());
         soB2cEntity.setOrgName(shopInfoEntity.getSalesOrgName());
-
         // 源单付款状态优先
         if (StringUtils.isBlank(soB2cEntity.getPayStatus())) {
             //付款时间不为空则已付款
@@ -5966,6 +5969,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (StringUtils.isBlank(dto.getCurrency())) {
             dto.setCurrency(shopInfo.getDefaultCurrency());
         }
+        // 全托管币种取值为交易币种
+        if (isFullyManagedOrder(dto.getDictPlatform())){
+            dto.setCurrency(shopInfo.getTradeCurrency());
+        }
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
         try {
@@ -6100,6 +6107,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
+            // 全托管作废保留以前状态
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
+                oldEntity.setApproveStatus(oldApproveStatus);
+                dto.setPayStatus(oldEntity.getPayStatus());
+                dto.setPayTime(oldEntity.getPayTime());
+                dto.setBillStatus(oldEntity.getBillStatus());
+            }
             //沃尔玛
             if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                 if ("Cancelled".equals(platformOrderStatus)
@@ -6126,13 +6140,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         oldEntity.setRemark("");
                     }
                 }
-            }
-            // 自发货订单状态不更新(由ERP系统决定)
-            if (!oldEntity.hasPlatformWarehouseOrder()) {
-                dto.setBillStatus(oldEntity.getBillStatus());
-            }
-            //TikTok
-            if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
                 if ("CANCELLED".equalsIgnoreCase(platformOrderStatus)) {
                     oldEntity.setApproveStatus(oldApproveStatus);
                     dto.setPayStatus(oldEntity.getPayStatus());
@@ -6141,8 +6148,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setIsCancel(Boolean.TRUE);
                 }
             }
-
-
+            // 自发货订单状态不更新(由ERP系统决定)
+            if (!oldEntity.hasPlatformWarehouseOrder()) {
+                dto.setBillStatus(oldEntity.getBillStatus());
+            }
             // 自发货订单如果来源状态是带配货不更新状态, 审核状态也不更新
             if (!oldEntity.hasPlatformWarehouseOrder() && SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(dto.getBillStatus())) {
                 dto.setBillStatus(oldEntity.getBillStatus());
