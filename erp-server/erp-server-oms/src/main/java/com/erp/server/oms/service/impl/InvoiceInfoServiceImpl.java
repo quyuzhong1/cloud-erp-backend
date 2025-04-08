@@ -46,7 +46,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -509,6 +508,31 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if(CollectionUtils.isNotEmpty(updateSoB2cList)){
             soB2cService.updateBatchById(updateSoB2cList);
         }
+    }
+
+    @Override
+    public BatchResultDTO cancelInvoice(String id,String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO returnInvoice(String id,String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO notNeedInvoice(String id, String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO updateCce(InvoiceInfoDTO.UpdateCceDTO dto) {
+        return null;
+    }
+
+    @Override
+    public InvoiceInfoDTO.ViewCceDTO viewCce(String id) {
+        return null;
     }
 
     private List<InvoiceInfoEntity> autoUploadInvoice(List<InvoiceInfoEntity> waitCreateVoiceList, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<BatchResultDTO> resultDTOList) {
