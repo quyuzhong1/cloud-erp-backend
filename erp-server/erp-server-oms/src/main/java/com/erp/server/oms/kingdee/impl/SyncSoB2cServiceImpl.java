@@ -1004,10 +1004,15 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                     resultMap.put(b2cDeliveryDetailEntity.getId(), soDetailEntity.getPrice());
                     continue;
                 } else {
-                    ServiceException.runError("未拆分订单明细:发货单明细sku和销售订单明细不相同:delivery_sku={}, so_sku={}",
-                            b2cDeliveryDetailEntity.getSkuId(),
-                            soDetailEntity.getSkuId()
-                    );
+                    BigDecimal divAmount = soDetailEntity.getPrice()
+                            .multiply(new BigDecimal(soDetailEntity.getQty())
+                                    .divide(new BigDecimal(b2cDeliveryDetailEntity.getDeliveryQty()), 4, RoundingMode.DOWN));
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), divAmount);
+                    continue;
+//                    ServiceException.runError("未拆分订单明细:发货单明细sku和销售订单明细不相同:delivery_sku={}, so_sku={}",
+//                            b2cDeliveryDetailEntity.getSkuId(),
+//                            soDetailEntity.getSkuId()
+//                    );
                 }
             }
 
