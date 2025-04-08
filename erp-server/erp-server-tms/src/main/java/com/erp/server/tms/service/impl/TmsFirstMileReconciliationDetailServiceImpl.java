@@ -1439,7 +1439,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         //导出错误数据
         List<FirstMileReconciliationStandardExcelDTO> errorList = excelListenerUtil.getErrorList();
         //处理数据(对相同序号的数据进行成本分摊和重量分摊)
-        List<FirstMileReconciliationStandardExcelDTO> handlerList = splitWeightAndCost(successList, errorList);
+        List<FirstMileReconciliationStandardExcelDTO> handlerList = splitWeightAndCost(successList, errorList, mainEntity);
         //导入数据保存
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> successImortList = handleImportStandardData(handlerList, errorList, mainEntity);
 
@@ -1513,17 +1513,27 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     //执行重量分摊以及费用分摊
     private List<FirstMileReconciliationStandardExcelDTO> splitWeightAndCost(
             List<FirstMileReconciliationStandardExcelDTO> successList,
-            List<FirstMileReconciliationStandardExcelDTO> errorList) {
+            List<FirstMileReconciliationStandardExcelDTO> errorList,
+            TmsFirstMileReconciliationEntity mainEntity) {
         List<FirstMileReconciliationStandardExcelDTO> resultList = new ArrayList<>();
         List<FirstMileReconciliationStandardExcelDTO> tempList = new ArrayList<>();
         //序号唯一的设置到结果集合里
         List<FirstMileReconciliationStandardExcelDTO> singleEntryList = new ArrayList<>();
+
+        List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.FIRST_MILE.getCode());
+        if (CollUtil.isEmpty(tmsCfgCostList)) {
+            throw new ServiceException("费用项未配置，请联系管理员");
+        }
+        Map<String, String> costCategoryMap = groupCostCategories(tmsCfgCostList);
+        CfgSettingValueDTO.AllocationSettingDTO cfgSettingByAllocationSetting = cfgSettingService.getCfgSettingByAllocationSetting();
+        if (cfgSettingByAllocationSetting == null) {
+            throw new ServiceException("分摊设置未配置，请联系管理员");
+        }
+
         // 重量校验：当存在一致的序号时，是否有装箱重量
         if (CollUtil.isNotEmpty(successList)) {
             Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
                     .collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
-//            Map<String, List<FirstMileReconciliationStandardExcelDTO>> successMap = successList.stream()
-//                    .collect(Collectors.groupingBy(e -> e.getNo() + ":" + e.getCostName()));
 
             //序号唯一的设置到结果集合里
             singleEntryList = successMap.entrySet().stream()
@@ -1578,56 +1588,15 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         .collect(Collectors.toList());
 
                 try {
-                    //未装箱清单
-                    Map<String, WmsCartonSpecDTO.NoPackingView> noPackingViewsMap = packingTaskFeign.checkCartonWeightBySourceCodes(deliveryCodeList).stream()
-                            .collect(Collectors.toMap(WmsCartonSpecDTO.NoPackingView::getDeliveryCode, t -> t, (t1, t2) -> t1));
-
-                    //装箱清单的重量信息
-                    Map<String, WmsCartonDTO.ListPackingCartonDTO> listPackingCartonMap = packingTaskFeign.listCartonBySourceCodes(deliveryCodeList).stream()
-                            .collect(Collectors.toMap(WmsCartonDTO.ListPackingCartonDTO::getDeliveryCode, t -> t, (t1, t2) -> t1));
-
-                    for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : excelMap.entrySet()) {
-                        boolean hasUnpacked = false;
-                        for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
-                            WmsCartonSpecDTO.NoPackingView noPackingView = noPackingViewsMap.get(excelDTO.getSourceCode());
-                            WmsCartonDTO.ListPackingCartonDTO packingCartonDTO = listPackingCartonMap.get(excelDTO.getSourceCode());
-                            if ((noPackingView != null && CollUtil.isNotEmpty(noPackingView.getDetailList()))
-                                    || null == packingCartonDTO
-                                    || StringUtils.isBlank(packingCartonDTO.getWeightingStatus())
-                                    || !packingCartonDTO.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())
-                            ) {
-                                hasUnpacked = true;
-                                break;
-                            }
-                        }
-
-                        if (hasUnpacked) {
-                            for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
-                                excelDTO.setErrorMsg("装箱重量不能为0");
-                                errorList.add(excelDTO);
-                            }
-                        } else {
-                            tempList.addAll(entry.getValue());
-                        }
-                    }
+                    //校验装箱信息，校验重量
+                    checkWeight(errorList, deliveryCodeList, excelMap, cfgSettingByAllocationSetting, tempList);
                 } catch (Exception e) {
-                    log.error("调用 checkCartonWeightBySourceCodes 失败", e);
                     throw new ServiceException("获取未装箱清单失败，请稍后重试");
                 }
             }
         }
 
         if (CollUtil.isNotEmpty(tempList)) {
-            List<TmsCfgCostEntity> tmsCfgCostList = tmsCfgCostService.listByCostAttribution(DictCostAttributionEnum.FIRST_MILE.getCode());
-            if (CollUtil.isEmpty(tmsCfgCostList)) {
-                throw new ServiceException("费用项未配置，请联系管理员");
-            }
-            Map<String, String> costCategoryMap = groupCostCategories(tmsCfgCostList);
-            CfgSettingValueDTO.AllocationSettingDTO cfgSettingByAllocationSetting = cfgSettingService.getCfgSettingByAllocationSetting();
-            if (cfgSettingByAllocationSetting == null) {
-                throw new ServiceException("分摊设置未配置，请联系管理员");
-            }
-
             //粗略判断是否有设置成本分摊的方式
             Boolean hasCost = Boolean.FALSE;
             if(cfgSettingByAllocationSetting.getFirstShippingCost().equals(CostAllocationEnum.COST_ALLOCATION.getCode())||
@@ -1641,49 +1610,30 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
             List<String> deliveryCodeList = tempList.stream()
                     .map(FirstMileReconciliationStandardExcelDTO::getSourceCode)
                     .collect(Collectors.toList());
-            List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS = packingTaskFeign.listCartonBySourceCodes(deliveryCodeList);
-            Map<String, BigDecimal> deliveryCodeWeightMap = calculateDeliveryCodeWeight(cfgSettingByAllocationSetting, listPackingCartonDTOS);
 
-            //获取sku成本
+            List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS = packingTaskFeign.listCartonBySourceCodes(deliveryCodeList);
+
+            Map<String, WmsCartonDTO.ListPackingCartonDTO> listPackingCartonMap = listPackingCartonDTOS.stream()
+                    .collect(Collectors.toMap(WmsCartonDTO.ListPackingCartonDTO::getDeliveryCode, t -> t, (t1, t2) -> t1));
+
+            List<String> skuIds = listPackingCartonDTOS.stream()
+                    .flatMap(dto -> dto.getCartonDetailDTOList().stream())
+                    .map(WmsCartonDetailDTO.BoxDTO::getSkuId)
+                    .collect(Collectors.toList());
+
+            Map<String, BigDecimal> skuIdToGrossWeightMap = productPackFeign.listBySkuIds(skuIds).stream()
+                    .collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getGrossWeight));
+
+            Map<String, BigDecimal> deliveryCodeWeightMap = calculateDeliveryCodeWeight(cfgSettingByAllocationSetting, listPackingCartonDTOS,skuIdToGrossWeightMap);
+
+            //校验sku成本，设置sku成本
             if(Boolean.TRUE.equals(hasCost)){
-                List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class)
-                        .eq(WarehouseEntity::getName, "东莞塘厦仓")
-                        .list();
-                if (CollUtil.isEmpty(warehouseList)) {
-                    throw new ServiceException("未找到仓库信息");
-                }
-                List<BaseIdDTO.CodeDTO> companyByCodeList = sysUserFeign.listAccountingCompanyByCodeList(Collections.singletonList("113"));
-                if (CollUtil.isEmpty(companyByCodeList)) {
-                    throw new ServiceException("未找到公司信息");
-                }
-                InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = buildQueryB2BDTO(listPackingCartonDTOS, warehouseList.get(0), companyByCodeList.get(0));
-                List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
-                if(CollUtil.isEmpty(skuCostDTOS)){
-                    throw new ServiceException("sku成本不能为空");
-                }
-                Map<String, BigDecimal> skuCostMap = skuCostDTOS.stream()
-                        .collect(Collectors.toMap(InventorySkuCostDTO.SkuCostDTO::getSkuId, InventorySkuCostDTO.SkuCostDTO::getProductCost,(o1,o2)->o1));
-                //计算发货单sku成本
-                Map<String, BigDecimal> deliveryCodeCostMap = calculateDeliveryCodeCost(listPackingCartonDTOS, skuCostMap);
-                Map<String, List<FirstMileReconciliationStandardExcelDTO>> collect = tempList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
-                tempList.clear();
-                for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : collect.entrySet()) {
-                    List<FirstMileReconciliationStandardExcelDTO> value = entry.getValue();
-                    if(value.stream().allMatch(e -> deliveryCodeCostMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) > 0)){
-                        value.forEach(e -> e.setSkuCost(deliveryCodeCostMap.get(e.getSourceCode())));
-                        tempList.addAll(value);
-                    }else {
-                        value.forEach(e -> e.setErrorMsg("查询SKU成本失败，请先维护SKU成本信息"));
-                        errorList.addAll(value);
-                    }
-                }
+                checkCost(errorList, listPackingCartonDTOS, tempList, listPackingCartonMap,mainEntity.getReconciliationDate());
             }
             if(CollUtil.isEmpty(tempList)){
                 return resultList;
             }
-            tempList.forEach(e -> {
-                e.setGrossWeigh(deliveryCodeWeightMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO));
-            });
+            tempList.forEach(e -> e.setGrossWeigh(deliveryCodeWeightMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO)));
 
             Map<String, List<FirstMileReconciliationStandardExcelDTO>> groupByNoAndCostNameMap = tempList.stream()
                     .collect(Collectors.groupingBy(e -> e.getNo() + ":" + e.getCostName()));
@@ -1701,10 +1651,100 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return resultList;
     }
 
+    //校验重量
+    private void checkWeight(List<FirstMileReconciliationStandardExcelDTO> errorList, List<String> deliveryCodeList, Map<String, List<FirstMileReconciliationStandardExcelDTO>> excelMap, CfgSettingValueDTO.AllocationSettingDTO cfgSettingByAllocationSetting, List<FirstMileReconciliationStandardExcelDTO> tempList) {
+        //未装箱清单
+        Map<String, WmsCartonSpecDTO.NoPackingView> noPackingViewsMap = packingTaskFeign.checkCartonWeightBySourceCodes(deliveryCodeList).stream()
+                .collect(Collectors.toMap(WmsCartonSpecDTO.NoPackingView::getDeliveryCode, t -> t, (t1, t2) -> t1));
+
+        //装箱清单的重量信息
+        List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS = packingTaskFeign.listCartonBySourceCodes(deliveryCodeList);
+        Map<String, WmsCartonDTO.ListPackingCartonDTO> listPackingCartonMap = listPackingCartonDTOS.stream()
+                .collect(Collectors.toMap(WmsCartonDTO.ListPackingCartonDTO::getDeliveryCode, t -> t, (t1, t2) -> t1));
+
+        List<String> skuIds = listPackingCartonDTOS.stream()
+                .flatMap(dto -> dto.getCartonDetailDTOList().stream())
+                .map(WmsCartonDetailDTO.BoxDTO::getSkuId)
+                .collect(Collectors.toList());
+        Map<String, BigDecimal> skuIdToGrossWeightMap = productPackFeign.listBySkuIds(skuIds).stream()
+                .collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getGrossWeight));
+
+        for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : excelMap.entrySet()) {
+            String errorMsg ="";
+            for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
+                WmsCartonSpecDTO.NoPackingView noPackingView = noPackingViewsMap.get(excelDTO.getSourceCode());
+                WmsCartonDTO.ListPackingCartonDTO packingCartonDTO = listPackingCartonMap.get(excelDTO.getSourceCode());
+                if ((noPackingView != null && CollUtil.isNotEmpty(noPackingView.getDetailList()))
+                        || null == packingCartonDTO
+                        || StringUtils.isBlank(packingCartonDTO.getWeightingStatus())
+                        || !packingCartonDTO.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())
+                ) {
+                    errorMsg = "订单内有装箱信息没有重量";
+                    break;
+                }
+                if (cfgSettingByAllocationSetting.getWeightFirstAllocation().equals(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode())
+                        && packingCartonDTO.getCartonSpecDTOList().stream().anyMatch(e -> e.getPackageWeight().compareTo(BigDecimal.ZERO) <= 0)) {
+                    errorMsg = "订单内有装箱信息没有重量";
+                    break;
+                }else if(cfgSettingByAllocationSetting.getWeightFirstAllocation().equals(WeightAllocationSmallBagEnum.SINGLE_PRODUCT_WEIGHT.getCode())
+                        && packingCartonDTO.getCartonDetailDTOList().stream().anyMatch(e -> skuIdToGrossWeightMap.getOrDefault(e.getSkuId(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) <= 0)){
+                    errorMsg = "订单内有SKU没有重量，请先维护SKU重量信息";
+                    break;
+                }
+            }
+            if (StringUtils.isNotBlank(errorMsg)) {
+                for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
+                    excelDTO.setErrorMsg(errorMsg);
+                    errorList.add(excelDTO);
+                }
+            } else {
+                tempList.addAll(entry.getValue());
+            }
+        }
+    }
+
+    // 提取公共逻辑：校验sku成本，设置sku成本
+    private void checkCost(List<FirstMileReconciliationStandardExcelDTO> errorList, List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS, List<FirstMileReconciliationStandardExcelDTO> tempList, Map<String, WmsCartonDTO.ListPackingCartonDTO> listPackingCartonMap,LocalDate reconciliationDate) {
+        List<WarehouseEntity> warehouseList = FeignQuery.create(WarehouseEntity.class)
+                .eq(WarehouseEntity::getName, "东莞塘厦仓")
+                .list();
+        if (CollUtil.isEmpty(warehouseList)) {
+            throw new ServiceException("未找到仓库信息");
+        }
+        List<BaseIdDTO.CodeDTO> companyByCodeList = sysUserFeign.listAccountingCompanyByCodeList(Collections.singletonList("113"));
+        if (CollUtil.isEmpty(companyByCodeList)) {
+            throw new ServiceException("未找到公司信息");
+        }
+        InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = buildQueryB2BDTO(listPackingCartonDTOS, warehouseList.get(0), companyByCodeList.get(0),reconciliationDate);
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
+        if(CollUtil.isEmpty(skuCostDTOS)){
+            throw new ServiceException("sku成本不能为空");
+        }
+        Map<String, BigDecimal> skuCostMap = skuCostDTOS.stream()
+                .collect(Collectors.toMap(InventorySkuCostDTO.SkuCostDTO::getSkuId, InventorySkuCostDTO.SkuCostDTO::getProductCost,(o1,o2)->o1));
+        Map<String, BigDecimal> deliveryCodeCostMap = calculateDeliveryCodeCost(listPackingCartonDTOS, skuCostMap);
+
+        Map<String, List<FirstMileReconciliationStandardExcelDTO>> collect = tempList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
+        tempList.clear();
+        for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : collect.entrySet()) {
+            String errorMsg;
+            List<FirstMileReconciliationStandardExcelDTO> value = entry.getValue();
+            errorMsg = value.stream().map(excelDTO -> listPackingCartonMap.get(excelDTO.getSourceCode())).anyMatch(cartonDTO -> cartonDTO.getCartonDetailDTOList().stream().anyMatch(e -> skuCostMap.getOrDefault(e.getSkuId(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) <= 0)) ? "查询SKU成本失败，请先维护SKU成本信息" : "";
+
+            if (StringUtils.isNotBlank(errorMsg)) {
+                value.stream().forEach(e -> e.setErrorMsg(errorMsg));
+                errorList.addAll(value);
+            } else {
+                value.stream().forEach(e -> e.setSkuCost(deliveryCodeCostMap.get(e.getSourceCode())));
+                tempList.addAll(value);
+            }
+        }
+    }
+
     // 提取公共逻辑：计算发货单重量
-    private Map<String, BigDecimal> calculateDeliveryCodeWeight(CfgSettingValueDTO.AllocationSettingDTO cfgSetting, List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS) {
+    private Map<String, BigDecimal> calculateDeliveryCodeWeight(CfgSettingValueDTO.AllocationSettingDTO cfgSetting, List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS,Map<String, BigDecimal> skuIdToGrossWeightMap ) {
         Map<String, BigDecimal> deliveryCodeWeightMap = new HashMap<>();
-        if (cfgSetting.getWeightFirstAllocation().equals(WeightAllocationEnum.OUTSTOCK_CHARGED_WEIGHT.getCode())) {
+        if (cfgSetting.getWeightFirstAllocation().equals(WeightAllocationSmallBagEnum.OUTSTOCK_CHARGED_WEIGHT.getCode())) {
             for (WmsCartonDTO.ListPackingCartonDTO cartonDTO : listPackingCartonDTOS) {
                 BigDecimal totalWeight = cartonDTO.getCartonSpecDTOList().stream()
                         .map(WmsCartonSpecDTO.PackingCartonSpecDTO::getPackageWeight)
@@ -1712,14 +1752,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 deliveryCodeWeightMap.put(cartonDTO.getDeliveryCode(), totalWeight);
             }
         } else {
-            List<String> skuIds = listPackingCartonDTOS.stream()
-                    .flatMap(dto -> dto.getCartonDetailDTOList().stream())
-                    .map(WmsCartonDetailDTO.BoxDTO::getSkuId)
-                    .collect(Collectors.toList());
-
-            Map<String, BigDecimal> skuIdToGrossWeightMap = productPackFeign.listBySkuIds(skuIds).stream()
-                    .collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getGrossWeight));
-
             for (WmsCartonDTO.ListPackingCartonDTO cartonDTO : listPackingCartonDTOS) {
                 BigDecimal totalWeight = cartonDTO.getCartonDetailDTOList().stream()
                         .filter(dto -> dto.getPackQty() > 0)
@@ -1759,7 +1791,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
     }
 
     // 提取公共逻辑：构建查询参数
-    private InventorySkuCostDTO.QueryB2BDTO buildQueryB2BDTO(List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS, WarehouseEntity warehouse, BaseIdDTO.CodeDTO company) {
+    private InventorySkuCostDTO.QueryB2BDTO buildQueryB2BDTO(List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS, WarehouseEntity warehouse, BaseIdDTO.CodeDTO company,LocalDate reconciliationDate) {
         InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = new InventorySkuCostDTO.QueryB2BDTO();
         queryB2BDTO.setSkuIds(listPackingCartonDTOS.stream()
                 .flatMap(dto -> dto.getCartonDetailDTOList().stream())
@@ -1767,7 +1799,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                 .collect(Collectors.toList()));
         queryB2BDTO.setWarehouseId(warehouse.getId());
         queryB2BDTO.setSalesOrgId(company.getId());
-        queryB2BDTO.setBillDate(LocalDate.now());
+        queryB2BDTO.setBillDate(reconciliationDate);
         return queryB2BDTO;
     }
 
