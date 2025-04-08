@@ -989,13 +989,8 @@ public class ProductDetailController extends BaseController {
      * @date 2023-01-11 14:58
      */
     @GetMapping("/search/skuWithCombination")
-    public ApiResult<List<SkuSimpleVO>> skuWithCombination(String searchKeyword) {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-        List<SkuSimpleVO> skuList = productDetailService.searchSkuWithCombination(searchKeyword);
-        stopWatch.stop();
-        log.warn(stopWatch.prettyPrint());
-        return success(skuList);
+    public ApiResult<List<SkuSimpleVO>> skuWithCombination(@RequestParam(value = "searchKeyword",required = false) String searchKeyword) {
+        return success(productDetailService.searchSkuWithCombination(searchKeyword));
     }
 
 
