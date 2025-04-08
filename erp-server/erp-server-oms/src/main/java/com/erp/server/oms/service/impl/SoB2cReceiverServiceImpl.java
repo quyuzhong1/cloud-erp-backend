@@ -443,6 +443,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
 
                         String customerId = saveB2cCustomer(excelDTO, soB2cEntity);
                         b2cReceiverEntity.setCustomerId(customerId);
+                        b2cReceiverEntity.setMainId(soB2cEntity.getId());
                         this.save(b2cReceiverEntity);
                     } else {
                         //如果存在买家信息，则更新
