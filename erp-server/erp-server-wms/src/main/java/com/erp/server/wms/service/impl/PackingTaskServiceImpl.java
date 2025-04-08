@@ -2888,7 +2888,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             List<String> cartonIdList = wmsCartonList.stream().filter(e -> e.getPackingTaskId().equals(taskId)).map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
             //分别找出boxDTOS 和 packingCartonSpecDTOS中 mainId 在 cartonIdList 中的数据集合
             List<WmsCartonDetailDTO.BoxDTO> boxDTOList = boxDTOS.stream().filter(e -> cartonIdList.contains(e.getMainId())).collect(Collectors.toList());
-            List<WmsCartonSpecDTO.PackingCartonSpecDTO> packingCartonSpecDTOList = packingCartonSpecDTOS.stream().filter(e -> idList.contains(e.getMainId())).collect(Collectors.toList());
+            List<WmsCartonSpecDTO.PackingCartonSpecDTO> packingCartonSpecDTOList = packingCartonSpecDTOS.stream().filter(e -> taskId.equals(e.getMainId())).collect(Collectors.toList());
 
             listPackingCartonDTO.setTaskId(taskId);
             listPackingCartonDTO.setCartonDetailDTOList(boxDTOList);
