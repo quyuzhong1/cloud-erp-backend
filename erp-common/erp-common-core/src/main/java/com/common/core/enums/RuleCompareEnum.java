@@ -24,6 +24,8 @@ public enum RuleCompareEnum implements EnumMessage {
     IS_NULL("isEmpty", "为空"),
     NOT_NULL("notEmpty", "不为空"),
     STARTS_WITH("startsWith", "以...开头"),
+    INTERVAL_EQ("intervalEq", "区间等于"),
+    INTERVAL_STARTS_WITH("intervalStartsWith", "区间以...开头"),
     ;
 
 

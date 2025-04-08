@@ -136,6 +136,9 @@ public class SoB2cReceiverEntity extends BaseEntity<SoB2cReceiverEntity> {
     @TableField(exist = false)
     private String customerCountry;
 
+    @TableField(exist = false)
+    private String shopCountry;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String LOGIN_ID = "login_id";

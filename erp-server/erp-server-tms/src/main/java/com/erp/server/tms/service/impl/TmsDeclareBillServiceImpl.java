@@ -877,7 +877,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
         addDTO.setSourceId(autoGenerateBillDTO.getId());
         addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
-        addDTO.setReceiverName("香港唯迹");
         addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
         addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
         if(Objects.nonNull(autoGenerateBillDTO.getFirstMileDeliveryEntity())){
@@ -885,9 +884,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             addDTO.setToPort(autoGenerateBillDTO.getFirstMileDeliveryEntity().getCountryId());
         }
         //发货公司
-        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
-        BaseIdDTO company = companyList.stream().filter(v->v.getName().equals("深圳市优篮子科技有限公司")).findFirst().orElse(new BaseIdDTO());
-        addDTO.setSenderId(company.getId());
+        CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
+        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("id"))){
+            String senderId = declareSetting.getDataJson().get("id").toString();
+            addDTO.setSenderId(senderId);
+        }
+        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("receiverName"))){
+            String receiverName = declareSetting.getDataJson().get("receiverName").toString();
+            addDTO.setReceiverName(receiverName);
+        }
         addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
         addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
         addDTO.setIsAuto(true);
@@ -915,7 +920,6 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
         TmsDeclareBillDTO.AddDTO addDTO  = new TmsDeclareBillDTO.AddDTO();
         addDTO.setSourceId(autoGenerateBillDTO.getId());
         addDTO.setDeclareType(DeclareDeclareTypeEnum.INDEPENDENT.getCode());
-        addDTO.setReceiverName("香港唯迹");
         addDTO.setDictSupervisionMethod(DeclareSupervisionMethodEnum.COMMONLY.getCode());
         addDTO.setDictNatureLevy(DeclareNatureLevyEnum.COMMONLY.getCode());
         if(Objects.nonNull(autoGenerateBillDTO.getSoOutstockEntity())){
@@ -923,9 +927,15 @@ public class TmsDeclareBillServiceImpl extends SuperServiceImpl<TmsDeclareBillMa
             addDTO.setToPort(autoGenerateBillDTO.getSoOutstockEntity().getCountry());
         }
         //发货公司
-        List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
-        BaseIdDTO company = companyList.stream().filter(v->v.getName().equals("深圳市优篮子科技有限公司")).findFirst().orElse(new BaseIdDTO());
-        addDTO.setSenderId(company.getId());
+        CfgSettingEntity declareSetting = cfgSettingService.getByKey(CfgSettingEnum.DECLARE_CUSTOMS.getCode());
+        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("id"))){
+            String senderId = declareSetting.getDataJson().get("id").toString();
+            addDTO.setSenderId(senderId);
+        }
+        if(Objects.nonNull(declareSetting) && Objects.nonNull(declareSetting.getDataJson().get("receiverName"))){
+            String receiverName = declareSetting.getDataJson().get("receiverName").toString();
+            addDTO.setReceiverName(receiverName);
+        }
         addDTO.setDictPackType(DeclarePackTypeEnum.CARTON.getCode());
         addDTO.setDictTransactionMethod(DeclareTransactionMethodEnum.EXW.getCode());
         addDTO.setIsAuto(true);

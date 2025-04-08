@@ -238,9 +238,27 @@ public class CustomerDTO implements Serializable {
          * 国家名称
          */
         private String countryName;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class VirtualDTO {
+
+        @NotBlank(message = "客户id不能为空")
+        private String customerId;
+
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+    }
     @Data
     @NoArgsConstructor
     public static class PageSelectDTO {
@@ -557,7 +575,6 @@ public class CustomerDTO implements Serializable {
          * 内部组织id
          */
         private String innerOrgId;
-
 
         /**
          * 内部组织
@@ -1338,7 +1355,14 @@ public class CustomerDTO implements Serializable {
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
-
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
         private List<InvoiceDTO.ViewDTO> invoiceList;
 

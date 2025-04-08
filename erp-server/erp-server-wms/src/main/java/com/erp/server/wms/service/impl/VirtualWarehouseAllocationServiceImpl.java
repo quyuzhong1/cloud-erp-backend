@@ -908,7 +908,7 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         inventoryParamDTO.setWarehouseIdList(warehouseIdList);
         inventoryParamDTO.setSkuIdList(skuIdList);
         inventoryParamDTO.setVirtualWarehouseIdList(virtualWarehouseIdList);
-        inventoryParamDTO.setDictInventoryStatus(InventoryStatusEnum.USABLE.getCode());
+        inventoryParamDTO.setDictInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryQtyList = CollectionUtils.isEmpty(virtualWarehouseIdList) ?
                 new ArrayList<>() : virtualInventoryService.listInventoryQty(inventoryParamDTO);
 
@@ -980,6 +980,13 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         log.info("编辑 开始记录分货单日志数据，单号：【{}】", old.getCode());
         String msg = CharSequenceUtil.format("是否统计由【{}】变更为【{}】", old.getIsStatistics(),dto.getIsStatistics());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), old.getId(), "编辑操作");
+    }
+
+    @Override
+    public List<VirtualWarehouseAllocationEntity> rebuildVirtualWarehouseAllocationFlow() {
+        return lambdaQuery().eq(VirtualWarehouseAllocationEntity::getStatus,VirtualWarehouseAllocationStatusEnum.HANDLE.getCode())
+                .orderByAsc(VirtualWarehouseAllocationEntity::getHandleDate)
+                .list();
     }
 
 }

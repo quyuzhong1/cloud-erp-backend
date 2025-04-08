@@ -150,7 +150,7 @@ public class RequisitionApplicationChangeDetailServiceImpl extends SuperServiceI
                 Integer pickedQty;
                 if(CollectionUtils.isNotEmpty(currentBomList) && CollectionUtils.isNotEmpty(currentPickList)){
                     Integer bomQty = currentBomList.stream().filter(v->v.getSkuId().equals(currentPickList.get(0).getSkuId())).findFirst().map(BomChildrenSkuDTO::getQuantity).orElse(0);
-                    pickedQty = bomQty * currentPickList.get(0).getQty();
+                    pickedQty = currentPickList.get(0).getQty()/bomQty;
                 }else{
                     pickedQty = currentPickList.stream().mapToInt(PickingDetailEntity::getQty).sum();
                 }

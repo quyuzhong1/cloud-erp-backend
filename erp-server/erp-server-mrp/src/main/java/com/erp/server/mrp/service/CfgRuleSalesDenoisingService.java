@@ -3,6 +3,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.mrp.dto.CfgRuleSalesDenoisingDTO;
 import com.erp.model.mrp.dto.CfgRuleSalesQtyDTO;
 import com.erp.model.mrp.entity.CfgRuleSalesDenoisingEntity;
+import com.erp.model.mrp.entity.CfgRuleSalesQtyEntity;
 
 import java.util.List;
 
@@ -20,10 +21,12 @@ public interface CfgRuleSalesDenoisingService extends SuperService<CfgRuleSalesD
      * 修改
      *
      * @param salesDenoisingList
+     * @param cfgRuleSalesQtyEntity
+     * @param skuType
      * @author will
      * @date: 2024-08-23
      */
-     void update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList,String salesQtyId,Boolean isCustom);
+     void update(List<CfgRuleSalesDenoisingDTO.UpdateDTO> salesDenoisingList, CfgRuleSalesQtyEntity cfgRuleSalesQtyEntity, String skuType, Boolean isBatch);
 
     /**
      * 根据销量id集合查询

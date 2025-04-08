@@ -5,6 +5,8 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,6 +21,26 @@ import java.util.Map;
 @NoArgsConstructor
 public class SoB2cAbnormalDTO  implements Serializable {
 
+    /**
+     * 分页查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ClearAbnormalDTO  {
+
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * remark
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+
+    }
     /**
      * 分页查询参数
      */

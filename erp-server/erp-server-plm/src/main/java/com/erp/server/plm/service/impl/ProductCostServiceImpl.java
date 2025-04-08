@@ -3,10 +3,7 @@ package com.erp.server.plm.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
@@ -20,7 +17,6 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.plm.mapper.ProductCostMapper;
 import com.erp.server.plm.service.BasicDictService;
 import com.erp.server.plm.service.ProductCostService;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -154,16 +150,6 @@ public class ProductCostServiceImpl extends ServiceImpl<ProductCostMapper, Produ
     public Boolean saveOrUpdate(ProductCostDTO productCostDTO) {
         ProductCostEntity costEntity = new ProductCostEntity();
         BeanMapper.copy(productCostDTO, costEntity);
-        LoginUser loginUser = UserContext.getLoginUser();
-        if (ObjectUtils.isNotEmpty(loginUser)) {
-            if (StringUtils.isBlank(productCostDTO.getId())) {
-                costEntity.setCreateUserId(loginUser.getUid());
-                costEntity.setCreateUserName(loginUser.getUserName());
-            } else {
-                costEntity.setUpdateUserId(loginUser.getUid());
-                costEntity.setUpdateUserName(loginUser.getUserName());
-            }
-        }
         return this.saveOrUpdate(costEntity);
     }
 

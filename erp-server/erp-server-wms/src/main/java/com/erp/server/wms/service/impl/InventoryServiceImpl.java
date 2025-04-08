@@ -73,7 +73,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_INVENTORY_AGE;
 
 /**
  * @Classname: InventoryServiceImpl
@@ -1470,5 +1471,15 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
             return new ArrayList<>();
         }
         return lambdaQuery().eq(InventoryEntity::getWarehouseId, warehouseId).lt(InventoryEntity::getQty,0).list();
+    }
+
+    @Override
+    public List<InventoryEntity> listInventoryBySkuNos(List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().select(InventoryEntity::getId,InventoryEntity::getSkuId,InventoryEntity::getSkuNo, InventoryEntity::getQty,
+                        InventoryEntity::getWarehouseId,InventoryEntity::getDictInventoryStatus, InventoryEntity::getWarehouseLocation)
+                .in(InventoryEntity::getSkuNo, skuNoList).list();
     }
 }

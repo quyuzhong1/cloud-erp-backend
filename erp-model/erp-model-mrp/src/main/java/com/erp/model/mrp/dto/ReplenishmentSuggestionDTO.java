@@ -1,12 +1,14 @@
 package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.dto.base.SortParamDTO;
 import com.erp.model.mrp.entity.SalesEstimateEntity;
+import com.erp.model.mrp.entity.SalesEstimateHistoryEntity;
 import com.erp.model.mrp.entity.SalesInfoEntity;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.mrp.vo.ReplenishmentSuggestionVO;
@@ -19,6 +21,7 @@ import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +52,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          */
         @NotBlank(message = "建议类型不能为空")
         private String platformType;
+
+        /**
+         * 平台
+         */
+        private String platform;
         /**
          * sku类型
          */
@@ -57,6 +65,10 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 是否关注
          */
         private Boolean favorite;
+        /**
+         * 补货类型
+         */
+        private String replenishmentType;
 
         /**
          * 最近日期排序
@@ -120,8 +132,8 @@ public class ReplenishmentSuggestionDTO implements Serializable {
         /**
          * 销量设置
          */
-        @Valid
-        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+//        @Valid
+//        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
 
     }
 
@@ -131,6 +143,11 @@ public class ReplenishmentSuggestionDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BatchUpdateRuleDTO {
+
+        /**
+         * 是否批量
+         */
+        private Boolean isBatch = false;
 
         /**
          * 主键ids
@@ -148,7 +165,7 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 销量设置
          */
         @Valid
-        private CfgRuleSalesQtyDTO.UpdateDetailDTO salesQtyUpdateDTO;
+        private CfgRuleSalesQtyDTO.UpdateDTO salesQtyUpdateDTO;
 
     }
 
@@ -868,6 +885,142 @@ public class ReplenishmentSuggestionDTO implements Serializable {
          * 销量去噪导出
          */
         private List<CfgRuleSalesDenoisingDTO.SalesDenoisingExportDTO> salesDenoisingExportList;
+    }
+
+    @Getter
+    @Setter
+    public static class ExportSalesDTO {
+
+        private List<SkuShopDTO> skuShopList;
+
+        private LocalDate startDate;
+
+        private LocalDate endDate;
+
+    }
+
+    @Getter
+    @Setter
+    public static class SkuShopDTO {
+
+        private String skuNo;
+
+        private String skuId;
+
+        private String shopName;
+
+        private String shopId;
+
+    }
+
+    @Getter
+    @Setter
+    public static class HistorySaleExportDTO {
+
+        @ExcelProperty(value = "SKU", index = 0)
+        private String skuNo;
+
+
+        @ExcelProperty(value = "店铺名字", index = 1)
+        private String shopName;
+
+
+        @ExcelProperty(value = "平台", index = 2)
+        private String platformName;
+
+
+        @ExcelProperty(value = "开始日期", index = 3)
+        private String startDate;
+
+
+        @ExcelProperty(value = "结束日期", index = 4)
+        private String endDate;
+
+
+        @ExcelProperty(value = "maeScore", index = 5)
+        private String maeScore;
+
+
+        @ExcelProperty(value = "mseScore", index = 6)
+        private String mseScore;
+
+
+        @ExcelProperty(value = "rmseScore", index = 7)
+        private String rmseScore;
+
+
+        @ExcelProperty(value = "mapeScore", index = 8)
+        private String mapeScore;
+
+
+        @ExcelProperty(value = "r2Score", index = 9)
+        private String r2Score;
+
+        public static HistorySaleExportDTO bulidHistorySaleExportDTO(ReplenishmentSuggestionDTO.SkuShopDTO shopDTO, String platformName,
+                                                                     ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO) {
+            HistorySaleExportDTO exportDTO = new HistorySaleExportDTO();
+            exportDTO.setSkuNo(shopDTO.getSkuNo());
+            exportDTO.setShopName(shopDTO.getShopName());
+            exportDTO.setPlatformName(platformName);
+            exportDTO.setStartDate(exportSalesDTO.getStartDate().format(DateTimeFormatter.ISO_DATE));
+            exportDTO.setEndDate(exportSalesDTO.getEndDate().format(DateTimeFormatter.ISO_DATE));
+            return exportDTO;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class HistorySaleDetailExportDTO {
+
+        @ExcelProperty(value = "SKU", index = 0)
+        private String skuNo;
+
+
+        @ExcelProperty(value = "店铺名字", index = 1)
+        private String shopName;
+
+
+        @ExcelProperty(value = "平台", index = 2)
+        private String platformName;
+
+
+        @ExcelProperty(value = "计算日期", index = 3)
+        private String calcDate;
+
+
+        @ExcelProperty(value = "预测日期", index = 4)
+        private String date;
+
+
+        @ExcelProperty(value = "预估日销量", index = 5)
+        private BigDecimal saleQty;
+
+
+        @ExcelProperty(value = "实际日销量", index = 6)
+        private Integer realQty;
+
+        public static List<HistorySaleDetailExportDTO> buildHistorySaleDetailExportDTO(SkuShopDTO shopDTO, String platformName, ExportSalesDTO exportSalesDTO,
+                                                                                       List<ReplenishmentResultDTO.SalesHistoryDTO> salesHistoryDTOS,
+                                                                                       List<SalesEstimateHistoryEntity> saleEstimateList,
+                                                                                       String detailId) {
+            Map<LocalDate, Integer> historyMap = salesHistoryDTOS.stream()
+                    .filter(v -> v.getShopSkuIds().equals(shopDTO.getShopId() + "-" + shopDTO.getSkuId()))
+                    .collect(Collectors.toMap(ReplenishmentResultDTO.SalesHistoryDTO::getDate, ReplenishmentResultDTO.SalesHistoryDTO::getOriginalSalesQty, (o1, o2) -> o1));
+            return saleEstimateList.stream()
+                    .filter(v -> v.getReplenishmentDetailId().equals(detailId))
+                    .map(v -> {
+                        HistorySaleDetailExportDTO exportDTO = new HistorySaleDetailExportDTO();
+                        exportDTO.setSkuNo(shopDTO.getSkuNo());
+                        exportDTO.setShopName(shopDTO.getShopName());
+                        exportDTO.setPlatformName(platformName);
+                        exportDTO.setCalcDate(exportSalesDTO.getStartDate().format(DateTimeFormatter.ISO_DATE));
+                        exportDTO.setDate(v.getDate().format(DateTimeFormatter.ISO_DATE));
+                        exportDTO.setSaleQty(v.getSalesQty());
+                        exportDTO.setRealQty(Optional.ofNullable(historyMap.get(v.getDate())).orElse(0));
+                        return exportDTO;
+                    })
+                    .collect(Collectors.toList());
+        }
     }
 
 }

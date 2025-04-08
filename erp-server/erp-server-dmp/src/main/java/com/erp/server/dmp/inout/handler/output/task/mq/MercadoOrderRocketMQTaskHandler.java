@@ -199,6 +199,9 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         if (dmpSoInfoEntityList.get(0).getPayTime() != null) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
+        //运费
+        BigDecimal shippingAmount = dmpSoInfoEntityList.stream().map(DmpSoInfoEntity::getShippingAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        orderDTO.setShippingFee(shippingAmount);
 
         orderDTO.setLabelJson(dmpSoInfoEntityList.get(0).getExtendData());
         orderDTO.setApproveStatusStr(dmpSoInfoEntityList.get(0).getOrderStatus());
@@ -224,6 +227,11 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         orderDTO.setTotalDiscount(totalDiscount);
         //扩展字段
         orderDTO.setExtendData(dmpSoInfoEntityList.get(0).getExtendData());
+
+        // 税金
+        orderDTO.setTotalTaxFee(dmpSoInfoEntityList.get(0).getTotalTaxFee());
+        // 税后支付金额
+        orderDTO.setAfterTaxAmount(dmpSoInfoEntityList.get(0).getAfterTaxAmount());
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntityList, dmpSoDetailEntityList);
@@ -279,7 +287,7 @@ public class MercadoOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         // 金额
         detailDTO.setAmount(soDetailEntity.getAfterAmount());
         // 单价
-        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPrice()));
+        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPriceOrigin()));
         // 币别（原币）
         detailDTO.setCurrency(dmpSoInfoEntityList.get(0).getCurrencyCode());
         // 汇率

@@ -218,6 +218,17 @@ public class OrderHistorySalesEsServiceImpl implements OrderHistorySalesEsServic
     }
 
     @Override
+    public void deleteByDateBetween(List<String> shopSkuIds, LocalDate startDate, LocalDate endDate) {
+        if (CollectionUtils.isEmpty(shopSkuIds)) {
+            return;
+        }
+        List<List<String>> partition = Lists.partition(shopSkuIds, 1000);
+        CompletableFuture.allOf(partition.stream()
+                .map(shopSkuIdList -> CompletableFuture.runAsync(() -> orderHistorySalesEsRepository.deleteByShopSkuIdInAndDateBetween(shopSkuIdList, startDate, endDate), threadPoolTaskExecutor))
+                .toArray(CompletableFuture[]::new)).join();
+    }
+
+    @Override
     public void deleteByDateBetween(LocalDate startDate, LocalDate endDate) {
         orderHistorySalesEsRepository.deleteByDateBetween(startDate, endDate);
     }

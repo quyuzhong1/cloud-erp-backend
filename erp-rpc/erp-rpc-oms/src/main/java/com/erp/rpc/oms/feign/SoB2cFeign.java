@@ -679,11 +679,13 @@ public interface SoB2cFeign {
 
     /**
      * 同步速递云线上订单/配货单
+     *
      * @param soId
      * @param operateEnum
+     * @param sourceType
      */
     @GetMapping("feign/soB2c/syncSdyOrderHandler")
-    void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum);
+    void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum, @RequestParam("sourceType") String sourceType);
 
     /**
      * 同步销售出库单的单据日期
@@ -702,4 +704,10 @@ public interface SoB2cFeign {
      **/
     @PostMapping("feign/soB2c/approve")
     List<BatchResultDTO> approve(@RequestBody BaseApproveParamDTO dto);
+
+    /**
+     * 查询订单关联的拆分信息
+     **/
+    @PostMapping("feign/soB2c/getSplitCombination")
+    SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId);
 }

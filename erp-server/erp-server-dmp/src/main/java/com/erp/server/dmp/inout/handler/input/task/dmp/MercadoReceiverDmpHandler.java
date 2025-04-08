@@ -67,7 +67,7 @@ public class MercadoReceiverDmpHandler extends DmpInputDoNextDmpHandler {
                             Map<String, Object> cityMap = (Map<String, Object>) shippingAddressMap.get("city");
                             detail.put("country", countryMap.get("fid"));
 
-                            detail.put("postCode", countryMap.get("zipCode"));
+                            detail.put("postCode", shippingAddressMap.get("zipCode"));
                             detail.put("province", stateMap.get("name"));
                             detail.put("city", cityMap.get("name"));
                             detail.put("district", shippingAddressMap.get("addressLine"));

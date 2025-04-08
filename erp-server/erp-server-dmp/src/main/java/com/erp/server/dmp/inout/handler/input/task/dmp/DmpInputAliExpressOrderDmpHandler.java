@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.core.utils.MathUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
+import com.erp.oms.aliexpress.dto.response.AmountInfo;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
@@ -126,9 +128,31 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						Map<String, Object> orderAmountMap = (Map) orderAmountObj;
 						Object amount = orderAmountMap.get("amount");
 						if (amount != null) {
-							dmpDataMap.put("totalDiscount", MathUtil.valueOf(amount).subtract(payAmount));
+//							dmpDataMap.put("totalDiscount", MathUtil.valueOf(amount).subtract(payAmount));
+							dmpDataMap.put("allAmount", amount);
 						}
 					}
+
+					// 总优惠金额
+					Object promotionFeeObj = detailData.get("promotion_fee");
+					if(promotionFeeObj != null) {
+						Map<String, Object> promotionFeeMap = (Map) promotionFeeObj;
+						Object promotionFee = promotionFeeMap.get("amount");
+						if (promotionFee != null) {
+							dmpDataMap.put("totalDiscount",promotionFee);
+						}
+					}
+
+					// 税后支付金额
+					Object newSellerOrderAmountObj = detailData.get("new_seller_order_amount");
+					if(newSellerOrderAmountObj != null) {
+						Map<String, Object> promotionFeeMap = (Map) newSellerOrderAmountObj;
+						Object newSellerOrderAmount = promotionFeeMap.get("amount");
+						if (newSellerOrderAmount != null) {
+							dmpDataMap.put("afterTaxPayAmount", newSellerOrderAmount);
+						}
+					}
+
 
 					//退款
 					Object refundInfoObj = detailData.get("refund_info");
@@ -152,6 +176,22 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			            long count = orderItemDetailList.stream().
 			                    filter(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType())).count();
 			            isAliexpressPlatformWarehouseOrder = count > 0;
+			            
+			            dmpDataMap.put("allAmount", orderItemDetailList.stream().map(o -> {
+				        	Integer productCount = o.getProductCount();
+				        	if(productCount == null || productCount == 0) {
+				        		return BigDecimal.ZERO;
+				        	}
+				        	AmountInfo productPrice = o.getProductPrice();
+				        	if(productPrice == null) {
+				        		return BigDecimal.ZERO;
+				        	}
+				        	String amount = productPrice.getAmount();
+				        	if(StringUtils.isBlank(amount)) {
+				        		return BigDecimal.ZERO;
+				        	}
+				        	return new BigDecimal(amount).multiply(new BigDecimal(productCount));
+				        }).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
 			        }
 			        labelMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
 			        labelMap.put("isPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
@@ -164,11 +204,12 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			        }
 			        
 			        dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
-			        dmpDataMap.put("orderStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
+			        dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
 			        dmpDataMap.put("payStatus", sourceOrder.convertPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()));
 			        // 审核状态状态
 			        // （ApproveStatus字典类型）
-			        dmpDataMap.put("approveStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));
+			        dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));
+			        
 				}
 				
 			}

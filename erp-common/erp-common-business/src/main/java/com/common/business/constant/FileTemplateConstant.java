@@ -21,5 +21,9 @@ public class FileTemplateConstant {
      * 要货申请FNSKU
      */
     public static final String FNSKU = "FNSKU";
+    /**
+     * VAT发票
+     */
+    public static final String CFG_VAT_INVOICE = "VAT发票";
 
 }

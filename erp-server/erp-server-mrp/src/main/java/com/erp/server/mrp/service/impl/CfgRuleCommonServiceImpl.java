@@ -114,12 +114,12 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     }
 
     @Override
-    public List<CfgRuleCommonDTO.ViewDTO> view(String platformType,String type) {
+    public List<CfgRuleCommonDTO.ViewDTO> view(String type) {
         //查询已存在数据
-        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listRuleCommon(platformType,type);
+        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listRuleCommon(type);
         if (CollectionUtils.isEmpty(viewList)) {
             //返回初始化数据
-           return this.listDefaultRuleCommonTree(platformType,type);
+           return this.listDefaultRuleCommonTree(type);
         }
         //返回新增数据
         return viewList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getParentId())).peek(item -> item.setChildrenList(getChildren(item, viewList))).collect(Collectors.toList());
@@ -127,11 +127,11 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
 
     @Override
     @Cacheable(cacheNames = "cache:mrp:getCfgRuleCommon",keyGenerator = "myKeyGenerator")
-    public List<CfgRuleCommonDTO.StrategyResultDTO> getCfgRuleCommon(String platformType, String type) {
-        List<CfgRuleCommonDTO.StrategyResultDTO> strategyList = baseMapper.listByPlatformTypeAndType(platformType, type, false);
+    public List<CfgRuleCommonDTO.StrategyResultDTO> getCfgRuleCommon(String type) {
+        List<CfgRuleCommonDTO.StrategyResultDTO> strategyList = baseMapper.listByPlatformTypeAndType(type, false);
         if (CollectionUtils.isEmpty(strategyList)) {
             //返回初始化数据
-            strategyList  = baseMapper.listByPlatformTypeAndType(platformType,type, true);
+            strategyList  = baseMapper.listByPlatformTypeAndType(type, true);
         }
         return buildTree(strategyList);
     }
@@ -140,11 +140,11 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     public Map<String, List<CfgRuleCommonDTO.DescriptionDTO>> description(String platformType) {
         //查询是否开启海外仓
         Boolean isEnableOverseas = cgRuleWarehouseService.getIsEnableOverseas(platformType);
-        List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+        List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery()
                 .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
                 .eq(CfgRuleCommonEntity::getIsDefault, false));
         if (CollectionUtils.isEmpty(list)) {
-             list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+             list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery()
                      .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.INVENTORY.getCode())
                      .eq(CfgRuleCommonEntity::getIsDefault, true));
         }
@@ -217,12 +217,12 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
     }
 
     @Override
-    public String timeFrame(String platformType) {
-        List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+    public String timeFrame() {
+        List<CfgRuleCommonEntity> list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery()
                 .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.SUGGEST.getCode())
                 .eq(CfgRuleCommonEntity::getIsDefault, false));
         if (CollectionUtils.isEmpty(list)) {
-            list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery().eq(CfgRuleCommonEntity::getPlatformType, platformType)
+            list = list(Wrappers.<CfgRuleCommonEntity>lambdaQuery()
                     .eq(CfgRuleCommonEntity::getType, CfgRuleCommonTypeEnum.SUGGEST.getCode())
                     .eq(CfgRuleCommonEntity::getIsDefault, true));
         }
@@ -316,11 +316,10 @@ public class CfgRuleCommonServiceImpl extends SuperServiceImpl<CfgRuleCommonMapp
      * 获取默认配置
      * @author will
      * @date 2024/8/27 9:28
-     * @param platformType
      * @return List<ViewDTO>
      */
-    private List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommonTree (String platformType,String type) {
-        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listDefaultRuleCommon(platformType,type);
+    private List<CfgRuleCommonDTO.ViewDTO> listDefaultRuleCommonTree (String type) {
+        List<CfgRuleCommonDTO.ViewDTO> viewList = baseMapper.listDefaultRuleCommon(type);
         if (CollectionUtils.isEmpty(viewList)) {
             return Collections.emptyList();
         }

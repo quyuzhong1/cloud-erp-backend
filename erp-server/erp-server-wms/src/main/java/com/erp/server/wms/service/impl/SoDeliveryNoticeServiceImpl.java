@@ -42,6 +42,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
@@ -193,6 +194,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         Map<String,Integer> qtyMap = new HashMap<>();
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
         if (CollectionUtils.isNotEmpty(records)) {
             records.forEach(obj -> {
                 if (CharSequenceUtil.isNotBlank(obj.getPackingStatus())) {
@@ -235,6 +239,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
                         qtyMap.put(key,0);
                         obj.setPackingQty(obj.getPackingQty());
                     }
+                }
+                //中转仓名称
+                if (CharSequenceUtil.isNotBlank(obj.getTransferWarehouseIds())){
+                    StringBuilder sb = new StringBuilder();
+                    List<String> split = CharSequenceUtil.split(obj.getTransferWarehouseIds(), ",");
+                    for (String s : split) {
+                        sb.append(warehouseMap.get(s)).append(",");
+                    }
+                    obj.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
                 }
             });
         }
@@ -1718,6 +1731,9 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         //获取销售单详情信息
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByIds(orderDetailIds);
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
         for (SoDeliveryNoticeDTO.PagingView pagingView : pagingViews.getRecords()) {
             pagingView.setApproveStatusName(ApproveStatusEnum.getName(pagingView.getApproveStatus()));
             pagingView.setInvalidStatusName(InvalidStatusEnum.getName(pagingView.getInvalidStatus()));
@@ -1734,6 +1750,15 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(pagingView.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
             pagingView.setCustomerName(customerInfoEntity.getName());
             pagingView.setDeliveryStatusName(pagingView.getDeliveryStatus() ? "已发货" : "未发货");
+            //中转仓名称
+            if (CharSequenceUtil.isNotBlank(pagingView.getTransferWarehouseIds())){
+                StringBuilder sb = new StringBuilder();
+                List<String> split = CharSequenceUtil.split(pagingView.getTransferWarehouseIds(), ",");
+                for (String s : split) {
+                    sb.append(warehouseMap.get(s)).append(",");
+                }
+                pagingView.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
+            }
         }
         return new PagingVO<>(pagingViews);
     }
@@ -1895,5 +1920,10 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             throw new ServiceException(ApiError.ERROR_SO_INFO_PUSH_MACHINE_NOT_EXIST_DATA);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow() {
+        return baseMapper.rebuildB2bVirtualFlow();
     }
 }

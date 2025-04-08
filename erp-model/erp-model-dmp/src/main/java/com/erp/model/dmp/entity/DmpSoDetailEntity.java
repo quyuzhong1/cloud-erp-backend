@@ -210,6 +210,55 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     @TableField("api_spec_name")
     private String apiSpecName;
 
+    /**
+     * 产品销售税
+     */
+    @TableField("item_tax")
+    private BigDecimal itemTax;
+
+    /**
+     * 运费税
+     */
+    @TableField("shipping_tax")
+    private BigDecimal shippingTax;
+
+    /**
+     * 礼品包装费(备用)
+     */
+    @TableField("gift_wrap_cost")
+    private BigDecimal giftWrapCost;
+
+    /**
+     * 礼品包装税
+     */
+    @TableField("gift_wrap_tax")
+    private BigDecimal giftWrapTax;
+
+    /**
+     * 监管费(备用)
+     */
+    @TableField("regulatory_cost")
+    private BigDecimal regulatoryCost;
+
+    /**
+     * 监管税费(备用)
+     */
+    @TableField("regulatory_tax")
+    private BigDecimal regulatoryTax;
+
+    /**
+     * 促销折扣税
+     */
+    @TableField("promotion_discount_tax")
+    private BigDecimal promotionDiscountTax;
+
+    /**
+     * 运费折扣税
+     */
+    @TableField("shipping_discount_tax")
+    private BigDecimal shippingDiscountTax;
+
+
     public static final String MAIN_ID = "main_id";
 
     public static final String THIRD_DETAIL_ID = "third_detail_id";

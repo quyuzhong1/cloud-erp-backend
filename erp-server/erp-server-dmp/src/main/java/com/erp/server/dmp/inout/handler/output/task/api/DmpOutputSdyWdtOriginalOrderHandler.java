@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
@@ -105,7 +106,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
         if (200 == handle.getCode()) {
             status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
         } else {
-            status = DmpOutputTaskRecordStatusEnum.ERROR.getCode();
+            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
         }
 
         dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()), handle.getMsg());
@@ -114,7 +115,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
     /**
      * 解析订单数据
      **/
-    public Map<String, ShudiyunB2cOrderDTO> convert(DmpSoOriginalInfoEntity dmpSoInfoEntity, List<DmpSoOriginalDetailEntity> dmpSoDetailEntityList) {
+    public Map<String, ShudiyunB2cOrderDTO> convert(DmpSoOriginalInfoEntity dmpSoInfoEntity, List<DmpSoOriginalDetailEntity> dmpSoDetailEntityList , Map<String, Map<String, Object>> cacheMap) {
     	Map<String , ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if (CollUtil.isEmpty(dmpSoDetailEntityList)) {
     		return result;
@@ -177,32 +178,117 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setTotal_freight(BigDecimal.ZERO);
 
-            //查询旺店通对应系统店铺
-            List<ThirdShopEntity> thirdShopEntityList = thirdShopService.lambdaQuery()
-                    .eq(ThirdShopEntity::getCode, dmpSoInfoEntity.getShopNo())
-                    .eq(ThirdShopEntity::getSysType, PlatformDictEnum.WDT.getCode())
-                    .list();
+            Map<String, Object> thirdShopEntityListMap = cacheMap.get("thirdShopEntityList");
+            if(thirdShopEntityListMap == null) {
+            	thirdShopEntityListMap = new HashMap<>();
+            }
+            
+            String shopNo = dmpSoInfoEntity.getShopNo();
+            Object thirdShopEntityListObject = thirdShopEntityListMap.get(shopNo);
+            List<ThirdShopEntity> thirdShopEntityList = null;
+            if(thirdShopEntityListObject == null) {
+            	//查询旺店通对应系统店铺
+                thirdShopEntityList = thirdShopService.lambdaQuery()
+                        .eq(ThirdShopEntity::getCode, shopNo)
+                        .eq(ThirdShopEntity::getSysType, PlatformDictEnum.WDT.getCode())
+                        .list();
+            }else {
+            	thirdShopEntityList = (List<ThirdShopEntity>) thirdShopEntityListObject;
+            }
+            thirdShopEntityListMap.put(shopNo, thirdShopEntityList);
+            cacheMap.put("thirdShopEntityList", thirdShopEntityListMap);
+            
 
             if (CollUtil.isNotEmpty(thirdShopEntityList)) {
-                //查询旺店通对应系统店铺
-                List<ThirdMappingEntity> shop = thirdMappingService.lambdaQuery()
-                        .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
-                        .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
-                        .eq(ThirdMappingEntity::getThirdInfoId, thirdShopEntityList.get(0).getId())
-                        .list();
-                if (CollectionUtils.isNotEmpty(shop)) {
-                    ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
-                    CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, shopInfo.getCustomerId());
+            	Map<String, Object> shopListMap = cacheMap.get("shopList");
+                if(shopListMap == null) {
+                	shopListMap = new HashMap<>();
+                }
+                
+                String thirdInfoId = thirdShopEntityList.get(0).getId();
+                Object shopListObject = shopListMap.get(thirdInfoId);
+                List<ThirdMappingEntity> shopList = null;
+                if(shopListObject == null) {
+                	//查询旺店通对应系统店铺
+                    shopList = thirdMappingService.lambdaQuery()
+                            .eq(ThirdMappingEntity::getType, ThirdSysTypeEnum.SHOP.getCode())
+                            .eq(ThirdMappingEntity::getThirdSysType, PlatformDictEnum.WDT.getCode())
+                            .eq(ThirdMappingEntity::getThirdInfoId, thirdInfoId)
+                            .list();
+                }else {
+                	shopList = (List<ThirdMappingEntity>)shopListObject;
+                }
+                shopListMap.put(thirdInfoId, shopList);
+                cacheMap.put("shopList", shopListMap);
+                
+                if (CollectionUtils.isNotEmpty(shopList)) {
+                	Map<String, Object> shopInfoMap = cacheMap.get("shopInfo");
+                    if(shopInfoMap == null) {
+                    	shopInfoMap = new HashMap<>();
+                    }
+                    String sysId = shopList.get(0).getSysId();
+                    Object shopInfObject = shopInfoMap.get(sysId);
+                    ShopInfoEntity shopInfo = null;
+                    if(shopInfObject == null) {
+                    	shopInfo = FeignQuery.getById(ShopInfoEntity.class, sysId);
+                    }else {
+                    	shopInfo = (ShopInfoEntity)shopInfObject; 
+                    }
+                    shopInfoMap.put(sysId, shopInfo);
+                    cacheMap.put("shopInfo", shopInfoMap);
+                    
+                    Map<String, Object> customerInfoMap = cacheMap.get("customerInfo");
+                    if(customerInfoMap == null) {
+                    	customerInfoMap = new HashMap<>();
+                    }
+                    String customerId = shopInfo.getCustomerId();
+                    Object customerInfobject = customerInfoMap.get(customerId);
+                    CustomerInfoEntity customerInfo = null;
+                    if(customerInfobject == null) {
+                    	customerInfo = FeignQuery.getById(CustomerInfoEntity.class, customerId);
+                    }else {
+                    	customerInfo = (CustomerInfoEntity)customerInfobject; 
+                    }
+                    customerInfoMap.put(customerId, customerInfo);
+                    cacheMap.put("customerInfo", customerInfoMap);
 
                     if (ObjectUtil.isNotEmpty(customerInfo)) {
                         //组织编码
-                        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(Arrays.asList(customerInfo.getFinancialOrganization(), shopInfo.getSalesOrgId()));
+                    	String salesOrgId = shopInfo.getSalesOrgId();
+                        String financialOrganization = customerInfo.getFinancialOrganization();
 
+						Map<String, Object> companyEntityMap = cacheMap.get("companyEntity");
+	                    if(companyEntityMap == null) {
+	                    	companyEntityMap = new HashMap<>();
+	                    }
+	                    BaseIdDTO.CodeDTO salesOrg = null;
+	                    Object salesOrgIdObject = companyEntityMap.get(salesOrgId);
+	                    if(salesOrgIdObject == null) {
+	                    	List<CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(salesOrgId));
+	                    	if(CollUtil.isNotEmpty(accountingCompanyList)) {
+	                    		salesOrg = accountingCompanyList.get(0);
+	                    	}
+	                    }else {
+	                    	salesOrg = (BaseIdDTO.CodeDTO)salesOrgIdObject;
+	                    }
+	                    companyEntityMap.put(salesOrgId, salesOrg);
+	                    
+	                    BaseIdDTO.CodeDTO sysAccountingCompanyEntity = null;
+	                    Object sysAccountingCompanyEntityObject = companyEntityMap.get(financialOrganization);
+	                    if(sysAccountingCompanyEntityObject == null) {
+	                    	List<CodeDTO> sysAccountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(financialOrganization));
+	                    	if(CollUtil.isNotEmpty(sysAccountingCompanyList)) {
+	                    		sysAccountingCompanyEntity = sysAccountingCompanyList.get(0);
+	                    	}
+	                    }else {
+	                    	sysAccountingCompanyEntity = (BaseIdDTO.CodeDTO)sysAccountingCompanyEntityObject;
+	                    }
+	                    companyEntityMap.put(financialOrganization, sysAccountingCompanyEntity);
+	                    cacheMap.put("companyEntity", companyEntityMap);
+	                    
                         //销售组织
-                        BaseIdDTO.CodeDTO salesOrg = companyEntities.stream().filter(req -> req.getId().equals(shopInfo.getSalesOrgId())).findFirst().orElse(null);
                         shudiyunB2cOrderDTO.setSales_company_code(salesOrg.getCode());
 
-                        BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
                         if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
                             shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
                             shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
@@ -213,16 +299,47 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
                         String subPlatformType = customerInfo.getPlatformType();
                         if(StringUtils.isNotBlank(subPlatformType)) {
-                            List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
-                            if(CollUtil.isNotEmpty(dictList)) {
-                                shudiyunB2cOrderDTO.setSubplatform_no(dictList.get(0).getName());
-                                shudiyunB2cOrderDTO.setSubplatform_name(dictList.get(0).getValue());
+                        	Map<String, Object> subPlatformTypeMap = cacheMap.get("subPlatformType");
+                            if(subPlatformTypeMap == null) {
+                            	subPlatformTypeMap = new HashMap<>();
+                            }
+                            Object subPlatformTypebject = subPlatformTypeMap.get(subPlatformType);
+                            com.erp.model.oms.entity.DictBasicEntity subPlatformTypeDict = null;
+                            if(subPlatformTypebject == null) {
+                            	List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                            	if(CollUtil.isNotEmpty(dictList)) {
+                            		subPlatformTypeDict = dictList.get(0);
+                            	}
+                            }else {
+                            	subPlatformTypeDict = (com.erp.model.oms.entity.DictBasicEntity)subPlatformTypebject; 
+                            }
+                            subPlatformTypeMap.put(subPlatformType, subPlatformTypeDict);
+                            cacheMap.put("subPlatformType", subPlatformTypeMap);
+                            
+                            if(subPlatformTypeDict != null) {
+                                shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                                shudiyunB2cOrderDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                             }
                         }
                     }
-                    DictCurrencyEntity dictCurrencyEntity = FeignQuery.getById(DictCurrencyEntity.class, shopInfo.getTradeCurrency());
-                    if (ObjectUtil.isNotEmpty(dictCurrencyEntity)) {
-                        shudiyunB2cOrderDTO.setTransaction_currency(dictCurrencyEntity.getName());
+                    
+                    Map<String, Object> dictCurrencyMap = cacheMap.get("dictCurrency");
+                    if(dictCurrencyMap == null) {
+                    	dictCurrencyMap = new HashMap<>();
+                    }
+                    String tradeCurrency = shopInfo.getTradeCurrency();
+                    Object dictCurrencybject = dictCurrencyMap.get(tradeCurrency);
+                    DictCurrencyEntity dictCurrency = null;
+                    if(dictCurrencybject == null) {
+                    	dictCurrency = FeignQuery.getById(DictCurrencyEntity.class, tradeCurrency);
+                    }else {
+                    	dictCurrency = (DictCurrencyEntity)dictCurrencybject; 
+                    }
+                    dictCurrencyMap.put(tradeCurrency, dictCurrency);
+                    cacheMap.put("dictCurrency", dictCurrencyMap);
+                    
+                    if (ObjectUtil.isNotEmpty(dictCurrency)) {
+                        shudiyunB2cOrderDTO.setTransaction_currency(dictCurrency.getName());
                     }
                     shudiyunB2cOrderDTO.setTransaction_currency_code(shopInfo.getTradeCurrency());
                     shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
@@ -247,7 +364,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setRemark("");
 
-            shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoInfoEntity.getTradeStatus()));
+            shudiyunB2cOrderDTO.setGoods_status(wdtItemStatus(dmpSoDetailEntity.getStatus()));
 
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getNum().intValue());
             shudiyunB2cOrderDTO.setUnit("PCS");
@@ -323,8 +440,9 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
         }
 
         Map<String, String> map = new HashMap<>();
+        Map<String, Map<String, Object>> cacheMap = new HashMap<>();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOriginalInfoEntityMap.get(changId), dmpSoOriginalDetailEntityMap.get(changId));
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOriginalInfoEntityMap.get(changId), dmpSoOriginalDetailEntityMap.get(changId) , cacheMap);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));

@@ -27,7 +27,7 @@ import java.util.*;
 @Scope("prototype")
 public class MercadoMarketplaceApiInitHandler implements DmpInputApiInitHandler {
     @Resource
-    private MercadoSdkClientService mercadoSdkClientService;
+    private MercadoSdkClientService mercadoLocalSdkClientService;
     @Resource
     protected MongoService mongoService;
 
@@ -39,7 +39,7 @@ public class MercadoMarketplaceApiInitHandler implements DmpInputApiInitHandler 
         String nextLevelId = dmpInputApiInitRequest.getNextLevelId();
 
         //  根据店铺ID获取授权
-        MercadoShopInfoDTO shopInfoDTO = mercadoSdkClientService.getShopInfoByShopId(nextLevelId);
+        MercadoShopInfoDTO shopInfoDTO = mercadoLocalSdkClientService.getShopInfoByShopId(nextLevelId);
         if (null == shopInfoDTO) {
             log.error("[美客多产品下载]从缓存中获取美客多 token 失败: shopId={}", nextLevelId);
             return Collections.emptyList();

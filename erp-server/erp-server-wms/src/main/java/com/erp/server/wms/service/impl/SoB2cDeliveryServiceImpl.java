@@ -43,10 +43,7 @@ import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cLogisticsEntity;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.oms.enums.TransferStatusEnum;
@@ -66,6 +63,7 @@ import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -202,10 +200,11 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private WarehouseLocationMoveService warehouseLocationMoveService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
     @Resource
     @Lazy
     private SoB2cDeliveryService soB2cDeliveryService;
+    @Resource
+    private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -1242,6 +1241,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
 
+
+
     @Override
     public void rollbackPickingInventory(List<String> ids) {
         //删除拣货单
@@ -1572,20 +1573,15 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         if (currentEntity.hasPlatformWarehouseOrder()){
             return false;
         }
-        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cFeign.listSoB2cLogisticsByMainIdList(Collections.singletonList(currentEntity.getId()));
-        if (CollectionUtils.isEmpty(soB2cLogisticsList)){
-            // 无物流信息
-            String msg = CharSequenceUtil.format("soId={}, 无物流信息", currentEntity.getId());
-            throw new ServiceException(msg);
-        }
-        SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsList.get(0);
-        // 无发货单判断是否海外仓发货
-        LogisticsSupplierDTO.AuthDTO auth = logisticsAuthFeign.getAuthByChannelId(logisticsEntity.getLogisticsChannelId());
-        if (Objects.isNull(auth)) {
-            throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
-        }
         // 如果是API对接的海外仓忽略发货单为空拦截
-        if (OmsPlatformEnum.getByCode(auth.getLogisticsPlatform()) != null) {
+        List<SoB2cDetailEntity> detailEntityList = soB2cFeign.listDetailByMainIds(Collections.singletonList(currentEntity.getId()));
+        if (CollectionUtils.isEmpty(detailEntityList)){
+            ServiceException.runError("{}明细为空", currentEntity.getCode());
+        }
+        List<String> warehouseIds = detailEntityList.stream().map(SoB2cDetailEntity::getWarehouseId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseDTO.ViewDTO> overseasWarehouseList = overseasProviderWarehouseService.listByWarehouseIdList(warehouseIds);
+        if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
+            // 海外仓出库单
             return false;
         }
 
@@ -2289,6 +2285,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         List<PickingListsDTO.SourceView> views = pickingListsService.listBySourceIds(ids);
         List<WaveListDTO.WaveDeliveryDTO> deliveryList = waveListService.listByDeliverIds(ids);
         List<SoB2cLogisticsEntity> soB2cLogisticsEntities = FeignQuery.create(SoB2cLogisticsEntity.class).in(SoB2cLogisticsEntity::getMainId, soIds).list();
+        //中转仓map
+        Map<String, String> warehouseMap =  warehouseService.list().stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
         for (SoB2cDeliveryDTO.ListDTO record : records) {
             //拦截标识
             SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(record.getSourceId())).findFirst().orElse(null);
@@ -2341,6 +2340,16 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsEntities.stream().filter(v->v.getMainId().equals(record.getSourceId())).findFirst().orElse(new SoB2cLogisticsEntity());
             record.setLogisticsCode(soB2cLogisticsEntity.getCode());
             record.setTrackCode(soB2cLogisticsEntity.getTrackNo());
+
+            //中转仓名称
+            if (CharSequenceUtil.isNotBlank(record.getTransferWarehouseIds())){
+                StringBuilder sb = new StringBuilder();
+                List<String> split = CharSequenceUtil.split(record.getTransferWarehouseIds(), ",");
+                for (String s : split) {
+                    sb.append(warehouseMap.get(s)).append(",");
+                }
+                record.setTransferWarehouseNames(sb.substring(0, sb.length() - 1));
+            }
         }
     }
 
@@ -2506,4 +2515,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow() {
+        return baseMapper.rebuildB2cVirtualFlow();
+    }
 }

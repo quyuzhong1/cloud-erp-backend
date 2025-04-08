@@ -439,6 +439,16 @@
             AND li.platform = #{params.platform}
             AND sm.dict_platform = #{params.platform}
         </if>
+        <if test="params.platformList !=null and params.platformList.size>0">
+            AND li.platform IN
+            <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            AND sm.dict_platform in
+            <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <!--匹配结果吧true 已匹配 false 未匹配-->
         <if test="params.matchResult != null">
             AND li.match_result = #{params.matchResult}
@@ -642,7 +652,8 @@
         sm.create_user_name as createUserName,
         sm.create_time as createTime,
         sm.update_user_name as updateUserName,
-        sm.update_time as updateTime
+        sm.update_time as updateTime,
+        sm.effective_time as effectiveTime
         FROM sku_mapping sm
         INNER JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE

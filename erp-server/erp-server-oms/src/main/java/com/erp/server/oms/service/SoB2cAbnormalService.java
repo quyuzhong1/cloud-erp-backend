@@ -39,5 +39,5 @@ public interface SoB2cAbnormalService {
      */
     List<BatchResultDTO> batchRetry(String id);
 
-    void clearAbnormal(List<String> ids);
+    void clearAbnormal(SoB2cAbnormalDTO.ClearAbnormalDTO dto);
 }

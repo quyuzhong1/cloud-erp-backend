@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -28,6 +29,7 @@ import com.erp.model.oms.entity.SoReturnDetailEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
@@ -83,7 +85,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_DAILY_QC_BILL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_BILL;
@@ -612,7 +613,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         //是否存在权限
         Boolean isExist = isExistAuth(billIdList, "wms:qcBill:updateProductPack", "qc_user_id");
-        if (!isExist) {
+        if (Boolean.FALSE.equals(isExist)) {
             return;
         }
         //采购信息
@@ -620,7 +621,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (CollectionUtils.isEmpty(poIdList)) {
             return;
         }
-        List<PurchaseOrderEntity> purchaseOrderList = scmTaskFeign.listPurchaseOrderByIds(poIdList);
+        List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listByPurchaseOrderIds(poIdList);
 
         //质检产品信息
         List<String> qcIdList = qcInfoEntityList.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
@@ -629,16 +630,19 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         List<ProductPackDTO> productPactList = new ArrayList<>();
 
         for (QcInfoEntity qcInfoEntity :  qcInfoEntityList) {
-            PurchaseOrderEntity purchaseOrderEntity = purchaseOrderList.stream().filter(obj -> obj.getId().equals(qcInfoEntity.getPurchaseOrderId())).findFirst().orElse(null);
-            if (ObjectUtils.isEmpty(purchaseOrderEntity)) {
-                continue;
-            }
-            if (!purchaseOrderEntity.getIsFirstMassProduct()) {
-                continue;
-            }
             QcProductEntity qcProductEntity = qcProductList.stream().filter(obj -> obj.getMainId().equals(qcInfoEntity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(qcProductEntity)) {
                 throw new ServiceException(ApiError.ERROR_99015);
+            }
+            PurchaseOrderDetailEntity entity = purchaseOrderDetailList.stream().filter(v -> v.getPurchaseOrderId().equals(qcInfoEntity.getPurchaseOrderId()))
+                    .filter(v -> v.getSkuId().equals(qcProductEntity.getSkuId()))
+                    .findFirst()
+                    .orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            if (FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(entity.getFirstMassProduct())) {
+                continue;
             }
             long count = productPactList.stream().filter(obj -> obj.getSkuId().equals(qcProductEntity.getSkuId())).count();
             if (count > 0) {
@@ -647,9 +651,12 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             ProductPackDTO productPackDTO = new ProductPackDTO();
             productPackDTO.setSkuId(qcProductEntity.getSkuId());
             productPackDTO.setSkuNo(qcProductEntity.getSkuNo());
-            productPackDTO.setProductLength(LengthConverterUtil.cmToMm(qcProductEntity.getProductLength()));
-            productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(qcProductEntity.getProductWidth()));
-            productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(qcProductEntity.getProductHeight()));
+            //非首批 回填plm
+            if(StringUtils.isNotBlank(entity.getFirstMassProduct()) && !entity.getFirstMassProduct().equals(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode())){
+                productPackDTO.setProductLength(LengthConverterUtil.cmToMm(qcProductEntity.getProductLength()));
+                productPackDTO.setProductWidth(LengthConverterUtil.cmToMm(qcProductEntity.getProductWidth()));
+                productPackDTO.setProductHeight(LengthConverterUtil.cmToMm(qcProductEntity.getProductHeight()));
+            }
             productPackDTO.setBoxQty(new BigDecimal(qcProductEntity.getBoxQty()));
             productPackDTO.setBoxWeight(qcProductEntity.getBoxWeight());
             productPackDTO.setNetWeight(qcProductEntity.getProductNetWeight());
@@ -2226,8 +2233,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             List<String> billIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).collect(Collectors.toList());
             List<QcRemarkEntity> billRemarkList = qcRemarkService.getByMainIdList(billIdList);
             List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
-            List<String> billIds = dataList.stream().map(QcInfoDTO.DailyListDTO::getId).distinct().collect(Collectors.toList());
-            List<PurchaseOrderEntity> poList = scmTaskFeign.listPurchaseOrderByIds(billIds);
+            List<String> purchaseOrderIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getPurchaseOrderId).distinct().collect(Collectors.toList());
+            List<PurchaseOrderDetailEntity> purchaseOrderDetailEntities = scmTaskFeign.listByPurchaseOrderIds(purchaseOrderIdList);
 
             List<String> productIdList = dataList.stream().map(QcInfoDTO.DailyListDTO::getProductId).collect(Collectors.toList());
 
@@ -2257,10 +2264,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 qcDailyReportDTO.setSkuNo(skuNo);
 
                 // 是否新品
-                Boolean isFirstMassProduct = poList.stream().filter(p -> p.getId().equals(item.getPurchaseOrderId())).
-                        findFirst().flatMap(obj -> Optional.ofNullable(obj.getIsFirstMassProduct())).orElse(Boolean.FALSE);
-                qcDailyReportDTO.setIsFirstMassProduct(isFirstMassProduct);
-                qcDailyReportDTO.setFirstMassProductName(Objects.equals(qcDailyReportDTO.getIsFirstMassProduct(), Boolean.TRUE) ? ProductTypeEnum.NEW_PRODUCTS.getName() : ProductTypeEnum.OLD_PRODUCTS.getName());
+                PurchaseOrderDetailEntity entity = purchaseOrderDetailEntities.stream().filter(v -> v.getPurchaseOrderId().equals(item.getPurchaseOrderId()))
+                        .filter(v -> v.getSkuId().equals(item.getSkuId())).findFirst().orElse(new PurchaseOrderDetailEntity());
+                qcDailyReportDTO.setFirstMassProduct(entity.getFirstMassProduct());
+                qcDailyReportDTO.setFirstMassProductName(FirstMassProductTypeEnum.getName(entity.getFirstMassProduct()));
 
                 String supplierId = item.getSupplierId();
                 String supplierName = supplierList.stream().filter(s -> s.getId().equals(supplierId)).

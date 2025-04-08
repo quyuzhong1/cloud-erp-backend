@@ -1,23 +1,9 @@
 package com.erp.server.oms.schedule;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.entity.BaseEntity;
-import com.common.message.constant.RedisKeyConstant;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.sys.entity.CfgCountryPartitionEntity;
 import com.erp.model.sys.enums.DictValueEnum;
 import com.erp.server.oms.service.*;
@@ -28,18 +14,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * 同步军区映射
@@ -75,9 +55,12 @@ public class PartitionJob {
             List<SoB2cReceiverEntity> list = pageData.getRecords();
             List<SoB2cReceiverEntity> updateList = new ArrayList<>();
             for (SoB2cReceiverEntity soB2cReceiverEntity : list) {
-                String country = soB2cReceiverEntity.getCountry();
-                if(StringUtils.isNotBlank(soB2cReceiverEntity.getCustomerCountry()) && !soB2cReceiverEntity.getCustomerCountry().equals(DictValueEnum.GL.getCode())){
+                String country = soB2cReceiverEntity.getShopCountry();
+                if(StringUtils.isBlank(country) || country.equals(DictValueEnum.ALL.getCode())){
                     country = soB2cReceiverEntity.getCustomerCountry();
+                }
+                if(StringUtils.isBlank(country) || country.equals(DictValueEnum.ALL.getCode())){
+                    country = soB2cReceiverEntity.getCountry();
                 }
                 if(StringUtils.isBlank(country)){
                     continue;
@@ -111,7 +94,7 @@ public class PartitionJob {
             List<SoInfoEntity> updateList = new ArrayList<>();
             for (SoInfoEntity soInfoEntity : list) {
                 String country = soInfoEntity.getCustomerCountry();
-                if(StringUtils.isNotBlank(soInfoEntity.getCustomerCountry()) && !soInfoEntity.getCustomerCountry().equals(DictValueEnum.GL.getCode())){
+                if(StringUtils.isNotBlank(soInfoEntity.getCustomerCountry()) && !soInfoEntity.getCustomerCountry().equals(DictValueEnum.ALL.getCode())){
                     country = soInfoEntity.getCustomerCountry();
                 }
                 if(StringUtils.isBlank(country)){

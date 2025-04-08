@@ -258,4 +258,10 @@ public class ProductLogisticsEntity extends BaseEntity<ProductLogisticsEntity> i
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 保险属性
+     */
+    @TableField("insurance_property")
+    private String insuranceProperty;
 }

@@ -50,7 +50,8 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
         LocalDate startDate = calculationDate.minusDays(cleanDay);
         LocalDate endDate = calculationDate.minusDays(1);
         //删除原数据
-        orderHistorySalesEsService.deleteByDateBetween(startDate, endDate);
+        List<String> shopSkuIds = salesInfoAllList.stream().map(v -> v.getShopId() + "-" + v.getSkuId()).distinct().collect(Collectors.toList());
+        orderHistorySalesEsService.deleteByDateBetween(shopSkuIds, startDate, endDate);
         //保存新数据
         List<OrderHistorySalesEsEntity> orderHistorySalesEsList = getOrderHistorySales(salesInfoAllList);
         orderHistorySalesEsService.saveAll(orderHistorySalesEsList);
@@ -81,7 +82,8 @@ public abstract class AbstractCalculationStrategy implements PlatformCalculation
         LocalDate startDate = calculationDate.minusDays(cleanDay);
         LocalDate endDate = calculationDate.minusDays(1);
         //删除原数据
-        outStockHistorySalesEsService.deleteByDateBetween(startDate, endDate);
+        List<String> shopSkuIds = salesInfoAllList.stream().map(v -> v.getShopId() + "-" + v.getSkuId()).distinct().collect(Collectors.toList());
+        outStockHistorySalesEsService.deleteByDateBetween(shopSkuIds, startDate, endDate);
         //保存新数据
         List<OutStockHistorySalesEsEntity> outStockHistorySales = getOutStockHistorySales(salesInfoAllList);
         outStockHistorySalesEsService.saveAll(outStockHistorySales);

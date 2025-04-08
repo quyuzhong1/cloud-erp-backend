@@ -272,44 +272,74 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     </select>
     
     <delete id="dmpInputMoveToHistoryTable">
-		insert into dmp_input_task_file_his select * from dmp_input_task_file where main_id in (select id from dmp_input_task where status = 'finish' and update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size});
-delete from dmp_input_task_file where main_id in (select id from dmp_input_task where status = 'finish' and update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size});
+		insert into dmp_input_task_file_his select * from dmp_input_task_file where main_id in (${conditionSql});
+		delete from dmp_input_task_file where main_id in (${conditionSql});
 
-insert into dmp_input_task_his select * from dmp_input_task where status = 'finish' and update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size};
-delete from dmp_input_task where id in (select id from dmp_input_task where status = 'finish' and update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size});
+		insert into dmp_input_task_his select * from dmp_input_task where id in (${conditionSql});
+		delete from dmp_input_task where id in (${conditionSql});
 	</delete>
 	
     <delete id="dmpRelationMoveToHistoryTable">
-		insert into dmp_input_file_mongo_relation_his select * from dmp_input_file_mongo_relation where update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size};
-delete from dmp_input_file_mongo_relation where id in (select id from dmp_input_file_mongo_relation where update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size});
+    	<if test="fileConditionSql != null and fileConditionSql != ''">
+    		insert into dmp_input_file_mongo_relation_his select * from dmp_input_file_mongo_relation where id in (${fileConditionSql});
+			delete from dmp_input_file_mongo_relation where id in (${fileConditionSql});
+    	</if>
 
-insert into dmp_input_mongo_dmp_relation_his select * from dmp_input_mongo_dmp_relation where update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size};
-delete from dmp_input_mongo_dmp_relation where id in (select id from dmp_input_mongo_dmp_relation where update_time <![CDATA[ < ]]> #{beforeUpdateTime} order by update_time limit #{size});
+		<if test="dmpConditionSql != null and dmpConditionSql != ''">
+			insert into dmp_input_mongo_dmp_relation_his select * from dmp_input_mongo_dmp_relation where id in (${dmpConditionSql});
+			delete from dmp_input_mongo_dmp_relation where id in (${dmpConditionSql});
+		</if>
 	</delete>
+	
+	<select id="getDmpOutputMoveToHistoryTable" resultType="java.lang.String">
+		select t.id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size};
+	</select>
 	
     <delete id="dmpOutputMoveToHistoryTable">
-		insert into dmp_push_msg_his select * from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
-));
-delete from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
-));
-
-insert into dmp_output_task_record_his select * from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
-);
-delete from dmp_output_task_record where status = 'finish' and main_id in (
-select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size}
-);
-
-insert into dmp_output_task_his select * from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size};
-delete from dmp_output_task where id in (select id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size});
+		insert into dmp_push_msg_his select * from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql}));
+		delete from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql}));
+	
+		insert into dmp_output_task_record_his select * from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql});
+		delete from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql});
+	
+		insert into dmp_output_task_his select * from dmp_output_task t where id in (${conditionSql});
+		delete from dmp_output_task where id in (${conditionSql});
 
 	</delete>
 	
+	<select id="getDmpOutputNoRecordMoveToHistoryTable" resultType="java.lang.String">
+		select g.id from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
+	</select>
+	
     <delete id="dmpOutputNoRecordMoveToHistoryTable">
-insert into dmp_output_task_his select * from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
-delete from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
+		insert into dmp_output_task_his select * from dmp_output_task g where g.id in (${conditionSql});
+		delete from dmp_output_task g where g.id in (${conditionSql});
 	</delete>
-    
+
+    <select id="queryBySourceCodeAndCfgOutputId" resultMap="BaseResultMap">
+        SELECT
+            dotr.*
+        FROM
+            dmp_output_task_record AS dotr
+            LEFT JOIN dmp_output_task AS dor ON dor.ID = dotr.main_id
+        WHERE
+            dor.cfg_output_id = #{cfgOutputId}
+          AND dotr.source_code = #{sourceCode}
+          AND dotr.source_code NOT IN ( '', '_' )
+          AND dotr.is_deleted = FALSE
+          AND dor.is_deleted = FALSE
+    </select>
+    <select id="getOutputTaskRecord" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+        SELECT
+            dotr.*
+        FROM
+            dmp_output_task_record AS dotr
+                LEFT JOIN dmp_output_task AS dor ON dor.ID = dotr.main_id
+                LEFT JOIN dmp_cfg_output AS dco on dco.id = dor.cfg_output_id
+        WHERE
+            dco.output_class = #{outputClass}
+          AND dotr.source_code = #{sourceCode}
+          AND dotr.is_deleted = FALSE
+          AND dor.is_deleted = FALSE ORDER BY dotr.create_time LIMIT 1
+    </select>
 </mapper>

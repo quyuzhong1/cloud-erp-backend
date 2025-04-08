@@ -36,6 +36,9 @@ public enum DeliveryModeEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
+        if(code == null){
+            return "";
+        }
         for (DeliveryModeEnum billTypeEnum : DeliveryModeEnum.values()) {
             if (code.equals(billTypeEnum.getCode())) {
                 return billTypeEnum.getName();

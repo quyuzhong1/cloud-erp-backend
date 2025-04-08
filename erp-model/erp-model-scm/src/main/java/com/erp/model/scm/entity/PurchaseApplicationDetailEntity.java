@@ -130,6 +130,13 @@ public class PurchaseApplicationDetailEntity extends BaseEntity<PurchaseApplicat
     @TableField("create_po_type")
     private String createPoType;
 
+
+    /**
+     * 新品首批
+     */
+    @TableField("first_mass_product")
+    private String firstMassProduct;
+
     /**
      * 备注
      */

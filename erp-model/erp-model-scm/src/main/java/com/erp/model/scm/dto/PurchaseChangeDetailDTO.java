@@ -89,7 +89,14 @@ public class PurchaseChangeDetailDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
-
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+        /**
+         * 新品首批名称
+         */
+        private String firstMassProductName;
         /**
          * 变更备注
          */

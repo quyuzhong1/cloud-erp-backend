@@ -68,4 +68,8 @@ public class GoodCangLogisticsProductsResp extends CleanBaseDTO implements Seria
     //是否打板 0否 1是
     @JSONField(name = "is_optional_board")
     private Integer isOptionalBoard;
+
+    //配送商类型
+    @JSONField(name = "distributor_type")
+    private Integer distributorType;
 }

@@ -393,6 +393,11 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             Integer virtualUsableQty = virtualInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuId) && CharSequenceUtil.equals(obj.getDictInventoryStatus(),InventoryStatusEnum.USABLE.getCode())).findFirst().
                     flatMap(obj -> Optional.ofNullable(obj.getInventoryQty())).orElse(MathUtil.ZERO);
             item.setVirtualAvailableQty(MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? qty : virtualUsableQty);
+            item.setVirtualUsableQty(virtualUsableQty);
+            //虚拟冻结库存
+            Integer virtualFrozenQty = virtualInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), skuId) && CharSequenceUtil.equals(obj.getDictInventoryStatus(),InventoryStatusEnum.FROZEN.getCode())).findFirst().
+                    flatMap(obj -> Optional.ofNullable(obj.getInventoryQty())).orElse(MathUtil.ZERO);
+            item.setVirtualFrozenQty(virtualFrozenQty);
 
             //虚拟缺货数量(显示正数)
             Integer virtualScarceQty =  MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? MathUtil.ZERO : qty - virtualUsableQty;
@@ -434,7 +439,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
 
     @Override
     public List<SoDetailEntity> listSoDetailByMainIds(List<String> ids) {
-        return baseMapper.listSoDetailByMainIds(ids);
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SoDetailEntity::getMainId, ids).list();
     }
 
     @Override

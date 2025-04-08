@@ -1,5 +1,9 @@
 package com.common.core.utils;
 
+import cn.hutool.core.util.ReUtil;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
@@ -33,5 +37,27 @@ public class CurrencyUtil {
         } else {
             throw new IllegalArgumentException("无法解析金额: " + currencyStr);
         }
+    }
+
+    @Getter
+    @ToString
+    @NoArgsConstructor
+    public static class Money {
+        private String amount;
+        private String currency;
+
+        /**
+         * 字符串解析对象
+         * @param input 13.56(EUR)
+         */
+        public Money(String input) {
+            this.amount = ReUtil.get("([\\d.]+)", input, 0);
+            this.currency = ReUtil.get("\\((\\w+)\\)", input, 1);
+        }
+
+        public static Money init(String input) {
+            return new Money(input);
+        }
+
     }
 }

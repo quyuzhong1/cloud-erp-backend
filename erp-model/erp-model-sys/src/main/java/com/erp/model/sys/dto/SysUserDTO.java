@@ -73,6 +73,15 @@ public class SysUserDTO implements Serializable {
 
     //绑定状态
     private Integer bindingState;
+    /**
+     * 部门id
+     */
+    private String deptId;
+
+    /**
+     * 部门名称
+     */
+    private String deptName;
 
     @Data
     @NoArgsConstructor

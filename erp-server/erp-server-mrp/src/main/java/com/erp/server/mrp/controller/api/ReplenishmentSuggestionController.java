@@ -289,7 +289,7 @@ public class ReplenishmentSuggestionController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = replenishmentSuggestionService.batchUpdateRule(id, dto.getStockUpUpdateDTO(),dto.getSalesQtyUpdateDTO());
+                resultDTO = replenishmentSuggestionService.batchUpdateRule(id, dto.getStockUpUpdateDTO(),dto.getSalesQtyUpdateDTO(), dto.getIsBatch());
             } catch (Exception e) {
                 log.error("批量设置规则", e);
                 ReplenishmentSuggestionEntity entity = replenishmentSuggestionService.getById(id);
@@ -695,7 +695,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     @GetMapping("/isReplenishment")
     public ApiResult<String> isReplenishment(String platformType) {
         List<ReplenishmentSuggestionEntity> suggestions = replenishmentSuggestionService.listCalculationData(platformType);
-        basicReplenishmentDataService.isReplenishment(suggestions,platformType,LocalDate.now());
+        basicReplenishmentDataService.isReplenishment(suggestions, LocalDate.now());
         return success();
     }
 
@@ -761,5 +761,15 @@ public class ReplenishmentSuggestionController extends BaseController {
     public ApiResult<String> exportCalcData(@RequestBody @Validated BaseIdDTO dto) {
         replenishmentSuggestionService.exportCalcData(dto);
         return success();
+    }
+
+
+    /**
+     * 临时接口
+     * @param exportSalesDTO 导出
+     */
+    @PostMapping("/exportSales")
+    public void exportSales(@RequestBody ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response) {
+        replenishmentSuggestionService.exportSales(exportSalesDTO, response);
     }
 }

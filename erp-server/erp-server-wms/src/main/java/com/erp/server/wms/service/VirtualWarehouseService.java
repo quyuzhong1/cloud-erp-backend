@@ -1,12 +1,12 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.entity.VirtualWarehouseEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
 
 import java.util.List;
 
@@ -87,4 +87,17 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      */
     List<String> listWarehouseBySql(String compareCodeSplicingValueSql);
 
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    Boolean exportExcel(VirtualWarehouseDTO.PagingParamDTO dto);
+
+    /**
+     * 导出虚拟仓设置
+     * @param dto
+     * @return
+     */
+    PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto);
 }

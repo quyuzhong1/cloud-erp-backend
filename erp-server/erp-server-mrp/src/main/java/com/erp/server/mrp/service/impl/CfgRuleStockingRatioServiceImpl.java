@@ -54,16 +54,16 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = {"cache:mrp:ratio:listByStockUpIdList","cache:mrp:listByStockUpIdAndType"}, allEntries = true, beforeInvocation = true)
-    public Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList,String stockUpId,String type,Boolean isCustom) {
+    public Boolean update(List<CfgRuleStockingRatioDTO.UpdateDTO> stockingRatioList, CfgRuleStockUpEntity cfgRuleStockUpEntity, String type, Boolean isBatch) {
         if (CollectionUtils.isEmpty(stockingRatioList)) {
             stockingRatioList = Collections.emptyList();
         }
         List<CfgRuleStockingRatioEntity> list = BeanMapperUtils.copyList(CfgRuleStockingRatioEntity.class, stockingRatioList);
 
         //原物流信息
-        List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdListAndType(Collections.singletonList(stockUpId),type);
+        List<CfgRuleStockingRatioEntity> oldList = listByStockUpIdListAndType(Collections.singletonList(cfgRuleStockUpEntity.getId()),type);
         //自定义更新无需删除
-        if (Boolean.FALSE.equals(isCustom)) {
+        if (Boolean.FALSE.equals(isBatch)) {
             //删除明细
             List<String> deleteIds = getDeleteIds(list, oldList);
             if (!CollectionUtils.isEmpty(deleteIds)) {
@@ -77,14 +77,14 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
             return  Boolean.TRUE;
         }
         // 数据处理
-        handleData(list,oldList,stockUpId,type,isCustom);
-        log.info("编辑 开始修改备货系数（规则设置）数据，id：【{}】",stockUpId);
+        handleData(list,oldList,cfgRuleStockUpEntity,type,isBatch);
+        log.info("编辑 开始修改备货系数（规则设置）数据，id：【{}】",cfgRuleStockUpEntity.getId());
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("备货系数（规则设置）保存失败");
         }
         //日志
-        addOperateLog(list,stockUpId);
+        addOperateLog(list,cfgRuleStockUpEntity.getId());
         return Boolean.TRUE;
     }
     /**
@@ -173,15 +173,18 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<CfgRuleStockingRatioEntity> list,List<CfgRuleStockingRatioEntity> oldList,String stockUpId,String type,Boolean isCustom) {
+    private void handleData(List<CfgRuleStockingRatioEntity> list,List<CfgRuleStockingRatioEntity> oldList,CfgRuleStockUpEntity cfgRuleStockUpEntity,String type,Boolean isBatch) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         validateUniqueNames(list);
         //排序
-        int maxIndex = Boolean.TRUE.equals(isCustom) ? getMaxIndex(oldList) : MathUtil.ZERO;
+        int maxIndex = Boolean.TRUE.equals(isBatch) ? getMaxIndex(oldList) : MathUtil.ZERO;
         for (CfgRuleStockingRatioEntity stockingRatioEntity : list) {
-            updateStockingRatio(oldList, stockUpId, type, isCustom, stockingRatioEntity, maxIndex);
+            if (CfgRuleStockingRatioTypeEnum.NEW.getCode().equals(type) && Boolean.TRUE.equals(cfgRuleStockUpEntity.getIsCfgSame())) {
+                stockingRatioEntity.setId(null);
+            }
+            updateStockingRatio(oldList, cfgRuleStockUpEntity.getId(), type, isBatch, stockingRatioEntity, maxIndex);
             maxIndex ++;
         }
     }
@@ -196,7 +199,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
      * @param stockingRatioEntity 备货系数
      * @param maxIndex            优先级
      */
-    private static void updateStockingRatio(List<CfgRuleStockingRatioEntity> oldList, String stockUpId, String type, Boolean isCustom, CfgRuleStockingRatioEntity stockingRatioEntity, int maxIndex) {
+    private static void updateStockingRatio(List<CfgRuleStockingRatioEntity> oldList, String stockUpId, String type, Boolean isBatch, CfgRuleStockingRatioEntity stockingRatioEntity, int maxIndex) {
         //排序
         stockingRatioEntity.setIndex(maxIndex + 1);
 
@@ -205,7 +208,7 @@ public class CfgRuleStockingRatioServiceImpl extends SuperServiceImpl<CfgRuleSto
         if (!ObjectUtils.isEmpty(entity)) {
             stockingRatioEntity.setId(entity.getId());
             //自定义添加的需要保持原有序号
-            stockingRatioEntity.setIndex(Boolean.TRUE.equals(isCustom) ? entity.getIndex() : stockingRatioEntity.getIndex());
+            stockingRatioEntity.setIndex(Boolean.TRUE.equals(isBatch) ? entity.getIndex() : stockingRatioEntity.getIndex());
         }
         //主表id
         stockingRatioEntity.setStockUpId(stockUpId);

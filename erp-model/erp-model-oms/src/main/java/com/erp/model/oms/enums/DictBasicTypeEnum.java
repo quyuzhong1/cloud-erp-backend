@@ -28,6 +28,11 @@ public enum DictBasicTypeEnum {
     DELIVERY_MODE("deliveryMode",  "交货方式"),
     TRADE_TERM("tradeTerm",  "贸易条款"),
 
+    // 数帝云
+    SDY_SUB_PLATFORM("sdySubPlatform" , "数帝子平台映射"),
+    SDY_PARTITION_LEVEL1_DEPT("sdyPartitionLevel1Dept" , "数帝云军区一级部门映射"),
+    SDY_PLATFORM_LEVEL2_DEPT("sdyPlatformLevel2Dept" , "数帝云平台二级部门映射"),
+
     ;
 
 
@@ -52,7 +57,7 @@ public enum DictBasicTypeEnum {
 
     public static String getName(String type) {
         for (DictBasicTypeEnum dictBasic : DictBasicTypeEnum.values()) {
-            if (type.equals(dictBasic.getType())) {
+            if (dictBasic.getType().equals(type)) {
                 return dictBasic.getDesc();
             }
         }
