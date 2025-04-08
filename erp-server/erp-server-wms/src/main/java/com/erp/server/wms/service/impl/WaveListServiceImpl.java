@@ -319,6 +319,9 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public ApiResult<?> printFinishSkuBarcode(BaseIdsDTO.IdsDTO idsDTO) {
         List<WaveListEntity> waveListEntities = this.listByIds(idsDTO.getIds());
+        if (CollUtil.isEmpty(waveListEntities)) {
+            throw new ServiceException(ApiError.ERROR_1030);
+        }
         //全部都是全托管订单才能打印
         boolean allFullyManaged = waveListEntities.stream().allMatch(WaveListEntity::getIsFullyManaged);
         if (!allFullyManaged){
@@ -338,7 +341,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);
         for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
-            if(!deliveryEntity.getIsPrintLogistic()){
+            if(!deliveryEntity.getIsPrintSkuBarcode()){
                 deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId()).update();
                 operateLogService.addModuleOperateLog("验货完成自动打印SKU条码", ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), deliveryEntity.getId(), "SKU条码打印", loginUser.getUid(), loginUser.getUserName());
             }
