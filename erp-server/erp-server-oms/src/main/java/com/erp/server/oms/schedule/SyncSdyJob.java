@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -94,6 +95,10 @@ public class SyncSdyJob {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             createStartTime = jsonParam.getLocalDateTime("createStartTime", LocalDateTime.now().minusMonths(1));
             createEndTime = jsonParam.getLocalDateTime("createEndTime", LocalDateTime.now());
+            String platformListStr = jsonParam.getStr("platformList");
+            if (StringUtils.isNotBlank(platformListStr)){
+                platformList = Arrays.stream(platformListStr.split(",")).collect(Collectors.toList());
+            }
             jsonParam.getInt("pageSize", 1000);
         }
 
