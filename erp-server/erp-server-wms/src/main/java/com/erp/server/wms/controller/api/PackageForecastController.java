@@ -338,4 +338,13 @@ public class PackageForecastController extends BaseController {
     public ApiResult<PackageForecastDTO.ShippingProviderDTO> searchShippingProvider(@RequestBody @Valid PackageForecastDTO.SearchShippingProviderDTO dto) {
         return success(packageForecastService.searchShippingProvider(dto));
     }
+
+    /**
+     * 确认发货 只支持tiktok全托管商家自配业务
+     */
+    @PostMapping("/confirmDelivery")
+    public ApiResult<List<BatchResultDTO>> confirmDelivery(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = packageForecastService.confirmDelivery(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

@@ -134,7 +134,7 @@ public class PackageForecastDTO implements Serializable {
         @NotBlank(message = "揽收方式不能为空")
         private String collectMode;
 
-        @Null(message = "总重量不能为空")
+        @NotNull(message = "总重量不能为空")
         private Integer weight;
 
         /**
