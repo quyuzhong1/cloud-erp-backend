@@ -252,6 +252,13 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setSourceId(thirdCode);
         // 来源编码
         orderDTO.setSourceCode(thirdCode);
+
+		// 税后支付金额
+		orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+		// 税后支付金额
+		orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
+		// 折扣金额
+		orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
         
         // 标签json
         orderDTO.setLabelJson(dmpSoInfoEntity.getExtendData());

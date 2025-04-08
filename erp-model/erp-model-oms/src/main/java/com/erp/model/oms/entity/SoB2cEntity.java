@@ -378,6 +378,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("vat_invoice_status")
     private String vatInvoiceStatus;
 
+    /**
+     * 总税费
+     */
+    @TableField("total_tax_fee")
+    private BigDecimal totalTaxFee;
+
+    /**
+     * 总税后支付金额(速卖通)
+     */
+    @TableField("after_tax_amount")
+    private BigDecimal afterTaxAmount;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -450,6 +462,9 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", dictPayMethod='" + dictPayMethod + '\'' +
                 ", buyerRemark='" + buyerRemark + '\'' +
                 ", isCancel=" + isCancel +
+                ", totalTaxFee=" + totalTaxFee +
+                ", afterTaxAmount=" + afterTaxAmount +
+                ", totalDiscount=" + totalDiscount +
                 '}';
     }
 

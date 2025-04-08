@@ -13,28 +13,28 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
-import com.erp.rpc.oms.feign.SoReturnFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
-import com.erp.server.wms.service.SoReturnInstockDetailService;
-import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WmsPushMsgService;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockService {
@@ -51,13 +51,32 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                                                          List<ProductDetailEntity> parentSkuList,
                                                          List<CustomerInfoEntity> customerInfoList,
                                                          List<BaseIdDTO.CodeDTO> companyEntities,
-                                                         List<DictBasicEntity> dictBasicEntityList,
                                                          List<SoReturnEntity> soReturnEntityList,
                                                          List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                                                         List<SoReturnEntity> receiveReturnList) {
+                                                         List<SoReturnEntity> receiveReturnList,
+                                                         String countryCode,
+                                                         String partitionId,
+                                                         String dictPlatform,
+                                                         List<DictBasicEntity> omsAllDictList,
+                                                         List<DictPartitionEntity> partitionEntityList,
+                                                         List<DictCountryEntity> countryEntityList,
+                                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<SysDepartmentEntity> deptList,
+                                                         List<CfgCountryPartitionEntity> countryPartitionEntityList
+    ) {
 
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // 字典分组
+        Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        // 销售平台
+        List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
+        // 数帝云军区一级部门映射
+        List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
+        // 数帝云平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType(), Collections.emptyList());
+
 
         //退货物流单号
         String rootNodeNoInitial = getRootNodeNoInitial(entity, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList);
@@ -201,6 +220,95 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setSource_system("SDC");
         shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNoInitial);
 
+        // 国家编码
+        // 国家名称
+        String countryName = "";
+        // 区域编码
+        String regionCode = "";
+        // 区域名称
+        String regionName = "";
+        // 军区编码
+        String militaryRegionCode = "";
+        // 军区名称
+        String militaryRegionName = "";
+        // 部门编码
+        String departmentCode = "";
+        // 部门名称
+        String departmentName= "";
+
+        // 国家信息为空替换为客户对应国家
+        if (StringUtils.isBlank(countryCode) && null != customerInfo){
+            countryCode = customerInfo.getCountryId();
+            // 替换分区
+            String finalCountryCode = countryCode;
+            CfgCountryPartitionEntity cfgCountryPartitionEntity = countryPartitionEntityList.stream().filter(e -> e.getCountry().equalsIgnoreCase(finalCountryCode)).findFirst().orElse(null);
+            if ( null != cfgCountryPartitionEntity){
+                partitionId = cfgCountryPartitionEntity.getPartitionId();
+            }
+            dictPlatform = customerInfo.getPlatformType();
+        }
+
+        String finalCountryCode = countryCode;
+        DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalCountryCode)).findFirst().orElse(null);
+        if (null != dictCountryEntity){
+            countryName = dictCountryEntity.getShortNameCn();
+            // 区域编码
+            regionCode = dictCountryEntity.getSubregionCode();
+            // 区域名称
+            DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
+            if (null != dictGlobalAreaEntity){
+                regionName = dictGlobalAreaEntity.getSubregionName();
+            }
+        }
+
+        String finalPartitionId = partitionId;
+        DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
+        if (null != dictPartitionEntity){
+            // 军区编码
+            militaryRegionCode = dictPartitionEntity.getCode();
+            // 军区名称
+            militaryRegionName = dictPartitionEntity.getName();
+            // 军区一级部门映射
+            DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
+            // 销售平台二级部门映射
+            String finalDictPlatform = dictPlatform;
+            List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPlatform)).collect(Collectors.toList());
+
+            if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
+                List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
+                SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
+                                e.getPath().contains(sdyPartitionDeptEntity.getValue())
+                                        && deptLevel2Ids.contains(e.getId())
+                        )
+                        .findFirst()
+                        .orElse(null);
+                if (null != departmentDTO){
+                    // 部门编码
+                    departmentCode = departmentDTO.getCode();
+                    // 部门名称
+                    departmentName = departmentDTO.getName();
+                }
+            }
+        }
+        // 国家编码
+        shudiyunB2cOrderDTO.setCountry_code(countryCode);
+        // 国家名称
+        shudiyunB2cOrderDTO.setCountry(countryName);
+        // 区域编码
+        shudiyunB2cOrderDTO.setRegion_code(regionCode);
+        // 区域名称
+        shudiyunB2cOrderDTO.setRegion_name(regionName);
+        // 军区编码
+        shudiyunB2cOrderDTO.setMilitary_region_code(militaryRegionCode);
+        // 军区名称
+        shudiyunB2cOrderDTO.setMilitary_region_name(militaryRegionName);
+        // 部门编码
+        shudiyunB2cOrderDTO.setDepartment_code(departmentCode);
+        // 部门名称
+        shudiyunB2cOrderDTO.setDepartment_name(departmentName);
+
+
+
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
 
     }
@@ -215,10 +323,19 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                               List<ProductDetailEntity> parentSkuList,
                               List<CustomerInfoEntity> customerInfoList,
                               List<BaseIdDTO.CodeDTO> companyEntities,
-                              List<DictBasicEntity> dictBasicEntityList,
                               List<SoReturnEntity> soReturnEntityList,
                               List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                              List<SoReturnEntity> receiveReturnList) {
+                              List<SoReturnEntity> receiveReturnList,
+                              String country,
+                              String partitionId,
+                              String dictPlatform,
+                              List<DictBasicEntity> omsAllDictList,
+                              List<DictPartitionEntity> partitionEntityList,
+                              List<DictCountryEntity> countryEntityList,
+                              List<DictGlobalAreaEntity> dictGlobalEntityList,
+                              List<SysDepartmentEntity> deptList,
+                              List<CfgCountryPartitionEntity> countryPartitionEntityList
+    ) {
         for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
             WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
             wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
@@ -226,7 +343,27 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             wmsPushMsgEntity.setSourceId(detailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, detailEntity, operate, skuVOList, bomChildrenSkuDTOS, currencyList, parentSkuList, customerInfoList, companyEntities, dictBasicEntityList, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList)));
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity,
+                    detailEntity,
+                    operate,
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    currencyList,
+                    parentSkuList,
+                    customerInfoList,
+                    companyEntities,
+                    soReturnEntityList,
+                    soReturnReceiveEntityList,
+                    receiveReturnList,
+                    country,
+                    partitionId,
+                    dictPlatform,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList,
+                    countryPartitionEntityList)));
             wmsPushMsgService.save(wmsPushMsgEntity);
         }
     }

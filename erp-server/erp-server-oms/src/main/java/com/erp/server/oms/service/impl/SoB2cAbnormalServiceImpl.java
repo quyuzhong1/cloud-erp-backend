@@ -14,7 +14,6 @@ import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.OperateLogService;
@@ -136,6 +135,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
         List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList = new ArrayList<>();
         soB2cEntityList.forEach(v->{
             v.setSignOrderError("");
+            //清除异常 -- 暂时只针对拉取失败的类型
+            soB2cErrorService.removeErrorOrder(v.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
+
             OperateLogDTO.AddModuleOperateLogDTO addModuleOperateLogDTO = OperateLogDTO.AddModuleOperateLogDTO.builder()
                     .content(msg)
                     .businessId(v.getId())
@@ -145,6 +147,8 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             operateLogList.add(addModuleOperateLogDTO);
         });
         soB2cService.updateBatchById(soB2cEntityList);
+
+
         operateLogService.batchAddModuleOperateLog(operateLogList);
 
         log.error("清除异常销售订单异常：{}", JSON.toJSONString(codes));
