@@ -1403,7 +1403,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             this.updateBatchById(packageForecastEntityList);
             return BatchResultDTO.fail(dto.getIds().get(0), packageForecastEntityList.get(0).getCode(), e.getMessage());
         }
-        return new BatchResultDTO();
+        return BatchResultDTO.success();
     }
 
     @Override
