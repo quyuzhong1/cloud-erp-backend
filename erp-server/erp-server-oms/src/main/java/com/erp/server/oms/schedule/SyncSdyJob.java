@@ -191,7 +191,7 @@ public class SyncSdyJob {
                         .collect(Collectors.toList());
                 soB2cDeliveryEntityMap = soB2cDeliveryEntityList.stream().collect(Collectors.groupingBy(SoB2cDeliveryEntity::getSourceId));
                 if (!CollectionUtils.isEmpty(soB2cDeliveryEntityList)) {
-                    List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                    List<String> mainIds = soB2cDeliveryEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
                     soB2cDeliveryDetailEntityList = FeignQuery.create(SoB2cDeliveryDetailEntity.class)
                             .in(SoB2cDeliveryDetailEntity::getMainId, mainIds)
                             .list();
