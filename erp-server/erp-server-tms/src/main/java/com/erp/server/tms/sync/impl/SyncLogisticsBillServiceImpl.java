@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
 import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -168,7 +169,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             tmsPushMsgEntity.setSourceId(billDetailEntity.getId());
             tmsPushMsgEntity.setSourceCode(sourceCode);
             tmsPushMsgEntity.setSyncOperate(operate);
-            tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticsChannelEntities, logisticsSupplierEntities)));
+            tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticsChannelEntities, logisticsSupplierEntities)));
             tmsPushMsgService.save(tmsPushMsgEntity);
         }
     }
@@ -191,9 +192,13 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             tmsPushMsgEntity.setSourceCode(sourceCode);
             tmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
-            map.put("isQuerySync", Boolean.TRUE);
-            map.put("detailId", billDetailEntity.getId());
-            map.put("operate", operate);
+            if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            	map.put("isQuerySync", Boolean.TRUE);
+                map.put("detailId", billDetailEntity.getId());
+                map.put("operate", operate);
+            }else {
+            	map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, new ArrayList<>(), new ArrayList<>());
+            }
             tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             tmsPushMsgService.save(tmsPushMsgEntity);
         }
