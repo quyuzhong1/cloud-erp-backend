@@ -64,7 +64,7 @@ public class OpenApiController {
             referer = request.getHeader("referer");
         }
         if(StringUtils.isBlank(referer)) {
-            return ApiResult.error(500, "请求头referer不能为空");
+            return ApiResult.error(500, "请求头appId或referer不能为空");
         }
         if (CollectionUtils.isEmpty(fileMap) || 1 != fileMap.size()){
             return ApiResult.error(500, "仅能上传一个文件");
@@ -113,7 +113,7 @@ public class OpenApiController {
     		referer = request.getHeader("referer");
     	}
     	if(StringUtils.isBlank(referer)) {
-    		return ApiResult.error(500, "请求头referer不能为空");
+    		return ApiResult.error(500, "请求头appId或referer不能为空");
     	}
     	log.warn("{}平台接口统一请求报文：{}" , referer , JSON.toJSONString(req));
     	
