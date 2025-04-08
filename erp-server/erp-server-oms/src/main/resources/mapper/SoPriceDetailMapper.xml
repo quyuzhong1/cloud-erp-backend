@@ -224,7 +224,9 @@
         spd.min_qty as minQty,
         spd.max_qty as maxQty,
         sp.so_org_id as soOrgId,
-        sp.so_org_name as soOrgName
+        sp.so_org_name as soOrgName,
+        spd.expire_date as expireDate,
+        spd.effective_date as effectiveDate
         from so_price sp
         inner join so_price_detail spd on sp.id = spd.main_id and spd.is_deleted = false
         inner join customer_info si on sp.customer_id = si.id and si.is_deleted = false

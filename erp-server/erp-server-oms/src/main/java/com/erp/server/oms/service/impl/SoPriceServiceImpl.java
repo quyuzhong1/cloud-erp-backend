@@ -1061,6 +1061,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
                             && StrUtil.isNotBlank(obj.getSkuId()) && obj.getSkuId().equals(priceParamDTO.getSkuId())
                             && StrUtil.isNotBlank(obj.getCustomerId()) && StrUtil.isNotBlank(priceParamDTO.getCustomerId()) && obj.getCustomerId().equals(priceParamDTO.getCustomerId())
                             && StrUtil.isNotBlank(obj.getSoOrgId()) && StrUtil.isNotBlank(priceParamDTO.getSoOrgId()) && StrUtil.equals(obj.getSoOrgId(),priceParamDTO.getSoOrgId())
+                            && (ObjectUtil.isEmpty(priceParamDTO.getDate()) || obj.getEffectiveDate().equals(priceParamDTO.getDate()) || obj.getEffectiveDate().isAfter(priceParamDTO.getDate()))
                             && Objects.nonNull(purchaseQty) && (purchaseQty >= obj.getMinQty() && obj.getMaxQty() > purchaseQty))
                     .findFirst().orElse(new SoPriceDetailDTO.SoTaxPriceBatchViewDTO());
             priceDTO.setTaxPrice(viewDTO.getTaxPrice());
