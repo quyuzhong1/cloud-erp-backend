@@ -209,6 +209,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 					if(!dmpOutputTaskRecordService.getById(dmpOutputTaskRecordEntity.getId()).getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
 						if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
 							this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+							this.afterPushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
 						}
 					}
 
@@ -233,6 +234,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	protected abstract void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
+	
+	protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {}
 	
 	public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList , DmpOutputTaskRequest dmpOutputTaskRequest) {
 		DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
