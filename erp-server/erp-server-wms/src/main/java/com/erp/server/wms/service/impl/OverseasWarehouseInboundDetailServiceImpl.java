@@ -229,7 +229,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(entity.getId(),
                     userInfo.getUserName(),
                     dto.getReceivedQty(),
-                    LocalDateTime.now(ZoneId.systemDefault()));
+                    dto.getReceiveDate().atStartOfDay());
             if (!overseasWarehouseInboundReceivedService.save(receivedEntity)) {
                 throw new ServiceException("海外仓入库单签收保存失败");
             }
