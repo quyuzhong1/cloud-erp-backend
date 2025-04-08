@@ -56,6 +56,7 @@ import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
 import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -2201,6 +2202,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return new PagingVO<>(iPage);
     }
 
+
     /**
      * 回写要货申请的头程发货单生成状态
      * @author jack
@@ -3032,5 +3034,10 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
                 base64List.add(base);
             }
         }
+    }
+
+    @Override
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow() {
+        return baseMapper.rebuildFirstMileVirtualFlow();
     }
 }

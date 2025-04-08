@@ -6,6 +6,7 @@ import com.common.business.service.SuperService;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 

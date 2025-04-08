@@ -935,4 +935,12 @@ public class SoB2cFeignController extends BaseController {
         }
         return resultDTOS;
     }
+
+    /**
+     * 查询订单关联的拆分信息
+     * */
+    @PostMapping("/getSplitCombination")
+    public SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId) {
+        return soB2cRefService.getSplitCombination(soId);
+    }
 }
