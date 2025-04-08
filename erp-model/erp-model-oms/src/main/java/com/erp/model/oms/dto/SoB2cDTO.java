@@ -3718,6 +3718,10 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     public static class ExtendDataDTO {
         /**
+         * 订单数量
+         */
+        private Integer orderQty;
+        /**
          * 送货数量
          */
         private Integer deliveryQty;

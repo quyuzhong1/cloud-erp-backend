@@ -755,7 +755,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             //如果这里是速卖通的话就 对接平台
             if (logisticsPlatform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())) {
                 base64 = aliExpressPrint(logisticsPlatform, entity);
-            }else{
+            }else if(logisticsPlatform.equals(PlatformDictEnum.TIK_TOK.getCode())){
                 List<WmsAttachmentDTO.UpdateDTO> updateDTOS = wmsAttachmentService.getByBusinessIds(Collections.singletonList(id));
                 if (CollectionUtils.isNotEmpty(updateDTOS)) {
                     WmsAttachmentDTO.UpdateDTO updateDTO = updateDTOS.get(0);
@@ -767,6 +767,21 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 }else{
                     return "";
                 }
+            }else if(logisticsPlatform.equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
+                if(StringUtils.isBlank(entity.getPlatformPackageNo())){
+                    throw new ServiceException("TikTok全托管平台的物流子单（包裹号）不能为空");
+                }
+                List<PackageForecastDetailEntity> forecastDetailList = packageForecastDetailService.listDbByMainId(entity.getId());
+                List<String> soIds = forecastDetailList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
+                List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
+                List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(shopIds)){
+                    throw new ServiceException("销售订单店铺未找到");
+                }
+                String url = tikTokFullService.printLogistics(soB2cEntityList.get(0).getShopId(), entity.getPlatformPackageNo());
+                base64 = PdfUtil.convertPdfUrlToBase64(url,true);
+                String prefix = "data:application/pdf;base64,";
+                base64 = prefix + base64;
             }
         } catch (Exception e) {
             log.error("打印失败>>>>>>>{}", e);
@@ -1346,6 +1361,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("揽收地址不存在");
         }
         String addressName = addressEntity.getName();
+        tikTokFullyShippingReq.setSenderContactId(dto.getCollectAddressId());
         if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
             tikTokFullyShippingReq.setDeliveryMode("SELF_DELIVERY");
             TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
@@ -1354,6 +1370,8 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         }else{
             tikTokFullyShippingReq.setDeliveryMode("PLATFORM_DELIVERY");
+            tikTokFullyShippingReq.setShippingBoxQuantity(dto.getTotalBox());
+            tikTokFullyShippingReq.setTotalWeight(new TikTokFullyShippingReq.TotalWeightDTO(String.valueOf(dto.getDeliveryWeight()),"GRAM"));
             tikTokFullyShippingReq.setLogistics(new TikTokFullyShippingReq.LogisticsDTO(dto.getLogisticType(),dto.getProviderCode(),dto.getProviderName()));
             TikTokFullyShippingReq.ReserveInfoDTO reserveInfoDTO = new TikTokFullyShippingReq.ReserveInfoDTO();
             reserveInfoDTO.setPredictedPickupTime((int) dto.getCollectDate().atStartOfDay().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
@@ -1361,9 +1379,6 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             reserveInfoDTO.setPredictedPickupLt((int) dto.getEndTime().toInstant(ZoneOffset.ofHours(8)).getEpochSecond());
             tikTokFullyShippingReq.setReserveInfo(reserveInfoDTO);
         }
-        tikTokFullyShippingReq.setTotalWeight(new TikTokFullyShippingReq.TotalWeightDTO(String.valueOf(dto.getDeliveryWeight()),"GRAM"));
-        tikTokFullyShippingReq.setShippingBoxQuantity(dto.getTotalBox());
-        tikTokFullyShippingReq.setSenderContactId(dto.getCollectAddressId());
         try {
             TikTokFullyShippingResp tikTokFullyShippingResp = tikTokFullService.shipment(soB2cEntityList.get(0).getShopId(),tikTokFullyShippingReq);
             packageForecastEntityList.forEach(v-> {
@@ -1440,7 +1455,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
     private TikTokFullyShippingProviderReq buildReq(PackageForecastDTO.SearchShippingProviderDTO dto, List<String> deliveryCodes) {
         TikTokFullyShippingProviderReq tikTokFullyShippingProviderReq = new TikTokFullyShippingProviderReq();
         tikTokFullyShippingProviderReq.setDeliveryOption(dto.getDeliveryOption());
-        tikTokFullyShippingProviderReq.setDeliveryMode(dto.getCollectMode());
+        if(dto.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
+            tikTokFullyShippingProviderReq.setDeliveryMode("SELF_DELIVERY");
+        }else{
+            tikTokFullyShippingProviderReq.setDeliveryMode("PLATFORM_DELIVERY");
+        }
         tikTokFullyShippingProviderReq.setSenderContactId(dto.getAddressId());
         tikTokFullyShippingProviderReq.setDeliveryOrderCodes(deliveryCodes);
         tikTokFullyShippingProviderReq.setTotalWeight(new TikTokFullyShippingProviderReq.TotalWeightDTO(String.valueOf(dto.getWeight()),"GRAM"));
