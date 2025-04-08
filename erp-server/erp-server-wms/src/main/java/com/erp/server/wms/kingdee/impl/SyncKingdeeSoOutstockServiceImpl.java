@@ -146,7 +146,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoOutstockEntity entity, String operate) {
         //生成任务
-        return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncB2cDataToKingdee(entity, operate));
+    	}
     }
 
 
@@ -185,7 +189,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncWdtDataToKingdee(SoOutstockEntity entity, String operate) {
         //生成任务
-        return saveTask(entity, operate, this.newSyncWdtDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncB2cDataToKingdee(entity, operate));
+    	}
     }
 
     /**
