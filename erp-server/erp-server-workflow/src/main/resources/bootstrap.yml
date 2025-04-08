@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-workflow
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9040
+  port: 7040
 
 logging:
   config: classpath:logback-spring.xml

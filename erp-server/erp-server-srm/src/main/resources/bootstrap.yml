@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-srm
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9130
+  port: 7130
 
 logging:
   config: classpath:logback-spring.xml

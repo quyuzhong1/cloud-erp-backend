@@ -2,9 +2,9 @@ spring:
   application:
     name: erp-wms
   profiles:
-    active: dev
+    active: test
 server:
-  port: 9090
+  port: 7090
 
 logging:
   config: classpath:logback-spring.xml
