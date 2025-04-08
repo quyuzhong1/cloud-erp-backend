@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
+public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     @Resource
     private ThirdShopService thirdShopService;
     @Resource
@@ -70,52 +70,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
     private DmpOutputCreateFactory dmpOutputCreateFactory;
 
     @Override
-    protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
-        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-        if(!map.isEmpty()) {
-            LocalDateTime now = LocalDateTime.now();
-            int i = 0;
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                String dataId = entry.getKey();
-                String value = entry.getValue();
-                ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(value, ShudiyunB2cOrderDTO.class);
-                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                dmpOutputTaskRecordEntity.setId(id);
-                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                dmpOutputTaskRecordEntity.setDataId(dataId);
-                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
-                dmpOutputTaskRecordEntity.setRequestData(value);
-                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                i = i + 1;
-            }
-        }
-
-        return dmpOutputTaskRecordEntityList;
-    }
-
-    @Override
-    protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
-        String id = dmpOutputTaskRecordEntity.getId();
-        String status = "";
-        String requestData = dmpOutputTaskRecordEntity.getRequestData();
-        ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if (200 == handle.getCode()) {
-            status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
-        } else {
-            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-        }
-
-        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
-
-        //创建旺店通原始订单任务
+    protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
+    		DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	//创建旺店通原始订单任务
         List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
-
+        String requestData = dmpOutputTaskRecordEntity.getRequestData();
         if(requestData.trim().startsWith("{")) {
             ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
             shudiyunB2cOrderDTOList.add(dto);
@@ -138,7 +97,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
         });
     }
-
 
     /**
      * 解析订单数据

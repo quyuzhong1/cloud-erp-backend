@@ -160,7 +160,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
             if (CharSequenceUtil.isBlank(sourceCode)) {
-                continue;
+//                continue;
             }
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
@@ -182,7 +182,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
             if (CharSequenceUtil.isBlank(sourceCode)) {
-                continue;
+//                continue;
             }
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
