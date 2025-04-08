@@ -428,14 +428,7 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                 //订单只有待提交、审核不通过时允许导入更新
                 if(!soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !soB2cEntity.getApproveStatus().equals(ApproveStatusEnum.REJECT)){
                     errorMsgList.add("【"+soB2cEntity.getCode() + "】订单只有待提交、审核不通过时允许导入更新");
-                }
-            }
-            if (CollectionUtils.isNotEmpty(errorMsgList)) {
-                List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
-                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
-                errorList.add(excelDTO);
-            }else {
-                for (SoB2cEntity soB2cEntity : soB2cList) {
+                }else{
                     //如果买家名为空，则使用收件人名
                     if (StringUtils.isBlank(excelDTO.getCustomerName())) {
                         excelDTO.setCustomerName(excelDTO.getReceiverName());
@@ -470,6 +463,11 @@ public class SoB2cReceiverServiceImpl extends SuperServiceImpl<SoB2cReceiverMapp
                         operateLogService.addModuleOperateLogByObj(soB2cReceiverMap.get(soB2cEntity.getId()), b2cReceiverEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
                     }
                 }
+            }
+            if (CollectionUtils.isNotEmpty(errorMsgList)) {
+                List<String> itemErrorList = errorMsgList.stream().distinct().collect(Collectors.toList());
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
+                errorList.add(excelDTO);
             }
         }
     }
