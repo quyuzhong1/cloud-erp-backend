@@ -1665,11 +1665,22 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                         .collect(Collectors.toMap(InventorySkuCostDTO.SkuCostDTO::getSkuId, InventorySkuCostDTO.SkuCostDTO::getProductCost,(o1,o2)->o1));
                 //计算发货单sku成本
                 Map<String, BigDecimal> deliveryCodeCostMap = calculateDeliveryCodeCost(listPackingCartonDTOS, skuCostMap);
-                tempList.forEach(e -> {
-                    e.setSkuCost(deliveryCodeCostMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO));
-                });
+                Map<String, List<FirstMileReconciliationStandardExcelDTO>> collect = tempList.stream().collect(Collectors.groupingBy(FirstMileReconciliationStandardExcelDTO::getNo));
+                tempList.clear();
+                for (Map.Entry<String, List<FirstMileReconciliationStandardExcelDTO>> entry : collect.entrySet()) {
+                    List<FirstMileReconciliationStandardExcelDTO> value = entry.getValue();
+                    if(value.stream().allMatch(e -> deliveryCodeCostMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO).compareTo(BigDecimal.ZERO) > 0)){
+                        value.forEach(e -> e.setSkuCost(deliveryCodeCostMap.get(e.getSourceCode())));
+                        tempList.addAll(value);
+                    }else {
+                        value.forEach(e -> e.setErrorMsg("查询SKU成本失败，请先维护SKU成本信息"));
+                        errorList.addAll(value);
+                    }
+                }
             }
-
+            if(CollUtil.isEmpty(tempList)){
+                return resultList;
+            }
             tempList.forEach(e -> {
                 e.setGrossWeigh(deliveryCodeWeightMap.getOrDefault(e.getSourceCode(), BigDecimal.ZERO));
             });
