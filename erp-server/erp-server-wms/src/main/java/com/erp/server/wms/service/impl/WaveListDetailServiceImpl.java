@@ -171,7 +171,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         InventoryBatchUnApproveDTO inventoryBatchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.SO_B2C_DELIVERY, Collections.singletonList(deliveryId));
         inventoryTransCoreService.batchUnApprove(inventoryBatchUnApproveDTO);
         //修改发货单状态：待处理
-        deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()).eq("id", deliveryId).notIn("status", SoB2cDeliveryStatusEnum.SHIPPED.getCode(), SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode()));
+        deliveryService.update(new UpdateWrapper<SoB2cDeliveryEntity>().set("status", SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode()).eq("id", deliveryId).notIn("status", SoB2cDeliveryStatusEnum.SHIPPED.getCode(), SoB2cDeliveryStatusEnum.EXCEPTION_ORDER.getCode(), SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getCode()));
         //删除拣货单
         PickingListsEntity pickingListEntity = pickingListsService.getOne(new LambdaQueryWrapper<PickingListsEntity>().eq(PickingListsEntity::getSourceId, deliveryId));
         pickingListsService.remove(new LambdaQueryWrapper<PickingListsEntity>().eq(PickingListsEntity::getId, pickingListEntity.getId()));
