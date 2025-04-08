@@ -187,7 +187,8 @@ public class SyncSdyJob {
                 // 最新已发货单
                 List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryFeign.listBySourceId(selfAddSoIds)
                         .stream()
-                        .filter(e -> Objects.equals(e.getStatus(), SoB2cDeliveryStatusEnum.SHIPPED.getCode())).collect(Collectors.toList());
+                        .filter(e -> e.getStatus().equalsIgnoreCase(SoB2cDeliveryStatusEnum.SHIPPED.getCode()))
+                        .collect(Collectors.toList());
                 soB2cDeliveryEntityMap = soB2cDeliveryEntityList.stream().collect(Collectors.groupingBy(SoB2cDeliveryEntity::getSourceId));
                 if (!CollectionUtils.isEmpty(soB2cDeliveryEntityList)) {
                     List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
