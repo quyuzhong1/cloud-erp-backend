@@ -103,13 +103,60 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
             errorMsgList.addAll(msgList);
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getPayTimeStr())) {
-            excelDTO.setPayTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getPayTimeStr()));
+            try {
+                excelDTO.setPayTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getPayTimeStr()));
+            }catch (Exception e){
+                errorMsgList.add("支付时间格式错误");
+            }
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getRequiredDeliveryTimeStr())) {
-            excelDTO.setRequiredDeliveryTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredDeliveryTimeStr()));
+            try {
+                excelDTO.setRequiredDeliveryTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredDeliveryTimeStr()));
+            }catch (Exception e){
+                errorMsgList.add("预计发货时间格式错误");
+            }
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getRequiredReceiveTimeStr())) {
-            excelDTO.setRequiredReceiveTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredReceiveTimeStr()));
+            try {
+                excelDTO.setRequiredReceiveTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredReceiveTimeStr()));
+            }catch (Exception e){
+                errorMsgList.add("预计收货时间格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getAmountStr())) {
+            try {
+                excelDTO.setAmount(new BigDecimal(excelDTO.getAmountStr()));
+            }catch (Exception e){
+                errorMsgList.add("订单金额格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getPriceStr())) {
+            try {
+                excelDTO.setPrice(new BigDecimal(excelDTO.getPriceStr()));
+            }catch (Exception e){
+                errorMsgList.add("真实售价格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getTaxRateStr())) {
+            try {
+                excelDTO.setTaxRate(new BigDecimal(excelDTO.getTaxRateStr()));
+            }catch (Exception e){
+                errorMsgList.add("税率式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getActualShippingCostStr())) {
+            try {
+                excelDTO.setActualShippingCost(new BigDecimal(excelDTO.getActualShippingCostStr()));
+            }catch (Exception e){
+                errorMsgList.add("实际运费格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getQtyStr())) {
+            try {
+                excelDTO.setQty(new Integer(excelDTO.getQtyStr()));
+            }catch (Exception e){
+                errorMsgList.add("下单数量格式错误");
+            }
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getPackageSize())) {
             //根据*拆分，并转换成长宽高
