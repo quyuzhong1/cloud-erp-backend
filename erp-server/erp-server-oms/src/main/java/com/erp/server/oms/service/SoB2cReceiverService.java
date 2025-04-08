@@ -9,7 +9,9 @@ import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 
@@ -86,4 +88,6 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
     void buildPartitionId(SoB2cReceiverEntity receiverEntity, ShopInfoEntity shopInfoEntity);
 
     IPage<SoB2cReceiverEntity> pagePartitionIsNull(Page query);
+
+    void importB2cCustomerFile(MultipartFile excelFile, HttpServletResponse response);
 }
