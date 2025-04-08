@@ -140,7 +140,6 @@ public class PackageForecastDTO implements Serializable {
         /**
          * 物流类型
          */
-        @NotBlank(message = "物流类型不能为空")
         private String deliveryOption;
 
         /**
