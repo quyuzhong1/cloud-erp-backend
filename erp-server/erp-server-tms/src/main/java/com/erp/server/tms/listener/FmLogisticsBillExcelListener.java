@@ -233,16 +233,31 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                 logisticsSupplierEntity = null;
             }
             if(StringUtils.isNotBlank(excelDTO.getChannelName())){
-                LogisticsChannelEntity logisticsChannelEntity = logisticsChannelEntityList.stream().filter(v->v.getName().equals(excelDTO.getChannelName())).findFirst().orElse(null);
-                if(Objects.isNull(logisticsChannelEntity)){
+                List<LogisticsChannelEntity> currentlogisticsChannelEntityList = logisticsChannelEntityList.stream().filter(v->v.getName().equals(excelDTO.getChannelName())).collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(currentlogisticsChannelEntityList)){
                     errorMsgList.add("渠道不存在");
                 }else{
-                    if(Objects.nonNull(logisticsSupplierEntity) && !logisticsSupplierEntity.getId().equals(logisticsChannelEntity.getMainId())){
-                        errorMsgList.add("渠道与物流商不匹配");
+                    if(currentlogisticsChannelEntityList.size() > 1 && Objects.isNull(logisticsSupplierEntity)){
+                        errorMsgList.add("渠道存在多条，请选择对应的物流商");
+                    }else if (currentlogisticsChannelEntityList.size() > 1){
+                        LogisticsChannelEntity logisticsChannel = currentlogisticsChannelEntityList.stream().filter(v->v.getMainId().equals(entity.getLogisticsSupplierId())).findFirst().orElse(null);
+                        if(Objects.isNull(logisticsChannel)) {
+                            errorMsgList.add("渠道与物流商不匹配");
+                        }else{
+                            entity.setChannelId(logisticsChannel.getId());
+                            if(StringUtils.isBlank(entity.getLogisticsSupplierId())){
+                                entity.setLogisticsSupplierId(logisticsChannel.getMainId());
+                            }
+                        }
                     }else{
-                        entity.setChannelId(logisticsChannelEntity.getId());
-                        if(StringUtils.isBlank(entity.getLogisticsSupplierId())){
-                            entity.setLogisticsSupplierId(logisticsChannelEntity.getMainId());
+                        LogisticsChannelEntity logisticsChannel = currentlogisticsChannelEntityList.get(0);
+                        if(Objects.nonNull(logisticsSupplierEntity) && !logisticsSupplierEntity.getId().equals(logisticsChannel.getMainId())){
+                            errorMsgList.add("渠道与物流商不匹配");
+                        }else{
+                            entity.setChannelId(logisticsChannel.getId());
+                            if(StringUtils.isBlank(entity.getLogisticsSupplierId())){
+                                entity.setLogisticsSupplierId(logisticsChannel.getMainId());
+                            }
                         }
                     }
                 }
