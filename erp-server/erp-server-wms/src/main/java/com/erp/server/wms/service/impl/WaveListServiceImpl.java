@@ -403,7 +403,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
         List<PickingListsDTO.CombinationPrintDetailView> deliveryDetailList = deliveryService.getDeliveryDetail(deliveryIds);
         printPickingMainDTO.setCombinationPrintDetailList(deliveryDetailList);
-        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds);
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds, true);
         if (CollUtil.isEmpty(printPickingViewList)) {
             return null;
         }

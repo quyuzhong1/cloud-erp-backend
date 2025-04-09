@@ -504,7 +504,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
 
     @Override
-    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
+    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids, boolean isAddWave) {
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
 
         //待处理、已发货和取消发货单 状态，不允许在打印拣货单
@@ -563,9 +563,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (ObjectUtil.isEmpty(viewDTO.getWarehouseLocation())) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
-            //波次信息
-            WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
-            viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
+            if (isAddWave){
+                //波次信息
+                WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
+                viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
+            }else {
+                viewDTO.setWaveCode("");
+            }
+
             printPickingViewList.add(viewDTO);
         }
         // 合并处理数量不相同的行
@@ -1310,9 +1315,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, SoB2cDetailEntity> soB2cDetailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity()));
         Map<String, SoB2cLogisticsEntity> logisticsMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
         Map<String, LogisticsChannelDTO.BaseDTO> channelMap = channelInfoList.stream().collect(Collectors.toMap(LogisticsChannelDTO.BaseDTO::getId, Function.identity()));
-        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntityList) {
+        Map<String, List<SoB2cDeliveryDetailEntity>> deliveryMap = soB2cDeliveryDetailEntityList.stream().collect(Collectors.groupingBy(e -> e.getMainId() + e.getSourceDetailId()));
+        //循环遍历 deliveryMap
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : deliveryMap.entrySet()) {
+            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
             SoB2cDeliveryDTO.PrintSkuBarcodeDTO printSkuBarcodeDTO = new SoB2cDeliveryDTO.PrintSkuBarcodeDTO();
-            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(detailEntity.getMainId());
+
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(value.get(0).getMainId());
             if (Objects.isNull(soB2cDeliveryEntity)) {
                 continue;
             }
@@ -1320,21 +1329,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (Objects.isNull(soB2cEntity)) {
                 continue;
             }
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(detailEntity.getSourceDetailId());
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(value.get(0).getSourceDetailId());
             if (Objects.isNull(soB2cDetailEntity)) {
                 continue;
             }
-            printSkuBarcodeDTO.setId(detailEntity.getMainId());
+            printSkuBarcodeDTO.setId(soB2cDeliveryEntity.getId());
             printSkuBarcodeDTO.setCode(soB2cDeliveryEntity.getCode());
             printSkuBarcodeDTO.setSoId(soB2cEntity.getId());
             printSkuBarcodeDTO.setSoCode(soB2cEntity.getCode());
             printSkuBarcodeDTO.setPlatformCode(soB2cEntity.getPlatformCode());
             printSkuBarcodeDTO.setShopId(soB2cEntity.getShopId());
-            printSkuBarcodeDTO.setSkuId(detailEntity.getSkuId());
-            printSkuBarcodeDTO.setSkuNo(detailEntity.getSkuNo());
+            printSkuBarcodeDTO.setSkuId(soB2cDetailEntity.getSkuId());
+            printSkuBarcodeDTO.setSkuNo(soB2cDetailEntity.getSkuNo());
             printSkuBarcodeDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
             printSkuBarcodeDTO.setPlatformSpuNo(soB2cDetailEntity.getPlatformSpuNo());
-            printSkuBarcodeDTO.setQty(detailEntity.getDeliveryQty());
+            printSkuBarcodeDTO.setQty(soB2cDetailEntity.getQty());
             SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsMap.get(soB2cEntity.getId());
             if (Objects.nonNull(soB2cLogisticsEntity)) {
                 printSkuBarcodeDTO.setTransportNo(soB2cLogisticsEntity.getCode());

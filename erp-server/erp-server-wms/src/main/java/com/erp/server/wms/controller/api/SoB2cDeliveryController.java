@@ -236,7 +236,7 @@ public class SoB2cDeliveryController extends BaseController {
     )
     public ApiResult<SoB2cDeliveryDTO.PrintPickingDTO> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         SoB2cDeliveryDTO.PrintPickingDTO printPickingDTO = new SoB2cDeliveryDTO.PrintPickingDTO();
-        printPickingDTO.setPrintPickingViewDTOList(soB2cDeliveryService.printPickingView(dto.getIds()));
+        printPickingDTO.setPrintPickingViewDTOList(soB2cDeliveryService.printPickingView(dto.getIds(), false));
         printPickingDTO.setCombinationPrintDetailList(soB2cDeliveryService.getDeliveryDetail(dto.getIds()));
         return success(printPickingDTO);
     }
