@@ -60,7 +60,7 @@
                 AND cis.is_deleted = FALSE
                 <!-- 权限 -->
                 <if test="params.permissionSql!=null and params.permissionSql!=''">
-                    AND ${params.permissionSql}
+                    ${params.permissionSql}
                 </if>
                 GROUP BY cis.id, cis.type, cis.company_name, cis.lei_code, cis.disabled
                        , cis.tax_type, cis.dict_company_type, cis.state_tax_no, cis.email
