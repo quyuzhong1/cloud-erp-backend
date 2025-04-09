@@ -642,21 +642,16 @@ public class AfterSaleDTO implements Serializable {
         /**
          *
          */
-        private String skuName;
+        private String prodcutName;
         /**
          *
          */
-        private Integer qty;
+        private Integer skuQty;
 
         /**
          * 单价
          */
         private BigDecimal price;
-
-        /**
-         * 数量 * 单价 = 货值
-         */
-        private BigDecimal skuPrice;
 
         /**
          *
