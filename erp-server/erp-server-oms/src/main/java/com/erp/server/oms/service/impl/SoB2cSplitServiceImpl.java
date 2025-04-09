@@ -888,11 +888,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 addDetailDTO.setOperateDetailId(detailEntity.getId());
                 if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
                     SoPriceDTO.PriceDTO priceDTO = priceDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(priceDTO)) {
-                        throw new ServiceException(ApiError.ERROR_SO_B2C_SPLIT_PRICE, entity.getCode(), detailEntity.getSkuNo());
-                    }
-                    addDetailDTO.setPrice(priceDTO.getTaxPrice());
-                    addDetailDTO.setTaxRate(priceDTO.getTaxRate());
+                    addDetailDTO.setPrice(Objects.nonNull(priceDTO) ? priceDTO.getTaxPrice() : detailEntity.getPrice());
+                    addDetailDTO.setTaxRate(Objects.nonNull(priceDTO) ?  priceDTO.getTaxRate() : detailEntity.getTaxRate());
                 }
                 detailList.add(addDetailDTO);
                 //累加拆分金额

@@ -1272,6 +1272,10 @@ public class SoB2cDTO implements Serializable {
          * 扩展字段
          */
         private String extendData;
+        /**
+         * 标签json
+         */
+        private String labelJson;
 
         /**
          * 物流信息
