@@ -1,24 +1,21 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
+import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.server.oms.service.InvoiceInfoService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -99,6 +96,19 @@ public class InvoiceInfoController extends BaseController {
     }
 
     /**
+     * 生成发票校验
+     * @author will
+     * @date 2025/4/8 14:22
+     * @param dto
+     * @return ApiResult<List<ViewDTO>>
+     */
+    @PostMapping("/checkGenerateInvoice")
+    public ApiResult<List<InvoiceTaxDTO.CheckGenerateInvoiceDTO>> checkGenerateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> list = invoiceInfoService.checkGenerateInvoice(dto.getIds());
+        return  success(list);
+    }
+
+    /**
      * 上传发票
      */
     @PostMapping("/uploadInvoice")
@@ -118,4 +128,88 @@ public class InvoiceInfoController extends BaseController {
         return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
+    /**
+     * 导出发票xml(返回url下载)
+     * @author will
+     * @date 2025/4/8 09:39
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/exportXml")
+    public ApiResult<Resource> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        return success(invoiceInfoService.exportXml(dto));
+    }
+
+    /**
+     * 导出发票pdf(返回url下载)
+     * @author will
+     * @date 2025/4/8 09:39
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("/exportPdf")
+    public ApiResult<Resource> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        return success(invoiceInfoService.exportPdf(dto));
+    }
+
+    /**
+     * 开具Cce数据回显
+     * @author will
+     * @date 2025/4/8 09:37
+     * @param id
+     * @return ApiResult<ViewCceDTO>
+     */
+    @GetMapping("/viewCce")
+    @LogViewService
+    public ApiResult<InvoiceInfoDTO.ViewCceDTO> viewCce(@RequestParam(value = "id") String id) {
+        return success(invoiceInfoService.viewCce(id));
+    }
+
+    /**
+     * 开局Cce
+     * @author will
+     * @date 2025/4/8 09:31
+     * @param dto
+     * @return ApiResult<Object>
+     */
+    @PostMapping("/updateCce")
+    public ApiResult<BatchResultDTO> updateCce(@RequestBody @Valid InvoiceInfoDTO.UpdateCceDTO dto) {
+        return success(invoiceInfoService.updateCce(dto));
+    }
+
+    /**
+     * 取消发票
+     * @author will
+     * @date 2025/4/7 18:40
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/cancelInvoice")
+    public ApiResult<BatchResultDTO> cancelInvoice(@RequestBody @Validated InvoiceInfoDTO.RemarkDTO dto) {
+        return success(invoiceInfoService.cancelInvoice(dto.getId(),dto.getRemark()));
+    }
+
+    /**
+     * 退票
+     * @author will
+     * @date 2025/4/7 18:40
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/returnInvoice")
+    public ApiResult<BatchResultDTO> returnInvoice(@RequestBody @Validated InvoiceInfoDTO.RemarkDTO dto) {
+        return success(invoiceInfoService.returnInvoice(dto.getId(),dto.getRemark()));
+    }
+
+    /**
+     * 无需开票
+     * @author will
+     * @date 2025/4/7 18:40
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/notNeedInvoice")
+    public ApiResult<BatchResultDTO> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.RemarkDTO dto) {
+        return success(invoiceInfoService.notNeedInvoice(dto.getId(),dto.getRemark()));
+    }
 }

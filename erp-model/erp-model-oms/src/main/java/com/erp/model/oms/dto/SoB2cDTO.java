@@ -819,6 +819,11 @@ public class SoB2cDTO implements Serializable {
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+
+        /**
+         * 发票状态，SoB2cNfeStatusEnum枚举
+         */
+        private String invoiceStatus;
     }
 
 
