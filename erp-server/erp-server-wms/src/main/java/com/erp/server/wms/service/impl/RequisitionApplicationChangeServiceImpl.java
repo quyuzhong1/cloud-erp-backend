@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -44,6 +45,7 @@ import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.RequisitionApplicationChangeMapper;
 import com.erp.server.wms.service.*;
@@ -112,7 +114,8 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
-
+    @Resource
+    private AuthDataFeign authDataFeign;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(RequisitionApplicationChangeDTO.ViewDTO addDTO) {
@@ -163,7 +166,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Override
     public PagingVO<RequisitionApplicationChangeDTO.ListDTO> paging(PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<RequisitionApplicationChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
@@ -173,11 +176,20 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
-
+    private String getPermissionSql(String permissionSql) {
+        permissionSql = CharSequenceUtil.isBlank(permissionSql) ? " AND 1=1 " : permissionSql;
+        // 店铺权限
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("ra.channel_id");
+        shopPermissionSql = CharSequenceUtil.isBlank(shopPermissionSql)? " AND 1=1 " : shopPermissionSql;
+        // 仓库权限
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("rad.to_warehouse_id");
+        warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
+        return CharSequenceUtil.format("{} and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
+    }
     @Override
     public List<RequisitionApplicationChangeDTO.TabListDTO> tabList(PermissionsDTO param) {
         RequisitionApplicationChangeDTO.PagingParamDTO searchParam = new RequisitionApplicationChangeDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
+        searchParam.setPermissionSql(getPermissionSql(param.getPermissionSql()));
         List<RequisitionApplicationChangeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
