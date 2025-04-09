@@ -149,4 +149,6 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @return
      */
     DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass);
+    
+    List<String> outputErrorCountMsg();
 }
