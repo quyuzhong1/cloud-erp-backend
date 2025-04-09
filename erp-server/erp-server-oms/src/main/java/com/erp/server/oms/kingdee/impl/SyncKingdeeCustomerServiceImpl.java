@@ -135,9 +135,8 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);
         contractPushEnityLsit.add(pushTaskEntity);
         
-        Object object = resultMap.get("customerList");
-        if(object != null) {
-        	List<CustomerContactEntity> contactEntities = (List<CustomerContactEntity>) object;
+        List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
+        if(CollUtil.isNotEmpty(contactEntities)) {
         	//审核通过联系人发送金蝶
             contactEntities.forEach(obj -> {
                 DmpPushTaskEntity taskEntity = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
