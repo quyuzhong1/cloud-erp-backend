@@ -18,4 +18,9 @@ public class DmpOutputCreateRequest extends DmpOutputRequest{
 	 * 是否抛出异常
 	 */
 	private boolean isThrowException = false;
+	
+	/**
+	 * 是否校验黑名单
+	 */
+	private boolean isNotValidate = false;
 }
