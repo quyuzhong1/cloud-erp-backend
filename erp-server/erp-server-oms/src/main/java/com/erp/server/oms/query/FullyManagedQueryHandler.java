@@ -305,11 +305,11 @@ public class FullyManagedQueryHandler extends AbstractQueryHandler {
         }
         //即将超时
         if (FullyManagedTabEnum.ENUM_WILL_TIMEOUT.getCode().equals(value)) {
-            return "NOW() >= sbe.delivery_warning_time and sbe.required_delivery_time >= NOW() and sb2c.bill_status != 'shipped'";
+            return "NOW() >= sbe.delivery_warning_time and sbe.required_delivery_time >= NOW() and sb2c.bill_status != 'shipped' and sb2c.invalid_status = false";
         }
         //已超时
         if (FullyManagedTabEnum.ENUM_HAS_TIMEOUT.getCode().equals(value)) {
-            return "NOW() > sbe.required_delivery_time and sb2c.bill_status != 'shipped'";
+            return "NOW() > sbe.required_delivery_time and sb2c.bill_status != 'shipped' and sb2c.invalid_status = false";
         }
         if (CollectionUtils.isNotEmpty(approveStatusList)) {
             super.buildDefaultDTO("sb2c.approve_status", approveStatusList);
