@@ -3,7 +3,6 @@ package com.erp.model.tms.dto.excel;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
@@ -73,9 +72,11 @@ public class FirstMileReconciliationStandardExcelDTO implements Serializable {
     @FieldValid(fieldName = "币种", isNotBlank = true)
     private String currency;
 
+
     /**
      * 错误信息
      */
+    @ExcelProperty(value = "错误信息", index = 9)
     private String errorMsg;
     @ExcelIgnore
     private String logisticsBillId;
