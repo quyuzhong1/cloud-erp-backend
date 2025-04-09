@@ -8,7 +8,6 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
@@ -67,7 +66,7 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
     public InvoiceTaxDTO.ViewDTO view(String listingId) {
         InvoiceTaxEntity taxEntity = getByListingId(listingId);
         if (ObjUtil.isEmpty(taxEntity)) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_TAX_NOT_EXIST);
+            return  new InvoiceTaxDTO.ViewDTO();
         }
         return BeanUtil.toBean(taxEntity, InvoiceTaxDTO.ViewDTO.class);
     }
