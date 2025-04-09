@@ -86,4 +86,14 @@ public class AfterSaleFeignController extends BaseController {
         return success(afterSaleService.getDetailByPlatformCode(platformCode));
     }
 
+    /**
+     * 获取节点配置信息
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("/getNodeList")
+    ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
+        return success(afterSaleService.getNodeList());
+    }
+
 }

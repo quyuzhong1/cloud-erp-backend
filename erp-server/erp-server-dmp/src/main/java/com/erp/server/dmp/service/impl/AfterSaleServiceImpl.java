@@ -637,7 +637,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     /**
      * 获取节点配置信息
      */
-    private List<AfterSaleDTO.NodeDTO>  getNodeList() {
+    @Override
+    public List<AfterSaleDTO.NodeDTO>  getNodeList() {
         String value = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_NODE);
         if (StringUtils.isBlank(value)) {
             throw new ServiceException("售后维修节点配置不存在");
@@ -698,10 +699,18 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (CollUtil.isEmpty(entityList)) {
             throw new ServiceException("未找到售后申请单数据");
         }
+
+        if(StringUtil.isBlank(dto.getNode())){
+            throw new ServiceException("请选择单据状态");
+        }
+
+        List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
+        AfterSaleDTO.NodeDTO node = nodeList.stream().filter(t -> t.getNode().equals(dto.getNode())).findFirst().orElseThrow(() -> new ServiceException("未找到节点配置信息"));
+
+
         for (AfterSaleEntity entity : entityList) {
             BatchResultDTO batchResultDTO;
-            // 待提交或审核不通过并且未作废允许作废
-            if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus()))){
+            if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus()))){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有审核通过未作废的单据才能进行状态变更");
             }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未完成的单据才能进行状态变更");
@@ -711,15 +720,25 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 entity.setStatus(dto.getNode());
                 updateById(entity);
 
-                afterSaleProgressService.updateStatus(entity.getId(), dto.getNode(),dto.getRemark());
+                List<AfterSaleProgressEntity> progressList = afterSaleProgressService.getByMainIds(Collections.singletonList(entity.getId())).stream()
+                        .filter(t -> Objects.isNull(t.getNodeTime())).collect(Collectors.toList());
 
+                for (AfterSaleProgressEntity afterSaleProgressEntity : progressList) {
+                    Integer index = afterSaleProgressEntity.getIndex();
+                    if(index.compareTo(node.getIndex())<0){
+                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                    }
+                    if(index.compareTo(node.getIndex())==0){
+                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                        afterSaleProgressEntity.setRemark(dto.getRemark());
+                    }
+                }
+                afterSaleProgressService.updateBatchById(progressList);
             }
             resultList.add(batchResultDTO);
         }
         return resultList;
     }
-
-
 
 
     /**
