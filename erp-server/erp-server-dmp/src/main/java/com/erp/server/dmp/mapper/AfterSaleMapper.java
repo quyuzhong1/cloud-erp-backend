@@ -1,4 +1,5 @@
 package com.erp.server.dmp.mapper;
+import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -52,4 +53,8 @@ public interface AfterSaleMapper extends BaseMapper<AfterSaleEntity> {
     * @return
     */
     List<AfterSaleDTO.TabListDTO> tabList(@Param("params") AfterSaleDTO.PagingParamDTO searchParam);
+
+    List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(@Param("params")AfterSaleDTO.ProgressDTO params);
+
+    List<AfterSaleProgressDTO.RepairHistoryListDTO> getRepairHistory(@Param("params")AfterSaleDTO.ThridUserDTO params);
 }
