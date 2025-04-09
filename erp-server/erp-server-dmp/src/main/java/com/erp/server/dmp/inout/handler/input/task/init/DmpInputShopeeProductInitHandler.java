@@ -102,7 +102,10 @@ public class DmpInputShopeeProductInitHandler extends DmpInputInitHandler{
 	    	if(hasNextPage) {
 	    		productRequest.setOffset(result.getInt("next_offset"));
 	    	}
-	    	item.addAll(result.getJSONArray("item"));
+	    	cn.hutool.json.JSONArray itemData = result.getJSONArray("item");
+	    	if(CollUtil.isNotEmpty(itemData)) {
+	    		item.addAll(itemData);
+	    	}
 		}
 		dmpInputTaskInitDTO.setMsg(item.toJSONString());
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
