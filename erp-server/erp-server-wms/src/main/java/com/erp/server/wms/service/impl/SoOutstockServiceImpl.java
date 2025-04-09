@@ -1318,6 +1318,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
         soOutstockDetailAllList.addAll(soOutstockDetailEntityList);
 
+        Map<String, List<SoOutstockDetailEntity>> detailMap = soOutstockDetailAllList.stream().collect(Collectors.groupingBy(SoOutstockDetailEntity::getMainId));
+
         Boolean result = this.removeByIds(ids);
         if (result) {
             //添加日志
@@ -1336,7 +1338,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             //推送数帝云
             for (SoOutstockEntity outstockEntity : list) {
-                syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, soOutstockDetailAllList, SyncOperateEnum.OPERATE_DELETE.getCode());
+                List<SoOutstockDetailEntity> detailEntityList = detailMap.get(outstockEntity.getId());
+                syncKingdeeSoOutstockService.syncDataToSdy(outstockEntity, detailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
             }
 
         }
@@ -2651,7 +2654,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     }
 
     private List<SoOutstockEntity> getBySoIdAndWarehouseId(String soB2cId, String warehouseId) {
-        return this.lambdaQuery().eq(SoOutstockEntity::getSoId, soB2cId).eq(SoOutstockEntity::getWarehouseId,warehouseId).list();
+        return this.lambdaQuery().eq(SoOutstockEntity::getSoId, soB2cId).eq(CharSequenceUtil.isNotBlank(warehouseId), SoOutstockEntity::getWarehouseId,warehouseId).list();
     }
 
     /**
@@ -3300,7 +3303,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         LocalDateTime deliveryTime = platformGenerateSoOutstockDTO.getDeliveryTime();
         String warehouseId = generateB2cDTO.getWarehouseId();
         String soB2cId = generateB2cDTO.getSoId();
-        List<SoOutstockEntity> outstockList = this.getBySoIdAndWarehouseId(soB2cId,warehouseId);
+        List<SoOutstockEntity> outstockList = this.getBySoIdAndWarehouseId(soB2cId,null);
         //判断是否是历史数据
         SoOutstockEntity outstock = CollUtil.isNotEmpty(outstockList) ? outstockList.stream().filter(e -> Objects.equals(thirdCode, e.getThirdCode())).findFirst().orElse(null) : null;
         if (Objects.isNull(outstock)){

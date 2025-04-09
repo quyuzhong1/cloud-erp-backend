@@ -581,4 +581,11 @@ public interface SysUserFeign {
 
     @PostMapping("feign/dept/getDeptByIds")
     List<SysDepartmentEntity> getDeptByIds(@RequestBody List<String> ids);
+
+
+    /**
+     * 获取所有的部门信息
+     */
+    @GetMapping("feign/dept/getDeptEntityList")
+    List<SysDepartmentEntity> getDeptEntityList();
 }
