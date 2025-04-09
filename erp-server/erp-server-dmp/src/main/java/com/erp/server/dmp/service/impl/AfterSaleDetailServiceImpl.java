@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 /**
  * <p>
@@ -84,6 +87,14 @@ public class AfterSaleDetailServiceImpl extends SuperServiceImpl<AfterSaleDetail
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, afterSaleDetailEntity, null, afterSaleDetailEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<AfterSaleDetailEntity> listByMainIds(List<String> ids) {
+        if(CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(AfterSaleDetailEntity::getMainId, ids).list();
     }
 
 

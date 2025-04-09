@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.AfterSaleDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 售后申请明细表 服务类
@@ -33,4 +35,5 @@ public interface AfterSaleDetailService extends SuperService<AfterSaleDetailEnti
     Boolean update(AfterSaleDetailDTO.UpdateDTO dto);
 
 
+    List<AfterSaleDetailEntity> listByMainIds(List<String> ids);
 }

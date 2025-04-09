@@ -23,12 +23,18 @@ import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
+import com.erp.model.dmp.dto.AttachmentDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.dmp.enums.AfterSaleStatusEnum;
@@ -40,7 +46,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,13 +66,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, AfterSaleEntity> implements AfterSaleService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
-
     @Resource
     private AttachmentService attachmentService;
     @Resource
@@ -84,6 +88,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private WxMiniAppService wxMiniAppService;
     @Resource
     private DmpSoInfoService dmpSoInfoService;
+    @Resource
+    private DmpSoOriginalInfoService dmpSoOriginalInfoService;
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
 
 
 
@@ -238,17 +246,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         AfterSaleDTO.PagingParamDTO searchParam = new AfterSaleDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<AfterSaleDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        list.forEach(item -> item.setTabFlagName(ApproveStatusEnum.getName(item.getTabFlag())));
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();
         // 不存在的状态赋值为0
         List<String> existStatusList = list.stream().map(AfterSaleDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new AfterSaleDTO.TabListDTO(status, 0));
-        }
+            if (!existStatusList.contains(status)) {
+                list.add(new AfterSaleDTO.TabListDTO(status,ApproveStatusEnum.getName(status), 0));
+            }
         });
-        list.add(new AfterSaleDTO.TabListDTO("all", list.stream().mapToInt(AfterSaleDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
 
@@ -472,7 +479,30 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         AfterSaleDTO.ViewDTO data = BeanMapperUtils.map(AfterSaleDTO.ViewDTO.class, afterSaleEntity);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
+        //查询用户信息
+        ThridUserInfoEntity thridUserInfoEntity = thridUserInfoService.getById(afterSaleEntity.getThridUserId());
+        if(Objects.nonNull(thridUserInfoEntity)){
+            data.setNickName(thridUserInfoEntity.getNickName());
+            data.setPhoneNumber(thridUserInfoEntity.getPhoneNumber());
+            data.setThridUserName(thridUserInfoEntity.getUsername());
+        }
+
+        //查询明细
+        List<AfterSaleDetailEntity> detailList = afterSaleDetailService.listByMainIds(Collections.singletonList(id));
+        data.setDetailList(detailList);
+        //查询附件
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessId(id);
+        if(CollUtil.isNotEmpty(attachmentList)) {
+            List<String> attachNameList = new ArrayList<>();
+            List<String> attachUrlList = new ArrayList<>();
+
+            for (AttachmentDTO.UpdateDTO dto : attachmentList) {
+                attachNameList.add(dto.getAttachName());
+                attachUrlList.add(dto.getAttachUrl());
+            }
+            data.setAttachNameList(attachNameList);
+            data.setAttachUrlList(attachUrlList);
+        }
         return data;
     }
     /**
@@ -500,6 +530,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+        //单据状态
+        data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
     }
 
     /**
@@ -556,7 +590,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
             //单据状态
-            data.setStatusName(AfterSaleStatusEnum.getName(data.getStatus()));
+            data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
         }
     }
     /**
@@ -664,14 +698,18 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
      */
     @Override
     public List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(AfterSaleDTO.ProgressDTO dto) {
-        return Collections.emptyList();
+        List<AfterSaleProgressDTO.RepairRecordListDTO> repairProgress = this.baseMapper.getRepairProgress(dto);
+        repairProgress.forEach(t -> t.setNodeName(AfterSaleStatusEnum.getNode(t.getNode())));
+        return repairProgress;
     }
     /**
      * 寄修历史
      */
     @Override
-    public List<AfterSaleProgressDTO.RepairHistoryListDTO> getRepairHistory(AfterSaleDTO.ProgressDTO dto) {
-        return Collections.emptyList();
+    public List<AfterSaleProgressDTO.RepairHistoryListDTO> getRepairHistory(AfterSaleDTO.ThridUserDTO dto) {
+        List<AfterSaleProgressDTO.RepairHistoryListDTO> repairHistory = this.baseMapper.getRepairHistory(dto);
+        repairHistory.forEach(t -> t.setStatusName(AfterSaleStatusEnum.getNode(t.getStatus())));
+        return repairHistory;
     }
 
     @Override
@@ -684,12 +722,85 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         return wxMiniAppService.jsCode2SessionInfo(jsCode);
     }
 
+    /**
+     * 根据平台代码获取详情信息
+     * 此方法首先会根据平台代码从两个不同的服务中获取数据，然后分别对获取到的数据进行处理
+     * 处理过程中，会通过不同的API调用获取更多的产品信息，并将这些信息整合到最终的结果列表中
+     * @param platformCode 平台代码，用于查询详情信息
+     * @return 返回一个包含详情信息的列表，如果查询不到相关信息，则返回空列表
+     */
     @Override
     public List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode) {
+        // 检查平台代码是否为空，如果为空则直接返回空列表
         if(StringUtil.isEmpty(platformCode)){
             return Collections.emptyList();
         }
-        return dmpSoInfoService.listDetailByPlatformCode(platformCode);
+        List<AfterSaleDTO.DropDownDTO> resultList = new ArrayList<>();
+//        // 从dmpSoInfoService服务中获取详情信息列表
+//        getPlatformMappingList(platformCode, resultList);
+        // 从dmpSoOriginalInfoService服务中获取详情信息列表
+        getWdtMappingList(platformCode, resultList);
+        // 返回最终的结果列表
+        return resultList;
     }
 
+    private void getWdtMappingList(String platformCode, List<AfterSaleDTO.DropDownDTO> resultList) {
+        // 从dmpSoOriginalInfoService服务中获取详情信息列表
+        List<AfterSaleDTO.DropDownDTO> wdtDropDownDTOS = dmpSoOriginalInfoService.listDetailByPlatformCode(platformCode);
+        // 如果获取到的信息列表不为空，则进一步处理
+        if(CollUtil.isNotEmpty(wdtDropDownDTOS)){
+            // 提取并去重商品的平台SKU编号列表
+            List<String> platformSkuNoList = wdtDropDownDTOS.stream().map(AfterSaleDTO.DropDownDTO::getSkuNo).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            // 调用远程服务获取商品信息列表
+            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(platformSkuNoList);
+            // 将商品信息列表转换为Map，以便后续查询
+            Map<String, String> map = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, SkuVO::getSkuId, (k1, k2) -> k1));
+            // 遍历原始信息列表，更新商品SKU ID
+            for (AfterSaleDTO.DropDownDTO drop : wdtDropDownDTOS) {
+                String skuId = map.getOrDefault(drop.getSkuNo(), "");
+                if(StringUtil.isNotBlank(skuId)){
+                    drop.setSkuId(skuId);
+                    resultList.add(drop);
+                }
+            }
+        }
+    }
+
+    private void getPlatformMappingList(String platformCode, List<AfterSaleDTO.DropDownDTO> resultList) {
+        // 从dmpSoInfoService服务中获取详情信息列表
+        List<AfterSaleDTO.DropDownDTO> dropDownDTOS = dmpSoInfoService.listDetailByPlatformCode(platformCode);
+        // 如果获取到的信息列表不为空，则进一步处理
+        if(CollUtil.isNotEmpty(dropDownDTOS)){
+            // 提取并去重商品的平台SKU ID列表
+            List<String> platformSkuIdList = dropDownDTOS.stream().map(AfterSaleDTO.DropDownDTO::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            // 获取第一个元素的店铺ID和平台类型
+            String shopId = dropDownDTOS.get(0).getShopId();
+            String platform = dropDownDTOS.get(0).getThirdType();
+
+            // 创建查询参数对象
+            ListingInfoParamDTO dto = new ListingInfoParamDTO();
+            dto.setPlatform(platform);
+            dto.setType(RuleTypeEnum.PLATFORM.getCode());
+            dto.setPlatformSkuIdList(platformSkuIdList);
+            dto.setShopIdList(Collections.singletonList(shopId));
+
+            // 调用远程服务获取商品信息列表
+            List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(dto);
+            // 如果获取到的商品信息列表不为空，则进一步处理
+            if(CollUtil.isNotEmpty(listingInfoWithSkuMappingDTOS)){
+                // 将商品信息列表转换为Map，以便后续查询
+                Map<String, ListingInfoWithSkuMappingDTO> map = listingInfoWithSkuMappingDTOS.stream().collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getPlatformSkuId, t->t, (k1, k2) -> k1));
+                // 遍历原始信息列表，更新商品SKU信息
+                for (AfterSaleDTO.DropDownDTO drop : dropDownDTOS) {
+                    ListingInfoWithSkuMappingDTO skuMappingDTO = map.getOrDefault(drop.getSkuId(), null);
+                    if(Objects.nonNull(skuMappingDTO)){
+                        drop.setSkuId(skuMappingDTO.getProductSkuId());
+                        drop.setSkuNo(skuMappingDTO.getProductSkuNo());
+                        drop.setSkuName(skuMappingDTO.getProductName());
+                        resultList.add(drop);
+                    }
+                }
+            }
+        }
+    }
 }

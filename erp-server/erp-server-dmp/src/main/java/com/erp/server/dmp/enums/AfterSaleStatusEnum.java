@@ -1,10 +1,10 @@
 package com.erp.server.dmp.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
+
 import java.util.Arrays;
 
 /**
@@ -45,10 +45,14 @@ public enum AfterSaleStatusEnum implements EnumMessage {
         return name;
     }
 
-    public static String getName(String state) {
-        if (StringUtils.isNotBlank(state)) {
-            for (ApproveStatusEnum item : ApproveStatusEnum.values()) {
-                if (state.equals(item.getStatus())) {
+    public String getNode() {
+        return node;
+    }
+
+    public static String getName(String code) {
+        if (StringUtils.isNotBlank(code)) {
+            for (AfterSaleStatusEnum item : AfterSaleStatusEnum.values()) {
+                if (code.equals(item.getCode())) {
                     return item.getName();
                 }
             }
@@ -59,6 +63,18 @@ public enum AfterSaleStatusEnum implements EnumMessage {
     public static AfterSaleStatusEnum getByCode(String code){
         return Arrays.stream(values()).filter(a -> a.getCode().equalsIgnoreCase(code))
                 .findFirst().orElse(null);
+    }
+
+
+    public static String getNode(String code) {
+        if (StringUtils.isNotBlank(code)) {
+            for (AfterSaleStatusEnum item : AfterSaleStatusEnum.values()) {
+                if (code.equals(item.getCode())) {
+                    return item.getNode();
+                }
+            }
+        }
+        return "";
     }
 
 

@@ -72,7 +72,7 @@ public class AfterSaleFeignController extends BaseController {
      * @return ApiResultwo
      */
     @PostMapping("/getRepairHistory")
-    public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
+    public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody @Validated AfterSaleDTO.ThridUserDTO dto) {
         return success(afterSaleService.getRepairHistory(dto));
     }
 
