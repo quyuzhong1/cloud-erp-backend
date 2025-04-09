@@ -466,4 +466,14 @@ public class AfterSaleController extends BaseController {
         return success(afterSaleService.changeStatus(dto));
     }
 
+    /**
+     * 根据订单编号查询明细
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("/getDetailByPlatformCode")
+    ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
+        return success(afterSaleService.getDetailByPlatformCode(platformCode));
+    }
+
 }
