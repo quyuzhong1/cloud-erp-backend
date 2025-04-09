@@ -92,11 +92,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 打印拣货单预览
      *
      * @param ids
+     * @param isAddWave 是否添加波次
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.printPickingViewDTO>
      * @Author Luo_WG
      * @Date 2023/12/13 19:37
      **/
-    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids);
+    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids, boolean isAddWave);
 
     /**
      * 打印拣货单
