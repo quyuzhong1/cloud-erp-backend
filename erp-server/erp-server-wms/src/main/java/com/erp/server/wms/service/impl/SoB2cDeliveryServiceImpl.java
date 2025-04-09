@@ -1459,9 +1459,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, SoB2cDeliveryEntity> deliveryEntityMap = deliveryEntityList.stream().collect(Collectors.toMap(SoB2cDeliveryEntity::getId, Function.identity()));
         Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
         Map<String, SoB2cDetailEntity> soB2cDetailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity()));
-        for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailEntityList) {
+        Map<String, List<SoB2cDeliveryDetailEntity>> deliveryMap = deliveryDetailEntityList.stream().collect(Collectors.groupingBy(e -> e.getMainId() + e.getSourceDetailId()));
+        //循环遍历 deliveryMap
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : deliveryMap.entrySet()) {
+            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
             PickingListsDTO.CombinationPrintDetailView view = new PickingListsDTO.CombinationPrintDetailView();
-            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(detailEntity.getMainId());
+
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(value.get(0).getMainId());
             if (Objects.isNull(soB2cDeliveryEntity)) {
                 continue;
             }
@@ -1469,15 +1473,31 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (Objects.isNull(soB2cEntity)) {
                 continue;
             }
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(detailEntity.getSourceDetailId());
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(value.get(0).getSourceDetailId());
             if (Objects.isNull(soB2cDetailEntity)) {
                 continue;
             }
-            view.setThirdSku(soB2cDetailEntity.getPlatformSkuNo());
-            view.setParentSku(detailEntity.getSkuNo());
-            view.setParentSkuQty(detailEntity.getDeliveryQty());
-            view.setCustomerPo("");
-            list.add(view);
+            if(value.size() == 1 && soB2cDetailEntity.getSkuNo().equals(value.get(0).getSkuNo())){
+                PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                combinationPrintDetailView.setThirdSku((soB2cDetailEntity.getPlatformSkuNo()));
+                combinationPrintDetailView.setIsCombination(Boolean.FALSE);
+                combinationPrintDetailView.setParentSku(soB2cDetailEntity.getSkuNo());
+                combinationPrintDetailView.setParentSkuQty(soB2cDetailEntity.getQty());
+                combinationPrintDetailView.setCustomerPo("");
+                list.add(combinationPrintDetailView);
+                continue;
+            }
+            for (SoB2cDeliveryDetailEntity deliveryDetailEntity : value){
+                PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                combinationPrintDetailView.setThirdSku((soB2cDetailEntity.getPlatformSkuNo()));
+                combinationPrintDetailView.setIsCombination(Boolean.TRUE);
+                combinationPrintDetailView.setParentSku(soB2cDetailEntity.getSkuNo() + "【组】");
+                combinationPrintDetailView.setParentSkuQty(soB2cDetailEntity.getQty());
+                combinationPrintDetailView.setChildSku(deliveryDetailEntity.getSkuNo());
+                combinationPrintDetailView.setChildSkuQty(deliveryDetailEntity.getDeliveryQty());
+                combinationPrintDetailView.setCustomerPo("");
+                list.add(combinationPrintDetailView);
+            }
         }
         List<PickingListsDTO.CombinationPrintDetailView> combinationList = list.stream()
                 // 先按客户PO分组
