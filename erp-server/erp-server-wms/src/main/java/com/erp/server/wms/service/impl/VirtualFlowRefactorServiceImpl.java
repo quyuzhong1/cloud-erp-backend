@@ -25,8 +25,8 @@ import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualTransRuleDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.CfgSettingOrderTypeEnum;
 import com.erp.model.wms.enums.DictBasicEnum;
+import com.erp.model.wms.enums.VirtualFlowRefactorEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -103,11 +103,8 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
     @Override
     public void rebuildFlow(String jobParam) {
         List<String> orderTypeList = CharSequenceUtil.isNotBlank(jobParam) ? Arrays.asList(jobParam.split(",")) :
-                Arrays.stream(CfgSettingOrderTypeEnum.values()).map(CfgSettingOrderTypeEnum::getCode).collect(Collectors.toList());
+                Arrays.stream(VirtualFlowRefactorEnum.values()).map(VirtualFlowRefactorEnum::getCode).collect(Collectors.toList());
         log.info("VirtualFlowRefactorServiceImpl rebuildFlow start");
-
-        //分货单
-        rebuildVirtualWarehouseAllocationFlow();
 
         // 使用自定义线程池处理订单类型
         ExecutorService executor = Executors.newFixedThreadPool(orderTypeList.size());
@@ -129,12 +126,14 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @return void
      */
     private void processOrderType(String orderType) {
-        if (CfgSettingOrderTypeEnum.B2B.getCode().equals(orderType)) {
+        if (VirtualFlowRefactorEnum.B2B.getCode().equals(orderType)) {
             rebuildB2bFlow();
-        } else if (CfgSettingOrderTypeEnum.B2C.getCode().equals(orderType)) {
+        } else if (VirtualFlowRefactorEnum.B2C.getCode().equals(orderType)) {
             rebuildB2cFlow();
-        } else if (CfgSettingOrderTypeEnum.FIRST_MILE.getCode().equals(orderType)) {
+        } else if (VirtualFlowRefactorEnum.FIRST_MILE.getCode().equals(orderType)) {
             rebuildFirstMileFlow();
+        } else if (VirtualFlowRefactorEnum.WAREHOUSE_ALLOCATION.getCode().equals(orderType)) {
+            rebuildVirtualWarehouseAllocationFlow();
         }
     }
 
@@ -148,7 +147,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        list.parallelStream().forEach(allocationEntity -> {
+        list.forEach(allocationEntity -> {
             //查找所有明细
             List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.listByMainIdList(Collections.singletonList(allocationEntity.getId()));
             if (CollectionUtils.isNotEmpty(detailList)) {
@@ -535,7 +534,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         transferDTO.setBillDate(param.getBillDate());
         transferDTO.setSkuId(param.getSkuId());
         transferDTO.setSkuNo(param.getSkuNo());
-
+        transferDTO.setTradeTime(param.getTradeTime());
         transferDTO.setQty(param.getQty());
         transferDTO.setOperationMode(operationMode);
         transferDTO.setWarehouseOptionEnum(warehouseOption);
