@@ -227,7 +227,7 @@ public class TikTokFullyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
      */
     public static List<PlatformOrderDetailDTO> parseDetailDto(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> dmpSoDetailEntities) {
         //相同的sku和packageId合并去重
-        Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream().collect(Collectors.groupingBy(req -> req.getPlatformSku() + req.getPlatformPackageId()));
+        Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream().collect(Collectors.groupingBy(DmpSoDetailEntity::getPlatformDetailId));
 
         return collect.entrySet().stream()
                 .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue(), e.getKey()))
