@@ -446,7 +446,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             entity.setRemark("取消失败原因:" + e.getMessage());
             this.updateById(entity);
             log.error("取消上传失败>>>>", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:"+e.getMessage());
         }
 
     }
@@ -455,13 +455,16 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(entity.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
+            throw new ServiceException("商家自配方式不支持取消组包");
+        }
         if(CollectionUtils.isEmpty(shopIds)){
             throw new ServiceException("销售订单店铺未找到");
         }
         if (shopIds.size() > 1){
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
-        tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
+        tikTokFullService.cancelLogistics(shopIds.get(0), entity.getTransportNo());
     }
 
     private void tikTokCancel(PackageForecastEntity entity) {
@@ -1399,6 +1402,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 v.setCollectMode(dto.getCollectMode());
                 v.setCollectAddressId(dto.getCollectAddressId());
                 v.setCollectAddress(addressName);
+                v.setRemark("");
                 this.updateBatchById(packageForecastEntityList);
             });
         }catch (Exception e){
