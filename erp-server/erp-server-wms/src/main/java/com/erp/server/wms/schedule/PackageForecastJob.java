@@ -19,6 +19,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -62,7 +63,6 @@ public class PackageForecastJob {
         }
         handoverStatusList.add(CharSequenceUtil.EMPTY);
         List<PackageForecastEntity> orders = packageForecastService.lambdaQuery()
-                .ne(PackageForecastEntity::getHandoverNo, CharSequenceUtil.EMPTY)
                 .in(PackageForecastEntity::getHandoverStatus,handoverStatusList)
                 .gt(PackageForecastEntity::getBillDate, dateTime)
                 .list();
@@ -97,7 +97,8 @@ public class PackageForecastJob {
             if(Objects.isNull(packageForecast) || Objects.isNull(soB2cEntity)){
                 return;
             }
-            if(soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            if(soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
+             && StringUtils.isNotBlank(packageForecast.getHandoverNo())){
                 packageForecastService.queryAliExpressInfo(packageForecast);
                 XxlJobHelper.log("syncPackageForecastInfo update : {}", packageForecast.getHandoverNo());
             }
