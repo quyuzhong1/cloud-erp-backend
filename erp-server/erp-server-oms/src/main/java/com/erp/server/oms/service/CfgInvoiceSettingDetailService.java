@@ -1,9 +1,9 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
 import com.common.business.service.SuperService;
+import com.common.business.dto.base.*;
+import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 
 import java.util.List;
 
@@ -12,14 +12,17 @@ import java.util.List;
  * 发票设置明细 服务类
  * </p>
  *
- * @author Lambda
- * @since 2025-04-07
+ * @author hcg
+ * @since 2025-04-09
  */
 public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceSettingDetailEntity> {
 
-    List<CfgInvoiceSettingDetailDTO.ViewDTO> view(String mainId,String key,List<String> names);
+    Boolean update(CfgInvoiceSettingDetailDTO.UpdateDTO addOrUpdateDTO);
+
+    List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
 
     BaseResultDTO.AddDTO add(CfgInvoiceSettingDetailDTO.AddDTO dto);
 
     List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop();
+
 }

@@ -1,83 +1,72 @@
 package com.erp.model.oms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import java.math.BigDecimal;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-
+import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
-import java.math.BigDecimal;
-
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
+
 
 /**
  * <p>
  * 发票设置明细
  * </p>
  *
- * @author Lambda
- * @since 2025-04-07
- */
-@Getter
-@Setter
+ * @author hcg
+ * @since 2025-04-09
+*/
+@Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("cfg_invoice_setting_detail")
 public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingDetailEntity> {
 
     /**
-     * 发票设置id
-     */
+    * 发票设置id
+    */
     @TableField("main_id")
     private String mainId;
-
     /**
-     * 平台
-     */
+    * 平台value
+    */
     @TableField("dict_platform")
     private String dictPlatform;
-
     /**
-     * 店铺id
-     */
+    * 店铺id
+    */
     @TableField("shop_id")
     private String shopId;
-
     /**
-     * 开票规则
-     */
+    * 开票规则：amount=按产品全额开票，custom=按（产品全额×自定义百分比）后开票,deduct=按（产品全额-佣金）后开票  枚举：CfgInvoiceSettingDetailDictInvoiceRuleEnum
+    */
     @TableField("dict_invoice_rule")
     private String dictInvoiceRule;
-
     /**
-     * 比例
-     */
+    * 比例
+    */
     @TableField("ratio")
     private BigDecimal ratio;
-
     /**
-     * 是否包含运费
-     */
+    * 是否包含运费
+    */
     @TableField("is_contain_ship_fee")
     private Boolean isContainShipFee;
-
     /**
-     * 税费类型
-     */
+    * 税费类型：purchase_sale=采购经销，self_sale=自产自销  枚举：CfgInvoiceSettingDetailTaxTypeEnum
+    */
     @TableField("tax_type")
     private String taxType;
-
     /**
-     * 开票节点（自动开票）
-     */
+    * 开票节点：after_pull=订单拉取后，after_audit=订单审核后，no_auto=不自动开票  枚举：CfgInvoiceSettingDetailInvoiceNodeEnum
+    */
     @TableField("invoice_node")
     private String invoiceNode;
-
     /**
-     * 自动上传
-     */
+    * 自动上传
+    */
     @TableField("is_auto_upload")
     private Boolean isAutoUpload;
 

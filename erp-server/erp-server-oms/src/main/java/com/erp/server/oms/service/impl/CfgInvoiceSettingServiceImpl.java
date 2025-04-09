@@ -4,7 +4,6 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -21,7 +20,6 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgInvoiceSettingMapper;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -95,6 +92,9 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     @Override
     public Boolean update(CfgInvoiceSettingDTO.UpdateDTO dto) {
         CfgInvoiceSettingEntity old = super.getById(dto.getId());
+        if (ObjectUtil.isEmpty(old)){
+            throw new ServiceException("此发票设置不存在");
+        }
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票设置"));
         CfgInvoiceSettingEntity cfgVatInvoiceEntity = BeanMapperUtils.map(CfgInvoiceSettingEntity.class, dto);
         cfgVatInvoiceEntity.setLeiCode(old.getLeiCode());
@@ -123,43 +123,25 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     public CfgInvoiceSettingDTO.ViewDTO view(String id) {
         CfgInvoiceSettingEntity old = super.getById(id);
         CfgInvoiceSettingDTO.ViewDTO dto = new CfgInvoiceSettingDTO.ViewDTO();
+        BeanUtil.copyProperties(old, dto);
         if (ObjectUtil.isEmpty(old)) {
-            return dto;
+            throw new ServiceException("此发票设置不存在");
         }
-        LambdaQueryWrapper<CfgInvoiceSettingDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(CfgInvoiceSettingDetailEntity::getMainId, old.getId());
-        List<CfgInvoiceSettingDetailEntity> detailEntityList = cfgInvoiceSettingDetailService.list(queryWrapper);
-        if (ObjectUtil.isEmpty(detailEntityList)) {
-            return dto;
-        }
-        List<String> shopIdList = detailEntityList.stream()
-                .map(CfgInvoiceSettingDetailEntity::getShopId)
-                .filter(Objects::nonNull) // 可选：去除 null 的情况
-                .collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIdList);
-        List<CfgInvoiceSettingDTO.ShopInfoDTO> shopInfoDTOS = shopInfoEntityList.stream()
-                .map(entity -> {
-                    CfgInvoiceSettingDTO.ShopInfoDTO shopInfoDTO = new CfgInvoiceSettingDTO.ShopInfoDTO();
-                    BeanUtil.copyProperties(entity, shopInfoDTO);
-                    return shopInfoDTO;
-                })
-                .collect(Collectors.toList());
-        BeanMapperUtils.copy(old, dto);
-        dto.setShopList(shopInfoDTOS);
         return dto;
     }
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean updateStatus(CfgInvoiceSettingDTO.UpdateDTO dto) {
-        boolean b = false;
-        if (ObjectUtil.isNotEmpty(dto.getDisabled())) {
-            CfgInvoiceSettingEntity entity = new CfgInvoiceSettingEntity();
-            entity.setId(dto.getId());
-            entity.setDisabled(dto.getDisabled());
-            b= super.updateById(entity);
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean updateStatus(CfgInvoiceSettingDTO.UpdateStatusDTO dto) {
+        CfgInvoiceSettingEntity invoiceSettingEntity = baseMapper.selectById(dto.getId());
+        if (ObjectUtil.isEmpty(invoiceSettingEntity)) {
+            throw new ServiceException("当前发票设置不存在");
         }
-        return b;
+        if (invoiceSettingEntity.getDisabled().equals(dto.getDisabled())) {
+            throw new ServiceException("当前状态与修改状态一致，无需修改");
+        }
+        CfgInvoiceSettingEntity entity = BeanUtil.copyProperties(dto, CfgInvoiceSettingEntity.class);
+        return baseMapper.updateById(entity) > 0;
     }
 
 }
