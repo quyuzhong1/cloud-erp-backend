@@ -41,8 +41,8 @@ public class FullyManagedJob {
     /**
      * 查询送货单信息
      */
-    @XxlJob("GetDeliveryOrderByParam")
-    public void GetDeliveryOrderByParam() {
+    @XxlJob("getDeliveryOrderByParam")
+    public void getDeliveryOrderByParam() {
         XxlJobHelper.log("查询送货单信息开始执行");
         String jobParam = XxlJobHelper.getJobParam();
         //已发货 且 INBOUND: 已入库上架/INVAILD-已作废  中间查询【未发货不需要查或者已入库或已作废不需要查询】
