@@ -73,6 +73,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
@@ -225,7 +226,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
-
+    @Resource
+    private AuthDataFeign authDataFeign;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -281,7 +283,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.TabListDTO> tabList(PermissionsDTO param) {
         FirstMileDeliveryDTO.PagingParamDTO searchParam = new FirstMileDeliveryDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
+        searchParam.setPermissionSql(getPermissionSql(param.getPermissionSql()));
         List<RequisitionApplicationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = RequisitionApplicationStatusEnum.getStatusList();
@@ -299,7 +301,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public PagingVO<RequisitionApplicationDTO.ListDTO> paging(PagingDTO<RequisitionApplicationDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<RequisitionApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
@@ -308,6 +310,17 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
+    }
+
+    private String getPermissionSql(String permissionSql) {
+        permissionSql = CharSequenceUtil.isBlank(permissionSql) ? " AND 1=1 " : permissionSql;
+        // 店铺权限
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("ra.channel_id");
+        shopPermissionSql = CharSequenceUtil.isBlank(shopPermissionSql)? " AND 1=1 " : shopPermissionSql;
+        // 仓库权限
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("rad.to_warehouse_id");
+        warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
+        return CharSequenceUtil.format("{} and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
     }
 
     @Override
