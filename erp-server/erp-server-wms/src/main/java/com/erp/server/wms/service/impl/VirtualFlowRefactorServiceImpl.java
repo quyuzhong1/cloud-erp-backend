@@ -44,7 +44,6 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -107,14 +106,13 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         log.info("VirtualFlowRefactorServiceImpl rebuildFlow start");
 
         // 使用自定义线程池处理订单类型
-        ExecutorService executor = Executors.newFixedThreadPool(orderTypeList.size());
         List<CompletableFuture<Void>> futures = orderTypeList.stream()
-                .map(orderType -> CompletableFuture.runAsync(() -> processOrderType(orderType), executor))
+                .map(orderType -> CompletableFuture.runAsync(() -> processOrderType(orderType), virtualFlowRefactorPool))
                 .collect(Collectors.toList());
 
         // 等待所有任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        executor.shutdown();
+        virtualFlowRefactorPool.shutdown();
         log.info("VirtualFlowRefactorServiceImpl rebuildFlow end");
     }
 
@@ -282,7 +280,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
        }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-        map.forEach((key, value) -> virtualFlowRefactorPool.submit(() -> {
+        map.forEach((key, value) ->  {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -309,7 +307,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             }
             //更新库存
             getSelfBean().approve(dto);
-        }));
+        });
     }
 
     /**
@@ -323,7 +321,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             return;
         }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId()).concat(obj.getBusinessType())));
-        map.forEach((key, value) -> virtualFlowRefactorPool.submit(() -> {
+        map.forEach((key, value) -> {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -346,7 +344,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             }
             //更新库存
             getSelfBean().approve(dto);
-        }));
+        });
     }
 
     /**
@@ -374,7 +372,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }).collect(Collectors.toList());
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-        map.forEach((key, value) -> virtualFlowRefactorPool.submit(() -> {
+        map.forEach((key, value) ->  {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -393,7 +391,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             }
             //更新库存
             getSelfBean().approve(dto);
-        }));
+        });
     }
 
     /**
