@@ -83,6 +83,14 @@ public class SoDetailImportExcelDTO {
     @ExcelProperty(value = "是否补发", index = 7)
     @FieldValid(fieldName = "是否补发",isNotBlank = true,fieldValues = "是,否")
     private String isReissue;
+    /**
+     * 客户PO号
+     */
+    @ColumnWidth(40)
+    @ExcelProperty(value = "客户PO号", index = 8)
+    @FieldValid(fieldName = "客户PO号",maxLength=30)
+    private String customerPO;
+
 
     /**
      * 备注
