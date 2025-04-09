@@ -1403,6 +1403,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 v.setHandoverNo(tikTokFullyShippingResp.getData().getLogisticsOrder());
                 v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
                 v.setCollectMode(dto.getCollectMode());
+
                 v.setCollectAddressId(dto.getCollectAddressId());
                 v.setCollectAddress(addressName);
                 v.setRemark("");
