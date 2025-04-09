@@ -3740,6 +3740,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //是否关闭
                 String isCloseStr = item.getIsClose();
                 addDetail.setIsClose("是".equals(isCloseStr));
+                //客户PO号
+                addDetail.setCustomerPO(item.getCustomerPO());
                 addDetail.setRemark(item.getDetailRemark());
                 //sku no
                 String skuNo = item.getSkuNo();
