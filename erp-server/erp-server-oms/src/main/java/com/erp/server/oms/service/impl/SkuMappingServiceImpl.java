@@ -445,7 +445,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //更新发票税务信息
         if (ObjectUtil.isNotEmpty(dto.getTaxCodeDTO())) {
             dto.getTaxCodeDTO().setListingId(listing.getId());
-            InvoiceTaxDTO.UpdateDTO updateDTO = BeanUtil.toBean(dto, InvoiceTaxDTO.UpdateDTO.class);
+            InvoiceTaxDTO.UpdateDTO updateDTO = BeanUtil.toBean(dto.getTaxCodeDTO(), InvoiceTaxDTO.UpdateDTO.class);
             invoiceTaxService.addOrUpdate(updateDTO);
         }
         // 无修改
