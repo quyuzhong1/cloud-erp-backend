@@ -68,6 +68,8 @@
         sd.goods_no as skuNo,
         sd.goods_name as skuName,
         sd.num as qty,
+        sd.price as price,
+        sd.price *  sd.num as skuValue,
         'wdt' as thirdType
         FROM
         dmp_so_original_info si

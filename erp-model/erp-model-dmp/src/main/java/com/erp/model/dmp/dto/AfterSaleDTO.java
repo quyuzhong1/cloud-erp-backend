@@ -522,7 +522,9 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 附件
          */
-        private List<AttachmentDTO> attachmentList;
+//        private List<AttachmentDTO> attachmentList;
+        private List<String> attachNameList;
+        private List<String> attachUrlList;
 
 
         /**
@@ -645,6 +647,17 @@ public class AfterSaleDTO implements Serializable {
          *
          */
         private Integer qty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 数量 * 单价 = 货值
+         */
+        private BigDecimal skuPrice;
+
         /**
          *
          */
