@@ -440,6 +440,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             entity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
             entity.setHandoverStatus("");
             entity.setTransportNo("");
+            entity.setHandoverNo("");
+            entity.setRemark("");
+            entity.setPlatformPackageNo("");
             this.updateById(entity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传");
         } catch (Exception e) {
@@ -464,7 +467,7 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if (shopIds.size() > 1){
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
-        tikTokFullService.cancelLogistics(shopIds.get(0), entity.getTransportNo());
+        tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
     }
 
     private void tikTokCancel(PackageForecastEntity entity) {
