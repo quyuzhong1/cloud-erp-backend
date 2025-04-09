@@ -130,9 +130,13 @@ public enum ModuleTypeEnum {
     RULE_PROMPT_WORD("115", "汉化管理"),
     CFG_VAT_INVOICE("116", "VAT发票设置"),
     INVOICE_INFO("117", "发票上传记录"),
-    INVOICE_SETTING("121", "发票设置"),
-    INVOICE_SETTING_DETAIL("122", "发票设置明细"),
-            ;
+    CFG_SETTING("118", "系统配置"),
+    SO_B2C_EXTEND("119", "销售订单扩展信息"),
+    SO_PRICE("118", "销售价目表"),
+    SO_PRICE_CHANGE("119", "销售调目表"),
+
+    AFTER_SALE("120", "售后申请"),
+    ;
 
 
 
