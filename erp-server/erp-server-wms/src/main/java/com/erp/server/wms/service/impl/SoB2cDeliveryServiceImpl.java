@@ -517,7 +517,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
         }
         List<String> platformList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+        boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        boolean allNotMatch = platformList.stream().noneMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        if (!allMatch && !allNotMatch) {
             throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT);
         }
         // 异常单生成波次异常状态，不允许在打印拣货单
@@ -1437,13 +1439,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
         boolean allNotMatch = platformList.stream().noneMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
         if (!allMatch && !allNotMatch) {
-            throw new ServiceException(ApiError.ERROR_EXIST_FULLY_AND_NOT_FULLY_ORDER);
+            throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT);
         }
         if (!allMatch){
             return list;
-        }
-        if(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
-            throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT);
         }
         List<String> soIds = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getSourceId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
@@ -1466,7 +1465,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 continue;
             }
             view.setThirdSku(soB2cDetailEntity.getPlatformSkuNo());
-            view.setParentSku(soB2cDetailEntity.getSkuNo());
+            view.setParentSku(detailEntity.getSkuNo());
             view.setParentSkuQty(detailEntity.getDeliveryQty());
             view.setCustomerPo("");
             list.add(view);
