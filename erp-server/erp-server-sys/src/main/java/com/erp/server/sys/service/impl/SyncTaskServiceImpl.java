@@ -6,13 +6,16 @@ import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.KingdeePostEntity;
 import com.erp.model.sys.entity.KingdeeUserRefPostEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
+import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeePostService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeUserPostService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
+import com.erp.server.sys.service.KingdeePostService;
 import com.erp.server.sys.service.KingdeeUserRefPostService;
 import com.erp.server.sys.service.SyncTaskService;
 import com.erp.server.sys.service.SysUserInfoService;
@@ -50,6 +53,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     
     @Resource
     private KingdeeDepartmentService kingdeeDepartmentService;
+    
+    @Resource
+    private KingdeePostService kingdeePostService;
 
     @Resource
     private SyncKingdeeSysUserInfoService syncKingdeeSysUserInfoService;
@@ -59,6 +65,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     
     @Resource
     private SyncKingdeeSysDeptService syncKingdeeSysDeptService;
+    
+    @Resource
+    private SyncKingdeePostService syncKingdeePostService;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
@@ -127,6 +136,9 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 break;
             case SYS_DEPARTMENT:
             	resultList = newSysDepartment(sourceDetailList);
+            	break;
+            case SYS_POST:
+            	resultList = newSysPost(sourceDetailList);
             	break;
             default:
             	break;
@@ -199,6 +211,27 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     			continue;
     		}
     		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSysDeptService.newSyncDataToKingdee(kingdeeDepartmentEntity, syncParamDetailDTO.getSyncOperate()));
+    	}
+    	return resultList;
+    }
+    
+    private Map<String , Map<String, Object>> newSysPost (List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+    	List<KingdeePostEntity> list = kingdeePostService.listByIds(sourceIdList);
+    	if (CollectionUtils.isEmpty(list)) {
+    		log.error("userPost >>>> 未找到数据！");
+    		return resultList;
+    	}
+    	for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+    		String sourceId = syncParamDetailDTO.getSourceId();
+    		KingdeePostEntity kingdeePostEntity = list.stream().filter(obj -> {
+    			return obj.getId().equals(sourceId);
+    		}).findFirst().orElse(null);
+    		if (ObjectUtils.isEmpty(kingdeePostEntity)) {
+    			continue;
+    		}
+    		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeePostService.newSyncDataToKingdee(kingdeePostEntity, syncParamDetailDTO.getSyncOperate()));
     	}
     	return resultList;
     }
