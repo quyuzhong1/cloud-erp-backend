@@ -56,9 +56,8 @@
                 FROM cfg_invoice_setting AS cis
                 LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id
                 LEFT JOIN shop_info AS si ON cisd.shop_id = si.id
-                WHERE
-                cis.is_deleted = FALSE
-                AND ${params.sqlMap.default}
+                WHERE ${params.sqlMap.default}
+                AND cis.is_deleted = FALSE
                 <!-- 权限 -->
                 <if test="params.permissionSql!=null and params.permissionSql!=''">
                     AND ${params.permissionSql}
