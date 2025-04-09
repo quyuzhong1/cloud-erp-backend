@@ -48,6 +48,17 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     List<ListingInfoEntity> listByAuth(String type,List<String> platformSkuNoList,List<String> authIdList);
     List<ListingInfoEntity> listByParam(String type,String platform,List<String> skuNoList);
     /**
+     * 根据平台集合、sku集合查询
+     * @author will
+     * @date 2025/4/8 14:48
+     * @param type
+     * @param platformList
+     * @param platformSkuNoList
+     * @return List<ListingInfoEntity>
+     */
+    List<ListingInfoEntity> listByParams(String type,List<String> platformList,List<String> platformSkuNoList);
+
+    /**
      * 根据类型获取到对应数据
      * @author yl
      * @date 2023-08-24 14:54

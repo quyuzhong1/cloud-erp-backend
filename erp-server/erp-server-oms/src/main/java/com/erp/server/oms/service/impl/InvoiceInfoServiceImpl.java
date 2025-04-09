@@ -1,8 +1,10 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -27,6 +29,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
+import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
@@ -41,17 +44,29 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.nio.file.Files;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INFO;
 
@@ -97,6 +112,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private InvoiceTaxService invoiceTaxService;
+
 
     @Value("${fdfs.publicUrl}")
     private String fdfsPubUrl;
@@ -509,6 +528,146 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if(CollectionUtils.isNotEmpty(updateSoB2cList)){
             soB2cService.updateBatchById(updateSoB2cList);
         }
+    }
+
+    @Override
+    public BatchResultDTO cancelInvoice(String id,String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO returnInvoice(String id,String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO notNeedInvoice(String id, String remark) {
+        return null;
+    }
+
+    @Override
+    public BatchResultDTO updateCce(InvoiceInfoDTO.UpdateCceDTO dto) {
+        return null;
+    }
+
+    @Override
+    public InvoiceInfoDTO.ViewCceDTO viewCce(String id) {
+        return null;
+    }
+
+    @Override
+    public Resource exportXml(InvoiceInfoDTO.PagingParamDTO dto) {
+        List<File> pdfFiles = new ArrayList<>();
+
+        if (pdfFiles.isEmpty()) {
+            return (Resource) ResponseEntity.badRequest().build();
+        }
+        if (pdfFiles.size() == 1) {
+            File file = pdfFiles.get(0);
+            return (Resource) ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getName() + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .body(new FileSystemResource(file));
+        } else {
+            ByteArrayOutputStream zipStream = new ByteArrayOutputStream();
+            try (ZipOutputStream zipOut = new ZipOutputStream(zipStream)) {
+                for (File file : pdfFiles) {
+                    ZipEntry zipEntry = new ZipEntry(file.getName());
+                    zipOut.putNextEntry(zipEntry);
+                    Files.copy(file.toPath(), zipOut);
+                    zipOut.closeEntry();
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            byte[] zipBytes = zipStream.toByteArray();
+
+            // 清理临时文件
+            for (File file : pdfFiles) {
+                try {
+                    Files.deleteIfExists(file.toPath());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            return (Resource) ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"files.zip\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .contentLength(zipBytes.length)
+                    .body(new ByteArrayResource(zipBytes));
+        }
+    }
+
+    @Override
+    public Resource exportPdf(InvoiceInfoDTO.@Valid PagingParamDTO dto) {
+        return null;
+    }
+
+    @Override
+    public List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //发票明细信息
+        List<InvoiceDetailEntity> invoiceDetailList = invoiceDetailService.listByIds(ids);
+        Map<String, InvoiceDetailEntity> invoiceDetailMap = invoiceDetailList.stream().collect(Collectors.toMap(InvoiceDetailEntity::getId, Function.identity()));
+        List<String> platformSkuNoList = invoiceDetailList.stream().map(InvoiceDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(invoiceDetailList)) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+        //发票主表信息
+        List<String> mainIdList = invoiceDetailList.stream().map(InvoiceDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<InvoiceInfoEntity> invoiceInfoList = this.listByIds(mainIdList);
+        Map<String, InvoiceInfoEntity> invoiceMap = invoiceInfoList.stream().collect(Collectors.toMap(InvoiceInfoEntity::getId, Function.identity()));
+
+        List<String> soIdList = invoiceInfoList.stream().map(InvoiceInfoEntity::getSoId).distinct().collect(Collectors.toList());
+        //销售订单
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
+        Map<String, SoB2cEntity> soB2cMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+        List<String> platformList = soB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().collect(Collectors.toList());
+
+        //listing信息
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParams(RuleTypeEnum.PLATFORM.getCode(), platformList, platformSkuNoList);
+        Map<String, ListingInfoEntity> listingMap = listingInfoEntityList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getPlatform(),obj.getPlatformSkuNo()), Function.identity()));
+
+        //listingId集合
+        List<String> listingIdList = listingInfoEntityList.stream().map(ListingInfoEntity::getId).distinct().collect(Collectors.toList());
+        //查询发票税务信息
+        List<InvoiceTaxEntity> invoiceTaxList = invoiceTaxService.listByListingIdList(listingIdList);
+        Map<String, InvoiceTaxEntity> taxMap = invoiceTaxList.stream().collect(Collectors.toMap(InvoiceTaxEntity::getListingId, Function.identity()));
+
+        List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> resultList = new ArrayList<>();
+        for (String id : ids) {
+            InvoiceTaxDTO.CheckGenerateInvoiceDTO viewDTO = new InvoiceTaxDTO.CheckGenerateInvoiceDTO();
+            //发票明细信息
+            InvoiceDetailEntity invoiceDetailEntity = invoiceDetailMap.get(id);
+            if (ObjUtil.isEmpty(invoiceDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_INVOICE_DETAIL_NOT_EXIST);
+            }
+            //发票信息
+            InvoiceInfoEntity invoiceInfoEntity = invoiceMap.get(invoiceDetailEntity.getMainId());
+            if (ObjUtil.isEmpty(invoiceDetailEntity)) {
+                throw new ServiceException(ApiError.ERROR_INVOICE_NOT_EXIST);
+            }
+            //销售订单信息
+            SoB2cEntity soB2cEntity =  soB2cMap.get(invoiceInfoEntity.getId());
+            if (ObjUtil.isEmpty(soB2cEntity)) {
+                throw new ServiceException(ApiError.ERROR_92016);
+            }
+            //listing信息
+            ListingInfoEntity listingInfoEntity = listingMap.get(CharSequenceUtil.format("{}-{}", soB2cEntity.getDictPlatform(), invoiceDetailEntity.getPlatformSkuNo()));
+            //税务信息
+            InvoiceTaxEntity invoiceTaxEntity = ObjUtil.isEmpty(listingInfoEntity) ? null : taxMap.get(listingInfoEntity.getId());
+            Boolean isGenerateInvoiceTax = invoiceTaxService.checkInvoiceTax(invoiceTaxEntity);
+            if (isGenerateInvoiceTax) {
+                BeanUtil.copyProperties(invoiceTaxEntity, viewDTO);
+            }
+            viewDTO.setIsGenerateInvoiceTax(isGenerateInvoiceTax);
+            viewDTO.setPlatformSkuNo(invoiceDetailEntity.getPlatformSkuNo());
+            resultList.add(viewDTO);
+        }
+        return resultList;
     }
 
     private List<InvoiceInfoEntity> autoUploadInvoice(List<InvoiceInfoEntity> waitCreateVoiceList, List<CfgVatInvoiceEntity> cfgVatInvoiceEntities, List<SoB2cEntity> soB2cEntityList, List<BatchResultDTO> resultDTOList) {
