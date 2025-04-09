@@ -30,6 +30,7 @@ public class InvoiceUpdateHisDTO implements Serializable {
         /**
          * 主键id
          */
+        @NotBlank(message = "id不能为空")
         private String id;
     }
 

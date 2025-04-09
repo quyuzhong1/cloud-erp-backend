@@ -41,9 +41,22 @@ public class InvoiceInfoDTO implements Serializable {
          */
         private Integer count;
     }
+    /**
+     * 带备注DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReturnRemarkDTO extends  RemarkDTO{
+        /**
+         * 退货税务编码
+         */
+        @NotBlank(message = "退货税务编码不能为空")
+        private String returnTaxCode;
+    }
+
 
     /**
-     * 详情
+     * 带备注DTO
      */
     @Data
     @NoArgsConstructor
@@ -53,6 +66,25 @@ public class InvoiceInfoDTO implements Serializable {
          */
         @NotBlank(message = "id不能为空")
         private String id;
+
+        /**
+         * 备注
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+    }
+
+    /**
+     * 销售订单备注DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoRemarkDTO {
+        /**
+         * so主键id
+         */
+        @NotBlank(message = "soId不能为空")
+        private String soId;
 
         /**
          * 备注
@@ -399,5 +431,18 @@ public class InvoiceInfoDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportResultDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 文件url
+         */
+        private String attachUrl;
     }
 }

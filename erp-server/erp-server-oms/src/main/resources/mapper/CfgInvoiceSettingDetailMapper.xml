@@ -23,7 +23,6 @@
        <result column="is_auto_upload" property="isAutoUpload" />
     </resultMap>
 
-    <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         cisd.id,
         cisd.create_user_id,
@@ -34,8 +33,17 @@
         cisd.update_time,
         cisd.version,
         cisd.is_deleted,
-        cisd.main_id, cisd.dict_platform, cisd.shop_id, cisd.dict_invoice_rule, cisd.ratio, cisd.is_contain_ship_fee, cisd.tax_type, cisd.invoice_node, cisd.is_auto_upload
+        cisd.main_id,
+        cisd.dict_platform,
+        cisd.shop_id,
+        cisd.dict_invoice_rule,
+        cisd.ratio,
+        cisd.is_contain_ship_fee,
+        cisd.tax_type,
+        cisd.invoice_node,
+        cisd.is_auto_upload
     </sql>
+
     <select id="selectDetailShop" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDetailShop">
         SELECT
             cisd.main_id AS mainId,
@@ -68,4 +76,18 @@
         WHERE
             cisd.is_deleted = FALSE;
     </select>
+
+    <!-- 根据店铺id集合查询 -->
+    <select id="listByShopIdList" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+        from cfg_invoice_setting cis
+        inner join cfg_invoice_setting_detail cisd on cis.id = cisd.main_id and cisd.is_deleted = false
+        where cis.is_deleted = false and cis.disabled = false
+        and cisd.shop_id in
+        <foreach collection="shopIdList" separator="," open="(" close=")" item="item">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

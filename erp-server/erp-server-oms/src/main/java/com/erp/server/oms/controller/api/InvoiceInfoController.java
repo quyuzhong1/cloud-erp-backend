@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
@@ -12,13 +13,22 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
+import com.erp.model.oms.entity.InvoiceInfoEntity;
 import com.erp.server.oms.service.InvoiceInfoService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -86,12 +96,41 @@ public class InvoiceInfoController extends BaseController {
     }
 
     /**
-     * 生成发票
+     * 生成Vat发票
      * 传参销售订单ids
      */
-    @PostMapping("/generateInvoice")
-    public ApiResult<List<BatchResultDTO>> generateInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchGenerateInvoice(dto.getIds());
+    @PostMapping("/generateVatInvoice")
+    public ApiResult<List<BatchResultDTO>> generateVatInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchGenerateVatInvoice(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 生成Nfe发票
+     * @author will 
+     * @date 2025/4/9 11:46
+     * @param dto 
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/generateNfeInvoice")
+    public ApiResult<List<BatchResultDTO>> generateNfeInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = invoiceInfoService.batchGenerateNfeInvoice(id);
+            }catch (Exception e){
+                log.error("生成Nfe发票失败",e);
+                List<InvoiceInfoEntity> entityList = invoiceInfoService.listBySoIds(Collections.singletonList(id));
+                if (CollUtil.isEmpty(entityList)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "生成Nfe发票不存在, 生成Nfe发票失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(id, id, e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
@@ -136,8 +175,15 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/exportXml")
-    public ApiResult<Resource> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
-        return success(invoiceInfoService.exportXml(dto));
+    @WebAdvanceQuery
+    public ApiResult<ResponseEntity<StreamingResponseBody>> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        StreamingResponseBody responseBody = invoiceInfoService.exportXml(dto);
+        String fileName = "attachments_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
+        ResponseEntity<StreamingResponseBody> body = ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(responseBody);
+        return success(body);
     }
 
     /**
@@ -148,6 +194,7 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<String>
      */
     @PostMapping("/exportPdf")
+    @WebAdvanceQuery
     public ApiResult<Resource> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
         return success(invoiceInfoService.exportPdf(dto));
     }
@@ -197,8 +244,8 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/returnInvoice")
-    public ApiResult<BatchResultDTO> returnInvoice(@RequestBody @Validated InvoiceInfoDTO.RemarkDTO dto) {
-        return success(invoiceInfoService.returnInvoice(dto.getId(),dto.getRemark()));
+    public ApiResult<BatchResultDTO> returnInvoice(@RequestBody @Validated InvoiceInfoDTO.ReturnRemarkDTO dto) {
+        return success(invoiceInfoService.returnInvoice(dto.getId(),dto.getRemark(),dto.getReturnTaxCode()));
     }
 
     /**
@@ -209,7 +256,7 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/notNeedInvoice")
-    public ApiResult<BatchResultDTO> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.RemarkDTO dto) {
-        return success(invoiceInfoService.notNeedInvoice(dto.getId(),dto.getRemark()));
+    public ApiResult<BatchResultDTO> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.SoRemarkDTO dto) {
+        return success(invoiceInfoService.notNeedInvoice(dto.getSoId(),dto.getRemark()));
     }
 }

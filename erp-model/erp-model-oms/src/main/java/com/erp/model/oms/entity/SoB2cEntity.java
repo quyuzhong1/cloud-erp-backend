@@ -379,6 +379,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private String vatInvoiceStatus;
 
     /**
+     * 发票状态 NfeInvoiceStatusEnum
+     */
+    @TableField("nfe_invoice_status")
+    private String nfeInvoiceStatus;
+
+    /**
      * 总税费
      */
     @TableField("total_tax_fee")
