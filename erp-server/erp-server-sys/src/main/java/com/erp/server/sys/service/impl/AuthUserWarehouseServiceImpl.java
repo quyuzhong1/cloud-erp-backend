@@ -162,7 +162,7 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
             //删除移除的权限
             List<String> ids = new ArrayList<>();
             if (CollUtil.isNotEmpty(list)){
-                ids = list.stream().map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
+                ids = list.stream().map(AuthUserWarehouseEntity::getWarehouseId).collect(Collectors.toList());
                 List<String> deleteIdList = list.stream().filter(e -> !warehouseIdList.contains(e.getWarehouseId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
                         .map(AuthUserWarehouseEntity::getId).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(deleteIdList)){

@@ -121,7 +121,12 @@
             inventory_sku_cost isc
         LEFT JOIN inventory_sku_cost_detail iscd ON iscd.main_id = isc.id
         WHERE iscd.is_deleted = FALSE and isc.status = 'approve'
-        AND isc.allocated_month >= (CURRENT_DATE - INTERVAL '3 months')
+        <if test="null != month  and '' != month ">
+            and to_char(isc.allocated_month, 'YYYY-MM') = #{month}
+        </if>
+        <if test="null == month  or '' == month ">
+            AND isc.allocated_month >= (CURRENT_DATE - INTERVAL '3 months')
+        </if>
         <if test="skuIds != null and skuIds.size > 0">
             and iscd.sku_id in
             <foreach collection="skuIds" item="item" open="(" close=")" separator=",">
@@ -140,6 +145,7 @@
                 #{item}
             </foreach>
         </if>
+
         )
         SELECT
             salesOrgId,

@@ -395,7 +395,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(queryB2BDTO.getSkuIds());
         List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
         List<String> skuIds2 = Stream.concat(childSkuIds.stream(), queryB2BDTO.getSkuIds().stream()).distinct().collect(Collectors.toList());
-        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, Collections.singletonList(queryB2BDTO.getWarehouseId()), Collections.singletonList(queryB2BDTO.getSalesOrgId()));
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, Collections.singletonList(queryB2BDTO.getWarehouseId()), Collections.singletonList(queryB2BDTO.getSalesOrgId()), queryB2BDTO.getMonth());
         if (CollUtil.isEmpty(skuCostDTOS)){
             return Collections.emptyList();
         }
@@ -449,7 +449,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
         List<String> skuIds2 = Stream.concat(childSkuIds.stream(), skuIds.stream()).distinct().collect(Collectors.toList());
-        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, warehouseIds, Collections.singletonList(queryB2CDTO.getSalesOrgId()));
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, warehouseIds, Collections.singletonList(queryB2CDTO.getSalesOrgId()),null);
         if (CollUtil.isEmpty(skuCostDTOS)){
             return Collections.emptyList();
         }
@@ -506,7 +506,7 @@ public class InventorySkuCostServiceImpl extends SuperServiceImpl<InventorySkuCo
         List<BomChildrenSkuDTO> bomChildrenList = plmTaskFeign.listBomChildBySkuIds(skuIds);
         List<String> childSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
         List<String> skuIds2 = Stream.concat(childSkuIds.stream(), skuIds.stream()).distinct().collect(Collectors.toList());
-        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, warehouseIds, salesOrgIds);
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = baseMapper.listSkuCost(skuIds2, warehouseIds, salesOrgIds,null);
         if (CollUtil.isEmpty(skuCostDTOS)){
             return Collections.emptyList();
         }

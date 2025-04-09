@@ -1800,6 +1800,9 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         queryB2BDTO.setWarehouseId(warehouse.getId());
         queryB2BDTO.setSalesOrgId(company.getId());
         queryB2BDTO.setBillDate(reconciliationDate);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
+        String month = reconciliationDate.format(formatter);
+        queryB2BDTO.setMonth(month);
         return queryB2BDTO;
     }
 
