@@ -31,7 +31,7 @@ public class AfterSaleDetailEntity extends BaseEntity<AfterSaleDetailEntity> {
     @TableField("main_id")
     private String mainId;
     /**
-    * 货值
+    * 单价
     */
     @TableField("price")
     private BigDecimal price;
