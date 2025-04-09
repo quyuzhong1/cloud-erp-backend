@@ -134,6 +134,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "vmad.warehouse_id",
             menuCode = "wms:virtualWarehouseAllocation:paging",
             tableAlias = "vma"
     )
@@ -302,6 +303,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "vmad.warehouse_id",
             menuCode = "wms:virtualWarehouseAllocation:paging",
             tableAlias = "vma"
     )

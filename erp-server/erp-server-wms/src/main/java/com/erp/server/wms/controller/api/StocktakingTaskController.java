@@ -81,6 +81,7 @@ public class StocktakingTaskController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sp.warehouse_id",
             menuCode = "wms:stocktakingTask:paging",
             tableAlias = "st"
     )
@@ -284,6 +285,7 @@ public class StocktakingTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘点任务")
     @PostMapping("/export")
+    @WebAdvanceQuery(handler = StocktakingTaskQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid StocktakingTaskDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = stocktakingTaskService.exportExcel(dto, response);
         return result ? success() : failure();

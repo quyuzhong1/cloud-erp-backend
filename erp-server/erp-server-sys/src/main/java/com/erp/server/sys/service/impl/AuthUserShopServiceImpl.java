@@ -215,7 +215,7 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
             //删除移除的权限
             List<String> ids = new ArrayList<>();
             if (CollUtil.isNotEmpty(list)){
-                ids = list.stream().map(AuthUserShopEntity::getId).collect(Collectors.toList());
+                ids = list.stream().map(AuthUserShopEntity::getShopId).collect(Collectors.toList());
                 List<String> deleteIdList = list.stream().filter(e -> !shopIdList.contains(e.getShopId()) || AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()))
                         .map(AuthUserShopEntity::getId).collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(deleteIdList)){
