@@ -4,6 +4,7 @@ import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -34,4 +35,12 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
       * @return: List<CfgInvoiceSettingDetailDTO.ViewDTO>
       **/
     List<CfgInvoiceSettingDetailDTO.ViewDTO> selectDetailDict(String mainId);
+    /**
+     * 根据店铺id集合查询
+     * @author will
+     * @date 2025/4/9 12:20
+     * @param shopIdList
+     * @return List<CfgInvoiceSettingDetailEntity>
+     */
+    List<CfgInvoiceSettingDetailEntity> listByShopIdList(@Param("shopIdList") List<String> shopIdList);
 }

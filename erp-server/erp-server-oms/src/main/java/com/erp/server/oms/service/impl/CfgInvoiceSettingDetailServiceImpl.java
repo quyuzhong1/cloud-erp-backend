@@ -5,11 +5,20 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgInvoiceSettingDetailMapper;
+import com.erp.server.oms.service.CfgInvoiceSettingDetailService;
+import com.erp.server.oms.service.CfgInvoiceSettingService;
+import com.erp.server.oms.service.DictBasicService;
+import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -19,8 +28,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -141,5 +157,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     @Override
     public List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop() {
         return baseMapper.selectDetailShop();
+    }
+
+    @Override
+    public List<CfgInvoiceSettingDetailEntity> listByShopIdList(List<String> shopIdList) {
+        return baseMapper.listByShopIdList(shopIdList);
     }
 }

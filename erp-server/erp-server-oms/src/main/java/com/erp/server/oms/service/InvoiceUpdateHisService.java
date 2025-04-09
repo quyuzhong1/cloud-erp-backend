@@ -43,4 +43,12 @@ public interface InvoiceUpdateHisService extends SuperService<InvoiceUpdateHisEn
      * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.InvoiceUpdateHisDTO.ListDTO>
      */
     List<InvoiceUpdateHisDTO.ListDTO> list(InvoiceUpdateHisDTO.IdDTO dto);
+    /**
+     * 根据发票id查询修改的历史数量
+     * @author will
+     * @date 2025/4/9 14:58
+     * @param invoiceInfoId
+     * @return Integer
+     */
+    Integer countByInvoiceInfoId(String invoiceInfoId);
 }
