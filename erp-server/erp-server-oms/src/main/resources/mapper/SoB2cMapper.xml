@@ -1459,7 +1459,7 @@ SELECT DISTINCT so.* FROM so_b2c so
             </foreach>
         </if>
         <if test="platformStatusList!= null and platformStatusList.size > 0">
-            and sb2c.platform_order_status in
+            and sb2c.platform_order_status not in
             <foreach collection="platformStatusList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
