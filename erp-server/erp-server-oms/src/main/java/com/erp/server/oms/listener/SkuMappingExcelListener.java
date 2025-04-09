@@ -1,7 +1,7 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -12,6 +12,7 @@ import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.excel.SkuMappingImportExcelDTO;
@@ -23,6 +24,7 @@ import com.erp.model.oms.enums.ListingSourceTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.service.InvoiceTaxService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SkuMappingService;
@@ -74,6 +76,9 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
     private ListingInfoService listingInfoService;
 
+    private InvoiceTaxService invoiceTaxService;
+
+
     private List<SkuMappingEntity> addSkuMappingList = new ArrayList<>(10);
 
     /**
@@ -96,6 +101,12 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
      * 更新的listing
      */
     private List<ListingInfoEntity> updateListingInfoList = new ArrayList<>(10);
+
+    /**
+     * 发票税务信息
+     */
+    private List<InvoiceTaxDTO.UpdateDTO> invoiceTaxList = new ArrayList<>();
+
     private final OperateLogService operateLogService;
 
     private final List<String> removeIds = new ArrayList<>();
@@ -107,7 +118,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                                    List<DictBasicDTO.ViewDTO> dictBasicList,
                                    List<ListingInfoEntity> listingInfoEntityList,
                                    ListingInfoService listingInfoService,
-                                   OperateLogService operateLogService) {
+                                   OperateLogService operateLogService,
+                                   InvoiceTaxService invoiceTaxService) {
         this.skuMappingService = skuMappingService;
         this.skuList = skuList;
         this.shopList = shopList;
@@ -116,6 +128,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         this.listingInfoEntityList = listingInfoEntityList;
         this.listingInfoService = listingInfoService;
         this.operateLogService = operateLogService;
+        this.invoiceTaxService = invoiceTaxService;
     }
 
     /**
@@ -295,6 +308,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                 if (Objects.nonNull(listingInfoEntity)){
                     listingInfoEntity.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
                     updateListingInfoList.add(listingInfoEntity);
+                    //税务信息
+                    InvoiceTaxDTO.UpdateDTO invoiceTaxUpdateDTO = BeanUtil.toBean(skuMappingImportExcelDTO, InvoiceTaxDTO.UpdateDTO.class);
+                    invoiceTaxUpdateDTO.setListingId(listingInfoEntity.getId());
+                    invoiceTaxList.add(invoiceTaxUpdateDTO);
                 }
                 return;
             }
@@ -330,6 +347,11 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             addListingInfoEntity.setPlatform(dictPlatform);
             addListingInfoEntity.setSourceType(ListingSourceTypeEnum.SELF_ADD.getCode());
             addListingInfoEntityList.add(addListingInfoEntity);
+
+            //税务信息
+            InvoiceTaxDTO.UpdateDTO invoiceTaxUpdateDTO = BeanUtil.toBean(skuMappingImportExcelDTO, InvoiceTaxDTO.UpdateDTO.class);
+            invoiceTaxUpdateDTO.setListingId(listingInfoEntity.getId());
+            invoiceTaxList.add(invoiceTaxUpdateDTO);
         }
         SkuMappingEntity add = new SkuMappingEntity();
         add.setDictPlatform(dictPlatform);
@@ -368,6 +390,10 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         }
         if (CollectionUtils.isNotEmpty(addSkuMappingList)) {
             skuMappingService.saveBatch(addSkuMappingList);
+        }
+
+        if (CollectionUtils.isNotEmpty(invoiceTaxList)) {
+            invoiceTaxService.importUpdate(invoiceTaxList);
         }
 
         if(CollectionUtils.isNotEmpty(removeIds)){

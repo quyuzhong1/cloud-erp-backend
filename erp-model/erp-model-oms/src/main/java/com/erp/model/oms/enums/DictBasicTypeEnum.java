@@ -27,6 +27,7 @@ public enum DictBasicTypeEnum {
     SHOP_TRANSFER_COST("shopTransferCost","店铺转账费率选项"),
     DELIVERY_MODE("deliveryMode",  "交货方式"),
     TRADE_TERM("tradeTerm",  "贸易条款"),
+    INVOICE_TAX_NFE_ORIGIN("invoiceTaxNfeOrigin",  "发票税务信息Nfe原产地"),
 
     // 数帝云
     SDY_SUB_PLATFORM("sdySubPlatform" , "数帝子平台映射"),

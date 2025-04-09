@@ -632,7 +632,34 @@ public class SkuMappingDTO implements Serializable {
          * 仓库发货配置
          */
         private List<SkuMappingExtendDTO.ListDTO> extendList = Collections.emptyList();
-
+        /**
+         * 发票海关编码
+         */
+        private String invoiceHsCode;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 跨州税务编码
+         */
+        private String diffStateTaxCode;
+        /**
+         * 同州税务编码
+         */
+        private String sameStateTaxCode;
+        /**
+         * 原产地
+         */
+        private String dictOrigin;
+        /**
+         * 原产地名称
+         */
+        private String dictOriginName;
+        /**
+         * 开票产品名称
+         */
+        private String invoiceProductName;
     }
 
 

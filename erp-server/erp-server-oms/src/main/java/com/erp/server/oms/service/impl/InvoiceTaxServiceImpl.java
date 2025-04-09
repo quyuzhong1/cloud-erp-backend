@@ -21,8 +21,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -89,6 +93,26 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
             return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void importUpdate(List<InvoiceTaxDTO.UpdateDTO> invoiceTaxList) {
+        if (CollUtil.isEmpty(invoiceTaxList)) {
+            return;
+        }
+        List<String> listingIdList = invoiceTaxList.stream().map(InvoiceTaxDTO.UpdateDTO::getListingId).distinct().collect(Collectors.toList());
+        List<InvoiceTaxEntity> oldTaxList = listByListingIdList(listingIdList);
+        Map<String, InvoiceTaxEntity> map = oldTaxList.stream().collect(Collectors.toMap(InvoiceTaxEntity::getListingId, Function.identity()));
+        List<InvoiceTaxEntity> addOrUpdateList = new ArrayList<>();
+        for (InvoiceTaxDTO.UpdateDTO invoiceTaxDTO : invoiceTaxList) {
+            InvoiceTaxEntity invoiceTaxEntity = BeanMapperUtils.map(InvoiceTaxEntity.class, invoiceTaxDTO);
+            InvoiceTaxEntity oldEntity = map.get(invoiceTaxEntity.getListingId());
+            if (ObjUtil.isNotEmpty(oldEntity)) {
+                invoiceTaxEntity.setId(oldEntity.getId());
+            }
+            addOrUpdateList.add(invoiceTaxEntity);
+        }
+        super.saveOrUpdateBatch(addOrUpdateList);
     }
 
     /**

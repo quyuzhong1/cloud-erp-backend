@@ -3,11 +3,8 @@ package com.erp.model.oms.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.time.LocalDateTime;
 
 /**
  * @author Lambda
@@ -74,11 +71,59 @@ public class SkuMappingImportExcelDTO {
     @ExcelProperty(value = "启用时间", index = 6)
     @FieldValid(fieldName = "启用时间")
     private String enabledTime;
+
+    /**
+     * NCM
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "NCM", index = 7)
+    @FieldValid(fieldName = "NCM")
+    private String invoiceHsCode;
+
+    /**
+     * 单位
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "单位", index = 8)
+    @FieldValid(fieldName = "单位")
+    private String unit;
+
+    /**
+     * 跨州CFOP
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "跨州CFOP", index = 9)
+    @FieldValid(fieldName = "跨州CFOP")
+    private String diffStateTaxCode;
+
+    /**
+     * 同州CFOP
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "同州CFOP", index = 10)
+    @FieldValid(fieldName = "同州CFOP")
+    private String sameStateTaxCode;
+
+    /**
+     * 原产地
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "原产地", index = 11)
+    @FieldValid(fieldName = "原产地")
+    private String dictOrigin;
+
+    /**
+     * 开票产品名称
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "开票产品名称", index = 12)
+    @FieldValid(fieldName = "开票产品名称")
+    private String invoiceProductName;
     /**
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 7)
+    @ExcelProperty(value = "错误数据", index = 13)
     private String errorMsg;
 
 

@@ -50,4 +50,12 @@ public interface InvoiceTaxService extends SuperService<InvoiceTaxEntity> {
      * @return Boolean
      */
     Boolean checkInvoiceTax(InvoiceTaxEntity invoiceTaxEntity);
+    /**
+     *
+     * @author will
+     * @date 2025/4/9 09:53
+     * @param invoiceTaxList
+     * @return void
+     */
+    void importUpdate(List<InvoiceTaxDTO.UpdateDTO> invoiceTaxList);
 }
