@@ -94,8 +94,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         if ((null != soB2cEntity.getIsCancel() && Boolean.TRUE.equals(soB2cEntity.getIsCancel()))
                 || (null != soB2cEntity.getInvalidStatus() && Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) )) {
-            // 取消商品数量（合计）
-            shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
+                // 取消商品数量（合计）
+                shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+            }
         }
         shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
@@ -229,9 +231,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         } else {
             if ((Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null )
                     || (Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) && soB2cEntity.getInvalidStatus() != null)) {
-                BigDecimal totalCancelGoodsAmount = soB2cDetailEntityList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(totalCancelGoodsAmount);
-
+                if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
+                    BigDecimal totalCancelGoodsAmount = soB2cDetailEntityList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                    shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(totalCancelGoodsAmount);
+                }
             }
         }
 
@@ -328,8 +331,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         if ((Boolean.TRUE.equals(soB2cEntity.getIsCancel()) && soB2cEntity.getIsCancel() != null )
                 || (Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) && soB2cEntity.getInvalidStatus() != null)) {
-            shudiyunB2cOrderDTO.setGoods_status("已取消");
-            shudiyunB2cOrderDTO.setBiz_status("已取消");
+            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())){
+                shudiyunB2cOrderDTO.setGoods_status("已取消");
+                shudiyunB2cOrderDTO.setBiz_status("已取消");
+            }
         }
 
         shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
@@ -640,8 +645,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         if ((null != soB2cEntity.getIsCancel() && Boolean.TRUE.equals(soB2cEntity.getIsCancel()))
                 || (null != soB2cEntity.getInvalidStatus() && Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) )) {
-            // 取消商品数量（合计）
-            shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
+                // 取消商品数量（合计）
+                shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+            }
         }
         shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
@@ -759,8 +766,10 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         if ((null != soB2cEntity.getIsCancel() && Boolean.TRUE.equals(soB2cEntity.getIsCancel()))
                 || (null != soB2cEntity.getInvalidStatus() && Boolean.TRUE.equals(soB2cEntity.getInvalidStatus()) )) {
-            // 取消商品数量（合计）
-            shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+            if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
+                // 取消商品数量（合计）
+                shudiyunB2cOrderDTO.setTotal_canceled_goods_quantity(totalQty);
+            }
         }
         shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(totalQty - shudiyunB2cOrderDTO.getTotal_canceled_goods_quantity());
 
