@@ -582,21 +582,25 @@ public class AfterSaleDTO implements Serializable {
         /**
          *
          */
-        private String skuId;
+        private String goodsId;
 
         /**
          *
          */
-        private String skuNo;
+        private String goodsNo;
 
         /**
          *
          */
-        private Integer skuName;
+        private String goodsName;
         /**
          *
          */
-        private String qty;
+        private Integer qty;
+        /**
+         *
+         */
+        private String thirdType;
 
     }
 
