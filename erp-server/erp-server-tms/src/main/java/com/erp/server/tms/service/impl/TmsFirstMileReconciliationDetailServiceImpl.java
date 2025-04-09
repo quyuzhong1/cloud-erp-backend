@@ -1558,10 +1558,16 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     boolean allCurrencyEqual = value.stream().allMatch(excelDTO -> firstCurrency.equals(excelDTO.getCurrency()));
                     //实际实重
                     String actualWeight = dto.getActualWeight();
-                    boolean allActualWeightEqual = value.stream().allMatch(excelDTO -> actualWeight.equals(excelDTO.getActualWeight()));
+                    Boolean allActualWeightEqual = Boolean.TRUE;
+                    if(StringUtils.isNotBlank(actualWeight)){
+                        allActualWeightEqual = value.stream().allMatch(excelDTO -> actualWeight.equals(excelDTO.getActualWeight()));
+                    }
                     //实际体积重
                     String volumeWeight = dto.getVolumeWeight();
-                    boolean allVolumeWeightEqual = value.stream().allMatch(excelDTO -> volumeWeight.equals(excelDTO.getVolumeWeight()));
+                    Boolean allVolumeWeightEqual = Boolean.TRUE;
+                    if(StringUtils.isNotBlank(volumeWeight)){
+                        allVolumeWeightEqual = value.stream().allMatch(excelDTO -> volumeWeight.equals(excelDTO.getVolumeWeight()));
+                    }
                     //费用项
                     String costName = dto.getCostName();
                     boolean allCostNameEqual = value.stream().allMatch(excelDTO -> costName.equals(excelDTO.getCostName()));
@@ -1769,27 +1775,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         return tmsCfgCostList.stream().collect(Collectors.toMap(TmsCfgCostEntity::getCostName, TmsCfgCostEntity::getDictCostCategory, (o1, o2) -> o1));
     }
 
-    private Map<String, Set<String>> groupCostCategories2(List<TmsCfgCostEntity> tmsCfgCostList) {
-        Map<String, Set<String>> costCategoryMap = new HashMap<>();
-        costCategoryMap.put("shippingCostList", tmsCfgCostList.stream()
-                .filter(e -> DictCostCategoryEnum.SHIPPING_COST.getCode().equals(e.getDictCostCategory()))
-                .map(TmsCfgCostEntity::getCostName)
-                .collect(Collectors.toSet()));
-        costCategoryMap.put("declareCostList", tmsCfgCostList.stream()
-                .filter(e -> DictCostCategoryEnum.DECLARE_COST.getCode().equals(e.getDictCostCategory()))
-                .map(TmsCfgCostEntity::getCostName)
-                .collect(Collectors.toSet()));
-        costCategoryMap.put("otherCostList", tmsCfgCostList.stream()
-                .filter(e -> DictCostCategoryEnum.OTHER_COST.getCode().equals(e.getDictCostCategory()))
-                .map(TmsCfgCostEntity::getCostName)
-                .collect(Collectors.toSet()));
-        costCategoryMap.put("otherTaxCostList", tmsCfgCostList.stream()
-                .filter(e -> DictCostCategoryEnum.OTHER_TAX_FEE.getCode().equals(e.getDictCostCategory()))
-                .map(TmsCfgCostEntity::getCostName)
-                .collect(Collectors.toSet()));
-        return costCategoryMap;
-    }
-
     // 提取公共逻辑：构建查询参数
     private InventorySkuCostDTO.QueryB2BDTO buildQueryB2BDTO(List<WmsCartonDTO.ListPackingCartonDTO> listPackingCartonDTOS, WarehouseEntity warehouse, BaseIdDTO.CodeDTO company,LocalDate reconciliationDate) {
         InventorySkuCostDTO.QueryB2BDTO queryB2BDTO = new InventorySkuCostDTO.QueryB2BDTO();
@@ -1839,12 +1824,12 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal leftActualWeight = BigDecimal.ZERO;
-            BigDecimal leftCostValue = BigDecimal.ZERO;
             BigDecimal leftVolumeWeight= BigDecimal.ZERO;
+
+            BigDecimal leftCostValue = BigDecimal.ZERO;
             for (int i = 0; i < value.size(); i++) {
                 FirstMileReconciliationStandardExcelDTO excelDTO = value.get(i);
                 BigDecimal weightRate = excelDTO.getGrossWeigh().divide(totalWeightByCode, 4, RoundingMode.DOWN);
-
                 //实重
                 BigDecimal actualWeight = MathUtil.getBigDecimalByStr(excelDTO.getActualWeight());
                 //费用金额
