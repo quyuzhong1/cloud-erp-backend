@@ -1,46 +1,48 @@
 package com.erp.server.oms.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
-import com.erp.server.oms.service.CfgInvoiceSettingService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
-
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
 
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.enums.LogActionEnum;
+import com.common.business.dto.base.*;
+import org.springframework.web.bind.annotation.RestController;
+import com.common.core.controller.BaseController;
+import com.erp.server.oms.service.CfgInvoiceSettingService;
+import com.common.core.controller.vo.ApiResult;
+import com.common.business.annotation.DataPermission;
+import com.common.business.enums.DataAttributeEnum;
+import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
+
 /**
- * nf-e发票设置
- * @author Lambda
- * @since 2025-04-07
+ * @author hcg
+ * @since 2025-04-09
  */
 @Slf4j
 @RestController
-@LogSystemModule("发票设置")
+@LogSystemModule("")
 @RequestMapping("/cfgInvoiceSetting")
 public class CfgInvoiceSettingController extends BaseController {
     @Resource
     private CfgInvoiceSettingService cfgInvoiceSettingService;
 
     /**
-     * 发票设置分页
+     * 发票设置分页查询
      *
-     * @return
-     */
+     * @description:
+     * @author: hcg
+     * @date: 2025/4/9 14:43
+     * @param: dto
+     * @return: PagingVO<CfgInvoiceSettingDTO.PagingViewDTO>
+     **/
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "oms:cfgInvoiceSetting:paging",
@@ -54,10 +56,13 @@ public class CfgInvoiceSettingController extends BaseController {
     }
 
     /**
-     * 新增
-     * @param dto
-     * @return
-     */
+     * 发票设置新增
+     *
+     * @author: hcg
+     * @date: 2025/4/9 14:43
+     * @param: dto
+     * @return: BaseResultDTO.AddDTO
+     **/
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "发票设置新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgInvoiceSettingDTO.AddDTO dto) {
@@ -65,10 +70,14 @@ public class CfgInvoiceSettingController extends BaseController {
     }
 
     /**
-     * 修改
-     * @param dto
-     * @return
-     */
+     * 发票设置修改
+     *
+     * @description:
+     * @author: hcg
+     * @date: 2025/4/9 14:42
+     * @param: dto
+     * @return:
+     **/
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "发票设置修改")
     public ApiResult<?> update(@RequestBody @Validated CfgInvoiceSettingDTO.UpdateDTO dto) {
@@ -77,10 +86,13 @@ public class CfgInvoiceSettingController extends BaseController {
     }
 
     /**
-     * 删除
+     * 发票设置删除
      *
-     * @return
-     */
+     * @author: hcg
+     * @date: 2025/4/9 14:42
+     * @param: idsDTO
+     * @return: Boolean
+     **/
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.UPDATE, desc = "发票设置删除")
     public ApiResult<Boolean> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO idsDTO) {
@@ -88,23 +100,31 @@ public class CfgInvoiceSettingController extends BaseController {
     }
 
     /**
-     * 详情
-     * @param id
-     * @return
-     */
-    @PostMapping("/view/{id}")
-    public ApiResult<CfgInvoiceSettingDTO.ViewDTO> delete(@PathVariable("id") String id) {
-        return success(cfgInvoiceSettingService.view(id));
+     * 发票设置详情
+     *
+     * @description:
+     * @author: yanhongwei
+     * @date: 2025/4/9 14:40
+     * @param: BaseIdDTO
+     * @return: CfgInvoiceSettingDTO.ViewDTO
+     **/
+    @GetMapping("/view")
+    public ApiResult<CfgInvoiceSettingDTO.ViewDTO> view(@RequestBody @Validated BaseIdDTO dto) {
+        return success(cfgInvoiceSettingService.view(dto.getId()));
     }
 
     /**
-     * 启用
-     * @param dto
-     * @return
-     */
+     * 发票设置启用或禁用
+     *
+     * @description:
+     * @author: hcg
+     * @date: 2025/4/9 14:41
+     * @param: dto
+     * @return:
+     **/
     @PostMapping("/updateStatus")
     @LogAction(value = LogActionEnum.UPDATE, desc = "启用或禁用")
-    public ApiResult<?> updateStatus(@RequestBody @Validated CfgInvoiceSettingDTO.UpdateDTO dto) {
+    public ApiResult<?> updateStatus(@RequestBody @Validated CfgInvoiceSettingDTO.UpdateStatusDTO dto) {
         cfgInvoiceSettingService.updateStatus(dto);
         return success();
     }

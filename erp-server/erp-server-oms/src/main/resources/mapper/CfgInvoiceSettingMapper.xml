@@ -37,6 +37,8 @@
                 cis.id,
                 cis.type as type,
                 cis.company_name as companyName,
+                cis.update_time as updateTime,
+                cis.update_user_name as updateUserName,
                 cis.lei_code as leiCode,
                 cis.disabled as disabled,
                 cis.tax_type as taxType,
@@ -66,7 +68,7 @@
                        , cis.tax_type, cis.dict_company_type, cis.state_tax_no, cis.email
                        , cis.post_code, cis.address, cis.doorplate_no, cis.district, cis.city
                        , cis.state, cis.no, cis.start_code, cis.certificate_url, cis.certificate_password
-                       , cis.create_time
+                       , cis.create_time, cis.update_time, cis.update_user_name
                 ORDER BY
                 cis.create_time DESC
     </select>

@@ -1,135 +1,116 @@
 package com.erp.model.oms.entity;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.Accessors;
 
-import java.io.Serializable;
 
 /**
  * <p>
  * 
  * </p>
  *
- * @author Lambda
- * @since 2025-04-07
- */
-@Getter
-@Setter
+ * @author hcg
+ * @since 2025-04-09
+*/
+@Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
 @TableName("cfg_invoice_setting")
 public class CfgInvoiceSettingEntity extends BaseEntity<CfgInvoiceSettingEntity> {
 
     /**
-     * 发票类型
-     */
+    * 发票类型
+    */
     @TableField("type")
     private String type;
-
     /**
-     * 公司名称
-     */
+    * 公司名称
+    */
     @TableField("company_name")
     private String companyName;
-
     /**
-     * 法人国家经济号
-     */
+    * 法人国家经济号
+    */
     @TableField("lei_code")
     private String leiCode;
-
     /**
-     * 启用禁用 true禁用 false启用
-     */
+    * 启用禁用 true禁用 false启用
+    */
     @TableField("disabled")
     private Boolean disabled;
-
     /**
-     * 税务类型
-     */
+    * 税务类型
+    */
     @TableField("tax_type")
     private String taxType;
-
     /**
-     * 公司类型
-     */
+    * 公司类型
+    */
     @TableField("dict_company_type")
     private String dictCompanyType;
-
     /**
-     * 州税号
-     */
+    * 州税号
+    */
     @TableField("state_tax_no")
     private String stateTaxNo;
-
     /**
-     * 邮箱
-     */
+    * 邮箱
+    */
     @TableField("email")
     private String email;
-
     /**
-     * 邮编
-     */
+    * 邮编
+    */
     @TableField("post_code")
     private String postCode;
-
     /**
-     * 地址
-     */
+    * 地址
+    */
     @TableField("address")
     private String address;
-
     /**
-     * 门牌号
-     */
+    * 门牌号
+    */
     @TableField("doorplate_no")
     private String doorplateNo;
-
     /**
-     * 区
-     */
+    * 区
+    */
     @TableField("district")
     private String district;
-
     /**
-     * 城市
-     */
+    * 城市
+    */
     @TableField("city")
     private String city;
-
     /**
-     * 州
-     */
+    * 州
+    */
     @TableField("state")
     private String state;
-
     /**
-     * 序列号
-     */
+    * 序列号
+    */
     @TableField("no")
     private Integer no;
-
     /**
-     * 起始编号
-     */
+    * 起始编号
+    */
     @TableField("start_code")
     private String startCode;
-
     /**
-     * A1证书链接
-     */
+    * A1证书链接
+    */
     @TableField("certificate_url")
     private String certificateUrl;
-
     /**
-     * A1证书密码
-     */
+    * A1证书密码
+    */
     @TableField("certificate_password")
     private String certificatePassword;
 

@@ -2,18 +2,28 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 
+/**
+ * <p>
+ * 请求响应实体
+ * </p>
+ *
+ * @author hcg
+ * @since 2025-04-09
+ */
 @Data
 @NoArgsConstructor
 public class CfgInvoiceSettingDTO implements Serializable {
@@ -177,12 +187,23 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * 主键id
          */
-        private String  id;
+        private String id;
 
         /**
          * 发票类型
          */
         private String type;
+
+        /**
+         * 操作人
+         */
+        private String updateUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime updateTime;
 
         /**
          * 公司名称
@@ -285,12 +306,12 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * sqlMap 默认key default
          */
-        private Map<String,String> sqlMap;
+        private Map<String, String> sqlMap;
     }
 
     @Data
     @NoArgsConstructor
-    public static class ShopInfoDTO{
+    public static class ShopInfoDTO {
         /**
          * 平台
          */
@@ -303,10 +324,26 @@ public class CfgInvoiceSettingDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ViewDTO extends CommonDTO{
+    public static class ViewDTO extends CommonDTO {
         /**
-         * 循环拼接每个对象格式为'dictPlatform：name'，中间以'；'隔离
+         * 主键id
          */
-        private List<ShopInfoDTO> shopList;
+        private String id;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStatusDTO {
+        /**
+         * 主键Id
+         */
+        @NotBlank(message = "主键Id不能为空")
+        private String id;
+
+        /**
+         * 是否启用标识
+         */
+        @NotNull(message = "是否启用标识不能为空")
+        private Boolean disabled;
     }
 }
