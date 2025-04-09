@@ -135,6 +135,7 @@ public enum ModuleTypeEnum {
     SO_PRICE("118", "销售价目表"),
     SO_PRICE_CHANGE("119", "销售调目表"),
 
+    AFTER_SALE("120", "售后申请"),
     ;
 
 

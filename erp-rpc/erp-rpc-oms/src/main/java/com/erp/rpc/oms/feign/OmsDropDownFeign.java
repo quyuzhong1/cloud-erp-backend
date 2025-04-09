@@ -1,16 +1,13 @@
 package com.erp.rpc.oms.feign;
 
 import com.common.business.dto.base.BaseDropDownDTO;
-import com.erp.model.oms.dto.CfgRuleOrderHandleDTO;
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.DictBasicEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
-import java.util.Map;
 
 @FeignClient(name = "erp-oms", contextId = "dropDown")
 public interface OmsDropDownFeign {
@@ -30,5 +27,8 @@ public interface OmsDropDownFeign {
      */
     @GetMapping("feign/drop/down/dict/getByTypeAndValue")
     DictBasicEntity getByTypeAndValue(@RequestParam("type") String type, @RequestParam("value") String value);
+
+    @GetMapping("feign/drop/down/dict/list")
+    ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("key") String key);
 
 }

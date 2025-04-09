@@ -1,0 +1,67 @@
+package com.erp.rpc.dmp.feign;
+
+
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.dto.AfterSaleProgressDTO;
+import com.erp.model.dmp.dto.ThridUserInfoDTO;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+
+/**
+ * 售后申请小程序端接口
+ *
+ * @author jack
+ * @since 2025-04-07
+ */
+@FeignClient(value = "erp-dmp", path = "feign/afterSale", contextId = "AfterSaleFeign")
+public interface AfterSaleFeign {
+
+    /**
+     * @return
+     * @author jack
+     * @date: 2025-04-06
+     */
+    @PostMapping("feign/afterSale/addThridUser")
+    ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto);
+
+
+    /**
+     * 新增
+     * @author jack
+     * @date:  2025-04-06
+     * @param dto
+     * @return ApiResult<String>
+     */
+    @PostMapping("feign/afterSale/add")
+    ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto);
+    /**
+     *
+     * 获取寄修进度
+     * @Author jack
+     * @since 2025-04-07
+     **/
+    @PostMapping("feign/afterSale/getRepairRecord")
+    ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody  @Validated  AfterSaleDTO.ProgressDTO dto);
+    /**
+     * 获取寄修历史
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @PostMapping("feign/afterSale/getRepairHistory")
+    ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody  @Validated  AfterSaleDTO.ThridUserDTO dto);
+    /**
+     * 根据订单编号查询明细
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("feign/afterSale/getDetailByPlatformCode")
+    ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode);
+}
