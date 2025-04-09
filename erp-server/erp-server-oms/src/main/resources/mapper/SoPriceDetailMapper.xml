@@ -231,8 +231,7 @@
         inner join so_price_detail spd on sp.id = spd.main_id and spd.is_deleted = false
         inner join customer_info si on sp.customer_id = si.id and si.is_deleted = false
         <where>
-            sp.is_deleted = false and sp.approve_status = 'approve' and spd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
-            spd.effective_date and spd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
+            sp.is_deleted = false and sp.approve_status = 'approve' and spd.disabled = false
             <if test="params.skuIdList != null and params.skuIdList.size > 0">
                 and spd.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">
