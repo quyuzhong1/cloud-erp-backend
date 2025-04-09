@@ -14,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.erp.server.dmp.query.AfterSaleQueryHandler;
 import com.erp.server.dmp.service.AfterSaleService;
@@ -54,7 +55,7 @@ public class AfterSaleController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "售后申请表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto) {
-        return success(afterSaleService.add(dto));
+        return success(afterSaleService.addAndSubmit(dto));
     }
 
     /**
@@ -464,6 +465,39 @@ public class AfterSaleController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "售后申请状态变更")
     public ApiResult<List<BatchResultDTO>> changeStatus(@RequestBody @Validated AfterSaleDTO.IdsDTO dto) {
         return success(afterSaleService.changeStatus(dto));
+    }
+
+    /**
+     * 获取寄修进度
+     * @author jack
+     * @date:  2025-04-06
+     * @return ApiResult
+     */
+    @PostMapping("/getRepairRecord")
+    public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
+        return success(afterSaleService.getRepairProgress(dto));
+    }
+
+
+    /**
+     * 获取寄修历史
+     * @author jack
+     * @date:  2025-04-06
+     * @return ApiResultwo
+     */
+    @PostMapping("/getRepairHistory")
+    public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody @Validated AfterSaleDTO.ThridUserDTO dto) {
+        return success(afterSaleService.getRepairHistory(dto));
+    }
+
+    /**
+     * 根据订单编号查询明细
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("/getDetailByPlatformCode")
+    ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
+        return success(afterSaleService.getDetailByPlatformCode(platformCode));
     }
 
 }

@@ -109,13 +109,20 @@
         afsd.sku_no AS skuNo,
         afsd.prodcut_name AS prodcutName,
         afsd.sku_qty AS skuQty,
-        afsd.detail_desc AS detailDesc
+        afsd.detail_desc AS detailDesc,
+        tui.username AS thridUserName,
+        tui.nick_name AS nickName,
+        tui.phone_number AS phoneNumber
         FROM
             after_sale AS afs
             left join after_sale_detail  AS afsd on afs.id = afsd.main_id and afsd.is_deleted =FALSE
+            left join thrid_user_info as tui on afs.thrid_user_id = tui.id and tui.is_deleted = FALSE
         where
             ${params.sqlMap.default}
           AND afs.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -142,6 +149,46 @@
             ${params.permissionSql}
         </if>
         GROUP BY approve_status
+    </select>
+    <select id="getRepairProgress" resultType="com.erp.model.dmp.dto.AfterSaleProgressDTO$RepairRecordListDTO"
+            parameterType="com.erp.model.dmp.dto.AfterSaleDTO$ProgressDTO">
+        select
+            afs.id,
+            afsp.id as detailId,
+            afsp.node  ,
+            afsp.node_time  ,
+            afsp.track_no  ,
+            afsp.remark  ,
+            afsp.index
+        from
+            after_sale afs
+                left join after_sale_progress afsp on afs.id = afsp.main_id and afsp.is_deleted = FALSE
+        where
+            afs.is_deleted = false
+        <if test="params != null and params.code != null and params.code != ''">
+            and afs.code = #{params.code}
+        </if>
+        <if test="params != null and params.thridUserId != null and params.thridUserId != ''">
+            and afs.thrid_user_id = #{params.thridUserId}
+        </if>
+        order by index
+    </select>
+    <select id="getRepairHistory" resultType="com.erp.model.dmp.dto.AfterSaleProgressDTO$RepairHistoryListDTO"
+            parameterType="com.erp.model.dmp.dto.AfterSaleDTO$ThridUserDTO">
+        select
+        afs.id,
+        afs.code,
+        afs.status,
+        afs.update_time,
+        afs.remark
+        from
+        after_sale afs
+        where
+        afs.is_deleted = false
+        <if test="params != null and params.thridUserId != null and params.thridUserId != ''">
+            and afs.thrid_user_id = #{params.thridUserId}
+        </if>
+        order by afs.create_time desc
     </select>
 
 </mapper>

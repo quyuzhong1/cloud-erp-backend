@@ -190,6 +190,8 @@ public class AfterSaleProgressDTO implements Serializable {
          * id
          */
         private String id;
+
+        private String detailId;
         /**
          * 进度节点
          */
@@ -204,10 +206,6 @@ public class AfterSaleProgressDTO implements Serializable {
          * 进度节点名称
          */
         private String nodeName;
-        /**
-         * 是否已激活
-         */
-        private Boolean isActivate;
 
         /**
          * 快递单号

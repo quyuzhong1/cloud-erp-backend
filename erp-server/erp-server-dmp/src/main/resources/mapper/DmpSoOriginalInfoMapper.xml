@@ -60,6 +60,26 @@
         is_deleted,
         platform_create_time, platform_update_time, source_platform, source_system, third_code, platform_code, shop_no, trade_status, pay_status, trade_time, pay_time, buyer_message, remark, buyer_email, buyer_name, receiver_name, receiver_country, receiver_province, receiver_city, receiver_district, receiver_address, receiver_mobile, receiver_telno, discount, paid, currency, refund_amount, trade_from, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
     </sql>
+    <select id="listDetailByPlatformCode" resultType="com.erp.model.dmp.dto.AfterSaleDTO$DropDownDTO" parameterType="java.lang.String">
+        SELECT
+        si.id,
+        sd.id as detailId,
+        '' as skuId,
+        sd.goods_no as skuNo,
+        sd.goods_name as prodcutName,
+        sd.num as skuQty,
+        sd.price as price,
+        'wdt' as thirdType
+        FROM
+        dmp_so_original_info si
+        LEFT JOIN dmp_so_original_detail sd ON sd.main_id = si.ID and sd.is_deleted = FALSE
+        where
+        si.is_deleted = FALSE
+        <if test="null != platformCode and platformCode != ''">
+            AND (si.platform_code  = #{platformCode} or si.third_code = #{platformCode})
+        </if>
+        order by detailId desc
+    </select>
 
 
 </mapper>

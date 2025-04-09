@@ -1,24 +1,28 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.InvoiceDetailDTO;
 import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.erp.server.oms.mapper.InvoiceDetailMapper;
 import com.erp.server.oms.service.InvoiceDetailService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.oms.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.InvoiceDetailDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 上传记录订单明细 服务实现类
@@ -93,6 +97,14 @@ public class InvoiceDetailServiceImpl extends SuperServiceImpl<InvoiceDetailMapp
     @Override
     public void batchUpdate(String id, List<InvoiceDetailDTO.UpdateDTO> detailList) {
 
+    }
+
+    @Override
+    public List<InvoiceDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(InvoiceDetailEntity::getMainId,mainIdList).list();
     }
 
 

@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum InvoiceInfoInvoiceTypeEnum implements EnumMessage {
 	VAT("vat", "VAT发票"),
+    NFE("nfe", "NF-e发票"),
     ;
     /**
      * 类型

@@ -40,6 +40,10 @@ public class AfterSaleDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         /**
+         * 类型
+         */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -223,6 +227,18 @@ public class AfterSaleDTO implements Serializable {
          * 寄回快递单号
          */
         private String returnTrackNo;
+        /**
+         * 客户名
+         */
+        private String thridUserName;
+        /**
+         * 用户昵称
+         */
+        private String nickName;
+        /**
+         * 手机号码
+         */
+        private String phoneNumber;
     }
 
     /**
@@ -355,6 +371,39 @@ public class AfterSaleDTO implements Serializable {
         private String remark;
 
 
+        private String statusName;
+        /**
+         * 审核状态名称
+         */
+        private String approveStatusName;
+        /**
+         * 作废状态名称
+         */
+        private String invalidStatusName;
+        /**
+         * 寄出快递单号
+         */
+        private String outboundTrackNo;
+        /**
+         * 寄回快递单号
+         */
+        private String returnTrackNo;
+        /**
+         * 客户名
+         */
+        private String thridUserName;
+        /**
+         * 用户昵称
+         */
+        private String nickName;
+        /**
+         * 手机号码
+         */
+        private String phoneNumber;
+
+        private List<AfterSaleDetailEntity> detailList;
+        private List<String> attachNameList;
+        private List<String> attachUrlList;
     }
 
     /**
@@ -473,7 +522,9 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 附件
          */
-        private List<AttachmentDTO> attachmentList;
+//        private List<AttachmentDTO> attachmentList;
+        private List<String> attachNameList;
+        private List<String> attachUrlList;
 
 
         /**
@@ -545,7 +596,7 @@ public class AfterSaleDTO implements Serializable {
          *
          */
         @NotBlank(message = "用户唯一标记不能为空")
-        private String uId;
+        private String thridUserId;
     }
     /**
      *
@@ -579,24 +630,33 @@ public class AfterSaleDTO implements Serializable {
          *dmp_so_detail/dmp_so_original_detail 主键
          */
         private String detailId;
+
+        private String shopId;
         /**
          *
          */
         private String skuId;
 
-        /**
-         *
-         */
         private String skuNo;
 
         /**
          *
          */
-        private Integer skuName;
+        private String prodcutName;
         /**
          *
          */
-        private String qty;
+        private Integer skuQty;
+
+        /**
+         * 单价
+         */
+        private BigDecimal price;
+
+        /**
+         *
+         */
+        private String thirdType;
 
     }
 

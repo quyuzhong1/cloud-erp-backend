@@ -802,4 +802,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     public DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass) {
         return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
     }
+
+	@Override
+	public List<String> outputErrorCountMsg() {
+		return baseMapper.outputErrorCountMsg();
+	}
 }

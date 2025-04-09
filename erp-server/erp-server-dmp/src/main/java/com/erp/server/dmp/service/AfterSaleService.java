@@ -160,7 +160,7 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
 
     List<BatchResultDTO> changeStatus(AfterSaleDTO.IdsDTO dto);
 
-    List<AfterSaleProgressDTO.RepairHistoryListDTO> getRepairHistory(AfterSaleDTO.ProgressDTO dto);
+    List<AfterSaleProgressDTO.RepairHistoryListDTO> getRepairHistory(AfterSaleDTO.ThridUserDTO dto);
 
     String getAccessToken();
 

@@ -1,13 +1,14 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -107,6 +108,14 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
     @TableField("query_result")
     private String queryResult;
 
+    @TableField("invoice_nature")
+    private String invoiceNature;
+
+    @TableField("platform_invoice_no")
+    private String platformInvoiceNo;
+
+    @TableField("cancel_reason")
+    private String cancelReason;
 
     public static final String CODE = "code";
 

@@ -141,24 +141,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         StocktakingTaskDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-//        String tabFlag = params.getTabFlag();
-//        //对应tab的状态
-//        List<String> tabList = new ArrayList<>(1);
-//        if (!WmsConstant.ALL.equals(tabFlag)) {
-//            tabList.add(tabFlag);
-//        }
-        List<String> mainIdList = new ArrayList<>();
-        //仓库id
-        String warehouseId = params.getWarehouseId();
-        if (CharSequenceUtil.isNotBlank(warehouseId)) {
-            List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Collections.singletonList(warehouseId));
-            List<String> mainIds = taskDetailList.stream().map(StocktakingTaskDetailEntity::getMainId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(mainIds)) {
-                return new PagingVO<>(new Page<>());
-            }
-            mainIdList.addAll(mainIds);
-        }
-        IPage pageData = baseMapper.paging(query, params, null, mainIdList);
+        IPage pageData = baseMapper.paging(query, params);
         List<StocktakingTaskDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO<>(pageData);
@@ -722,25 +705,8 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     public Boolean exportExcel(StocktakingTaskDTO.ExportDTO params, HttpServletResponse response) {
-        String tabFlag = params.getTabFlag();
-        //对应tab的状态
-        List<String> tabList = new ArrayList<>(1);
-        if (!WmsConstant.ALL.equals(tabFlag)) {
-            tabList.add(tabFlag);
-        }
-        List<String> mainIdList = new ArrayList<>();
-        //仓库id
-        String warehouseId = params.getWarehouseId();
-        if (CharSequenceUtil.isNotBlank(warehouseId)) {
-            List<StocktakingTaskDetailEntity> taskDetailList = stocktakingTaskDetailService.listByWarehouseIds(Collections.singletonList(warehouseId));
-            List<String> mainIds = taskDetailList.stream().map(StocktakingTaskDetailEntity::getMainId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(mainIds)) {
-                throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-            }
-            mainIdList.addAll(mainIds);
-        }
         //获取导出数据
-        List<StocktakingTaskDTO.PagingViewDTO> list = baseMapper.listExport(params, tabList, mainIdList);
+        List<StocktakingTaskDTO.PagingViewDTO> list = baseMapper.listExport(params);
         if (CollectionUtils.isEmpty(list)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
