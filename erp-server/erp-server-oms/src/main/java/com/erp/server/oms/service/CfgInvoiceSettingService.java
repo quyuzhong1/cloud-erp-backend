@@ -10,9 +10,7 @@ import com.common.business.service.SuperService;
 import java.util.List;
 
 /**
- * <p>
- *  服务类
- * </p>
+ * 服务类
  *
  * @author Lambda
  * @since 2025-04-07
@@ -29,5 +27,5 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
 
     CfgInvoiceSettingDTO.ViewDTO view(String id);
 
-    Boolean updateStatus(CfgInvoiceSettingDTO.UpdateDTO dto);
+    Boolean updateStatus(CfgInvoiceSettingDTO.UpdateStatusDTO dto);
 }
