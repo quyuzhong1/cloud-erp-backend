@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.enums.FullyManagedPlatformStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.oms.service.SoB2cDetailService;
 import com.erp.server.oms.service.SoB2cService;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 public class FullyManagedJob {
     @Resource
     private SoB2cService soB2cService;
+    @Resource
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private TikTokFullService tikTokFullService;
@@ -49,8 +51,8 @@ public class FullyManagedJob {
         List<String> billStatusList = new ArrayList<>();
         billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         List<String> platformStatusList = new ArrayList<>();
-        platformStatusList.add("INBOUND");
-        platformStatusList.add("INVAILD");
+        platformStatusList.add(FullyManagedPlatformStatusEnum.TikTokStatusEnum.INBOUND.getErpEnum().getCode());
+        platformStatusList.add(FullyManagedPlatformStatusEnum.TikTokStatusEnum.INVAILD.getErpEnum().getCode());
         List<String> platformList = new ArrayList<>();
         platformList.add(PlatformDictEnum.TIK_TOK_FULLY.getCode());
         List<SoB2cDTO.DeliveryDTO> deliveryDTOS = soB2cService.listDeliveryOrderByParam(billStatusList, platformStatusList,platformList);
@@ -59,7 +61,6 @@ public class FullyManagedJob {
             XxlJobHelper.log("查询送货单信息执行完成 没有需要查询的订单");
             return; // 没有配置则不执行
         }
-        List<String> soIds = deliveryDTOS.stream().map(SoB2cDTO.DeliveryDTO::getId).distinct().collect(Collectors.toList());
         Map<String, String> transportNoMap = deliveryDTOS.stream().collect(Collectors.toMap(SoB2cDTO.DeliveryDTO::getTransportNo, SoB2cDTO.DeliveryDTO::getId));
         Map<String, List<SoB2cDTO.DeliveryDTO>> shopMap = deliveryDTOS.stream().collect(Collectors.groupingBy(SoB2cDTO.DeliveryDTO::getShopId));
         //循环查询
