@@ -38,7 +38,7 @@
             from dict_invoice_hs dih
             <where>
                 ${params.sqlMap.default}
-                and dih.is_delete = false
+                and dih.is_deleted = false
                 <if test="params.permissionSql!=null and params.permissionSql!=''">
                     ${params.permissionSql}
                 </if>
