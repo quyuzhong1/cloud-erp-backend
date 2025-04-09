@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
@@ -40,6 +41,7 @@ public class DictInvoiceHsController extends BaseController {
     * @return DictInvoiceHsDTO.ListDTO
     */
     @PostMapping("/paging")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<DictInvoiceHsDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DictInvoiceHsDTO.PagingParamDTO> dto) {
         return success(dictInvoiceHsService.paging(dto));
     }
