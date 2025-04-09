@@ -59,7 +59,7 @@ public class DictInvoiceHsDTO implements Serializable {
         /**
          * 描述
          */
-        private String desc;
+        private String description;
         /**
          * 国家
          */
@@ -86,7 +86,7 @@ public class DictInvoiceHsDTO implements Serializable {
         /**
         * 描述
         */
-        private String desc;
+        private String description;
 
         /**
         * 国家
@@ -136,7 +136,7 @@ public class DictInvoiceHsDTO implements Serializable {
         * 描述
         */
         @NotBlank(message = "描述不能为空")
-        private String desc;
+        private String description;
 
         /**
         * 国家

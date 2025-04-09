@@ -605,27 +605,27 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
-    public List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids) {
-        if (CollUtil.isEmpty(ids)) {
+    public List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> soIdList) {
+        if (CollUtil.isEmpty(soIdList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
+        //销售订单
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
+        Map<String, SoB2cEntity> soB2cMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+        List<String> platformList = soB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().collect(Collectors.toList());
+
+        //发票主表信息
+        List<InvoiceInfoEntity> invoiceInfoList = this.listBySoIds(soIdList);
+        List<String> mainIdList = invoiceInfoList.stream().map(InvoiceInfoEntity::getId).distinct().collect(Collectors.toList());
+        Map<String, InvoiceInfoEntity> invoiceMap = invoiceInfoList.stream().collect(Collectors.toMap(InvoiceInfoEntity::getId, Function.identity()));
+
         //发票明细信息
-        List<InvoiceDetailEntity> invoiceDetailList = invoiceDetailService.listByIds(ids);
+        List<InvoiceDetailEntity> invoiceDetailList = invoiceDetailService.listByMainIdList(mainIdList);
         Map<String, InvoiceDetailEntity> invoiceDetailMap = invoiceDetailList.stream().collect(Collectors.toMap(InvoiceDetailEntity::getId, Function.identity()));
         List<String> platformSkuNoList = invoiceDetailList.stream().map(InvoiceDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isEmpty(invoiceDetailList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-        //发票主表信息
-        List<String> mainIdList = invoiceDetailList.stream().map(InvoiceDetailEntity::getMainId).distinct().collect(Collectors.toList());
-        List<InvoiceInfoEntity> invoiceInfoList = this.listByIds(mainIdList);
-        Map<String, InvoiceInfoEntity> invoiceMap = invoiceInfoList.stream().collect(Collectors.toMap(InvoiceInfoEntity::getId, Function.identity()));
-
-        List<String> soIdList = invoiceInfoList.stream().map(InvoiceInfoEntity::getSoId).distinct().collect(Collectors.toList());
-        //销售订单
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
-        Map<String, SoB2cEntity> soB2cMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
-        List<String> platformList = soB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().collect(Collectors.toList());
 
         //listing信息
         List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParams(RuleTypeEnum.PLATFORM.getCode(), platformList, platformSkuNoList);
@@ -638,7 +638,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         Map<String, InvoiceTaxEntity> taxMap = invoiceTaxList.stream().collect(Collectors.toMap(InvoiceTaxEntity::getListingId, Function.identity()));
 
         List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> resultList = new ArrayList<>();
-        for (String id : ids) {
+        for (InvoiceDetailEntity InvoiceDetailEntity : invoiceDetailList) {
+            //发票明细id
+            String id = InvoiceDetailEntity.getId();
+
             InvoiceTaxDTO.CheckGenerateInvoiceDTO viewDTO = new InvoiceTaxDTO.CheckGenerateInvoiceDTO();
             //发票明细信息
             InvoiceDetailEntity invoiceDetailEntity = invoiceDetailMap.get(id);
