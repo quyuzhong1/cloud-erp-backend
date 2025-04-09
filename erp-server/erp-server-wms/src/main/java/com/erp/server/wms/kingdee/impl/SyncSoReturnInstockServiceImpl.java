@@ -9,13 +9,10 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-<<<<<<< HEAD
 import com.erp.model.dmp.constant.DmpOutputConstant;
-=======
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.dto.DmpReturnInstockDTO;
 import com.erp.model.dmp.dto.DmpReturnInstockDetailDTO;
->>>>>>> feature/dmpData-shukai-0403
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
