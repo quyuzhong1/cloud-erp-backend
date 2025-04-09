@@ -18,10 +18,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.CalculateSizeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
@@ -326,7 +323,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (CollectionUtils.isNotEmpty(skuIds)) {
             skuList = plmTaskFeign.getSimpleSkuInfoByIds(skuIds);
         }
-
+        //全托管转换平台状态
+        if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            dto.setPlatformOrderStatus(FullyManagedPlatformStatusEnum.getErpCodeByCode(dto.getDictPlatform(),dto.getPlatformOrderStatus()));
+        }
         // 主表更新或保存
         SoB2cDTO.PullOrderResultDTO resultDTO = soB2cService.saveOrUpdateEntity(dto, shopInfo);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
