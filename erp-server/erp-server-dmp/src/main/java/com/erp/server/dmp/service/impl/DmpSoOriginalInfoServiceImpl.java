@@ -3,22 +3,27 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.dto.DmpSoOriginalInfoDTO;
 import com.erp.model.dmp.entity.DmpSoOriginalInfoEntity;
 import com.erp.server.dmp.mapper.DmpSoOriginalInfoMapper;
 import com.erp.server.dmp.service.DmpSoOriginalInfoService;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.dmp.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.dmp.dto.DmpSoOriginalInfoDTO;
-import java.util.*;
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 /**
  * <p>
  * 中台原始销售订单表 服务实现类
@@ -91,5 +96,13 @@ public class DmpSoOriginalInfoServiceImpl extends SuperServiceImpl<DmpSoOriginal
     */
     private void handleData(DmpSoOriginalInfoEntity dmpSoOriginalInfoEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<AfterSaleDTO.DropDownDTO> listDetailByPlatformCode(String platformCode) {
+        if(StringUtil.isEmpty(platformCode)){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listDetailByPlatformCode(platformCode);
     }
 }
