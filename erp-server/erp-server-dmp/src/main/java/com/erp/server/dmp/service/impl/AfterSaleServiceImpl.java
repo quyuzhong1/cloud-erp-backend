@@ -141,7 +141,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if(downDTOMap.containsKey(detail.getSkuId())){
                 AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                 detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getQty());
+                detail.setSkuQty(downDTO.getSkuQty());
             }
         });
         afterSaleDetailService.saveBatch(detailList);
@@ -223,7 +223,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if(downDTOMap.containsKey(detail.getSkuId())){
                 AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                 detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getQty());
+                detail.setSkuQty(downDTO.getSkuQty());
             }
         });
         // 删除明细数据
@@ -825,7 +825,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     if(Objects.nonNull(skuMappingDTO)){
                         drop.setSkuId(skuMappingDTO.getProductSkuId());
                         drop.setSkuNo(skuMappingDTO.getProductSkuNo());
-                        drop.setSkuName(skuMappingDTO.getProductName());
+                        drop.setProdcutName(skuMappingDTO.getProductName());
                         resultList.add(drop);
                     }
                 }
