@@ -1,13 +1,13 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -32,8 +32,8 @@ public class DictInvoiceHsEntity extends BaseEntity<DictInvoiceHsEntity> {
     /**
     * 描述
     */
-    @TableField("desc")
-    private String desc;
+    @TableField("description")
+    private String description;
     /**
     * 国家
     */
@@ -43,7 +43,7 @@ public class DictInvoiceHsEntity extends BaseEntity<DictInvoiceHsEntity> {
 
     public static final String HS_CODE = "hs_code";
 
-    public static final String DESC = "desc";
+    public static final String DESCRIPTION = "description";
 
     public static final String COUNTRY = "country";
 

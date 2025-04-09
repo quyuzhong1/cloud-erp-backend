@@ -13,7 +13,7 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="hs_code" property="hsCode" />
-       <result column="desc" property="desc" />
+       <result column="description" property="description" />
        <result column="country" property="country" />
     </resultMap>
 
@@ -28,7 +28,7 @@
         update_time,
         version,
         is_deleted,
-        hs_code, desc, country
+        hs_code, description, country
     </sql>
 
     <!-- 分页查询 -->
