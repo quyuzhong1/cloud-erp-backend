@@ -81,7 +81,7 @@ public class AfterSaleFeignController extends BaseController {
      * @Author jack
      * @since 2025-04-07
      */
-    @GetMapping("feign/afterSale/getDetailByPlatformCode")
+    @GetMapping("/getDetailByPlatformCode")
     ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
         return success(afterSaleService.getDetailByPlatformCode(platformCode));
     }
@@ -91,7 +91,7 @@ public class AfterSaleFeignController extends BaseController {
      * @Author jack
      * @since 2025-04-07
      */
-    @GetMapping("feign/afterSale/getNodeList")
+    @GetMapping("/getNodeList")
     ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
         return success(afterSaleService.getNodeList());
     }
