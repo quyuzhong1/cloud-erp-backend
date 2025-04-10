@@ -37,15 +37,14 @@ public class CfgInvoiceSettingDetailController extends BaseController {
     /**
      * 发票明细新增或修改
      *
-     * @param dto
+     * @param dtoList
      * @return ApiResult<String>
      * @author hcg
      * @date: 2025-04-09
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "发票设置新增")
-    public ApiResult<BaseResultDTO.AddDTO> addOrUpdate(@RequestBody @Validated CfgInvoiceSettingDetailDTO.AddDTO dto) {
-        return success(cfgInvoiceSettingDetailService.addOrUpdate(dto));
+    public ApiResult<Object> addBatch(@RequestBody @Validated List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList) {
+        return success(cfgInvoiceSettingDetailService.addOrUpdate(dtoList));
     }
 
     /**

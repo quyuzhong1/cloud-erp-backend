@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -83,25 +84,28 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddDTO addDTO) {
-        CfgInvoiceSettingEntity cfgInvoiceSettingEntity = cfgInvoiceSettingService.getById(addDTO.getMainId());
+    public BaseResultDTO.AddDTO addOrUpdate(List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList) {
+        CfgInvoiceSettingEntity cfgInvoiceSettingEntity = cfgInvoiceSettingService.getById(dtoList.get(0).getMainId());
         if (ObjectUtil.isEmpty(cfgInvoiceSettingEntity)){
             throw new ServiceException("发票设置不存在");
         }
-        CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = new CfgInvoiceSettingDetailEntity();
-        BeanMapperUtils.copy(addDTO, cfgInvoiceSettingDetailEntity);
-        cfgInvoiceSettingDetailEntity.setDictPlatform(addDTO.getPlatformValue());
+        List<CfgInvoiceSettingDetailEntity> entityList = dtoList.stream()
+                .map(item -> {
+                    CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(item, CfgInvoiceSettingDetailEntity.class);
+                    entity.setDictPlatform(item.getPlatformValue()); // 单独设置字段
+                    return entity;
+                })
+                .collect(Collectors.toList());
         //保存平台value
-        cfgInvoiceSettingDetailEntity.setDictPlatform(addDTO.getPlatformValue());
         log.info("开始新增发票设置明细");
-        boolean save = super.saveOrUpdate(cfgInvoiceSettingDetailEntity);
+        boolean save = super.saveOrUpdateBatch(entityList);
         if (!save) {
             throw new ServiceException("发票设置明细保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发票设置明细", cfgInvoiceSettingDetailEntity.getId());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVOICE_SETTING_DETAIL.getCode(), cfgInvoiceSettingDetailEntity.getId(), "新增操作");
-        return new BaseResultDTO.AddDTO(cfgInvoiceSettingDetailEntity.getId(), cfgInvoiceSettingDetailEntity.getId());
+        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "发票设置明细", dtoList.get(0).getId());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVOICE_SETTING_DETAIL.getCode(), dtoList.get(0).getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(dtoList.get(0).getId(), dtoList.get(0).getId());
     }
 
     @Override
