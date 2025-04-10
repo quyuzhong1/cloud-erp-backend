@@ -200,7 +200,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "售后申请单"));
         if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(old.getInvalidStatus())){
             throw new ServiceException("只有未作废的单据才能进行状态变更");
-        }else if(AfterSaleStatusEnum.FINISHED.getCode().equals(old.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(old.getStatus())  ){
+        }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(old.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(old.getStatus())  ){
             throw new ServiceException("只有未完成的单据才能进行状态变更");
         }
 
@@ -729,7 +729,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             BatchResultDTO batchResultDTO;
             if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未作废的单据才能进行状态变更");
-            }else if(AfterSaleStatusEnum.FINISHED.getCode().equals(entity.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(entity.getStatus())  ){
+            }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(entity.getStatus())  ){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未完成的单据才能进行状态变更");
             }else {
                 batchResultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);

@@ -78,5 +78,5 @@ public interface AfterSaleFeign {
     ApiResult<Boolean> udpateTrackNo(@RequestBody @Validated AfterSaleDTO.UpdateTrackNoDTO dto);
 
     @PostMapping("/code2Session")
-    ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(ThridUserInfoDTO.Code2SessionInfoDTO dto);
+    ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(ThridUserInfoDTO.CodeToSessionDTO dto);
 }

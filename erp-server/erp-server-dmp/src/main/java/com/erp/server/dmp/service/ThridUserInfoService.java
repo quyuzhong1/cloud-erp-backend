@@ -34,5 +34,5 @@ public interface ThridUserInfoService extends SuperService<ThridUserInfoEntity> 
     Boolean update(ThridUserInfoDTO.UpdateDTO dto);
 
 
-    ThridUserInfoDTO.CodeToSessionResp code2Session(ThridUserInfoDTO.Code2SessionInfoDTO dto);
+    ThridUserInfoDTO.CodeToSessionResp code2Session(ThridUserInfoDTO.CodeToSessionDTO dto);
 }

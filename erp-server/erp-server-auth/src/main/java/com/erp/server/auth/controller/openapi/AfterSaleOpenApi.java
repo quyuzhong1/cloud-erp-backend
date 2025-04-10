@@ -56,7 +56,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("code2Session")
-    public ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@Validated ThridUserInfoDTO.Code2SessionInfoDTO dto){
+    public ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@Validated ThridUserInfoDTO.CodeToSessionDTO dto){
         return afterSaleFeign.code2Session(dto);
     }
 
