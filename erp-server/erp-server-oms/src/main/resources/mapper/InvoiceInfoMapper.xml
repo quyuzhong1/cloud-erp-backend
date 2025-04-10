@@ -82,7 +82,7 @@
     </select>
 
     <!-- 查询导出的xmlUrl -->
-    <select id="listExportXmlUrl" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$ExportResultDTO">
+    <select id="listExportUrl" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$ExportAttachDTO">
         select
             DISTINCT
             ii.id,

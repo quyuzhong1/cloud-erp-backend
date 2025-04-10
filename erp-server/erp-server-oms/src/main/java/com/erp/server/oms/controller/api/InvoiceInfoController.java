@@ -12,6 +12,7 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
@@ -28,8 +29,8 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -183,12 +184,18 @@ public class InvoiceInfoController extends BaseController {
     @PostMapping("/exportXml")
     @WebAdvanceQuery
     public ResponseEntity<StreamingResponseBody> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
-        StreamingResponseBody responseBody = invoiceInfoService.exportXml(dto);
-        String fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
+        InvoiceInfoDTO.ExportResultDTO resultDTO = invoiceInfoService.exportXml(dto);
+        // 编码文件名（兼容所有Java版本）
+        String encodedFileName;
+        try {
+            encodedFileName = URLEncoder.encode(resultDTO.getFileName(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new ServiceException("编码失败");
+        }
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''" + encodedFileName)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(responseBody);
+                .body(resultDTO.getResponseBody());
     }
 
     /**
@@ -201,12 +208,18 @@ public class InvoiceInfoController extends BaseController {
     @PostMapping("/exportPdf")
     @WebAdvanceQuery
     public ResponseEntity<StreamingResponseBody> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
-        StreamingResponseBody responseBody = invoiceInfoService.exportPdf(dto);
-        String fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
+        InvoiceInfoDTO.ExportResultDTO resultDTO = invoiceInfoService.exportPdf(dto);
+        // 编码文件名（兼容所有Java版本）
+        String encodedFileName;
+        try {
+            encodedFileName = URLEncoder.encode(resultDTO.getFileName(), "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new ServiceException("编码失败");
+        }
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''" + encodedFileName)
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .body(responseBody);
+                .body(resultDTO.getResponseBody());
     }
 
     /**
