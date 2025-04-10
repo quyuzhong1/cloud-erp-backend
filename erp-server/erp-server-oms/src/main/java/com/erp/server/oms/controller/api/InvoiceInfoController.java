@@ -1,7 +1,6 @@
 package com.erp.server.oms.controller.api;
 
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -15,7 +14,6 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
-import com.erp.model.oms.entity.InvoiceInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.server.oms.service.InvoiceInfoService;
 import com.erp.server.oms.service.SoB2cService;
@@ -32,7 +30,6 @@ import javax.validation.Valid;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -128,9 +125,9 @@ public class InvoiceInfoController extends BaseController {
                 resultDTO = invoiceInfoService.batchGenerateNfeInvoice(id);
             }catch (Exception e){
                 log.error("生成Nfe发票失败",e);
-                List<InvoiceInfoEntity> entityList = invoiceInfoService.listBySoIds(Collections.singletonList(id));
-                if (CollUtil.isEmpty(entityList)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "生成Nfe发票不存在, 生成Nfe发票失败");
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "b2c订单不存在, 生成Nfe发票失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }

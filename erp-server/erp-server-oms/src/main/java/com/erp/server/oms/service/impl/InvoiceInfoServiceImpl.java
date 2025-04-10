@@ -207,7 +207,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(Collections.singletonList(id));
-        if (CollUtil.isNotEmpty(soB2cDetailEntityList)) {
+        if (CollUtil.isEmpty(soB2cDetailEntityList)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单明细");
         }
         List<String> skuIdList = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -852,10 +852,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             if (ObjUtil.isEmpty(invoiceDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_INVOICE_NOT_EXIST);
             }
+
             //销售订单信息
-            SoB2cEntity soB2cEntity =  soB2cMap.get(invoiceInfoEntity.getId());
+            SoB2cEntity soB2cEntity =  soB2cMap.get(invoiceInfoEntity.getSoId());
             if (ObjUtil.isEmpty(soB2cEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
+            }
+            if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
+                throw new ServiceException(ApiError.ERROR_INVOICE_NFE_GENERATE);
             }
             //listing信息
             ListingInfoEntity listingInfoEntity = listingMap.get(CharSequenceUtil.format("{}-{}", soB2cEntity.getDictPlatform(), invoiceDetailEntity.getPlatformSkuNo()));
