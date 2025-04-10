@@ -35,7 +35,7 @@ public class CfgInvoiceSettingDetailController extends BaseController {
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
 
     /**
-     * 发票明细新增
+     * 发票明细新增或修改
      *
      * @param dto
      * @return ApiResult<String>
@@ -44,25 +44,9 @@ public class CfgInvoiceSettingDetailController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "发票设置新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgInvoiceSettingDetailDTO.AddDTO dto) {
-        return success(cfgInvoiceSettingDetailService.add(dto));
+    public ApiResult<BaseResultDTO.AddDTO> addOrUpdate(@RequestBody @Validated CfgInvoiceSettingDetailDTO.AddDTO dto) {
+        return success(cfgInvoiceSettingDetailService.addOrUpdate(dto));
     }
-
-    /**
-     * 发票明细修改
-     *
-     * @param dto
-     * @return ApiResult
-     * @author hcg
-     * @date: 2025-04-09
-     */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "发票设置明细修改")
-    public ApiResult<?> update(@RequestBody @Validated CfgInvoiceSettingDetailDTO.UpdateDTO dto) {
-        cfgInvoiceSettingDetailService.update(dto);
-        return success();
-    }
-
 
     /**
      * 发票设置明细详情
@@ -74,4 +58,18 @@ public class CfgInvoiceSettingDetailController extends BaseController {
     public ApiResult<List<CfgInvoiceSettingDetailDTO.ViewDTO>> view(@RequestBody @Validated CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
         return success(cfgInvoiceSettingDetailService.view(dto));
     }
+
+    /**
+     * 店铺下拉
+     * @description:
+     * @author: hcg
+     * @date: 2025/4/10 15:01
+     * @param:
+     * @return:
+     **/
+    @GetMapping("/listShopSelect")
+    public ApiResult<List<CfgInvoiceSettingDetailDTO.ViewShopDTO>> listShopSelect(@RequestParam String dictplatform){
+        return success(cfgInvoiceSettingDetailService.listShopSelect(dictplatform));
+    }
+
 }

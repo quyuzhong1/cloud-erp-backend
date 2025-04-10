@@ -17,11 +17,9 @@ import java.util.List;
  */
 public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceSettingDetailEntity> {
 
-    Boolean update(CfgInvoiceSettingDetailDTO.UpdateDTO addOrUpdateDTO);
-
     List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
 
-    BaseResultDTO.AddDTO add(CfgInvoiceSettingDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddDTO dto);
 
     List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop();
     /**
@@ -32,4 +30,6 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
      * @return List<CfgInvoiceSettingDetailEntity>
      */
     List<CfgInvoiceSettingDetailEntity> listByShopIdList(List<String> shopIdList);
+
+    List<CfgInvoiceSettingDetailDTO.ViewShopDTO> listShopSelect(String dictplatform);
 }
