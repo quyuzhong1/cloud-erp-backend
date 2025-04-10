@@ -241,7 +241,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         //开票中不再生成
         InvoiceInfoEntity existInvoiceInfoEntity = existList.stream().filter(e -> e.getSoId().equals(soB2cEntity.getId()) && e.getStatus().equals(InvoiceInfoStatusEnum.INVOICING.getCode())).findFirst().orElse(null);
         if(Objects.nonNull(existInvoiceInfoEntity)){
-            return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "已存在开票中的发票");
+            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "已存在开票中的发票");
         }
         InvoiceInfoEntity invoiceInfoEntity = buildNfeInvoiceEntity(soB2cEntity);
         List<InvoiceDetailEntity> detailEntityList = buildInvoiceDetail(soB2cDetailEntityList, invoiceInfoEntity,skuNameMap);
