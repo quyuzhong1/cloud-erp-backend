@@ -45,9 +45,8 @@ public interface SoB2cDetailMapper extends BaseMapper<SoB2cDetailEntity> {
 
     /**
      *  更新明细的扩展数据
-     * @param soId
-     * @param platformSkuCode
+     * @param id
      * @param extendData
      */
-    void updateExtendData(@Param("soId") String soId, @Param("platformSkuCode") String platformSkuCode, @Param("extendData") String extendData);
+    void updateExtendData(@Param("id") String id, @Param("extendData") String extendData);
 }

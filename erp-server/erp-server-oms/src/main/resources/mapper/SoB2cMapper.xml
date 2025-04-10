@@ -1369,6 +1369,10 @@
             </foreach>
         </if>
     </update>
+    <update id="updateExtendData">
+        UPDATE so_b2c SET extend_data = #{extendData}, update_time = now(),version = version + 1
+        WHERE  id = #{id}
+    </update>
 
     <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">
         select * from (
@@ -1442,10 +1446,16 @@ SELECT DISTINCT so.* FROM so_b2c so
         sb2c.dict_platform,
         sb2c.platform_order_status,
         sb2c.shop_id,
+        sb2c.extend_data as extendData,
+        sbd.id as detailId,
+        sbd.extend_data as extendDetailData,
+        sbd.platform_sku_no as platformSkuNo,
+        sbd.platform_spu_no as platformSpuNo,
         sb2cl.code as transportNo
         from so_b2c sb2c
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        where sb2c.is_deleted = false
+        inner join so_b2c_detail sbd on sb2c.id = sbd.main_id and sbd.is_deleted = false
+        where sb2c.is_deleted = false and sb2cl.code  != ''
         <if test="platformList!= null and platformList.size > 0">
             and sb2c.dict_platform in
             <foreach collection="platformList" item="item" open="(" separator="," close=")">
