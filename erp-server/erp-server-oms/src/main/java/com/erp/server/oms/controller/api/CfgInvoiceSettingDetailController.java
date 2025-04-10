@@ -71,7 +71,7 @@ public class CfgInvoiceSettingDetailController extends BaseController {
      * @return
      */
     @GetMapping("/view")
-    public ApiResult<List<CfgInvoiceSettingDetailDTO.ViewDTO>> view(@RequestBody @Validated CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
+    public ApiResult<List<CfgInvoiceSettingDetailDTO.ViewDTO>> view(@RequestParam @Validated CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
         return success(cfgInvoiceSettingDetailService.view(dto));
     }
 }
