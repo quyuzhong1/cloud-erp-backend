@@ -356,6 +356,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                             receiverInfoVO.setProvince(addressHandleContent.getProvinceReplaceText());
                         }
                         break;
+                    case CUSTOMIZE:
+                        receiverInfoVO.setProvince(addressHandleContent.getProvinceFillText());
+                        break;
                     default:
                         break;
                 }

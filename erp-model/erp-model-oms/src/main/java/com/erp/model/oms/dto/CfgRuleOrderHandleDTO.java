@@ -324,7 +324,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 省/州替换为。。。
          */
         private String provinceReplaceText;
-
+        /**
+         * 省/州为空填充文本
+         */
+        private String provinceFillText;
         /**
          * 处理城市开关
          */
