@@ -67,4 +67,13 @@ public interface AfterSaleFeign {
 
     @GetMapping("/getNodeList")
     ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList();
+
+    /**
+     * 更新客户运单号
+     * @author jack
+     * @date:  2025-04-06
+     * @return ApiResult
+     */
+    @PostMapping("/udpateTrackNo")
+    ApiResult<Boolean> udpateTrackNo(@RequestBody @Validated AfterSaleDTO.UpdateTrackNoDTO dto);
 }

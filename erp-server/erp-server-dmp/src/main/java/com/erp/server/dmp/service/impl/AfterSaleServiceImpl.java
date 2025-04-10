@@ -198,10 +198,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     public Boolean update(AfterSaleDTO.UpdateDTO updateDTO) {
         AfterSaleEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "售后申请单"));
-        // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+        if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(old.getInvalidStatus())){
+            throw new ServiceException("只有未作废的单据才能进行状态变更");
+        }else if(AfterSaleStatusEnum.FINISHED.getCode().equals(old.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(old.getStatus())  ){
+            throw new ServiceException("只有未完成的单据才能进行状态变更");
         }
+
         AfterSaleEntity afterSaleEntity =  BeanMapperUtils.map(AfterSaleEntity.class, updateDTO);
 
         log.info("编辑 开始修改售后申请单数据，单号：【{}】", old.getCode());
@@ -264,11 +266,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //更新运单号
         List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
         for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
-            if(afterSaleProgressEntity.getIndex().equals(3) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode()) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
                 afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
                 afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
             }
-            if(afterSaleProgressEntity.getIndex().equals(7) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode()) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
                 afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
                 afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
             }
@@ -523,15 +525,15 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             return Boolean.TRUE;
         }
         //更新节点时间
-        updateProgressByMainId(entity.getId(), 3);
+        updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         return updateForApprove(entity.getId(), approveStatus.getStatus());
     }
 
     //更新节点时间
-    private void updateProgressByMainId(String id,Integer index) {
+    private void updateProgressByMainId(String id,String node) {
         //更新单据状态
-        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByIndex(id, index);
+        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(id, node);
         if (Objects.nonNull(afterSaleProgressEntity)) {
             afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
             afterSaleProgressService.updateById(afterSaleProgressEntity);
@@ -571,10 +573,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //查询进度
         List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(id));
         for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
-            if(afterSaleProgressEntity.getIndex().equals(3)){//客户寄件
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())){//客户寄件
                 data.setReturnTrackNo(afterSaleProgressEntity.getTrackNo());
             }
-            if(afterSaleProgressEntity.getIndex().equals(7)){//售后发货
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())){//售后发货
                 data.setOutboundTrackNo(afterSaleProgressEntity.getTrackNo());
             }
         }
@@ -707,40 +709,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     }
 
-
-//    @Transactional(rollbackFor = Exception.class)
-//    @Override
-//    public BatchResultDTO changeStatus(String id) {
-//        AfterSaleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到售后申请单数据"));
-//        // 待提交或审核不通过并且未作废允许作废
-//        if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())  || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-//            throw new ServiceException("只有审核通过的单据才能进行状态变更");
-//        }
-//        Integer count = afterSaleProgressService.lambdaQuery().eq(AfterSaleProgressEntity::getMainId, id).in(AfterSaleProgressEntity::getNode,
-//                AfterSaleStatusEnum.FINISHED.getCode(), AfterSaleStatusEnum.TERMINATED.getCode()).count();
-//        if(count > 0){
-//            throw new ServiceException("未完成未终止的单据才能进行状态变更");
-//        }
-//
-//        List<AfterSaleProgressEntity> progressList = afterSaleProgressService.getByMainIds(Collections.singletonList(id));
-//        List<AfterSaleProgressEntity> oldList = progressList.stream().filter(t -> Objects.nonNull(t.getNodeTime())).collect(Collectors.toList());
-//        oldList.sort(Comparator.comparingInt(AfterSaleProgressEntity::getIndex).reversed());
-//        String oldNode = oldList.get(0).getNode();
-//
-//        List<AfterSaleProgressEntity> newList = progressList.stream().filter(t -> Objects.isNull(t.getNodeTime())).collect(Collectors.toList());
-//        // 根据 index 进行排序
-//        newList.sort(Comparator.comparingInt(AfterSaleProgressEntity::getIndex));
-//        // 变更状态
-//        AfterSaleProgressEntity afterSaleProgressEntity = newList.get(0);
-//        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-//        afterSaleProgressService.updateById(afterSaleProgressEntity);
-//        String newNode = afterSaleProgressEntity.getNode();
-//
-//        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据状态变更操作：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "售后申请单","从"+oldNode+"变更到"+newNode);
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "状态变更操作");
-//        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
-//    }
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> changeStatus(AfterSaleDTO.IdsDTO dto) {
@@ -757,12 +725,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
         AfterSaleDTO.NodeDTO node = nodeList.stream().filter(t -> t.getNode().equals(dto.getNode())).findFirst().orElseThrow(() -> new ServiceException("未找到节点配置信息"));
 
-
         for (AfterSaleEntity entity : entityList) {
             BatchResultDTO batchResultDTO;
-            if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus()))){
-                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有审核通过未作废的单据才能进行状态变更");
-            }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
+            if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
+                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未作废的单据才能进行状态变更");
+            }else if(AfterSaleStatusEnum.FINISHED.getCode().equals(entity.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(entity.getStatus())  ){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未完成的单据才能进行状态变更");
             }else {
                 batchResultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
@@ -770,20 +737,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 entity.setStatus(dto.getNode());
                 updateById(entity);
 
-                List<AfterSaleProgressEntity> progressList = afterSaleProgressService.listByMainIds(Collections.singletonList(entity.getId())).stream()
-                        .filter(t -> Objects.isNull(t.getNodeTime())).collect(Collectors.toList());
-
-                for (AfterSaleProgressEntity afterSaleProgressEntity : progressList) {
-                    Integer index = afterSaleProgressEntity.getIndex();
-                    if(index.compareTo(node.getIndex())<0){
-                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-                    }
-                    if(index.compareTo(node.getIndex())==0){
-                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-                        afterSaleProgressEntity.setRemark(dto.getRemark());
-                    }
+                AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), dto.getNode());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                if(StringUtils.isNotBlank(dto.getTrackNo())){
+                    afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
                 }
-                afterSaleProgressService.updateBatchById(progressList);
+                afterSaleProgressService.updateById(afterSaleProgressEntity);
             }
             resultList.add(batchResultDTO);
         }
@@ -900,5 +859,22 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
             }
         }
+    }
+
+
+    @Override
+    public Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto) {
+        String code = dto.getCode();
+        String trackNo = dto.getTrackNo();
+
+        AfterSaleEntity afterSaleEntity = lambdaQuery().eq(AfterSaleEntity::getCode, code).one();
+        if (Objects.isNull(afterSaleEntity)) {
+            throw new ServiceException("售后申请单不存在");
+        }
+
+        return afterSaleProgressService.lambdaUpdate().eq(AfterSaleProgressEntity::getMainId, afterSaleEntity.getId())
+                .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
+                .set(AfterSaleProgressEntity::getTrackNo, trackNo)
+                .update();
     }
 }

@@ -103,4 +103,15 @@ public class AfterSaleOpenApi {
         return afterSaleFeign.getNodeList();
     }
 
+    /**
+     * 更新客户运单号
+     * @author jack
+     * @date:  2025-04-06
+     * @return ApiResult
+     */
+    @OpenApi("udpateTrackNo")
+    ApiResult<Boolean> udpateTrackNo(@Validated AfterSaleDTO.UpdateTrackNoDTO dto){
+        return afterSaleFeign.udpateTrackNo(dto);
+    }
+
 }

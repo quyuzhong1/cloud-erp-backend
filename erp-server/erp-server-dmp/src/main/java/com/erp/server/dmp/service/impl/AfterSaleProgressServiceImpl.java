@@ -120,12 +120,12 @@ public class AfterSaleProgressServiceImpl extends SuperServiceImpl<AfterSaleProg
     }
 
     @Override
-    public AfterSaleProgressEntity getByIndex(String id, Integer index) {
-        if (StringUtils.isBlank(id) || Objects.isNull(index)) {
+    public AfterSaleProgressEntity getByNode(String id, String node) {
+        if (StringUtils.isBlank(id) || StringUtils.isBlank(node)) {
             return null;
         }
         // 查询数据
-        return lambdaQuery().eq(AfterSaleProgressEntity::getMainId, id).eq(AfterSaleProgressEntity::getIndex, index).one();
+        return lambdaQuery().eq(AfterSaleProgressEntity::getMainId, id).eq(AfterSaleProgressEntity::getNode, node).one();
     }
 
     /**

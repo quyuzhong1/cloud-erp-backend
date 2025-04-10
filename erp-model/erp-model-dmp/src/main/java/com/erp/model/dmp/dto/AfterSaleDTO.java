@@ -619,8 +619,9 @@ public class AfterSaleDTO implements Serializable {
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
 
-
         private String comment;
+
+        private String trackNo;
 
     }
 
@@ -686,6 +687,28 @@ public class AfterSaleDTO implements Serializable {
         /**
          */
         private String platformCode;
+
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateTrackNoDTO {
+        /**
+         *
+         */
+        @NotBlank(message = "工单号不能为空")
+        private String code;
+
+        /**
+         *
+         */
+        @NotBlank(message = "快递单号不能为空")
+        private String trackNo;
+
 
 
     }

@@ -40,5 +40,5 @@ public interface AfterSaleProgressService extends SuperService<AfterSaleProgress
 
     Boolean updateStatus(String id, String node, String remark);
 
-    AfterSaleProgressEntity getByIndex(String id, Integer index);
+    AfterSaleProgressEntity getByNode(String id, String node);
 }
