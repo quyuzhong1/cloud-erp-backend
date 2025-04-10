@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -256,6 +257,9 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
             throw new ServiceException(ApiError.ERROR_1016);
+        }catch (ExcelAnalysisException e){
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1033);
         }
         return Boolean.TRUE;
 
