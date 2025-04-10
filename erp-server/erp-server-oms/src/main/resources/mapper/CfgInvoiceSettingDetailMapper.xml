@@ -74,7 +74,9 @@
                 LEFT JOIN
             shop_info si ON cisd.dict_platform = si.name
         WHERE
-            cisd.is_deleted = FALSE;
+            cisd.is_deleted = FALSE
+            And cisd.main_id = #{mainId}
+        ;
     </select>
 
     <!-- 根据店铺id集合查询 -->
