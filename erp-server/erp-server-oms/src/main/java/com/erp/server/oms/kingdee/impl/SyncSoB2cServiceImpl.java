@@ -205,13 +205,15 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setBiz_time(localDateTime.format(soB2cEntity.getPlatformOrderCreateTime()));
         }
         // 从交易子类型：线上订单=配货单, 其他=线下订单
-        if (OrderSubTypeEnum.ONLINE_ORDER.getCode().equalsIgnoreCase(soB2cEntity.getTransactionSubType())) {
-            shudiyunB2cOrderDTO.setTransaction_type("配货单");
-            shudiyunB2cOrderDTO.setTransaction_sub_type("线上订单");
-        } else {
-            shudiyunB2cOrderDTO.setTransaction_type("线下订单");
-            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
-        }
+//        if (OrderSubTypeEnum.ONLINE_ORDER.getCode().equalsIgnoreCase(soB2cEntity.getTransactionSubType())) {
+//            shudiyunB2cOrderDTO.setTransaction_type("配货单");
+//            shudiyunB2cOrderDTO.setTransaction_sub_type("线上订单");
+//        } else {
+//            shudiyunB2cOrderDTO.setTransaction_type("线下订单");
+//            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
+//        }
+        shudiyunB2cOrderDTO.setTransaction_type("配货单");
+        shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soB2cEntity.getTransactionSubType()));
 
         if (CharSequenceUtil.isBlank(soB2cEntity.getBillStatus())) {
             soB2cEntity.setBillStatus(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
