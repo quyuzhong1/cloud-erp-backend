@@ -119,4 +119,11 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
      * @param ids ids
      */
     List<PickingListsDTO.PrintView> b2bPrint(List<String> ids);
+
+    /**
+     * 打印组合品清单
+     * @param ids
+     * @return
+     */
+    List<PickingListsDTO.PrintCombinationView> printCombination(List<String> ids);
 }
