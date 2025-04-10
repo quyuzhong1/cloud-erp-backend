@@ -2,6 +2,7 @@ package com.erp.server.oms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -61,14 +62,19 @@ public class FullyManagedJob {
             XxlJobHelper.log("查询送货单信息执行完成 没有需要查询的订单");
             return; // 没有配置则不执行
         }
-        Map<String, String> transportNoMap = deliveryDTOS.stream().collect(Collectors.toMap(SoB2cDTO.DeliveryDTO::getTransportNo, SoB2cDTO.DeliveryDTO::getId));
         Map<String, List<SoB2cDTO.DeliveryDTO>> shopMap = deliveryDTOS.stream().collect(Collectors.groupingBy(SoB2cDTO.DeliveryDTO::getShopId));
         //循环查询
         for (Map.Entry<String, List<SoB2cDTO.DeliveryDTO>> entry : shopMap.entrySet()) {
             String shopId = entry.getKey();
             List<SoB2cDTO.DeliveryDTO> deliveryDTOList = entry.getValue();
             List<String> deliveryNoList = deliveryDTOList.stream().map(SoB2cDTO.DeliveryDTO::getTransportNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            List<FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO> deliveryOrdersDTOS = tikTokFullService.listDeliveryOrderByParam(shopId, deliveryNoList);
+            List<FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO> deliveryOrdersDTOS;
+            try {
+                deliveryOrdersDTOS = tikTokFullService.listDeliveryOrderByParam(shopId, deliveryNoList);
+            }catch (Exception e){
+                XxlJobHelper.log("查询送货单信息执行完成 店铺：" + shopId + "查询失败" + e.getMessage());
+                continue;
+            }
             if (CollUtil.isEmpty(deliveryOrdersDTOS)) {
                 XxlJobHelper.log("查询送货单信息执行完成 店铺：" + shopId + "没有需要查询的订单");
                 continue;
@@ -76,27 +82,52 @@ public class FullyManagedJob {
             //根据订单号进行分组
             Map<String, FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO> orderMap = deliveryOrdersDTOS.stream().collect(Collectors.toMap(FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO::getCode, Function.identity()));
             for (Map.Entry<String, FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO> orderEntry : orderMap.entrySet()) {
-                String orderNo = orderEntry.getKey();
-                String soId = transportNoMap.get(orderNo);
+                String transportNo = orderEntry.getKey();
+                SoB2cDTO.DeliveryDTO deliveryDTO1 = deliveryDTOS.stream().filter(e -> e.getTransportNo().equals(transportNo)).findFirst().orElse(null);
+                if (Objects.isNull(deliveryDTO1)) {
+                    XxlJobHelper.log("查询送货单信息执行完成 运单号：" + transportNo + "没有对应的订单信息");
+                    continue;
+                }
+                String soId = deliveryDTO1.getId();
+                String code = deliveryDTO1.getCode();
                 if (CharSequenceUtil.isBlank(soId)) {
-                    XxlJobHelper.log("查询送货单信息执行完成 订单：" + orderNo + "没有对应的全托管单");
+                    XxlJobHelper.log("查询送货单信息执行完成 订单：" + code + "没有对应的全托管单");
+                    continue;
+                }
+                List<SoB2cDTO.DeliveryDTO> detailList = deliveryDTOList.stream().filter(e -> e.getId().equals(soId)).collect(Collectors.toList());
+                if (CollUtil.isEmpty(detailList)){
+                    XxlJobHelper.log("查询送货单信息执行完成 订单：" + code + "没有对应的订单信息");
                     continue;
                 }
                 FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO deliveryOrdersDTO = orderEntry.getValue();
                 List<FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO.SkusDTO> skus = deliveryOrdersDTO.getSkus();
                 if (CollUtil.isEmpty(skus)) {
-                    XxlJobHelper.log("查询送货单信息执行完成 订单：" + orderNo + "没有对应的商品信息");
+                    XxlJobHelper.log("查询送货单信息执行完成 订单：" + code + "没有对应的商品信息");
                     continue;
                 }
+                //订单明细扩展字段
                 for (FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO.SkusDTO skusDTO : skus){
-                    SoB2cDTO.ExtendDataDTO extendDataDTO = new SoB2cDTO.ExtendDataDTO();
+                    SoB2cDTO.DeliveryDTO deliveryDTO = detailList.stream().filter(e -> e.getId().equals(soId) && e.getPlatformSpuNo().equals(skusDTO.getPlatformSkuCode())).findFirst().orElse(null);
+                    if (Objects.isNull(deliveryDTO)) {
+                        XxlJobHelper.log("查询送货单信息执行完成 订单：" + code + "没有对应的" + skusDTO.getPlatformSkuCode() + "商品信息");
+                        continue;
+                    }
+                    SoB2cDTO.ExtendDataDTO extendDataDTO = JSONUtil.toBean(deliveryDTO.getExtendDetailData(), SoB2cDTO.ExtendDataDTO.class);
                     extendDataDTO.setDeliveryQty(Objects.nonNull(skusDTO.getDeliveredQuantity()) ? skusDTO.getDeliveredQuantity() : 0);
                     extendDataDTO.setInstockQty(Objects.nonNull(skusDTO.getInboundQuantity()) ? skusDTO.getInboundQuantity() : 0);
                     extendDataDTO.setReceiveQty(Objects.nonNull(skusDTO.getReceivedQuantity()) ? skusDTO.getReceivedQuantity() : 0);
                     extendDataDTO.setReturnQty(Objects.nonNull(skusDTO.getReturnedQuantity()) ? skusDTO.getReturnedQuantity() : 0);
                     //根据平台sku和订单id更新扩展信息
-                    soB2cDetailService.updateExtendData(soId,skusDTO.getPlatformSkuCode(), extendDataDTO);
+                    soB2cDetailService.updateExtendData(deliveryDTO.getDetailId(), extendDataDTO);
                 }
+                //订单主表扩展字段
+                SoB2cDTO.ExtendDataDTO extendDataDTO = JSONUtil.toBean(detailList.get(0).getExtendData(), SoB2cDTO.ExtendDataDTO.class);
+                extendDataDTO.setDeliveryQty(Objects.nonNull(deliveryOrdersDTO.getDeliveredQuantity()) ? deliveryOrdersDTO.getDeliveredQuantity() : 0);
+                extendDataDTO.setInstockQty(Objects.nonNull(deliveryOrdersDTO.getInboundQuantity()) ? deliveryOrdersDTO.getInboundQuantity() : 0);
+                extendDataDTO.setReceiveQty(Objects.nonNull(deliveryOrdersDTO.getReceivedQuantity()) ? deliveryOrdersDTO.getReceivedQuantity() : 0);
+                extendDataDTO.setReturnQty(Objects.nonNull(deliveryOrdersDTO.getReturnedQuantity()) ? deliveryOrdersDTO.getReturnedQuantity() : 0);
+                //根据平台sku和订单id更新扩展信息
+                soB2cService.updateExtendData(detailList.get(0).getId(), extendDataDTO);
             }
         }
 

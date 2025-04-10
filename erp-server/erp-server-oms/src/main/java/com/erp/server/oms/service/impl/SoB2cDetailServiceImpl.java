@@ -809,8 +809,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     }
 
     @Override
-    public void updateExtendData(String soId, String platformSkuCode, SoB2cDTO.ExtendDataDTO extendDataDTO) {
-        baseMapper.updateExtendData(soId,platformSkuCode, JSONUtil.toJsonStr(extendDataDTO));
+    public void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO) {
+        baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
     }
 
     /**

@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DataIdempotent;
@@ -897,6 +898,14 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
             }
             addDTO.setDetailList(detailList);
+            //全托管订单重算订单数量
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+                //累加订单数量
+                Integer orderQty = detailList.stream().map(SoB2cDetailDTO.AddDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                SoB2cDTO.ExtendDataDTO dataDTO = JSONUtil.toBean(entity.getExtendData(), SoB2cDTO.ExtendDataDTO.class);
+                dataDTO.setOrderQty(orderQty);
+                addDTO.setExtendData(JSONUtil.toJsonStr(dataDTO));
+            }
             //拆分金额所占比例
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
             BigDecimal amount = MathUtil.multiply(rate, entity.getAmount());

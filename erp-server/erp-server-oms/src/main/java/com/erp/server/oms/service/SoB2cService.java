@@ -1081,4 +1081,11 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList);
+
+    /**
+     * 根据主表更新扩展字段
+     * @param id
+     * @param extendDataDTO
+     */
+    void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
 }
