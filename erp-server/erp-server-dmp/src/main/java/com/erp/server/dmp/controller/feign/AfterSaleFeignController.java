@@ -91,7 +91,7 @@ public class AfterSaleFeignController extends BaseController {
      * @Author jack
      * @since 2025-04-07
      */
-    @GetMapping("/getNodeList")
+    @GetMapping("feign/afterSale/getNodeList")
     ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
         return success(afterSaleService.getNodeList());
     }

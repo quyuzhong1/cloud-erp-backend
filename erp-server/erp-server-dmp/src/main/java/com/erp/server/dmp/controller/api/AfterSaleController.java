@@ -510,4 +510,5 @@ public class AfterSaleController extends BaseController {
     ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
         return success(afterSaleService.getNodeList());
     }
+
 }

@@ -2,6 +2,7 @@ package com.erp.model.dmp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.dmp.entity.AfterSaleDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -220,11 +221,11 @@ public class AfterSaleDTO implements Serializable {
         private Integer skuQty;
         private String detailDesc;
         /**
-         * 寄出快递单号
+         * 仓库寄的快递单号
          */
         private String outboundTrackNo;
         /**
-         * 寄回快递单号
+         * 客户寄的快递单号
          */
         private String returnTrackNo;
         /**
@@ -283,7 +284,7 @@ public class AfterSaleDTO implements Serializable {
         /**
         * 审核状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
         * 审核时间
@@ -381,11 +382,11 @@ public class AfterSaleDTO implements Serializable {
          */
         private String invalidStatusName;
         /**
-         * 寄出快递单号
+         * 仓库寄的快递单号
          */
         private String outboundTrackNo;
         /**
-         * 寄回快递单号
+         * 客户寄的快递单号
          */
         private String returnTrackNo;
         /**
@@ -526,6 +527,14 @@ public class AfterSaleDTO implements Serializable {
         private List<String> attachNameList;
         private List<String> attachUrlList;
 
+        /**
+         * 仓库寄的快递单号
+         */
+        private String outboundTrackNo;
+        /**
+         * 客户寄的快递单号
+         */
+        private String returnTrackNo;
 
         /**
          * 明细
