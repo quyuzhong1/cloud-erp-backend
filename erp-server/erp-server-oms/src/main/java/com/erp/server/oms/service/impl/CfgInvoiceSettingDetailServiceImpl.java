@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -60,10 +59,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         ArrayList<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
         //查询详情列表
         List<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOList = baseMapper.selectDetailDict(dto.getId());
-        //查询平台对应店铺
+        //查询平台value对应
         List<DictBasicDTO.ViewDTO> keyList = dictBasicService.getByKey(dto.getKey());
         if (ObjectUtil.isNotEmpty(dto.getNames())) {
-            keyList = keyList.stream().filter(item -> ObjectUtil.isNotEmpty(dto.getNames()) && dto.getNames().contains(item.getName())).collect(Collectors.toList());
+            keyList = keyList.stream().filter(item -> ObjectUtil.isNotEmpty(dto.getNames()) && dto.getNames().contains(item.getValue())).collect(Collectors.toList());
         }
         // 列表为空，第一次点击，返回平台情况即可
         if (ObjectUtil.isEmpty(viewDTOList)) {
