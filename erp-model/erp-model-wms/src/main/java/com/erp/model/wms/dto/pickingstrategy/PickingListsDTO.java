@@ -235,6 +235,111 @@ public class PickingListsDTO {
          */
         private List<CombinationPrintDetailView> combinationPrintDetailView;
     }
+    @Data
+    @NoArgsConstructor
+    public static class PrintCombinationView {
+
+        /**
+         * 单据编号
+         */
+        private String code;
+        /**
+         * 客户/渠道名
+         */
+        private String channelName;
+        /**
+         * 打印时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime printTime;
+        /**
+         * 打单人
+         */
+        private String printUserName;
+        /**
+         * 经办人
+         */
+        private String handlingUserName;
+        /**
+         * 单品拣货清单
+         */
+        private List<PrintSkuView> printSkuSingleViewList;
+
+        /**
+         * 组合品拣货清单
+         */
+        private List<PrintSkuView> printSkuCombinationViewList;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class PrintSkuView {
+        /**
+         * 三方sku
+         */
+        private String thirdSku;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 推荐仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 明细来源Id
+         */
+        private String sourceDetailId;
+        /**
+         * 是否是捆绑商品:true=是，false=否
+         */
+        private Boolean isCombination;
+        /**
+         * 组合sku
+         */
+        private String parentSkuNo;
+
+        /**
+         * 发货数量
+         */
+        private Integer parentSkuQty;
+
+        /**
+         * 子级sku
+         */
+        private String childSkuNo;
+
+        /**
+         * 子级sku数量
+         */
+        private Integer childSkuQty;
+        /**
+         * 客户PO
+         */
+        private String customerPO;
+        public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName, String customerPO) {
+            this.parentSkuNo = detail.getSkuNo();
+            this.productName = productName;
+            this.sourceCode = entity.getSourceCode();
+            this.parentSkuQty = detail.getQty();
+            this.warehouseId = entity.getWarehouseId();
+            this.warehouseName = entity.getWarehouseName();
+            this.warehouseLocation = detail.getWarehouseLocation();
+            this.sourceDetailId = detail.getSourceDetailId();
+            this.customerPO = customerPO;
+        }
+    }
 
     @Getter
     @Setter
@@ -321,7 +426,7 @@ public class PickingListsDTO {
         /**
          * 客户PO
          */
-        private String customerPo;
+        private String customerPO;
 
         public void getPrintView(PickingListsEntity entity, PickingDetailEntity detail, String productName) {
             this.skuId = detail.getSkuId();

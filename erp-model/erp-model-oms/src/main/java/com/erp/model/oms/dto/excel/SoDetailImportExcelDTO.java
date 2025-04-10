@@ -96,7 +96,7 @@ public class SoDetailImportExcelDTO {
      * 备注
      */
     @ColumnWidth(40)
-    @ExcelProperty(value = "备注", index = 8)
+    @ExcelProperty(value = "备注", index = 9)
     @FieldValid(fieldName = "备注",maxLength=200)
     private String remark;
 
@@ -106,7 +106,7 @@ public class SoDetailImportExcelDTO {
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 9)
+    @ExcelProperty(value = "错误数据", index = 10)
     private String errorMsg;
 
 
