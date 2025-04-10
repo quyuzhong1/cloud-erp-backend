@@ -3751,5 +3751,10 @@ public class SoB2cDTO implements Serializable {
         private String platformOrderStatus;
         private String shopId;
         private String transportNo;
+        private String detailId;
+        private String extendData;
+        private String extendDetailData;
+        private String platformSkuNo;
+        private String platformSpuNo;
     }
 }

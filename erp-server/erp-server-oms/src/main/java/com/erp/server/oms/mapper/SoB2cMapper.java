@@ -279,4 +279,11 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @return
      */
     List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(@Param("billStatusList") List<String> billStatusList, @Param("platformStatusList") List<String> platformStatusList, @Param("platformList") List<String> platformList);
+
+    /**
+     * 更新
+     * @param id
+     * @param extendData
+     */
+    void updateExtendData(@Param("id") String id, @Param("extendData") String extendData);
 }
