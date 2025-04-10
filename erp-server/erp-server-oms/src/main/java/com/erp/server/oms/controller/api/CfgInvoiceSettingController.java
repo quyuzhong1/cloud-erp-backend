@@ -23,6 +23,7 @@ import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 
 /**
+ * 发票设置
  * @author hcg
  * @since 2025-04-09
  */

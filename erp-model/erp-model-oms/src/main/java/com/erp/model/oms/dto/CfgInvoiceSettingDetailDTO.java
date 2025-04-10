@@ -219,10 +219,13 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         /**
          * 主键id
          */
+        @NotBlank(message = "id不能为空")
+        @Size(max = 19, message = "id最大长度不能超过19位")
         private String id;
         /**
          * key = salesPlatform
          */
+        @NotBlank(message = "key不能为空")
         private String key;
 
         /**
