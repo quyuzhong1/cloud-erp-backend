@@ -52,10 +52,6 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
          */
         private String platformValue;
 
-        /**
-         * 平台value
-         */
-        private String dictPlatform;
 
         /**
          * 店铺id
@@ -230,7 +226,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         private String key;
 
         /**
-         * 目前限制为速卖通和美克多本土店
+         * 目前限制为速卖通和美克多本土店 names = ["美克多","速卖通"]
          */
         private List<String> names;
     }

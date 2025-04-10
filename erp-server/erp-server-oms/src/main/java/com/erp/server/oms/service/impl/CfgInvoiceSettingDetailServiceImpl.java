@@ -19,19 +19,12 @@ import com.erp.server.oms.service.CfgInvoiceSettingDetailService;
 import com.erp.server.oms.service.CfgInvoiceSettingService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.exception.ServiceException;
+
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
@@ -40,10 +33,8 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
-import javax.annotation.Resource;
 
 /**
  * <p>
@@ -69,7 +60,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         ArrayList<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
         //查询详情列表
         List<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOList = baseMapper.selectDetailDict(dto.getId());
-        //查询平台对应字典
+        //查询平台对应店铺
         List<DictBasicDTO.ViewDTO> keyList = dictBasicService.getByKey(dto.getKey());
         if (ObjectUtil.isNotEmpty(dto.getNames())) {
             keyList = keyList.stream().filter(item -> ObjectUtil.isNotEmpty(dto.getNames()) && dto.getNames().contains(item.getName())).collect(Collectors.toList());
@@ -84,9 +75,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             });
             return viewDTOS;
         }
-        viewDTOList.forEach(item -> {
-
-        });
         return viewDTOList;
     }
 
@@ -146,13 +134,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         return Boolean.TRUE;
     }
 
-
-    /**
-     * 新增修改处理数据
-     * code映射value
-     */
-    private void handleData(CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity) {
-    }
 
     @Override
     public List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop() {

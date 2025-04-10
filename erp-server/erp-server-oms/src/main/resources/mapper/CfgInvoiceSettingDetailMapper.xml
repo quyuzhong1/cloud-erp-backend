@@ -67,14 +67,16 @@
             cisd.tax_type AS taxType,
             cisd.invoice_node AS invoiceNode,
             cisd.is_auto_upload AS isAutoUpload,
-            si.name AS platformName,
-            si.value AS platformValue
+            si.dict_platform AS platformName,
+            si.name AS platformValue
         FROM
             cfg_invoice_setting_detail cisd
                 LEFT JOIN
-            shop_info si ON cisd.dict_platform = si.value
+            shop_info si ON cisd.dict_platform = si.name
         WHERE
-            cisd.is_deleted = FALSE;
+            cisd.is_deleted = FALSE
+            And cisd.main_id = #{mainId}
+        ;
     </select>
 
     <!-- 根据店铺id集合查询 -->

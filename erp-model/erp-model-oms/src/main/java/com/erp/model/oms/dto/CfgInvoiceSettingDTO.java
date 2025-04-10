@@ -54,7 +54,6 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * 启用禁用状态（true禁用，false启用，必填）
          */
-        @NotNull(message = "启用禁用状态不能为空")
         private Boolean disabled;
 
         /**
@@ -101,9 +100,8 @@ public class CfgInvoiceSettingDTO implements Serializable {
         private String address;
 
         /**
-         * 门牌号（必填）
+         * 门牌号
          */
-        @NotBlank(message = "门牌号不能为空")
         @Size(max = 50, message = "门牌号最大长度不能超过50位")
         private String doorplateNo;
 
@@ -122,9 +120,8 @@ public class CfgInvoiceSettingDTO implements Serializable {
         private String city;
 
         /**
-         * 州（必填）
+         * 州
          */
-        @NotBlank(message = "州不能为空")
         @Size(max = 50, message = "州最大长度不能超过50位")
         private String state;
 
