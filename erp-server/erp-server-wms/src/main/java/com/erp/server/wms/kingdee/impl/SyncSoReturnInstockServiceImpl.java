@@ -131,8 +131,14 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 
-
-        shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNoInitial);
+        // 父节点单号=平台退货订单号
+        shudiyunB2cOrderDTO.setParent_node_no(rootNodeNoInitial);
+        String targetRootNode = rootNodeNoInitial;
+        if (StringUtils.isNotBlank(entity.getPlatformOrderCode())){
+            targetRootNode = entity.getPlatformOrderCode();
+        }
+        shudiyunB2cOrderDTO.setRoot_node_no(targetRootNode);
+        shudiyunB2cOrderDTO.setRoot_node_no_initial(targetRootNode);
         shudiyunB2cOrderDTO.setGoods_no(detailEntity.getSkuNo());
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
         shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
