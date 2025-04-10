@@ -4370,7 +4370,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LocalDateTime createTime = soB2cEntity.getCreateTime();
         //全托管订单设置币种
         if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
-            soB2cEntity.setCurrency(shopInfoEntity.getTradeCurrency());
+            if(CharSequenceUtil.isBlank(soB2cEntity.getCurrency())){
+                soB2cEntity.setCurrency(shopInfoEntity.getTradeCurrency());
+            }
             createTime = soB2cEntity.getPayTime();
         }
         if (StringUtils.isNotBlank(soB2cEntity.getCurrency())) {
