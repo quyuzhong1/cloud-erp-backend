@@ -97,6 +97,8 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
+        @Size(max = 19, message = "发票设置明细id最大长度不能超过19位")
+        private String id;
     }
 
     /**

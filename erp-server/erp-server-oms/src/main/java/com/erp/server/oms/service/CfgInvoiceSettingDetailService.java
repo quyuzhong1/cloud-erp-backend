@@ -19,7 +19,7 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
 
     List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
 
-    BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList);
 
     List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop();
     /**
