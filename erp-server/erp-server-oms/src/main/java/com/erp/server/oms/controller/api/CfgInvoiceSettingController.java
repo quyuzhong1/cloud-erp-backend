@@ -103,13 +103,13 @@ public class CfgInvoiceSettingController extends BaseController {
      * 发票设置详情
      *
      * @description:
-     * @author: yanhongwei
+     * @author: hcg
      * @date: 2025/4/9 14:40
      * @param: BaseIdDTO
      * @return: CfgInvoiceSettingDTO.ViewDTO
      **/
     @GetMapping("/view")
-    public ApiResult<CfgInvoiceSettingDTO.ViewDTO> view(@RequestParam @Validated String settingId) {
+    public ApiResult<CfgInvoiceSettingDTO.ViewDTO> view(@RequestParam(value = "settingId") String settingId) {
         return success(cfgInvoiceSettingService.view(settingId));
     }
 
