@@ -1467,6 +1467,11 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NOT_EXIST(92175,"发票信息不存在"),
     ERROR_INVOICE_DETAIL_NOT_EXIST(92176,"发票明细不存在"),
     ERROR_INVOICE_TAX_NOT_EXIST(92177,"税务信息不存在"),
+    ERROR_INVOICE_NFE_GENERATE(92178,"只有美客多和速卖通平台支持生成NF-e发票"),
+    ERROR_INVOICE_NFE_SHOP_BIND(92179,"店铺【{}】未配置公司账号"),
+    ERROR_INVOICE_SUCCESS(92180,"发票未开票成功不支持此操作"),
+    ERROR_INVOICE_NOT_NEED(92181,"仅待开票和开票失败的订单允许无开票"),
+    ERROR_INVOICE_NFE_OPTION(92182,"仅NF-E发票支持此操作"),
 
 
     /**

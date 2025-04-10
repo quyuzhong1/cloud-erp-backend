@@ -30,5 +30,13 @@
         invoice_info_id, content
     </sql>
 
+    <!-- 根据发票id查询数量  -->
+    <select id="countByInvoiceInfoId" resultType="java.lang.Integer">
+        select
+            count(0)
+        from invoice_update_his iuh
+        where iuh.is_deleted = false and iuh.invoice_info_id = #{invoiceInfoId}
+    </select>
+
 
 </mapper>

@@ -24,5 +24,12 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
     BaseResultDTO.AddDTO add(CfgInvoiceSettingDetailDTO.AddDTO dto);
 
     List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop();
-
+    /**
+     * 根据店铺id集合查询
+     * @author will
+     * @date 2025/4/9 12:20
+     * @param shopIdList
+     * @return List<CfgInvoiceSettingDetailEntity>
+     */
+    List<CfgInvoiceSettingDetailEntity> listByShopIdList(List<String> shopIdList);
 }

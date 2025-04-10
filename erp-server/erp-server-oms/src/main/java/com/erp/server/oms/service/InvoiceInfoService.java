@@ -9,10 +9,10 @@ import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 /**
@@ -53,8 +53,16 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     PagingVO<InvoiceInfoDTO.PagingViewDTO> paging(PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto, Boolean isExport);
 
     String downloadInvoice(String id);
+    /**
+     * 生成发票
+     * @author will
+     * @date 2025/4/9 11:43
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO batchGenerateNfeInvoice(String id);
 
-    List<BatchResultDTO> batchGenerateInvoice(List<String> ids);
+    List<BatchResultDTO> batchGenerateVatInvoice(List<String> ids);
 
     void batchSave(List<InvoiceInfoEntity> addList, List<InvoiceDetailEntity> addDetailList);
 
@@ -82,16 +90,16 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO returnInvoice(String id,String remark);
+    BatchResultDTO returnInvoice(String id,String remark,String returnTaxCode);
     /**
      * 无需开票
      * @author will 
      * @date 2025/4/8 09:04
-     * @param id
+     * @param soId
      * @param remark 
      * @return BatchResultDTO
      */
-    BatchResultDTO notNeedInvoice(@NotBlank(message = "id不能为空") String id, @NotBlank(message = "备注不能为空") String remark);
+    BatchResultDTO notNeedInvoice( String soId, String remark);
     /**
      * 开局Cce
      * @author will
@@ -115,7 +123,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param dto
      * @return Resource
      */
-    Resource exportXml(InvoiceInfoDTO.@Valid PagingParamDTO dto);
+    StreamingResponseBody exportXml(InvoiceInfoDTO.PagingParamDTO dto);
     /**
      * 导出pdf
      * @author will
@@ -123,7 +131,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param dto
      * @return Resource
      */
-    Resource exportPdf(InvoiceInfoDTO.@Valid PagingParamDTO dto);
+    Resource exportPdf(InvoiceInfoDTO.PagingParamDTO dto);
     /**
      * 生成发票校验
      * @author will

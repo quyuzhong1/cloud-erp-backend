@@ -3,6 +3,7 @@ import com.erp.model.oms.entity.InvoiceUpdateHisEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 
 /**
@@ -15,5 +16,12 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface InvoiceUpdateHisMapper extends BaseMapper<InvoiceUpdateHisEntity> {
-
+    /**
+     * 根据发票id查询修改的历史数量
+     * @author will
+     * @date 2025/4/9 15:00
+     * @param invoiceInfoId
+     * @return Integer
+     */
+    Integer countByInvoiceInfoId(@Param("invoiceInfoId") String invoiceInfoId);
 }

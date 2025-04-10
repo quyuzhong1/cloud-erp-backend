@@ -107,6 +107,11 @@ public class InvoiceDetailServiceImpl extends SuperServiceImpl<InvoiceDetailMapp
         return lambdaQuery().in(InvoiceDetailEntity::getMainId,mainIdList).list();
     }
 
+    @Override
+    public void removeByMainId(String mainId) {
+        lambdaUpdate().eq(InvoiceDetailEntity::getMainId,mainId).remove();
+    }
+
 
     /**
     * 新增修改处理数据

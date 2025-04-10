@@ -93,6 +93,11 @@ public class InvoiceUpdateHisServiceImpl extends SuperServiceImpl<InvoiceUpdateH
         return Collections.emptyList();
     }
 
+    @Override
+    public Integer countByInvoiceInfoId(String invoiceInfoId) {
+        return baseMapper.countByInvoiceInfoId(invoiceInfoId);
+    }
+
     /**
     * 新增修改处理数据
     */
