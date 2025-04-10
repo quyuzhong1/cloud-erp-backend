@@ -213,13 +213,9 @@ public class InvoiceInfoController extends BaseController {
         } catch (UnsupportedEncodingException e) {
             throw new ServiceException("编码失败");
         }
-        // 动态设置 Content-Type
-        MediaType contentType = resultDTO.getFileName().contains(".pdf")
-                ? MediaType.APPLICATION_PDF
-                : MediaType.APPLICATION_OCTET_STREAM;
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename*=UTF-8''" + encodedFileName)
-                .contentType(contentType)
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(resultDTO.getResponseBody());
     }
 
