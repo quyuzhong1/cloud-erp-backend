@@ -1,5 +1,6 @@
 package com.erp.server.oms.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.InvoiceTaxEntity;
@@ -23,7 +24,7 @@ public interface InvoiceTaxService extends SuperService<InvoiceTaxEntity> {
     * @param dto
     * @return
     */
-    Boolean addOrUpdate(InvoiceTaxDTO.UpdateDTO dto);
+    BatchResultDTO addOrUpdate(InvoiceTaxDTO.UpdateDTO dto);
 
     /**
      * 查看
