@@ -6092,6 +6092,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
+            //全托管订单 存在历史订单信息，扩展字段数据不更新
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                dto.setExtendData(oldEntity.getExtendData());
+            }
             // 全托管作废保留以前状态
             if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 oldEntity.setApproveStatus(oldApproveStatus);
