@@ -228,14 +228,14 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         
         //服务sku
         List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
-        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
-                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        List<String> ignoreInventorySkuNos = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuNo).distinct().collect(Collectors.toList()) : Collections.emptyList();
         List<JSONObject> list = new ArrayList<>();
         for (OtherOutstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
             String skuNo = detail.getSkuNo();
-            if(ignoreInventorySkuIds.contains(skuNo)) {
+            if(ignoreInventorySkuNos.contains(skuNo)) {
             	continue;
             }
             //实发数量
