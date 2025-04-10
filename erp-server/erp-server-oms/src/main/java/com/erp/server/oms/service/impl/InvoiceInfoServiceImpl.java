@@ -675,7 +675,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
         }
         //无需开票
-        if (!SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus()) && !SoB2cNfeStatusEnum.INVOICE_FAILED.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
+        if (!SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus()) && !SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
             throw new ServiceException(ApiError.ERROR_INVOICE_SUCCESS);
         }
         soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode());
