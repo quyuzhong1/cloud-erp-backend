@@ -59,6 +59,7 @@
 
     <select id="selectDetailDict" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDTO">
         SELECT
+            cisd.id AS id,
             cisd.shop_id AS shopId,
             cisd.main_id AS mainId,
             cisd.dict_invoice_rule AS dictInvoiceRule,
@@ -72,7 +73,7 @@
         FROM
             cfg_invoice_setting_detail cisd
                 LEFT JOIN
-            shop_info si ON cisd.dict_platform = si.dict_platform
+            shop_info si ON cisd.shop_id = si.id
         WHERE
             cisd.is_deleted = FALSE
             And cisd.main_id = #{mainId}
