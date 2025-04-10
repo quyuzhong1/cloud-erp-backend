@@ -292,6 +292,14 @@ public class SoB2cDTO implements Serializable {
         private String vatInvoiceStatusName;
 
         /**
+         * 发票状态，SoB2cNfeStatusEnum枚举,pending待开票,invoicing开票中,invoiceFailure开票失败,notNeedInvoice无需开票,waitUpload待上传,uploadFailure上传失败,uploadSuccess已上传notNeedUpload无需上传
+         */
+        private String nfeInvoiceStatus;
+        /**
+         * nfe发票状态名称
+         */
+        private String nfeInvoiceStatusName;
+        /**
          * 单据编码
          */
         private String code;
@@ -819,11 +827,6 @@ public class SoB2cDTO implements Serializable {
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
-
-        /**
-         * 发票状态，SoB2cNfeStatusEnum枚举
-         */
-        private String invoiceStatus;
     }
 
 
