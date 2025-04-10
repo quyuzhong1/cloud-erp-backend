@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -83,8 +84,8 @@ public class InvoiceInfoDTO implements Serializable {
         /**
          * so主键id
          */
-        @NotBlank(message = "soId不能为空")
-        private String soId;
+        @NotEmpty(message = "soId不能为空")
+        private List<String> soIdList;
 
         /**
          * 备注
@@ -444,5 +445,9 @@ public class InvoiceInfoDTO implements Serializable {
          * 文件url
          */
         private String attachUrl;
+        /**
+         * 文件名称
+         */
+        private String attachName;
     }
 }
