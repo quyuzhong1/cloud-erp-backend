@@ -16,7 +16,6 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
@@ -34,6 +33,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -55,6 +55,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_DMP_AFTER_SALE;
+
 /**
  * <p>
  * 售后申请表 服务实现类
@@ -92,6 +95,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private DmpSoOriginalInfoService dmpSoOriginalInfoService;
     @Resource
     private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
 
@@ -312,25 +317,28 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     @Override
-    public void exportList(AfterSaleDTO.ExportDTO param, HttpServletResponse response) {
-        List<AfterSaleDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/afterSale.xlsx";
-        String name = "售后申请单导出";
+    public void exportList(AfterSaleDTO.PagingParamDTO param, HttpServletResponse response) {
+//        List<AfterSaleDTO.ListDTO> list = this.baseMapper.listExport(param);
+//        if(CollUtil.isEmpty(list)) {
+//           return;
+//        }
+//        // 数据处理
+//        fillList(list);
+//        // 导出数据
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/afterSale.xlsx";
+//        String name = "售后申请单导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date).append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        StringBuilder builder = new StringBuilder();
+        builder.append("售后申请导出").append(date);
+        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_DMP_AFTER_SALE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)

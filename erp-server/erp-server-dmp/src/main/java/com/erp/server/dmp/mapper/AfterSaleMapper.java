@@ -44,7 +44,7 @@ public interface AfterSaleMapper extends BaseMapper<AfterSaleEntity> {
     * @param params
     * @return
     */
-    List<AfterSaleDTO.ListDTO> listExport(@Param("params") AfterSaleDTO.ExportDTO params);
+    List<AfterSaleDTO.ListDTO> listExport(@Param("params") AfterSaleDTO.PagingParamDTO params);
 
 
     /**
