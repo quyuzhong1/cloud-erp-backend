@@ -408,47 +408,6 @@ public class AfterSaleController extends BaseController {
         return success();
     }
 
-
-
-
-//    /**
-//     *
-//     * @author jack
-//     * @date:  2025-04-06
-//     * @param dto
-//     * @return ApiResult<List<BatchResultDTO>>
-//     */
-//    @PostMapping("/changeStatus")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "dmp:afterSale:invalid",
-//            serviceClass = AfterSaleService.class,
-//            keyIdName = "ids")
-//    @LogAction(value = LogActionEnum.INVALID, desc = "售后申请状态变更")
-//    public ApiResult<List<BatchResultDTO>> changeStatus(@RequestBody @Validated AfterSaleDTO.IdsDTO dto) {
-//        List<String> ids = dto.getIds();
-//        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-//        List<AfterSaleEntity> list = afterSaleService.lambdaQuery().in(AfterSaleEntity::getId, ids).list();
-//        Map<String, AfterSaleEntity> idEntityMap = list.stream().collect(Collectors.toMap(AfterSaleEntity::getId, w -> w));
-//        for (String id : dto.getIds()) {
-//            BatchResultDTO result;
-//            try {
-//                result = afterSaleService.changeStatus(id);
-//            }catch (Exception e){
-//                AfterSaleEntity entity = idEntityMap.get(id);
-//                if (ObjectUtil.isEmpty(entity)) {
-//                    result = BatchResultDTO.fail(id, id, "售后申请单不存在, 作废失败");
-//                    resultDTOS.add(result);
-//                    continue;
-//                }
-//                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
-//            }
-//            resultDTOS.add(result);
-//        }
-//        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
-//    }
-
-
     /**
      *
      * @author jack

@@ -143,10 +143,9 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     * @author jack
     * @date: 2025-04-06
     * @param dto
-    * @param response
     * @return
     */
-    void exportList(AfterSaleDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(AfterSaleDTO.PagingParamDTO dto,HttpServletResponse response);
 
     /**
     * 审核通过回调方法

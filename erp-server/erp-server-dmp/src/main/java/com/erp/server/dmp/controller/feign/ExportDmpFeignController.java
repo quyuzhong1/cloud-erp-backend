@@ -3,9 +3,11 @@ package com.erp.server.dmp.controller.feign;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
 import com.erp.model.dmp.dto.DmpPullTaskDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.server.dmp.query.AfterSaleQueryHandler;
 import com.erp.server.dmp.query.DmpOutputTaskRecordQueryHandler;
 import com.erp.server.dmp.query.DmpTaskQueryHandler;
 import com.erp.server.dmp.service.*;
@@ -30,6 +32,8 @@ public class ExportDmpFeignController {
     private DmpPullTaskHistoryService dmpPullTaskHistoryService;
     @Resource
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+    @Resource
+    private AfterSaleService afterSaleService;
 
     @PostMapping("/pullTaskHistory")
     @WebAdvanceQuery(handler = DmpTaskQueryHandler.class)
@@ -60,5 +64,12 @@ public class ExportDmpFeignController {
     @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
     public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(@RequestBody PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
         return dmpOutputTaskRecordService.paging(dto);
+    }
+
+
+    @PostMapping("/exportAfterSale")
+    @WebAdvanceQuery(handler = AfterSaleQueryHandler.class)
+    public PagingVO<AfterSaleDTO.ListDTO> exportAfterSale(@RequestBody PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
+        return afterSaleService.paging(dto);
     }
 }
