@@ -238,6 +238,7 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
             if(ignoreInventorySkuNos.contains(skuNo)) {
             	continue;
             }
+            jsonObject.set("skuNo", skuNo);
             //实发数量
             jsonObject.set("actualQty", detail.getActualQty());
             //单位
