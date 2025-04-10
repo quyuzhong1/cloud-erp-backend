@@ -53,6 +53,11 @@ public class InvoiceTaxDTO implements Serializable {
         private String platformSkuNo;
 
         /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
+
+        /**
         * listing表id
         */
         private String listingId;

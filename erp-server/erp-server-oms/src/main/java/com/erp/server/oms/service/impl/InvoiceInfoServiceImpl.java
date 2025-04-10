@@ -768,12 +768,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
-        String fileName;
-        if (exportResultList.size() == 1) {
-            fileName = exportResultList.get(0).getAttachName();
-        } else {
-            fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        }
+        String fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
         StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
         resultDTO.setFileName(fileName);
         resultDTO.setResponseBody(streamingResponseBody);
@@ -790,12 +785,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
-        String fileName;
-        if (exportResultList.size() == 1) {
-            fileName = exportResultList.get(0).getAttachName();
-        } else {
-            fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        }
+        String fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
         StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
         resultDTO.setFileName(fileName);
         resultDTO.setResponseBody(streamingResponseBody);
@@ -851,6 +841,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             }
             viewDTO.setIsGenerateInvoiceTax(isGenerateInvoiceTax);
             viewDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
+            viewDTO.setPlatformSkuName( ObjUtil.isEmpty(listingInfoEntity) ? "" : listingInfoEntity.getPlatformSkuName());
             viewDTO.setPlatform(soB2cEntity.getDictPlatform());
             resultList.add(viewDTO);
         }
@@ -962,44 +953,32 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public StreamingResponseBody downloadZip(List<InvoiceInfoDTO.ExportAttachDTO> exportAttachList) {
         return outputStream -> {
-            if (exportAttachList.size() == 1) {
-                // 单文件直接下载
-                InvoiceInfoDTO.ExportAttachDTO dto = exportAttachList.get(0);
-                try {
-                    byte[] fileContent = FastDFSClientUtil.getFileByte(dto.getAttachUrl());
-                    outputStream.write(fileContent);
-                    outputStream.flush();
-                } catch (Exception e) {
-                    throw new ServiceException("文件下载失败: " + dto.getAttachName(), e);
-                }
-            } else {
-                // 多文件打包 ZIP
-                try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
-                    Semaphore semaphore = new Semaphore(10);
-                    List<CompletableFuture<Void>> futures = exportAttachList.stream()
-                            .map(attachDTO -> CompletableFuture.runAsync(() -> {
-                                try {
-                                    semaphore.acquire();
-                                    String fileName = attachDTO.getAttachName();
-                                    byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
+            // 多文件打包 ZIP
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                Semaphore semaphore = new Semaphore(10);
+                List<CompletableFuture<Void>> futures = exportAttachList.stream()
+                        .map(attachDTO -> CompletableFuture.runAsync(() -> {
+                            try {
+                                semaphore.acquire();
+                                String fileName = attachDTO.getAttachName();
+                                byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
 
-                                    synchronized (zipOut) {
-                                        zipOut.putNextEntry(new ZipEntry(fileName));
-                                        zipOut.write(content);
-                                        zipOut.closeEntry();
-                                    }
-                                } catch (Exception e) {
-                                    throw new RuntimeException("文件处理失败: " + attachDTO.getAttachName(), e);
-                                } finally {
-                                    semaphore.release();
+                                synchronized (zipOut) {
+                                    zipOut.putNextEntry(new ZipEntry(fileName));
+                                    zipOut.write(content);
+                                    zipOut.closeEntry();
                                 }
-                            }, executorPool))
-                            .collect(Collectors.toList());
+                            } catch (Exception e) {
+                                throw new RuntimeException("文件处理失败: " + attachDTO.getAttachName(), e);
+                            } finally {
+                                semaphore.release();
+                            }
+                        }, executorPool))
+                        .collect(Collectors.toList());
 
-                    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-                } catch (Exception e) {
-                    throw new ServiceException("压缩包生成失败", e);
-                }
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            } catch (Exception e) {
+                throw new ServiceException("压缩包生成失败", e);
             }
         };
     }
