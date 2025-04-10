@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.sdk.oms.mercadolocal.constant.MercadoConstant;
+import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.dto.MercadoShipOrderDTO;
 import com.sdk.oms.mercadolocal.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercadolocal.dto.mercadolocal.PlatformMercadoRefreshTokenDTO;
@@ -64,12 +65,12 @@ public class MercadoLocalSdkClientService {
 
     public static void main(String[] args) {
 
-        String accessToken = "APP_USR-5344160433223219-040819-98f98e38c85e8845baef659494961604-2119968271";
+        String accessToken = "APP_USR-5344160433223219-040923-fc7333b5d7a130bf026491ec0535d8e1-2119968271";
         //组装授权url
         String clientId = "3457166802805723";
         String clientSecret = "QucvI4VWHO0w3AZftOElz5liVOurfjQG";
         String url = MercadoConstant.URL;
-        String path = "/orders/{order_id}/billing_info".replace("{order_id}","2000010772320466");
+        String path = "/shipments/{id}/invoice_data/?siteId=MLB".replace("{id}","44444");
         StringBuffer sb = new StringBuffer();
         sb.append(url);
         sb.append(path);
@@ -79,16 +80,15 @@ public class MercadoLocalSdkClientService {
         HashMap<String, Object> orderParams = new HashMap<>(1);
 
         HashMap<String, Object> params = new HashMap<>(2);
+        String param = "<nfeProc versao=\"4.00\" xmlns=\"http://www.portalfiscal.inf.br/nfe\"></nfeProc>";
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
         headerMap.put("Authorization", "Bearer " +accessToken);
-        headerMap.put("x-version", "2");
-
+        headerMap.put("Content-Type", "application/xml");
 
         //拉取数据
         ApiResult apiResult = new ApiResult();
-        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), JSONUtil.toJsonStr(params), null, headerMap, RequestMethod.GET);
-
+        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), param, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             System.out.println("errrrrrrrrrrrr");
         }
@@ -651,14 +651,38 @@ public class MercadoLocalSdkClientService {
         return OkHttpUtils.doGetJsonBase64(orderUrl, orderParams, orderHeaderMap);
     }
 
-//    public static void main(String[] args) {
-//        MercadoLocalSdkClientService sdkClientService = new MercadoLocalSdkClientService();
-//        Map<String, String> authMap = new HashMap<>();
-//        String shippingId = "44487360197";
-//        authMap.put("token","APP_USR-5344160433223219-032623-9028ad77ee8c26b78726511bfa91047d-2119968271");
-//        sdkClientService.printShippingLabel(authMap, Long.valueOf(shippingId));
-//    }
+    /**
+     * 上传发票
+     */
+    public void uploadInvoice(MercadoInvoiceDTO mercadoInvoiceDTO) {
 
+        //  根据店铺ID获取授权
+        MercadoShopInfoDTO shopInfoByShopId = this.getShopInfoByShopId(mercadoInvoiceDTO.getShopId());
+
+        String accessToken = shopInfoByShopId.getAccessToken();
+        //组装授权url
+        String url = MercadoConstant.URL;
+        String path = "/shipments/{id}/invoice_data/?siteId=" + mercadoInvoiceDTO.getSiteId();
+        path = path.replace("{id}",mercadoInvoiceDTO.getShipmentId());
+        StringBuffer sb = new StringBuffer();
+        sb.append(url);
+        sb.append(path);
+        //入参
+        String param = mercadoInvoiceDTO.getXmlContent();
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer " +accessToken);
+        headerMap.put("Content-Type", "application/xml");
+
+        //拉取数据
+        ApiResult apiResult = new ApiResult();
+        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), param, null, headerMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}", path, param, JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}",
+                    path, param, JSONUtil.toJsonStr(apiResult)));
+        }
+    }
     /**
      * 标记发货
      */
