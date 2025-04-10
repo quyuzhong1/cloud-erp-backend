@@ -1,5 +1,6 @@
 package com.erp.server.oms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.business.dto.FindUserDTO;
@@ -17,6 +18,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
@@ -210,6 +212,13 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             if (StringUtils.isBlank(sellerId)) {
                 errorMsgList.add("销售员不存在");
             }
+            //单据子类型
+            String transactionSubTypeName = excelDTO.getTransactionSubTypeName();
+            String transactionSubType = OrderSubTypeEnum.getCodeByName(transactionSubTypeName);
+            addDTO.setTransactionSubType(transactionSubType);
+            if (StringUtils.isBlank(transactionSubType)) {
+                errorMsgList.add("单据子类型不存在");
+            }
             //存在错误数据则直接返回
             if (returnErrorList(excelDTO, errorMsgList, no)) return;
 
@@ -396,6 +405,8 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
             errorMsgList.add("是否关闭不能为空");
         }
         addDetail.setIsClose("是".equals(isCloseStr));
+        //客户PO号
+        addDetail.setCustomerPO(excelDTO.getCustomerPO());
         addDetail.setRemark(excelDTO.getDetailRemark());
 
         //sku no
@@ -415,15 +426,25 @@ public class B2BSoExcelListener extends AnalysisEventListener<B2BSoImportExcelDT
         String qtyStr = excelDTO.getQty();
         Integer qty = StringUtils.isNotBlank(qtyStr) ? Integer.valueOf(qtyStr) : 0;
         addDetail.setQty(qty);
-        //销售单价
-        String priceStr = excelDTO.getPrice();
-        BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
-        addDetail.setPrice(price);
-
         //税率
         String taxRateStr = excelDTO.getTaxRate();
         BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
         addDetail.setTaxRate(taxRate);
+        //销售单价
+        String priceStr = excelDTO.getPrice();
+        BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
+        //含税单价
+        String taxPriceStr = excelDTO.getTaxPrice();
+        //含税单价和销售单价不能同时为空
+        if (CharSequenceUtil.isAllBlank(priceStr,taxPriceStr)) {
+            errorMsgList.add("销售单价和含税单价不能同时为空");
+        }
+        if (CharSequenceUtil.isNotBlank(taxPriceStr) && CharSequenceUtil.isBlank(priceStr) && "是".equals(excelDTO.getIsTax())) {
+            BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
+            price = MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, MathUtil.divide(addDetail.getTaxRate(),MathUtil.BigDecimal_100)));
+        }
+
+        addDetail.setPrice(price);
         detailList.add(addDetail);
 
         addDTO.setDetailList(detailList);

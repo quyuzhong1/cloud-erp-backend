@@ -825,8 +825,10 @@ public class SoDetailDTO implements Serializable {
          * 是否关闭
          */
         private Boolean isClose;
-
-
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         /**
          * 备注
          */
