@@ -484,6 +484,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             .set(AfterSaleEntity::getInvalidRemark, remark)
             .update();
 
+        //更新节点时间
+        //更新通过，则进入下一个节点：终止
+        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+        afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TERMINATED.getCode());
+        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+        afterSaleProgressService.updateById(afterSaleProgressEntity);
+
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "售后申请单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "作废操作");
@@ -524,9 +531,19 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        //更新节点时间
-        updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        if(approveStatus.equals(ApproveStatusEnum.REJECT)){
+            //审批不通过，则最后的节点为终止
+            AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+            afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TERMINATED.getCode());
+            afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            afterSaleProgressService.updateById(afterSaleProgressEntity);
+        }else {
+            //更新节点时间
+            //更新通过，则进入下一个节点：待寄回
+            updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+        }
+
         return updateForApprove(entity.getId(), approveStatus.getStatus());
     }
 
@@ -862,6 +879,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto) {
         String code = dto.getCode();
@@ -872,9 +890,15 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             throw new ServiceException("售后申请单不存在");
         }
 
-        return afterSaleProgressService.lambdaUpdate().eq(AfterSaleProgressEntity::getMainId, afterSaleEntity.getId())
+        boolean update = afterSaleProgressService.lambdaUpdate().eq(AfterSaleProgressEntity::getMainId, afterSaleEntity.getId())
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
                 .set(AfterSaleProgressEntity::getTrackNo, trackNo)
                 .update();
+        if (Boolean.TRUE.equals(update)) {
+            //更新节点时间
+            //更新通过，则进入下一个节点：售后签收
+            updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+        }
+        return update;
     }
 }
