@@ -207,7 +207,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
         }
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(Collections.singletonList(id));
-        if (CollUtil.isNotEmpty(soB2cDetailEntityList)) {
+        if (CollUtil.isEmpty(soB2cDetailEntityList)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单明细");
         }
         List<String> skuIdList = soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
