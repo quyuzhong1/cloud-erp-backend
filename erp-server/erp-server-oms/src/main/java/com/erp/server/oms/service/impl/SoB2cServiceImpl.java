@@ -9951,7 +9951,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if(orderSubTypeMap.containsKey(mainInfo.getTransactionSubType())){
                 soB2cEntity.setTransactionSubType(orderSubTypeMap.get(mainInfo.getTransactionSubType()));
             }else {
-                errorMsgList.add("订单分类未找到");
+                errorMsgList.add("订单类型未找到");
             }
 
             //订单备注
