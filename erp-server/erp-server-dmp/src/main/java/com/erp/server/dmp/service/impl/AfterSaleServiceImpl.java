@@ -133,23 +133,26 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), "新增操作");
         //新增明细
         List<AfterSaleDetailEntity> detailList = addDTO.getDetailList();
-        List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-        List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
-        Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-        detailList.forEach(detail -> {
-            detail.setMainId(afterSaleEntity.getId());
-            ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-            detail.setSkuNo(productDetail.getSkuNo());
-            detail.setProdcutName(productDetail.getName());
-            if(downDTOMap.containsKey(detail.getSkuId())){
-                AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getSkuQty());
-            }
-        });
-        afterSaleDetailService.saveBatch(detailList);
+        if(CollUtil.isNotEmpty(detailList)){
+            List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+            List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
+            Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+            detailList.forEach(detail -> {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                detail.setSkuNo(productDetail.getSkuNo());
+                detail.setProdcutName(productDetail.getName());
+                if(downDTOMap.containsKey(detail.getSkuId())){
+                    AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                    detail.setPrice(downDTO.getPrice());
+                    detail.setSkuQty(downDTO.getSkuQty());
+                }
+            });
+            afterSaleDetailService.saveBatch(detailList);
+        }
+
 
         //新增维修记录
         List<AfterSaleProgressEntity> progressList = new ArrayList<>();
@@ -231,26 +234,28 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         //新增明细
         List<AfterSaleDetailEntity> detailList = updateDTO.getDetailList();
-        List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-        List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
-        Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-        detailList.forEach(detail -> {
-            detail.setMainId(afterSaleEntity.getId());
-            ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-            detail.setSkuNo(productDetail.getSkuNo());
-            detail.setProdcutName(productDetail.getName());
-            if(downDTOMap.containsKey(detail.getSkuId())){
-                AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getSkuQty());
-            }
-        });
-        // 删除明细数据
-        List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-        afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
-        afterSaleDetailService.saveOrUpdateBatch(detailList);
+        if(CollUtil.isNotEmpty(detailList)){
+            List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+            List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
+            Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+            detailList.forEach(detail -> {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                detail.setSkuNo(productDetail.getSkuNo());
+                detail.setProdcutName(productDetail.getName());
+                if(downDTOMap.containsKey(detail.getSkuId())){
+                    AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                    detail.setPrice(downDTO.getPrice());
+                    detail.setSkuQty(downDTO.getSkuQty());
+                }
+            });
+            // 删除明细数据
+            List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+            afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
+            afterSaleDetailService.saveOrUpdateBatch(detailList);
+        }
 
         // 删除明细数据
         attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
