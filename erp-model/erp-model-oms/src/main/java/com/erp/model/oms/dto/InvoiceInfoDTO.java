@@ -4,6 +4,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -436,7 +437,7 @@ public class InvoiceInfoDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ExportResultDTO {
+    public static class ExportAttachDTO {
         /**
          * 主键id
          */
@@ -449,5 +450,18 @@ public class InvoiceInfoDTO implements Serializable {
          * 文件名称
          */
         private String attachName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportResultDTO {
+        /**
+         * 响应体
+         */
+       private StreamingResponseBody responseBody;
+       /**
+        * 下载文件名称
+        */
+       private String fileName;
     }
 }

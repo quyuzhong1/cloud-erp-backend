@@ -26,7 +26,7 @@ public class InvoiceTaxDTO implements Serializable {
     @NoArgsConstructor
     public static class CheckGenerateInvoiceDTO extends  ViewDTO{
         /**
-         * 是否生成税务信息
+         * 是否已生成税务信息,false则需要补全
          */
         private Boolean isGenerateInvoiceTax;
     }

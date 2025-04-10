@@ -122,7 +122,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param dto
      * @return Resource
      */
-    StreamingResponseBody exportXml(InvoiceInfoDTO.PagingParamDTO dto);
+    InvoiceInfoDTO.ExportResultDTO exportXml(InvoiceInfoDTO.PagingParamDTO dto);
     /**
      * 导出pdf
      * @author will
@@ -130,7 +130,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param dto
      * @return Resource
      */
-    StreamingResponseBody exportPdf(InvoiceInfoDTO.PagingParamDTO dto);
+    InvoiceInfoDTO.ExportResultDTO exportPdf(InvoiceInfoDTO.PagingParamDTO dto);
     /**
      * 生成发票校验
      * @author will
@@ -139,4 +139,13 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return List<CheckGenerateInvoiceDTO>
      */
     List<InvoiceTaxDTO.CheckGenerateInvoiceDTO> checkGenerateInvoice(List<String> ids);
+
+    /**
+     * 压缩zip
+     * @author will
+     * @date 2025/4/10 11:07
+     * @param exportAttachList
+     * @return StreamingResponseBody
+     */
+    StreamingResponseBody downloadZip (List<InvoiceInfoDTO.ExportAttachDTO> exportAttachList);
 }

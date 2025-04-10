@@ -28,7 +28,7 @@ public interface InvoiceInfoMapper extends BaseMapper<InvoiceInfoEntity> {
      * @author will
      * @date 2025/4/9 16:24
      * @param params
-     * @return ExportResultDTO
+     * @return ExportAttachDTO
      */
-    List<InvoiceInfoDTO.ExportResultDTO> listExportXmlUrl(@Param("params") InvoiceInfoDTO.PagingParamDTO params, @Param("type")String type);
+    List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(@Param("params") InvoiceInfoDTO.PagingParamDTO params, @Param("type")String type);
 }
