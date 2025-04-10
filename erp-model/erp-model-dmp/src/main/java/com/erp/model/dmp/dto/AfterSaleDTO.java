@@ -669,4 +669,25 @@ public class AfterSaleDTO implements Serializable {
 
     }
 
+
+
+    /**
+     * 微信小程序输出结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OpenApiCommonDTO{
+
+        /**
+         */
+        private String key;
+
+
+        /**
+         */
+        private String platformCode;
+
+
+    }
+
 }
