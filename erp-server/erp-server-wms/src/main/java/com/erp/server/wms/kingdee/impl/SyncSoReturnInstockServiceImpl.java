@@ -224,7 +224,6 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
 
         shudiyunB2cOrderDTO.setSource_system("SDC");
-        shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNoInitial);
 
         // 国家编码
         // 国家名称
