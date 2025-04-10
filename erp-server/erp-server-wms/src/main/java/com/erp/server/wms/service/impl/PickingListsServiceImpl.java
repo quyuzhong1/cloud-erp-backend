@@ -755,6 +755,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getCustomerPO)
                             .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)
                             .thenComparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
                     )
                     .collect(Collectors.toList());
             printView.setPrintSkuSingleViewList(singleList);
@@ -780,6 +781,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     )
                     .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getCustomerPO)
                             .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
                             .thenComparing(PickingListsDTO.PrintSkuView::getChildSkuNo)
                     )
                     .collect(Collectors.toList());
