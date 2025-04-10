@@ -451,7 +451,7 @@
         from requisition_application ra
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false and rad.from_virtual_warehouse_id != '' and ra.status in ('handleIng','handle')
         where ra.is_deleted = false
-        --加工单出库(海外仓)
+        --加工单出库(海外仓/不走货件的fba)
         union all
         SELECT
             md.sku_id,
@@ -466,7 +466,7 @@
             mi.approve_time as trade_time,
             md.qty as qty
         FROM requisition_application ra
-        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'thirdWarehouse'  AND rad.from_virtual_warehouse_id != ''
+        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false AND rad.from_virtual_warehouse_id != ''
         INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
         INNER JOIN first_mile_delivery_detail fmdd ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
         inner join machine_ref_so mrs on fmd.id = mrs.so_id and fmdd.id = mrs.so_detail_id and mrs.is_deleted = false
@@ -514,7 +514,7 @@
             ti.approve_time as trade_time,
             tid.qty as qty
         FROM requisition_application ra
-        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'thirdWarehouse'  AND rad.from_virtual_warehouse_id != ''
+        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false  AND rad.from_virtual_warehouse_id != ''
         INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
         INNER JOIN first_mile_delivery_detail fmdd ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
         inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id
