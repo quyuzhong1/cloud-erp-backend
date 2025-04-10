@@ -37,12 +37,21 @@ import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -176,6 +185,48 @@ public class SoB2cController extends BaseController {
         //自动计算预估运费到订单的预估运费字段
         soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(id));
         return success(add.getCode());
+    }
+
+
+    /**
+     * 导入B2C销售订单
+     * @param excelFile  文件流
+     * @param response   响应
+     * @return com.common.core.vo.ApiResult
+     * @Author jack
+     * @Date 2025-03-21
+     **/
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入B2C销售订单")
+    @PostMapping("/importB2cFile")
+    public ApiResult importB2cFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        soB2cService.importB2cFile(excelFile, response);
+        return success();
+    }
+
+    /**
+     * 下载导出更新模板
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
+    @GetMapping("/exportUpdateTemplate")
+    public void exportUpdateTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/b2cUpdateTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**

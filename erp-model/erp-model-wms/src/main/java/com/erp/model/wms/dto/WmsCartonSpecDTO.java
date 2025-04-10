@@ -524,6 +524,10 @@ public class WmsCartonSpecDTO implements Serializable {
     @NoArgsConstructor
     public static class NoPackingView {
         /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
          * 单据id
          */
         private String sourceId;
@@ -1008,5 +1012,18 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         @NotBlank(message = "箱子ID不能为空")
         private String cartonId;
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingCartonSpecDTO {
+        private String mainId;
+        private Integer boxQty;
+        private BigDecimal packageWeight;
+        private String weightUnit;
     }
 }

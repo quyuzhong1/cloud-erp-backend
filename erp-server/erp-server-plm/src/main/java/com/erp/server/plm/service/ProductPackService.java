@@ -6,7 +6,9 @@ import com.erp.model.plm.dto.ProductPackShowDTO;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.vo.ProductVO;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description 产品包装信息服务类
@@ -97,4 +99,6 @@ public interface ProductPackService extends IService<ProductPackEntity> {
      * @return List<ProductPackEntity>
      */
     List<ProductPackEntity> listBySkuIdList(List<String> skuIdList);
+
+    Map<String, BigDecimal> listSingleBySkuIds(List<String> skuIds);
 }

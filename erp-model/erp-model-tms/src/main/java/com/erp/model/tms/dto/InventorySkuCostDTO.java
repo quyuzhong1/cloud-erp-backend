@@ -423,6 +423,10 @@ public class InventorySkuCostDTO implements Serializable {
          * 账单日期
          */
         private LocalDate billDate;
+        /**
+         * 对账年月份
+         */
+        private String month;
     }
     @Data
     @Builder
