@@ -194,7 +194,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
     }
 
     /**
-     * 详情
+     * 绑定店铺
      */
     @Data
     @NoArgsConstructor
@@ -208,7 +208,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
          */
         private String dictPlatform;
         /**
-         * 平台name
+         * 平台店铺name
          */
         private String name;
     }
@@ -217,7 +217,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class ViewParamsDTO {
         /**
-         * 主键id
+         * main_id
          */
         @NotBlank(message = "id不能为空")
         @Size(max = 19, message = "id最大长度不能超过19位")
@@ -229,8 +229,26 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         private String key;
 
         /**
-         * 目前限制为速卖通和美克多本土店 names = ["美克多","速卖通"]
+         * 目前限制为速卖通和美克多本土店 names = ["AliExpress","mercadolibre"]
          */
         private List<String> names;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewShopDTO {
+        /**
+         * shopid
+         */
+        private String id;
+        /**
+         * shop.dictplatform
+         */
+        private String name;
+
+        /**
+         *  shop.name
+         */
+        private String value;
     }
 }
