@@ -1,13 +1,13 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -65,6 +65,18 @@ public class InvoiceTaxEntity extends BaseEntity<InvoiceTaxEntity> {
     @TableField("type")
     private String type;
 
+
+    /**
+     * 平台SKU
+     */
+    @TableField(exist = false)
+    private String platformSkuNo;
+
+    /**
+     * 平台
+     */
+    @TableField(exist = false)
+    private String platform;
 
     public static final String LISTING_ID = "listing_id";
 

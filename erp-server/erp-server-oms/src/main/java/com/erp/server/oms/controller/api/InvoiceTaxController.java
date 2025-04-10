@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
@@ -12,6 +13,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * 发票税务信息
@@ -33,13 +36,23 @@ public class InvoiceTaxController extends BaseController {
     * 新增或修改
     * @author will
     * @date:  2025-04-07
-    * @param dto
+    * @param list
     * @return ApiResult
     */
     @PostMapping("/addOrUpdate")
-    public ApiResult<String> addOrUpdate(@RequestBody @Validated InvoiceTaxDTO.UpdateDTO dto) {
-        invoiceTaxService.addOrUpdate(dto);
-        return success();
+    public ApiResult<List<BatchResultDTO>> addOrUpdate(@RequestBody @Validated List<InvoiceTaxDTO.UpdateDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (InvoiceTaxDTO.UpdateDTO updateDTO :list) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO =  invoiceTaxService.addOrUpdate(updateDTO);
+            }catch (Exception e){
+                log.error("生成发票税务信息失败",e);
+                resultDTO = BatchResultDTO.fail(updateDTO.getPlatformSkuNo(), updateDTO.getPlatformSkuNo(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

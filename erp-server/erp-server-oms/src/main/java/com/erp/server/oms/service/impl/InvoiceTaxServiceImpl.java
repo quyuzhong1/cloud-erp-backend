@@ -6,14 +6,18 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.InvoiceTaxEntity;
+import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.server.oms.mapper.InvoiceTaxMapper;
 import com.erp.server.oms.service.InvoiceTaxService;
+import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,13 +44,16 @@ import java.util.stream.Collectors;
 public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, InvoiceTaxEntity> implements InvoiceTaxService {
     @Autowired
     private OperateLogService operateLogService;
+    @Autowired
+    private ListingInfoService listingInfoService;
 
     /**
     * 修改
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean addOrUpdate(InvoiceTaxDTO.UpdateDTO addOrUpdateDTO) {
+    public BatchResultDTO addOrUpdate(InvoiceTaxDTO.UpdateDTO addOrUpdateDTO) {
+
         InvoiceTaxEntity invoiceTaxEntity =  BeanMapperUtils.map(InvoiceTaxEntity.class, addOrUpdateDTO);
         // 数据处理
         handleData(invoiceTaxEntity);
@@ -59,7 +66,7 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
         log.info("编辑 开始记录发票税务信息日志数据，id：【{}】", invoiceTaxEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), invoiceTaxEntity.getId(), "发票税务信息");
         operateLogService.addModuleOperateLogByObj(invoiceTaxEntity, invoiceTaxEntity, null, invoiceTaxEntity.getId(), msg);
-        return Boolean.TRUE;
+        return BatchResultDTO.success(invoiceTaxEntity.getId(), invoiceTaxEntity.getId(), "生成发票税务信息成功");
     }
 
     @Override
@@ -118,7 +125,18 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
     * 新增修改处理数据
     */
     private void handleData(InvoiceTaxEntity invoiceTaxEntity) {
-        InvoiceTaxEntity old = getByListingId(invoiceTaxEntity.getListingId());
+        if(CharSequenceUtil.isBlank(invoiceTaxEntity.getListingId()) && (CharSequenceUtil.isBlank(invoiceTaxEntity.getPlatformSkuNo()) ||  CharSequenceUtil.isBlank(invoiceTaxEntity.getPlatform()))) {
+            throw new ServiceException("listingId和平台SKU、平台不能全部为空");
+        }
+        String listingId = invoiceTaxEntity.getListingId();
+        if (CharSequenceUtil.isBlank(listingId)) {
+            List<ListingInfoEntity> listingInfoList = listingInfoService.listByParam(RuleTypeEnum.PLATFORM.getCode(), invoiceTaxEntity.getPlatform(), Collections.singletonList(invoiceTaxEntity.getPlatformSkuNo()));
+            if (CollUtil.isNotEmpty(listingInfoList)) {
+                listingId = listingInfoList.get(0).getId();
+            }
+        }
+        invoiceTaxEntity.setListingId(listingId);
+        InvoiceTaxEntity old = getByListingId(listingId);
         if (ObjUtil.isNotEmpty(old)) {
             invoiceTaxEntity.setId(old.getId());
         }

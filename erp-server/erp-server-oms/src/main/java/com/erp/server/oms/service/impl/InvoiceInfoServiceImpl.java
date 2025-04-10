@@ -1,7 +1,6 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -25,7 +24,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.common.core.utils.FileUtil;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
@@ -769,12 +768,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
-        String fileName;
-        if (exportResultList.size() == 1) {
-            fileName = exportResultList.get(0).getAttachName();
-        } else {
-            fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        }
+        String fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
         StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
         resultDTO.setFileName(fileName);
         resultDTO.setResponseBody(streamingResponseBody);
@@ -791,12 +785,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
         // 动态生成文件名
-        String fileName;
-        if (exportResultList.size() == 1) {
-            fileName = exportResultList.get(0).getAttachName();
-        } else {
-            fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        }
+        String fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
         StreamingResponseBody streamingResponseBody = downloadZip(exportResultList);
         resultDTO.setFileName(fileName);
         resultDTO.setResponseBody(streamingResponseBody);
@@ -813,19 +802,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         Map<String, SoB2cEntity> soB2cMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
         List<String> platformList = soB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().collect(Collectors.toList());
 
-        //发票主表信息
-        List<InvoiceInfoEntity> invoiceInfoList = this.listBySoIds(soIdList);
-        List<String> mainIdList = invoiceInfoList.stream().map(InvoiceInfoEntity::getId).distinct().collect(Collectors.toList());
-        Map<String, InvoiceInfoEntity> invoiceMap = invoiceInfoList.stream().collect(Collectors.toMap(InvoiceInfoEntity::getId, Function.identity()));
-
-        //发票明细信息
-        List<InvoiceDetailEntity> invoiceDetailList = invoiceDetailService.listByMainIdList(mainIdList);
-        Map<String, InvoiceDetailEntity> invoiceDetailMap = invoiceDetailList.stream().collect(Collectors.toMap(InvoiceDetailEntity::getId, Function.identity()));
-        List<String> platformSkuNoList = invoiceDetailList.stream().map(InvoiceDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (CollUtil.isEmpty(invoiceDetailList)) {
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(soIdList);
+        List<String> platformSkuNoList = soB2cDetailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(soB2cDetailList)) {
             throw new ServiceException(ApiError.ERROR_98004);
         }
-
+        if (CollUtil.isEmpty(platformSkuNoList)) {
+            throw new ServiceException("选择订单无平台SKU不支持开票");
+        }
         //listing信息
         List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParams(RuleTypeEnum.PLATFORM.getCode(), platformList, platformSkuNoList);
         Map<String, ListingInfoEntity> listingMap = listingInfoEntityList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getPlatform(),obj.getPlatformSkuNo()), Function.identity()));
@@ -837,24 +821,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         Map<String, InvoiceTaxEntity> taxMap = invoiceTaxList.stream().collect(Collectors.toMap(InvoiceTaxEntity::getListingId, Function.identity()));
 
         Set<InvoiceTaxDTO.CheckGenerateInvoiceDTO> resultList = new HashSet<>();
-        for (InvoiceDetailEntity InvoiceDetailEntity : invoiceDetailList) {
-            //发票明细id
-            String id = InvoiceDetailEntity.getId();
-
+        for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailList) {
             InvoiceTaxDTO.CheckGenerateInvoiceDTO viewDTO = new InvoiceTaxDTO.CheckGenerateInvoiceDTO();
-            //发票明细信息
-            InvoiceDetailEntity invoiceDetailEntity = invoiceDetailMap.get(id);
-            if (ObjUtil.isEmpty(invoiceDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_INVOICE_DETAIL_NOT_EXIST);
-            }
-            //发票信息
-            InvoiceInfoEntity invoiceInfoEntity = invoiceMap.get(invoiceDetailEntity.getMainId());
-            if (ObjUtil.isEmpty(invoiceDetailEntity)) {
-                throw new ServiceException(ApiError.ERROR_INVOICE_NOT_EXIST);
-            }
-
             //销售订单信息
-            SoB2cEntity soB2cEntity =  soB2cMap.get(invoiceInfoEntity.getSoId());
+            SoB2cEntity soB2cEntity =  soB2cMap.get(soB2cDetailEntity.getMainId());
             if (ObjUtil.isEmpty(soB2cEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
             }
@@ -862,15 +832,17 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 throw new ServiceException(ApiError.ERROR_INVOICE_NFE_GENERATE);
             }
             //listing信息
-            ListingInfoEntity listingInfoEntity = listingMap.get(CharSequenceUtil.format("{}-{}", soB2cEntity.getDictPlatform(), invoiceDetailEntity.getPlatformSkuNo()));
+            ListingInfoEntity listingInfoEntity = listingMap.get(CharSequenceUtil.format("{}-{}", soB2cEntity.getDictPlatform(), soB2cDetailEntity.getPlatformSkuNo()));
             //税务信息
             InvoiceTaxEntity invoiceTaxEntity = ObjUtil.isEmpty(listingInfoEntity) ? null : taxMap.get(listingInfoEntity.getId());
             Boolean isGenerateInvoiceTax = invoiceTaxService.checkInvoiceTax(invoiceTaxEntity);
             if (isGenerateInvoiceTax) {
-                BeanUtil.copyProperties(invoiceTaxEntity, viewDTO);
+                continue;
             }
             viewDTO.setIsGenerateInvoiceTax(isGenerateInvoiceTax);
-            viewDTO.setPlatformSkuNo(invoiceDetailEntity.getPlatformSkuNo());
+            viewDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
+            viewDTO.setPlatformSkuName( ObjUtil.isEmpty(listingInfoEntity) ? "" : listingInfoEntity.getPlatformSkuName());
+            viewDTO.setPlatform(soB2cEntity.getDictPlatform());
             resultList.add(viewDTO);
         }
         return new ArrayList<>(resultList);
@@ -981,45 +953,32 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Override
     public StreamingResponseBody downloadZip(List<InvoiceInfoDTO.ExportAttachDTO> exportAttachList) {
         return outputStream -> {
-            if (exportAttachList.size() == 1) {
-                // 单文件直接下载
-                InvoiceInfoDTO.ExportAttachDTO dto = exportAttachList.get(0);
-                String attachUrl = CharSequenceUtil.format("{}{}", fdfsPubUrl, dto.getAttachUrl());
-                try {
-                    byte[] fileContent = FileUtil.downloadFile(attachUrl);
-                    outputStream.write(fileContent);
-                } catch (Exception e) {
-                    throw new ServiceException("文件下载失败: " + dto.getAttachName(), e);
-                }
-            } else {
-                // 多文件打包 ZIP
-                try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
-                    Semaphore semaphore = new Semaphore(10);
-                    List<CompletableFuture<Void>> futures = exportAttachList.stream()
-                            .map(attachDTO -> CompletableFuture.runAsync(() -> {
-                                try {
-                                    semaphore.acquire();
-                                    String url = CharSequenceUtil.format("{}{}", fdfsPubUrl, attachDTO.getAttachUrl());
-                                    String fileName = attachDTO.getAttachName();
-                                    byte[] content = FileUtil.downloadFile(url);
+            // 多文件打包 ZIP
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                Semaphore semaphore = new Semaphore(10);
+                List<CompletableFuture<Void>> futures = exportAttachList.stream()
+                        .map(attachDTO -> CompletableFuture.runAsync(() -> {
+                            try {
+                                semaphore.acquire();
+                                String fileName = attachDTO.getAttachName();
+                                byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
 
-                                    synchronized (zipOut) {
-                                        zipOut.putNextEntry(new ZipEntry(fileName));
-                                        zipOut.write(content);
-                                        zipOut.closeEntry();
-                                    }
-                                } catch (Exception e) {
-                                    throw new RuntimeException("文件处理失败: " + attachDTO.getAttachName(), e);
-                                } finally {
-                                    semaphore.release();
+                                synchronized (zipOut) {
+                                    zipOut.putNextEntry(new ZipEntry(fileName));
+                                    zipOut.write(content);
+                                    zipOut.closeEntry();
                                 }
-                            }, executorPool))
-                            .collect(Collectors.toList());
+                            } catch (Exception e) {
+                                throw new RuntimeException("文件处理失败: " + attachDTO.getAttachName(), e);
+                            } finally {
+                                semaphore.release();
+                            }
+                        }, executorPool))
+                        .collect(Collectors.toList());
 
-                    CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-                } catch (Exception e) {
-                    throw new ServiceException("压缩包生成失败", e);
-                }
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            } catch (Exception e) {
+                throw new ServiceException("压缩包生成失败", e);
             }
         };
     }
