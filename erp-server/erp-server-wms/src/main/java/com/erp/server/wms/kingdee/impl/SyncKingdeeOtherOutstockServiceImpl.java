@@ -24,12 +24,14 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherOutstockService;
@@ -45,6 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @description: 同步其他入库单
@@ -76,6 +79,9 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
@@ -95,6 +101,9 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (OtherOutstockEntity entity, String operate, Map<String, Object> resultMap) {
+    	if(resultMap == null) {
+    		return null;
+    	}
     	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
         		.eq(CfgSettingEntity::getKey, SourceTypeEnum.OTHER_OUTSTOCK.getCode())
@@ -216,12 +225,19 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
         }
         //是否支持下推仓位
         List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
-
+        
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
         List<JSONObject> list = new ArrayList<>();
         for (OtherOutstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
-            jsonObject.set("skuNo", detail.getSkuNo());
+            String skuNo = detail.getSkuNo();
+            if(ignoreInventorySkuIds.contains(skuNo)) {
+            	continue;
+            }
             //实发数量
             jsonObject.set("actualQty", detail.getActualQty());
             //单位
@@ -257,6 +273,9 @@ public class SyncKingdeeOtherOutstockServiceImpl implements SyncKingdeeOtherOuts
             jsonObject.set("remark", detail.getRemark());
 
             list.add(jsonObject);
+        }
+        if(CollUtil.isEmpty(list)) {
+        	return null;
         }
         resultMap.put("list", list);
         return resultMap;
