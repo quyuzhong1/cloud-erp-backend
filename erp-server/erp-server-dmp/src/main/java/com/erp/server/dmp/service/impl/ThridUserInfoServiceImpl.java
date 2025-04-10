@@ -46,10 +46,10 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThridUserInfoDTO.AddDTO addDTO) {
-        String jsCode = addDTO.getJsCode();
-        if(StringUtils.isBlank(jsCode)){
-            throw new ServiceException("jsCode不能为空");
-        }
+//        String jsCode = addDTO.getJsCode();
+//        if(StringUtils.isBlank(jsCode)){
+//            throw new ServiceException("jsCode不能为空");
+//        }
         ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
         BeanMapper.copy(addDTO.getUserInfo(), thridUserInfoEntity);
 //        // 调用微信接口获取用户信息

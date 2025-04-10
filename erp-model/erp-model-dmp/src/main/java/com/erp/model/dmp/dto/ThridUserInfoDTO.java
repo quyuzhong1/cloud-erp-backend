@@ -110,10 +110,10 @@ public class ThridUserInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO {
 
-        /**
-         * 用户登录凭证（有效期五分钟）。开发者需要在开发者服务器后台调用 code2Session，使用 code 换取 openid、unionid、session_key 等信息
-         */
-        private String jsCode;
+//        /**
+//         * 用户登录凭证（有效期五分钟）。开发者需要在开发者服务器后台调用 code2Session，使用 code 换取 openid、unionid、session_key 等信息
+//         */
+//        private String jsCode;
 
 
         private String thirdUserId;
