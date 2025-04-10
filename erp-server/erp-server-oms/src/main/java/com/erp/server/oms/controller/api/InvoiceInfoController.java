@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
@@ -14,7 +15,9 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.server.oms.service.InvoiceInfoService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -45,6 +48,9 @@ public class InvoiceInfoController extends BaseController {
 
     @Resource
     private InvoiceInfoService invoiceInfoService;
+
+    @Resource
+    private SoB2cService soB2cService;
 
     /**
     * 新增
@@ -176,14 +182,13 @@ public class InvoiceInfoController extends BaseController {
      */
     @PostMapping("/exportXml")
     @WebAdvanceQuery
-    public ApiResult<ResponseEntity<StreamingResponseBody>> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+    public ResponseEntity<StreamingResponseBody> exportXml(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
         StreamingResponseBody responseBody = invoiceInfoService.exportXml(dto);
-        String fileName = "attachments_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
-        ResponseEntity<StreamingResponseBody> body = ResponseEntity.ok()
+        String fileName = "invoiceXml_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
+        return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .body(responseBody);
-        return success(body);
     }
 
     /**
@@ -195,8 +200,13 @@ public class InvoiceInfoController extends BaseController {
      */
     @PostMapping("/exportPdf")
     @WebAdvanceQuery
-    public ApiResult<Resource> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
-        return success(invoiceInfoService.exportPdf(dto));
+    public ResponseEntity<StreamingResponseBody> exportPdf(@RequestBody @Valid InvoiceInfoDTO.PagingParamDTO dto) {
+        StreamingResponseBody responseBody = invoiceInfoService.exportPdf(dto);
+        String fileName = "invoicePdf_" + LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME) + ".zip";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(responseBody);
     }
 
     /**
@@ -256,7 +266,24 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/notNeedInvoice")
-    public ApiResult<BatchResultDTO> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.SoRemarkDTO dto) {
-        return success(invoiceInfoService.notNeedInvoice(dto.getSoId(),dto.getRemark()));
+    public ApiResult<List<BatchResultDTO>> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.SoRemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getSoIdList().size());
+        for (String id : dto.getSoIdList()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = invoiceInfoService.notNeedInvoice(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("无需开票失败",e);
+                SoB2cEntity soB2cEntity = soB2cService.getById(id);
+                if (ObjUtil.isEmpty(soB2cEntity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "销售订单不存在, 无需开票失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(id, id, e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

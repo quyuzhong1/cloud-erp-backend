@@ -25,6 +25,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
@@ -42,13 +43,7 @@ import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,10 +52,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.math.BigDecimal;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -775,82 +767,18 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (CollUtil.isEmpty(exportResultList)) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-
-        // 2. 获取去重的URL列表
-        List<String> attachUrlList = exportResultList.stream()
-                .map(obj -> CharSequenceUtil.format("{}{}",fdfsPubUrl,obj.getAttachUrl()))
-                .distinct()
-                .collect(Collectors.toList());
-
-        // 3. 返回流式响应体（避免内存溢出）
-        return outputStream -> {
-            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
-                // 使用信号量控制并发写入（避免ZipOutputStream线程不安全）
-                Semaphore semaphore = new Semaphore(10); // 控制并发写入数为10
-
-                List<CompletableFuture<Void>> futures = attachUrlList.stream()
-                        .map(url -> CompletableFuture.runAsync(() -> {
-                            try {
-                                semaphore.acquire(); // 获取许可
-                                byte[] fileContent = downloadFile(url);
-                                String fileName = getFileNameFromUrl(url);
-
-                                synchronized (zipOut) { // 同步写入
-                                    zipOut.putNextEntry(new ZipEntry(fileName));
-                                    zipOut.write(fileContent);
-                                    zipOut.closeEntry();
-                                }
-                            } catch (Exception e) {
-                                throw new RuntimeException("文件处理失败: " + url, e);
-                            } finally {
-                                semaphore.release(); // 释放许可
-                            }
-                        }, executorPool))
-                        .collect(Collectors.toList());
-
-                // 等待所有任务完成
-                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-            } catch (Exception e) {
-                throw new ServiceException("压缩包生成失败", e);
-            }
-        };
-    }
-
-    // 文件下载方法（带超时和重试）
-    private byte[] downloadFile(String url) {
-        int retry = 3;
-        while (retry-- > 0) {
-            try (CloseableHttpClient httpClient = HttpClients.custom()
-                    .setConnectionTimeToLive(10, TimeUnit.SECONDS)
-                    .build()) {
-
-                HttpGet httpGet = new HttpGet(url);
-                try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                    if (response.getStatusLine().getStatusCode() == 200) {
-                        return EntityUtils.toByteArray(response.getEntity());
-                    }
-                }
-            } catch (Exception e) {
-                if (retry == 0) throw new ServiceException("下载失败: " + url, e);
-            }
-        }
-        throw new ServiceException("无法下载文件: " + url);
-    }
-
-    // 文件名处理（防止非法字符）
-    private String getFileNameFromUrl(String url) {
-        try {
-            String path = new URI(url).getPath();
-            String rawName = path.substring(path.lastIndexOf('/') + 1);
-            return rawName.replaceAll("[\\\\/:*?\"<>|]", "_"); // 替换非法字符
-        } catch (URISyntaxException e) {
-            return "file_" + DigestUtils.md5Hex(url) + ".xml";
-        }
+        return downloadZip(exportResultList);
     }
 
     @Override
-    public Resource exportPdf(InvoiceInfoDTO.@Valid PagingParamDTO dto) {
-        return null;
+    public StreamingResponseBody exportPdf(InvoiceInfoDTO.PagingParamDTO dto) {
+        // 1. 查询附件URL列表
+        List<InvoiceInfoDTO.ExportResultDTO> exportResultList = baseMapper.listExportXmlUrl(dto,AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
+
+        if (CollUtil.isEmpty(exportResultList)) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        return downloadZip(exportResultList);
     }
 
     @Override
@@ -1014,5 +942,49 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     */
     private void handleData(InvoiceInfoEntity invoiceInfoEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+
+    /**
+     * 下载Zip
+     * @author will
+     * @date 2025/4/10 10:23
+     * @param exportResultList
+     * @return StreamingResponseBody
+     */
+    private StreamingResponseBody downloadZip (List<InvoiceInfoDTO.ExportResultDTO> exportResultList) {
+        // 3. 返回流式响应体（避免内存溢出）
+        return outputStream -> {
+            try (ZipOutputStream zipOut = new ZipOutputStream(outputStream)) {
+                // 使用信号量控制并发写入（避免ZipOutputStream线程不安全）
+                Semaphore semaphore = new Semaphore(10); // 控制并发写入数为10
+
+                List<CompletableFuture<Void>> futures = exportResultList.stream()
+                        .map(resultDTO -> CompletableFuture.runAsync(() -> {
+                            try {
+                                String attachUrl = CharSequenceUtil.format("{}{}", fdfsPubUrl, resultDTO.getAttachUrl());
+                                String attachName = resultDTO.getAttachName();
+                                semaphore.acquire(); // 获取许可
+                                byte[] fileContent = FileUtil.downloadFile(attachUrl);
+
+                                synchronized (zipOut) { // 同步写入
+                                    zipOut.putNextEntry(new ZipEntry(attachName));
+                                    zipOut.write(fileContent);
+                                    zipOut.closeEntry();
+                                }
+                            } catch (Exception e) {
+                                throw new RuntimeException("文件处理失败: " + resultDTO, e);
+                            } finally {
+                                semaphore.release(); // 释放许可
+                            }
+                        }, executorPool))
+                        .collect(Collectors.toList());
+
+                // 等待所有任务完成
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            } catch (Exception e) {
+                throw new ServiceException("压缩包生成失败", e);
+            }
+        };
     }
 }
