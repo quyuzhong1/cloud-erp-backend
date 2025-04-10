@@ -44,6 +44,10 @@ public class InvoiceTaxDTO implements Serializable {
         */
         private String  id;
         /**
+         * 店铺id
+         */
+        private String  shopId;
+        /**
          * 平台
          */
         private String platform;
@@ -126,7 +130,10 @@ public class InvoiceTaxDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CommonDTO {
-
+        /**
+         * 店铺Id
+         */
+        private String shopId;
         /**
          * 平台
          */

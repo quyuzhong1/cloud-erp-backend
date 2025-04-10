@@ -27,10 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
-import com.erp.model.oms.dto.CfgVatInvoiceDTO;
-import com.erp.model.oms.dto.InvoiceInfoDTO;
-import com.erp.model.oms.dto.InvoiceTaxDTO;
-import com.erp.model.oms.dto.InvoiceUpdateHisDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuVO;
@@ -117,6 +114,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private InvoiceUpdateHisService invoiceUpdateHisService;
+
+    @Resource
+    private SkuMappingService skuMappingService;
+
 
     @Resource
     @Qualifier("soB2cTabExecutorPool")
@@ -249,7 +250,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
         //生成发票,调用第三方
 
-        //回调更新发票清单状态
+        //回调更新b2c订单发票清单状态
+
 
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");
     }
@@ -800,6 +802,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         //销售订单
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
         Map<String, SoB2cEntity> soB2cMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+        List<String> shopIdList = soB2cEntityList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
         List<String> platformList = soB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().collect(Collectors.toList());
 
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(soIdList);
@@ -810,12 +813,18 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (CollUtil.isEmpty(platformSkuNoList)) {
             throw new ServiceException("选择订单无平台SKU不支持开票");
         }
-        //listing信息
-        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByParams(RuleTypeEnum.PLATFORM.getCode(), platformList, platformSkuNoList);
-        Map<String, ListingInfoEntity> listingMap = listingInfoEntityList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getPlatform(),obj.getPlatformSkuNo()), Function.identity()));
+        // 查询该店铺所有平台sku
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setShopIdList(shopIdList);
+        paramDTO.setPlatformList(platformList);
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setPlatformSkuNoList(platformSkuNoList);
+        // 所有包含历史映射关系
+        List<ListingInfoWithSkuMappingDTO> listingInfoEntityList = skuMappingService.findListDto(paramDTO);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = listingInfoEntityList.stream().distinct().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getPlatform(),obj.getPlatformSkuNo(),obj.getShopId())));
 
         //listingId集合
-        List<String> listingIdList = listingInfoEntityList.stream().map(ListingInfoEntity::getId).distinct().collect(Collectors.toList());
+        List<String> listingIdList = listingInfoEntityList.stream().map(ListingInfoWithSkuMappingDTO::getListingId).distinct().collect(Collectors.toList());
         //查询发票税务信息
         List<InvoiceTaxEntity> invoiceTaxList = invoiceTaxService.listByListingIdList(listingIdList);
         Map<String, InvoiceTaxEntity> taxMap = invoiceTaxList.stream().collect(Collectors.toMap(InvoiceTaxEntity::getListingId, Function.identity()));
@@ -832,17 +841,18 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 throw new ServiceException(ApiError.ERROR_INVOICE_NFE_GENERATE);
             }
             //listing信息
-            ListingInfoEntity listingInfoEntity = listingMap.get(CharSequenceUtil.format("{}-{}", soB2cEntity.getDictPlatform(), soB2cDetailEntity.getPlatformSkuNo()));
+            List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), soB2cDetailEntity.getPlatformSkuNo(),soB2cEntity.getShopId()));
             //税务信息
-            InvoiceTaxEntity invoiceTaxEntity = ObjUtil.isEmpty(listingInfoEntity) ? null : taxMap.get(listingInfoEntity.getId());
+            InvoiceTaxEntity invoiceTaxEntity = CollUtil.isEmpty(listingInfoWithSkuMappingList) ? new InvoiceTaxEntity() : listingInfoWithSkuMappingList.stream().filter(obj -> ObjUtil.isNotEmpty(taxMap.get(obj.getListingId()))).map(obj -> taxMap.get(obj.getListingId())).findFirst().orElse(new InvoiceTaxEntity());
             Boolean isGenerateInvoiceTax = invoiceTaxService.checkInvoiceTax(invoiceTaxEntity);
             if (isGenerateInvoiceTax) {
                 continue;
             }
             viewDTO.setIsGenerateInvoiceTax(isGenerateInvoiceTax);
             viewDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
-            viewDTO.setPlatformSkuName( ObjUtil.isEmpty(listingInfoEntity) ? "" : listingInfoEntity.getPlatformSkuName());
+            viewDTO.setPlatformSkuName(CollUtil.isEmpty(listingInfoWithSkuMappingList) ? "" : listingInfoWithSkuMappingList.get(0).getPlatformSkuName());
             viewDTO.setPlatform(soB2cEntity.getDictPlatform());
+            viewDTO.setShopId(soB2cEntity.getShopId());
             resultList.add(viewDTO);
         }
         return new ArrayList<>(resultList);
