@@ -605,6 +605,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             PickingListsDTO.PrintCombinationView printView = new PickingListsDTO.PrintCombinationView();
             printView.setPrintTime(LocalDateTime.now());
             printView.setPrintUserName(user.getUserName());
+            printView.setSourceCode(picking.getSourceCode());
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
                 RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
                         .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
