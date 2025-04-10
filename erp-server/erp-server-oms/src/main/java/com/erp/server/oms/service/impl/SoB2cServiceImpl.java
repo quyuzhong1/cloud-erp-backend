@@ -9892,6 +9892,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList);
     }
 
+    @Override
+    public void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO) {
+        baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
