@@ -29,7 +29,7 @@ public interface AfterSaleFeign {
      * @author jack
      * @date: 2025-04-06
      */
-    @PostMapping("feign/afterSale/addThridUser")
+    @PostMapping("/addThridUser")
     ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto);
 
 
@@ -40,7 +40,7 @@ public interface AfterSaleFeign {
      * @param dto
      * @return ApiResult<String>
      */
-    @PostMapping("feign/afterSale/add")
+    @PostMapping("/add")
     ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto);
     /**
      *
@@ -48,23 +48,23 @@ public interface AfterSaleFeign {
      * @Author jack
      * @since 2025-04-07
      **/
-    @PostMapping("feign/afterSale/getRepairRecord")
+    @PostMapping("/getRepairRecord")
     ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody  @Validated  AfterSaleDTO.ProgressDTO dto);
     /**
      * 获取寄修历史
      * @Author jack
      * @since 2025-04-07
      */
-    @PostMapping("feign/afterSale/getRepairHistory")
+    @PostMapping("/getRepairHistory")
     ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody  @Validated  AfterSaleDTO.ThridUserDTO dto);
     /**
      * 根据订单编号查询明细
      * @Author jack
      * @since 2025-04-07
      */
-    @GetMapping("feign/afterSale/getDetailByPlatformCode")
+    @GetMapping("/getDetailByPlatformCode")
     ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode);
 
-    @GetMapping("feign/afterSale/getNodeList")
+    @GetMapping("/getNodeList")
     ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList();
 }

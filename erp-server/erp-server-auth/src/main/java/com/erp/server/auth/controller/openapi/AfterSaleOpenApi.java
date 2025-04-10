@@ -10,8 +10,6 @@ import com.erp.rpc.dmp.feign.AfterSaleFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.server.auth.config.OpenApi;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -38,8 +36,8 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("getDetailByPlatformCode")
-    public ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
-        return afterSaleFeign.getDetailByPlatformCode(platformCode);
+    public ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(AfterSaleDTO.OpenApiCommonDTO dto){
+        return afterSaleFeign.getDetailByPlatformCode(dto.getPlatformCode());
     }
 
     /**
@@ -48,7 +46,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("addThridUser")
-    public ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto){
+    public ApiResult<BaseResultDTO.AddDTO> addThridUser(@Validated ThridUserInfoDTO.AddDTO dto){
         return afterSaleFeign.addThridUser(dto);
     }
 
@@ -59,8 +57,8 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("listSalesPlatform")
-    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSalesPlatform(@RequestParam("key") String key){
-        return omsDropDownFeign.list(key);
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSalesPlatform(AfterSaleDTO.OpenApiCommonDTO dto){
+        return omsDropDownFeign.list(dto.getKey());
     }
 
 
@@ -70,7 +68,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("add")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto){
+    public ApiResult<BaseResultDTO.AddDTO> add( @Validated AfterSaleDTO.AddDTO dto){
         return afterSaleFeign.add(dto);
     }
 
@@ -80,7 +78,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("getRepairRecord")
-    public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody @Valid AfterSaleDTO.ProgressDTO dto) {
+    public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord( @Valid AfterSaleDTO.ProgressDTO dto) {
         return afterSaleFeign.getRepairRecord(dto);
     }
 
@@ -90,7 +88,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("getRepairHistory")
-    public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory(@RequestBody @Validated AfterSaleDTO.ThridUserDTO dto){
+    public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory( @Validated AfterSaleDTO.ThridUserDTO dto){
         return afterSaleFeign.getRepairHistory(dto);
     }
 

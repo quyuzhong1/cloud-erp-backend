@@ -26,6 +26,6 @@ public class WxConstants {
      * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html
      *
      */
-    public static final String JSCODE_TO_SESSION = "jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code ";
+    public static final String JSCODE_TO_SESSION = "sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code ";
 
 }
