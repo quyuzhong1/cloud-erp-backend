@@ -982,4 +982,11 @@ public class VirtualWarehouseAllocationServiceImpl extends SuperServiceImpl<Virt
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(), old.getId(), "编辑操作");
     }
 
+    @Override
+    public List<VirtualWarehouseAllocationEntity> rebuildVirtualWarehouseAllocationFlow() {
+        return lambdaQuery().eq(VirtualWarehouseAllocationEntity::getStatus,VirtualWarehouseAllocationStatusEnum.HANDLE.getCode())
+                .orderByAsc(VirtualWarehouseAllocationEntity::getHandleDate)
+                .list();
+    }
+
 }

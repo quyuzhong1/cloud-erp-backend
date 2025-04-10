@@ -49,6 +49,7 @@ import com.erp.server.dmp.service.*;
 import com.google.common.collect.Lists;
 
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -58,7 +59,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import javax.sql.DataSource;
+
 import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -644,10 +652,28 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 			}
 		}else {
 			List<DmpOutputTaskRecordEntity> allUpdateList = new ArrayList<>();
-			Map<String, Map<String, Object>> invoke = FeignQuery.invoke(Map.class , "com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "newFindDataSendSyncTask", Arrays.asList(syncParamDTO));
-			if(invoke != null) {
+			Map<String, Map<String, Object>> result = null;
+			List<DmpCfgOutputDataEntity> dmpCfgOutputDataEntityList = dmpHandlerCache.getDmpCfgOutputDataEntityList(d -> d.getMainId().equals(dmpCfgOutputEntity.getId()));
+			if(CollUtil.isNotEmpty(dmpCfgOutputDataEntityList)) {
+				DmpCfgOutputDataEntity dmpCfgOutputDataEntity = dmpCfgOutputDataEntityList.get(0);
+				String dbId = dmpCfgOutputDataEntity.getDbId();
+				DataSource dataSource = dmpHandlerCache.getDataSource(dbId);
+				String sqlQuery = dmpCfgOutputDataEntity.getSqlString().replace("?", sourceDetailList.stream().map(SyncParamDetailDTO::getSourceId).collect(Collectors.joining("','", "('", "')")));
+				try {
+					Map<String, List<Map<String, Object>>> sourceResult = DmpHandlerUtils.queryDatabase(dataSource, sqlQuery);
+					result = new HashMap<>();
+					for(SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
+						result.put(syncParamDetailDTO.getDataId(), DmpHandlerUtils.parseDbColumnName(sourceResult.get(syncParamDetailDTO.getSourceId())));
+					}
+				} catch (SQLException e) {
+					throw new RuntimeException("查询组装数据失败" , e);
+				}
+			}else {
+				result = FeignQuery.invoke(Map.class , "com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "newFindDataSendSyncTask", Arrays.asList(syncParamDTO));
+			}
+			if(result != null) {
 				Map<String, List<DmpOutputTaskRecordEntity>> dataIdOutputMaps = list.stream().collect(Collectors.groupingBy(DmpOutputTaskRecordEntity::getDataId));
-				for(Map.Entry<String, Map<String, Object>> i : invoke.entrySet()) {
+				for(Map.Entry<String, Map<String, Object>> i : result.entrySet()) {
 					List<DmpOutputTaskRecordEntity> updateList = dataIdOutputMaps.get(i.getKey());
 					if(CollUtil.isNotEmpty(updateList)) {
 						String requestData = JSON.toJSONString(i.getValue());
@@ -666,6 +692,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 		}
 		return new ArrayList<>();
     }
+    
 
     @Override
     public DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO) {
@@ -775,4 +802,9 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     public DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass) {
         return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
     }
+
+	@Override
+	public List<String> outputErrorCountMsg() {
+		return baseMapper.outputErrorCountMsg();
+	}
 }

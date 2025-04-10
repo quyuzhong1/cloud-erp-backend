@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
@@ -56,7 +55,6 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -1822,5 +1820,13 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             List<CustomerB2cEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+
+    @Override
+    public List<CustomerB2CDTO.DropListDTO> customerListByName(List<String> customerNameList) {
+        List<CustomerB2CDTO.DropListDTO> b2cCustomerList = baseMapper.customerListByName(customerNameList);
+        buildCustomerDTO(b2cCustomerList);
+        return b2cCustomerList;
     }
 }

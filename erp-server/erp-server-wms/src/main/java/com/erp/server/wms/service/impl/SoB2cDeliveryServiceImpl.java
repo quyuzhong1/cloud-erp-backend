@@ -65,6 +65,7 @@ import com.erp.model.tms.enums.LogisticsLabelTypeEnum;
 import com.erp.model.tms.enums.LogisticsPrintTypeEnum;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
@@ -1268,6 +1269,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getLoginUser().getUserName(),entity.getTransferWarehouseIds(),transferWarehouseIdList), ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "批量修改中转仓配置");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修改中转仓配置成功");
     }
+
+
 
     @Override
     public List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids) {
@@ -2831,4 +2834,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow() {
+        return baseMapper.rebuildB2cVirtualFlow();
+    }
 }

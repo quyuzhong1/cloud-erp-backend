@@ -117,6 +117,7 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_CREATE_UPDATE_WRAPPER_ERROR(1065,"创建UpdateWrapper异常"),
     /**
      * 警告信息 从800 开始
      */
@@ -1453,6 +1454,7 @@ public enum ApiError implements Serializable {
     ERROR_92172(92172,"退货通知单明细不能为空"),
     ERROR_92173(92173,"退货签收单明细不能为空"),
     ERROR_92174(92174,"退货入库单明细不能为空"),
+    ERROR_92175(92175,"存在下游单据不允许作废"),
     ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
     ERROR_SO_PRICE_CHANGE_DATE(92177,"销售调价表SKU【{}】失效时间不可小于生效时间"),

@@ -1288,7 +1288,6 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
        );
     }
 
-
     @Override
     public void exportSales(ReplenishmentSuggestionDTO.ExportSalesDTO exportSalesDTO, HttpServletResponse response) {
         List<ProductDetailEntity> productDetailList = FeignQuery.list(ProductDetailEntity.class);

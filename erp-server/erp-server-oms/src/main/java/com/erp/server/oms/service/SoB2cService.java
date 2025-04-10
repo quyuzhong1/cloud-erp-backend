@@ -25,7 +25,9 @@ import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -1060,6 +1062,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
+
+    void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
 
     /**
      * 根据销售订单id和平台获取分区id

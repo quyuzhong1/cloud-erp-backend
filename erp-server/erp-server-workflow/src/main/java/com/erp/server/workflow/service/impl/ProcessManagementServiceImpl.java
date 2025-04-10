@@ -1,9 +1,11 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -19,6 +21,7 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.DeduplicationUtil;
+import com.common.core.utils.JsonPathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -37,6 +40,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
+import io.netty.util.internal.StringUtil;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -65,10 +69,10 @@ import org.camunda.bpm.model.bpmn.instance.StartEvent;
 import org.camunda.bpm.model.bpmn.instance.UserTask;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.annotation.Resource;
@@ -98,6 +102,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public static final String LAST_APPROVER = "lastApprover";
     public static final String LAST_TASK_MANAGEMENT_ID = "lastTaskManagementId";
     public static final String APPROVE_TYPE = "approveType";
+    // 流程管理服务
+    @Resource
+    private ProcessManagementService processManagementService;
     @Resource
     private ProcessBusinessService processBusinessService;
     @Resource
@@ -219,11 +226,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param startUserId
      * @param propertiesDTO
      */
-    private List<String> addApproveInfo(String startUserId, CamundaDTO.PropertiesDTO propertiesDTO ) {
+    private List<String> addApproveInfo(String startUserId, CamundaDTO.PropertiesDTO propertiesDTO, Map<String, Object> variables) {
         // 获取审批人
         String candidateUsers = propertiesDTO.getCandidateUsers();
         // 使用策略模式获取审批人
-        List<String> userIds = assigneeStrategyService.getResult(propertiesDTO.getAssigneeOption(), propertiesDTO.getAssignee(),startUserId,candidateUsers);
+        List<String> userIds = assigneeStrategyService.getResult(propertiesDTO, startUserId, candidateUsers, variables);
         // 无审批人处理
         if (CollectionUtils.isEmpty(userIds)) {
             log.warn("任务节点无审批人,开始空审核人处理 startUserId={}", startUserId);
@@ -308,7 +315,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .execute();
         }
         // 保存流程任务数据
-        updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment(), dto.getVariablesMap());
+        processManagementService.updateApprove(managementTask.getTaskManagementId(), dto.getApproveType(), managementTask.getManagementId(), processInstanceId,dto.getComment(), dto.getVariablesMap());
         if(Boolean.TRUE.equals(isFirst)){
             sameApproverAutoPass(dto, processManagementList.get(0).getProcessDefinitionId(),currentTask.getProcessInstanceId());
         }
@@ -316,7 +323,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
 
-    @Transactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public void sameApproveHandler(ProcessManagementDTO.ApproveDTO dto, ProcessManagementDTO.ManagementTaskDTO managementTask, DictBasicEnum reviewSetting) {
         String userId = dto.getUserId();
         String processInstanceId = managementTask.getProcessInstanceId();
@@ -334,7 +341,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             dto.setComment("相邻节点审核人重复,审核自动通过");
             dto.setUserId(managementTask.getCurApproveId());
-            approveProcess(dto,Boolean.FALSE);
+            processManagementService.approveProcess(dto,Boolean.FALSE);
         }else if(DictBasicEnum.GLOBAL_DEDUPE.equals(reviewSetting)) {
             // 全局去重
             // 查询已完成审核节点
@@ -351,7 +358,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             dto.setComment("全局去重审核人重复,审核自动通过");
             dto.setUserId(managementTask.getCurApproveId());
-            approveProcess(dto, Boolean.FALSE);
+            processManagementService.approveProcess(dto, Boolean.FALSE);
         }
     }
 
@@ -434,7 +441,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public List<String> getCandidateByAct(PvmActivity act, String processDefinitionId, String startUserId) {
+    public List<String> getCandidateByAct(PvmActivity act, DelegateExecution executionDelegate, String startUserId) {
+        String processDefinitionId = executionDelegate.getProcessDefinitionId();
         BpmnModelInstance modelInstance = repositoryService.getBpmnModelInstance(processDefinitionId);
         // 获取当前节点的 CamundaProperty
         String actId = act.getId();
@@ -456,7 +464,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .collect(Collectors.toMap(CamundaProperty::getCamundaName, value -> CharSequenceUtil.isNotBlank(value.getCamundaValue()) ? value.getCamundaValue() : ""));
         CamundaDTO.PropertiesDTO propertiesDTO = BeanUtil.toBean(propertiesMap, CamundaDTO.PropertiesDTO.class);
         // 获取当前节点的候选人
-        List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO);
+        Map<String, Object> variables = executionDelegate.getVariables();
+        List<String> candidateUsers = addApproveInfo(startUserId, propertiesDTO, variables);
         if(CollectionUtils.isEmpty(candidateUsers)){
             log.warn("任务节点无审批人为空 startUserId={}", startUserId);
             // 无审批人终止流程
@@ -661,14 +670,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程实例
         Page<ProcessManagementDTO.PagingResultDTO> query = new Page<>(pageDTO.getCurrPage(), pageDTO.getPageSize());
         IPage<ProcessManagementDTO.PagingResultDTO> pageData = baseMapper.paging(query, pageDTO.getParams());
-        pageData.getRecords().stream().peek(record ->{
-            if(null != record.getProcessStatus()){
+        pageData.getRecords().forEach(record -> {
+            if (record.getProcessStatus() != null) {
                 record.setProcessStatusName(record.getProcessStatus().getName());
             }
-            if(null != record.getTaskStatus()){
+            if (record.getTaskStatus() != null) {
                 record.setTaskStatusName(record.getTaskStatus().getName());
             }
-        }).collect(Collectors.toList());
+        });
         return new PagingVO<>(pageData);
     }
 
@@ -706,51 +715,112 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     public void createTaskHandle(DelegateTask task) {
         // 保存流程任务数据 execution 中包含实例信息,
         // 审批任务填充审批信息
-         DelegateExecution execution = task.getExecution();
+        DelegateExecution execution = task.getExecution();
         String processDefinitionId = execution.getProcessDefinitionId();
         String taskDefinitionKey = task.getTaskDefinitionKey();
+        // 获取扩展属性
         CamundaDTO.PropertiesDTO propertiesDTO = getProperties(taskDefinitionKey, processDefinitionId);
         if(null == propertiesDTO){
             log.warn("流程设计未配置扩展属性, processDefinitionId: {}, taskDefinitionKey: {}", processDefinitionId, taskDefinitionKey);
             return;
         }
         // 保存流程任务数据
+        saveProcessTaskData(task, execution, propertiesDTO);
+    }
+
+    private void saveProcessTaskData(DelegateTask task, DelegateExecution execution, CamundaDTO.PropertiesDTO propertiesDTO) {
         DelegateExecution processInstance = task.getExecution().getProcessInstance();
         String processInstanceId = processInstance.getId();
-        String activityName = CharSequenceUtil.isNotBlank(processInstance.getCurrentActivityName()) ? processInstance.getCurrentActivityName():task.getName();
-        String activityId = CharSequenceUtil.isNotBlank(processInstance.getCurrentActivityId()) ? processInstance.getCurrentActivityId():task.getTaskDefinitionKey();
+        // 获取流程实例信息
+        String activityName = getActivityName(processInstance, task);
+        String activityId = getActivityId(processInstance, task);
         LocalDateTime processStartTime = LocalDateUtil.date2LocalDateTime(task.getCreateTime());
         String executionId = task.getExecutionId();
+        String processDefinitionId = execution.getProcessDefinitionId();
+
         // 查询流程设计审核人处理方式
         ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId.split(":")[0]);
-        if(null == processDefinition) {
+        if (processDefinition == null) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
+
+        List<String> candidateUsers = getCandidateUsers(task, execution, propertiesDTO);
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
+        if (CollectionUtils.isEmpty(userList)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST_PARAM, JSONUtil.toJsonStr(candidateUsers));
+        }
+
+        Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e));
+        saveTaskManagementEntities(task, processInstanceId, activityId, processStartTime, propertiesDTO, executionId, activityName, candidateUsers, userMap);
+    }
+
+    /**
+     * 获取当前节点名称
+     * @param processInstance
+     * @param task
+     * @return
+     */
+    private String getActivityName(DelegateExecution processInstance, DelegateTask task) {
+        return CharSequenceUtil.isNotBlank(processInstance.getCurrentActivityName()) ? processInstance.getCurrentActivityName() : task.getName();
+    }
+
+    /**
+     * 获取当前节点ID
+     * @param processInstance
+     * @param task
+     * @return
+     */
+    private String getActivityId(DelegateExecution processInstance, DelegateTask task) {
+        return CharSequenceUtil.isNotBlank(processInstance.getCurrentActivityId()) ? processInstance.getCurrentActivityId() : task.getTaskDefinitionKey();
+    }
+
+    /**
+     * 获取审批人
+     * @param task 任务
+     * @param execution 执行
+     * @param propertiesDTO 扩展属性
+     * @return 审批人
+     */
+    private List<String> getCandidateUsers(DelegateTask task, DelegateExecution execution, CamundaDTO.PropertiesDTO propertiesDTO) {
         List<String> candidateUsers = task.getCandidates().stream().map(IdentityLink::getUserId).collect(Collectors.toList());
         String assignee = task.getAssignee();
         if(CharSequenceUtil.isNotBlank(assignee)){
             candidateUsers= Arrays.asList(assignee.split(","));
         }
-        if(CollectionUtils.isEmpty(candidateUsers)){
+        if (CollectionUtils.isEmpty(candidateUsers)) {
             String startUserId = "" + execution.getVariable("creator");
-            candidateUsers = addApproveInfo(startUserId, propertiesDTO);
+            candidateUsers = addApproveInfo(startUserId, propertiesDTO, execution.getVariables());
         }
-        // 将集合变量设置到流程实例中
-        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(candidateUsers);
-        if(CollectionUtils.isEmpty(userList)){
-            throw new ServiceException(ApiError.USER_NOT_EXIST_PARAM, JSONUtil.toJsonStr(candidateUsers));
+        if (CharSequenceUtil.isNotBlank(propertiesDTO.getSomebody_exp())){
+            candidateUsers = replaceApproveVariables(Arrays.asList(propertiesDTO.getSomebody_exp().split(",")), execution.getVariables());
         }
-        Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e ));
+
+        return candidateUsers;
+    }
+
+    /**
+     * 保存流程任务数据
+     * @param task 任务
+     * @param processInstanceId 流程实例ID
+     * @param activityId 节点ID
+     * @param processStartTime  流程开始时间
+     * @param propertiesDTO 扩展属性
+     * @param executionId 执行ID
+     * @param activityName 节点名称
+     * @param candidateUsers 审批人
+     * @param userMap 审批人信息
+     */
+    private void saveTaskManagementEntities(DelegateTask task, String processInstanceId, String activityId, LocalDateTime processStartTime, CamundaDTO.PropertiesDTO propertiesDTO, String executionId, String activityName, List<String> candidateUsers, Map<String, FindUserDTO> userMap) {
         String copyUser = propertiesDTO.getCopyUser();
         candidateUsers.forEach(userId -> {
-            // 对去重类型做处理，自动审核通过
             FindUserDTO findUserDTO = userMap.get(userId);
-            if(null == findUserDTO){
+            if (null == findUserDTO) {
+                log.error("###ProcessManagementServiceImpl>>>saveTaskManagementEntities:::审批人不存在, userId: {}", userId);
                 return;
             }
             ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, findUserDTO, executionId, activityName);
             ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.saveProcessTask(insertTask);
-            if (CharSequenceUtil.isNotBlank(copyUser)){
+            if (CharSequenceUtil.isNotBlank(copyUser)) {
                 List<String> ccUserIds = Arrays.asList(copyUser.split(","));
                 List<FindUserDTO> ccUserList = sysUserFeign.getUserListByUserIds(ccUserIds);
                 processTaskCcService.saveCcUser(task.getId(), ccUserList, taskManagementEntity.getId());
@@ -835,7 +905,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .setAnnotation("审批超时，自动驳回")
                     .execute();
             // 保存流程任务数据
-            updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回", null);
+            processManagementService.updateApprove(task.getTaskManagementId(), ApproveTypeEnum.REJECT, task.getManagementId(), task.getProcessInstanceId(), "审批超时，自动驳回", null);
         }
     }
 
@@ -908,9 +978,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public List<ProcessManagementDTO.StartResultDTO> batchStartProcess(ValidList<ProcessManagementDTO.StartDTO> dtoList) {
         List<ProcessManagementDTO.StartResultDTO> resultList = new ArrayList<>();
-        dtoList.stream().forEach(dto -> {
+        dtoList.forEach(dto -> {
             // 启动流程
-            ProcessManagementDTO.StartResultDTO resultDTO = startProcess(dto);
+            ProcessManagementDTO.StartResultDTO resultDTO = processManagementService.startProcess(dto);
             resultList.add(resultDTO);
         });
         return resultList;
@@ -922,7 +992,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementDTO.ApproveResultDTO> resultList = new ArrayList<>();
         dtoList.forEach(approveDTO -> {
             // 审批流程
-            ProcessManagementDTO.ApproveResultDTO resultDTO = approveProcess(approveDTO, Boolean.TRUE);
+            ProcessManagementDTO.ApproveResultDTO resultDTO = processManagementService.approveProcess(approveDTO, Boolean.TRUE);
             resultList.add(resultDTO);
         });
         return resultList;
@@ -1056,5 +1126,24 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .last(SqlConstants.LIMIT_1)
                 .list();
     }
+
+    /**
+     * 将审批人变量替换为流程变量中的实际值。
+     *
+     * @param approves 审批人列表（可以包含格式为 #{variableName} 的变量）
+     * @param variables 流程变量
+     * @return 实际审批人列表
+     */
+    public static List<String> replaceApproveVariables(List<String> approves, Map<String, Object> variables) {
+        if (CollectionUtils.isEmpty(approves)) {
+            return approves;
+        }
+        // 遍历approves，将其中的变量替换为实陫值
+        return approves.stream().map(approve -> {
+            String valueFromPath = JsonPathUtil.getValueFromPath(variables, approve);
+            return CharSequenceUtil.isNotBlank(valueFromPath) ? valueFromPath : StringUtil.EMPTY_STRING;
+        }).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+    }
+
 
 }

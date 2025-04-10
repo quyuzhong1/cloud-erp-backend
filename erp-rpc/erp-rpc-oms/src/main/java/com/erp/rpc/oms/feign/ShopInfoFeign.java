@@ -1,6 +1,5 @@
 package com.erp.rpc.oms.feign;
 
-import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;

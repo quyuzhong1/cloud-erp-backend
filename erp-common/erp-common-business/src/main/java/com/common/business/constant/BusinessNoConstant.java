@@ -163,9 +163,8 @@ public interface BusinessNoConstant {
     String THD = "THD";
     String TKD = "TKD";
     String XLSS = "XLSS";
-    String MJ = "MJ";
     String YHBG = "YHBG";
-
+    String MJ = "MJ";
     //库龄批次号
     String N = "N";
     String INV = "INV";
@@ -174,4 +173,6 @@ public interface BusinessNoConstant {
     String XSJM = "XSJM";
     String XSTJ = "XSTJ";
 
+    //售后
+    String SHSQ = "SHSQ";
 }

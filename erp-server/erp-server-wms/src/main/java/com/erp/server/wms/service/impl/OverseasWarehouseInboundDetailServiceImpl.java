@@ -168,10 +168,14 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         // 主表ID， 主实体
         Map<String, OverseasWarehouseInboundEntity> mainResultMap = new HashMap<>();
         Map<String, Integer> receiverdMap = new HashMap<>();
-
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = this.getByIds(dtoList.stream().map(OverseasWarehouseInboundDTO.ReceivedDTO::getDetailId).collect(Collectors.toList()));
+        List<OverseasWarehouseInboundReceivedEntity> addReceivedList = new ArrayList<>();
         for (OverseasWarehouseInboundDTO.ReceivedDTO dto : dtoList) {
             // 查询详情
-            OverseasWarehouseInboundDetailEntity entity = this.getById(dto.getDetailId());
+            OverseasWarehouseInboundDetailEntity entity  = detailEntityList.stream()
+                    .filter(e -> StringUtils.equals(e.getId(), dto.getDetailId()))
+                    .findFirst()
+                    .orElse(null);
             if (Objects.isNull(entity)){
                 throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST);
             }
@@ -208,10 +212,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             if (Objects.equals(entity.getReceiveQty(), entity.getPackQty())){
                 entity.setReceiveStatus("already");
             }
-            // 详情更新签收数量
-            if (!this.updateById(entity)) {
-                throw new ServiceException("海外仓入库单详情更新失败");
-            }
+
             // 主订单状态
             // 检查是否完全签收
             Boolean allReceive = this.checkAllReceiveByMainId(entity.getMainId());
@@ -229,25 +230,25 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(entity.getId(),
                     userInfo.getUserName(),
                     dto.getReceivedQty(),
-                    LocalDateTime.now(ZoneId.systemDefault()));
-            if (!overseasWarehouseInboundReceivedService.save(receivedEntity)) {
-                throw new ServiceException("海外仓入库单签收保存失败");
-            }
+                    dto.getReceiveDate().atStartOfDay());
+            addReceivedList.add(receivedEntity);
             // 添加主表
             mainResultMap.putIfAbsent(mainEntity.getId(), mainEntity);
 
             // 添加明细
-            List<OverseasWarehouseInboundDetailEntity> detailEntityList = detailResultMap.get(mainEntity.getId());
-            if (CollectionUtils.isEmpty(detailEntityList)){
+            List<OverseasWarehouseInboundDetailEntity> currentDetailEntityList = detailResultMap.get(mainEntity.getId());
+            if (CollectionUtils.isEmpty(currentDetailEntityList)){
                 List<OverseasWarehouseInboundDetailEntity> currentList = new LinkedList<>();
                 currentList.add(entity);
                 detailResultMap.put(mainEntity.getId(), currentList);
             } else {
-                detailEntityList.add(entity);
-                detailResultMap.put(mainEntity.getId(), detailEntityList);
+                currentDetailEntityList.add(entity);
+                detailResultMap.put(mainEntity.getId(), currentDetailEntityList);
             }
             receiverdMap.put(receivedEntity.getDetailId(), receivedEntity.getReceiveQty());
         }
+        this.updateBatchById(detailEntityList);
+        overseasWarehouseInboundReceivedService.saveBatch(addReceivedList);
 
         for (Map.Entry<String, List<OverseasWarehouseInboundDetailEntity>> entry : detailResultMap.entrySet()) {
             // 主表

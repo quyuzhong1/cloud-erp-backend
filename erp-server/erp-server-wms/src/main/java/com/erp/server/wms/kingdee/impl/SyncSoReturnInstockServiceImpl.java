@@ -9,6 +9,10 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpReturnInstockDTO;
+import com.erp.model.dmp.dto.DmpReturnInstockDetailDTO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -32,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -312,6 +317,267 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
 
     }
+    
+    @Override
+    public Map<String, Object> syncNewDataToSdyFieldHandler(SoReturnInstockEntity entity,
+                                                         SoReturnInstockDetailEntity detailEntity,
+                                                         String operate,
+                                                         List<SkuVO> skuVOList,
+                                                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                         List<CurrencyDTO.ViewDTO> currencyList,
+                                                         List<ProductDetailEntity> parentSkuList,
+                                                         List<CustomerInfoEntity> customerInfoList,
+                                                         List<BaseIdDTO.CodeDTO> companyEntities,
+                                                         List<SoReturnEntity> soReturnEntityList,
+                                                         List<SoReturnReceiveEntity> soReturnReceiveEntityList,
+                                                         List<SoReturnEntity> receiveReturnList,
+                                                         String countryCode,
+                                                         String partitionId,
+                                                         String dictPlatform,
+                                                         List<DictBasicEntity> omsAllDictList,
+                                                         List<DictPartitionEntity> partitionEntityList,
+                                                         List<DictCountryEntity> countryEntityList,
+                                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<SysDepartmentEntity> deptList,
+                                                         List<CfgCountryPartitionEntity> countryPartitionEntityList
+    ) {
+
+        // 字典分组
+        Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        // 销售平台
+        List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
+        // 数帝云军区一级部门映射
+        List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
+        // 数帝云平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType(), Collections.emptyList());
+
+
+        //退货物流单号
+        String rootNodeNoInitial = getRootNodeNoInitial(entity, soReturnEntityList, soReturnReceiveEntityList, receiveReturnList);
+
+        DmpReturnInstockDTO.ViewDTO viewDto = new DmpReturnInstockDTO.ViewDTO();
+        DmpReturnInstockDetailDTO.ViewDTO detailViewDto = new DmpReturnInstockDetailDTO.ViewDTO();
+
+        String thirdReturnInstockId = entity.getId();
+		viewDto.setThirdReturnInstockId(thirdReturnInstockId);
+		viewDto.setThirdCreateTime(entity.getCreateTime());
+		viewDto.setThirdUpdateTime(entity.getUpdateTime());
+		detailViewDto.setThirdReturnInstockId(thirdReturnInstockId);
+		detailViewDto.setThirdDetailCreateTime(detailEntity.getCreateTime());
+		detailViewDto.setThirdDetailUpdateTime(detailEntity.getUpdateTime());
+		detailViewDto.setThirdReturnInstockDetailId(detailEntity.getId());
+		viewDto.setThirdReturnInstockCode(entity.getCode());
+		LocalDate billDate = entity.getBillDate();
+        if (billDate != null) {
+        	viewDto.setReturnInstockTime(billDate.atStartOfDay());
+        }
+        viewDto.setReturnInstockStatus(ApproveStatusEnum.getName(entity.getApproveStatus()));
+        detailViewDto.setDataStatus(new ShudiyunB2cOrderDTO().sdyStatusHandle(operate, entity.getVersion(), detailEntity.getVersion()));
+
+        //组织信息
+        CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(customerInfo)) {
+
+            String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+            viewDto.setSalesCompanyCode(salesOrgCode);
+            BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+            	viewDto.setReceivingCompanyCode(sysAccountingCompanyEntity.getCode());
+            	viewDto.setOrganizationCode(sysAccountingCompanyEntity.getCode());
+            	viewDto.setOrganizationName(sysAccountingCompanyEntity.getName());
+            }
+
+            if (customerInfo.getCurrency() == null) {
+            	detailViewDto.setSettlementCurrencyCode("");
+            } else {
+            	detailViewDto.setSettlementCurrencyCode(customerInfo.getCurrency());
+            }
+
+            if (customerInfo.getTradeCurrency() == null) {
+            	detailViewDto.setCurrencyCode("");
+            } else {
+            	detailViewDto.setCurrencyCode(customerInfo.getTradeCurrency());
+            }
+
+            viewDto.setSourcePlatform(customerInfo.getPlatformType());
+            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
+            viewDto.setPlatformName(platformName);
+            viewDto.setShopNo(customerInfo.getCode());
+            viewDto.setShopName(customerInfo.getName());
+        }
+
+        viewDto.setPlatformReturnInstockCode(rootNodeNoInitial);
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+
+        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
+        	detailViewDto.setIsGift(1);
+        } else {
+        	detailViewDto.setIsGift(0);
+        }
+
+        BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
+        	detailViewDto.setIsComb(1);
+        	detailViewDto.setSuiteNo(bomChildrenSkuDTO.getParentSkuNo());
+            BomChildrenSkuDTO finalBomChildrenSkuDTO1 = bomChildrenSkuDTO;
+            String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO1.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            detailViewDto.setSuiteName(skuName);
+        } else {
+            bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
+            	detailViewDto.setSuiteNo(bomChildrenSkuDTO.getParentSkuNo());
+                BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
+                String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+                detailViewDto.setSuiteName(skuName);
+            } else {
+            	detailViewDto.setSuiteNo(skuVO.getSkuNo());
+            	detailViewDto.setSuiteName(skuVO.getSkuName());
+            }
+        }
+
+        if (OrderTypeEnum.B2B.getCode().equals(entity.getType())) {
+        	viewDto.setLogisticCompanyName("【未知】");
+        	viewDto.setLogisticCompanyCode("【未知】");
+        } else {
+        	viewDto.setLogisticCompanyName("空");
+        	viewDto.setLogisticCompanyCode("空");
+        }
+        if (CharSequenceUtil.isBlank(entity.getReturnLogisticCode())) {
+        	viewDto.setReturnLogisticCode("【未知】");
+        } else {
+        	viewDto.setReturnLogisticCode(entity.getReturnLogisticCode());
+        }
+        detailViewDto.setReturnInstockQty(detailEntity.getRealQty());
+
+        detailViewDto.setRemark(detailEntity.getRemark());
+        detailViewDto.setWarehouseNo(detailEntity.getWarehouseId());
+        detailViewDto.setWarehouseName(detailEntity.getWarehouseName());
+        detailViewDto.setReturnInstockAmount(detailEntity.getReturnAmount());
+
+        // 商品状态
+        if (entity.getSourceType().equals(SourceTypeEnum.PLATFORM_RETURN_INSTOCK.getCode())) {
+        	detailViewDto.setDetailStatus("平台收货");
+        } else if (entity.getSourceType().equals(SourceTypeEnum.THIRD_WAREHOUSE_RETURN_INSTOCK.getCode())) {
+        	detailViewDto.setDetailStatus("第三方仓收货");
+        } else {
+        	detailViewDto.setDetailStatus("本地仓收货");
+        }
+
+        detailViewDto.setDeliveryTime(entity.getApproveTime());
+        
+        detailViewDto.setUnit(skuVO.getUnitName());
+        detailViewDto.setListPrice(skuVO.getRetailPrice());
+
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(detailEntity.getCurrency())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+        	detailViewDto.setCurrencyName(viewDTO.getName());
+            detailViewDto.setCurrencyCode(viewDTO.getId());
+        }
+
+        if(skuVO.getSpuNo() == null) {
+        	detailViewDto.setSpuNo(skuVO.getSkuNo());
+            detailViewDto.setSpuName(skuVO.getSkuName());
+        }else {
+        	detailViewDto.setSpuNo(skuVO.getSpuNo());
+            detailViewDto.setSpuName(skuVO.getSpuName());
+        }
+        detailViewDto.setPlatformSkuNo(skuVO.getSpuNo());
+        detailViewDto.setPlatformSkuName(skuVO.getSpuName());
+        detailViewDto.setSkuNo(skuVO.getSkuNo());
+        detailViewDto.setSkuName(skuVO.getSkuName());
+
+        // 国家编码
+        // 国家名称
+        String countryName = "";
+        // 区域编码
+        String regionCode = "";
+        // 区域名称
+        String regionName = "";
+        // 军区编码
+        String militaryRegionCode = "";
+        // 军区名称
+        String militaryRegionName = "";
+        // 部门编码
+        String departmentCode = "";
+        // 部门名称
+        String departmentName= "";
+
+        // 国家信息为空替换为客户对应国家
+        if (StringUtils.isBlank(countryCode) && null != customerInfo){
+            countryCode = customerInfo.getCountryId();
+            // 替换分区
+            String finalCountryCode = countryCode;
+            CfgCountryPartitionEntity cfgCountryPartitionEntity = countryPartitionEntityList.stream().filter(e -> e.getCountry().equalsIgnoreCase(finalCountryCode)).findFirst().orElse(null);
+            if ( null != cfgCountryPartitionEntity){
+                partitionId = cfgCountryPartitionEntity.getPartitionId();
+            }
+            dictPlatform = customerInfo.getPlatformType();
+        }
+
+        String finalCountryCode = countryCode;
+        DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalCountryCode)).findFirst().orElse(null);
+        if (null != dictCountryEntity){
+            countryName = dictCountryEntity.getShortNameCn();
+            // 区域编码
+            regionCode = dictCountryEntity.getSubregionCode();
+            // 区域名称
+            DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
+            if (null != dictGlobalAreaEntity){
+                regionName = dictGlobalAreaEntity.getSubregionName();
+            }
+        }
+
+        String finalPartitionId = partitionId;
+        DictPartitionEntity dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
+        if (null != dictPartitionEntity){
+            // 军区编码
+            militaryRegionCode = dictPartitionEntity.getCode();
+            // 军区名称
+            militaryRegionName = dictPartitionEntity.getName();
+            // 军区一级部门映射
+            DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(dictPartitionEntity.getCode())).findFirst().orElse(null);
+            // 销售平台二级部门映射
+            String finalDictPlatform = dictPlatform;
+            List<DictBasicEntity> sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPlatform)).collect(Collectors.toList());
+
+            if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
+                List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
+                SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
+                                e.getPath().contains(sdyPartitionDeptEntity.getValue())
+                                        && deptLevel2Ids.contains(e.getId())
+                        )
+                        .findFirst()
+                        .orElse(null);
+                if (null != departmentDTO){
+                    // 部门编码
+                    departmentCode = departmentDTO.getCode();
+                    // 部门名称
+                    departmentName = departmentDTO.getName();
+                }
+            }
+        }
+        // 国家编码
+        detailViewDto.setCountryCode(countryCode);
+        // 国家名称
+        detailViewDto.setCountryName(countryName);
+        // 区域编码
+        detailViewDto.setRegionCode(regionCode);
+        // 区域名称
+        detailViewDto.setRegionName(regionName);
+        // 军区编码
+        detailViewDto.setMilitaryRegionCode(militaryRegionCode);
+        // 军区名称
+        detailViewDto.setMilitaryRegionName(militaryRegionName);
+        // 部门编码
+        detailViewDto.setDepartmentCode(departmentCode);
+        // 部门名称
+        detailViewDto.setDepartmentName(departmentName);
+
+        viewDto.setDetailList(Arrays.asList(detailViewDto));
+
+        return BeanUtil.beanToMap(viewDto);
+
+    }
 
     @Override
     public void syncDataToSdy(SoReturnInstockEntity entity,
@@ -343,7 +609,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             wmsPushMsgEntity.setSourceId(detailEntity.getId());
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity,
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncNewDataToSdyFieldHandler(entity,
                     detailEntity,
                     operate,
                     skuVOList,
@@ -380,9 +646,16 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
             wmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
-            map.put("isQuerySync", Boolean.TRUE);
-            map.put("detailId", detailEntity.getId());
-            map.put("operate", operate);
+            if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            	map = this.syncNewDataToSdyFieldHandler(entity, detailEntity, operate, new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), "", "", "", new ArrayList<>(), new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+            }else {
+            	map.put("isQuerySync", Boolean.TRUE);
+                map.put("detailId", detailEntity.getId());
+                map.put("operate", operate);
+            }
             wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             wmsPushMsgService.save(wmsPushMsgEntity);
         }

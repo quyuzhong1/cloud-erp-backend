@@ -405,7 +405,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        }
         // 已支付订单在出库时推送
         // 已取消订单推送?
-        if (mainEntity.getIsCancel()) {
+        if (mainEntity.getIsCancel() && ApproveStatusEnum.APPROVE.equals(mainEntity.getApproveStatus())) {
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }

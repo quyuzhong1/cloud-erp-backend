@@ -125,15 +125,15 @@ public class SoDetailDTO implements Serializable {
          * 价税合计（折前）
          */
         private BigDecimal taxAmountBefore;
-        /**
-         * 成本来源
-         */
-        private String costSource;
 
         /**
          * 客户PO号
          */
         private String customerPO;
+        /**
+         * 成本来源
+         */
+        private String costSource;
     }
 
 
@@ -387,6 +387,10 @@ public class SoDetailDTO implements Serializable {
         private BigDecimal taxPriceLc;
 
         /**
+         * 客户PO号
+         */
+        private String customerPO;
+        /**
          * 发货状态 unShipped 未发货  partialShipment 部分发货  completeShipment 已发货
          */
         private String deliveryStatus;
@@ -404,10 +408,6 @@ public class SoDetailDTO implements Serializable {
          * 成本来源
          */
         private String costSource;
-        /**
-         * 客户PO号
-         */
-        private String customerPO;
     }
 
     /**
@@ -825,8 +825,10 @@ public class SoDetailDTO implements Serializable {
          * 是否关闭
          */
         private Boolean isClose;
-
-
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
         /**
          * 备注
          */

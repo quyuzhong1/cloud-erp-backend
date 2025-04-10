@@ -53,7 +53,7 @@ import java.util.Objects;
 public class SalesDemandController extends BaseController {
 
     @Resource
-   private SalesDemandService salesDemandService;
+    private SalesDemandService salesDemandService;
 
    /**
     * 分页查询

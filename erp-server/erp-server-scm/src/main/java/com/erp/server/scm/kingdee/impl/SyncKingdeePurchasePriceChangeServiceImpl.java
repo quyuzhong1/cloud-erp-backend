@@ -18,6 +18,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -88,7 +89,12 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         if(object != null) {
         	purchasePriceIdStr = object.toString();
         }
-		return saveTask(entity,operate,resultMap, purchasePriceIdStr);
+        
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap() , purchasePriceIdStr);
+    	}else {
+    		return saveTask(entity,operate,resultMap, purchasePriceIdStr);
+    	}
     }
 
     /**

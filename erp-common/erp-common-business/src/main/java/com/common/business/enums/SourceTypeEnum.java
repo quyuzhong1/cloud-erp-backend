@@ -246,6 +246,9 @@ public enum SourceTypeEnum {
     SDY_SELF_DELIVERY_ORDER("sdySelfDeliveryOrder", "速帝云自发货配货单","so_b2c_delivery"),
     SDY_ALIEXPRESS_DELIVERY_ORDER("sdyAliExpressDeliveryOrder", "速帝云速卖通配货单","aliexpress_delivery"),
 
+
+    //售后申请
+    AFTER_SALE("afterSale", "售后申请","after_sale"),
     ;
 
     /**

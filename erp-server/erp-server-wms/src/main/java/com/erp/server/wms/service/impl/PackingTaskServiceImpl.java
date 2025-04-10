@@ -29,10 +29,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.Md5Util;
+import com.common.core.utils.*;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -71,6 +68,7 @@ import com.erp.server.wms.mapper.PackingTaskMapper;
 import com.erp.server.wms.service.*;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
@@ -400,14 +398,15 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuList = this.listGroupSkuById(dto.getTaskId());
         //更新主表状态
         updatePackingStatus(groupSkuList, packingTask);
-        //发送飞书通知
-        this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent(), packingTask);
+
 
         //装箱完成
         if(packingTask.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
                 && packingTask.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
             //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
             RequisitionApplicationEntity entity = requisitionApplicationService.getById(packingTask.getSourceId());
+            //发送飞书通知
+            this.sendNoticeMsg(dto.getTaskId(), dto.getOperation(), dto.getContent(), packingTask);
             if(null != entity){
                 Map<String,String> map = new HashMap<>();
                 map.put("code",entity.getCode());
@@ -1314,8 +1313,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             wmsCartonEntity = cartonEntityList.stream().filter(e -> Objects.nonNull(e) && e.getSpecId().equals(specId)).findFirst().orElse(new WmsCartonEntity());
             //更新装箱状态
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
-            //发送飞书通知
-            this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent(),packingTaskEntity );
+
 
 
         }else {
@@ -1325,8 +1323,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             String cartonId = wmsCartonService.add(addDTO,wmsCartonSpecEntity);
             //更新装箱状态
             this.updatePackingStatus(listGroupSkuById(addDTO.getTaskId()),packingTaskEntity);
-            //发送飞书通知
-            this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent(), packingTaskEntity);
             wmsCartonEntity = wmsCartonService.getById(cartonId);
         }
 
@@ -1334,6 +1330,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if(packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
                 && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
             //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
+            //发送飞书通知
+            this.sendNoticeMsg(addDTO.getTaskId(), addDTO.getOperation(), addDTO.getContent(),packingTaskEntity );
             RequisitionApplicationEntity entity = requisitionApplicationService.getById(packingTaskEntity.getSourceId());
             if(null != entity){
                 Map<String,String> map = new HashMap<>();
@@ -1417,8 +1415,12 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         Integer boxNo = updateAdjustData(dto);
         //更新装箱状态
         this.updatePackingStatus(listGroupSkuById(dto.getTaskId()),packingTaskEntity);
-        //发送飞书通知
-        this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()), packingTaskEntity);
+        if(packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
+                && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
+            //发送飞书通知
+            this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "调整装箱-" + AdjustTypeEnum.getName(dto.getAdjustType()), packingTaskEntity);
+
+        }
         return packingTaskEntity.getSourceCode() + "-" + boxNo;
     }
 
@@ -1652,6 +1654,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if(packingTaskEntity.getPackingStatus().equals(PackingTaskStatusEnum.PACKED.getCode())
                 && packingTaskEntity.getWeightingStatus().equals(PackingWeightStatusEnum.WEIGHTED.getCode())){
             //发送飞书通知 要货申请已装箱 CfgSettingEnum.FS_REQUISITION_PACKING_NOTICE
+            //发送飞书通知
+            this.sendNoticeMsg(dto.getTaskId(), "装箱任务", "修改箱规", packingTaskEntity);
             RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getSourceId());
             if(null != entity){
                 Map<String,String> map = new HashMap<>();
@@ -2812,4 +2816,104 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         firstMileDeliveryEntity.addAll(firstMileDeliveryService.listByIds(sourceIds));
         return firstMileDeliveryEntity;
     }
+
+    /**
+     * 根据源码列表检查纸箱重量
+     * 此方法通过源码获取打包任务实体列表，并进一步处理以获取未打包的视图列表
+     * 主要用于过滤和处理数据，以提供有关未打包纸箱的详细信息
+     *
+     * @param sourceCodes 源码列表，用于查询打包任务
+     * @return 返回一个 NoPackingView 对象列表，表示未打包的纸箱信息
+     */
+    @Override
+    public List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(List<String> sourceCodes){
+        //发货单
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listByCodes(sourceCodes);
+        List<String> firstMileDeliverySourceCodes = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getSourceCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        // 根据源码列表获取打包任务实体列表
+        List<PackingTaskEntity> packingTaskEntityList = this.listBySourceCodes(firstMileDeliverySourceCodes);
+
+        // 检查打包任务实体列表是否为空，如果为空则直接返回空列表
+        if(CollUtil.isEmpty(packingTaskEntityList)){
+            return Collections.emptyList();
+        }
+
+        // 提取打包任务实体列表中的任务ID，并去重
+        List<String> taskIds = packingTaskEntityList.stream()
+                .map(PackingTaskEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 对每个 taskId 调用 notPackingDetailView 方法，获取未打包的视图列表
+        List<WmsCartonSpecDTO.NoPackingView> viewList = taskIds.stream()
+                .map(this::notPackingDetailView)
+                .collect(Collectors.toList());
+
+        //替换viewList中的来源为发货单
+
+        for (WmsCartonSpecDTO.NoPackingView noPackingView : viewList) {
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntities.stream().filter(e -> e.getSourceCode().equals(noPackingView.getSourceCode())).findFirst().orElse(null);
+            noPackingView.setDeliveryCode(firstMileDeliveryEntity.getCode());
+        }
+        return viewList;
+    }
+
+
+    @Override
+    public List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(List<String> sourceCodes) {
+        if(CollUtil.isEmpty(sourceCodes)){
+            return Collections.emptyList();
+        }
+
+        List<WmsCartonDTO.ListPackingCartonDTO>  resutlList = new ArrayList<>();
+        //发货单
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.listByCodes(sourceCodes);
+        List<String> firstMileDeliverySourceCodes = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getSourceCode).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        // 根据源码列表获取打包任务实体列表
+        List<PackingTaskEntity> packingTaskEntityList = this.listBySourceCodes(firstMileDeliverySourceCodes);
+
+        List<String> idList = packingTaskEntityList.stream().map(PackingTaskEntity::getId).distinct().collect(Collectors.toList());
+        List<WmsCartonEntity> wmsCartonList = wmsCartonService.listByTaskIds(idList);
+        List<String> wmsCartonIdList = wmsCartonList.stream().map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
+        List<WmsCartonDetailEntity> detailList = wmsCartonDetailService.lambdaQuery().in(WmsCartonDetailEntity::getMainId, wmsCartonIdList).list();
+
+        List<WmsCartonSpecEntity> specList = wmsCartonSpecService.lambdaQuery().in(WmsCartonSpecEntity::getMainId, idList).list();
+
+        List<WmsCartonDetailDTO.BoxDTO> boxDTOS = BeanMapper.copyList(detailList, WmsCartonDetailDTO.BoxDTO.class);
+        List<WmsCartonSpecDTO.PackingCartonSpecDTO> packingCartonSpecDTOS = BeanMapper.copyList(specList, WmsCartonSpecDTO.PackingCartonSpecDTO.class);
+
+        for (PackingTaskEntity packingTaskEntity : packingTaskEntityList) {
+            String taskId = packingTaskEntity.getId();
+            String sourceCode = packingTaskEntity.getSourceCode();
+            WmsCartonDTO.ListPackingCartonDTO listPackingCartonDTO = new WmsCartonDTO.ListPackingCartonDTO();
+            List<String> cartonIdList = wmsCartonList.stream().filter(e -> e.getPackingTaskId().equals(taskId)).map(WmsCartonEntity::getId).distinct().collect(Collectors.toList());
+            //分别找出boxDTOS 和 packingCartonSpecDTOS中 mainId 在 cartonIdList 中的数据集合
+            List<WmsCartonDetailDTO.BoxDTO> boxDTOList = boxDTOS.stream().filter(e -> cartonIdList.contains(e.getMainId())).collect(Collectors.toList());
+            List<WmsCartonSpecDTO.PackingCartonSpecDTO> packingCartonSpecDTOList = packingCartonSpecDTOS.stream().filter(e -> taskId.equals(e.getMainId())).collect(Collectors.toList());
+
+            listPackingCartonDTO.setTaskId(taskId);
+            listPackingCartonDTO.setCartonDetailDTOList(boxDTOList);
+            listPackingCartonDTO.setSourceCode(sourceCode);
+            listPackingCartonDTO.setWeightingStatus(packingTaskEntity.getWeightingStatus());
+            listPackingCartonDTO.setCartonSpecDTOList(packingCartonSpecDTOList);
+
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntities.stream().filter(e -> e.getSourceCode().equals(packingTaskEntity.getSourceCode())).findFirst().orElse(null);
+            listPackingCartonDTO.setDeliveryCode(firstMileDeliveryEntity.getCode());
+            resutlList.add(listPackingCartonDTO);
+        }
+
+        return resutlList;
+    }
+
+    @Override
+    public List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity) {
+        String id = firstMileDeliveryEntity.getId();
+        String sourceId = firstMileDeliveryEntity.getSourceId();
+
+        List<String > list = new ArrayList<>();
+        list.add(id);
+        list.add(sourceId);
+        return lambdaQuery().in(PackingTaskEntity::getSourceId, list).list();
+    }
+
 }

@@ -130,7 +130,7 @@ public class DmpOutputCreateFactory{
 		DmpOutputCreateResponse dmpOutputCreateResponse = this.createHotfixOutputTask(dmpRequest);
 		DmpOutputTaskRequest dmpOutputTaskRequest = new DmpOutputTaskRequest();
 		DmpOutputTaskEntity dmpOutputTaskEntity = dmpOutputCreateResponse.getAfterDmpOutputTaskEntityList().get(0);
-		dmpOutputTaskRequest.setNotValidate(true);
+		dmpOutputTaskRequest.setNotValidate(dmpRequest.isNotValidate());
 		dmpOutputTaskRequest.setOutputTaskId(dmpOutputTaskEntity.getId());
 		dmpOutputTaskRequest.setExecTimeout(dmpOutputTaskEntity.getExecTimeout());
 		

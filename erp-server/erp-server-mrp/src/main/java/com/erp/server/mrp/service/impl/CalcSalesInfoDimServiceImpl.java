@@ -160,8 +160,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
             //计算吻合度
             calculationSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
             //计算月吻合度
-            calculationMonthSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);
-            calcSalesInfoDenoisingService.saveBatch(calculationSales);
+            calculationMonthSimilarity(dto, calcSalesInfoEstimateList, hisSalesMap, entity);            calcSalesInfoDenoisingService.saveBatch(calculationSales);
             calcSalesInfoEstimateService.saveBatch(calcSalesInfoEstimateList);
             entity.setStatus(CalcStatusEnum.FINISH.getCode());
             dto.setStatus(CalcStatusEnum.FINISH.getCode());

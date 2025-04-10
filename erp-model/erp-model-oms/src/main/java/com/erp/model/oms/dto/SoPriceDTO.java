@@ -781,6 +781,7 @@ public class SoPriceDTO implements Serializable {
         /**
          * 时间
          */
+        @NotNull(message = "时间不能为空")
         private LocalDate date;
     }
 
