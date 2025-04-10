@@ -1558,7 +1558,7 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             .collect(Collectors.toList()).size();
                     if(value.size() != sourceCodeCount){
                         for (FirstMileReconciliationStandardExcelDTO excelDTO : entry.getValue()) {
-                            excelDTO.setErrorMsg("相同序号单据的实际实重，实际体积重，费用项，费用金额，币种不一致。");
+                            excelDTO.setErrorMsg("同一序号下，单号不能相同");
                             errorList.add(excelDTO);
                         }
                         excelMap.remove(entry.getKey());
