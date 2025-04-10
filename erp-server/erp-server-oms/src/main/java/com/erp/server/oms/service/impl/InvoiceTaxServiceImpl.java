@@ -9,16 +9,18 @@ import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.InvoiceTaxEntity;
-import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.server.oms.mapper.InvoiceTaxMapper;
 import com.erp.server.oms.service.InvoiceTaxService;
-import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OperateLogService;
+import com.erp.server.oms.service.SkuMappingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -45,7 +47,7 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
     @Autowired
     private OperateLogService operateLogService;
     @Autowired
-    private ListingInfoService listingInfoService;
+    private SkuMappingService skuMappingService;
 
     /**
     * 修改
@@ -125,15 +127,25 @@ public class InvoiceTaxServiceImpl extends SuperServiceImpl<InvoiceTaxMapper, In
     * 新增修改处理数据
     */
     private void handleData(InvoiceTaxEntity invoiceTaxEntity) {
-        if(CharSequenceUtil.isBlank(invoiceTaxEntity.getListingId()) && (CharSequenceUtil.isBlank(invoiceTaxEntity.getPlatformSkuNo()) ||  CharSequenceUtil.isBlank(invoiceTaxEntity.getPlatform()))) {
-            throw new ServiceException("listingId和平台SKU、平台不能全部为空");
+        if(CharSequenceUtil.isBlank(invoiceTaxEntity.getListingId()) && (CharSequenceUtil.isBlank(invoiceTaxEntity.getPlatformSkuNo()) ||  CharSequenceUtil.isBlank(invoiceTaxEntity.getPlatform()) ||  CharSequenceUtil.isBlank(invoiceTaxEntity.getShopId()))) {
+            throw new ServiceException("listingId和平台SKU、平台、店铺不能全部为空");
         }
         String listingId = invoiceTaxEntity.getListingId();
         if (CharSequenceUtil.isBlank(listingId)) {
-            List<ListingInfoEntity> listingInfoList = listingInfoService.listByParam(RuleTypeEnum.PLATFORM.getCode(), invoiceTaxEntity.getPlatform(), Collections.singletonList(invoiceTaxEntity.getPlatformSkuNo()));
-            if (CollUtil.isNotEmpty(listingInfoList)) {
-                listingId = listingInfoList.get(0).getId();
+            // 查询该店铺所有平台sku
+            ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+            paramDTO.setPlatform(invoiceTaxEntity.getPlatform());
+            paramDTO.setShopIdList(Collections.singletonList(invoiceTaxEntity.getShopId()));
+            paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+            paramDTO.setPlatformSkuNoList(Collections.singletonList(invoiceTaxEntity.getPlatformSkuNo()));
+            // 所有包含历史映射关系
+            List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
+            if (CollUtil.isNotEmpty(listDto)) {
+                listingId = listDto.get(0).getListingId();
             }
+        }
+        if (CharSequenceUtil.isBlank(listingId)) {
+            throw new ServiceException(ApiError.ERROR_LISTING_NOT_EXIST);
         }
         invoiceTaxEntity.setListingId(listingId);
         InvoiceTaxEntity old = getByListingId(listingId);

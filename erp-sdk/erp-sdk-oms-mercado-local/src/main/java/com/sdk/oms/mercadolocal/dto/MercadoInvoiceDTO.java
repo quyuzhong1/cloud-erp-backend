@@ -13,10 +13,6 @@ public class MercadoInvoiceDTO {
      */
     private String shopId;
     /**
-     * 站点
-     */
-    private String siteId;
-    /**
      * 发票xml内容
      */
     private String xmlContent;

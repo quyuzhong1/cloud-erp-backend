@@ -78,6 +78,12 @@ public class InvoiceTaxEntity extends BaseEntity<InvoiceTaxEntity> {
     @TableField(exist = false)
     private String platform;
 
+    /**
+     * 店铺Id
+     */
+    @TableField(exist = false)
+    private String shopId;
+
     public static final String LISTING_ID = "listing_id";
 
     public static final String INVOICE_HS_CODE = "invoice_hs_code";
