@@ -72,7 +72,7 @@
         FROM
             cfg_invoice_setting_detail cisd
                 LEFT JOIN
-            shop_info si ON cisd.dict_platform = si.name
+            shop_info si ON cisd.dict_platform = si.dict_platform
         WHERE
             cisd.is_deleted = FALSE
             And cisd.main_id = #{mainId}

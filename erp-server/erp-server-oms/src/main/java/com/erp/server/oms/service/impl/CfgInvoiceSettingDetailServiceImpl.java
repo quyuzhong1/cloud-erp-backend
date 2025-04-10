@@ -89,8 +89,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = new CfgInvoiceSettingDetailEntity();
         BeanMapperUtils.copy(addDTO, cfgInvoiceSettingDetailEntity);
         cfgInvoiceSettingDetailEntity.setDictPlatform(addDTO.getPlatformValue());
-        // 数据处理
-        handleData(cfgInvoiceSettingDetailEntity);
         //保存平台value
         cfgInvoiceSettingDetailEntity.setDictPlatform(addDTO.getPlatformValue());
         log.info("开始新增发票设置明细");
@@ -120,9 +118,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
 
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票设置明细"));
         CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = BeanMapperUtils.map(CfgInvoiceSettingDetailEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(cfgInvoiceSettingDetailEntity);
         log.info("编辑 开始修改发票设置明细数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgInvoiceSettingDetailEntity);
         if (!save) {
