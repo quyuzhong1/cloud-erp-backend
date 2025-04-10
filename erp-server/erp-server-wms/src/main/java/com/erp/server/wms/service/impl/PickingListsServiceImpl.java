@@ -605,6 +605,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             PickingListsDTO.PrintCombinationView printView = new PickingListsDTO.PrintCombinationView();
             printView.setPrintTime(LocalDateTime.now());
             printView.setPrintUserName(user.getUserName());
+            printView.setSourceCode(picking.getSourceCode());
             if (SourceTypeEnum.REQUISITION_APPLICATION.getCode().equals(picking.getSourceType())) {
                 RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(picking.getSourceId()))
                         .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
@@ -755,6 +756,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getCustomerPO)
                             .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)
                             .thenComparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
                     )
                     .collect(Collectors.toList());
             printView.setPrintSkuSingleViewList(singleList);
@@ -780,6 +782,8 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                     )
                     .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getCustomerPO)
                             .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
                             .thenComparing(PickingListsDTO.PrintSkuView::getChildSkuNo)
                     )
                     .collect(Collectors.toList());

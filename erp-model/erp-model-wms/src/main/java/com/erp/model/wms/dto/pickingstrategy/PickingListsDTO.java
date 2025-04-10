@@ -244,6 +244,10 @@ public class PickingListsDTO {
          */
         private String code;
         /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
          * 客户/渠道名
          */
         private String channelName;

@@ -17,6 +17,7 @@ public enum RuleOrderHandleEnum {
         REPLACE_WITH_CITY("replaceWithCity","若收货地址省/州为空,使用城市信息进行填充"),
         REPLACE_BLANK("replaceBlank","省州推送物流商下单为空"),
         CUSTOM_REPLACE("customReplace","自定义替换"),
+        CUSTOMIZE("customize","自定义"),
         ;
         private final String code;
         private final String name;
