@@ -64,4 +64,7 @@ public interface AfterSaleFeign {
      */
     @GetMapping("feign/afterSale/getDetailByPlatformCode")
     ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode);
+
+    @GetMapping("feign/afterSale/getNodeList")
+    ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList();
 }

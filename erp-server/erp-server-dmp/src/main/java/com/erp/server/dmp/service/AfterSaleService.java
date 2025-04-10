@@ -158,6 +158,8 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
 
     List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(AfterSaleDTO.ProgressDTO dto);
 
+    List<AfterSaleDTO.NodeDTO>  getNodeList();
+
     List<BatchResultDTO> changeStatus(AfterSaleDTO.IdsDTO dto);
 
     List<AfterSaleProgressDTO.RepairHistoryListDTO> getRepairHistory(AfterSaleDTO.ThridUserDTO dto);

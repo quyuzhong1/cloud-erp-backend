@@ -22,9 +22,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 /**
  * <p>
  * 售后进度记录表 服务实现类
@@ -94,11 +93,14 @@ public class AfterSaleProgressServiceImpl extends SuperServiceImpl<AfterSaleProg
     }
 
     @Override
-    public List<AfterSaleProgressEntity> getByMainIds(List<String> ids) {
+    public List<AfterSaleProgressEntity> listByMainIds(List<String> ids) {
         if(CollUtil.isEmpty(ids)){
             return Collections.emptyList();
         }
-        return lambdaQuery().in(AfterSaleProgressEntity::getMainId, ids).list();
+        List<AfterSaleProgressEntity> list = lambdaQuery().in(AfterSaleProgressEntity::getMainId, ids).list();
+        // 根据 index 进行数值排序
+        list.sort(Comparator.comparingInt(AfterSaleProgressEntity::getIndex));
+        return list;
     }
 
     @Override
@@ -115,6 +117,15 @@ public class AfterSaleProgressServiceImpl extends SuperServiceImpl<AfterSaleProg
 
         return Boolean.TRUE;
 
+    }
+
+    @Override
+    public AfterSaleProgressEntity getByIndex(String id, Integer index) {
+        if (StringUtils.isBlank(id) || Objects.isNull(index)) {
+            return null;
+        }
+        // 查询数据
+        return lambdaQuery().eq(AfterSaleProgressEntity::getMainId, id).eq(AfterSaleProgressEntity::getIndex, index).one();
     }
 
     /**

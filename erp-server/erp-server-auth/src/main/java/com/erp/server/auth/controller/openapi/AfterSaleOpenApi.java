@@ -94,4 +94,15 @@ public class AfterSaleOpenApi {
         return afterSaleFeign.getRepairHistory(dto);
     }
 
+
+    /**
+     * 获取节点配置信息
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @OpenApi("getNodeList")
+    ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
+        return afterSaleFeign.getNodeList();
+    }
+
 }

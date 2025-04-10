@@ -153,7 +153,21 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             afterSaleProgressEntity.setMainId(afterSaleEntity.getId());
             afterSaleProgressEntity.setIndex(nodeDTO.getIndex());
             afterSaleProgressEntity.setNode(nodeDTO.getNode());
-            if(nodeDTO.getIndex().equals(1)){
+            //售后申请单，自动进入审核中
+            if(nodeDTO.getNode().equals(AfterSaleStatusEnum.REPAIR_REQUEST.getCode())
+                    ||nodeDTO.getNode().equals(AfterSaleStatusEnum.APPROVE_ING.getCode())){
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            }
+            //客户寄件
+            if(nodeDTO.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
+                    && StringUtils.isNotBlank(addDTO.getReturnTrackNo())){
+                afterSaleProgressEntity.setTrackNo(addDTO.getReturnTrackNo());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            }
+            //售后发货
+            if(nodeDTO.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
+                    && StringUtils.isNotBlank(addDTO.getOutboundTrackNo())){
+                afterSaleProgressEntity.setTrackNo(addDTO.getOutboundTrackNo());
                 afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
             }
             progressList.add(afterSaleProgressEntity);
@@ -245,6 +259,20 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 entity.setBusinessId(afterSaleEntity.getId());
                 attachmentService.save(entity);
             }
+        }
+
+        //更新运单号
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
+        for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
+            if(afterSaleProgressEntity.getIndex().equals(3) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
+                afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            }
+            if(afterSaleProgressEntity.getIndex().equals(7) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
+                afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            }
+            afterSaleProgressService.updateById(afterSaleProgressEntity);
         }
         return Boolean.TRUE;
     }
@@ -494,8 +522,20 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
+        //更新节点时间
+        updateProgressByMainId(entity.getId(), 3);
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         return updateForApprove(entity.getId(), approveStatus.getStatus());
+    }
+
+    //更新节点时间
+    private void updateProgressByMainId(String id,Integer index) {
+        //更新单据状态
+        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByIndex(id, index);
+        if (Objects.nonNull(afterSaleProgressEntity)) {
+            afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            afterSaleProgressService.updateById(afterSaleProgressEntity);
+        }
     }
 
     @Override
@@ -528,6 +568,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             data.setAttachNameList(attachNameList);
             data.setAttachUrlList(attachUrlList);
         }
+        //查询进度
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(id));
+        for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
+            if(afterSaleProgressEntity.getIndex().equals(3)){//客户寄件
+                data.setReturnTrackNo(afterSaleProgressEntity.getTrackNo());
+            }
+            if(afterSaleProgressEntity.getIndex().equals(7)){//售后发货
+                data.setOutboundTrackNo(afterSaleProgressEntity.getTrackNo());
+            }
+        }
         return data;
     }
     /**
@@ -555,7 +605,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus().getCode()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         //单据状态
         data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
@@ -637,7 +687,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     /**
      * 获取节点配置信息
      */
-    private List<AfterSaleDTO.NodeDTO>  getNodeList() {
+    @Override
+    public List<AfterSaleDTO.NodeDTO>  getNodeList() {
         String value = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_NODE);
         if (StringUtils.isBlank(value)) {
             throw new ServiceException("售后维修节点配置不存在");
@@ -698,10 +749,18 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (CollUtil.isEmpty(entityList)) {
             throw new ServiceException("未找到售后申请单数据");
         }
+
+        if(StringUtil.isBlank(dto.getNode())){
+            throw new ServiceException("请选择单据状态");
+        }
+
+        List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
+        AfterSaleDTO.NodeDTO node = nodeList.stream().filter(t -> t.getNode().equals(dto.getNode())).findFirst().orElseThrow(() -> new ServiceException("未找到节点配置信息"));
+
+
         for (AfterSaleEntity entity : entityList) {
             BatchResultDTO batchResultDTO;
-            // 待提交或审核不通过并且未作废允许作废
-            if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus()))){
+            if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus().getStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus()))){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有审核通过未作废的单据才能进行状态变更");
             }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未完成的单据才能进行状态变更");
@@ -711,15 +770,25 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 entity.setStatus(dto.getNode());
                 updateById(entity);
 
-                afterSaleProgressService.updateStatus(entity.getId(), dto.getNode(),dto.getRemark());
+                List<AfterSaleProgressEntity> progressList = afterSaleProgressService.listByMainIds(Collections.singletonList(entity.getId())).stream()
+                        .filter(t -> Objects.isNull(t.getNodeTime())).collect(Collectors.toList());
 
+                for (AfterSaleProgressEntity afterSaleProgressEntity : progressList) {
+                    Integer index = afterSaleProgressEntity.getIndex();
+                    if(index.compareTo(node.getIndex())<0){
+                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                    }
+                    if(index.compareTo(node.getIndex())==0){
+                        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                        afterSaleProgressEntity.setRemark(dto.getRemark());
+                    }
+                }
+                afterSaleProgressService.updateBatchById(progressList);
             }
             resultList.add(batchResultDTO);
         }
         return resultList;
     }
-
-
 
 
     /**

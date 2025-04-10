@@ -464,7 +464,8 @@ public class AfterSaleController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.INVALID, desc = "售后申请状态变更")
     public ApiResult<List<BatchResultDTO>> changeStatus(@RequestBody @Validated AfterSaleDTO.IdsDTO dto) {
-        return success(afterSaleService.changeStatus(dto));
+        List<BatchResultDTO> resultDTOS = afterSaleService.changeStatus(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -498,6 +499,16 @@ public class AfterSaleController extends BaseController {
     @GetMapping("/getDetailByPlatformCode")
     ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
         return success(afterSaleService.getDetailByPlatformCode(platformCode));
+    }
+
+    /**
+     * 获取节点配置信息
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("/getNodeList")
+    ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
+        return success(afterSaleService.getNodeList());
     }
 
 }
