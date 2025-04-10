@@ -11,7 +11,6 @@ import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -131,7 +130,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param dto
      * @return Resource
      */
-    Resource exportPdf(InvoiceInfoDTO.PagingParamDTO dto);
+    StreamingResponseBody exportPdf(InvoiceInfoDTO.PagingParamDTO dto);
     /**
      * 生成发票校验
      * @author will
