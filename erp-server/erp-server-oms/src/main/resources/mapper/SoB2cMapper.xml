@@ -105,7 +105,8 @@
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName,
-        sb2c.vat_invoice_status as vatInvoiceStatus
+        sb2c.vat_invoice_status as vatInvoiceStatus,
+        sb2c.nfe_invoice_status as nfeInvoiceStatus
     </sql>
 
     <!-- 通用查询结果列 -->
