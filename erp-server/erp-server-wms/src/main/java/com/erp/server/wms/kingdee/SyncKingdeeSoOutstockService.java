@@ -83,6 +83,25 @@ public interface SyncKingdeeSoOutstockService {
                                                   List<DictCountryEntity> countryEntityList,
                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
                                                   List<SysDepartmentEntity> deptList);
+    
+    Map<String, Object> syncNewDataToSdyFieldHandler(SoOutstockEntity entity,
+    		SoOutstockDetailEntity soOutstockDetailEntity,
+    		String operate,
+    		List<CurrencyDTO.ViewDTO> currencyList,
+    		List<ShopInfoEntity> shopInfoList,
+    		List<CustomerInfoEntity> customerInfoList,
+    		List<BaseIdDTO.CodeDTO> companyEntities,
+    		List<SkuVO> skuVOList,
+    		List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+    		List<ProductDetailEntity> parentSkuList,
+    		List<SoB2cEntity> soB2cEntities,
+    		List<SoInfoEntity> soInfoEntities,
+    		List<SoB2cReceiverEntity> soB2cReceiverEntityList,
+    		List<DictBasicEntity> dictBasicEntityList,
+    		List<DictPartitionEntity> partitionEntityList,
+    		List<DictCountryEntity> countryEntityList,
+    		List<DictGlobalAreaEntity> dictGlobalEntityList,
+    		List<SysDepartmentEntity> deptList);
 
     /**
      * 同步数帝云
