@@ -169,4 +169,6 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode);
 
     List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode);
+
+    Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto);
 }

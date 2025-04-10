@@ -96,4 +96,16 @@ public class AfterSaleFeignController extends BaseController {
         return success(afterSaleService.getNodeList());
     }
 
+
+    /**
+     * 更新客户运单号
+     * @author jack
+     * @date:  2025-04-06
+     * @return ApiResult
+     */
+    @PostMapping("/udpateTrackNo")
+    public ApiResult<Boolean> udpateTrackNo(@RequestBody @Validated AfterSaleDTO.UpdateTrackNoDTO dto) {
+        Boolean b = afterSaleService.udpateTrackNo(dto);
+        return Boolean.TRUE.equals(b) ? success(b) : failure(b);
+    }
 }
