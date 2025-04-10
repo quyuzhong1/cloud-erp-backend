@@ -291,5 +291,45 @@ public class ThridUserInfoDTO implements Serializable {
 
     }
 
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Code2SessionInfoDTO {
+
+        /**
+         * 用户登录凭证（有效期五分钟）。开发者需要在开发者服务器后台调用 code2Session，使用 code 换取 openid、unionid、session_key 等信息
+         */
+        @NotBlank(message = "jscode不能为空")
+        private String jsCode;
+
+        /**
+         * thirdUserId
+         */
+        private String thirdUserId;
+
+
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CodeToSessionResp {
+
+        private String sessionKey;
+
+        private String unionid;
+
+        private String errmsg;
+
+        private String openid;
+
+        private Integer errcode;
+    }
+
+
 
 }

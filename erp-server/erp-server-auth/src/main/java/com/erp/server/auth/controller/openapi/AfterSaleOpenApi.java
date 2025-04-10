@@ -50,6 +50,16 @@ public class AfterSaleOpenApi {
         return afterSaleFeign.addThridUser(dto);
     }
 
+    /**
+     * 新增寄修用户
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @OpenApi("code2Session")
+    public ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@Validated ThridUserInfoDTO.Code2SessionInfoDTO dto){
+        return afterSaleFeign.code2Session(dto);
+    }
+
 
     /**
      * 寄修申请-购买平台

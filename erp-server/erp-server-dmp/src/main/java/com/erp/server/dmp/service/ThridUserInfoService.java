@@ -1,8 +1,9 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.ThridUserInfoEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.ThridUserInfoDTO;
+import com.erp.model.dmp.entity.ThridUserInfoEntity;
 
 /**
  * <p>
@@ -33,4 +34,5 @@ public interface ThridUserInfoService extends SuperService<ThridUserInfoEntity> 
     Boolean update(ThridUserInfoDTO.UpdateDTO dto);
 
 
+    ThridUserInfoDTO.CodeToSessionResp code2Session(ThridUserInfoDTO.Code2SessionInfoDTO dto);
 }
