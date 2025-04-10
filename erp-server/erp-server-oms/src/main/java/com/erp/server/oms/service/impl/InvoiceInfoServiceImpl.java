@@ -851,6 +851,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             }
             viewDTO.setIsGenerateInvoiceTax(isGenerateInvoiceTax);
             viewDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
+            viewDTO.setPlatformSkuName( ObjUtil.isEmpty(listingInfoEntity) ? "" : listingInfoEntity.getPlatformSkuName());
             viewDTO.setPlatform(soB2cEntity.getDictPlatform());
             resultList.add(viewDTO);
         }
