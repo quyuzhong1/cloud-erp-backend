@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 
@@ -47,6 +48,8 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     * @return PagingVO<AfterSaleDTO.ListDTO>>
     */
     PagingVO<AfterSaleDTO.ListDTO> paging(PagingDTO<AfterSaleDTO.PagingParamDTO> pagingParamDTO);
+
+    PagingVO<DmpAfterSaleExcekDTO> exportList(PagingDTO<AfterSaleDTO.PagingParamDTO> pagingParamDTO);
 
     /**
     * 状态统计

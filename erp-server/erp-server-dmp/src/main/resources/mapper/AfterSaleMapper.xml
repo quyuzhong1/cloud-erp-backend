@@ -145,7 +145,7 @@
         select approve_status, count(id) from after_sale where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.dmp.dto.AfterSaleDTO$ListDTO">
+    <select id="listExport" resultType="com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO">
         <include refid="paging_sql"></include>
     </select>
     <select id="tabList" resultType="com.erp.model.dmp.dto.AfterSaleDTO$TabListDTO">

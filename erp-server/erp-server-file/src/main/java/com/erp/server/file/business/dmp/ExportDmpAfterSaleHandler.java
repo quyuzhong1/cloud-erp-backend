@@ -4,6 +4,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
 import com.erp.rpc.dmp.feign.ExportDmpFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -23,18 +24,18 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_DMP_AFTER_SALE;
  */
 @Component
 @Slf4j
-public class ExportDmpAfterSaleHandler extends AbstractPageFileEventHandler<AfterSaleDTO.ListDTO, AfterSaleDTO.PagingParamDTO> {
+public class ExportDmpAfterSaleHandler extends AbstractPageFileEventHandler<DmpAfterSaleExcekDTO, AfterSaleDTO.PagingParamDTO> {
 
     @Resource
     private ExportDmpFeign exportDmpFeign;
 
     @Override
-    protected PagingVO<AfterSaleDTO.ListDTO> getPageData(PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
+    protected PagingVO<DmpAfterSaleExcekDTO> getPageData(PagingDTO<AfterSaleDTO.PagingParamDTO> dto) {
         return exportDmpFeign.exportAfterSale(dto);
     }
 
     @Override
-    protected List<AfterSaleDTO.ListDTO> getData(FileTask fileTask) {
+    protected List<DmpAfterSaleExcekDTO> getData(FileTask fileTask) {
         AfterSaleDTO.PagingParamDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<AfterSaleDTO.PagingParamDTO>() {});
         return listSeqData(dto);
     }
