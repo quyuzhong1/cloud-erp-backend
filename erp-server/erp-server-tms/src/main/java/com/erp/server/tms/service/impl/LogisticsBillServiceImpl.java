@@ -1070,6 +1070,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 try {
                     labelList = service.getLabelList(labelVOArrayList);
                 } catch (IOException e) {
+                    log.error("获取物流面单异常", e);
                     throw new ServiceException("获取物流面单异常"+e.getMessage());
                 }
                 //校验是否请求成功
