@@ -98,6 +98,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpSoOutstockService dmpSoOutstockService;
 
 
 
@@ -828,6 +830,31 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         return wxMiniAppService.jsCode2SessionInfo(jsCode);
     }
 
+
+    @Override
+    public void syncWdtToAfterSale() {
+        List<AfterSaleDTO.DropDownDTO> resultList = new ArrayList<>();
+        List<AfterSaleEntity> list = lambdaQuery().eq(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                .ne(AfterSaleEntity::getRepairInvoiceCode, "").list();
+        if(CollUtil.isNotEmpty(list)){
+            List<String> repairInvoiceCodeList = list.stream().map(AfterSaleEntity::getRepairInvoiceCode).collect(Collectors.toList());
+            List<DmpSoOutstockEntity> dmpSoOutstockList = dmpSoOutstockService.lambdaQuery()
+                    .eq(DmpSoOutstockEntity::getStatus, "1")
+                    .in(DmpSoOutstockEntity::getPlatformCode, repairInvoiceCodeList).list();
+            if(CollUtil.isNotEmpty(dmpSoOutstockList)){
+                Map<String, DmpSoOutstockEntity> map = dmpSoOutstockList.stream().collect(Collectors.toMap(DmpSoOutstockEntity::getPlatformCode, t -> t, (k1, k2) -> k1));
+                for (AfterSaleEntity afterSaleEntity : list) {
+                    String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
+                    if(map.containsKey(repairInvoiceCode) && StringUtils.isNotBlank(map.get(repairInvoiceCode).getTransportNo())){
+                        //更新节点时间
+                        //更新通过，则进入下一个节点：已完成
+                        updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * 根据平台代码获取详情信息
      * 此方法首先会根据平台代码从两个不同的服务中获取数据，然后分别对获取到的数据进行处理
@@ -849,6 +876,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 返回最终的结果列表
         return resultList;
     }
+
+
+
 
     private void getWdtMappingList(String platformCode, List<AfterSaleDTO.DropDownDTO> resultList) {
         // 从dmpSoOriginalInfoService服务中获取详情信息列表
