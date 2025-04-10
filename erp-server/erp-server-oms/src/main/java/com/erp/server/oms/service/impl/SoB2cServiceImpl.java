@@ -9761,7 +9761,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 sb.append(name);
                 try {
                     //排序
-//                    errorList.sort(Comparator.comparing(B2CSoImportExcelDTO::getNo));
+                    errorList.sort(Comparator.comparingInt(dto -> Integer.parseInt(dto.getNo())));
                     new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
                 } catch (IOException e) {
                     throw new ServiceException(ApiError.ERROR_95125);
@@ -9839,8 +9839,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
         Map<String, SkuMappingDTO.ListSkuDTO> skuNoMap = new HashMap<>();
+        Map<String, SkuVO> skuVoNoMap = new HashMap<>();
         if (CollUtil.isNotEmpty(skuMappingList)){
             skuNoMap = skuMappingList.stream().collect(Collectors.toMap(SkuMappingDTO.ListSkuDTO::getProductSkuNo, v -> v, (oldValue, newValue) -> oldValue));
+        }
+        List<String> skuNoList = successList.stream().map(B2CSoImportExcelDTO::getSkuNo).collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
+        if (CollUtil.isNotEmpty(skuVOS)){
+            skuVoNoMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, v -> v, (oldValue, newValue) -> oldValue));
         }
 
         LocalDateTime nowTime = LocalDateTime.now();
@@ -9848,6 +9854,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
         //校验整数或者小数正则
         String regex = "^[0-9]+(\\.[0-9]+)?$";
+
+        //订单类型
+        Map<String, String> orderSubTypeMap = dictBasicService.getByKey("orderSubType").stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getName, DictBasicDTO.ViewDTO::getValue, (oldValue, newValue) -> oldValue));
+
 
         // 根据序号分组
         Map<String, List<B2CSoImportExcelDTO>> groupedByNo = successList.stream().collect(Collectors.groupingBy(B2CSoImportExcelDTO::getNo));
@@ -9938,14 +9948,19 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
 
             //订单类型
-            soB2cEntity.setTransactionSubType(OrderSubTypeEnum.getName(mainInfo.getTransactionSubType()));
+            if(orderSubTypeMap.containsKey(mainInfo.getTransactionSubType())){
+                soB2cEntity.setTransactionSubType(orderSubTypeMap.get(mainInfo.getTransactionSubType()));
+            }else {
+                errorMsgList.add("订单分类未找到");
+            }
+
             //订单备注
             soB2cEntity.setRemark(mainInfo.getRemark());
 
             //买家
             SoB2cReceiverDTO.AddDTO receiverDTO = new SoB2cReceiverDTO.AddDTO();
             BeanMapper.copy(mainInfo, receiverDTO);
-            if(StringUtils.isNotBlank(mainInfo.getCustomerName()) && Objects.nonNull(b2cCustomerMap.get(mainInfo.getCustomerName()))){
+            if(StringUtils.isNotBlank(mainInfo.getCustomerName()) && b2cCustomerMap.containsKey(mainInfo.getCustomerName())) {
                 CustomerB2CDTO.DropListDTO customerDTO = b2cCustomerMap.get(mainInfo.getCustomerName());
                 receiverDTO.setCustomerId(customerDTO.getCustomerId());
             }
@@ -9998,7 +10013,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //实际运费
             if(StringUtils.isNotBlank(mainInfo.getActualShippingCost())){
                 if(mainInfo.getActualShippingCost().matches(regex)){
-                    b2cLogisitics.setAccessoriesCost(MathUtil.getBigDecimalByStr(mainInfo.getActualShippingCost()));
+                    b2cLogisitics.setActualShippingCost(MathUtil.getBigDecimalByStr(mainInfo.getActualShippingCost()));
                 }else {
                     errorMsgList.add("实际运费包含非数字字符");
                 }
@@ -10018,7 +10033,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 SoB2cDetailEntity detailEntity = new SoB2cDetailEntity();
                 String skuNo = detail.getSkuNo();
                 SkuMappingDTO.ListSkuDTO skuVO = skuNoMap.get(skuNo);
-                if(Objects.isNull(skuVO)){
+                if(Objects.isNull(skuVO) || !skuVoNoMap.containsKey(skuNo)){
                     msgList.add("sku未找到");
                 }else {
                     detailEntity.setSkuId(skuVO.getProductSkuId());
@@ -10027,12 +10042,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     if(mainInfo.getQty().matches("\\d+")){
                         detailEntity.setQty(MathUtil.valueOfInteger(detail.getQty()));
                     }else {
-                        errorMsgList.add("数量包含非数字字符");
+                        msgList.add("数量包含非数字字符");
                     }
                     if(mainInfo.getDetailAmount().matches(regex)){
-                        detailEntity.setAmount(MathUtil.getBigDecimalByStr(detail.getDetailAmount()));
+                        BigDecimal price = MathUtil.getBigDecimalByStr(detail.getDetailAmount());
+                        detailEntity.setPrice(price);
+                        BigDecimal qty = MathUtil.getBigDecimalByStr(detail.getQty());
+                        detailEntity.setAmount(price.multiply(qty));
                     }else {
-                        errorMsgList.add("真实售价包含非数字字符");
+                        msgList.add("真实售价包含非数字字符");
                     }
                     detailEntity.setCurrency(currency);
                     detailEntity.setExchangeRate(soB2cEntity.getExchangeRate());
@@ -10072,20 +10090,29 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     soB2cLogisticsService.add(b2cLogisitics, soB2cEntity.getId());
                     if(StringUtils.isBlank(receiverDTO.getCustomerId())){
                         //新增B2C客户
-                        SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
-                        BeanMapper.copyNonNull(mainInfo, addDTO);
-                        addDTO.setReceiverDTO(receiverDTO);
-                        CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO, soB2cEntity.getId());
-                        String customerId = customerB2cService.add(dto);
+//                        SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
+//                        BeanMapper.copyNonNull(mainInfo, addDTO);
+//                        addDTO.setReceiverDTO(receiverDTO);
+//                        CustomerB2CDTO.AddDTO dto = buildB2cCustomerAddDTO(addDTO, soB2cEntity.getId());
+//                        dto.setName(mainInfo.getCustomerName());
+//                        String customerId = customerB2cService.add(dto);
+                        CustomerB2cEntity dto = new CustomerB2cEntity();
+                        String customerId = IdWorker.getIdStr();
+                        dto.setId(customerId);
+                        dto.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_CUSTC));
+                        dto.setPlatformType(soB2cEntity.getDictPlatform());
+                        dto.setName(mainInfo.getCustomerName());
+                        dto.setCountryId(receiverDTO.getCountry());
+                        dto.setCurrency(soB2cEntity.getCurrency());
+                        dto.setSourceId(soB2cEntity.getId());
+                        dto.setSourceType("soB2c");
+                        dto.setApproveStatus(ApproveStatusEnum.APPROVE);
+                        customerB2cService.save(dto);
                         receiverDTO.setCustomerId(customerId);
                     }
                     //新增买家信息
                     soB2cReceiverService.add(receiverDTO, soB2cEntity);
                     //新增明细
-//                    SoB2cDTO.AddDTO addDTO = new SoB2cDTO.AddDTO();
-//                    BeanMapper.copy(soB2cEntity,addDTO);
-//                    addDTO.setDetailList(addDTOS);
-//                    soB2cDetailService.add(addDTO, soB2cEntity.getId());
                     soB2cDetailService.saveBatch(detailList);
                     //新增财务信息
                     addSoB2cFinance(soB2cEntity);
