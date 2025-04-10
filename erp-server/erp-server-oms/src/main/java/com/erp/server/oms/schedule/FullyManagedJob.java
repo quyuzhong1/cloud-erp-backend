@@ -68,7 +68,13 @@ public class FullyManagedJob {
             String shopId = entry.getKey();
             List<SoB2cDTO.DeliveryDTO> deliveryDTOList = entry.getValue();
             List<String> deliveryNoList = deliveryDTOList.stream().map(SoB2cDTO.DeliveryDTO::getTransportNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-            List<FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO> deliveryOrdersDTOS = tikTokFullService.listDeliveryOrderByParam(shopId, deliveryNoList);
+            List<FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO> deliveryOrdersDTOS;
+            try {
+                deliveryOrdersDTOS = tikTokFullService.listDeliveryOrderByParam(shopId, deliveryNoList);
+            }catch (Exception e){
+                XxlJobHelper.log("查询送货单信息执行完成 店铺：" + shopId + "查询失败" + e.getMessage());
+                continue;
+            }
             if (CollUtil.isEmpty(deliveryOrdersDTOS)) {
                 XxlJobHelper.log("查询送货单信息执行完成 店铺：" + shopId + "没有需要查询的订单");
                 continue;
