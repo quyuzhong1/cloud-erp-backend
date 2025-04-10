@@ -108,4 +108,9 @@ public class AfterSaleFeignController extends BaseController {
         Boolean b = afterSaleService.udpateTrackNo(dto);
         return Boolean.TRUE.equals(b) ? success(b) : failure(b);
     }
+
+    @PostMapping("/code2Session")
+    ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(ThridUserInfoDTO.Code2SessionInfoDTO dto){
+        return success(thridUserInfoService.code2Session(dto));
+    }
 }

@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -53,19 +52,36 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
         }
         ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
         BeanMapper.copy(addDTO.getUserInfo(), thridUserInfoEntity);
-        // 调用微信接口获取用户信息
-        WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(jsCode);
-        if(Objects.isNull(wxJscodeToSessionResponse)){
-            thridUserInfoEntity.setOpenid(wxJscodeToSessionResponse.getOpenid());
-            thridUserInfoEntity.setUnionid(wxJscodeToSessionResponse.getUnionid());
-            thridUserInfoEntity.setType("wx");
-        }
+//        // 调用微信接口获取用户信息
+//        WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(jsCode);
+//        if(Objects.isNull(wxJscodeToSessionResponse)){
+//            thridUserInfoEntity.setOpenid(wxJscodeToSessionResponse.getOpenid());
+//            thridUserInfoEntity.setUnionid(wxJscodeToSessionResponse.getUnionid());
+//            thridUserInfoEntity.setType("wx");
+//        }
 
         boolean save = super.save(thridUserInfoEntity);
         if(!save) {
             throw new ServiceException("用户单保存失败");
         }
         return new BaseResultDTO.AddDTO(thridUserInfoEntity.getId(), thridUserInfoEntity.getId());
+    }
+
+
+    @Override
+    public ThridUserInfoDTO.CodeToSessionResp code2Session(ThridUserInfoDTO.Code2SessionInfoDTO dto) {
+        ThridUserInfoDTO.CodeToSessionResp codeToSessionResp = new ThridUserInfoDTO.CodeToSessionResp();
+        WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(dto.getJsCode());
+        BeanMapper.copy(wxJscodeToSessionResponse, codeToSessionResp);
+
+        if(StringUtils.isBlank(dto.getThirdUserId())){
+            lambdaUpdate().eq(ThridUserInfoEntity::getId, dto.getThirdUserId())
+                    .set(ThridUserInfoEntity::getOpenid, wxJscodeToSessionResponse.getOpenid())
+                    .set(ThridUserInfoEntity::getUnionid, wxJscodeToSessionResponse.getUnionid())
+                   .set(ThridUserInfoEntity::getType, "wx")
+                   .update();
+        }
+        return codeToSessionResp;
     }
 
     /**
