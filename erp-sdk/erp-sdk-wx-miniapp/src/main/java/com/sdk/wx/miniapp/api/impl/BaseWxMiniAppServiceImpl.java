@@ -9,11 +9,22 @@ import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import com.sdk.wx.miniapp.response.WxTokenResponse;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.ParseException;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpUriRequest;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,7 +74,7 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
     paramMap.put("secret", appsecret);
     paramMap.put("js_code", jsCode);
     paramMap.put("grant_type", grantType);
-    String bodyStr = sendGet(url, paramMap);
+    String bodyStr = sendGet2(url);
     return JSONUtil.toBean(bodyStr, WxJscodeToSessionResponse.class);
 
   }
@@ -82,6 +93,57 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
       log.error(e.getMessage());
     }
     return bodyStr;
+  }
+
+  private static String sendGet2(String url){
+    log.info("baseUrl：{}", url);
+
+    CloseableHttpClient httpClient = HttpClients.createDefault();
+    HttpGet get = new HttpGet(url);
+    String bodyStr = "";
+    bodyStr = invoke(httpClient, (HttpUriRequest)get);
+    try {
+      httpClient.close();
+    } catch (IOException e) {
+    }
+    return bodyStr;
+  }
+
+  public static String invoke(CloseableHttpClient httpclient, HttpUriRequest httpost) {
+    HttpResponse response = sendRequest(httpclient, httpost);
+    if(response == null){
+      return "";
+    }
+    String body = "";
+    int statusCode = response.getStatusLine().getStatusCode();
+    if (statusCode == 200)
+      body = parseResponse(response);
+    return body;
+  }
+
+  private static HttpResponse sendRequest(CloseableHttpClient httpclient, HttpUriRequest httpost) {
+    CloseableHttpResponse closeableHttpResponse = null;
+    try {
+      closeableHttpResponse = httpclient.execute(httpost);
+    } catch (ClientProtocolException e) {
+      log.error("HttpClientService sendRequest error", (Throwable)e);
+    } catch (IOException e) {
+      log.error("HttpClientService sendRequest error", e);
+    }
+    return (HttpResponse)closeableHttpResponse;
+  }
+
+  private static String parseResponse(HttpResponse response) {
+    HttpEntity entity = response.getEntity();
+    String body = "";
+    try {
+      if (entity != null)
+        body = EntityUtils.toString(entity);
+    } catch (ParseException e) {
+    } catch (IOException e) {
+      log.error("HttpClientService paseResponse error", e);
+    }
+    return body;
   }
 
 }
