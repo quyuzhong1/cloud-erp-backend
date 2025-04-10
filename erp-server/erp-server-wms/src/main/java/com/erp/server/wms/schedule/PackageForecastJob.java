@@ -127,11 +127,10 @@ public class PackageForecastJob {
                     TikTokFullyLogisticResp tikTokFullyLogisticResp = tikTokFullService.queryLogistics(shopId,handoverNos);
                     List<TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO> logisticsOrders = tikTokFullyLogisticResp.getData().getLogisticsOrders();
                     for (TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO logisticsOrder : logisticsOrders) {
-                        PackageForecastEntity packageForecast = tiktokFullyList.stream()
+                        List<PackageForecastEntity> packageForecast = tiktokFullyList.stream()
                                 .filter(packageForecastEntity -> packageForecastEntity.getHandoverNo().equals(logisticsOrder.getCode()))
-                                .findFirst()
-                                .orElse(null);
-                        if(Objects.isNull(packageForecast)){
+                                .collect(Collectors.toList());
+                        if(CollectionUtils.isEmpty(packageForecast)){
                             continue;
                         }
                         //返回的运单号可能有多个，拼接起来
@@ -143,10 +142,12 @@ public class PackageForecastJob {
                                 .map(TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO.LogisticsSubOrdersDTO::getCode)
                                 .collect(Collectors.toList());
                         String subLogisticCode = String.join(",", subLogisticCodeList);
-                        packageForecast.setPlatformPackageNo(subLogisticCode);
-                        packageForecast.setTransportNo(transportNo);
-                        packageForecast.setHandoverStatus(logisticsOrder.getStatus());
-                        updateList.add(packageForecast);
+                        for (PackageForecastEntity entity : packageForecast) {
+                            entity.setPlatformPackageNo(subLogisticCode);
+                            entity.setTransportNo(transportNo);
+                            entity.setHandoverStatus(logisticsOrder.getStatus());
+                        }
+                        updateList.addAll(packageForecast);
                     }
                 }catch (Exception e){
                     log.error("查询tiktok全托管异常 : ",e);
