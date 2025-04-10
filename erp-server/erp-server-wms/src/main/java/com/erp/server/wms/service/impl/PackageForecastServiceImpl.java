@@ -419,6 +419,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        if(PackageUploadStatusEnum.CANCEL.getCode().equals(entity.getUploadStatus())){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "已取消上传");
+        }
         if (!successCode.equals(entity.getUploadStatus())) {
             throw new ServiceException("仅上传成功可操作");
         }
@@ -453,7 +456,11 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         }
 
     }
-    private void tikTokFullyCancel(PackageForecastEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public void tikTokFullyCancel(PackageForecastEntity entity) {
+        if(StringUtils.isBlank(entity.getHandoverNo())){
+            return;
+        }
         List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
@@ -468,6 +475,21 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
         tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
+        //将相同组包号的数据都取消
+        List<PackageForecastEntity> sameCodeList = lambdaQuery().eq(PackageForecastEntity::getHandoverNo, entity.getHandoverNo())
+                .ne(PackageForecastEntity::getId, entity.getId())
+                .list();
+        if(CollectionUtils.isNotEmpty(sameCodeList)){
+            for (PackageForecastEntity packageForecastEntity : sameCodeList) {
+                packageForecastEntity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
+                packageForecastEntity.setHandoverStatus("");
+                packageForecastEntity.setTransportNo("");
+                packageForecastEntity.setHandoverNo("");
+                packageForecastEntity.setRemark("");
+                packageForecastEntity.setPlatformPackageNo("");
+            }
+            this.updateBatchById(sameCodeList);
+        }
     }
 
     private void tikTokCancel(PackageForecastEntity entity) {
