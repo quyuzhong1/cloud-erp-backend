@@ -69,6 +69,11 @@ public class AfterSaleDTO implements Serializable {
         */
         private Map<String,String> sqlMap;
 
+         /**
+          * 主键id
+          */
+         private List<String> ids;
+
      }
     /**
     * 分页列表
