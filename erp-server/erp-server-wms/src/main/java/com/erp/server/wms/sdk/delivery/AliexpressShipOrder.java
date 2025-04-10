@@ -189,15 +189,15 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         List<SoB2cDetailEntity> allSplitSoB2cDetail = splitCombinationDTO.getSoB2cDetailEntityList();
         String sendType = "all";
         if(CollectionUtils.isEmpty(allSplitSoB2cDetail) || CollectionUtils.isEmpty(allSplitSoB2c)){
-            sendType = "all";
+            return sendType;
         }
         SoB2cEntity currentEntity = allSplitSoB2c.stream().filter(e -> e.getId().equals(mainEntity.getId())).findFirst().orElse(null);
         if(Objects.isNull(currentEntity)){
-            sendType = "all";
+            return sendType;
         }else{
             List<SoB2cEntity> otherSplitSoB2c = allSplitSoB2c.stream().filter(e -> !e.getId().equals(mainEntity.getId())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(otherSplitSoB2c)) {
-                sendType = "all";
+                return sendType;
             }
             List<String> otherMainIds = otherSplitSoB2c.stream().map(BaseEntity::getId).collect(Collectors.toList());
             List<SoB2cDetailEntity> otherSplitSoB2cDetail = allSplitSoB2cDetail.stream().filter(e -> otherMainIds.contains(e.getMainId())).collect(Collectors.toList());
