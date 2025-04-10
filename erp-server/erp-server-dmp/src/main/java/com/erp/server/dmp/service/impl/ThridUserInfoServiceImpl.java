@@ -69,7 +69,7 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
 
 
     @Override
-    public ThridUserInfoDTO.CodeToSessionResp code2Session(ThridUserInfoDTO.Code2SessionInfoDTO dto) {
+    public ThridUserInfoDTO.CodeToSessionResp code2Session(ThridUserInfoDTO.CodeToSessionDTO dto) {
         ThridUserInfoDTO.CodeToSessionResp codeToSessionResp = new ThridUserInfoDTO.CodeToSessionResp();
         WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(dto.getJsCode());
         BeanMapper.copy(wxJscodeToSessionResponse, codeToSessionResp);

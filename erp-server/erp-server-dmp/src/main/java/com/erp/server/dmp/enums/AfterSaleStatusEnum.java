@@ -17,9 +17,9 @@ public enum AfterSaleStatusEnum implements EnumMessage {
     TO_BE_RETURNED("toBeReturned","待寄回","客户寄件"),
     AFTER_SALES_RECEIVED("afterSalesReceived","售后签收","售后签收"),
 //    INSPECTION("inspection","检测/维修中","售后检测/维修作业"),
-    REPAIR("repair","检测/维修中","售后检测/维修作业"),
-    TO_BE_SHIPPED("toBeShipped","待寄出","售后发货"),
-    FINISHED("finished","已完成","已完成"),
+    REPAIR("repair","检测/维修中","检测/维修中"),
+    TO_BE_SHIPPED("toBeShipped","待寄出","已完成"),
+//    FINISHED("finished","已完成","已完成"),
     TERMINATED("terminated","已终止","已终止")
     ;
 

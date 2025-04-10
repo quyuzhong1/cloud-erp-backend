@@ -50,7 +50,7 @@ public class AfterSaleFeignController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto) {
-        return success(afterSaleService.add(dto));
+        return success(afterSaleService.addAndSubmit(dto));
     }
 
     /**
@@ -110,7 +110,7 @@ public class AfterSaleFeignController extends BaseController {
     }
 
     @PostMapping("/code2Session")
-    ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(ThridUserInfoDTO.Code2SessionInfoDTO dto){
+    ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@RequestBody ThridUserInfoDTO.CodeToSessionDTO dto){
         return success(thridUserInfoService.code2Session(dto));
     }
 }
