@@ -313,6 +313,14 @@ public class SoB2cDTO implements Serializable {
         private Integer orderQty;
 
         /**
+         * 发票状态，SoB2cNfeStatusEnum枚举,pending待开票,invoicing开票中,invoiceFailure开票失败,notNeedInvoice无需开票,waitUpload待上传,uploadFailure上传失败,uploadSuccess已上传notNeedUpload无需上传
+         */
+        private String nfeInvoiceStatus;
+        /**
+         * nfe发票状态名称
+         */
+        private String nfeInvoiceStatusName;
+        /**
          * 单据编码
          */
         private String code;
