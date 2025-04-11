@@ -132,6 +132,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             viewShopDTO.setId(item.getId());
             viewShopDTO.setName(item.getDictPlatform());
             viewShopDTO.setValue(item.getName());
+            viewShopDTO.setDisabled(item.getDisabled());
             viewShopDTOS.add(viewShopDTO);
         });
         return viewShopDTOS;
