@@ -19,10 +19,10 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.AttachmentDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -97,6 +97,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private SkuMappingFeign skuMappingFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpSoOutstockService dmpSoOutstockService;
 
 
 
@@ -133,23 +135,26 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), "新增操作");
         //新增明细
         List<AfterSaleDetailEntity> detailList = addDTO.getDetailList();
-        List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-        List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
-        Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-        detailList.forEach(detail -> {
-            detail.setMainId(afterSaleEntity.getId());
-            ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-            detail.setSkuNo(productDetail.getSkuNo());
-            detail.setProdcutName(productDetail.getName());
-            if(downDTOMap.containsKey(detail.getSkuId())){
-                AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getSkuQty());
-            }
-        });
-        afterSaleDetailService.saveBatch(detailList);
+        if(CollUtil.isNotEmpty(detailList)){
+            List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+            List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
+            Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+            detailList.forEach(detail -> {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                detail.setSkuNo(productDetail.getSkuNo());
+                detail.setProdcutName(productDetail.getName());
+                if(downDTOMap.containsKey(detail.getSkuId())){
+                    AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                    detail.setPrice(downDTO.getPrice());
+                    detail.setSkuQty(downDTO.getSkuQty());
+                }
+            });
+            afterSaleDetailService.saveBatch(detailList);
+        }
+
 
         //新增维修记录
         List<AfterSaleProgressEntity> progressList = new ArrayList<>();
@@ -231,26 +236,28 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         //新增明细
         List<AfterSaleDetailEntity> detailList = updateDTO.getDetailList();
-        List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-        List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
-        Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-        detailList.forEach(detail -> {
-            detail.setMainId(afterSaleEntity.getId());
-            ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-            detail.setSkuNo(productDetail.getSkuNo());
-            detail.setProdcutName(productDetail.getName());
-            if(downDTOMap.containsKey(detail.getSkuId())){
-                AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getSkuQty());
-            }
-        });
-        // 删除明细数据
-        List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-        afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
-        afterSaleDetailService.saveOrUpdateBatch(detailList);
+        if(CollUtil.isNotEmpty(detailList)){
+            List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+            List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
+            Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+            detailList.forEach(detail -> {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                detail.setSkuNo(productDetail.getSkuNo());
+                detail.setProdcutName(productDetail.getName());
+                if(downDTOMap.containsKey(detail.getSkuId())){
+                    AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                    detail.setPrice(downDTO.getPrice());
+                    detail.setSkuQty(downDTO.getSkuQty());
+                }
+            });
+            // 删除明细数据
+            List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+            afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
+            afterSaleDetailService.saveOrUpdateBatch(detailList);
+        }
 
         // 删除明细数据
         attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
@@ -299,6 +306,24 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     @Override
+    public PagingVO<DmpAfterSaleExcekDTO> exportList(PagingDTO<AfterSaleDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DmpAfterSaleExcekDTO> pageData = this.baseMapper.listExport(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 属性赋值
+        for(DmpAfterSaleExcekDTO data : pageData.getRecords()) {
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            //单据状态
+            data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
+        }
+        return new PagingVO(pageData);
+    }
+
+    @Override
     public List<AfterSaleDTO.TabListDTO> tabList(PermissionsDTO param) {
         AfterSaleDTO.PagingParamDTO searchParam = new AfterSaleDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
@@ -335,10 +360,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 //        } catch (Exception e) {
 //            throw new ServiceException(ApiError.ERROR_1015);
 //        }
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        StringBuilder builder = new StringBuilder();
-        builder.append("售后申请导出").append(date);
-        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_DMP_AFTER_SALE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("售后申请导出", EXPORT_DMP_AFTER_SALE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -804,6 +826,31 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         return wxMiniAppService.jsCode2SessionInfo(jsCode);
     }
 
+
+    @Override
+    public void syncWdtToAfterSale() {
+        List<AfterSaleDTO.DropDownDTO> resultList = new ArrayList<>();
+        List<AfterSaleEntity> list = lambdaQuery().eq(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                .ne(AfterSaleEntity::getRepairInvoiceCode, "").list();
+        if(CollUtil.isNotEmpty(list)){
+            List<String> repairInvoiceCodeList = list.stream().map(AfterSaleEntity::getRepairInvoiceCode).collect(Collectors.toList());
+            List<DmpSoOutstockEntity> dmpSoOutstockList = dmpSoOutstockService.lambdaQuery()
+                    .eq(DmpSoOutstockEntity::getStatus, "1")
+                    .in(DmpSoOutstockEntity::getPlatformCode, repairInvoiceCodeList).list();
+            if(CollUtil.isNotEmpty(dmpSoOutstockList)){
+                Map<String, DmpSoOutstockEntity> map = dmpSoOutstockList.stream().collect(Collectors.toMap(DmpSoOutstockEntity::getPlatformCode, t -> t, (k1, k2) -> k1));
+                for (AfterSaleEntity afterSaleEntity : list) {
+                    String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
+                    if(map.containsKey(repairInvoiceCode) && StringUtils.isNotBlank(map.get(repairInvoiceCode).getTransportNo())){
+                        //更新节点时间
+                        //更新通过，则进入下一个节点：已完成
+                        updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * 根据平台代码获取详情信息
      * 此方法首先会根据平台代码从两个不同的服务中获取数据，然后分别对获取到的数据进行处理
@@ -825,6 +872,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 返回最终的结果列表
         return resultList;
     }
+
+
+
 
     private void getWdtMappingList(String platformCode, List<AfterSaleDTO.DropDownDTO> resultList) {
         // 从dmpSoOriginalInfoService服务中获取详情信息列表

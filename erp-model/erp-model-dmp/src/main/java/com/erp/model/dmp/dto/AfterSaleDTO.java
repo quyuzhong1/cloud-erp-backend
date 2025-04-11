@@ -544,7 +544,6 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 明细
          */
-        @NotEmpty(message = "明细不能为空")
         private List<AfterSaleDetailEntity> detailList;
     }
 

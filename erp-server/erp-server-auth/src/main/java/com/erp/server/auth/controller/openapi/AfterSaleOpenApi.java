@@ -9,8 +9,6 @@ import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import com.erp.rpc.dmp.feign.AfterSaleFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.server.auth.config.OpenApi;
-import org.springframework.validation.annotation.Validated;
-
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
@@ -46,7 +44,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("addThridUser")
-    public ApiResult<BaseResultDTO.AddDTO> addThridUser(@Validated ThridUserInfoDTO.AddDTO dto){
+    public ApiResult<BaseResultDTO.AddDTO> addThridUser(@Valid ThridUserInfoDTO.AddDTO dto){
         return afterSaleFeign.addThridUser(dto);
     }
 
@@ -56,7 +54,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("code2Session")
-    public ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@Validated ThridUserInfoDTO.CodeToSessionDTO dto){
+    public ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@Valid ThridUserInfoDTO.CodeToSessionDTO dto){
         return afterSaleFeign.code2Session(dto);
     }
 
@@ -78,7 +76,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("add")
-    public ApiResult<BaseResultDTO.AddDTO> add( @Validated AfterSaleDTO.AddDTO dto){
+    public ApiResult<BaseResultDTO.AddDTO> add( @Valid AfterSaleDTO.AddDTO dto){
         return afterSaleFeign.add(dto);
     }
 
@@ -98,7 +96,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("getRepairHistory")
-    public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory( @Validated AfterSaleDTO.ThridUserDTO dto){
+    public ApiResult<List<AfterSaleProgressDTO.RepairHistoryListDTO>> getRepairHistory( @Valid AfterSaleDTO.ThridUserDTO dto){
         return afterSaleFeign.getRepairHistory(dto);
     }
 
@@ -120,7 +118,7 @@ public class AfterSaleOpenApi {
      * @return ApiResult
      */
     @OpenApi("udpateTrackNo")
-    ApiResult<Boolean> udpateTrackNo(@Validated AfterSaleDTO.UpdateTrackNoDTO dto){
+    ApiResult<Boolean> udpateTrackNo(@Valid AfterSaleDTO.UpdateTrackNoDTO dto){
         return afterSaleFeign.udpateTrackNo(dto);
     }
 
