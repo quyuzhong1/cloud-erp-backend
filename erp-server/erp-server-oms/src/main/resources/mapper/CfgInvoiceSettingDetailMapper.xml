@@ -68,8 +68,7 @@
             cisd.tax_type AS taxType,
             cisd.invoice_node AS invoiceNode,
             cisd.is_auto_upload AS isAutoUpload,
-            si.dict_platform AS platformName,
-            si.name AS platformValue
+            cisd.dict_platform AS dictPlatform
         FROM
             cfg_invoice_setting_detail cisd
                 LEFT JOIN

@@ -11,7 +11,6 @@ import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import javax.validation.Valid;
 import java.util.List;
 
 /**
@@ -106,7 +105,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param dto
      * @return BatchResultDTO
      */
-    BatchResultDTO updateCce(InvoiceInfoDTO.@Valid UpdateCceDTO dto);
+    BatchResultDTO updateCce(InvoiceInfoDTO.UpdateCceDTO dto);
     /**
      * 开局Cce数据回显
      * @author will
@@ -148,4 +147,14 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return StreamingResponseBody
      */
     StreamingResponseBody downloadZip (List<InvoiceInfoDTO.ExportAttachDTO> exportAttachList);
+
+    /**
+     *  删除开票失败的数据
+     * @author will
+     * @date 2025/4/10 19:15
+     * @param soId
+     * @param invoiceTypeList
+     * @return void
+     */
+    void removeFailedBySoId (String soId,List<String> invoiceTypeList);
 }
