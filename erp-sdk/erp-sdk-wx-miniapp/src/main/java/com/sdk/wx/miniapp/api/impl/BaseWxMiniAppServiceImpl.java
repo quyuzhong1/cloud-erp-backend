@@ -5,6 +5,7 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wx.miniapp.api.WxMiniAppService;
 import com.sdk.wx.miniapp.constants.WxConstants;
+import com.sdk.wx.miniapp.request.SubscribeMsgRequest;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import com.sdk.wx.miniapp.response.WxTokenResponse;
 import jodd.util.StringUtil;
@@ -41,7 +42,7 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
       accessToken = String.valueOf(redisUtil.get(key));
     } else {
       String url = String.format(WxConstants.BASE_URL + WxConstants.GET_ACCESS_TOKEN, appId, appsecret);
-      String bodyStr = sendGet(url, new HashMap<>());
+      String bodyStr = sendGet(url);
       WxTokenResponse resultMap = JSONUtil.toBean(bodyStr, WxTokenResponse.class);
       // 调用微信接口并缓存结果
       redisUtil.set(key, resultMap.getAccessToken(), 7000);
@@ -58,17 +59,42 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
     }
 
     String url = String.format(WxConstants.BASE_URL + WxConstants.JSCODE_TO_SESSION, appId, appsecret,jsCode);
-    Map<String, Object> paramMap = new HashMap<>();
-//    paramMap.put("appid", appId);
-//    paramMap.put("secret", appsecret);
-//    paramMap.put("js_code", jsCode);
-//    paramMap.put("grant_type", grantType);
-    String bodyStr = sendGet(url,paramMap );
+    String bodyStr = sendGet(url );
     return JSONUtil.toBean(bodyStr, WxJscodeToSessionResponse.class);
 
   }
 
-  private static String sendGet(String url, Map<String, Object> paramMap){
+
+  @Override
+  public  String sendSubscribeMsg(SubscribeMsgRequest request) {
+    //获取access_token
+    String accessToken = getAccessToken();
+    if (accessToken == null || accessToken.isEmpty()) {
+      log.error("Access token is null or empty.");
+      throw new RuntimeException("Failed to obtain access token.");
+    }
+    String url = String.format(WxConstants.BASE_URL + WxConstants.SEND_SUBSCRIBE_MESSAGE,accessToken);
+    Map<String, String> headers = new HashMap();
+    headers.put("Content-Type", "application/json");
+    headers.put("Accept", "application/json");
+    log.info("baseUrl：{}", url);
+    // 将请求对象转换为 JSON 字符串
+    String jsonStr = JSONUtil.toJsonStr(request);
+    if (jsonStr == null || jsonStr.isEmpty()) {
+      log.error("Request object cannot be serialized to JSON.");
+      throw new RuntimeException("Failed to serialize request object.");
+    }
+    String bodyStr = OkHttpUtils.doPostJson(url, jsonStr, headers);
+    // 验证返回值
+    if (bodyStr == null || bodyStr.isEmpty()) {
+      log.error("Response body is null or empty.");
+      throw new RuntimeException("Empty response received from server.");
+    }
+    log.info("bodyStr：{}", bodyStr);
+    return  bodyStr;
+  }
+
+  private static String sendGet(String url){
     log.info("baseUrl：{}", url);
 
     String bodyStr = "";
@@ -76,7 +102,7 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
     headers.put("Content-Type", "application/json");
     headers.put("Connection", "keep-alive");
     try {
-      bodyStr = OkHttpUtils.doGet(url, paramMap, headers);
+      bodyStr = OkHttpUtils.doGet(url, new HashMap<String, Object>(), headers);
       log.info("bodyStr：{}", bodyStr);
     } catch (Exception e) {
       log.error(e.getMessage());
