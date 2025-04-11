@@ -1475,5 +1475,11 @@ SELECT DISTINCT so.* FROM so_b2c so
                 #{item}
             </foreach>
         </if>
+        <if test="codeList!= null and codeList.size > 0">
+            and sb2c.code in
+            <foreach collection="codeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
     </select>
 </mapper>
