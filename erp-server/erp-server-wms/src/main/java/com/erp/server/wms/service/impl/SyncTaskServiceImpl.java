@@ -1181,25 +1181,47 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.syncDataToSdyFieldHandler(entity,
-                    soOutstockDetailEntity,
-                    syncParamDetailDTO.getSyncOperate(),
-                    currencyList,
-                    shopInfoList,
-                    customerInfoList,
-                    companyEntities,
-                    skuVOList,
-                    bomChildrenSkuDTOS,
-                    parentSkuList,
-                    soB2cEntities,
-                    soInfoEntities,
-                    soB2cReceiverEntityList,
-                    dictBasicEntityList,
-                    partitionEntityList,
-                    countryEntityList,
-                    dictGlobalEntityList,
-                    deptList
-            ));
+            if(syncParamDetailDTO.isNewQuerySync()) {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.syncNewDataToSdyFieldHandler(entity,
+                        soOutstockDetailEntity,
+                        syncParamDetailDTO.getSyncOperate(),
+                        currencyList,
+                        shopInfoList,
+                        customerInfoList,
+                        companyEntities,
+                        skuVOList,
+                        bomChildrenSkuDTOS,
+                        parentSkuList,
+                        soB2cEntities,
+                        soInfoEntities,
+                        soB2cReceiverEntityList,
+                        dictBasicEntityList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList
+                ));
+            }else {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSoOutstockService.syncDataToSdyFieldHandler(entity,
+                        soOutstockDetailEntity,
+                        syncParamDetailDTO.getSyncOperate(),
+                        currencyList,
+                        shopInfoList,
+                        customerInfoList,
+                        companyEntities,
+                        skuVOList,
+                        bomChildrenSkuDTOS,
+                        parentSkuList,
+                        soB2cEntities,
+                        soInfoEntities,
+                        soB2cReceiverEntityList,
+                        dictBasicEntityList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList
+                ));
+            }
         }
         return resultList;
     }
