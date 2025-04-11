@@ -5,7 +5,6 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wx.miniapp.api.WxMiniAppService;
 import com.sdk.wx.miniapp.constants.WxConstants;
-import com.sdk.wx.miniapp.request.SubscribeMsgRequest;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import com.sdk.wx.miniapp.response.WxTokenResponse;
 import jodd.util.StringUtil;
@@ -66,7 +65,7 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
 
 
   @Override
-  public  String sendSubscribeMsg(SubscribeMsgRequest request) {
+  public  String sendSubscribeMsg(String jsonStr) {
     //获取access_token
     String accessToken = getAccessToken();
     if (accessToken == null || accessToken.isEmpty()) {
@@ -78,12 +77,6 @@ public class BaseWxMiniAppServiceImpl implements WxMiniAppService {
     headers.put("Content-Type", "application/json");
     headers.put("Accept", "application/json");
     log.info("baseUrl：{}", url);
-    // 将请求对象转换为 JSON 字符串
-    String jsonStr = JSONUtil.toJsonStr(request);
-    if (jsonStr == null || jsonStr.isEmpty()) {
-      log.error("Request object cannot be serialized to JSON.");
-      throw new RuntimeException("Failed to serialize request object.");
-    }
     String bodyStr = OkHttpUtils.doPostJson(url, jsonStr, headers);
     // 验证返回值
     if (bodyStr == null || bodyStr.isEmpty()) {

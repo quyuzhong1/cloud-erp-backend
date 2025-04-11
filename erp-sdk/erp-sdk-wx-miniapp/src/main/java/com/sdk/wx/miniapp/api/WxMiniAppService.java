@@ -1,6 +1,5 @@
 package com.sdk.wx.miniapp.api;
 
-import com.sdk.wx.miniapp.request.SubscribeMsgRequest;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 
 /**
@@ -14,5 +13,5 @@ public interface WxMiniAppService {
 
   WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode);
 
-  String sendSubscribeMsg(SubscribeMsgRequest request);
+  String sendSubscribeMsg(String jsonStr);
 }
