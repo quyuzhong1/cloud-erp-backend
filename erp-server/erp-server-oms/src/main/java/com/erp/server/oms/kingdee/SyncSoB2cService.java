@@ -13,7 +13,7 @@ import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
-import javafx.util.Pair;
+import org.apache.commons.math3.util.Pair;
 
 import java.math.BigDecimal;
 import java.util.List;
