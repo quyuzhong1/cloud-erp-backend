@@ -122,11 +122,11 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             } catch (Exception e) {
                 entity.setRemark(e.getMessage());
                 entity.setStatus(VirtualDetailMsgStatusEnum.FAIL.getCode());
-                wmsVirtualDetailMsgService.updateStatus(entity);
+                wmsVirtualDetailMsgService.updateById(entity);
                 break;
             }
             entity.setStatus(VirtualDetailMsgStatusEnum.SUCCESS.getCode());
-            wmsVirtualDetailMsgService.updateStatus(entity);
+            wmsVirtualDetailMsgService.updateById(entity);
         }
     }
 
