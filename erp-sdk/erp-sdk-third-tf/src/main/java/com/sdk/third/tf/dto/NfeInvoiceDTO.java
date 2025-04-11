@@ -8,13 +8,10 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 /**
- * <p>
- * 上传记录请求响应实体
- * </p>
- *
- * @author zdy
- * @since 2025-03-07
-*/
+ * nef生成发票
+ * @author will
+ * @date 2025/4/11 12:09
+ */
 @Data
 @NoArgsConstructor
 public class NfeInvoiceDTO implements Serializable {
@@ -51,11 +48,13 @@ public class NfeInvoiceDTO implements Serializable {
         /**
          * 客户信息
          */
+        @Alias("cliente")
         private NfeClienteDTO  cliente;
 
         /**
          * 产品信息
          */
+        @Alias("itens")
         private NfeItensDTO  itens;
         /**
          * 总金额，unit_price*销售数量，多行明细汇总；unit_price计算见明细
@@ -176,5 +175,34 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("unit_price")
         private BigDecimal unitPrice;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class NfeCancelDTO {
+
+        /**
+         * 关系id
+         */
+        @Alias("transaction_id")
+        private String transactionId;
+
+        /**
+         * 原因
+         */
+        @Alias("justificativa")
+        private String justificativa;
+
+        /**
+         * token
+         */
+        @Alias("token_empresa")
+        private String tokenEmpresa;
+
+        /**
+         * 是否向客户端发送消息
+         */
+        @Alias("enviar_email_para_cliente")
+        private Boolean enviarEmailParaCliente = true;
     }
 }

@@ -41,6 +41,7 @@
     <!-- 列表查询 -->
     <select id="list" resultType="com.erp.model.oms.dto.InvoiceUpdateHisDTO$ListDTO">
         select
+            ROW_NUMBER() OVER (ORDER BY id) as no,
             <include refid="Base_Column_List" />
         from invoice_update_his iuh
         where iuh.is_deleted = false and iuh.invoice_info_id = #{params.id}
