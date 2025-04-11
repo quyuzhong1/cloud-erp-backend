@@ -6,6 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.entity.CompanyDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -124,6 +125,50 @@ public class TfFiscalService {
         }
         return null;
     }
+
+
+    /**
+     * 生成发票
+     * @author will
+     * @date 2025/4/11 12:12
+     * @param nfeCreateDTO
+     * @return Object
+     */
+    public Object createInvoice(NfeInvoiceDTO.NfeCreateDTO nfeCreateDTO){
+        String path = "/emitir_transparente";
+        String accessToken = getAccessToken();
+        nfeCreateDTO.setTokenEmpresa(accessToken);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCreateDTO), null, new HashMap<>(), RequestMethod.POST);
+        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        }
+        return apiResult.getData();
+    }
+
+
+    /**
+     * 取消发票
+     * @author will
+     * @date 2025/4/11 12:12
+     * @param nfeCreateDTO
+     * @return Object
+     */
+    public Object cancelInvoice(NfeInvoiceDTO.NfeCancelDTO nfeCreateDTO){
+        String path = "/cancelar_nota";
+        String accessToken = getAccessToken();
+        nfeCreateDTO.setTokenEmpresa(accessToken);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCreateDTO), null, new HashMap<>(), RequestMethod.POST);
+        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        }
+        return apiResult.getData();
+    }
+
+
 
     private String getAccessToken() {
         List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType,"TF-ACCESS_TOKEN").list();
