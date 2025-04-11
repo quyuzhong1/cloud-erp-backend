@@ -127,7 +127,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //第三方用户id为空的情况下，则新增用户
         if(StringUtils.isBlank(addDTO.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
-            thridUserInfoEntity.setUsername(addDTO.getUsername());
+            thridUserInfoEntity.setUsername(addDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
             thridUserInfoEntity.setType("selfAdd");
             thridUserInfoService.save(thridUserInfoEntity);
@@ -234,7 +234,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if(StringUtils.isNotBlank(afterSaleEntity.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
             thridUserInfoEntity.setId(afterSaleEntity.getThridUserId());
-            thridUserInfoEntity.setUsername(updateDTO.getUsername());
+            thridUserInfoEntity.setUsername(updateDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(updateDTO.getPhoneNumber());
             thridUserInfoService.updateById(thridUserInfoEntity);
         }
