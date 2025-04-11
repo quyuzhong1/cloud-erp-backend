@@ -2368,6 +2368,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     addDTO.setSkuId(deliverySku.getSkuId());
                     addDTO.setSkuNo(deliverySku.getSkuNo());
                     addDTO.setSourceDetailId(sourceDetailId);
+                    addDTO.setWarehouseId(deliverySku.getWarehouseId());
                     addDTO.setDeliveryQty(qty * deliverySku.getQty());
                     deliveryDetailList.add(addDTO);
                 }
@@ -2375,6 +2376,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 SoB2cDeliveryDetailDTO.AddDTO addDTO = new SoB2cDeliveryDetailDTO.AddDTO();
                 addDTO.setSkuId(skuId);
                 addDTO.setSkuNo(detailItem.getSkuNo());
+                addDTO.setWarehouseId(detailItem.getWarehouseId());
                 addDTO.setSourceDetailId(sourceDetailId);
                 addDTO.setDeliveryQty(qty);
                 deliveryDetailList.add(addDTO);
@@ -3846,6 +3848,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
             }
             data.setVatInvoiceStatusName(SoB2cVatStatusEnum.getName(data.getVatInvoiceStatus()));
+            data.setNfeInvoiceStatusName(SoB2cNfeStatusEnum.getName(data.getNfeInvoiceStatus()));
             //店铺
             ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(data.getShopId())).findFirst().orElse(null);
             if (ObjectUtils.isNotEmpty(shopInfoEntity)) {
@@ -9906,11 +9909,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList) {
+    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList) {
         if (CollUtil.isEmpty(platformList)){
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList);
+        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList,codeList);
     }
 
     @Override

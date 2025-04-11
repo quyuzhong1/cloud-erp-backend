@@ -105,7 +105,8 @@
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName,
-        sb2c.vat_invoice_status as vatInvoiceStatus
+        sb2c.vat_invoice_status as vatInvoiceStatus,
+        sb2c.nfe_invoice_status as nfeInvoiceStatus
     </sql>
     <sql id="Full_Managed_Column_List">
         sb2c.id,
@@ -1471,6 +1472,12 @@ SELECT DISTINCT so.* FROM so_b2c so
         <if test="platformStatusList!= null and platformStatusList.size > 0">
             and sb2c.platform_order_status not in
             <foreach collection="platformStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="codeList!= null and codeList.size > 0">
+            and sb2c.code in
+            <foreach collection="codeList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
         </if>

@@ -81,5 +81,19 @@
         i.create_time DESC
     </select>
 
+    <!-- 查询导出的xmlUrl -->
+    <select id="listExportUrl" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$ExportAttachDTO">
+        select
+            DISTINCT
+            ii.id,
+            att.attach_url,
+            att.attach_name
+        from invoice_info ii
+        inner join invoice_detail id on ii.id = id.main_id and id.is_deleted = false
+        inner join attachment att on ii.id = att.business_id and att.is_deleted = false and att.type = #{type}
+        left join shop_info si on ii.shop_id = si.id and si.disabled = false
+        where ${params.sqlMap.default} and ii.is_deleted = false and ii.invoice_type = 'nfe'
+    </select>
+
 
 </mapper>

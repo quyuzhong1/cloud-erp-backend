@@ -4,16 +4,21 @@ package com.common.core.utils;
 import cn.hutool.core.codec.Base64;
 import com.common.core.exception.ServiceException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -445,4 +450,36 @@ public class FileUtil {
         return base64Encoded;
     }
 
+
+    // 文件下载方法（带超时和重试）
+    public static byte[] downloadFile(String url) {
+        int retry = 3;
+        while (retry-- > 0) {
+            try (CloseableHttpClient httpClient = HttpClients.custom()
+                    .setConnectionTimeToLive(10, TimeUnit.SECONDS)
+                    .build()) {
+
+                HttpGet httpGet = new HttpGet(url);
+                try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                    if (response.getStatusLine().getStatusCode() == 200) {
+                        return EntityUtils.toByteArray(response.getEntity());
+                    }
+                }
+            } catch (Exception e) {
+                if (retry == 0) throw new ServiceException("下载失败: " + url, e);
+            }
+        }
+        throw new ServiceException("无法下载文件: " + url);
+    }
+
+    // 文件名处理（防止非法字符）
+    public static String getFileNameFromUrl(String url) {
+        try {
+            String path = new URI(url).getPath();
+            String rawName = path.substring(path.lastIndexOf('/') + 1);
+            return rawName.replaceAll("[\\\\/:*?\"<>|]", "_"); // 替换非法字符
+        } catch (URISyntaxException e) {
+            return "file_" + DigestUtils.md5Hex(url) + ".xml";
+        }
+    }
 }

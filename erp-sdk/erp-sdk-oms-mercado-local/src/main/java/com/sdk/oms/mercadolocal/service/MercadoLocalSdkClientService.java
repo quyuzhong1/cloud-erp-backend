@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
 import com.sdk.oms.mercadolocal.constant.MercadoConstant;
+import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.dto.MercadoShipOrderDTO;
 import com.sdk.oms.mercadolocal.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercadolocal.dto.mercadolocal.PlatformMercadoRefreshTokenDTO;
@@ -61,61 +62,53 @@ import java.util.*;
 @Slf4j
 @Component
 public class MercadoLocalSdkClientService {
+
 //    public static void main(String[] args) {
 //
-//        String orderUrl = "https://api.mercadolibre.com/marketplace/orders/2000006213527517";
-//
-//
+//        String accessToken = "APP_USR-5344160433223219-041005-6c3718c50d01369fb13ca5666d1ef4d5-2119968271";
 //        //组装授权url
-//        String clientId = "3457166802805723";
-//        String clientSecret = "QucvI4VWHO0w3AZftOElz5liVOurfjQG";
-//        String url = "https://api.mercadolibre.com/marketplace/orders/2000010507016480";
-//
-//
+//        String url = MercadoConstant.URL;
+//        String path = "/orders/2000011159453786";
+//        StringBuffer sb = new StringBuffer();
+//        sb.append(url);
+//        sb.append(path);
 //        //入参
-//        HashMap<String, Object> orderParams = new HashMap<>(1);
-//
 //        //设置请求头
-//        Map<String, String> orderHeaderMap = new HashMap<>(1);
-//        orderHeaderMap.put("Authorization", "Bearer " + "APP_USR-3457166802805723-012018-7d948085801db7d1625f3859c50f9d20-2201503196");
-////			https://api.mercadolibre.com/marketplace/orders/2000007633674134
+//        Map<String, String> headerMap = new HashMap<>(1);
+//        headerMap.put("Authorization", "Bearer " +accessToken);
+////        headerMap.put("Content-Type", "application/xml");
+//
 //        //拉取数据
 //        ApiResult apiResult = new ApiResult();
-//        Object data = null;
-//        long sleepTime = 1000;
-//        int count = 0;
-//        while(ObjectUtil.isEmpty(data)) {
-//            apiResult = HttpCommonUtil.sendOkHttpApiResult(url, JSONUtil.toJsonStr(orderParams), null, orderHeaderMap, RequestMethod.GET);
-//            if(apiResult.getMsg().equalsIgnoreCase("Read timed out")) {
-//                if(count == 10) {
-//                    throw new ServiceException("调用美客多" + url + "接口重试" + count + "失败");
-//                }
-//                try {
-//                    Thread.sleep(sleepTime);
-//                } catch (InterruptedException e) {
-//                    Thread.currentThread().interrupt();
-//                }
-//                sleepTime = sleepTime + 1000;
-//                count = count + 1;
-//            }
-//            data = apiResult.getData();
-//        }
-//
+//        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), "", null, headerMap, RequestMethod.GET);
 //        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-//            System.out.println("errrrrrrrrrrrr");
+//            System.out.println(apiResult.getData());
 //        }
 //
-//        //解析数据
-//        com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO orderViewDTO = null;
-//        ObjectMapper objectMapperBase = new ObjectMapper();
-//        try {
-//            orderViewDTO = objectMapperBase.readValue(JSONUtil.toJsonStr(apiResult.getData()), OrderViewDTO.class);
-//        } catch (JsonProcessingException e) {
-//            log.error("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}", url, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData()));
-//            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
-//                    url, orderParams.toString(), JSONUtil.toJsonStr(apiResult.getData())));
+//    }
+//    public static void main(String[] args) {
+//
+//        String accessToken = "APP_USR-5344160433223219-041005-6c3718c50d01369fb13ca5666d1ef4d5-2119968271";
+//        //组装授权url
+//        String url = MercadoConstant.URL;
+//        String path = "/shipments/{id}/invoice_data/?siteId=MLB".replace("{id}","44665639687");
+//        StringBuffer sb = new StringBuffer();
+//        sb.append(url);
+//        sb.append(path);
+//        //入参
+//        String param = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><nfeProc versao=\"4.00\" xmlns=\"http://www.portalfiscal.inf.br/nfe\"><NFe xmlns=\"http://www.portalfiscal.inf.br/nfe\"><infNFe Id=\"NFe35250352440061000173550070000001001151091188\" versao=\"4.00\"><ide><cUF>35</cUF><cNF>15109118</cNF><natOp>Venda de mercadorias</natOp><mod>55</mod><serie>7</serie><nNF>100</nNF><dhEmi>2025-03-28T23:28:46-03:00</dhEmi><dhSaiEnt>2025-03-28T23:28:46-03:00</dhSaiEnt><tpNF>1</tpNF><idDest>1</idDest><cMunFG>3550308</cMunFG><tpImp>1</tpImp><tpEmis>1</tpEmis><cDV>8</cDV><tpAmb>1</tpAmb><finNFe>1</finNFe><indFinal>1</indFinal><indPres>2</indPres><indIntermed>1</indIntermed><procEmi>0</procEmi><verProc>4.00 | UpSeller ERP</verProc></ide><emit><CNPJ>52440061000173</CNPJ><xNome>ROBO INTELIGENTE COMERCIAL LTDA</xNome><enderEmit><xLgr>ESTADO DE PERNAMBUCO</xLgr><nro>967</nro><xBairro>JARDIM EGLE</xBairro><cMun>3550308</cMun><xMun>São Paulo</xMun><UF>SP</UF><CEP>03936020</CEP><cPais>1058</cPais><xPais>Brasil</xPais></enderEmit><IE>125855854111</IE><CRT>1</CRT></emit><dest><CPF>43223224840</CPF><xNome>henrique Floret de Castro</xNome><enderDest><xLgr>Rua Doutor João de Góes Manso Sayão Netto 740,Proximo A P</xLgr><nro>S/N</nro><xBairro>Vila Industrial</xBairro><cMun>3506003</cMun><xMun>Bauru</xMun><UF>SP</UF><CEP>17055390</CEP><cPais>1058</cPais><xPais>Brasil</xPais></enderDest><indIEDest>9</indIEDest></dest><autXML><CNPJ>52223327000126</CNPJ></autXML><det nItem=\"1\"><prod><cProd>A014A</cProd><cEAN>SEM GTIN</cEAN><xProd>A100 Microfone</xProd><NCM>85181090</NCM><CFOP>5102</CFOP><uCom>UN</uCom><qCom>1</qCom><vUnCom>137.9</vUnCom><vProd>137.90</vProd><cEANTrib>SEM GTIN</cEANTrib><uTrib>UN</uTrib><qTrib>1</qTrib><vUnTrib>137.9</vUnTrib><indTot>1</indTot><xPed>UP30MX015756</xPed></prod><imposto><vTotTrib>46.78</vTotTrib><ICMS><ICMSSN102><orig>0</orig><CSOSN>102</CSOSN></ICMSSN102></ICMS><IPI><cEnq>999</cEnq><IPITrib><CST>99</CST><vBC>0.00</vBC><pIPI>0.00</pIPI><vIPI>0.00</vIPI></IPITrib></IPI><PIS><PISOutr><CST>99</CST><vBC>0.00</vBC><pPIS>0.00</pPIS><vPIS>0.00</vPIS></PISOutr></PIS><COFINS><COFINSOutr><CST>99</CST><vBC>0.00</vBC><pCOFINS>0.00</pCOFINS><vCOFINS>0.00</vCOFINS></COFINSOutr></COFINS></imposto><infAdProd>s_6803571842421218</infAdProd></det><total><ICMSTot><vBC>0.00</vBC><vICMS>0.00</vICMS><vICMSDeson>0.00</vICMSDeson><vFCPUFDest>0.00</vFCPUFDest><vICMSUFDest>0.00</vICMSUFDest><vICMSUFRemet>0</vICMSUFRemet><vFCP>0.00</vFCP><vBCST>0.00</vBCST><vST>0.00</vST><vFCPST>0.00</vFCPST><vFCPSTRet>0.00</vFCPSTRet><vProd>137.90</vProd><vFrete>0.00</vFrete><vSeg>0.00</vSeg><vDesc>0.00</vDesc><vII>0.00</vII><vIPI>0.00</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>0.00</vPIS><vCOFINS>0.00</vCOFINS><vOutro>0.00</vOutro><vNF>137.90</vNF><vTotTrib>46.78</vTotTrib></ICMSTot></total><transp><modFrete>2</modFrete><transporta/><vol><qVol>1</qVol></vol></transp><pag><detPag><indPag>0</indPag><tPag>99</tPag><xPag>pix</xPag><vPag>137.90</vPag></detPag></pag><infIntermed><CNPJ>03007331000141</CNPJ><idCadIntTran>CR20241127134854</idCadIntTran></infIntermed><infAdic><infCpl>Conf. Lei 12.741/2012 Tributação aprox. R$21.95 (15.92%) Federal e R$24.82 (18.0%) Estadual - Fonte IBPT /</infCpl></infAdic></infNFe><Signature xmlns=\"http://www.w3.org/2000/09/xmldsig#\"><SignedInfo><CanonicalizationMethod Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"/><SignatureMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#rsa-sha1\"/><Reference URI=\"#NFe35250352440061000173550070000001001151091188\"><Transforms><Transform Algorithm=\"http://www.w3.org/2000/09/xmldsig#enveloped-signature\"/><Transform Algorithm=\"http://www.w3.org/TR/2001/REC-xml-c14n-20010315\"/></Transforms><DigestMethod Algorithm=\"http://www.w3.org/2000/09/xmldsig#sha1\"/><DigestValue>1oEe+mjnqCwzhQjTUYqtuFhj/Yk=</DigestValue></Reference></SignedInfo><SignatureValue>EN7J/b+CW7uSWkv8AUDF73/XS2bxh0DQlV+cOCUU7DagPgo5kldrkJ1a5ngpnj7Q7ozSSt0jKO60etHNIBojWynS+evfq+W+nvdhH7mDZOfR3B09b4rM0/ptytDC19VjLDxQoLQEyPDz2y8kJKUn+18oSAuUJFEaDNpSmCTIqcwDvBLVcFncp6rona53pqPqXeIc/n3jCL7EWBQoFX8jILR2v8JzKgq925m1lMfe2b2d1ynSwEbmiwxVxUSKC1Nfpo7D2p2vxc+t4FmNPFULMkT/AMoODWM2rgZjfncJD2k6D9WsqgMuXvgV5RvFbDcfmr3yufV4jo8uWlynWUISGA==</SignatureValue><KeyInfo><X509Data><X509Certificate>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</X509Certificate></X509Data></KeyInfo></Signature></NFe><protNFe versao=\"4.00\"><infProt><tpAmb>1</tpAmb><verAplic>SP_NFE_PL009_V4</verAplic><chNFe>35250352440061000173550070000001001151091188</chNFe><dhRecbto>2025-03-28T23:30:48-03:00</dhRecbto><nProt>135250823129468</nProt><digVal>1oEe+mjnqCwzhQjTUYqtuFhj/Yk=</digVal><cStat>100</cStat><xMotivo>Autorizado o uso da NF-e</xMotivo></infProt></protNFe></nfeProc>";
+//        //设置请求头
+//        Map<String, String> headerMap = new HashMap<>(1);
+//        headerMap.put("Authorization", "Bearer " +accessToken);
+//        headerMap.put("Content-Type", "application/xml");
+//
+//        //拉取数据
+//        ApiResult apiResult = new ApiResult();
+//        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), param, null, headerMap, RequestMethod.POST);
+//        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+//            System.out.println(apiResult.getData());
 //        }
-//        System.out.println(orderViewDTO);
+//
 //    }
 
 
@@ -636,10 +629,10 @@ public class MercadoLocalSdkClientService {
             result.setBaseUrl(cfgAppClient.getUrl());
             result.setClientId(cfgAppClient.getClientId());
             result.setClientSecret(cfgAppClient.getClientSecret());
+
             Map<String, Object> extendData = shopInfoEntity.getExtendData();
             result.setUserId(Long.valueOf(extendData.get("userId") + ""));
-
-            result.setId(shopId);
+            result.setSiteId(shopInfoEntity.getBusinessModel());
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setAccessToken(shopAuthEntity.getAccessToken());
                 redisUtil.set(tokenKey, result, shopAuthEntity.getExpiresIn());
@@ -674,14 +667,38 @@ public class MercadoLocalSdkClientService {
         return OkHttpUtils.doGetJsonBase64(orderUrl, orderParams, orderHeaderMap);
     }
 
-    public static void main(String[] args) {
-        MercadoLocalSdkClientService sdkClientService = new MercadoLocalSdkClientService();
-        Map<String, String> authMap = new HashMap<>();
-        String shippingId = "44487360197";
-        authMap.put("token","APP_USR-5344160433223219-032623-9028ad77ee8c26b78726511bfa91047d-2119968271");
-        sdkClientService.printShippingLabel(authMap, Long.valueOf(shippingId));
-    }
+    /**
+     * 上传发票
+     */
+    public void uploadInvoice(MercadoInvoiceDTO mercadoInvoiceDTO) {
 
+        //  根据店铺ID获取授权
+        MercadoShopInfoDTO shopInfoByShopId = this.getShopInfoByShopId(mercadoInvoiceDTO.getShopId());
+
+        String accessToken = shopInfoByShopId.getAccessToken();
+        //组装授权url
+        String url = MercadoConstant.URL;
+        String path = "/shipments/{id}/invoice_data/?siteId=" + shopInfoByShopId.getSiteId();
+        path = path.replace("{id}",mercadoInvoiceDTO.getShipmentId());
+        StringBuffer sb = new StringBuffer();
+        sb.append(url);
+        sb.append(path);
+        //入参
+        String param = mercadoInvoiceDTO.getXmlContent();
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(1);
+        headerMap.put("Authorization", "Bearer " +accessToken);
+        headerMap.put("Content-Type", "application/xml");
+
+        //拉取数据
+        ApiResult apiResult = new ApiResult();
+        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), param, null, headerMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}", path, param, JSONUtil.toJsonStr(apiResult));
+            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}",
+                    path, param, JSONUtil.toJsonStr(apiResult)));
+        }
+    }
     /**
      * 标记发货
      */

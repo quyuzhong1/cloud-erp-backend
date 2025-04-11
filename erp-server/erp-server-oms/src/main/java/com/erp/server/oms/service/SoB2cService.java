@@ -1080,7 +1080,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param platformList
      * @return
      */
-    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList);
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList);
 
     /**
      * 根据主表更新扩展字段

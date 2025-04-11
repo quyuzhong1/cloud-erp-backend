@@ -136,7 +136,9 @@ public enum ModuleTypeEnum {
     SO_PRICE_CHANGE("119", "销售调目表"),
 
     AFTER_SALE("120", "售后申请"),
-    ;
+    INVOICE_SETTING("121", "发票设置"),
+    INVOICE_SETTING_DETAIL("122", "发票设置明细"),
+            ;
 
 
 
