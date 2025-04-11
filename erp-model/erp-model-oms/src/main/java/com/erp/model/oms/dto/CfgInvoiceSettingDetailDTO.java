@@ -153,14 +153,12 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         /**
          * 店铺id
          */
-        @NotBlank(message = "店铺id不能为空")
         @Size(max = 19, message = "店铺id最大长度不能超过19位")
         private String shopId;
 
         /**
          * 开票规则：amount=按产品全额开票，custom=按（产品全额×自定义百分比）后开票,deduct=按（产品全额-佣金）后开票
          */
-        @NotBlank(message = "开票规则：amount=按产品全额开票，custom=按（产品全额×自定义百分比）后开票,deduct=按（产品全额不能为空")
         @Size(max = 50, message = "开票规则：amount=按产品全额开票，custom=按（产品全额×自定义百分比）后开票,deduct=按（产品全额最大长度不能超过50位")
         private String dictInvoiceRule;
 
@@ -174,27 +172,23 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         /**
          * 是否包含运费
          */
-        @NotNull(message = "是否包含运费不能为空")
         private Boolean isContainShipFee;
 
         /**
          * 税费类型：purchase_sale=采购经销，self_sale=自产自销
          */
-        @NotBlank(message = "税费类型：purchase_sale=采购经销，self_sale=自产自销不能为空")
         @Size(max = 50, message = "税费类型：purchase_sale=采购经销，self_sale=自产自销最大长度不能超过50位")
         private String taxType;
 
         /**
          * 开票节点：after_pull=订单拉取后，after_audit=订单审核后，no_auto=不自动开票
          */
-        @NotBlank(message = "开票节点：after_pull=订单拉取后，after_audit=订单审核后，no_auto=不自动开票不能为空")
         @Size(max = 50, message = "开票节点：after_pull=订单拉取后，after_audit=订单审核后，no_auto=不自动开票最大长度不能超过50位")
         private String invoiceNode;
 
         /**
          * 自动上传
          */
-        @NotNull(message = "自动上传不能为空")
         private Boolean isAutoUpload;
 
     }
