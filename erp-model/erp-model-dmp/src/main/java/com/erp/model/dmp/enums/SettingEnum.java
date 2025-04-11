@@ -74,6 +74,7 @@ public enum SettingEnum {
 
     //after_sale
     AFTER_SALSE_NODE("afterSaleNode","after_sale","售后维修节点"),
+    AFTER_SALSE_SUBSCRIBE_MSG("afterSaleSubscribeMsg","after_sale","售后微信消息订阅"),
     ;
 
     @EnumValue

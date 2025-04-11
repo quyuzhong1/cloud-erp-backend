@@ -68,8 +68,7 @@
 	afs.invalid_time,
 	afs.remark
     </sql>
-
-    <select id="paging" resultType="com.erp.model.dmp.dto.AfterSaleDTO$ListDTO">
+    <sql id="paging_sql">
         SELECT
         afs.ID AS id,
         afs.create_user_id AS createUserId,
@@ -112,17 +111,27 @@
         afsd.detail_desc AS detailDesc,
         tui.username AS thridUserName,
         tui.nick_name AS nickName,
-        tui.phone_number AS phoneNumber
+        tui.phone_number AS phoneNumber,
+        r.track_no as returnTrackNo,
+        o.track_no as outboundTrackNo
         FROM
-            after_sale AS afs
-            left join after_sale_detail  AS afsd on afs.id = afsd.main_id and afsd.is_deleted =FALSE
-            left join thrid_user_info as tui on afs.thrid_user_id = tui.id and tui.is_deleted = FALSE
+        after_sale AS afs
+        left join after_sale_detail  AS afsd on afs.id = afsd.main_id and afsd.is_deleted =FALSE
+        left join thrid_user_info as tui on afs.thrid_user_id = tui.id and tui.is_deleted = FALSE
+        left join after_sale_progress as r on r.main_id = afs.id and r.is_deleted = false and r.node = 'toBeReturned'
+        left join after_sale_progress as o on o.main_id = afs.id and o.is_deleted = false and r.node = 'toBeShipped'
         where
-            ${params.sqlMap.default}
-          AND afs.is_deleted = false
-            <if test="params.permissionSql!=null and params.permissionSql!=''">
-                ${params.permissionSql}
-            </if>
+        ${params.sqlMap.default}
+        AND afs.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and afs.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -130,14 +139,18 @@
             </foreach>
         </if>
         afs.create_time DESC
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.AfterSaleDTO$ListDTO">
+        <include refid="paging_sql"></include>
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
         select approve_status, count(id) from after_sale where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.dmp.dto.AfterSaleDTO$ListDTO">
-
+    <select id="listExport" resultType="com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO">
+        <include refid="paging_sql"></include>
     </select>
     <select id="tabList" resultType="com.erp.model.dmp.dto.AfterSaleDTO$TabListDTO">
         SELECT
@@ -156,7 +169,7 @@
             afs.id,
             afsp.id as detailId,
             afsp.node  ,
-            afsp.node_time  ,
+            afsp.node_time as nodeTimeLd ,
             afsp.track_no  ,
             afsp.remark  ,
             afsp.index

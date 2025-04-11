@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 
@@ -47,6 +48,8 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     * @return PagingVO<AfterSaleDTO.ListDTO>>
     */
     PagingVO<AfterSaleDTO.ListDTO> paging(PagingDTO<AfterSaleDTO.PagingParamDTO> pagingParamDTO);
+
+    PagingVO<DmpAfterSaleExcekDTO> exportList(PagingDTO<AfterSaleDTO.PagingParamDTO> pagingParamDTO);
 
     /**
     * 状态统计
@@ -143,10 +146,9 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     * @author jack
     * @date: 2025-04-06
     * @param dto
-    * @param response
     * @return
     */
-    void exportList(AfterSaleDTO.ExportDTO dto, HttpServletResponse response);
+    void exportList(AfterSaleDTO.PagingParamDTO dto,HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -156,7 +158,9 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, AfterSaleEntity entity);
 
-    List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(AfterSaleDTO.ProgressDTO dto);
+    AfterSaleProgressDTO.RepairRecordDTO getRepairProgress(AfterSaleDTO.ProgressDTO dto);
+
+    List<AfterSaleDTO.NodeDTO>  getNodeList();
 
     List<BatchResultDTO> changeStatus(AfterSaleDTO.IdsDTO dto);
 
@@ -166,5 +170,11 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
 
     WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode);
 
+    void syncWdtToAfterSale();
+
     List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode);
+
+    Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto);
+
+    BatchResultDTO invalidByCode(String code);
 }
