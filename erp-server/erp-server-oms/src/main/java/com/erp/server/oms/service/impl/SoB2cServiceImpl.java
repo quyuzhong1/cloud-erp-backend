@@ -2364,6 +2364,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     addDTO.setSkuNo(deliverySku.getSkuNo());
                     addDTO.setSourceDetailId(sourceDetailId);
                     addDTO.setWarehouseId(deliverySku.getWarehouseId());
+                    addDTO.setWarehouseName(detailItem.getWarehouseName());
+                    addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+                    addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
                     addDTO.setDeliveryQty(qty * deliverySku.getQty());
                     deliveryDetailList.add(addDTO);
                 }
@@ -2372,6 +2375,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setSkuId(skuId);
                 addDTO.setSkuNo(detailItem.getSkuNo());
                 addDTO.setWarehouseId(detailItem.getWarehouseId());
+                addDTO.setWarehouseName(detailItem.getWarehouseName());
+                addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+                addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
                 addDTO.setSourceDetailId(sourceDetailId);
                 addDTO.setDeliveryQty(qty);
                 deliveryDetailList.add(addDTO);
