@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -15,11 +16,13 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
+import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgInvoiceSettingMapper;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.sdk.third.tf.TfFiscalService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,7 +51,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
 
     @Resource
-    private ShopInfoService shopInfoService;
+    DictBasicService dictBasicService;
 
     @Override
     public PagingVO<CfgInvoiceSettingDTO.PagingViewDTO> paging(PagingDTO<CfgInvoiceSettingDTO.PagingParamDTO> dto) {
@@ -57,15 +60,25 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         Page<CfgInvoiceSettingDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         //分页数据
         IPage<CfgInvoiceSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
+        //获取绑定店铺
         List<CfgInvoiceSettingDetailDTO.ViewDetailShop> detailShopList = cfgInvoiceSettingDetailService.getDetailShop();
+        //获取店铺名称
+        Set<String> dictPlatformSet = detailShopList.stream().map(CfgInvoiceSettingDetailDTO.ViewDetailShop::getDictPlatform).collect(Collectors.toSet());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.list(new LambdaQueryWrapper<DictBasicEntity>().in(DictBasicEntity::getValue, dictPlatformSet));
+        //platformValue-platformName
+        Map<String, String> dictValueNameMap = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName,(existing, replacement) -> existing));
+        //发票设置主键-绑定店铺集合
         Map<String, List<CfgInvoiceSettingDetailDTO.ViewDetailShop>> mainIdToDetailsMap = detailShopList.stream()
                 .collect(Collectors.groupingBy(CfgInvoiceSettingDetailDTO.ViewDetailShop::getMainId));
         pageData.getRecords().forEach(item -> {
-            List<CfgInvoiceSettingDetailDTO.ViewDetailShop> detailShopListByMainId = mainIdToDetailsMap.get(item.getId());
-            if (CollUtil.isEmpty(detailShopListByMainId)) {
+            List<CfgInvoiceSettingDetailDTO.ViewDetailShop> detailShopListByMainIdList = mainIdToDetailsMap.get(item.getId());
+            if (CollUtil.isEmpty(detailShopListByMainIdList)) {
                 return;
             }
-            List<CfgInvoiceSettingDTO.ShopInfoDTO> shopInfoList = BeanUtil.copyToList(detailShopListByMainId, CfgInvoiceSettingDTO.ShopInfoDTO.class);
+            List<CfgInvoiceSettingDTO.ShopInfoDTO> shopInfoList = BeanUtil.copyToList(detailShopListByMainIdList, CfgInvoiceSettingDTO.ShopInfoDTO.class);
+            shopInfoList.forEach(shopInfo -> {
+                shopInfo.setDictPlatformName(dictValueNameMap.get(shopInfo.getDictPlatform()));
+            });
             item.setShopList(shopInfoList);
         });
         //遍历分页数据集合

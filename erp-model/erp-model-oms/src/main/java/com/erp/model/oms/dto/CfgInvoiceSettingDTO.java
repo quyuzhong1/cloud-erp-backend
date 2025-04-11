@@ -314,6 +314,10 @@ public class CfgInvoiceSettingDTO implements Serializable {
          */
         private String dictPlatform;
         /**
+         * 平台
+         */
+        private String dictPlatformName;
+        /**
          * 店铺名称
          */
         private String name;
