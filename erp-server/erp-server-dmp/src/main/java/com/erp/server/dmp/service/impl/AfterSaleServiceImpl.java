@@ -3,6 +3,7 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -22,6 +23,9 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.AttachmentDTO;
@@ -50,6 +54,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -59,7 +64,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -106,6 +110,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DmpSoOutstockService dmpSoOutstockService;
+    @Resource
+    private MQProducerService mQProducerService;
 
 
 
@@ -288,7 +294,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     @Override
                     public void afterCommit() {
                         AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                        bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+                        bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
                     }
                 });
             }
@@ -303,7 +309,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     @Override
                     public void afterCommit() {
                         AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                        bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                        bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
                     }
                 });
             }
@@ -560,7 +566,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             @Override
             public void afterCommit() {
                 AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                bean.getSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
+                bean.sendSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
             }
         });
 
@@ -602,7 +608,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             @Override
             public void afterCommit() {
                 AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TERMINATED.getCode());
+                bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TERMINATED.getCode());
             }
         });
 
@@ -659,7 +665,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 @Override
                 public void afterCommit() {
                     AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                    bean.getSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
+                    bean.sendSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
                 }
             });
         }else {
@@ -674,7 +680,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 @Override
                 public void afterCommit() {
                     AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                    bean.getSubscribeMsgRequest(entity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+                    bean.sendSubscribeMsgRequest(entity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
                 }
             });
         }
@@ -907,7 +913,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     @Override
                     public void afterCommit() {
                         AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                        bean.getSubscribeMsgRequest(entity,afterSaleStatus.getCode());
+                        bean.sendSubscribeMsgRequest(entity,afterSaleStatus.getCode());
                     }
                 });
             }
@@ -971,7 +977,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     @Override
     public void syncWdtToAfterSale() {
         List<AfterSaleEntity> list = lambdaQuery().eq(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
-                .ne(AfterSaleEntity::getRepairInvoiceCode, "").list();
+                .ne(AfterSaleEntity::getRepairInvoiceCode, "")
+                .list();
         if(CollUtil.isNotEmpty(list)){
             List<String> repairInvoiceCodeList = list.stream().map(AfterSaleEntity::getRepairInvoiceCode).collect(Collectors.toList());
             List<DmpSoOutstockEntity> dmpSoOutstockList = dmpSoOutstockService.lambdaQuery()
@@ -988,7 +995,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode(),logisticsCode);
 
                         //发送微信订阅消息
-//                        getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                        sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
                     }
                 }
             }
@@ -1109,7 +1116,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             @Override
             public void afterCommit() {
                 AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
-                bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+                bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
             }
         });
         return update;
@@ -1118,7 +1125,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
 
 
-    public void getSubscribeMsgRequest(AfterSaleEntity afterSaleEntity,String status){
+    public void sendSubscribeMsgRequest(AfterSaleEntity afterSaleEntity, String status){
         String code = afterSaleEntity.getCode();
         String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
         String thridUserId = afterSaleEntity.getThridUserId();
@@ -1146,14 +1153,30 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             throw new ServiceException("售后微信消息订阅配置不存在");
         }
 
+        //推送mq 让消费者去执行消息推送
         SubscribeMsgRequest request = JSONUtil.toBean(value, SubscribeMsgRequest.class);
         request.setTouser(openId);
         request.setPage(request.getPage()+code);
         Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
         data.get("character_string1").setValue(repairInvoiceCode);
         data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
-        data.get("time6").setValue(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-        wxMiniAppService.sendSubscribeMsg(request);
+        data.get("time6").setValue(LocalDateTimeUtil.format(LocalDateTime.now(), DateUtil.fmt));
+
+        DmpPushMsgEntity dmpPushMsgEntity = new DmpPushMsgEntity();
+        // 将请求对象转换为 JSON 字符串
+        String jsonStr = JSONUtil.toJsonStr(request);
+
+        dmpPushMsgEntity.setTargetPlatform("wx");
+        dmpPushMsgEntity.setSourcePlatform(ServiceCodeNameEnum.DMP.getCode());
+        dmpPushMsgEntity.setSourceType(SourceTypeEnum.AFTER_SALE.getCode());
+        dmpPushMsgEntity.setSourceId(afterSaleEntity.getId());
+        dmpPushMsgEntity.setSourceCode(afterSaleEntity.getCode());
+        dmpPushMsgEntity.setPushData(jsonStr);
+        dmpPushMsgEntity.setMessageCreateTime(LocalDateTime.now());
+        dmpPushMsgEntity.setMessageCreateTime(LocalDateTime.now());
+
+        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
+                dmpPushMsgEntity, IdUtil.simpleUUID());
     }
 
 
