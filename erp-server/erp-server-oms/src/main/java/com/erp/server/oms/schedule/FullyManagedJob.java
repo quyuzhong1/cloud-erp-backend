@@ -18,10 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -56,7 +53,11 @@ public class FullyManagedJob {
         platformStatusList.add(FullyManagedPlatformStatusEnum.TikTokStatusEnum.INVAILD.getErpEnum().getCode());
         List<String> platformList = new ArrayList<>();
         platformList.add(PlatformDictEnum.TIK_TOK_FULLY.getCode());
-        List<SoB2cDTO.DeliveryDTO> deliveryDTOS = soB2cService.listDeliveryOrderByParam(billStatusList, platformStatusList,platformList);
+        List<String> codeList = new ArrayList<>();
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
+            codeList = Arrays.asList(jobParam.split("//,"));
+        }
+        List<SoB2cDTO.DeliveryDTO> deliveryDTOS = soB2cService.listDeliveryOrderByParam(billStatusList, platformStatusList,platformList,codeList);
         //根据店铺进行分组
         if (CollUtil.isEmpty(deliveryDTOS)) {
             XxlJobHelper.log("查询送货单信息执行完成 没有需要查询的订单");
@@ -71,6 +72,7 @@ public class FullyManagedJob {
             List<FullyDeliveryOrderDTO.DataDTO.DeliveryOrdersDTO> deliveryOrdersDTOS;
             try {
                 deliveryOrdersDTOS = tikTokFullService.listDeliveryOrderByParam(shopId, deliveryNoList);
+                XxlJobHelper.log("查询送货单信息执行完成 店铺：" + shopId + "查询结果：" + JSONUtil.toJsonStr(deliveryOrdersDTOS));
             }catch (Exception e){
                 XxlJobHelper.log("查询送货单信息执行完成 店铺：" + shopId + "查询失败" + e.getMessage());
                 continue;
