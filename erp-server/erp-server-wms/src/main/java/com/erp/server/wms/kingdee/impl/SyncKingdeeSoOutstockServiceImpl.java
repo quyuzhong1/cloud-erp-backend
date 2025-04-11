@@ -23,6 +23,8 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.CfgSettingDTO;
+import com.erp.model.dmp.dto.DmpSoOutstockDTO;
+import com.erp.model.dmp.dto.DmpSoOutstockDetailDTO;
 import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -1361,15 +1363,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     		List<DictCountryEntity> countryEntityList,
     		List<DictGlobalAreaEntity> dictGlobalEntityList,
     		List<SysDepartmentEntity> deptList) {
-    	DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    	DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     	
     	// 字典分组
     	Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
     	// 销售平台
     	List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
-    	// 数帝云子平台映射
-    	List<DictBasicEntity> dictList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(), Collections.emptyList());
     	// 数帝云军区一级部门映射
     	List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
     	// 数帝云平台二级部门映射
@@ -1421,22 +1419,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	}
     	
     	
-    	ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
+    	DmpSoOutstockDTO.ViewDTO viewDto = new DmpSoOutstockDTO.ViewDTO();
+    	DmpSoOutstockDetailDTO.ViewDTO detailView = new DmpSoOutstockDetailDTO.ViewDTO();
     	
     	// 国家编码
-    	shudiyunB2cOrderDTO.setCountry_code(country);
+    	viewDto.setCountry(country);
     	String finalCountry = country;
     	DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalCountry)).findFirst().orElse(null);
     	if (null != dictCountryEntity){
-    		// 国家名称
-    		shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
     		// 区域编码
-    		shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
-    		// 区域名称
-    		DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
-    		if (null != dictGlobalAreaEntity){
-    			shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
-    		}
+    		viewDto.setProvince(dictCountryEntity.getSubregionCode());
     	}
     	
     	String finalPartitionId = partitionId;
@@ -1450,9 +1442,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	
     	if (null != dictPartitionEntity){
     		// 军区编码
-    		shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
-    		// 军区名称
-    		shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
+    		viewDto.setDistrict(dictPartitionEntity.getCode());
     		// 军区一级部门映射
     		DictPartitionEntity finalDictPartitionEntity = dictPartitionEntity;
     		DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPartitionEntity.getCode())).findFirst().orElse(null);
@@ -1466,136 +1456,112 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     					.orElse(null);
     			if (null != departmentDTO){
     				// 部门编码
-    				shudiyunB2cOrderDTO.setDepartment_code(departmentDTO.getCode());
-    				// 部门名称
-    				shudiyunB2cOrderDTO.setDepartment_name(departmentDTO.getName());
+    				detailView.setSaleDeptName(departmentDTO.getCode());
     			}
     		}
     	}
     	
-    	shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + soOutstockDetailEntity.getId());
-    	shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
-    	shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
+    	String thirdCode = entity.getId();
+    	viewDto.setThirdCode(thirdCode);
+    	detailView.setThirdCode(thirdCode);
+    	detailView.setThirdDetailId(soOutstockDetailEntity.getId());
+    	viewDto.setThirdBillNo(entity.getCode());
+    	viewDto.setBillDate(entity.getBillDate().atStartOfDay());
     	//默认出库单
-    	shudiyunB2cOrderDTO.setTransaction_type("销售出库单");
-    	shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
-    	shudiyunB2cOrderDTO.setBiz_status(entity.getApproveStatus().getName());
-    	shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, entity.getVersion(), soOutstockDetailEntity.getVersion()));
+    	viewDto.setTradeLabel(convertOutstockTransactionSubType(transactionSubType));
+    	viewDto.setPlatformStatus(entity.getApproveStatus().getName());
+    	detailView.setDataStatus(new ShudiyunB2cOrderDTO().sdyStatusHandle(operate, entity.getVersion(), soOutstockDetailEntity.getVersion()));
     	
     	//客户信息
     	if (ObjectUtil.isNotEmpty(customerInfo)) {
     		String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
     		if (CharSequenceUtil.isNotBlank(salesOrgCode)) {
-    			shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+    			viewDto.setSaleOrgId(salesOrgCode);
     		} else {
     			salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).map(req -> req.getCode()).findFirst().orElse("");
-    			shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+    			viewDto.setSaleOrgId(salesOrgCode);
     		}
     		
     		BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
     		if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
-    			shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
-    			shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
-    			shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+    			viewDto.setFinancialCompanyId(sysAccountingCompanyEntity.getId());
     		}
     		
     		if (customerInfo.getCurrency() != null) {
     			CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getCurrency())).findFirst().orElse(null);
     			if (ObjectUtil.isNotEmpty(viewDTO)) {
-    				shudiyunB2cOrderDTO.setSettlement_currency_code(viewDTO.getId());
-    				shudiyunB2cOrderDTO.setSettlement_currency(viewDTO.getName());
+    				detailView.setPayCurrency(viewDTO.getId());
     			}
     		}
     		if (customerInfo.getTradeCurrency() != null) {
     			CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getTradeCurrency())).findFirst().orElse(null);
     			if (ObjectUtil.isNotEmpty(viewDTO)) {
-    				shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
-    				shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+    				detailView.setCurrency(viewDTO.getId());
     			}
     		}
-    		shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
+    		detailView.setPlatformType(customerInfo.getPlatformType());
     		String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
-    		shudiyunB2cOrderDTO.setPlatform_name(platformName);
-    		shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
-    		shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
-    		
-    		String subPlatformType = customerInfo.getPlatformType();
-    		if (StringUtils.isNotBlank(subPlatformType)) {
-    			DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
-    			if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-    				shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
-    				shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
-    			}
-    		}
+    		detailView.setPlatformName(platformName);
+    		viewDto.setShopId(customerInfo.getCode());
+    		viewDto.setShopName(customerInfo.getName());
     	}
-    	shudiyunB2cOrderDTO.setRoot_node_no(orderPlatformCode);
+    	detailView.setThirdOrderCode(orderPlatformCode);
     	
     	//产品信息
-    	shudiyunB2cOrderDTO.setGoods_no(soOutstockDetailEntity.getSkuNo());
     	SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
-    	shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
-    	if (skuVO.getSpuNo() == null) {
-    		shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
-    		shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
-    	} else {
-    		shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
-    		shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
-    	}
-    	shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
-    	shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
+    	
+    	detailView.setSkuNo(skuVO.getSkuNo());
+    	detailView.setSkuName(skuVO.getSkuName());
+    	detailView.setPlatformSku(skuVO.getSpuNo());
+    	detailView.setSpecifics(skuVO.getSpuName());
+    	
     	if (soOutstockDetailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-    		shudiyunB2cOrderDTO.setIs_gift(1);
+    		detailView.setIsGift(true);
     	} else {
-    		shudiyunB2cOrderDTO.setIs_gift(0);
+    		detailView.setIsGift(false);
     	}
     	BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
     	if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
-    		shudiyunB2cOrderDTO.setIs_comb(1);
-    		shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+    		detailView.setIsComb(1);
+    		detailView.setSuiteNo(bomChildrenSkuDTO.getParentSkuNo());
     		BomChildrenSkuDTO finalBomChildrenSkuDTO1 = bomChildrenSkuDTO;
     		String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO1.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
-    		shudiyunB2cOrderDTO.setSuite_name(skuName);
+    		detailView.setSuiteName(skuName);
     	} else {
     		bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
     		if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
-    			shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+    			detailView.setSuiteNo(bomChildrenSkuDTO.getParentSkuNo());
     			BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
     			String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
-    			shudiyunB2cOrderDTO.setSuite_name(skuName);
+    			detailView.setSuiteName(skuName);
     		} else {
-    			shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
-    			shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
+    			detailView.setSuiteNo(skuVO.getSkuNo());
+    			detailView.setSuiteName(skuVO.getSkuName());
     		}
     	}
     	
-    	shudiyunB2cOrderDTO.setRemark(soOutstockDetailEntity.getRemark());
-    	shudiyunB2cOrderDTO.setWarehouse_no(entity.getWarehouseId());
-    	shudiyunB2cOrderDTO.setWarehouse_name(entity.getWarehouseName());
+    	detailView.setRemark(soOutstockDetailEntity.getRemark());
+    	detailView.setWarehouseId(entity.getWarehouseId());
+    	detailView.setWarehouseName(entity.getWarehouseName());
     	
-    	// 商品状态
-    	shudiyunB2cOrderDTO.setGoods_status("已发货");
-    	if (entity.getActualDeliveryDate() != null) {
-    		shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getActualDeliveryDate()));
-    	}
+    	viewDto.setDeliveryTime(entity.getActualDeliveryDate());
     	
-    	shudiyunB2cOrderDTO.setGoods_transaction_quantity(soOutstockDetailEntity.getActualQty());
-    	shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
+    	detailView.setQty(soOutstockDetailEntity.getActualQty());
+    	detailView.setProductUnit(skuVO.getUnitName());
     	if (skuVO.getRetailPrice() != null) {
-    		shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
+    		detailView.setSellPrice(skuVO.getRetailPrice());
     	} else {
-    		shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
+    		detailView.setSellPrice(BigDecimal.ZERO);
     	}
     	
     	CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getCurrency())).findFirst().orElse(null);
     	if (ObjectUtil.isNotEmpty(viewDTO)) {
-    		shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
-    		shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
+    		detailView.setCurrency(viewDTO.getId());
     	}
     	
-    	shudiyunB2cOrderDTO.setSource_system("SDC");
-    	shudiyunB2cOrderDTO.setRoot_node_no_initial(orderPlatformCode);
+    	viewDto.setDetailList(Arrays.asList(detailView));
     	
-    	return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
+    	return BeanUtil.beanToMap(viewDto);
     }
 
 

@@ -219,8 +219,8 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
     /**
      * 明细状态
      */
-    @TableField("detail_status")
-    private String detailStatus;
+    @TableField("data_status")
+    private String dataStatus;
     
     /**
      * 平台类型

@@ -232,8 +232,8 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
     /**
      * 财务组织代码
      */
-    @TableField(value = "financial_company_code")
-    private String financialCompanyCode;
+    @TableField(value = "financial_company_id")
+    private String financialCompanyId;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
