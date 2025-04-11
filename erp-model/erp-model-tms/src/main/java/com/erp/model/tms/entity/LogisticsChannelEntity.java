@@ -235,6 +235,12 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
     @TableField("carrier_type")
     private String carrierType;
 
+    /**
+     * 是否发送发票
+     */
+    @TableField("is_send_invoice")
+    private Boolean isSendInvoice;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String FIELD_NAME = "name";

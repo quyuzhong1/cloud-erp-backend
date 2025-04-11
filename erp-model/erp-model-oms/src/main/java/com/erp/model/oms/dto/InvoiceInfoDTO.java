@@ -1,18 +1,19 @@
 package com.erp.model.oms.dto;
 
-import java.time.LocalDateTime;
-
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -27,7 +28,91 @@ import javax.validation.constraints.Size;
 public class InvoiceInfoDTO implements Serializable {
 
 
+    /**
+     * 开具Cce详情回显
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewCceDTO {
+        /**
+         * 发票号
+         */
+        private String code;
+        /**
+         * 修改次数
+         */
+        private Integer count;
+    }
+    /**
+     * 带备注DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ReturnRemarkDTO extends  RemarkDTO{
+        /**
+         * 退货税务编码
+         */
+        @NotBlank(message = "退货税务编码不能为空")
+        private String returnTaxCode;
+    }
 
+
+    /**
+     * 带备注DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RemarkDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 备注
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+    }
+
+    /**
+     * 销售订单备注DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoRemarkDTO {
+        /**
+         * so主键id
+         */
+        @NotEmpty(message = "soId不能为空")
+        private List<String> soIdList;
+
+        /**
+         * 备注
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+    }
+
+    /**
+     * 开具Cce保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateCceDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        /**
+         * 内容
+         */
+        @NotBlank(message = "内容不能为空")
+        private String content;
+    }
 
     /**
     * 详情
@@ -323,8 +408,18 @@ public class InvoiceInfoDTO implements Serializable {
          * 产品名称
          */
         private String productName;
-
-
+        /**
+         * 发票性质
+         */
+        private String invoiceNature;
+        /**
+         * 发票性质名称
+         */
+        private String invoiceNatureName;
+        /**
+         * 平台发票号
+         */
+        private String platformInvoiceNo;
     }
 
     @Data
@@ -338,5 +433,35 @@ public class InvoiceInfoDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportAttachDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 文件url
+         */
+        private String attachUrl;
+        /**
+         * 文件名称
+         */
+        private String attachName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExportResultDTO {
+        /**
+         * 响应体
+         */
+       private StreamingResponseBody responseBody;
+       /**
+        * 下载文件名称
+        */
+       private String fileName;
     }
 }

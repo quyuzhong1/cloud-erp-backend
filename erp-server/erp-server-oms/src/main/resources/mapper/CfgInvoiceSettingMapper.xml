@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.CfgInvoiceSettingMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgInvoiceSettingEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="type" property="type" />
+        <result column="company_name" property="companyName" />
+        <result column="lei_code" property="leiCode" />
+        <result column="disabled" property="disabled" />
+        <result column="tax_type" property="taxType" />
+        <result column="dict_company_type" property="dictCompanyType" />
+        <result column="state_tax_no" property="stateTaxNo" />
+        <result column="email" property="email" />
+        <result column="post_code" property="postCode" />
+        <result column="address" property="address" />
+        <result column="doorplate_no" property="doorplateNo" />
+        <result column="district" property="district" />
+        <result column="city" property="city" />
+        <result column="state" property="state" />
+        <result column="no" property="no" />
+        <result column="start_code" property="startCode" />
+        <result column="certificate_url" property="certificateUrl" />
+        <result column="certificate_password" property="certificatePassword" />
+    </resultMap>
+    <select id="paging" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDTO$PagingViewDTO">
+                SELECT
+                cis.id,
+                cis.type as type,
+                cis.company_name as companyName,
+                cis.update_time as updateTime,
+                cis.update_user_name as updateUserName,
+                cis.lei_code as leiCode,
+                cis.disabled as disabled,
+                cis.tax_type as taxType,
+                cis.dict_company_type as dictCompanyType,
+                cis.state_tax_no as stateTaxNo,
+                cis.email as email,
+                cis.post_code as postCode,
+                cis.address as address,
+                cis.doorplate_no as doorplateNo,
+                cis.district as district,
+                cis.city as city,
+                cis.state as state,
+                cis.no as no,
+                cis.start_code as startCode,
+                cis.certificate_url as certificateUrl,
+                cis.certificate_password as certificatePassword
+                FROM cfg_invoice_setting AS cis
+                LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id
+                WHERE ${params.sqlMap.default}
+                AND cis.is_deleted = FALSE
+                <!-- 权限 -->
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+                GROUP BY cis.id, cis.type, cis.company_name, cis.lei_code, cis.disabled
+                       , cis.tax_type, cis.dict_company_type, cis.state_tax_no, cis.email
+                       , cis.post_code, cis.address, cis.doorplate_no, cis.district, cis.city
+                       , cis.state, cis.no, cis.start_code, cis.certificate_url, cis.certificate_password
+                       , cis.create_time, cis.update_time, cis.update_user_name
+                ORDER BY
+                cis.create_time DESC
+    </select>
+</mapper>
