@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.AfterSaleDTO;
@@ -50,7 +51,7 @@ public class AfterSaleFeignController extends BaseController {
      */
     @PostMapping("/add")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto) {
-        return success(afterSaleService.add(dto));
+        return success(afterSaleService.addAndSubmit(dto));
     }
 
     /**
@@ -60,7 +61,7 @@ public class AfterSaleFeignController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/getRepairRecord")
-    public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
+    public ApiResult<AfterSaleProgressDTO.RepairRecordDTO>  getRepairRecord(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
         return success(afterSaleService.getRepairProgress(dto));
     }
 
@@ -81,9 +82,42 @@ public class AfterSaleFeignController extends BaseController {
      * @Author jack
      * @since 2025-04-07
      */
-    @GetMapping("feign/afterSale/getDetailByPlatformCode")
+    @GetMapping("/getDetailByPlatformCode")
     ApiResult<List<AfterSaleDTO.DropDownDTO>> getDetailByPlatformCode(@RequestParam("platformCode") String platformCode){
         return success(afterSaleService.getDetailByPlatformCode(platformCode));
+    }
+
+    /**
+     * 获取节点配置信息
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("/getNodeList")
+    ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
+        return success(afterSaleService.getNodeList());
+    }
+
+
+    /**
+     * 更新客户运单号
+     * @author jack
+     * @date:  2025-04-06
+     * @return ApiResult
+     */
+    @PostMapping("/udpateTrackNo")
+    public ApiResult<Boolean> udpateTrackNo(@RequestBody @Validated AfterSaleDTO.UpdateTrackNoDTO dto) {
+        Boolean b = afterSaleService.udpateTrackNo(dto);
+        return Boolean.TRUE.equals(b) ? success(b) : failure(b);
+    }
+
+    @PostMapping("/code2Session")
+    ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@RequestBody ThridUserInfoDTO.CodeToSessionDTO dto){
+        return success(thridUserInfoService.code2Session(dto));
+    }
+
+    @GetMapping("/invalidByCode")
+    public ApiResult<BatchResultDTO> invalidByCode(@RequestParam("code") String code){
+        return success(afterSaleService.invalidByCode(code));
     }
 
 }

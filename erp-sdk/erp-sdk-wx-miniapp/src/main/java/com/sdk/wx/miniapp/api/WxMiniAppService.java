@@ -13,5 +13,5 @@ public interface WxMiniAppService {
 
   WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode);
 
-
+  String sendSubscribeMsg(String jsonStr);
 }

@@ -2,6 +2,8 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -12,18 +14,22 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.AttachmentDTO;
+import com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
@@ -34,6 +40,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -41,13 +48,17 @@ import com.erp.server.dmp.enums.AfterSaleStatusEnum;
 import com.erp.server.dmp.mapper.AfterSaleMapper;
 import com.erp.server.dmp.service.*;
 import com.sdk.wx.miniapp.api.WxMiniAppService;
+import com.sdk.wx.miniapp.request.SubscribeMsgRequest;
 import com.sdk.wx.miniapp.response.WxJscodeToSessionResponse;
 import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -55,6 +66,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_DMP_AFTER_SALE;
+
 /**
  * <p>
  * 售后申请表 服务实现类
@@ -92,6 +106,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private DmpSoOriginalInfoService dmpSoOriginalInfoService;
     @Resource
     private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private DmpSoOutstockService dmpSoOutstockService;
+    @Resource
+    private MQProducerService mQProducerService;
 
 
 
@@ -107,7 +127,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //第三方用户id为空的情况下，则新增用户
         if(StringUtils.isBlank(addDTO.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
-            thridUserInfoEntity.setUsername(addDTO.getUsername());
+            thridUserInfoEntity.setUsername(addDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
             thridUserInfoEntity.setType("selfAdd");
             thridUserInfoService.save(thridUserInfoEntity);
@@ -115,6 +135,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         log.info("开始新增售后申请单");
         afterSaleEntity.setBillDate(LocalDate.now());
+        // 生成单号
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHSQ);
         afterSaleEntity.setCode(code);
@@ -128,23 +149,26 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), "新增操作");
         //新增明细
         List<AfterSaleDetailEntity> detailList = addDTO.getDetailList();
-        List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-        List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
-        Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-        detailList.forEach(detail -> {
-            detail.setMainId(afterSaleEntity.getId());
-            ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-            detail.setSkuNo(productDetail.getSkuNo());
-            detail.setProdcutName(productDetail.getName());
-            if(downDTOMap.containsKey(detail.getSkuId())){
-                AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getSkuQty());
-            }
-        });
-        afterSaleDetailService.saveBatch(detailList);
+        if(CollUtil.isNotEmpty(detailList)){
+            List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+            List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
+            Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+            detailList.forEach(detail -> {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                detail.setSkuNo(productDetail.getSkuNo());
+                detail.setProdcutName(productDetail.getName());
+                if(downDTOMap.containsKey(detail.getSkuId())){
+                    AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                    detail.setPrice(downDTO.getPrice());
+                    detail.setSkuQty(downDTO.getSkuQty());
+                }
+            });
+            afterSaleDetailService.saveBatch(detailList);
+        }
+
 
         //新增维修记录
         List<AfterSaleProgressEntity> progressList = new ArrayList<>();
@@ -153,7 +177,21 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             afterSaleProgressEntity.setMainId(afterSaleEntity.getId());
             afterSaleProgressEntity.setIndex(nodeDTO.getIndex());
             afterSaleProgressEntity.setNode(nodeDTO.getNode());
-            if(nodeDTO.getIndex().equals(1)){
+            //售后申请单，自动进入审核中
+            if(nodeDTO.getNode().equals(AfterSaleStatusEnum.REPAIR_REQUEST.getCode())
+                    ||nodeDTO.getNode().equals(AfterSaleStatusEnum.APPROVE_ING.getCode())){
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            }
+            //客户寄件
+            if(nodeDTO.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
+                    && StringUtils.isNotBlank(addDTO.getReturnTrackNo())){
+                afterSaleProgressEntity.setTrackNo(addDTO.getReturnTrackNo());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            }
+            //售后发货
+            if(nodeDTO.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())
+                    && StringUtils.isNotBlank(addDTO.getOutboundTrackNo())){
+                afterSaleProgressEntity.setTrackNo(addDTO.getOutboundTrackNo());
                 afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
             }
             progressList.add(afterSaleProgressEntity);
@@ -184,52 +222,47 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     public Boolean update(AfterSaleDTO.UpdateDTO updateDTO) {
         AfterSaleEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "售后申请单"));
-        // 待提交和审核不通过允许修改
-        if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
-            throw new ServiceException(ApiError.ERROR_1029);
+        if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(old.getInvalidStatus())){
+            throw new ServiceException("只有未作废的单据才能进行状态变更");
+        }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(old.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(old.getStatus())  ){
+            throw new ServiceException("只有未完成的单据才能进行状态变更");
         }
+
         AfterSaleEntity afterSaleEntity =  BeanMapperUtils.map(AfterSaleEntity.class, updateDTO);
 
-        log.info("编辑 开始修改售后申请单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(afterSaleEntity);
-        if(!save) {
-            throw new ServiceException("售后申请单保存失败");
-        }
-        // 记录主单操作日志
-        log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", afterSaleEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSaleEntity.getCode(), "售后申请单");
-        operateLogService.addModuleOperateLogByObj(old, afterSaleEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
         //更新用户信息
         if(StringUtils.isNotBlank(afterSaleEntity.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
             thridUserInfoEntity.setId(afterSaleEntity.getThridUserId());
-            thridUserInfoEntity.setUsername(updateDTO.getUsername());
+            thridUserInfoEntity.setUsername(updateDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(updateDTO.getPhoneNumber());
             thridUserInfoService.updateById(thridUserInfoEntity);
         }
 
         //新增明细
         List<AfterSaleDetailEntity> detailList = updateDTO.getDetailList();
-        List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-        Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-        List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
-        Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-        detailList.forEach(detail -> {
-            detail.setMainId(afterSaleEntity.getId());
-            ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-            detail.setSkuNo(productDetail.getSkuNo());
-            detail.setProdcutName(productDetail.getName());
-            if(downDTOMap.containsKey(detail.getSkuId())){
-                AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                detail.setPrice(downDTO.getPrice());
-                detail.setSkuQty(downDTO.getSkuQty());
-            }
-        });
-        // 删除明细数据
-        List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-        afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
-        afterSaleDetailService.saveOrUpdateBatch(detailList);
+        if(CollUtil.isNotEmpty(detailList)){
+            List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+            List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
+            Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+            detailList.forEach(detail -> {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                detail.setSkuNo(productDetail.getSkuNo());
+                detail.setProdcutName(productDetail.getName());
+                if(downDTOMap.containsKey(detail.getSkuId())){
+                    AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                    detail.setPrice(downDTO.getPrice());
+                    detail.setSkuQty(downDTO.getSkuQty());
+                }
+            });
+            // 删除明细数据
+            List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
+            afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
+            afterSaleDetailService.saveOrUpdateBatch(detailList);
+        }
 
         // 删除明细数据
         attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
@@ -246,6 +279,52 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 attachmentService.save(entity);
             }
         }
+
+        //更新运单号
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
+        for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode()) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
+                afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+
+                afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+
+                //发送微信订阅消息
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                        bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+                    }
+                });
+            }
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode()) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
+                afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+
+                afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+
+                //发送微信订阅消息
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                        bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                    }
+                });
+            }
+            afterSaleProgressService.updateById(afterSaleProgressEntity);
+        }
+
+        log.info("编辑 开始修改售后申请单数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(afterSaleEntity);
+        if(!save) {
+            throw new ServiceException("售后申请单保存失败");
+        }
+        // 记录主单操作日志
+        log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", afterSaleEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSaleEntity.getCode(), "售后申请单");
+        operateLogService.addModuleOperateLogByObj(old, afterSaleEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -260,6 +339,24 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         // 数据处理
         fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    @Override
+    public PagingVO<DmpAfterSaleExcekDTO> exportList(PagingDTO<AfterSaleDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<DmpAfterSaleExcekDTO> pageData = this.baseMapper.listExport(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 属性赋值
+        for(DmpAfterSaleExcekDTO data : pageData.getRecords()) {
+            data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+            data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
+            //单据状态
+            data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
+        }
         return new PagingVO(pageData);
     }
 
@@ -282,25 +379,25 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     @Override
-    public void exportList(AfterSaleDTO.ExportDTO param, HttpServletResponse response) {
-        List<AfterSaleDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/afterSale.xlsx";
-        String name = "售后申请单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public void exportList(AfterSaleDTO.PagingParamDTO param, HttpServletResponse response) {
+//        List<AfterSaleDTO.ListDTO> list = this.baseMapper.listExport(param);
+//        if(CollUtil.isEmpty(list)) {
+//           return;
+//        }
+//        // 数据处理
+//        fillList(list);
+//        // 导出数据
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/afterSale.xlsx";
+//        String name = "售后申请单导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date).append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
+        downloadTaskFeign.saveDownloadTask("售后申请导出", EXPORT_DMP_AFTER_SALE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -451,14 +548,72 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         log.info("作废 开始修改售后申请单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AfterSaleEntity::getId, id)
             .set(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+             .set(AfterSaleEntity::getInvalidTime, LocalDateTime.now())
+            .set(AfterSaleEntity::getStatus, AfterSaleStatusEnum.TERMINATED.getCode())
             .set(AfterSaleEntity::getInvalidRemark, remark)
             .update();
+
+        //更新节点时间
+        //更新通过，则进入下一个节点：终止
+        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+        afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TERMINATED.getCode());
+        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+        afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+
+        //发送微信订阅消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                bean.sendSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
+            }
+        });
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "售后申请单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
+
+
+    /**
+     * 作废
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO invalidByCode(String code) {
+        if(StringUtils.isBlank(code)){
+            throw new ServiceException("工单号不能为空");
+        }
+        AfterSaleEntity afterSaleEntity = lambdaQuery().eq(AfterSaleEntity::getCode, code).one();
+        if (Objects.isNull(afterSaleEntity)) {
+            throw new ServiceException("售后申请单不存在");
+        }
+
+        afterSaleEntity.setInvalidStatus(InvalidStatusEnum.VOIDED.getStatus());
+        afterSaleEntity.setInvalidTime(LocalDateTime.now());
+        afterSaleEntity.setStatus(AfterSaleStatusEnum.TERMINATED.getCode());
+        updateById(afterSaleEntity);
+
+        //更新节点时间
+        //更新通过，则进入下一个节点：终止
+        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+        afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TERMINATED.getCode());
+        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+        afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+        //发送微信订阅消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TERMINATED.getCode());
+            }
+        });
+
+        return BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), OperationTypeEnum.INVALID);
+    }
 
     /**
     * 撤销
@@ -495,7 +650,56 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             return Boolean.TRUE;
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        if(approveStatus.equals(ApproveStatusEnum.REJECT)){
+
+            entity.setStatus(AfterSaleStatusEnum.TERMINATED.getCode());
+
+            //审批不通过，则最后的节点为终止
+            AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+            afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TERMINATED.getCode());
+            afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+            //发送微信订阅消息
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                    bean.sendSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
+                }
+            });
+        }else {
+
+            entity.setStatus(AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+            //更新节点时间
+            //更新通过，则进入下一个节点：待寄回
+            updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode(),"");
+
+            //发送微信订阅消息
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                    bean.sendSubscribeMsgRequest(entity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+                }
+            });
+        }
+        //更新单据状态
+        updateById(entity);
         return updateForApprove(entity.getId(), approveStatus.getStatus());
+    }
+
+    //更新节点时间
+    private void updateProgressByMainId(String id,String node,String logisticsCode) {
+        //更新单据状态
+        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(id, node);
+        if (Objects.nonNull(afterSaleProgressEntity)) {
+            afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            if(StringUtils.isNotBlank(logisticsCode)){
+                afterSaleProgressEntity.setTrackNo(logisticsCode);
+            }
+            afterSaleProgressService.updateById(afterSaleProgressEntity);
+        }
     }
 
     @Override
@@ -528,6 +732,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             data.setAttachNameList(attachNameList);
             data.setAttachUrlList(attachUrlList);
         }
+        //查询进度
+        List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(id));
+        for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())){//客户寄件
+                data.setReturnTrackNo(afterSaleProgressEntity.getTrackNo());
+            }
+            if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())){//售后发货
+                data.setOutboundTrackNo(afterSaleProgressEntity.getTrackNo());
+            }
+        }
         return data;
     }
     /**
@@ -555,7 +769,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus().getCode()));
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         //单据状态
         data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
@@ -637,7 +851,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     /**
      * 获取节点配置信息
      */
-    private List<AfterSaleDTO.NodeDTO>  getNodeList() {
+    @Override
+    public List<AfterSaleDTO.NodeDTO>  getNodeList() {
         String value = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_NODE);
         if (StringUtils.isBlank(value)) {
             throw new ServiceException("售后维修节点配置不存在");
@@ -656,40 +871,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     }
 
-
-//    @Transactional(rollbackFor = Exception.class)
-//    @Override
-//    public BatchResultDTO changeStatus(String id) {
-//        AfterSaleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到售后申请单数据"));
-//        // 待提交或审核不通过并且未作废允许作废
-//        if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus())  || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
-//            throw new ServiceException("只有审核通过的单据才能进行状态变更");
-//        }
-//        Integer count = afterSaleProgressService.lambdaQuery().eq(AfterSaleProgressEntity::getMainId, id).in(AfterSaleProgressEntity::getNode,
-//                AfterSaleStatusEnum.FINISHED.getCode(), AfterSaleStatusEnum.TERMINATED.getCode()).count();
-//        if(count > 0){
-//            throw new ServiceException("未完成未终止的单据才能进行状态变更");
-//        }
-//
-//        List<AfterSaleProgressEntity> progressList = afterSaleProgressService.getByMainIds(Collections.singletonList(id));
-//        List<AfterSaleProgressEntity> oldList = progressList.stream().filter(t -> Objects.nonNull(t.getNodeTime())).collect(Collectors.toList());
-//        oldList.sort(Comparator.comparingInt(AfterSaleProgressEntity::getIndex).reversed());
-//        String oldNode = oldList.get(0).getNode();
-//
-//        List<AfterSaleProgressEntity> newList = progressList.stream().filter(t -> Objects.isNull(t.getNodeTime())).collect(Collectors.toList());
-//        // 根据 index 进行排序
-//        newList.sort(Comparator.comparingInt(AfterSaleProgressEntity::getIndex));
-//        // 变更状态
-//        AfterSaleProgressEntity afterSaleProgressEntity = newList.get(0);
-//        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
-//        afterSaleProgressService.updateById(afterSaleProgressEntity);
-//        String newNode = afterSaleProgressEntity.getNode();
-//
-//        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据状态变更操作：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "售后申请单","从"+oldNode+"变更到"+newNode);
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "状态变更操作");
-//        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
-//    }
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<BatchResultDTO> changeStatus(AfterSaleDTO.IdsDTO dto) {
@@ -698,12 +879,21 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (CollUtil.isEmpty(entityList)) {
             throw new ServiceException("未找到售后申请单数据");
         }
+
+        if(StringUtil.isBlank(dto.getNode())){
+            throw new ServiceException("请选择单据状态");
+        }
+
+        AfterSaleStatusEnum afterSaleStatus = AfterSaleStatusEnum.getByCode(dto.getNode());
+        if(Objects.isNull(afterSaleStatus)){
+            throw new ServiceException("未找到单据状态信息");
+        }
+
         for (AfterSaleEntity entity : entityList) {
             BatchResultDTO batchResultDTO;
-            // 待提交或审核不通过并且未作废允许作废
-            if ((!ApproveStatusEnum.APPROVE.getStatus().equals(entity.getApproveStatus()) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus()))){
-                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有审核通过未作废的单据才能进行状态变更");
-            }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
+            if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
+                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未作废的单据才能进行状态变更");
+            }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(entity.getStatus())  ){
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未完成的单据才能进行状态变更");
             }else {
                 batchResultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
@@ -711,8 +901,21 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 entity.setStatus(dto.getNode());
                 updateById(entity);
 
-                afterSaleProgressService.updateStatus(entity.getId(), dto.getNode(),dto.getRemark());
+                AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), dto.getNode());
+                afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+                if(StringUtils.isNotBlank(dto.getTrackNo())){
+                    afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
+                }
+                afterSaleProgressService.updateById(afterSaleProgressEntity);
 
+                //发送微信订阅消息
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                        bean.sendSubscribeMsgRequest(entity,afterSaleStatus.getCode());
+                    }
+                });
             }
             resultList.add(batchResultDTO);
         }
@@ -720,16 +923,35 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
 
-
-
     /**
      * 寄修进度
      */
     @Override
-    public List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(AfterSaleDTO.ProgressDTO dto) {
+    public AfterSaleProgressDTO.RepairRecordDTO getRepairProgress(AfterSaleDTO.ProgressDTO dto) {
+        AfterSaleProgressDTO.RepairRecordDTO repairRecordDTO = new AfterSaleProgressDTO.RepairRecordDTO();
         List<AfterSaleProgressDTO.RepairRecordListDTO> repairProgress = this.baseMapper.getRepairProgress(dto);
-        repairProgress.forEach(t -> t.setNodeName(AfterSaleStatusEnum.getNode(t.getNode())));
-        return repairProgress;
+        repairProgress.forEach(t -> {
+            t.setNodeName(AfterSaleStatusEnum.getNode(t.getNode()));
+            if (Objects.nonNull(t.getNodeTimeLd())) {
+                t.setNodeTime(LocalDateTimeUtil.format(t.getNodeTimeLd(), DateUtil.fmt));
+            }
+            if(StringUtils.isNotBlank(t.getTrackNo())){
+                if(StringUtils.isBlank(t.getRemark())){
+                    t.setRemark("快递单号："+t.getTrackNo());
+                }else {
+                    t.setRemark("快递单号："+t.getTrackNo() + "<br>" +t.getRemark());
+                }
+            }
+        });
+
+        // 过滤 nodeTime 不为空的记录找出 index 最大的记录
+        AfterSaleProgressDTO.RepairRecordListDTO repairRecordListDTO = repairProgress.stream()
+                .filter(record -> record.getNodeTimeLd() != null)
+                .max(Comparator.comparingInt(AfterSaleProgressDTO.RepairRecordListDTO::getIndex)).get();
+
+        repairRecordDTO.setActive(repairRecordListDTO.getIndex() - 1);
+        repairRecordDTO.setRecordList(repairProgress);
+        return repairRecordDTO;
     }
     /**
      * 寄修历史
@@ -749,6 +971,35 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     @Override
     public WxJscodeToSessionResponse jsCode2SessionInfo(String jsCode){
         return wxMiniAppService.jsCode2SessionInfo(jsCode);
+    }
+
+
+    @Override
+    public void syncWdtToAfterSale() {
+        List<AfterSaleEntity> list = lambdaQuery().eq(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                .ne(AfterSaleEntity::getRepairInvoiceCode, "")
+                .list();
+        if(CollUtil.isNotEmpty(list)){
+            List<String> repairInvoiceCodeList = list.stream().map(AfterSaleEntity::getRepairInvoiceCode).collect(Collectors.toList());
+            List<DmpSoOutstockEntity> dmpSoOutstockList = dmpSoOutstockService.lambdaQuery()
+                    .eq(DmpSoOutstockEntity::getStatus, "1")
+                    .in(DmpSoOutstockEntity::getThirdBillNo, repairInvoiceCodeList).list();
+            if(CollUtil.isNotEmpty(dmpSoOutstockList)){
+                Map<String, DmpSoOutstockEntity> map = dmpSoOutstockList.stream().collect(Collectors.toMap(DmpSoOutstockEntity::getPlatformCode, t -> t, (k1, k2) -> k1));
+                for (AfterSaleEntity afterSaleEntity : list) {
+                    String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
+                    if(map.containsKey(repairInvoiceCode) && StringUtils.isNotBlank(map.get(repairInvoiceCode).getLogisticsCode())){
+                        //更新节点时间
+                        //更新通过，则进入下一个节点：已完成
+                        String logisticsCode = map.get(repairInvoiceCode).getLogisticsCode();
+                        updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode(),logisticsCode);
+
+                        //发送微信订阅消息
+                        sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -772,6 +1023,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         // 返回最终的结果列表
         return resultList;
     }
+
+
+
 
     private void getWdtMappingList(String platformCode, List<AfterSaleDTO.DropDownDTO> resultList) {
         // 从dmpSoOriginalInfoService服务中获取详情信息列表
@@ -832,4 +1086,134 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
         }
     }
+
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto) {
+        String code = dto.getCode();
+        String trackNo = dto.getTrackNo();
+
+        AfterSaleEntity afterSaleEntity = lambdaQuery().eq(AfterSaleEntity::getCode, code).one();
+        if (Objects.isNull(afterSaleEntity)) {
+            throw new ServiceException("售后申请单不存在");
+        }
+        //更新单据状态
+        afterSaleEntity.setStatus(AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+        updateById(afterSaleEntity);
+        //更新运单号
+        boolean update = afterSaleProgressService.lambdaUpdate().eq(AfterSaleProgressEntity::getMainId, afterSaleEntity.getId())
+                .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
+                .set(AfterSaleProgressEntity::getTrackNo, trackNo)
+                .update();
+
+        //更新节点时间
+        //更新通过，则进入下一个节点：售后签收
+        updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),trackNo);
+
+        //发送微信订阅消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                bean.sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+            }
+        });
+        return update;
+    }
+
+
+
+
+    public void sendSubscribeMsgRequest(AfterSaleEntity afterSaleEntity, String status){
+        String code = afterSaleEntity.getCode();
+        String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
+        String thridUserId = afterSaleEntity.getThridUserId();
+        if(Objects.isNull(afterSaleEntity)){
+            return ;
+
+        }
+        if(StringUtils.isBlank(code)
+                || StringUtils.isBlank(repairInvoiceCode)
+                || StringUtils.isBlank(status)
+                || StringUtils.isBlank(thridUserId)){
+            return ;
+        }
+
+        ThridUserInfoEntity thridUserInfoEntity = thridUserInfoService.getById(thridUserId);
+        String openId;
+        if(Objects.nonNull(thridUserInfoEntity) && StringUtils.isNotBlank(thridUserInfoEntity.getOpenid())){
+            openId = thridUserInfoEntity.getOpenid();
+        }else {
+            return ;
+        }
+
+        String value = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_SUBSCRIBE_MSG);
+        if (StringUtils.isBlank(value)) {
+            throw new ServiceException("售后微信消息订阅配置不存在");
+        }
+
+        //推送mq 让消费者去执行消息推送
+        SubscribeMsgRequest request = JSONUtil.toBean(value, SubscribeMsgRequest.class);
+        request.setTouser(openId);
+        request.setPage(request.getPage()+code);
+        Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
+        data.get("character_string1").setValue(repairInvoiceCode);
+        data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
+        data.get("time6").setValue(LocalDateTimeUtil.format(LocalDateTime.now(), DateUtil.fmt));
+
+        DmpPushMsgEntity dmpPushMsgEntity = new DmpPushMsgEntity();
+        // 将请求对象转换为 JSON 字符串
+        String jsonStr = JSONUtil.toJsonStr(request);
+
+        dmpPushMsgEntity.setTargetPlatform("wx");
+        dmpPushMsgEntity.setSourcePlatform(ServiceCodeNameEnum.DMP.getCode());
+        dmpPushMsgEntity.setSourceType(SourceTypeEnum.AFTER_SALE.getCode());
+        dmpPushMsgEntity.setSourceId(afterSaleEntity.getId());
+        dmpPushMsgEntity.setSourceCode(afterSaleEntity.getCode());
+        dmpPushMsgEntity.setPushData(jsonStr);
+        dmpPushMsgEntity.setMessageCreateTime(LocalDateTime.now());
+        dmpPushMsgEntity.setMessageCreateTime(LocalDateTime.now());
+
+        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
+                dmpPushMsgEntity, IdUtil.simpleUUID());
+    }
+
+
+//    public static void main(String[] args) {
+//        String json ="{\"touser\": \"\",\n" +
+//                "  \"template_id\": \"11iXL0cf0mE57Rnxy6wMH_Gb4tSXed4NFXaAdQsIOr8\",\n" +
+//                "  \"page\": \"pages/repairProgress/index?code=\",\n" +
+//                "  \"miniprogram_state\":\"developer\",\n" +
+//                "  \"lang\":\"zh_CN\",\n" +
+//                "\t \"data\":{\n" +
+//                "        \"character_string1\": {\n" +
+//                "            \"value\": \"\"\n" +
+//                "        },\n" +
+//                "        \"thing2\": {\n" +
+//                "            \"value\": \"\"\n" +
+//                "        },\n" +
+//                "\t\t\t\t\"time6\": {\n" +
+//                "            \"value\": \"\"\n" +
+//                "        },\n" +
+//                "        \"thing7\": {\n" +
+//                "            \"value\": \"如有疑问，请联系客服\"\n" +
+//                "        }\n" +
+//                "    }\n" +
+//                "\t}";
+//        String openId ="openId";
+//        String code = "123456789";
+//        String repairInvoiceCode ="987654";
+//        String status = "approveIng";
+//        SubscribeMsgRequest request = JSONUtil.toBean(json, SubscribeMsgRequest.class);
+//        request.setTouser(openId);
+//        request.setPage(request.getPage()+code);
+//
+//        Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
+//        data.get("character_string1").setValue(repairInvoiceCode);
+//        data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
+//        data.get("time6").setValue(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+//
+//
+//    }
 }

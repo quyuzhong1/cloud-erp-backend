@@ -110,10 +110,14 @@ public class ThridUserInfoDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO {
 
-        /**
-         * 用户登录凭证（有效期五分钟）。开发者需要在开发者服务器后台调用 code2Session，使用 code 换取 openid、unionid、session_key 等信息
-         */
-        private String jsCode;
+//        /**
+//         * 用户登录凭证（有效期五分钟）。开发者需要在开发者服务器后台调用 code2Session，使用 code 换取 openid、unionid、session_key 等信息
+//         */
+//        private String jsCode;
+
+
+        private String thirdUserId;
+
 
         /**
          * 用户对象信息
@@ -145,6 +149,23 @@ public class ThridUserInfoDTO implements Serializable {
          */
         private String cloudID;
 
+    }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CodeToSessionDTO {
+
+        /**
+         * 用户登录凭证（有效期五分钟）。开发者需要在开发者服务器后台调用 code2Session，使用 code 换取 openid、unionid、session_key 等信息
+         */
+        @NotBlank(message = "jsCode不能为空")
+        private String jsCode;
+
+        @NotBlank(message = "thirdUserId不能为空")
+        private String thirdUserId;
     }
 
     /**
@@ -290,6 +311,25 @@ public class ThridUserInfoDTO implements Serializable {
         private String status;
 
     }
+
+    /**
+     * 新增
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CodeToSessionResp {
+
+        private String sessionKey;
+
+        private String unionid;
+
+        private String errmsg;
+
+        private String openid;
+
+        private Integer errcode;
+    }
+
 
 
 }

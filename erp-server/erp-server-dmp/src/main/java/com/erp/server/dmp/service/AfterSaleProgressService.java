@@ -36,7 +36,9 @@ public interface AfterSaleProgressService extends SuperService<AfterSaleProgress
     Boolean update(AfterSaleProgressDTO.UpdateDTO dto);
 
 
-    List<AfterSaleProgressEntity> getByMainIds(List<String> ids);
+    List<AfterSaleProgressEntity> listByMainIds(List<String> ids);
 
     Boolean updateStatus(String id, String node, String remark);
+
+    AfterSaleProgressEntity getByNode(String id, String node);
 }

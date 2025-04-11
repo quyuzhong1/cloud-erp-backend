@@ -143,6 +143,18 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
          * 发货仓库
          */
         private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
     }
 
 

@@ -7,6 +7,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import com.erp.model.dmp.entity.ThridUserInfoEntity;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -46,25 +46,42 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThridUserInfoDTO.AddDTO addDTO) {
-        String jsCode = addDTO.getJsCode();
-        if(StringUtils.isNotBlank(jsCode)){
-            throw new ServiceException("jsCode不能为空");
-        }
+//        String jsCode = addDTO.getJsCode();
+//        if(StringUtils.isBlank(jsCode)){
+//            throw new ServiceException("jsCode不能为空");
+//        }
         ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
-        BeanMapperUtils.copy(addDTO.getUserInfo(), thridUserInfoEntity);
-        // 调用微信接口获取用户信息
-        WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(jsCode);
-        if(Objects.isNull(wxJscodeToSessionResponse)){
-            thridUserInfoEntity.setOpenid(wxJscodeToSessionResponse.getOpenid());
-            thridUserInfoEntity.setUnionid(wxJscodeToSessionResponse.getUnionid());
-            thridUserInfoEntity.setType("wx");
-        }
+        BeanMapper.copy(addDTO.getUserInfo(), thridUserInfoEntity);
+//        // 调用微信接口获取用户信息
+//        WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(jsCode);
+//        if(Objects.isNull(wxJscodeToSessionResponse)){
+//            thridUserInfoEntity.setOpenid(wxJscodeToSessionResponse.getOpenid());
+//            thridUserInfoEntity.setUnionid(wxJscodeToSessionResponse.getUnionid());
+//            thridUserInfoEntity.setType("wx");
+//        }
 
         boolean save = super.save(thridUserInfoEntity);
         if(!save) {
             throw new ServiceException("用户单保存失败");
         }
         return new BaseResultDTO.AddDTO(thridUserInfoEntity.getId(), thridUserInfoEntity.getId());
+    }
+
+
+    @Override
+    public ThridUserInfoDTO.CodeToSessionResp code2Session(ThridUserInfoDTO.CodeToSessionDTO dto) {
+        ThridUserInfoDTO.CodeToSessionResp codeToSessionResp = new ThridUserInfoDTO.CodeToSessionResp();
+        WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(dto.getJsCode());
+        BeanMapper.copy(wxJscodeToSessionResponse, codeToSessionResp);
+
+        if(StringUtils.isBlank(dto.getThirdUserId())){
+            lambdaUpdate().eq(ThridUserInfoEntity::getId, dto.getThirdUserId())
+                    .set(ThridUserInfoEntity::getOpenid, wxJscodeToSessionResponse.getOpenid())
+                    .set(ThridUserInfoEntity::getUnionid, wxJscodeToSessionResponse.getUnionid())
+                   .set(ThridUserInfoEntity::getType, "wx")
+                   .update();
+        }
+        return codeToSessionResp;
     }
 
     /**

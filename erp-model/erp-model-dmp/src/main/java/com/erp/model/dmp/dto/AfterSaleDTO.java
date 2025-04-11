@@ -2,6 +2,7 @@ package com.erp.model.dmp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.dmp.entity.AfterSaleDetailEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -67,6 +68,11 @@ public class AfterSaleDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
+
+         /**
+          * 主键id
+          */
+         private List<String> ids;
 
      }
     /**
@@ -216,15 +222,15 @@ public class AfterSaleDTO implements Serializable {
         private BigDecimal repairAmount;
         private String skuId;
         private String skuNo;
-        private String prodcutName;
+        private String productName;
         private Integer skuQty;
         private String detailDesc;
         /**
-         * 寄出快递单号
+         * 仓库寄的快递单号
          */
         private String outboundTrackNo;
         /**
-         * 寄回快递单号
+         * 客户寄的快递单号
          */
         private String returnTrackNo;
         /**
@@ -283,7 +289,7 @@ public class AfterSaleDTO implements Serializable {
         /**
         * 审核状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         /**
         * 审核时间
@@ -381,11 +387,11 @@ public class AfterSaleDTO implements Serializable {
          */
         private String invalidStatusName;
         /**
-         * 寄出快递单号
+         * 仓库寄的快递单号
          */
         private String outboundTrackNo;
         /**
-         * 寄回快递单号
+         * 客户寄的快递单号
          */
         private String returnTrackNo;
         /**
@@ -452,7 +458,7 @@ public class AfterSaleDTO implements Serializable {
         private String thridUserId;
 
         @Size(max = 32,message = "客户名称最大长度不能超过32位")
-        private String username;
+        private String thridUserName;
 
         @Size(max = 32,message = "手机号码最大长度不能超过32位")
         private String phoneNumber;
@@ -526,11 +532,18 @@ public class AfterSaleDTO implements Serializable {
         private List<String> attachNameList;
         private List<String> attachUrlList;
 
+        /**
+         * 仓库寄的快递单号
+         */
+        private String outboundTrackNo;
+        /**
+         * 客户寄的快递单号
+         */
+        private String returnTrackNo;
 
         /**
          * 明细
          */
-        @NotEmpty(message = "明细不能为空")
         private List<AfterSaleDetailEntity> detailList;
     }
 
@@ -610,8 +623,9 @@ public class AfterSaleDTO implements Serializable {
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
 
-
         private String comment;
+
+        private String trackNo;
 
     }
 
@@ -621,15 +635,15 @@ public class AfterSaleDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class DropDownDTO{
-
-        /**
-         *dmp_so_info / dmp_so_original_info 主键
-         */
-        private String id;
-        /**
-         *dmp_so_detail/dmp_so_original_detail 主键
-         */
-        private String detailId;
+//
+//        /**
+//         *dmp_so_info / dmp_so_original_info 主键
+//         */
+//        private String id;
+//        /**
+//         *dmp_so_detail/dmp_so_original_detail 主键
+//         */
+//        private String detailId;
 
         private String shopId;
         /**
@@ -657,6 +671,53 @@ public class AfterSaleDTO implements Serializable {
          *
          */
         private String thirdType;
+
+    }
+
+
+
+    /**
+     * 微信小程序输出结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OpenApiCommonDTO{
+
+        /**
+         */
+        private String key;
+
+
+        /**
+         */
+        private String platformCode;
+
+
+        /**
+         */
+        private String code;
+
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdateTrackNoDTO {
+        /**
+         *
+         */
+        @NotBlank(message = "工单号不能为空")
+        private String code;
+
+        /**
+         *
+         */
+        @NotBlank(message = "快递单号不能为空")
+        private String trackNo;
+
 
     }
 
