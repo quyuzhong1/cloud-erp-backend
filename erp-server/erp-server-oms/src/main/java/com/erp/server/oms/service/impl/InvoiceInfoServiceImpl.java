@@ -201,6 +201,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO batchGenerateNfeInvoice(String id) {
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
@@ -252,11 +253,20 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
         //生成发票,调用第三方
 
+
+
         //回调更新b2c订单发票清单状态
         if (true) {
             soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.WAIT_UPLOAD.getCode());
         } else {
             soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode());
+        }
+
+        //美客多自动上传发票、速卖通无需上传
+        if (CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode())) {
+            soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode());
+        }else {
+            //上传到平台
         }
         soB2cService.updateById(soB2cEntity);
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");

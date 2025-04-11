@@ -38,7 +38,7 @@
         update_time,
         version,
         is_deleted,
-        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status
+        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status,invoice_nature,platform_invoice_no,cancel_reason,return_tax_code,return_reason,invoice_remark
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$PagingViewDTO">
         SELECT
@@ -61,7 +61,9 @@
         id.sku_id,
         id.product_name as productName,
         id.sku_no as skuNo,
-        si.name as shopName
+        si.name as shopName,
+        i.invoice_nature as invoiceNature,
+        i.platform_invoice_no as platformInvoiceNo
         FROM invoice_info i
         left join invoice_detail id on i.id = id.main_id and id.is_deleted = false
         left join shop_info si on i.shop_id = si.id and si.disabled = false
@@ -85,14 +87,14 @@
     <select id="listExportUrl" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$ExportAttachDTO">
         select
             DISTINCT
-            ii.id,
+            i.id,
             att.attach_url,
             att.attach_name
-        from invoice_info ii
-        inner join invoice_detail id on ii.id = id.main_id and id.is_deleted = false
-        inner join attachment att on ii.id = att.business_id and att.is_deleted = false and att.type = #{type}
-        left join shop_info si on ii.shop_id = si.id and si.disabled = false
-        where ${params.sqlMap.default} and ii.is_deleted = false and ii.invoice_type = 'nfe'
+        from invoice_info i
+        inner join invoice_detail id on i.id = id.main_id and id.is_deleted = false
+        inner join attachment att on i.id = att.business_id and att.is_deleted = false and att.type = #{type}
+        left join shop_info si on i.shop_id = si.id and si.disabled = false
+        where ${params.sqlMap.default} and i.is_deleted = false and i.invoice_type = 'nfe'
     </select>
 
 

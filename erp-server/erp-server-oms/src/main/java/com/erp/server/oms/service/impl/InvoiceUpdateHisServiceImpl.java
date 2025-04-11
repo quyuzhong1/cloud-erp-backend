@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 /**
@@ -90,7 +89,7 @@ public class InvoiceUpdateHisServiceImpl extends SuperServiceImpl<InvoiceUpdateH
 
     @Override
     public List<InvoiceUpdateHisDTO.ListDTO> list(InvoiceUpdateHisDTO.IdDTO dto) {
-        return Collections.emptyList();
+        return baseMapper.list(dto);
     }
 
     @Override

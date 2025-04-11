@@ -222,6 +222,19 @@ public class DmpSoBillDetailEntity extends BaseEntity<DmpSoBillDetailEntity> {
     @TableField("platform_order_detail_id")
     private String platformOrderDetailId;
 
+    /**
+     * 税号
+     */
+    @TableField("tax_no")
+    private String taxNo;
+
+    /**
+     * 注册号
+     */
+    @TableField("registration_no")
+    private String registrationNo;
+
+
 
 
     public static final String INPUT_TASK_ID = "input_task_id";
