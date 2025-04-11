@@ -9906,11 +9906,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList) {
+    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList) {
         if (CollUtil.isEmpty(platformList)){
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList);
+        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList,codeList);
     }
 
     @Override
