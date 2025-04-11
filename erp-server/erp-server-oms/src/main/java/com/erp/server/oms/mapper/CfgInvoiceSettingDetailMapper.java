@@ -27,14 +27,7 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
       * @return: List<CfgInvoiceSettingDetailDTO.ViewDetailShop>
       **/
     List<CfgInvoiceSettingDetailDTO.ViewDetailShop> selectDetailShop();
-    /**
-      * @description:根据主键id查询明细，根据平台value关联查询平台name
-      * @author: hcg
-      * @date: 2025/4/9 14:47
-      * @param: mainId
-      * @return: List<CfgInvoiceSettingDetailDTO.ViewDTO>
-      **/
-    List<CfgInvoiceSettingDetailDTO.ViewDTO> selectDetailDict(String mainId);
+
     /**
      * 根据店铺id集合查询
      * @author will

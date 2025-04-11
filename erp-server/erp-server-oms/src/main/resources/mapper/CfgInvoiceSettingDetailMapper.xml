@@ -57,28 +57,6 @@
             cisd.is_deleted = FALSE;
     </select>
 
-    <select id="selectDetailDict" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDTO">
-        SELECT
-            cisd.id AS id,
-            cisd.shop_id AS shopId,
-            cisd.main_id AS mainId,
-            cisd.dict_invoice_rule AS dictInvoiceRule,
-            cisd.ratio AS ratio,
-            cisd.is_contain_ship_fee AS isContainShipFee,
-            cisd.tax_type AS taxType,
-            cisd.invoice_node AS invoiceNode,
-            cisd.is_auto_upload AS isAutoUpload,
-            cisd.dict_platform AS dictPlatform
-        FROM
-            cfg_invoice_setting_detail cisd
-                LEFT JOIN
-            shop_info si ON cisd.shop_id = si.id
-        WHERE
-            cisd.is_deleted = FALSE
-            And cisd.main_id = #{mainId}
-        ;
-    </select>
-
     <!-- 根据店铺id集合查询 -->
     <select id="listByShopIdList" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
         select
