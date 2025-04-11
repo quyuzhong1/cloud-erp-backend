@@ -222,7 +222,7 @@ public class AfterSaleDTO implements Serializable {
         private BigDecimal repairAmount;
         private String skuId;
         private String skuNo;
-        private String prodcutName;
+        private String productName;
         private Integer skuQty;
         private String detailDesc;
         /**
@@ -635,15 +635,15 @@ public class AfterSaleDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class DropDownDTO{
-
-        /**
-         *dmp_so_info / dmp_so_original_info 主键
-         */
-        private String id;
-        /**
-         *dmp_so_detail/dmp_so_original_detail 主键
-         */
-        private String detailId;
+//
+//        /**
+//         *dmp_so_info / dmp_so_original_info 主键
+//         */
+//        private String id;
+//        /**
+//         *dmp_so_detail/dmp_so_original_detail 主键
+//         */
+//        private String detailId;
 
         private String shopId;
         /**

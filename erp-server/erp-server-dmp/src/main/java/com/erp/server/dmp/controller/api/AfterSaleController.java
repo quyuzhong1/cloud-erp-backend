@@ -469,5 +469,15 @@ public class AfterSaleController extends BaseController {
     ApiResult<List<AfterSaleDTO.NodeDTO>> getNodeList(){
         return success(afterSaleService.getNodeList());
     }
+    /**
+     * 获取节点配置信息
+     * @Author jack
+     * @since 2025-04-07
+     */
+    @GetMapping("/syncWdtToAfterSale")
+    ApiResult<Object> syncWdtToAfterSale(){
+        afterSaleService.syncWdtToAfterSale();
+        return success();
+    }
 
 }

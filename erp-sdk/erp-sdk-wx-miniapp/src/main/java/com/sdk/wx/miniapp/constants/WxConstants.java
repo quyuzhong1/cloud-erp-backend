@@ -28,4 +28,10 @@ public class WxConstants {
      */
     public static final String JSCODE_TO_SESSION = "sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code ";
 
+    /**
+     * 发送订阅消息
+     *  https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-message-management/subscribe-message/sendMessage.html
+     */
+    public static final String SEND_SUBSCRIBE_MESSAGE = "cgi-bin/message/subscribe/send?access_token=%s";
+
 }
