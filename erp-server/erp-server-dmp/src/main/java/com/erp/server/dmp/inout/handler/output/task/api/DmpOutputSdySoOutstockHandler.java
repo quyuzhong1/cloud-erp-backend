@@ -1,10 +1,8 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -18,9 +16,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -29,11 +25,6 @@ import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -44,8 +35,6 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -65,6 +54,8 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
         Map<String, DmpSoOutstockEntity> dmpSoOutstockEntityMap = new HashMap<>();
         Map<String, List<DmpSoOutstockDetailEntity>> dmpSoOutstockDetailEntityMap = new HashMap<>();
+        List<DmpSoOutstockEntity> changeDmpSoOutstockEntity = new ArrayList<>();
+        List<DmpSoOutstockDetailEntity> changeDmpSoOutstockDetailEntity = new ArrayList<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
@@ -73,6 +64,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                     for (BaseEntity v : value) {
                         DmpSoOutstockEntity dmpSoOriginalInfoEntity = (DmpSoOutstockEntity) v;
                         dmpSoOutstockEntityMap.put(dmpSoOriginalInfoEntity.getId(), dmpSoOriginalInfoEntity);
+                        changeDmpSoOutstockEntity.add(dmpSoOriginalInfoEntity);
                     }
                 } else if ("dmp_so_outstock_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
@@ -84,6 +76,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                         }
                         list.add(dmpSoOriginalDetailEntity);
                         dmpSoOutstockDetailEntityMap.put(mainId, list);
+                        changeDmpSoOutstockDetailEntity.add(dmpSoOriginalDetailEntity);
                     }
                 }
             }
@@ -91,21 +84,17 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
         Set<String> changeIds = new HashSet<>();
-        List<DmpSoOutstockEntity> changeDmpSoOutstockEntity = new ArrayList<>();
-        List<DmpSoOutstockDetailEntity> changeDmpSoOutstockDetailEntity = new ArrayList<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
                 String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
                 if ("dmp_so_outstock".equals(storageName)) {
                     for (BaseEntity v : value) {
-                    	changeDmpSoOutstockEntity.add((DmpSoOutstockEntity) v);
                         changeIds.add(v.getId());
                     }
                 } else if ("dmp_so_outstock_detail".equals(storageName)) {
                     for (BaseEntity v : value) {
                         DmpSoOutstockDetailEntity DmpSoDetailEntity = (DmpSoOutstockDetailEntity) v;
-                        changeDmpSoOutstockDetailEntity.add(DmpSoDetailEntity);
                         changeIds.add(DmpSoDetailEntity.getMainId());
                     }
                 }
