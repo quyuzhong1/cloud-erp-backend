@@ -545,6 +545,6 @@
         inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id
         inner join transfer_info ti on ti.id = tid.main_id and ti.is_deleted = false and ti.approve_status = 'approve'
         WHERE ra.is_deleted = false
-        ) firstMile order by firstMile.bill_date asc
+        ) firstMile where firstMile.qty > 0 order by firstMile.bill_date asc
     </select>
 </mapper>
