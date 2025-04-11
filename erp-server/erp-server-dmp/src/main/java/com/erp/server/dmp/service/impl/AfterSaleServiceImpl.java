@@ -19,7 +19,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
-import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.AttachmentDTO;
@@ -361,10 +360,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 //        } catch (Exception e) {
 //            throw new ServiceException(ApiError.ERROR_1015);
 //        }
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        StringBuilder builder = new StringBuilder();
-        builder.append("售后申请导出").append(date);
-        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_DMP_AFTER_SALE.getCode(), param);
+        downloadTaskFeign.saveDownloadTask("售后申请导出", EXPORT_DMP_AFTER_SALE.getCode(), param);
     }
 
     @Transactional(rollbackFor = Exception.class)
