@@ -28,6 +28,7 @@ import com.erp.server.oms.kingdee.*;
 import com.erp.server.oms.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
+import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
@@ -1046,7 +1047,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         // 部门信息
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
         // 计算自发货明细单价
-        Map<String, BigDecimal> deliveryDetailPriceMap = syncSoB2cService.convertAllAliExpressDeliveryDetailPrice(allDeliveryDetailList, soB2cDetailEntityList, skuVOList);
+        Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap = syncSoB2cService.convertAllAliExpressDeliveryDetailPrice(allDeliveryDetailList, soB2cDetailEntityList, skuVOList);
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();

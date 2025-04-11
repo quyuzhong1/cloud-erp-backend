@@ -40,6 +40,7 @@ import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OmsPushMsgService;
+import javafx.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -751,7 +752,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                    List<ShopInfoEntity> shopInfoList,
                                                                    List<CustomerInfoEntity> customerInfoList,
                                                                    List<BaseIdDTO.CodeDTO> companyEntities,
-                                                                   Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                                   Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap,
                                                                    SoB2cReceiverEntity receiverEntity,
                                                                    List<DictBasicEntity> omsAllDictList,
                                                                    List<DictPartitionEntity> partitionEntityList,
@@ -780,14 +781,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
         shudiyunB2cOrderDTO.setGoods_transaction_quantity(aliexpressDeliveryDetailEntity.getOrderLineQty());
 
-
         // 发货明细单价
-        BigDecimal price = deliveryDetailPriceMap.get(aliexpressDeliveryDetailEntity.getId());
+        Pair<BigDecimal, BigDecimal> pircePair = deliveryDetailPriceMap.get(aliexpressDeliveryDetailEntity.getId());
         // 单价
-        shudiyunB2cOrderDTO.setPrice(price);
+        shudiyunB2cOrderDTO.setPrice(pircePair.getKey());
         // 明细总价
-        shudiyunB2cOrderDTO.setGoods_transaction_amount(price.multiply(BigDecimal.valueOf(aliexpressDeliveryDetailEntity.getOrderLineQty())));
-
+        shudiyunB2cOrderDTO.setGoods_transaction_amount(pircePair.getValue());
 
         shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, aliexpressDeliveryEntity.getVersion(), aliexpressDeliveryDetailEntity.getVersion()));
 
@@ -875,17 +874,17 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
      * 计算自发发货单明细单价
      *
      * @param deliveryDetailList    速卖通发货单明细
-     * @param soB2cDetailEntityList
+     * @param soB2cDetailEntityList 速卖通销售订单明细
      * @param skuVOList             sku列表
-     * @return Map<速卖通明细ID, 平分单价>
+     * @return Map<速卖通明细ID, Pair<发货明细sku单价, 发货明细sku总价>
      */
     @Override
-    public Map<String, BigDecimal> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
+    public Map<String, Pair<BigDecimal, BigDecimal>> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
                                                                            List<SoB2cDetailEntity> soB2cDetailEntityList,
                                                                            List<SkuVO> skuVOList
     ) {
-        // Map<速卖通明细ID, 平均采购含税成本>
-        Map<String, BigDecimal> resultMap = new HashMap<>();
+        // Map<速卖通明细ID, Pair<发货明细单价, 发货明细总价>>
+        Map<String, Pair<BigDecimal, BigDecimal>> resultMap = new HashMap<>();
 
         Map<String, SkuVO> skuVoMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, e -> e));
 
@@ -898,14 +897,24 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             // 未拆分
             if (1 == entry.getValue().size()){
                 for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
-                    resultMap.put(aliExpressDetailEntity.getId(), aliExpressDetailEntity.getPrice());
+                    SoB2cDetailEntity detailEntity = soB2cDetailEntityList.stream()
+                            .filter(e -> e.getPlatformSpuNo().equalsIgnoreCase(entry.getKey()))
+                            .findFirst()
+                            .orElseThrow(() -> new ServiceException("未找对应明细:产品ID={}", entry.getKey()));
+                    //  根据发货数量和订单明细数量判断单价和发货明细总价
+                    Pair<BigDecimal, BigDecimal> pircePair = checkQtyGetPrice(aliExpressDetailEntity, detailEntity);
+                    resultMap.put(aliExpressDetailEntity.getId(), pircePair);
                 }
                 continue;
             }
             // 平台库存产品ID一样 = 未拆分
             if (1 == entry.getValue().stream().map(AliexpressDeliveryDetailEntity::getScItemId).count()){
                 for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
-                    resultMap.put(aliExpressDetailEntity.getId(), aliExpressDetailEntity.getPrice());
+                    SoB2cDetailEntity detailEntity = soB2cDetailEntityList.stream()
+                            .filter(e -> e.getPlatformSpuNo().equalsIgnoreCase(entry.getKey()))
+                            .findFirst()
+                            .orElseThrow(() -> new ServiceException("未找对应明细:产品ID={}", entry.getKey()));
+                    resultMap.put(aliExpressDetailEntity.getId(), new Pair<>(aliExpressDetailEntity.getPrice(), detailEntity.getAmount()));
                 }
                 continue;
             }
@@ -913,7 +922,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             // 总单价
             BigDecimal price = entry.getValue().get(0).getPrice();
 
-            BigDecimal finalPrice = price;
             // 根据产品ID匹配, 目前速卖通明细产品ID唯一
             SoB2cDetailEntity detailEntity = soB2cDetailEntityList.stream().filter(
                     e -> e.getPlatformSpuNo().equalsIgnoreCase(entry.getKey())).findFirst().orElse(null);
@@ -952,27 +960,40 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
             // 剩余价格
             BigDecimal lastPrice = price;
+            // 平台明细总价
+            BigDecimal lastTotalPrice = detailEntity.getAmount();
             for (int i = 0; i < entryList.size(); i++) {
                 Map.Entry<String, List<AliexpressDeliveryDetailEntity>> curEntry = entryList.get(i);
 
                 SkuVO skuVO = skuVoMap.get(curEntry.getKey());
                 List<AliexpressDeliveryDetailEntity> value = curEntry.getValue();
                 if (i == entryList.size() - 1){
+                    // 判断当前ERP sku发货数量 是否和 明细数量
+                    int sum = value.stream().mapToInt(AliexpressDeliveryDetailEntity::getOrderLineQty).sum();
+                    BigDecimal targetLastPrice = lastPrice;
+                    if (sum > detailEntity.getQty()){
+                        targetLastPrice = lastPrice.multiply(BigDecimal.valueOf(detailEntity.getQty())).divide(BigDecimal.valueOf(sum), 4, RoundingMode.DOWN);
+                    }
                     for (AliexpressDeliveryDetailEntity deliveryDetailEntity : value) {
-                        resultMap.put(deliveryDetailEntity.getId(), lastPrice);
+                        resultMap.put(deliveryDetailEntity.getId(), new Pair<>(targetLastPrice, lastTotalPrice));
+                        lastTotalPrice = targetLastPrice.multiply(BigDecimal.valueOf(deliveryDetailEntity.getOrderLineQty()));
                     }
                 } else {
                     // 当前单价 = 明细单价 * (成本 / 总成本)
                     BigDecimal curPrice = price.multiply(skuVO.getActualTaxCost())
                             .divide(totalCostAmount, 4, RoundingMode.DOWN);
                     for (AliexpressDeliveryDetailEntity deliveryDetailEntity : value) {
-                        resultMap.put(deliveryDetailEntity.getId(), curPrice);
+                        resultMap.put(deliveryDetailEntity.getId(), new Pair<>(curPrice, curPrice.multiply(BigDecimal.valueOf(deliveryDetailEntity.getOrderLineQty()))));
                     }
                     int sum = value.stream().mapToInt(AliexpressDeliveryDetailEntity::getOrderLineQty).sum();
+                    // 剩余总价 = 单价 * 总sku数量
+                    BigDecimal planBomTotalPrice = curPrice.multiply(BigDecimal.valueOf(sum));
                     // 剩余单价 = 当前单价 * 发货明细数量 / 明细数量
-                    BigDecimal planBomPrice = curPrice.multiply(BigDecimal.valueOf(sum))
+                    BigDecimal planBomPrice = planBomTotalPrice
                             .divide(BigDecimal.valueOf(detailEntity.getQty()), 4, RoundingMode.DOWN);
                     lastPrice = lastPrice.subtract(planBomPrice);
+                    // 剩余总价 = 当前总价 -（当前sku总价）
+                    lastTotalPrice = lastTotalPrice.subtract(planBomTotalPrice);
                 }
             }
         }
@@ -1168,7 +1189,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<SysDepartmentEntity> deptList
     ) {
         // 计算自发货明细单价
-        Map<String, BigDecimal> deliveryDetailPriceMap = convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList);
+        Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap = convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList);
         //同步配货单
         OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
         omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
@@ -1199,5 +1220,26 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 dictGlobalEntityList,
                 deptList)));
         omsPushMsgService.save(omsPushMsgEntity);
+    }
+
+
+    /**
+     * 根据发货数量和订单明细数量判断单价
+     * @param aliExpressDetailEntity 速卖通发货单明细
+     * @param detailEntity 订单明细
+     * @return 计算后发货sku单价
+     */
+    private Pair<BigDecimal, BigDecimal> checkQtyGetPrice(AliexpressDeliveryDetailEntity aliExpressDetailEntity, SoB2cDetailEntity detailEntity) {
+        if (aliExpressDetailEntity.getOrderLineQty() > detailEntity.getQty()){
+            // 速卖通发货单数量大于订单明细数量
+            // 速卖通发货单价格 * 订单明细数量 / 速卖通发货单发货数量
+            BigDecimal price = aliExpressDetailEntity.getPrice()
+                    .multiply(BigDecimal.valueOf(detailEntity.getQty()))
+                    .divide(BigDecimal.valueOf(aliExpressDetailEntity.getOrderLineQty()), 4, RoundingMode.DOWN);
+            return new Pair<>(price, detailEntity.getAmount());
+        } else {
+            //  速卖通发货单数量小于等于订单明细数量
+            return new Pair<>(aliExpressDetailEntity.getPrice(), detailEntity.getAmount());
+        }
     }
 }
