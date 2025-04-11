@@ -1,9 +1,12 @@
 package com.erp.server.oms.mapper;
+import com.erp.model.oms.dto.InvoiceUpdateHisDTO;
 import com.erp.model.oms.entity.InvoiceUpdateHisEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -24,4 +27,12 @@ public interface InvoiceUpdateHisMapper extends BaseMapper<InvoiceUpdateHisEntit
      * @return Integer
      */
     Integer countByInvoiceInfoId(@Param("invoiceInfoId") String invoiceInfoId);
+    /**
+     * 列表查询
+     * @author will
+     * @date 2025/4/11 10:36
+     * @param params
+     * @return List<ListDTO>
+     */
+    List<InvoiceUpdateHisDTO.ListDTO> list(@Param("params") InvoiceUpdateHisDTO.IdDTO params);
 }
