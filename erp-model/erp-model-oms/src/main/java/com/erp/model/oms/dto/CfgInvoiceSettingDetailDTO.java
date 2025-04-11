@@ -236,5 +236,10 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
          *  shop.name
          */
         private String value;
+
+        /**
+         *  店铺是否禁用
+         */
+        private Boolean disabled;
     }
 }
