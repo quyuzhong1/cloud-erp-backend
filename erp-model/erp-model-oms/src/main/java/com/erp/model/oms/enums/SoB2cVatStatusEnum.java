@@ -10,6 +10,7 @@ public enum SoB2cVatStatusEnum implements EnumMessage {
     PENDING("pending","待开票"),
     WAIT_UPLOAD("waitUpload","已开票"),
     INVOICE_FAILED("invoiceFailed","开票失败"),
+    NOT_NEED_INVOICE("notNeedInvoice","无需开票"),
     UPLOAD_FAILURE("uploadFailure","上传失败"),
     UPLOADING("uploading","上传中"),
     UPLOAD_SUCCESS("uploadSuccess","已上传"),

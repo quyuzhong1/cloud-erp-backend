@@ -245,14 +245,20 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         InvoiceInfoEntity invoiceInfoEntity = buildNfeInvoiceEntity(soB2cEntity);
         List<InvoiceDetailEntity> detailEntityList = buildInvoiceDetail(soB2cDetailEntityList, invoiceInfoEntity,skuNameMap);
+        //删除开票失败的数据
+        service.removeFailedBySoId(id, Collections.singletonList(InvoiceInfoInvoiceTypeEnum.NFE.getCode()));
         //保存数据
         service.batchSave(Collections.singletonList(invoiceInfoEntity),detailEntityList);
 
         //生成发票,调用第三方
 
         //回调更新b2c订单发票清单状态
-
-
+        if (true) {
+            soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.WAIT_UPLOAD.getCode());
+        } else {
+            soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode());
+        }
+        soB2cService.updateById(soB2cEntity);
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");
     }
     /**
@@ -672,11 +678,12 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             throw new ServiceException(ApiError.ERROR_INVOICE_SUCCESS);
         }
         soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode());
+        soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.NOT_NEED_INVOICE.getCode());
         soB2cService.updateById(soB2cEntity);
 
-        //删除开票清单
-        this.removeBySoId(soId);
-        return BatchResultDTO.success(soId, remark, "修改CC-e发票成功");
+        //删除开票失败的开票清单
+        service.removeFailedBySoId(soId,Arrays.asList(InvoiceInfoInvoiceTypeEnum.VAT.getCode(),InvoiceInfoInvoiceTypeEnum.NFE.getCode()));
+        return BatchResultDTO.success(soId, remark, "无需开票成功");
     }
     
     /**
@@ -686,8 +693,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
      * @param soId 
      * @return void
      */
-    private void removeBySoId (String soId) {
-        InvoiceInfoEntity invoiceInfoEntity = this.getFaildBySoId(soId);
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeFailedBySoId (String soId,List<String> invoiceTypeList) {
+        InvoiceInfoEntity invoiceInfoEntity = this.getFailedBySoId(soId,invoiceTypeList);
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
             return;
         }
@@ -704,8 +713,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
      * @param soId 
      * @return InvoiceInfoEntity
      */
-    private InvoiceInfoEntity getFaildBySoId (String soId) {
+    private InvoiceInfoEntity getFailedBySoId (String soId,List<String> invoiceTypeList) {
         return lambdaQuery().eq(InvoiceInfoEntity::getSoId,soId)
+                .in(InvoiceInfoEntity::getInvoiceType,invoiceTypeList)
                 .eq(InvoiceInfoEntity::getStatus, InvoiceInfoStatusEnum.INVOICE_FAILED.getCode())
                 .last("limit 1")
                 .one();
