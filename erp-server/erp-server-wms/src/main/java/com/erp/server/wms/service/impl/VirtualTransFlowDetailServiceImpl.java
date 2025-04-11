@@ -120,13 +120,14 @@ public class VirtualTransFlowDetailServiceImpl extends SuperServiceImpl<VirtualT
             try {
                 ApplicationContextUtils.getBean(VirtualTransFlowDetailServiceImpl.class).consumeMessage(listDTO.getBusinessId(),listDTO.getId());
             } catch (Exception e) {
-                entity.setRemark(e.getMessage());
+                entity.setRemark("操作失败："+ e.getMessage());
                 entity.setStatus(VirtualDetailMsgStatusEnum.FAIL.getCode());
-                wmsVirtualDetailMsgService.updateById(entity);
+                wmsVirtualDetailMsgService.updateStatus(entity);
                 break;
             }
+            entity.setRemark("操作成功");
             entity.setStatus(VirtualDetailMsgStatusEnum.SUCCESS.getCode());
-            wmsVirtualDetailMsgService.updateById(entity);
+            wmsVirtualDetailMsgService.updateStatus(entity);
         }
     }
 
