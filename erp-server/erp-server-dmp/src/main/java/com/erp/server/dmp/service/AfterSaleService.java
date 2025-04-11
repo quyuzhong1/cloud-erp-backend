@@ -158,7 +158,7 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, AfterSaleEntity entity);
 
-    List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(AfterSaleDTO.ProgressDTO dto);
+    AfterSaleProgressDTO.RepairRecordDTO getRepairProgress(AfterSaleDTO.ProgressDTO dto);
 
     List<AfterSaleDTO.NodeDTO>  getNodeList();
 
@@ -175,4 +175,6 @@ public interface AfterSaleService extends SuperService<AfterSaleEntity> {
     List<AfterSaleDTO.DropDownDTO> getDetailByPlatformCode(String platformCode);
 
     Boolean udpateTrackNo(AfterSaleDTO.UpdateTrackNoDTO dto);
+
+    BatchResultDTO invalidByCode(String code);
 }

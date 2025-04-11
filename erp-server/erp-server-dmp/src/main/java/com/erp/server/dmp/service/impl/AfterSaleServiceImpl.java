@@ -2,6 +2,7 @@ package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
@@ -12,6 +13,7 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -19,6 +21,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
 import com.erp.model.dmp.dto.AttachmentDTO;
@@ -49,6 +52,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -124,6 +129,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         log.info("开始新增售后申请单");
         afterSaleEntity.setBillDate(LocalDate.now());
+        // 生成单号
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHSQ);
         afterSaleEntity.setCode(code);
@@ -218,15 +224,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         AfterSaleEntity afterSaleEntity =  BeanMapperUtils.map(AfterSaleEntity.class, updateDTO);
 
-        log.info("编辑 开始修改售后申请单数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(afterSaleEntity);
-        if(!save) {
-            throw new ServiceException("售后申请单保存失败");
-        }
-        // 记录主单操作日志
-        log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", afterSaleEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSaleEntity.getCode(), "售后申请单");
-        operateLogService.addModuleOperateLogByObj(old, afterSaleEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
         //更新用户信息
         if(StringUtils.isNotBlank(afterSaleEntity.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
@@ -281,15 +278,47 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
         for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
             if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode()) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
+                afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+
                 afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
                 afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+
+                //发送微信订阅消息
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                        bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+                    }
+                });
             }
             if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode()) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
+                afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+
                 afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
                 afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+
+                //发送微信订阅消息
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                        bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                    }
+                });
             }
             afterSaleProgressService.updateById(afterSaleProgressEntity);
         }
+
+        log.info("编辑 开始修改售后申请单数据，单号：【{}】", old.getCode());
+        boolean save = super.updateById(afterSaleEntity);
+        if(!save) {
+            throw new ServiceException("售后申请单保存失败");
+        }
+        // 记录主单操作日志
+        log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", afterSaleEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSaleEntity.getCode(), "售后申请单");
+        operateLogService.addModuleOperateLogByObj(old, afterSaleEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -513,6 +542,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         log.info("作废 开始修改售后申请单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AfterSaleEntity::getId, id)
             .set(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
+             .set(AfterSaleEntity::getInvalidTime, LocalDateTime.now())
+            .set(AfterSaleEntity::getStatus, AfterSaleStatusEnum.TERMINATED.getCode())
             .set(AfterSaleEntity::getInvalidRemark, remark)
             .update();
 
@@ -523,11 +554,60 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
         afterSaleProgressService.updateById(afterSaleProgressEntity);
 
+
+        //发送微信订阅消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                bean.getSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
+            }
+        });
+
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "售后申请单", remark);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), entity.getId(), "作废操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.INVALID);
      }
+
+
+    /**
+     * 作废
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BatchResultDTO invalidByCode(String code) {
+        if(StringUtils.isBlank(code)){
+            throw new ServiceException("工单号不能为空");
+        }
+        AfterSaleEntity afterSaleEntity = lambdaQuery().eq(AfterSaleEntity::getCode, code).one();
+        if (Objects.isNull(afterSaleEntity)) {
+            throw new ServiceException("售后申请单不存在");
+        }
+
+        afterSaleEntity.setInvalidStatus(InvalidStatusEnum.VOIDED.getStatus());
+        afterSaleEntity.setInvalidTime(LocalDateTime.now());
+        afterSaleEntity.setStatus(AfterSaleStatusEnum.TERMINATED.getCode());
+        updateById(afterSaleEntity);
+
+        //更新节点时间
+        //更新通过，则进入下一个节点：终止
+        AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+        afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TERMINATED.getCode());
+        afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+        afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+        //发送微信订阅消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TERMINATED.getCode());
+            }
+        });
+
+        return BatchResultDTO.success(afterSaleEntity.getId(), afterSaleEntity.getCode(), OperationTypeEnum.INVALID);
+    }
 
     /**
     * 撤销
@@ -565,17 +645,41 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         if(approveStatus.equals(ApproveStatusEnum.REJECT)){
+
+            entity.setStatus(AfterSaleStatusEnum.TERMINATED.getCode());
+
             //审批不通过，则最后的节点为终止
             AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
             afterSaleProgressEntity.setNode(AfterSaleStatusEnum.TERMINATED.getCode());
             afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
             afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+            //发送微信订阅消息
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                    bean.getSubscribeMsgRequest(entity,AfterSaleStatusEnum.TERMINATED.getCode());
+                }
+            });
         }else {
+
+            entity.setStatus(AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
             //更新节点时间
             //更新通过，则进入下一个节点：待寄回
             updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode(),"");
-        }
 
+            //发送微信订阅消息
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                    bean.getSubscribeMsgRequest(entity,AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+                }
+            });
+        }
+        //更新单据状态
+        updateById(entity);
         return updateForApprove(entity.getId(), approveStatus.getStatus());
     }
 
@@ -774,8 +878,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             throw new ServiceException("请选择单据状态");
         }
 
-        List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
-        AfterSaleDTO.NodeDTO node = nodeList.stream().filter(t -> t.getNode().equals(dto.getNode())).findFirst().orElseThrow(() -> new ServiceException("未找到节点配置信息"));
+        AfterSaleStatusEnum afterSaleStatus = AfterSaleStatusEnum.getByCode(dto.getNode());
+        if(Objects.isNull(afterSaleStatus)){
+            throw new ServiceException("未找到单据状态信息");
+        }
 
         for (AfterSaleEntity entity : entityList) {
             BatchResultDTO batchResultDTO;
@@ -795,6 +901,15 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
                 }
                 afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+                //发送微信订阅消息
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                    @Override
+                    public void afterCommit() {
+                        AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                        bean.getSubscribeMsgRequest(entity,afterSaleStatus.getCode());
+                    }
+                });
             }
             resultList.add(batchResultDTO);
         }
@@ -806,10 +921,31 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
      * 寄修进度
      */
     @Override
-    public List<AfterSaleProgressDTO.RepairRecordListDTO> getRepairProgress(AfterSaleDTO.ProgressDTO dto) {
+    public AfterSaleProgressDTO.RepairRecordDTO getRepairProgress(AfterSaleDTO.ProgressDTO dto) {
+        AfterSaleProgressDTO.RepairRecordDTO repairRecordDTO = new AfterSaleProgressDTO.RepairRecordDTO();
         List<AfterSaleProgressDTO.RepairRecordListDTO> repairProgress = this.baseMapper.getRepairProgress(dto);
-        repairProgress.forEach(t -> t.setNodeName(AfterSaleStatusEnum.getNode(t.getNode())));
-        return repairProgress;
+        repairProgress.forEach(t -> {
+            t.setNodeName(AfterSaleStatusEnum.getNode(t.getNode()));
+            if (Objects.nonNull(t.getNodeTimeLd())) {
+                t.setNodeTime(LocalDateTimeUtil.format(t.getNodeTimeLd(), DateUtil.fmt));
+            }
+            if(StringUtils.isNotBlank(t.getTrackNo())){
+                if(StringUtils.isBlank(t.getRemark())){
+                    t.setRemark("快递单号："+t.getTrackNo());
+                }else {
+                    t.setRemark("快递单号："+t.getTrackNo() + "<br>" +t.getRemark());
+                }
+            }
+        });
+
+        // 过滤 nodeTime 不为空的记录找出 index 最大的记录
+        AfterSaleProgressDTO.RepairRecordListDTO repairRecordListDTO = repairProgress.stream()
+                .filter(record -> record.getNodeTimeLd() != null)
+                .max(Comparator.comparingInt(AfterSaleProgressDTO.RepairRecordListDTO::getIndex)).get();
+
+        repairRecordDTO.setActive(repairRecordListDTO.getIndex() - 1);
+        repairRecordDTO.setRecordList(repairProgress);
+        return repairRecordDTO;
     }
     /**
      * 寄修历史
@@ -851,6 +987,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         String logisticsCode = map.get(repairInvoiceCode).getLogisticsCode();
                         updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode(),logisticsCode);
 
+                        //发送微信订阅消息
+//                        getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
                     }
                 }
             }
@@ -953,26 +1091,55 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (Objects.isNull(afterSaleEntity)) {
             throw new ServiceException("售后申请单不存在");
         }
-
+        //更新单据状态
+        afterSaleEntity.setStatus(AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+        updateById(afterSaleEntity);
+        //更新运单号
         boolean update = afterSaleProgressService.lambdaUpdate().eq(AfterSaleProgressEntity::getMainId, afterSaleEntity.getId())
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
                 .set(AfterSaleProgressEntity::getTrackNo, trackNo)
                 .update();
-        if (Boolean.TRUE.equals(update)) {
-            //更新节点时间
-            //更新通过，则进入下一个节点：售后签收
-            updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),"");
-        }
+
+        //更新节点时间
+        //更新通过，则进入下一个节点：售后签收
+        updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),trackNo);
+
+        //发送微信订阅消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                AfterSaleServiceImpl bean = ApplicationContextUtils.getBean(AfterSaleServiceImpl.class);
+                bean.getSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+            }
+        });
         return update;
     }
 
 
-    public void getSubscribeMsgRequest(AfterSaleEntity afterSaleEntity,String openId,String code,String repairInvoiceCode,String status){
-        String code1 = afterSaleEntity.getCode();
-        String repairInvoiceCode1 = afterSaleEntity.getRepairInvoiceCode();
-        String status1 = afterSaleEntity.getStatus();
-        String thridUserId = afterSaleEntity.getThridUserId();
 
+
+    public void getSubscribeMsgRequest(AfterSaleEntity afterSaleEntity,String status){
+        String code = afterSaleEntity.getCode();
+        String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
+        String thridUserId = afterSaleEntity.getThridUserId();
+        if(Objects.isNull(afterSaleEntity)){
+            return ;
+
+        }
+        if(StringUtils.isBlank(code)
+                || StringUtils.isBlank(repairInvoiceCode)
+                || StringUtils.isBlank(status)
+                || StringUtils.isBlank(thridUserId)){
+            return ;
+        }
+
+        ThridUserInfoEntity thridUserInfoEntity = thridUserInfoService.getById(thridUserId);
+        String openId;
+        if(Objects.nonNull(thridUserInfoEntity) && StringUtils.isNotBlank(thridUserInfoEntity.getOpenid())){
+            openId = thridUserInfoEntity.getOpenid();
+        }else {
+            return ;
+        }
 
         String value = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_SUBSCRIBE_MSG);
         if (StringUtils.isBlank(value)) {
@@ -982,7 +1149,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         SubscribeMsgRequest request = JSONUtil.toBean(value, SubscribeMsgRequest.class);
         request.setTouser(openId);
         request.setPage(request.getPage()+code);
-
         Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
         data.get("character_string1").setValue(repairInvoiceCode);
         data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
@@ -991,40 +1157,40 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
 
-    public static void main(String[] args) {
-        String json ="{\"touser\": \"\",\n" +
-                "  \"template_id\": \"11iXL0cf0mE57Rnxy6wMH_Gb4tSXed4NFXaAdQsIOr8\",\n" +
-                "  \"page\": \"pages/repairProgress/index?code=\",\n" +
-                "  \"miniprogram_state\":\"developer\",\n" +
-                "  \"lang\":\"zh_CN\",\n" +
-                "\t \"data\":{\n" +
-                "        \"character_string1\": {\n" +
-                "            \"value\": \"\"\n" +
-                "        },\n" +
-                "        \"thing2\": {\n" +
-                "            \"value\": \"\"\n" +
-                "        },\n" +
-                "\t\t\t\t\"time6\": {\n" +
-                "            \"value\": \"\"\n" +
-                "        },\n" +
-                "        \"thing7\": {\n" +
-                "            \"value\": \"如有疑问，请联系客服\"\n" +
-                "        }\n" +
-                "    }\n" +
-                "\t}";
-        String openId ="openId";
-        String code = "123456789";
-        String repairInvoiceCode ="987654";
-        String status = "approveIng";
-        SubscribeMsgRequest request = JSONUtil.toBean(json, SubscribeMsgRequest.class);
-        request.setTouser(openId);
-        request.setPage(request.getPage()+code);
-
-        Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
-        data.get("character_string1").setValue(repairInvoiceCode);
-        data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
-        data.get("time6").setValue(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-
-
-    }
+//    public static void main(String[] args) {
+//        String json ="{\"touser\": \"\",\n" +
+//                "  \"template_id\": \"11iXL0cf0mE57Rnxy6wMH_Gb4tSXed4NFXaAdQsIOr8\",\n" +
+//                "  \"page\": \"pages/repairProgress/index?code=\",\n" +
+//                "  \"miniprogram_state\":\"developer\",\n" +
+//                "  \"lang\":\"zh_CN\",\n" +
+//                "\t \"data\":{\n" +
+//                "        \"character_string1\": {\n" +
+//                "            \"value\": \"\"\n" +
+//                "        },\n" +
+//                "        \"thing2\": {\n" +
+//                "            \"value\": \"\"\n" +
+//                "        },\n" +
+//                "\t\t\t\t\"time6\": {\n" +
+//                "            \"value\": \"\"\n" +
+//                "        },\n" +
+//                "        \"thing7\": {\n" +
+//                "            \"value\": \"如有疑问，请联系客服\"\n" +
+//                "        }\n" +
+//                "    }\n" +
+//                "\t}";
+//        String openId ="openId";
+//        String code = "123456789";
+//        String repairInvoiceCode ="987654";
+//        String status = "approveIng";
+//        SubscribeMsgRequest request = JSONUtil.toBean(json, SubscribeMsgRequest.class);
+//        request.setTouser(openId);
+//        request.setPage(request.getPage()+code);
+//
+//        Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
+//        data.get("character_string1").setValue(repairInvoiceCode);
+//        data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
+//        data.get("time6").setValue(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
+//
+//
+//    }
 }

@@ -693,6 +693,11 @@ public class AfterSaleDTO implements Serializable {
         private String platformCode;
 
 
+        /**
+         */
+        private String code;
+
+
     }
 
     /**
@@ -712,7 +717,6 @@ public class AfterSaleDTO implements Serializable {
          */
         @NotBlank(message = "快递单号不能为空")
         private String trackNo;
-
 
 
     }
