@@ -14,8 +14,8 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
@@ -31,17 +31,14 @@ import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.kingdee.SyncSoB2cService;
-import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OmsPushMsgService;
-import org.apache.commons.math3.util.Pair;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -629,7 +626,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                                                                 List<ShopInfoEntity> shopInfoList,
                                                                 List<CustomerInfoEntity> customerInfoList,
                                                                 List<BaseIdDTO.CodeDTO> companyEntities,
-                                                                Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                                Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap,
                                                                 SoB2cReceiverEntity receiverEntity,
                                                                 List<DictBasicEntity> omsAllDictList,
                                                                 List<DictPartitionEntity> partitionEntityList,
@@ -665,20 +662,18 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         }
 
         // 自发货明细单价
-        BigDecimal price = deliveryDetailPriceMap.get(soB2cDeliveryDetailEntity.getId());
-        if (null == price){
+        Pair<BigDecimal, BigDecimal> pairPrice = deliveryDetailPriceMap.get(soB2cDeliveryDetailEntity.getId());
+        if (null == pairPrice){
             ServiceException.runError("未找到计算的明细单价:发货单明细ID={}", soB2cDeliveryDetailEntity.getSourceDetailId());
         }
 
         // 单价
-        shudiyunB2cOrderDTO.setPrice(price);
+        shudiyunB2cOrderDTO.setPrice(pairPrice.getKey());
         // 明细总价
-        if(0 == soB2cDetailEntity.getPrice().compareTo(price)
-            ||  1 == soB2cDetailEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(soB2cDeliveryDetailEntity.getSourceDetailId())).count()
-        ){
+        if(0 == soB2cDetailEntity.getPrice().compareTo(pairPrice.getKey())){
             shudiyunB2cOrderDTO.setGoods_transaction_amount(soB2cDetailEntity.getAmount());
         } else {
-            shudiyunB2cOrderDTO.setGoods_transaction_amount(price.multiply(BigDecimal.valueOf(soB2cDeliveryDetailEntity.getDeliveryQty())));
+            shudiyunB2cOrderDTO.setGoods_transaction_amount(pairPrice.getValue());
         }
 
         shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, soB2cDeliveryEntity.getVersion(), soB2cDeliveryDetailEntity.getVersion()));
@@ -1009,13 +1004,13 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
      * @return Map<自发货明细ID, 平分单价>
      */
     @Override
-    public Map<String, BigDecimal> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
+    public Map<String, Pair<BigDecimal, BigDecimal>> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
                                                                  List<SoB2cDetailEntity> soB2cDetailEntityList,
                                                                  List<SkuVO> skuVOList,
                                                                  List<BomChildrenSkuDTO> bomChildrenSkuDTOS
     ) {
         // Map<自发货明细ID, 平均采购含税成本>
-        Map<String, BigDecimal> resultMap = new HashMap<>();
+        Map<String, Pair<BigDecimal, BigDecimal>> resultMap = new HashMap<>();
 
         Map<String, SoB2cDetailEntity> detailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
 
@@ -1036,23 +1031,22 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             if (1 == entry.getValue().size()){
                 SoB2cDeliveryDetailEntity b2cDeliveryDetailEntity = entry.getValue().get(0);
                 if (b2cDeliveryDetailEntity.getSkuId().equalsIgnoreCase(soDetailEntity.getSkuId())){
-                    resultMap.put(b2cDeliveryDetailEntity.getId(), soDetailEntity.getPrice());
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), new Pair<>(soDetailEntity.getPrice(), soDetailEntity.getAmount()));
                     continue;
                 } else {
+                    // 相同sku捆绑拆分
                     BigDecimal divAmount = soDetailEntity.getPrice()
                             .multiply(new BigDecimal(soDetailEntity.getQty()))
                                     .divide(new BigDecimal(b2cDeliveryDetailEntity.getDeliveryQty()), 4, RoundingMode.DOWN);
-                    resultMap.put(b2cDeliveryDetailEntity.getId(), divAmount);
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), new Pair<>(divAmount, soDetailEntity.getAmount()));
                     continue;
-//                    ServiceException.runError("未拆分订单明细:发货单明细sku和销售订单明细不相同:delivery_sku={}, so_sku={}",
-//                            b2cDeliveryDetailEntity.getSkuId(),
-//                            soDetailEntity.getSkuId()
-//                    );
                 }
             }
 
             // 总单价
-            BigDecimal price = soDetailEntity.getPrice();
+            BigDecimal lastPrice = soDetailEntity.getPrice();
+            // 平台明细总价
+            BigDecimal lastTotalPrice = soDetailEntity.getAmount();
 
             // 存在bom
             List<BomChildrenSkuDTO> bomList = bomChildrenSkuDTOS.stream().filter(e -> e.getParentSkuId().equalsIgnoreCase(soDetailEntity.getSkuId())).collect(Collectors.toList());
@@ -1078,7 +1072,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 totalCostAmount = totalCostAmount.add(allItemPrice);
             }
 
-            // 按明细创建时间排序
+            // 按明细ID时间排序
             List<SoB2cDeliveryDetailEntity> curDetailList = entry.getValue().stream().sorted(Comparator.comparing(SoB2cDeliveryDetailEntity::getId)).collect(Collectors.toList());
             for (int i = 0; i < curDetailList.size(); i++) {
                 SoB2cDeliveryDetailEntity b2cDeliveryDetailEntity = curDetailList.get(i);
@@ -1088,14 +1082,23 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 }
                 SkuVO skuVO = skuVoMap.get(b2cDeliveryDetailEntity.getSkuId());
                 if (i == curDetailList.size() - 1){
-                    resultMap.put(b2cDeliveryDetailEntity.getId(), price);
+                    // 判断当前ERP sku在bom的数量是否大于1
+                    if (1 < curBom.getQuantity()){
+                        lastPrice = lastPrice.divide(BigDecimal.valueOf(curBom.getQuantity()), 4, RoundingMode.DOWN);
+                    }
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), new Pair<>(lastPrice, lastTotalPrice));
                 } else {
                     // 当前单价 = 明细单价 * (bom成本 * bom数量 / bom总成本) / bom数量
-                    BigDecimal curPrice = price.multiply(skuVO.getActualTaxCost())
+                    BigDecimal curPrice = lastPrice.multiply(skuVO.getActualTaxCost())
                             .divide(totalCostAmount, 4, RoundingMode.DOWN);
-                    resultMap.put(b2cDeliveryDetailEntity.getId(), curPrice);
+                    // 当前sku总价
+                    BigDecimal curTotalPrice = curPrice.multiply(BigDecimal.valueOf(b2cDeliveryDetailEntity.getDeliveryQty()));
+                    // 设置到结果
+                    resultMap.put(b2cDeliveryDetailEntity.getId(), new Pair<>(curPrice, curTotalPrice));
                     // 剩余单价 = 当前单价 * bom数量
-                    price = price.subtract(curPrice.multiply(BigDecimal.valueOf(curBom.getQuantity())));
+                    lastPrice = lastPrice.subtract(curPrice.multiply(BigDecimal.valueOf(curBom.getQuantity())));
+                    // 剩余总价 = 当前总价 -（当前sku总价）
+                    lastTotalPrice = lastTotalPrice.subtract(curTotalPrice);
                 }
             }
         }
@@ -1128,8 +1131,8 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             List<SysDepartmentEntity> deptList
 
     ){
-        Map<String, BigDecimal> deliveryDetailPriceMap = convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
-            //同步配货单
+        Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap = convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
+        //同步配货单
             OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
             omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
             omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SELF_DELIVERY_ORDER.getCode());
