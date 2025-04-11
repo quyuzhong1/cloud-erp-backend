@@ -1,6 +1,7 @@
 package com.erp.server.dmp.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.AfterSaleDTO;
@@ -60,7 +61,7 @@ public class AfterSaleFeignController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/getRepairRecord")
-    public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
+    public ApiResult<AfterSaleProgressDTO.RepairRecordDTO>  getRepairRecord(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
         return success(afterSaleService.getRepairProgress(dto));
     }
 
@@ -113,4 +114,10 @@ public class AfterSaleFeignController extends BaseController {
     ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(@RequestBody ThridUserInfoDTO.CodeToSessionDTO dto){
         return success(thridUserInfoService.code2Session(dto));
     }
+
+    @GetMapping("/invalidByCode")
+    public ApiResult<BatchResultDTO> invalidByCode(@RequestParam("code") String code){
+        return success(afterSaleService.invalidByCode(code));
+    }
+
 }

@@ -2,6 +2,7 @@ package com.erp.rpc.dmp.feign;
 
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
@@ -49,7 +50,7 @@ public interface AfterSaleFeign {
      * @since 2025-04-07
      **/
     @PostMapping("/getRepairRecord")
-    ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody  @Validated  AfterSaleDTO.ProgressDTO dto);
+    ApiResult<AfterSaleProgressDTO.RepairRecordDTO>  getRepairRecord(@RequestBody  @Validated  AfterSaleDTO.ProgressDTO dto);
     /**
      * 获取寄修历史
      * @Author jack
@@ -79,4 +80,7 @@ public interface AfterSaleFeign {
 
     @PostMapping("/code2Session")
     ApiResult<ThridUserInfoDTO.CodeToSessionResp> code2Session(ThridUserInfoDTO.CodeToSessionDTO dto);
+
+    @GetMapping("/invalidByCode")
+    ApiResult<BatchResultDTO> invalidByCode(@RequestParam("code") String code);
 }

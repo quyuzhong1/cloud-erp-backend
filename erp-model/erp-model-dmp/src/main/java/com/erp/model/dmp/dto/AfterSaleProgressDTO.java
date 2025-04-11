@@ -7,6 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -180,6 +181,20 @@ public class AfterSaleProgressDTO implements Serializable {
         private String remark;
 
     }
+
+    /**
+     */
+    @Data
+    @NoArgsConstructor
+    public static class RepairRecordDTO {
+        /**
+         * active
+         */
+        private Integer active = 0;
+
+        List<RepairRecordListDTO> recordList;
+    }
+
     /**
      */
     @Data
@@ -215,7 +230,9 @@ public class AfterSaleProgressDTO implements Serializable {
         /**
          * 触发节点的时间
          */
-        private LocalDateTime nodeTime;
+        private LocalDateTime nodeTimeLd;
+
+        private String nodeTime ="";
         /**
          * 描述
          */

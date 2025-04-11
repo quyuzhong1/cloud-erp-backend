@@ -2,6 +2,7 @@ package com.erp.server.auth.controller.openapi;
 
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.dto.AfterSaleProgressDTO;
@@ -9,6 +10,7 @@ import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import com.erp.rpc.dmp.feign.AfterSaleFeign;
 import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.server.auth.config.OpenApi;
+
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
@@ -86,7 +88,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("getRepairRecord")
-    public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord( @Valid AfterSaleDTO.ProgressDTO dto) {
+    public ApiResult<AfterSaleProgressDTO.RepairRecordDTO> getRepairRecord( @Valid AfterSaleDTO.ProgressDTO dto) {
         return afterSaleFeign.getRepairRecord(dto);
     }
 
@@ -121,5 +123,18 @@ public class AfterSaleOpenApi {
     ApiResult<Boolean> udpateTrackNo(@Valid AfterSaleDTO.UpdateTrackNoDTO dto){
         return afterSaleFeign.udpateTrackNo(dto);
     }
+
+    /**
+     * 取消寄修申请
+     * @author jack
+     * @date:  2025-04-11
+     * @return ApiResult
+     */
+    @OpenApi("invalidByCode")
+    ApiResult<BatchResultDTO> invalidByCode(@Valid AfterSaleDTO.OpenApiCommonDTO dto){
+        return afterSaleFeign.invalidByCode(dto.getCode());
+    }
+
+
 
 }

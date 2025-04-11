@@ -434,7 +434,7 @@ public class AfterSaleController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/getRepairRecord")
-    public ApiResult<List<AfterSaleProgressDTO.RepairRecordListDTO>> getRepairRecord(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
+    public ApiResult<AfterSaleProgressDTO.RepairRecordDTO> getRepairRecord(@RequestBody @Validated AfterSaleDTO.ProgressDTO dto) {
         return success(afterSaleService.getRepairProgress(dto));
     }
 
