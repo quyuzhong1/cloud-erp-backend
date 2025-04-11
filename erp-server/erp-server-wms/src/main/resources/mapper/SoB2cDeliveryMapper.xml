@@ -209,7 +209,7 @@
         inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
         and so.approve_status = 'approve' and so.source_type != 'soB2cDelivery' and so.order_type ='b2c' and sod.virtual_warehouse_id != ''
         where so.is_deleted = false
-        ) b2c order by b2c.bill_date asc
+        ) b2c where b2c.qty > 0 order by b2c.bill_date asc
     </select>
 
 </mapper>
