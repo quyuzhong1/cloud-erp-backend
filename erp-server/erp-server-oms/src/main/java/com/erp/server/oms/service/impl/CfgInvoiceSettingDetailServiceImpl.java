@@ -27,12 +27,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.common.core.enums.ApiError;
 
 
 /**
@@ -81,7 +79,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         // 平台value对应名称
         Map<String, String> valueNameMap = keyList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
         viewDTOList.forEach(item -> {
-            item.setPlatformName(valueNameMap.get(item.getPlatformValue()));
+            item.setPlatformName(valueNameMap.get(item.getDictPlatform()));
         });
         return viewDTOList;
     }
