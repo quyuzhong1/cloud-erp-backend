@@ -37,4 +37,5 @@ public class AfterSaleSyncJob {
         XxlJobHelper.log("=====售后申请单同步旺店通 结束任务=====");
         return ReturnT.SUCCESS;
     }
+
 }

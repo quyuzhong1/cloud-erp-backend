@@ -571,18 +571,21 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }else {
             //更新节点时间
             //更新通过，则进入下一个节点：待寄回
-            updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
+            updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode(),"");
         }
 
         return updateForApprove(entity.getId(), approveStatus.getStatus());
     }
 
     //更新节点时间
-    private void updateProgressByMainId(String id,String node) {
+    private void updateProgressByMainId(String id,String node,String logisticsCode) {
         //更新单据状态
         AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(id, node);
         if (Objects.nonNull(afterSaleProgressEntity)) {
             afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+            if(StringUtils.isNotBlank(logisticsCode)){
+                afterSaleProgressEntity.setTrackNo(logisticsCode);
+            }
             afterSaleProgressService.updateById(afterSaleProgressEntity);
         }
     }
@@ -829,7 +832,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     @Override
     public void syncWdtToAfterSale() {
-        List<AfterSaleDTO.DropDownDTO> resultList = new ArrayList<>();
         List<AfterSaleEntity> list = lambdaQuery().eq(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
                 .ne(AfterSaleEntity::getRepairInvoiceCode, "").list();
         if(CollUtil.isNotEmpty(list)){
@@ -841,10 +843,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 Map<String, DmpSoOutstockEntity> map = dmpSoOutstockList.stream().collect(Collectors.toMap(DmpSoOutstockEntity::getPlatformCode, t -> t, (k1, k2) -> k1));
                 for (AfterSaleEntity afterSaleEntity : list) {
                     String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
-                    if(map.containsKey(repairInvoiceCode) && StringUtils.isNotBlank(map.get(repairInvoiceCode).getTransportNo())){
+                    if(map.containsKey(repairInvoiceCode) && StringUtils.isNotBlank(map.get(repairInvoiceCode).getLogisticsCode())){
                         //更新节点时间
                         //更新通过，则进入下一个节点：已完成
-                        updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                        String logisticsCode = map.get(repairInvoiceCode).getLogisticsCode();
+                        updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode(),logisticsCode);
+
                     }
                 }
             }
@@ -955,7 +959,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if (Boolean.TRUE.equals(update)) {
             //更新节点时间
             //更新通过，则进入下一个节点：售后签收
-            updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+            updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),"");
         }
         return update;
     }
