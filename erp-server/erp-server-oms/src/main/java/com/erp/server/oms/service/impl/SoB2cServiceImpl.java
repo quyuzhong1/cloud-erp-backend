@@ -2089,7 +2089,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (CharSequenceUtil.isNotBlank(status)){
                     String code = FullyManagedPlatformStatusEnum.getErpCodeByCode(PlatformDictEnum.TIK_TOK_FULLY.getCode(), status);
                     if (!code.equals(entity.getBillStatus())){
-                        this.updatePlatformStatus(entity, status);
+                        this.updatePlatformStatus(entity, code);
                     }
                     if (FullyManagedPlatformStatusEnum.TikTokStatusEnum.INVAILD.getCode().equals(status)){
                         throw new ServiceException(ApiError.ERROR_SO_B2C_PLATFORM_ORDER_STATUS_ERROR, entity.getCode());
