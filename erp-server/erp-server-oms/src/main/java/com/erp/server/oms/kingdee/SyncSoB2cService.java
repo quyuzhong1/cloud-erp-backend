@@ -91,7 +91,7 @@ public interface SyncSoB2cService {
                                                          List<ShopInfoEntity> shopInfoList,
                                                          List<CustomerInfoEntity> customerInfoList,
                                                          List<BaseIdDTO.CodeDTO> companyEntities,
-                                                         Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                         Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap,
                                                          SoB2cReceiverEntity receiverEntity,
                                                          List<DictBasicEntity> omsAllDictList,
                                                          List<DictPartitionEntity> partitionEntityList,
@@ -139,7 +139,7 @@ public interface SyncSoB2cService {
                                                                                       List<SkuVO> skuVOList
     );
 
-    Map<String, BigDecimal> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
+    Map<String, Pair<BigDecimal, BigDecimal>> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
                                                           List<SoB2cDetailEntity> soB2cDetailEntityList,
                                                           List<SkuVO> skuVOList,
                                                           List<BomChildrenSkuDTO> bomChildrenSkuDTOS

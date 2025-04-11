@@ -864,7 +864,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
 
         // 计算自发货明细单价
-        Map<String, BigDecimal> deliveryDetailPriceMap = syncSoB2cService.convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
+        Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap = syncSoB2cService.convertAllDeliveryDetailPrice(allDeliveryDetail, soB2cDetailEntityList, skuVOList, bomChildrenSkuDTOS);
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
