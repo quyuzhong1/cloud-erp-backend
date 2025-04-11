@@ -80,6 +80,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         Map<String, String> valueNameMap = keyList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
         viewDTOList.forEach(item -> {
             item.setPlatformName(valueNameMap.get(item.getDictPlatform()));
+            item.setPlatformValue(item.getDictPlatform());
         });
         return viewDTOList;
     }
