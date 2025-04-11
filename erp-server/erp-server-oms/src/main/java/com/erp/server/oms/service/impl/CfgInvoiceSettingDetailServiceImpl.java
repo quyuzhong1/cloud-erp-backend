@@ -78,6 +78,11 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             });
             return viewDTOS;
         }
+        // 平台value对应名称
+        Map<String, String> valueNameMap = keyList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+        viewDTOList.forEach(item -> {
+            item.setPlatformName(valueNameMap.get(item.getPlatformValue()));
+        });
         return viewDTOList;
     }
 
