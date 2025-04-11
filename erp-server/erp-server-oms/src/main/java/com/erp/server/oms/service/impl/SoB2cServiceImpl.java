@@ -9697,6 +9697,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         baseMapper.updateFbaNotVatInvoice(shopId, enableTime, vatInvoiceStatus);
     }
 
+    @Override
+    public void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus) {
+        lambdaUpdate().eq(SoB2cEntity::getId,soId).set(SoB2cEntity::getNfeInvoiceStatus,nfeInvoiceStatus).update();
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
