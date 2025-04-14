@@ -32,7 +32,9 @@ public class FullyManagedImportExcelDTO {
     @ColumnWidth(10)
     @ExcelProperty(value = "*序号", index = 0)
     @FieldValid(fieldName = "序号", isNotBlank = true ,maxLength = 10)
-    private String index;
+    private String indexStr;
+    @ExcelIgnore
+    private Integer index;
 
     /**
      * 平台订单号
