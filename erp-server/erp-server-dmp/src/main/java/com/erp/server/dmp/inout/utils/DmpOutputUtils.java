@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.utils;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
@@ -111,10 +112,30 @@ public class DmpOutputUtils{
 	        		}
 	        	}
 	        }
+	        if(errorCount != null && errorCount > 3) {
+	        	isSend = false;
+	        }
 	        if(isSend) {
 	        	DmpHandlerUtils.sendFeiShuMsg("输出【" + systemName +"】任务记录id=【" + id + "】，单据编号=【" + code + "】处理失败：" + message);
 	        }
 		}
 		return update;
+	}
+	
+	public void outputErrorCountMsg() {
+		WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
+        warnMsgInfo.setBizName("预警消息");
+        warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_DMP);
+        warnMsgInfo.setTitle("今天之前中台各业务推送失败数量汇总");
+        warnMsgInfo.setTableName("dmp_output_task_record");
+        warnMsgInfo.setTableId("无");
+        List<String> outputErrorCountMsg = dmpOutputTaskRecordService.outputErrorCountMsg();
+        if(CollUtil.isEmpty(outputErrorCountMsg)) {
+        	warnMsgInfo.setKeyInfo("无推送失败数据");
+        }else {
+        	warnMsgInfo.setKeyInfo(outputErrorCountMsg.stream().collect(Collectors.joining("\n")));
+        }
+        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
+        mqProducerService.sendWarnMsg(warnMsgInfo);
 	}
 }
