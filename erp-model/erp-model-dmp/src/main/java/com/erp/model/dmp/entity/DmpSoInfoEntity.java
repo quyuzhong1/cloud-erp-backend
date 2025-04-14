@@ -283,6 +283,11 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("after_tax_amount")
     private BigDecimal afterTaxAmount = BigDecimal.ZERO;
 
+    /**
+     * NF-E发票状态,nfeInvoiceStatus字典
+     */
+    @TableField("nfe_invoice_status")
+    private String nfeInvoiceStatus;
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 
