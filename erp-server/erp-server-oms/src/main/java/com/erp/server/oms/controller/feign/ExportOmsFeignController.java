@@ -7,6 +7,8 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
 import com.erp.server.oms.query.*;
 import com.erp.server.oms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
