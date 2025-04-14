@@ -127,7 +127,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //第三方用户id为空的情况下，则新增用户
         if(StringUtils.isBlank(addDTO.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
-            thridUserInfoEntity.setUsername(addDTO.getUserName());
+            thridUserInfoEntity.setUsername(addDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
             thridUserInfoEntity.setType("selfAdd");
             thridUserInfoService.save(thridUserInfoEntity);
@@ -223,9 +223,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         AfterSaleEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "售后申请单"));
         if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(old.getInvalidStatus())){
-            throw new ServiceException("只有未作废的单据才能进行编辑");
+            throw new ServiceException("只有未作废的单据才能进行状态变更");
         }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(old.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(old.getStatus())  ){
-            throw new ServiceException("只有未完成的单据才能进行编辑");
+            throw new ServiceException("只有未完成的单据才能进行状态变更");
         }
 
         AfterSaleEntity afterSaleEntity =  BeanMapperUtils.map(AfterSaleEntity.class, updateDTO);
@@ -234,7 +234,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if(StringUtils.isNotBlank(afterSaleEntity.getThridUserId())) {
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
             thridUserInfoEntity.setId(afterSaleEntity.getThridUserId());
-            thridUserInfoEntity.setUsername(updateDTO.getUserName());
+            thridUserInfoEntity.setUsername(updateDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(updateDTO.getPhoneNumber());
             thridUserInfoService.updateById(thridUserInfoEntity);
         }
