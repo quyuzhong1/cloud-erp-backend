@@ -457,9 +457,18 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         if(zipCodeHandleContent.isZipCodeEmptyFillSwitch() && StringUtils.isBlank(receiverInfoVO.getZipCode())){
                 receiverInfoVO.setZipCode(zipCodeHandleContent.getZipCodeEmptyFillText());
             }
-        //邮编替换
-        if(zipCodeHandleContent.isZipCodeReplaceSwitch() && StringUtils.isNotBlank(receiverInfoVO.getZipCode()) && StringUtils.isNotBlank(zipCodeHandleContent.getZipCodeWaitReplaceText())&& StringUtils.isNotBlank(zipCodeHandleContent.getZipCodeReplaceText())){
-            receiverInfoVO.setZipCode(receiverInfoVO.getZipCode().replace(zipCodeHandleContent.getZipCodeWaitReplaceText(), zipCodeHandleContent.getZipCodeReplaceText()));
+        //邮编处理
+        if(zipCodeHandleContent.isZipCodeSwitch()){
+            RuleOrderHandleEnum.ZipCodeContentEnum cityRuleContentEnum = EnumMessage.getByCode(RuleOrderHandleEnum.ZipCodeContentEnum.class,zipCodeHandleContent.getHandleZipCodeRule());
+            if(Objects.nonNull(cityRuleContentEnum)){
+                switch (cityRuleContentEnum) {
+                    case REPLACE_BLANK:
+                        receiverInfoVO.setZipCode(null);
+                        break;
+                    default:
+                        break;
+                }
+            }
         }
     }
     /**
