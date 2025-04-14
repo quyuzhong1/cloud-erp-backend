@@ -9868,6 +9868,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
+    public void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus) {
+
+    }
+
+    @Override
     public String getPartitionId(String soId, String platform) {
         if (soB2cService.isFullyManagedOrder(platform)){
             SoB2cExtendEntity extendEntity = soB2cExtendService.getByMainId(soId);

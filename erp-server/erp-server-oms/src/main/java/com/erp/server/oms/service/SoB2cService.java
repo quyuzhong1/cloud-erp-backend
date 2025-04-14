@@ -704,6 +704,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
+    boolean isFullyManagedOrder(String platform);
+
     /**
      * 根据订单拆分sku
      */
