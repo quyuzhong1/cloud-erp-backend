@@ -50,7 +50,8 @@ public class ExportOmsFeignController {
     private ReportManagerService reportManagerService;
     @Resource
     private InvoiceInfoService invoiceInfoService;
-
+    @Resource
+    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -159,5 +160,11 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery
     public PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
         return invoiceInfoService.paging(dto, true);
+    }
+
+    @PostMapping("/exportInvoiceInvalid")
+    @WebAdvanceQuery
+    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
+        return cfgInvoiceInvalidService.paging(dto);
     }
 }

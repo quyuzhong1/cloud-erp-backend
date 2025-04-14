@@ -1,13 +1,14 @@
 package com.erp.model.oms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -69,6 +70,12 @@ public class CfgInvoiceSettingDetailEntity extends BaseEntity<CfgInvoiceSettingD
     */
     @TableField("is_auto_upload")
     private Boolean isAutoUpload;
+
+    /**
+     * 公司token
+     */
+    @TableField(exist = false)
+    private String token;
 
 
     public static final String MAIN_ID = "main_id";
