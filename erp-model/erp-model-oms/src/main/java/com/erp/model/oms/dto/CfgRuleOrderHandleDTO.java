@@ -351,7 +351,6 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 城市为空填充文本
          */
         private String cityFillText;
-
         /**
          * 收货地址1过滤开关
          */
@@ -432,6 +431,11 @@ public class CfgRuleOrderHandleDTO implements Serializable {
     @NoArgsConstructor
     public static class ZipCodeHandleContent{
         /**
+         * 处理邮编的规则 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ZipCodeContentEnum}
+         * oms/common/enumDropDown?type=ZipCodeContent
+         */
+        private String handleZipCodeRule;
+        /**
          * 邮编过滤特殊符号开关
          */
         private boolean zipCodeFilterSwitch;
@@ -455,20 +459,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 邮编为空填充字符
          */
         private String zipCodeEmptyFillText;
-
         /**
-         * 邮编替换开关
+         * 处理邮编开关
          */
-        private boolean zipCodeReplaceSwitch;
-        /**
-         * 邮编待替换文本
-         */
-        private String zipCodeWaitReplaceText;
-
-        /**
-         * 邮编替换为。。。
-         */
-        private String zipCodeReplaceText;
+        private boolean zipCodeSwitch;
     }
     /**
      * 收货人处理

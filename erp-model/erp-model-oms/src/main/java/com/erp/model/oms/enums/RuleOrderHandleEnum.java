@@ -35,6 +35,14 @@ public enum RuleOrderHandleEnum {
         private final String code;
         private final String name;
     }
+    @Getter
+    @AllArgsConstructor
+    public enum ZipCodeContentEnum implements EnumMessage {
+        REPLACE_BLANK("replaceBlank","邮编推送物流商下单为空"),
+        ;
+        private final String code;
+        private final String name;
+    }
 
     @Getter
     @AllArgsConstructor
