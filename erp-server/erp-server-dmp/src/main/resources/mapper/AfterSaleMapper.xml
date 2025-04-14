@@ -158,6 +158,7 @@
         count(*)  AS count
         FROM  after_sale
         WHERE is_deleted=FALSE
+            and approve_status !='waitSubmit'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

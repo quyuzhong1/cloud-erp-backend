@@ -70,4 +70,6 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @date 2023-03-17 14:16
      */
     List<BaseDropDownDTO.Tree> getTreeByKey(String key);
+
+    List<BaseDropDownDTO.CommonDTO> listInternalSalesPlatform(String key);
 }

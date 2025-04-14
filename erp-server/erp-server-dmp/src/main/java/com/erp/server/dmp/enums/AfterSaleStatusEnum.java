@@ -12,14 +12,11 @@ import java.util.Arrays;
  * @date 2025-04-06
  */
 public enum AfterSaleStatusEnum implements EnumMessage {
-    REPAIR_REQUEST("repairRequest","客户报修","客户报修"),
     APPROVE_ING("approveIng","审核中","客服审核"),
     TO_BE_RETURNED("toBeReturned","待寄回","客户寄件"),
     AFTER_SALES_RECEIVED("afterSalesReceived","售后签收","售后签收"),
-//    INSPECTION("inspection","检测/维修中","售后检测/维修作业"),
     REPAIR("repair","检测/维修中","检测/维修中"),
     TO_BE_SHIPPED("toBeShipped","待寄出","已完成"),
-//    FINISHED("finished","已完成","已完成"),
     TERMINATED("terminated","已终止","已终止")
     ;
 

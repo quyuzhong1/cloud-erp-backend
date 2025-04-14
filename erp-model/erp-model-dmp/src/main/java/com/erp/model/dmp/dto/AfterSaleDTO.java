@@ -526,9 +526,12 @@ public class AfterSaleDTO implements Serializable {
         private String remark;
 
         /**
-         * 附件
+         * 小程序端附件
          */
-//        private List<AttachmentDTO> attachmentList;
+        private List<AttachmentDTO> attachmentList;
+        /**
+         * web附件
+         */
         private List<String> attachNameList;
         private List<String> attachUrlList;
 
@@ -546,6 +549,7 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 明细
          */
+        @NotEmpty(message = "售后明细不能为空")
         private List<AfterSaleDetailEntity> detailList;
     }
 
@@ -553,14 +557,16 @@ public class AfterSaleDTO implements Serializable {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class AttachmentDTO implements Serializable{
-        /**
-         * 文件名称
-         */
-        private String attachName;
+
+        private String tempFilePath;
+        private BigDecimal size;
+        private String fileType;
+        private String type;
         /**
          * 文件url
          */
-        private String attachUrl;
+        private String url;
+        private String thumb;
     }
 
     @Data

@@ -68,7 +68,7 @@ public class AfterSaleOpenApi {
      */
     @OpenApi("listSalesPlatform")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSalesPlatform(AfterSaleDTO.OpenApiCommonDTO dto){
-        return omsDropDownFeign.list(dto.getKey());
+        return  omsDropDownFeign.listInternalSalesPlatform(dto.getKey());
     }
 
 
