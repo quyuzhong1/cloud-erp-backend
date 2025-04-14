@@ -1462,6 +1462,7 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_SUCCESS(92180,"发票未开票成功不支持此操作"),
     ERROR_INVOICE_NOT_NEED(92181,"仅待开票和开票失败的订单允许无开票"),
     ERROR_INVOICE_NFE_OPTION(92182,"仅NF-E发票支持此操作"),
+    ERROR_SKU_INVOICE_TAX_NOT_EXIST(92183,"平台SKU【{}】、店铺【{}】未找到税务信息"),
     ERROR_92175(92175,"存在下游单据不允许作废"),
     ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
