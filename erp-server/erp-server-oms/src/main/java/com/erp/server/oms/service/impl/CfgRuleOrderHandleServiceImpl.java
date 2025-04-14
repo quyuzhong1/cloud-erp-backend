@@ -356,6 +356,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                             receiverInfoVO.setProvince(addressHandleContent.getProvinceReplaceText());
                         }
                         break;
+                    case CUSTOMIZE:
+                        receiverInfoVO.setProvince(addressHandleContent.getProvinceFillText());
+                        break;
                     default:
                         break;
                 }
@@ -377,6 +380,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         if (StringUtils.isNotBlank(receiverInfoVO.getCity()) && StringUtils.isNotBlank(addressHandleContent.getCityWaitReplaceText()) && receiverInfoVO.getCity().equals(addressHandleContent.getCityWaitReplaceText())) {
                             receiverInfoVO.setCity(addressHandleContent.getCityReplaceText());
                         }
+                        break;
+                    case CUSTOMIZE:
+                        receiverInfoVO.setCity(addressHandleContent.getCityFillText());
                         break;
                     default:
                         break;
@@ -451,7 +457,19 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         if(zipCodeHandleContent.isZipCodeEmptyFillSwitch() && StringUtils.isBlank(receiverInfoVO.getZipCode())){
                 receiverInfoVO.setZipCode(zipCodeHandleContent.getZipCodeEmptyFillText());
             }
-
+        //邮编处理
+        if(zipCodeHandleContent.isZipCodeSwitch()){
+            RuleOrderHandleEnum.ZipCodeContentEnum cityRuleContentEnum = EnumMessage.getByCode(RuleOrderHandleEnum.ZipCodeContentEnum.class,zipCodeHandleContent.getHandleZipCodeRule());
+            if(Objects.nonNull(cityRuleContentEnum)){
+                switch (cityRuleContentEnum) {
+                    case REPLACE_BLANK:
+                        receiverInfoVO.setZipCode(null);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
     /**
      * 收货人处理

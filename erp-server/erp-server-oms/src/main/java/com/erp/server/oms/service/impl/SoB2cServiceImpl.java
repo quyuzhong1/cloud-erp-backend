@@ -8491,7 +8491,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             if(Objects.nonNull(rulePromptWordEntityMap.get(listDTO.getErrorId()))){
                 RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(listDTO.getErrorId());
-                listDTO.setFailureReason(rulePromptWordEntity.getTips());
+                listDTO.setFailureReason(CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : listDTO.getMessage());
                 listDTO.setSolution(rulePromptWordEntity.getSolution());
             }
         }
