@@ -567,7 +567,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
      */
     @Override
     public void queryUploadingInvoice() throws Exception {
-        List<InvoiceInfoEntity> invoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getUploadStatus, InvoiceInfoUploadStatusEnum.UPLOADING.getCode()).list();
+        List<InvoiceInfoEntity> invoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getInvoiceType,InvoiceInfoInvoiceTypeEnum.VAT.getCode()).eq(InvoiceInfoEntity::getUploadStatus, InvoiceInfoUploadStatusEnum.UPLOADING.getCode()).list();
         invoiceInfoEntityList = invoiceInfoEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getQueryId()) && CharSequenceUtil.isNotBlank(e.getShopId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(invoiceInfoEntityList)){
             return;
@@ -733,6 +733,34 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         soB2cService.updateNfeInvoiceStatus(invoiceInfoEntity.getSoId(),nfeInvoiceStatus);
         //更新开票清单数据
         this.updateById(invoiceInfoEntity);
+    }
+
+    @Override
+    public void HandleUploadingNfeJob() {
+        List<InvoiceInfoEntity> invoiceInfoEntityList = listNfeUploading();
+        if(CollectionUtils.isEmpty(invoiceInfoEntityList)){
+            return;
+        }
+        List<String> soIds = invoiceInfoEntityList.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
+        for (InvoiceInfoEntity invoiceInfoEntity : invoiceInfoEntityList) {
+            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(invoiceInfoEntity.getSoId()) && invoiceInfoEntity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
+            nfeInvoiceService.getNfeInvoiceResult(soB2cEntity,invoiceInfoEntity.getQueryId());
+        }
+    }
+
+    /**
+     * 查询进行中数据
+     * @author will
+     * @date 2025/4/14 16:08
+     * @return List<InvoiceInfoEntity>
+     */
+    private List<InvoiceInfoEntity> listNfeUploading () {
+        return lambdaQuery().eq(InvoiceInfoEntity::getUploadStatus, InvoiceInfoUploadStatusEnum.UPLOADING.getCode())
+                .eq(InvoiceInfoEntity::getInvoiceType,InvoiceInfoInvoiceTypeEnum.NFE.getCode())
+                .ne(InvoiceInfoEntity::getQueryId,"")
+                .ne(InvoiceInfoEntity::getShopId,"")
+                .list();
     }
 
     /**

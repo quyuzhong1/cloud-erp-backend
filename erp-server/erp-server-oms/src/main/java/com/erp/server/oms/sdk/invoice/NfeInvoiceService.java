@@ -134,6 +134,59 @@ public class NfeInvoiceService {
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
     }
 
+    /**
+     * 查询生成发票结果
+     * @author will
+     * @date 2025/4/14 16:24
+     * @param soB2cEntity
+     * @param queryId
+     * @return void
+     */
+    public void getNfeInvoiceResult(SoB2cEntity soB2cEntity,String queryId) {
+        NfeInvoiceDTO.NfeListParamDTO nfeListParamDTO = new NfeInvoiceDTO.NfeListParamDTO();
+        nfeListParamDTO.setTransactionId(queryId);
+        String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
+        String remark = "";
+        String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
+        Object nfeInvoiceResult = null;
+        try {
+              nfeInvoiceResult = tfFiscalService.getNfeInvoiceResult(nfeListParamDTO);
+        } catch (Exception e) {
+           log.error("查询发票数据失败，原因：{}",e.getMessage());
+            invoiceStatus = InvoiceInfoStatusEnum.INVOICE_FAILED.getCode();
+            remark = e.getMessage();
+        }
+        if (InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode().equals(invoiceStatus)) {
+            //上传xml、pdf
+            uploadFile(nfeInvoiceResult);
+
+            //美客多自动上传发票、速卖通无需上传
+            if (CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode())) {
+                uploadStatus = SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode();
+            }else {
+                try {
+                    //上传到平台
+                    MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
+                    mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
+                    String extendData = soB2cEntity.getExtendData();
+                    JSONObject entries = JSONUtil.parseObj(extendData);
+                    Object shipmentId = entries.get("shipmentId");
+                    mercadoInvoiceDTO.setShipmentId(ObjUtil.isEmpty(shipmentId) ? "" : shipmentId.toString());
+                    mercadoInvoiceDTO.setXmlContent("");
+                    mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
+                } catch (Exception e) {
+                    uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode();
+                    remark = e.getMessage();
+                }
+            }
+        }
+        //更新开票状态
+        InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+        invoiceInfoEntity.setStatus(invoiceStatus);
+        invoiceInfoEntity.setUploadStatus(uploadStatus);
+        invoiceInfoEntity.setRemark(remark);
+        invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+    }
 
 
     /**
@@ -289,4 +342,8 @@ public class NfeInvoiceService {
         Object xml = jsonObject.get("xml");
         Object pdf = jsonObject.get("pdf");
     }
+
+
+
 }
+

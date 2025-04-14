@@ -171,6 +171,26 @@ public class TfFiscalService {
         return apiResult.getData();
     }
 
+    /**
+     * 查询发票
+     * @author will
+     * @date 2025/4/14 16:15
+     * @param nfeListParamDTO
+     * @return Object
+     */
+    public Object getNfeInvoiceResult(NfeInvoiceDTO.NfeListParamDTO nfeListParamDTO){
+        String path = "/consultar_nota";
+        String accessToken = getAccessToken();
+        nfeListParamDTO.setTokenEmpresa(accessToken);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeListParamDTO), null, new HashMap<>(), RequestMethod.POST);
+        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        }
+        return apiResult.getData();
+    }
+
 
 
     private String getAccessToken() {

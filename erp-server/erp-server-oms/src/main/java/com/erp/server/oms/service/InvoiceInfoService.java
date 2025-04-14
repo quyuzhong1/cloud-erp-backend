@@ -173,4 +173,11 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return void
      */
     void updateNfeStatusById(InvoiceInfoEntity invoiceInfoEntity);
+    /**
+     * 查询上传中的nfe发票
+     * @author will
+     * @date 2025/4/14 16:05
+     * @return void
+     */
+    void HandleUploadingNfeJob();
 }

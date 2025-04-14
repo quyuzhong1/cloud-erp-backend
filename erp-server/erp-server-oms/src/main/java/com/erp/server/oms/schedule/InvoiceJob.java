@@ -1,9 +1,8 @@
 package com.erp.server.oms.schedule;
 
 import com.erp.server.oms.service.InvoiceInfoService;
-import com.erp.server.oms.service.SoB2cReceiverService;
-import com.erp.server.oms.service.SoInfoService;
 import com.xxl.job.core.biz.model.ReturnT;
+import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -33,4 +32,17 @@ public class InvoiceJob {
         return ReturnT.SUCCESS;
     }
 
+    /**
+     * 查询上传中的nfe发票
+     * @author will
+     * @date 2025/4/14 16:04
+     * @return ReturnT<String>
+     */
+    @XxlJob("HandleUploadingNfeJob")
+    public ReturnT<String> HandleUploadingNfeJob() {
+        XxlJobHelper.log("HandleUploadingNfeJob  执行开始");
+        invoiceInfoService.HandleUploadingNfeJob();
+        XxlJobHelper.log("HandleUploadingNfeJob  执行结束");
+        return ReturnT.SUCCESS;
+    }
 }
