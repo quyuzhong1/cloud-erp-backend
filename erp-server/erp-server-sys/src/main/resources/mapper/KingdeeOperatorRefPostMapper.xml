@@ -113,7 +113,7 @@
                  LEFT JOIN sys_user_info su
                            ON su.uid = krp.erp_user_id
                  LEFT JOIN sys_department sd ON sd.id = kd.erp_dept_id
-        WHERE ko.is_deleted = FALSE AND krp.erp_user_id is not null AND kd.erp_dept_id is not null
+        WHERE ko.is_deleted = FALSE AND krp.erp_user_id is not null AND kd.erp_dept_id is not null and su.is_deleted = false
           AND ko.type_code = #{params.type}
           AND ko.use_org_id = #{params.orgId}
         and ko.disabled = false
