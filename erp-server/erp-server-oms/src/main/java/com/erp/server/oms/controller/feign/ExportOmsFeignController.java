@@ -7,8 +7,6 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
-import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
-import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
 import com.erp.server.oms.query.*;
 import com.erp.server.oms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,6 +50,8 @@ public class ExportOmsFeignController {
     private ReportManagerService reportManagerService;
     @Resource
     private InvoiceInfoService invoiceInfoService;
+    @Resource
+    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
     @Resource
     private FullyManagedOrderService fullyManagedOrderService;
 
@@ -183,6 +183,12 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery
     public PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
         return invoiceInfoService.paging(dto, true);
+    }
+
+    @PostMapping("/exportInvoiceInvalid")
+    @WebAdvanceQuery
+    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
+        return cfgInvoiceInvalidService.paging(dto);
     }
 
     /**

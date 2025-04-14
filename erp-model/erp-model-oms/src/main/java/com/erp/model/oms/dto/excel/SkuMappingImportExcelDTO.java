@@ -110,7 +110,7 @@ public class SkuMappingImportExcelDTO {
     @ColumnWidth(30)
     @ExcelProperty(value = "原产地", index = 11)
     @FieldValid(fieldName = "原产地")
-    private String dictOrigin;
+    private String dictOriginNo;
 
     /**
      * 开票产品名称

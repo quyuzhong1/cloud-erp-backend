@@ -15,6 +15,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 import com.erp.model.oms.entity.*;
@@ -171,4 +172,18 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         return baseMapper.updateById(entity) > 0;
     }
 
+    @Override
+    public List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName() {
+        List<CfgInvoiceSettingEntity> invoiceSettingEntityList = this.list(new LambdaQueryWrapper<CfgInvoiceSettingEntity>()
+                .select(CfgInvoiceSettingEntity::getCompanyName, CfgInvoiceSettingEntity::getId));
+        List<CfgInvoiceInvalidDTO.DropDownDTO> dropDownList = invoiceSettingEntityList.stream()
+                .map(entity -> {
+                    CfgInvoiceInvalidDTO.DropDownDTO dto = new CfgInvoiceInvalidDTO.DropDownDTO();
+                    dto.setCode(entity.getCompanyName());
+                    dto.setValue(entity.getId());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+        return dropDownList;
+    }
 }
