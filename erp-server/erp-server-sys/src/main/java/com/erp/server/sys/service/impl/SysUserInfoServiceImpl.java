@@ -895,6 +895,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName,SysUserInfoEntity::getUserState);
+        queryWrapper.eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE);
         queryWrapper.eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode());
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
@@ -986,7 +987,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserAccount, account)
-                .eq(StringUtils.isNotBlank(userType), SysUserInfoEntity::getUserType, userType);
+                .eq(StringUtils.isNotBlank(userType), SysUserInfoEntity::getUserType, userType)
+                .eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE);
         queryWrapper.last("LIMIT 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         return entity;
@@ -1004,6 +1006,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证手机号是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> mobileQueryWrapper = new LambdaQueryWrapper<>();
         mobileQueryWrapper.eq(SysUserInfoEntity::getUserAccount, sysUserInfoDTO.getMobile());
+        mobileQueryWrapper.eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             mobileQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
@@ -1017,6 +1020,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户名是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
         userNameQueryWrapper.eq(SysUserInfoEntity::getUserName, sysUserInfoDTO.getUserName());
+        userNameQueryWrapper.eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             userNameQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
@@ -1120,6 +1124,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
+        queryWrapper.eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         if (!Objects.isNull(entity)) {
             SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(userId);
@@ -1427,6 +1432,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery()
                 .eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount())
                 .eq(SysUserInfoEntity::getUserType,forgotPasswordDTO.getUserType())
+                .eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
@@ -1469,6 +1475,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery()
                 .eq(SysUserInfoEntity::getUserAccount, userAccount)
                 .eq(SysUserInfoEntity::getUserType,userType)
+                .eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE)
                 .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
@@ -1544,6 +1551,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
         queryWrapper.eq(SysUserInfoEntity::getUserState, SysConstant.YES_STATE);
+        queryWrapper.eq(SysUserInfoEntity::getIsDeleted, Boolean.FALSE);
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
         }
