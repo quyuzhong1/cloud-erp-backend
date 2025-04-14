@@ -454,13 +454,13 @@ public class AfterSaleDTO implements Serializable {
          * thrid_user_info主键id*
          * 客户ID
          */
-        @Size(max = 32,message = "客户ID最大长度不能超过32位")
+        @Size(max = 19,message = "客户ID最大长度不能超过19位")
         private String thridUserId;
 
         @Size(max = 32,message = "客户名称最大长度不能超过32位")
         private String thridUserName;
 
-        @Size(max = 32,message = "手机号码最大长度不能超过32位")
+        @Size(max = 13,message = "手机号码最大长度不能超过13位")
         private String phoneNumber;
 
         /**
