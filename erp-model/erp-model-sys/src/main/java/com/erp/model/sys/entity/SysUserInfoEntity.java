@@ -47,8 +47,10 @@ public class SysUserInfoEntity implements Serializable {
 	/**
 	 * 用户删除状态 1:正常 0：已删除
 	 */
-	@TableLogic(value = "1",delval = "0")
-	private Integer deleteState;
+	@TableField(value = "is_deleted")
+	@TableLogic
+	private Boolean isDeleted;
+
 	/**
 	 * 最后登录的ip
 	 */
