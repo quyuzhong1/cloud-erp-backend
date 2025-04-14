@@ -2079,7 +2079,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        if (isFullyManagedOrder(entity.getDictPlatform())){
+        //全托管并且是平台订单就进行校验状态
+        if (isFullyManagedOrder(entity.getDictPlatform()) && SourceTypeEnum.SO_B2C.getCode().equals(entity.getSourceType())){
             //检查平台状态
             List<FullyOrderDTO.DataDTO.StockupOrdersDTO> stockupOrdersDTOS = tikTokFullService.listOrderByParam(entity.getShopId(), Collections.singletonList(entity.getPlatformCode()));
             if (CollUtil.isNotEmpty(stockupOrdersDTOS)) {
