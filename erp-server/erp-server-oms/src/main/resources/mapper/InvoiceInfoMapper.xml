@@ -97,5 +97,17 @@
         where ${params.sqlMap.default} and i.is_deleted = false and i.invoice_type = 'nfe'
     </select>
 
+    <!-- 获取最新发票 -->
+    <select id="getNewInvoicedAttachBySoId" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$AttachDTO">
+        select
+            i.id,
+            att.attach_url,
+            att.attach_name
+        from invoice_info i
+        inner join attachment att on i.id = att.business_id and att.is_deleted = false and att.type = #{attachmentType}
+        where i.is_deleted = false and i.invoice_type  = #{invoiceType} and i.status = 'invoiceSuccess'
+        order by i.id desc,att.id desc limit 1
+    </select>
+
 
 </mapper>

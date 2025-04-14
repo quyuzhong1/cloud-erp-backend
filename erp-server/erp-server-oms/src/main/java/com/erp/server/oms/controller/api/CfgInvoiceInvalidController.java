@@ -39,7 +39,7 @@ public class CfgInvoiceInvalidController extends BaseController {
     private CfgInvoiceInvalidService cfgInvoiceInvalidService;
 
     /**
-    * 新增
+    * 作废发票号
     * @author hcg
     * @date:  2025-04-14
     * @param dto
@@ -60,8 +60,8 @@ public class CfgInvoiceInvalidController extends BaseController {
      */
     @PostMapping("/paging")
     @WebAdvanceQuery
-    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
-        return cfgInvoiceInvalidService.paging(dto);
+    public ApiResult<PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
+        return success(cfgInvoiceInvalidService.paging(dto));
     }
 
     /**
