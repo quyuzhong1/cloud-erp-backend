@@ -277,7 +277,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             return;
         }
         //根据平台单号进行分组
-        Map<String, List<FullyManagedImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(e ->e.getPlatformCode() + e.getDictPlatform()));
+        Map<String, List<FullyManagedImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(FullyManagedImportExcelDTO::getIndexStr));
         //遍历分组数据
         collect.forEach((key, value) -> {
             SoB2cDTO.AddDTO addDTO = buildAddDTO(key,value,errorList);
