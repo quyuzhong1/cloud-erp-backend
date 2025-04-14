@@ -621,7 +621,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //默认线下订单
         shudiyunB2cOrderDTO.setTransaction_type("配货单");
         if (CharSequenceUtil.isBlank(soInfoEntity.getTransactionSubType())) {
-            shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
+            shudiyunB2cOrderDTO.setTransaction_sub_type("线下订单");
         } else {
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soInfoEntity.getTransactionSubType()));
         }

@@ -496,11 +496,13 @@ public class SyncSdyJob {
         LocalDateTime createStartTime = null;
         LocalDateTime createEndTime = null;
         Integer pageSize = 1000;// 每页记录数
+        String queryParamsStr = "";
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             createStartTime = jsonParam.getLocalDateTime("createStartTime", LocalDateTime.now().minusMonths(1));
             createEndTime = jsonParam.getLocalDateTime("createEndTime", LocalDateTime.now());
             jsonParam.getInt("pageSize", 1000);
+            queryParamsStr = jsonParam.getStr("queryParams");
         }
 
         //总条数
@@ -509,7 +511,14 @@ public class SyncSdyJob {
         while (true) {
             XxlJobHelper.log("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
             int offset = currentPage * pageSize;
-            list = soInfoService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
+            if (StringUtils.isNotBlank(queryParamsStr)) {
+                List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
+                QueryWrapper<SoInfoEntity> queryWrapper = (QueryWrapper<SoInfoEntity>) QueryParam.getQueryWrapper(queryParams);
+                Page<SoInfoEntity> page = soInfoService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                list = page.getRecords();
+            } else {
+                list = soInfoService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
+            }
             if (CollUtil.isEmpty(list)) {
                 return;
             }
