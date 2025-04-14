@@ -76,4 +76,9 @@ public class OmsDropDownFeignController extends BaseController {
                 .collect(Collectors.toList());
         return success(result);
     }
+
+    @GetMapping("/dict/listInternalSalesPlatform")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listInternalSalesPlatform(@RequestParam("key") String key) {
+        return success(dictBasicService.listInternalSalesPlatform(key));
+    }
 }

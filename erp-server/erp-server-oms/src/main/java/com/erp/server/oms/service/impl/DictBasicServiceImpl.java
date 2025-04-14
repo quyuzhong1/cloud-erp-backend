@@ -15,10 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -179,5 +176,24 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
             }
         }
         return BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
+    }
+
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> listInternalSalesPlatform(String key) {
+//        List<DictBasicEntity> list =  listByType(key,DictBasicTypeEnum.SALES_PLATFORM_INTERNAL.getType());
+        List<DictBasicEntity> list = lambdaQuery()
+                .eq(DictBasicEntity::getType, key)
+                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
+                .in(DictBasicEntity::getSubType,
+                        DictBasicTypeEnum.SALES_PLATFORM_INTERNAL.getType(),
+                        DictBasicTypeEnum.SALES_PLATFORM_OTHER.getType())
+                .list();
+
+        List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class).stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+
+        List<BaseDropDownDTO.CommonDTO> result = resultList.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .collect(Collectors.toList());
+        return result;
     }
 }
