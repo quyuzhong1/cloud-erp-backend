@@ -40,6 +40,7 @@ public class AfterSaleFeignController extends BaseController {
      */
     @PostMapping("/addThridUser")
     public ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto) {
+        dto.setType("wx");
         return success(thridUserInfoService.add(dto));
     }
     /**

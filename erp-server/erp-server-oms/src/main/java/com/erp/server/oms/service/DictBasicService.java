@@ -77,4 +77,6 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return
      */
     List<DictBasicDTO.ViewDTO> listSalesPlatform(String key);
+
+    List<BaseDropDownDTO.CommonDTO> listInternalSalesPlatform(String key);
 }

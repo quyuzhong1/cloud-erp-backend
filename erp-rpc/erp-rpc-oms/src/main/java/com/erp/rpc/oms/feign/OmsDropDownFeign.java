@@ -31,4 +31,7 @@ public interface OmsDropDownFeign {
     @GetMapping("feign/drop/down/dict/list")
     ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("key") String key);
 
+    @GetMapping("feign/drop/down/dict/listInternalSalesPlatform")
+    ApiResult<List<BaseDropDownDTO.CommonDTO>> listInternalSalesPlatform(@RequestParam("key") String key);
+
 }

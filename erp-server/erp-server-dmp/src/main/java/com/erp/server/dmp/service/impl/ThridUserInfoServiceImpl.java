@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -46,20 +47,11 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThridUserInfoDTO.AddDTO addDTO) {
-//        String jsCode = addDTO.getJsCode();
-//        if(StringUtils.isBlank(jsCode)){
-//            throw new ServiceException("jsCode不能为空");
-//        }
         ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
         BeanMapper.copy(addDTO.getUserInfo(), thridUserInfoEntity);
-//        // 调用微信接口获取用户信息
-//        WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(jsCode);
-//        if(Objects.isNull(wxJscodeToSessionResponse)){
-//            thridUserInfoEntity.setOpenid(wxJscodeToSessionResponse.getOpenid());
-//            thridUserInfoEntity.setUnionid(wxJscodeToSessionResponse.getUnionid());
-//            thridUserInfoEntity.setType("wx");
-//        }
-
+        thridUserInfoEntity.setUnionid(addDTO.getUnionid());
+        thridUserInfoEntity.setOpenid(addDTO.getOpenid());
+        thridUserInfoEntity.setType(addDTO.getType());
         boolean save = super.save(thridUserInfoEntity);
         if(!save) {
             throw new ServiceException("用户单保存失败");
@@ -73,13 +65,13 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
         ThridUserInfoDTO.CodeToSessionResp codeToSessionResp = new ThridUserInfoDTO.CodeToSessionResp();
         WxJscodeToSessionResponse wxJscodeToSessionResponse = wxMiniAppService.jsCode2SessionInfo(dto.getJsCode());
         BeanMapper.copy(wxJscodeToSessionResponse, codeToSessionResp);
-
-        if(StringUtils.isBlank(dto.getThirdUserId())){
-            lambdaUpdate().eq(ThridUserInfoEntity::getId, dto.getThirdUserId())
-                    .set(ThridUserInfoEntity::getOpenid, wxJscodeToSessionResponse.getOpenid())
-                    .set(ThridUserInfoEntity::getUnionid, wxJscodeToSessionResponse.getUnionid())
-                   .set(ThridUserInfoEntity::getType, "wx")
-                   .update();
+        if(StringUtils.isNotBlank(wxJscodeToSessionResponse.getOpenid())){
+            ThridUserInfoEntity thridUserInfoEntity = lambdaQuery().eq(ThridUserInfoEntity::getOpenid, wxJscodeToSessionResponse.getOpenid()).one();
+            if(Objects.nonNull(thridUserInfoEntity)){
+                codeToSessionResp.setThridUserId(thridUserInfoEntity.getId());
+            }
+        }else {
+            throw new ServiceException("登录失败");
         }
         return codeToSessionResp;
     }
