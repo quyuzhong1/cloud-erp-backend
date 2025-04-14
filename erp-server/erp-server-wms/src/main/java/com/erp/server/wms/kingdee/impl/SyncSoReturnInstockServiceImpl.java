@@ -145,11 +145,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
         }
 
-        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            shudiyunB2cOrderDTO.setIs_gift(1);
-        } else {
-            shudiyunB2cOrderDTO.setIs_gift(0);
-        }
+//        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
+//            shudiyunB2cOrderDTO.setIs_gift(1);
+//        } else {
+//            shudiyunB2cOrderDTO.setIs_gift(0);
+//        }
 
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
