@@ -152,7 +152,7 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode());
-
+        orderDTO.setNfeInvoiceStatus(dmpSoInfoEntityList.get(0).getNfeInvoiceStatus());
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntityList.get(0).getNextLevelId());
 
