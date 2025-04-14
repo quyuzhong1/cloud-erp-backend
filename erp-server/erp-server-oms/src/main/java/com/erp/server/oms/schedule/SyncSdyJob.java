@@ -280,7 +280,7 @@ public class SyncSdyJob {
                             syncAliExpressDelivery(soB2cEntity,
                                     aliexpressDeliveryMap,
                                     detailAliexpressDeliveryList,
-                                    soB2cDetailEntityList,
+                                    detailEntityList,
                                     skuVOList,
                                     bomChildrenSkuDTOS,
                                     parentSkuList,
