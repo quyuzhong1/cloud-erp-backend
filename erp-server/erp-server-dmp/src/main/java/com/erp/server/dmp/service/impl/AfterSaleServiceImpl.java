@@ -244,7 +244,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             log.info("编辑 开始修改售后申请单数据，单号：【{}】", old.getCode());
             boolean save = super.updateById(afterSaleEntity);
             if(!save) {
-                throw new ServiceException("售后申请单保存失败");
+                throw new ServiceException("售后申请单更新失败");
             }
             // 记录主单操作日志
             log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", afterSaleEntity.getCode());
@@ -691,8 +691,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             entity.setStatus(AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
             //更新节点时间
             //更新通过，则进入下一个节点：待寄回
-            updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode(),"");
-
+            updateProgressByMainId(entity.getId(), AfterSaleStatusEnum.TO_BE_RETURNED.getCode(),"","");
             //发送微信订阅消息
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
                 @Override
@@ -708,13 +707,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     }
 
     //更新节点时间
-    private void updateProgressByMainId(String id,String node,String logisticsCode) {
+    private void updateProgressByMainId(String id,String node,String logisticsCode,String remark) {
         //更新单据状态
         AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(id, node);
         if (Objects.nonNull(afterSaleProgressEntity)) {
             afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
             if(StringUtils.isNotBlank(logisticsCode)){
                 afterSaleProgressEntity.setTrackNo(logisticsCode);
+            }
+            if(StringUtils.isNotBlank(remark)){
+                afterSaleProgressEntity.setRemark(remark);
             }
             afterSaleProgressService.updateById(afterSaleProgressEntity);
         }
@@ -918,7 +920,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未完成的单据才能进行状态变更");
             }else {
                 AfterSaleDTO.NodeDTO oldNodeDTO = nodeMap.get(entity.getStatus());
-                if(oldNodeDTO.getIndex() >= newNodeDTO.getIndex()){
+                if(oldNodeDTO.getIndex() > newNodeDTO.getIndex()){
                     batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "当前节点不能小于等于原节点");
                 }else {
                     batchResultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
@@ -930,6 +932,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
                     if(StringUtils.isNotBlank(dto.getTrackNo())){
                         afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
+                    }
+                    if(StringUtils.isNotBlank(afterSaleProgressEntity.getRemark())){
+                        afterSaleProgressEntity.setRemark(afterSaleProgressEntity.getRemark()+"<br>"+dto.getRemark());
+                    }else {
+                        afterSaleProgressEntity.setRemark(dto.getRemark());
                     }
                     afterSaleProgressService.updateById(afterSaleProgressEntity);
 
@@ -1019,7 +1026,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         //更新节点时间
                         //更新通过，则进入下一个节点：已完成
                         String logisticsCode = map.get(repairInvoiceCode).getLogisticsCode();
-                        updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode(),logisticsCode);
+                        updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode(),logisticsCode,"");
 
                         //发送微信订阅消息
                         sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
@@ -1133,12 +1140,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         boolean update = afterSaleProgressService.lambdaUpdate().eq(AfterSaleProgressEntity::getMainId, afterSaleEntity.getId())
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
                 .set(AfterSaleProgressEntity::getTrackNo, trackNo)
-//                .set(AfterSaleProgressEntity::getRemark,"待签收")
                 .update();
 
         //更新节点时间
         //更新通过，则进入下一个节点：售后签收
-        updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),trackNo);
+        updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),trackNo,"待签收");
 
         //发送微信订阅消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
