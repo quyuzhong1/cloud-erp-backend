@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -16,7 +17,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgInvoiceSettingMapper;
@@ -94,6 +94,19 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         if (!save) {
             throw new ServiceException("发票设置保存失败");
         }
+        if (StrUtil.isNotBlank(dto.getLeiCode())) {
+            // 示例格式：XX XXX XXX/XXX，例如：12 345 678/901
+            String regex = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{3}-\\d{2}$";
+            if (!dto.getLeiCode().matches(regex)) {
+                throw new ServiceException("CNPJ 格式不正确，格式应为：XX XXX XXX/XXX");
+            }
+        }
+        if (StrUtil.isNotBlank(dto.getLeiCode())) {
+            LambdaQueryWrapper<CfgInvoiceSettingEntity> queryWrapper = new LambdaQueryWrapper<CfgInvoiceSettingEntity>().eq(CfgInvoiceSettingEntity::getLeiCode, dto.getLeiCode());
+            if (super.count(queryWrapper) > 0) {
+                throw new ServiceException("CNPJ 已存在，不能重复");
+            }
+        }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置", entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), entity.getId(), "新增操作");
@@ -107,9 +120,11 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         if (ObjectUtil.isEmpty(old)){
             throw new ServiceException("此发票设置不存在");
         }
+        if (!StrUtil.equals(old.getLeiCode(), dto.getLeiCode())) {
+            throw new ServiceException("CNPJ 不允许修改");
+        }
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "发票设置"));
         CfgInvoiceSettingEntity cfgVatInvoiceEntity = BeanMapperUtils.map(CfgInvoiceSettingEntity.class, dto);
-        cfgVatInvoiceEntity.setLeiCode(old.getLeiCode());
         cfgVatInvoiceEntity.setStartCode(old.getStartCode());
         log.info("编辑 开始修改发票设置数据，id：【{}】", old.getId());
         boolean update = super.updateById(cfgVatInvoiceEntity);

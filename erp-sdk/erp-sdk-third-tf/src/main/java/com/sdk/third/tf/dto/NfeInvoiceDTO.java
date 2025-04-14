@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * nef生成发票
@@ -55,7 +56,7 @@ public class NfeInvoiceDTO implements Serializable {
          * 产品信息
          */
         @Alias("itens")
-        private NfeItensDTO  itens;
+        private List<NfeItensDTO> itens;
         /**
          * 总金额，unit_price*销售数量，多行明细汇总；unit_price计算见明细
          */
@@ -169,7 +170,7 @@ public class NfeInvoiceDTO implements Serializable {
          * 销售数量
          */
         @Alias("quantity")
-        private String quantity;
+        private Integer quantity;
         /**
          * 销售单价
          */

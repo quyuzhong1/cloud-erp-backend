@@ -704,8 +704,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
-    boolean isFullyManagedOrder(String platform);
-
     /**
      * 根据订单拆分sku
      */
@@ -897,6 +895,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
+     * @param skuId
      * @param warehouseId
      * @param qty
      * @param skuMappingDTOList
@@ -1061,6 +1060,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
+    /**
+     * 根据nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:35
+     * @param soId
+     * @param nfeInvoiceStatus
+     * @return void
+     */
+    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
     /**
      * 根据销售订单id和平台获取分区id

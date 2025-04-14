@@ -715,7 +715,17 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         //删除主表信息
         this.removeById(invoiceInfoEntity.getId());
     }
-    
+
+    @Override
+    public InvoiceInfoEntity getInvoicingBySoId(String id) {
+        return null;
+    }
+
+    @Override
+    public void updateNfeStatusById(InvoiceInfoEntity invoiceInfoEntity) {
+
+    }
+
     /**
      * 根据销售订单id查询失败开票信息
      * @author will 
