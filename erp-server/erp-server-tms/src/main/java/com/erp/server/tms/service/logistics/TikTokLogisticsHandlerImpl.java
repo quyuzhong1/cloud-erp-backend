@@ -177,7 +177,36 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
             if(StringUtils.isBlank(packageDocumentDTO.getData().getDocUrl())){
                 throw new ServiceException("获取标签失败");
             }else{
-                String base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(),false);
+                String base64 = "";
+                int maxRetries = 3; // 最大重试次数
+                long retryInterval = 1000; // 重试间隔1秒
+                Exception lastException = null;
+
+                for (int attempt = 0; attempt <= maxRetries; attempt++) { // 包含初始请求+3次重试
+                    try {
+                        base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl());
+                        break; // 成功则跳出循环
+                    } catch (Exception e) {
+                        lastException = e;
+                        if (attempt < maxRetries) { // 非最后一次尝试时等待
+                            try {
+                                Thread.sleep(retryInterval);
+                            } catch (InterruptedException ie) {
+                                log.error("TikTok获取物流面单重试睡眠异常:", ie);
+                                Thread.currentThread().interrupt();
+                            }
+                        }
+                    }
+                }
+
+                if (base64.isEmpty()) {
+                    String errorMsg = "获取标签失败，重试" + maxRetries + "次后仍失败";
+                    if (lastException != null) {
+                        log.error("TokTok获取面单获取标签失败，最后一次异常:", lastException);
+                        errorMsg += "，原因: " + lastException.getMessage();
+                    }
+                    throw new ServiceException(errorMsg);
+                }
                 String prefix = "data:application/pdf;base64,";
                 LogisticsPrintLabelResponse response = LogisticsPrintLabelResponse.builder()
                         .deliveryNoList(Collections.singletonList(vo.getDeliveryNo()))
