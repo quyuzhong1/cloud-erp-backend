@@ -223,9 +223,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         AfterSaleEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "售后申请单"));
         if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(old.getInvalidStatus())){
-            throw new ServiceException("只有未作废的单据才能进行状态变更");
+            throw new ServiceException("只有未作废的单据才能进行编辑");
         }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(old.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(old.getStatus())  ){
-            throw new ServiceException("只有未完成的单据才能进行状态变更");
+            throw new ServiceException("只有未完成的单据才能进行状态编辑");
         }
 
         AfterSaleEntity afterSaleEntity =  BeanMapperUtils.map(AfterSaleEntity.class, updateDTO);
