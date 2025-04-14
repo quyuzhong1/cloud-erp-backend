@@ -34,6 +34,7 @@ import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.ShopInfoService;
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
@@ -46,18 +47,10 @@ import java.util.stream.Collectors;
  * 全托管 销售订单导入
  */
 public class FullyManagedImportExcelListener extends AnalysisEventListener<FullyManagedImportExcelDTO> {
-
-
-    Map<String, SoB2cDTO.AddDTO> map = new HashMap<>();
-
-    /**
-     * 错误的map
-     */
-    Map<String, String> errorMap = new HashMap<>();
-
     /**
      * 错误信息
      */
+    @Getter
     private List<FullyManagedImportExcelDTO> errorList = new ArrayList<>();
 
     /**
@@ -68,6 +61,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
     /**
      * 数据校验成功的
      */
+    @Getter
     private List<FullyManagedImportExcelDTO> successList = new ArrayList<>();
 
     private final DictBasicService dictBasicService = SpringUtil.getBean(DictBasicService.class);
@@ -101,6 +95,11 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+        }
+        try {
+            excelDTO.setIndex(Integer.valueOf(excelDTO.getIndexStr()));
+        }catch (Exception e){
+            errorMsgList.add("序号格式错误");
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getPayTimeStr())) {
             try {
@@ -179,14 +178,6 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         dataList.add(excelDTO);
     }
 
-    public List<FullyManagedImportExcelDTO> getErrorList(){
-        return errorList;
-    }
-
-    public List<FullyManagedImportExcelDTO> getSuccessList(){
-        return successList;
-    }
-
     public List<FullyManagedImportExcelDTO> getExcelDateList(){
         return dataList;
     }
@@ -225,6 +216,16 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
 
         for (FullyManagedImportExcelDTO excelDTO : dataList) {
             List<String> errorMsgList = new ArrayList<>();
+            //相同序号的平台订单号是否一致
+            List<FullyManagedImportExcelDTO> sameIndexList = dataList.stream().filter(v -> v.getIndex().equals(excelDTO.getIndex())).collect(Collectors.toList());
+            List<String> platformCount = sameIndexList.stream().map(FullyManagedImportExcelDTO::getPlatformCode).distinct().collect(Collectors.toList());
+            if(platformCount.size() > 1){
+                errorMsgList.add("序号【"+excelDTO.getIndex()+"】存在多个平台订单号");
+            }
+            List<String> dictPlatformCount = sameIndexList.stream().map(FullyManagedImportExcelDTO::getDictPlatform).distinct().collect(Collectors.toList());
+            if(dictPlatformCount.size() > 1){
+                errorMsgList.add("序号【"+excelDTO.getIndex()+"】存在多个平台类型");
+            }
             //平台类型
             String platform = dictList.stream().filter(v -> v.getName().equals(excelDTO.getDictPlatformName())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse(null);
             if(Objects.isNull(platform)){
@@ -255,7 +256,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
             }
             //类目
             if (CharSequenceUtil.isNotBlank(excelDTO.getCategoryNameList())){
-                List<String> categoryIds = categoryList.stream().filter(v -> excelDTO.getCategoryNameList().contains(v.getName())).map(OrderCategoryDetailDTO.ListDTO::getId).collect(Collectors.toList());
+                List<String> categoryIds = categoryList.stream().filter(v -> excelDTO.getCategoryNameList().equals(v.getName())).map(OrderCategoryDetailDTO.ListDTO::getId).collect(Collectors.toList());
                 if(CollectionUtils.isEmpty(categoryIds)){
                     errorMsgList.add("类目不存在【"+excelDTO.getCategoryNameList()+"】");
                 }else {
