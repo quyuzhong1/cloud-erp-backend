@@ -1,6 +1,7 @@
 package com.sdk.third.tf.dto;
 
 import cn.hutool.core.annotation.Alias;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -180,6 +181,7 @@ public class NfeInvoiceDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class NfeCancelDTO {
 
         /**
@@ -205,5 +207,23 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("enviar_email_para_cliente")
         private Boolean enviarEmailParaCliente = true;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NfeListParamDTO {
+
+        /**
+         * 关系id
+         */
+        @Alias("transaction_id")
+        private String transactionId;
+
+        /**
+         * token
+         */
+        @Alias("token_empresa")
+        private String tokenEmpresa;
     }
 }
