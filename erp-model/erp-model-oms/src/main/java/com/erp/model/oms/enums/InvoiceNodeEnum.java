@@ -11,9 +11,9 @@ import java.util.Objects;
  * @date: 2025/4/14 14:38
  */
 public enum InvoiceNodeEnum {
-    AFTER_PULL("after_pull", "订单拉取后"),
-    AFTER_AUDIT("after_audit", "订单审核后"),
-    NO_AUTO("no_auto", "不自动开票"),
+    AFTER_PULL("AfterPull", "订单拉取后"),
+    AFTER_AUDIT("AfterAudit", "订单审核后"),
+    NO_AUTO("NoAuto", "不自动开票"),
     ;
 
     /**

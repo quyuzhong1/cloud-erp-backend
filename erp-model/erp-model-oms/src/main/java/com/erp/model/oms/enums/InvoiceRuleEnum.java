@@ -11,9 +11,9 @@ import java.util.Objects;
  * @date: 2025/4/14 14:21
  */
 public enum InvoiceRuleEnum {
-    AMOUNT("amount", "按产品全额开票"),
-    CUSTOM("custom", "按（产品全额×自定义百分比）后开票"),
-    DEDUCT("deduct", "按（产品全额-佣金）后开票"),
+    AMOUNT("Amount", "按产品全额开票"),
+    CUSTOM("Custom", "按（产品全额×自定义百分比）后开票"),
+    DEDUCT("Deduct", "按（产品全额-佣金）后开票"),
     ;
 
     /**

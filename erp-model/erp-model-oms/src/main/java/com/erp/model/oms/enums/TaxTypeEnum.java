@@ -11,8 +11,8 @@ import java.util.Objects;
  * @date: 2025/4/14 14:28
  */
 public enum TaxTypeEnum {
-    PURCHASE_SALE("purchase_sale", "采购经销"),
-    SELF_SALE("self_sale", "自产自销"),
+    PURCHASE_SALE("PurchaseSale", "采购经销"),
+    SELF_SALE("SelfSale", "自产自销"),
     ;
 
     /**
