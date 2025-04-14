@@ -157,4 +157,20 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return void
      */
     void removeFailedBySoId (String soId,List<String> invoiceTypeList);
+    /**
+     * 查询开票中发票
+     * @author will
+     * @date 2025/4/11 16:24
+     * @param id
+     * @return InvoiceInfoEntity
+     */
+    InvoiceInfoEntity getInvoicingBySoId(String id);
+    /**
+     * 更新nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:30
+     * @param invoiceInfoEntity
+     * @return void
+     */
+    void updateNfeStatusById(InvoiceInfoEntity invoiceInfoEntity);
 }

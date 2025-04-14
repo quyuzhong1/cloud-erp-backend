@@ -9,7 +9,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
@@ -59,7 +58,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     public List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
         ArrayList<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
         //查询详情列表
-        List<CfgInvoiceSettingDetailEntity> entityList = baseMapper.selectList(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getMainId, dto.getId()));
+        List<CfgInvoiceSettingDetailEntity> entityList = baseMapper.selectList(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getMainId, dto.getId()).orderByDesc(CfgInvoiceSettingDetailEntity::getDictPlatform));
         List<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(entityList, CfgInvoiceSettingDetailDTO.ViewDTO.class);
         //查询平台value对应
         List<DictBasicDTO.ViewDTO> keyList = dictBasicService.getByKey(dto.getKey());
