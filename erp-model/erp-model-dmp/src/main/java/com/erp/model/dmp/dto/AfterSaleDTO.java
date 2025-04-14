@@ -460,7 +460,7 @@ public class AfterSaleDTO implements Serializable {
         @Size(max = 32,message = "客户名称最大长度不能超过32位")
         private String thridUserName;
 
-        @Size(max = 13,message = "手机号码最大长度不能超过13位")
+        @Size(max = 11,message = "手机号码最大长度不能超过11位")
         private String phoneNumber;
 
         /**
@@ -533,12 +533,14 @@ public class AfterSaleDTO implements Serializable {
         private List<String> attachUrlList;
 
         /**
-         * 仓库寄的快递单号
+         * 寄出快递单号
          */
+        @Size(max = 64,message = "寄出快递单号最大长度不能超过64位")
         private String outboundTrackNo;
         /**
-         * 客户寄的快递单号
+         * 寄回快递单号
          */
+        @Size(max = 64,message = "寄回快递单号最大长度不能超过64位")
         private String returnTrackNo;
 
         /**
