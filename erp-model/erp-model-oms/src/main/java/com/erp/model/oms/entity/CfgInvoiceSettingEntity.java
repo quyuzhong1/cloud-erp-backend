@@ -113,7 +113,11 @@ public class CfgInvoiceSettingEntity extends BaseEntity<CfgInvoiceSettingEntity>
     */
     @TableField("certificate_password")
     private String certificatePassword;
-
+    /**
+     * 接口返回
+     */
+    @TableField("token")
+    private String token;
 
     public static final String TYPE = "type";
 
@@ -150,6 +154,8 @@ public class CfgInvoiceSettingEntity extends BaseEntity<CfgInvoiceSettingEntity>
     public static final String CERTIFICATE_URL = "certificate_url";
 
     public static final String CERTIFICATE_PASSWORD = "certificate_password";
+
+    public static final String TOKEN = "token";
 
     @Override
     public Serializable pkVal() {

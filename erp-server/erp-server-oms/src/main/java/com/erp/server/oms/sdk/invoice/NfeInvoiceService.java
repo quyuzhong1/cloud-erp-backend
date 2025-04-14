@@ -317,6 +317,7 @@ public class NfeInvoiceService {
      * @return void
      */
     public void cancelInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO) {
+
         Object obj;
         try {
              obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
@@ -325,6 +326,22 @@ public class NfeInvoiceService {
         }
         //上传
         uploadFile(obj);
+    }
+
+    /**
+     * 公司token不存在
+     * @author will
+     * @date 2025/4/14 16:56
+     * @param platform
+     * @param shopId
+     * @return String
+     */
+    private String getCompanyToken(String platform,String shopId) {
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(platform, shopId);
+        if (ObjUtil.isEmpty(invoiceSettingDetail) || CharSequenceUtil.isBlank(invoiceSettingDetail.getToken())) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_COMPANY_TOKEN_NOT_EXIST);
+        }
+        return invoiceSettingDetail.getToken();
     }
 
     /**
