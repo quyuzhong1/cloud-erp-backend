@@ -88,17 +88,11 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgInvoiceSettingDTO.AddDTO dto) {
-        CfgInvoiceSettingEntity entity = new CfgInvoiceSettingEntity();
-        BeanMapperUtils.copy(dto, entity);
-        boolean save = super.save(entity);
-        if (!save) {
-            throw new ServiceException("发票设置保存失败");
-        }
         if (StrUtil.isNotBlank(dto.getLeiCode())) {
             // 示例格式：XX XXX XXX/XXX，例如：12 345 678/901
-            String regex = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{3}-\\d{2}$";
+            String regex = "^\\d{2}\\.\\d{3}\\.\\d{3}/\\d{4}-\\d{2}$";
             if (!dto.getLeiCode().matches(regex)) {
-                throw new ServiceException("CNPJ 格式不正确，格式应为：XX XXX XXX/XXX");
+                throw new ServiceException("CNPJ 格式不正确，格式应为：XX XXX XXX/XXXX-XX");
             }
         }
         if (StrUtil.isNotBlank(dto.getLeiCode())) {
@@ -106,6 +100,12 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             if (super.count(queryWrapper) > 0) {
                 throw new ServiceException("CNPJ 已存在，不能重复");
             }
+        }
+        CfgInvoiceSettingEntity entity = new CfgInvoiceSettingEntity();
+        BeanMapperUtils.copy(dto, entity);
+        boolean save = super.save(entity);
+        if (!save) {
+            throw new ServiceException("发票设置保存失败");
         }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置", entity.getId());
