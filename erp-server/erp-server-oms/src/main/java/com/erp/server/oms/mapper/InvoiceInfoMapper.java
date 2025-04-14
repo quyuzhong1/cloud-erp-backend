@@ -31,4 +31,12 @@ public interface InvoiceInfoMapper extends BaseMapper<InvoiceInfoEntity> {
      * @return ExportAttachDTO
      */
     List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(@Param("params") InvoiceInfoDTO.PagingParamDTO params, @Param("type")String type);
+    /**
+     * 根据销售订单查询最新发票PDF
+     * @author will
+     * @date 2025/4/14 18:01
+     * @param soId
+     * @return AttachDTO
+     */
+    InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(@Param("soId")String soId,@Param("invoiceType")String invoiceType,@Param("attachmentType")String attachmentType);
 }
