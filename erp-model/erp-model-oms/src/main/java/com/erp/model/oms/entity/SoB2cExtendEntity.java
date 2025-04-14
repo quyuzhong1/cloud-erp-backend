@@ -1,5 +1,6 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldStrategy;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
@@ -33,17 +34,17 @@ public class SoB2cExtendEntity extends BaseEntity<SoB2cExtendEntity> {
     /**
     * 要求发货时间
     */
-    @TableField("required_delivery_time")
+    @TableField(value = "required_delivery_time", updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime requiredDeliveryTime;
     /**
     * 要求收货时间
     */
-    @TableField("required_receive_time")
+    @TableField(value ="required_receive_time", updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime requiredReceiveTime;
     /**
     * 发货预警时间
     */
-    @TableField("delivery_warning_time")
+    @TableField(value ="delivery_warning_time", updateStrategy = FieldStrategy.IGNORED)
     private LocalDateTime deliveryWarningTime;
     /**
     * 平台订单来源:PLATFORM=平台备货,MERCHANT=自主备货,ABNORMAL_REDELIVERY=异常补货  枚举：SoB2cExtendOrderSourceTypeEnum
@@ -58,7 +59,7 @@ public class SoB2cExtendEntity extends BaseEntity<SoB2cExtendEntity> {
     /**
      * 分区id
      */
-    @TableField("partition_id")
+    @TableField(value = "partition_id", updateStrategy = FieldStrategy.IGNORED)
     private String partitionId;
 
     @TableField(exist = false)

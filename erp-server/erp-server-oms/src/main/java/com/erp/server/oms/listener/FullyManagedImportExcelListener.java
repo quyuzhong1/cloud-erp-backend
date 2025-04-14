@@ -222,7 +222,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
             if(platformCount.size() > 1){
                 errorMsgList.add("序号【"+excelDTO.getIndex()+"】存在多个平台订单号");
             }
-            List<String> dictPlatformCount = sameIndexList.stream().map(FullyManagedImportExcelDTO::getDictPlatform).distinct().collect(Collectors.toList());
+            List<String> dictPlatformCount = sameIndexList.stream().map(FullyManagedImportExcelDTO::getDictPlatformName).distinct().collect(Collectors.toList());
             if(dictPlatformCount.size() > 1){
                 errorMsgList.add("序号【"+excelDTO.getIndex()+"】存在多个平台类型");
             }
