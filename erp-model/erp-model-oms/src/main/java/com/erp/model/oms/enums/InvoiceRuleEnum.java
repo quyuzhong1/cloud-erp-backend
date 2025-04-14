@@ -37,20 +37,20 @@ public enum InvoiceRuleEnum {
         return code;
     }
 
-    public String getDescription() {
+    public String getName() {
         return name;
     }
 
-    public static String getDescription(String code) {
+    public static String getName(String code) {
         for (InvoiceRuleEnum rule : InvoiceRuleEnum.values()) {
             if (code.equals(rule.getCode())) {
-                return rule.getDescription();
+                return rule.getName();
             }
         }
         return "";
     }
 
-    public static String getCodeByDesc(String description) {
+    public static String getCodeByName(String description) {
         for (InvoiceRuleEnum rule : InvoiceRuleEnum.values()) {
             if(Objects.equals(description, rule.name)) {
                 return rule.code;
