@@ -112,6 +112,7 @@ import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
@@ -135,7 +136,9 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -145,7 +148,8 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO_B2C_ABNORMAL;
 
 /**
  * <p>
@@ -371,6 +375,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private CustomerInfoService customerInfoService;
     @Resource
     private SyncSoB2cService syncSoB2cService;
+
+    @Resource
+    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -2094,6 +2104,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
             updateLingXingOrder(entity, list);
         }
+        //是否推送发票
+        autoPushInvoice(entity,overseasWarehouseList.get(0),logisticsChannelId);
+
         /**
          * 如果是API 对接的仓库
          * 下出库单的命令
@@ -2130,6 +2143,44 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
     }
+
+    /**
+     * 推送发票
+     * @author will
+     * @date 2025/4/14 17:43
+     * @param logisticsChannelId
+     * @return void
+     */
+    private void autoPushInvoice (SoB2cEntity entity,OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse,String logisticsChannelId) {
+        //物流渠道
+        LogisticsChannelEntity logisticsChannelEntity = FeignQuery.getById(LogisticsChannelEntity.class, logisticsChannelId);
+        if (ObjectUtil.isEmpty(logisticsChannelEntity) || !logisticsChannelEntity.getIsSendInvoice()) {
+            return;
+        }
+        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(entity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
+        if (ObjectUtil.isEmpty(attachDTO)) {
+            return;
+        }
+        String logisticsBase64 = "";
+        try {
+             logisticsBase64 = FileUtil.convertPdfUrlToBase64(FastDFSClientUtil.publicUrl + attachDTO.getAttachUrl());
+        } catch (Exception e) {
+            throw new ServiceException("base64转换失败");
+        }
+        if (CharSequenceUtil.isBlank(logisticsBase64)) {
+            throw new ServiceException("base64不能为空");
+        }
+        ThirdWarehouseUploadFileReq thirdWarehouseUploadFileReq = new ThirdWarehouseUploadFileReq();
+        thirdWarehouseUploadFileReq.setOrderCode(entity.getCode());
+        thirdWarehouseUploadFileReq.setFileData(logisticsBase64);
+        thirdWarehouseUploadFileReq.setAuthId(overseasProviderWarehouse.getMainId());
+        thirdWarehouseUploadFileReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
+        ApiResult<ThirdWarehouseUploadFileResponse> uploadFileResponse = thirdWarehouseFeign.uploadFile(thirdWarehouseUploadFileReq);
+        if(!uploadFileResponse.isSuccess()){
+            throw new ServiceException("上传发票失败{}",uploadFileResponse.getMsg());
+        }
+    }
+
 
     private void checkLogisticsParam(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         String labelJson = entity.getLabelJson();

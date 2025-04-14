@@ -464,4 +464,22 @@ public class InvoiceInfoDTO implements Serializable {
         */
        private String fileName;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class AttachDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 文件url
+         */
+        private String attachUrl;
+        /**
+         * 文件名称
+         */
+        private String attachName;
+    }
 }

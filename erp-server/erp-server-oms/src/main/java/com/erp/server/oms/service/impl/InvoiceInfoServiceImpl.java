@@ -749,6 +749,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
     }
 
+    @Override
+    public InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(String soId,String invoiceType,String attachmentType) {
+        return baseMapper.getNewInvoicedAttachBySoId(soId,invoiceType,attachmentType);
+    }
+
     /**
      * 查询进行中数据
      * @author will

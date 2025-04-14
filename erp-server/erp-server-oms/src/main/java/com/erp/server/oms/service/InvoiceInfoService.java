@@ -180,4 +180,12 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return void
      */
     void HandleUploadingNfeJob();
+    /**
+     * 根据soId查询最新的attach
+     * @author will
+     * @date 2025/4/14 17:59
+     * @param soId
+     * @return InvoiceInfoDTO.AttachDTO
+     */
+    InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(String soId,String invoiceType,String attachmentType);
 }
