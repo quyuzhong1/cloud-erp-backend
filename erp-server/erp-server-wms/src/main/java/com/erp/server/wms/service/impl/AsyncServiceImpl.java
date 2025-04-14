@@ -110,7 +110,6 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Async("wmsErpExecutor")
     @Override
-    @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
     public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag, boolean hasNotOutstock) {
         try {
             // 根据提交平台唯一key幂等提交
@@ -139,6 +138,7 @@ public class AsyncServiceImpl implements AsyncService {
 
 
     @Override
+    @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
     public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey,boolean hasNotOutstock) {
         log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
         // 查询本单明细有已发货标记跳过触发
