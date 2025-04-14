@@ -518,7 +518,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity = null;
             if (!CollectionUtils.isEmpty(skuCostAllocationEntityList)) {
                 firstMileSkuCostAllocationEntity = skuCostAllocationEntityList.stream().filter(e -> Objects.nonNull(e)
-                        && e.getSkuId().equals(deliveryDetailEntity.getSkuId())).findFirst().orElse(null);
+                        && e.getSkuId().equals(deliveryDetailEntity.getSkuId()) && e.getSourceDetailId().equals(deliveryDetailEntity.getId())).findFirst().orElse(null);
             }
             if (Objects.isNull(firstMileSkuCostAllocationEntity)) {
                 firstMileSkuCostAllocationEntity = new FirstMileSkuCostAllocationEntity();
@@ -922,7 +922,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             //期初数据是否存在
             if(Objects.nonNull(initEntity) && initEntity.getInitEstimatedCost().compareTo(BigDecimal.ZERO) == 0){
                 //期初在途费用-冲期初-本期分摊费用
-                detailEntity.setEndPeriodTransitCost(MathUtil.subtract(initEntity.getInitTransitCost(), mid));
+                detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
             }else {
                 if (Objects.isNull(initEntity)){
                     //期初数据不存在时 期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
