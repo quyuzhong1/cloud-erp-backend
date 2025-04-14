@@ -18,8 +18,6 @@ public class CompanyDTO {
     private Integer isActive;
     @Alias("numero")
     private String numero;
-    @Alias("city")
-    private String city;
     @Alias("bairro")
     private String bairro;
     @Alias("certificado_via_link")
@@ -56,4 +54,7 @@ public class CompanyDTO {
     private String username;
     @Alias("rua")
     private String rua;
+
+    private String city;
+
 }

@@ -1,13 +1,21 @@
 package com.sdk.third.tf;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
+import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.sdk.third.tf.dto.CommonResp;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
+import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.CompanyDTO;
+import com.sdk.third.tf.entity.UpdateCompanyDTO;
+import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
@@ -28,40 +36,26 @@ public class TfFiscalService {
     public final static String URL = "https://tffiscal.com.br/api";
 
     public static void main(String[] args) {
-        String path = "/cadastrar_empresa";
-
-        Map<String, Object> paramMap = buildDefaultParam();
-        paramMap.put("username","WJKJ");
-        paramMap.put("password","WJKJ");
-        paramMap.put("email","ulanzichat@ulanzi.cn");
-        paramMap.put("name","WJKJ");
-        paramMap.put("first_name","WJKJ");
-        paramMap.put("city","São Paulo");
-        paramMap.put("state","São Paulo");
-        paramMap.put("zip_code","03936-020");
-        paramMap.put("is_active",1);
-        paramMap.put("razao_social","test123");
-        paramMap.put("cnpj","40262014000106");
-        paramMap.put("ie","133011581111");
-        paramMap.put("senha_certificado","1234");
-        paramMap.put("certificado","test4");
-        paramMap.put("certificado_via_link",true);
-        paramMap.put("rua","test");
-        paramMap.put("numero","test");
-        paramMap.put("bairro","test");
-        paramMap.put("cep","test");
-        paramMap.put("telefone","12345678");
-        paramMap.put("ultimo_numero_nfe","test");
-        paramMap.put("numero_serie_nfe","");
+        String path = "/alterar_empresa";
+        UpdateCompanyDTO updateCompanyDTO = new UpdateCompanyDTO();
+        updateCompanyDTO.setTokenPlataforma("19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b");
+        updateCompanyDTO.setCnpj("96623144148088");
+        updateCompanyDTO.setIe("000000000");
+        updateCompanyDTO.setRazaoSocial("WJKJ");
+        updateCompanyDTO.setUsername("WJKJ2");
+        updateCompanyDTO.setApiCompleta(null);
         Map<String, String> headerMap = new HashMap<>();
+
         //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(paramMap), null, headerMap, RequestMethod.POST);
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(updateCompanyDTO), null, headerMap, RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
             throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
         }
-
+        if(!apiResult.getData().contains("\"success\":1")){
+            throw new ServiceException("adsa");
+        }
     }
 
     private static Map<String, Object> buildDefaultParam() {
@@ -73,14 +67,14 @@ public class TfFiscalService {
 
     /**
      * 创建公司
-     * @param createCompanyDTO
-     * @return
+     * @param addCompanyDTO
+     * @return 成功返回公司token 失败抛出异常
      */
-    public String createCompany(CompanyDTO createCompanyDTO){
+    public String createCompany(AddCompanyDTO addCompanyDTO){
         String path = "/cadastrar_empresa";
         String accessToken = getAccessToken();
-        createCompanyDTO.setTokenPlataforma(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(createCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
+        addCompanyDTO.setTokenPlataforma(accessToken);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(addCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
@@ -94,25 +88,33 @@ public class TfFiscalService {
      * @param updateCompanyDTO
      * @return
      */
-    public String updateCompany(CompanyDTO updateCompanyDTO){
+    public void updateCompany(UpdateCompanyDTO updateCompanyDTO){
         String path = "/alterar_empresa";
         String accessToken = getAccessToken();
         updateCompanyDTO.setTokenPlataforma(accessToken);
+        buildDefaultCompany(updateCompanyDTO);
+        updateCompanyDTO.setApiCompleta(null);
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(updateCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
             throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
         }
-        return null;
+        if(!apiResult.getData().toString().contains("\"success\":1")){
+            log.error("更新公司失败,{}", apiResult.getData().toString());
+            throw new ServiceException("更新公司失败:"+apiResult.getData().toString());
+        }
     }
 
     /**
      * 删除公司信息
      * @return
      */
-    public String deleteCompany(String cnpj){
-        String path = "/alterar_empresa";
+    public void deleteCompany(String cnpj){
+        if(StringUtils.isBlank(cnpj)){
+            throw new ServiceException("删除公司失败,cnpj不能为空");
+        }
+        String path = "/desativar_empresa";
         String accessToken = getAccessToken();
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("cnpj",cnpj);
@@ -123,7 +125,10 @@ public class TfFiscalService {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
             throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
         }
-        return null;
+        if(!apiResult.getData().toString().contains("desativado")){
+            log.error("删除公司失败,{}", apiResult.getData().toString());
+            throw new ServiceException("删除公司失败:"+apiResult.getData().toString());
+        }
     }
 
 
@@ -191,13 +196,30 @@ public class TfFiscalService {
         return apiResult.getData();
     }
 
-
-
     private String getAccessToken() {
         List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType,"TF-ACCESS_TOKEN").list();
         if(CollectionUtils.isEmpty(dictBasicEntityList)){
             throw new ServiceException("没有找到TF-ACCESS_TOKEN的字典数据");
         }
         return dictBasicEntityList.get(0).getValue();
+    }
+
+    private void buildDefaultCompany(CompanyDTO companyDTO) {
+        List<CfgSettingEntity> cfgSettingEntityList = FeignQuery.create(CfgSettingEntity.class).eq(CfgSettingEntity::getKey,"tfCompany").list();
+        if(CollectionUtils.isEmpty(cfgSettingEntityList)){
+            throw new ServiceException("没有找到配置数据");
+        }
+        CfgSettingEntity cfgSettingEntity = cfgSettingEntityList.get(0);
+        String jsonStr = cfgSettingEntity.getValue();
+        JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
+        companyDTO.setCity(jsonObject.getStr("city"));
+        companyDTO.setCertificadoViaLink(jsonObject.get("certificado_via_link",Boolean.class));
+        companyDTO.setZipCode(jsonObject.getStr("zip_code"));
+        companyDTO.setPassword(jsonObject.getStr("password"));
+        companyDTO.setName(jsonObject.getStr("name"));
+        companyDTO.setState(jsonObject.getStr("state"));
+        companyDTO.setApiCompleta(jsonObject.get("api_completa",Boolean.class));
+        companyDTO.setFirstName(jsonObject.getStr("first_name"));
+        companyDTO.setEmail(jsonObject.getStr("email"));
     }
 }
