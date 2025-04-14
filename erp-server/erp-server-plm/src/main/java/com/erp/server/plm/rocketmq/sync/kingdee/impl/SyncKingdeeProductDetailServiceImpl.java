@@ -23,6 +23,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.enums.SaleMethodEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -41,6 +42,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -399,6 +401,17 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
                 resultMap.put("is_service", 1);
             } else{
                 resultMap.put("is_service", 0);
+            }
+            // 销售方式
+            if (StringUtils.isNotBlank(productInfoEntity.getSaleMethod())) {
+                String[] sales = productInfoEntity.getSaleMethod().split(",");
+                List<SaleMethodEnum> saleMethods = Stream.of(sales).map(SaleMethodEnum::getEnumByName).collect(Collectors.toList());
+                if (1 == saleMethods.size() && saleMethods.contains(SaleMethodEnum.GIFT)){
+                    // 只包含赠品视为赠品
+                    resultMap.put("is_gift", 1);
+                } else {
+                    resultMap.put("is_gift", 0);
+                }
             }
         }
 
