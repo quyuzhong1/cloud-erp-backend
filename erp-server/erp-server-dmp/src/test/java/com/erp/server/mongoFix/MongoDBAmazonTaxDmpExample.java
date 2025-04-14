@@ -107,7 +107,7 @@ public class MongoDBAmazonTaxDmpExample {
             for (AmazonOrderEntity entity : resultList) {
                 String amazonOrderId = entity.getAmazonOrderId();
                 String shopId = entity.getShopId();
-                BigDecimal total_tax_fee = entity.getItemTax().add(entity.getShippingTax()).add(entity.getGiftWrapTax()).add(entity.getPromotionDiscountTax());
+                BigDecimal total_tax_fee = entity.getItemTax().add(entity.getShippingTax()).add(entity.getGiftWrapTax()).subtract(entity.getPromotionDiscountTax());
                 if (total_tax_fee.compareTo(BigDecimal.ZERO) <= 0 ){
                     continue;
                 }
