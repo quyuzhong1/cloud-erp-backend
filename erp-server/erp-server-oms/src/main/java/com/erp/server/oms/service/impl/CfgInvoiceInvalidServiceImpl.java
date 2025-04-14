@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -11,11 +12,13 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CfgInvoiceInvalidEntity;
+import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.mapper.CfgInvoiceInvalidMapper;
 import com.erp.server.oms.service.CfgInvoiceInvalidService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.erp.server.oms.service.CfgInvoiceSettingService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.CommonService;
 import com.common.core.exception.ServiceException;
@@ -52,6 +55,9 @@ public class CfgInvoiceInvalidServiceImpl extends SuperServiceImpl<CfgInvoiceInv
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private CfgInvoiceSettingService cfgInvoiceSettingService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -86,6 +92,11 @@ public class CfgInvoiceInvalidServiceImpl extends SuperServiceImpl<CfgInvoiceInv
     public Boolean export(CustomerDTO.@Valid ExportDTO dto) {
         downloadTaskFeign.saveDownloadTask("作废发票号", EXPORT_INVOICE_INVALID.getCode(), dto);
         return null;
+    }
+
+    @Override
+    public List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName() {
+        return cfgInvoiceSettingService.getCompanyName();
     }
 
 }

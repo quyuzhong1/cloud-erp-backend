@@ -7,6 +7,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
 
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * <p>
@@ -30,4 +31,6 @@ public interface CfgInvoiceInvalidService extends SuperService<CfgInvoiceInvalid
     PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> paging(PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);
 
     Boolean export(CustomerDTO.@Valid ExportDTO dto);
+
+    List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName();
 }

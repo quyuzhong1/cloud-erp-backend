@@ -21,6 +21,8 @@ import com.erp.server.oms.service.CfgInvoiceInvalidService;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
 
+import java.util.List;
+
 /**
  * 作废发票号
  *
@@ -70,5 +72,14 @@ public class CfgInvoiceInvalidController extends BaseController {
     public ApiResult<Object> exportCfgInvoiceInvalid(@RequestBody @Valid CustomerDTO.ExportDTO dto) {
         Boolean result = cfgInvoiceInvalidService.export(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();
+    }
+
+    /**
+     * 公司下拉
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出作废发票号")
+    @GetMapping("/getCompanyName")
+    public List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName() {
+        return cfgInvoiceInvalidService.getCompanyName();
     }
 }

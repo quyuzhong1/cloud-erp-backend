@@ -134,4 +134,18 @@ public class CfgInvoiceInvalidDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO extends SortDTO {
+        /**
+         * 发票设置companyName
+         */
+        private String code;
+
+        /**
+         * 发票设置id
+         */
+        private String value;
+    }
 }
