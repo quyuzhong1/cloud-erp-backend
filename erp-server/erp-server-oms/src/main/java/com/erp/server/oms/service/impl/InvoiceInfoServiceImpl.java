@@ -34,9 +34,12 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
+import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
+import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -118,6 +121,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     private SkuMappingService skuMappingService;
 
+    @Resource
+    private NfeInvoiceService nfeInvoiceService;
 
     @Resource
     @Qualifier("soB2cTabExecutorPool")
@@ -251,26 +256,15 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         //保存数据
         service.batchSave(Collections.singletonList(invoiceInfoEntity),detailEntityList);
 
-        //生成发票,调用第三方
-
-
-
-        //回调更新b2c订单发票清单状态
-        if (true) {
-            soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.WAIT_UPLOAD.getCode());
-        } else {
-            soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode());
-        }
-
-        //美客多自动上传发票、速卖通无需上传
-        if (CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode())) {
-            soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode());
-        }else {
-            //上传到平台
-        }
+        soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.INVOICING.getCode());
         soB2cService.updateById(soB2cEntity);
+
+        //异步生成发票,调用第三方
+        nfeInvoiceService.createInvoice(soB2cEntity);
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");
     }
+
+
     /**
      * 发票主表信息
      * @author will
@@ -648,8 +642,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceInfoEntity.setInvoiceNature(InvoiceNatureEnum.CANCEL.getCode());
         this.updateById(invoiceInfoEntity);
 
-        //TODO 第三方对接
-
+        //取消发票,调用第三方
+        NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO = NfeInvoiceConverter.INSTANCE.invoiceInfoEntityToNfeCancel(invoiceInfoEntity);
+        nfeInvoiceService.cancelInvoice(invoiceInfoEntity,nfeCancelDTO);
         return BatchResultDTO.success(id, invoiceInfoEntity.getCode(), "取消发票");
     }
 
@@ -718,12 +713,26 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     public InvoiceInfoEntity getInvoicingBySoId(String id) {
-        return null;
+        return lambdaQuery().eq(InvoiceInfoEntity::getSoId,id).eq(InvoiceInfoEntity::getStatus,InvoiceInfoStatusEnum.INVOICING.getCode()).last("limit 1").one();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateNfeStatusById(InvoiceInfoEntity invoiceInfoEntity) {
-
+        //更新销售订单nfe发票状态
+        String nfeInvoiceStatus = SoB2cNfeStatusEnum.WAIT_UPLOAD.getCode();
+        if (InvoiceInfoStatusEnum.INVOICE_FAILED.getCode().equals(invoiceInfoEntity.getStatus())) {
+            nfeInvoiceStatus = SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode();
+        } else if (InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode().equals(invoiceInfoEntity.getUploadStatus())) {
+            nfeInvoiceStatus = SoB2cNfeStatusEnum.UPLOAD_FAILURE.getCode();
+        } else if (InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(invoiceInfoEntity.getUploadStatus())) {
+            nfeInvoiceStatus = SoB2cNfeStatusEnum.UPLOAD_SUCCESS.getCode();
+        } else if (InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode().equals(invoiceInfoEntity.getUploadStatus())) {
+            nfeInvoiceStatus = SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode();
+        }
+        soB2cService.updateNfeInvoiceStatus(invoiceInfoEntity.getSoId(),nfeInvoiceStatus);
+        //更新开票清单数据
+        this.updateById(invoiceInfoEntity);
     }
 
     /**
@@ -971,6 +980,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             if(isExport && StringUtils.isNotBlank(pagingViewDTO.getFileUrl())){
                 pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
             }
+            pagingViewDTO.setInvoiceNatureName(InvoiceNatureEnum.getName(pagingViewDTO.getInvoiceNature()));
         });
     }
 

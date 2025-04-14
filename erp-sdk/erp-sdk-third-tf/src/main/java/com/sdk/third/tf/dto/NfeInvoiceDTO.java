@@ -1,6 +1,7 @@
 package com.sdk.third.tf.dto;
 
 import cn.hutool.core.annotation.Alias;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -180,6 +181,7 @@ public class NfeInvoiceDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class NfeCancelDTO {
 
         /**

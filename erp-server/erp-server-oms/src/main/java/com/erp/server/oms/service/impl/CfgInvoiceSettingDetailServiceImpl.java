@@ -136,4 +136,9 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         });
         return viewShopDTOS;
     }
+
+    @Override
+    public CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(String dictPlatform, String shopId) {
+        return baseMapper.getInvoiceSettingDetail(dictPlatform,shopId);
+    }
 }

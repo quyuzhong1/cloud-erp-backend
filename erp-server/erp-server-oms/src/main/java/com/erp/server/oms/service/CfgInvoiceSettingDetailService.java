@@ -32,4 +32,13 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
     List<CfgInvoiceSettingDetailEntity> listByShopIdList(List<String> shopIdList);
 
     List<CfgInvoiceSettingDetailDTO.ViewShopDTO> listShopSelect(String dictplatform);
+    /**
+     * 查询启用数据
+     * @author will
+     * @date 2025/4/14 14:10
+     * @param dictPlatform
+     * @param shopId
+     * @return CfgInvoiceSettingDetailEntity
+     */
+    CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(String dictPlatform, String shopId);
 }

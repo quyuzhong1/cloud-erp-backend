@@ -138,7 +138,10 @@ public class TfFiscalService {
         String path = "/emitir_transparente";
         String accessToken = getAccessToken();
         nfeCreateDTO.setTokenEmpresa(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCreateDTO), null, new HashMap<>(), RequestMethod.POST);
+        // 创建明确包含 Content-Type 的请求头
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "application/json"); // 关键设置
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCreateDTO), null, headers, RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
