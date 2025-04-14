@@ -209,7 +209,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setInvalidType("");
         // 作废原因
         orderDTO.setInvalidRemark("");
-        
+		orderDTO.setNfeInvoiceStatus(dmpSoInfoEntity.getNfeInvoiceStatus());
         BigDecimal payAmount = dmpSoInfoEntity.getPayAmount();
 		orderDTO.setAmount(payAmount);
         String currencyCode = dmpSoInfoEntity.getCurrencyCode();

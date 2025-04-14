@@ -87,7 +87,7 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
 
         //如果是巴西站用巴西站配置
-        if (MercadolibreBusinessModelEnum.BR.getCode().equals(shopInfo.getBusinessModel())) {
+        if (MercadolibreBusinessModelEnum.MLB.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_AUTHORIZE;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
@@ -148,7 +148,7 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
 
         //如果是巴西站用巴西站配置
-        if (MercadolibreBusinessModelEnum.BR.getCode().equals(shopInfo.getBusinessModel())) {
+        if (MercadolibreBusinessModelEnum.MLB.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
@@ -269,7 +269,7 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
 
         //如果是巴西站用巴西站配置
-        if (MercadolibreBusinessModelEnum.BR.getCode().equals(shopInfo.getBusinessModel())) {
+        if (MercadolibreBusinessModelEnum.MLB.getCode().equals(shopInfo.getBusinessModel())) {
             AppClientEnum appClient = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
             findDTO.setBusinessType(appClient.getBusinessType());
             findDTO.setDictPlatform(appClient.getPlatform());
