@@ -36,4 +36,13 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
      * @return List<CfgInvoiceSettingDetailEntity>
      */
     List<CfgInvoiceSettingDetailEntity> listByShopIdList(@Param("shopIdList") List<String> shopIdList);
+    /**
+     * 查询启用数据
+     * @author will
+     * @date 2025/4/14 14:10
+     * @param dictPlatform
+     * @param shopId
+     * @return CfgInvoiceSettingDetailEntity
+     */
+    CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(@Param("dictPlatform")String dictPlatform,@Param("shopId") String shopId);
 }
