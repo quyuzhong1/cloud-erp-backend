@@ -1,8 +1,10 @@
 package com.erp.server.tms.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -35,6 +37,10 @@ public class FirstMileEstimatedBillController extends BaseController {
      * 高级查询
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:firstMileEstimatedBill:paging"
+    )
     @WebAdvanceQuery(handler = FirstMileEstimatedQueryHandler.class)
     public ApiResult<PagingVO<FirstMileEstimatedBillDTO.View>> paging(@RequestBody PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto){
         PagingVO<FirstMileEstimatedBillDTO.View> pagingVO = firstMileEstimatedBillService.paging(dto);
@@ -58,8 +64,12 @@ public class FirstMileEstimatedBillController extends BaseController {
      * 统计tab数量
      */
     @GetMapping("/tabList")
-    public ApiResult<List<FirstMileEstimatedBillDTO.Tab>> tabList(){
-        List<FirstMileEstimatedBillDTO.Tab> list = firstMileEstimatedBillService.tabList();
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:firstMileEstimatedBill:paging"
+    )
+    public ApiResult<List<FirstMileEstimatedBillDTO.Tab>> tabList(@RequestBody FirstMileEstimatedBillDTO.PagingParam dto){
+        List<FirstMileEstimatedBillDTO.Tab> list = firstMileEstimatedBillService.tabList(dto);
         return ApiResult.success(list);
     }
 

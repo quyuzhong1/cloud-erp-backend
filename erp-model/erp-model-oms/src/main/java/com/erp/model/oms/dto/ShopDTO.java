@@ -222,6 +222,10 @@ public class ShopDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+        /**
+         * 展示对应用的的权限集合
+         */
+        private String userId;
 
     }
 

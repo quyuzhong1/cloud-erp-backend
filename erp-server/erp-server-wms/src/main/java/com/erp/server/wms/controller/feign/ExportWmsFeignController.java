@@ -269,7 +269,9 @@ public class ExportWmsFeignController {
     @PostMapping("/fbaDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:fbaDelivery:export",
+            shopTableField = "fd.shop_id",
+            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging",
             tableAlias = "fd"
     )
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
@@ -442,6 +444,12 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/overseasWarehouseInbound")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "owi.delivery_warehouse_id,owi.to_warehouse_id",
+            menuCode = "wms:overseasWarehouseInbound:paging",
+            tableAlias = "owi"
+    )
     @WebAdvanceQuery
     public PagingVO<OverseasWarehouseInboundDTO.ListDTO> exportOverseasWarehouseInbound(@RequestBody PagingDTO<OverseasWarehouseInboundDTO.ExportDTO> dto) {
         return overseasWarehouseInboundService.exportOverseasWarehouseInbound(dto);
@@ -494,6 +502,12 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/pickingLists")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "pl.warehouse_id",
+            menuCode = "wms:picking-lists:paging",
+            tableAlias = "pl"
+    )
     @WebAdvanceQuery
     public PagingVO<PickingListsDTO.ExportInfoDTO> exportPickingLists(@RequestBody PagingDTO<PickingListsDTO.ExportDTO> dto) {
         return pickingListsService.exportPickingLists(dto);

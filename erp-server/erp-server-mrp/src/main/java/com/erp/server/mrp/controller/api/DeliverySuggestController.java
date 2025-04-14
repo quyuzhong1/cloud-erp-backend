@@ -2,11 +2,13 @@ package com.erp.server.mrp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -50,6 +52,10 @@ public class DeliverySuggestController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "ds.shop_id",
+            menuCode = "oms:deliverySuggest:paging"
+    )
     @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public ApiResult<PagingVO<DeliverySuggestDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
         PagingVO<DeliverySuggestDTO.ListDTO> pagingVO = deliverySuggestService.paging(dto);
@@ -77,6 +83,10 @@ public class DeliverySuggestController extends BaseController {
      * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "ds.shop_id",
+            menuCode = "oms:deliverySuggest:paging"
+    )
     public ApiResult<List<DeliverySuggestDTO.TabListDTO>> tabList(@RequestBody DeliverySuggestDTO.TabListParamDTO dto) {
         List<DeliverySuggestDTO.TabListDTO> tabList = deliverySuggestService.tabList(dto);
         return success(tabList);

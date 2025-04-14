@@ -51,6 +51,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -154,6 +155,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private VirtualInventoryFeign virtualInventoryFeign;
     @Resource
     private InventoryFeign inventoryFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
 
     @Override
@@ -995,7 +998,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(PagingDTO<SkuMappingDTO.WarehousePagingParamDTO> dto) {
         SkuMappingDTO.WarehousePagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
+        params.setPermissionSql(getWarehousePermissionSql());
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         params.setType(RuleTypeEnum.WAREHOUSE.getCode());
         IPage pageData = baseMapper.warehousePaging(query, params);
@@ -1005,6 +1008,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         fillWarehouseDb(list);
         return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 如果没有仓库时，默认所有人可以查看
+     * @return
+     */
+    private String getWarehousePermissionSql() {
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sm.warehouse_id");
+        if (StringUtils.isBlank(warehousePermissionSql)) {
+            return "";
+        }
+        return " AND ( (sm.warehouse_id = '') OR " + " (1=1 " +warehousePermissionSql+ " ) ) ";
     }
 
 
@@ -1461,6 +1476,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         dto.getParams().setType(RuleTypeEnum.PLATFORM.getCode());
         Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
 
@@ -1471,6 +1487,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
         dto.getParams().setType(RuleTypeEnum.WAREHOUSE.getCode());
+        dto.getParams().setPermissionSql(getWarehousePermissionSql());
         Page<SkuMappingDTO.WarehousePagingViewDTO> page = baseMapper.listWarehouseExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         fillWarehouseDb(page.getRecords());
         return new PagingVO<>(page);

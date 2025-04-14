@@ -55,6 +55,7 @@ public class TmsWarehouseMappingController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "twm.erp_warehouse_id",
             menuCode = "tms:tmsWarehouseMapping:paging",
             tableAlias = "twm"
     )

@@ -14,12 +14,16 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +34,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 仓库管理
@@ -45,7 +50,8 @@ public class WarehouseController extends BaseController {
 
     @Resource
     private WarehouseService warehouseService;
-
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     /**
      * 仓库分页列表
@@ -74,6 +80,19 @@ public class WarehouseController extends BaseController {
     @PostMapping("/pagingCustom")
     @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())){
+            List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(dto.getParams().getUserId());
+            //如果用户没有店铺权限，就返回空
+            if (CollectionUtils.isEmpty(shopUserList)){
+                return success(new PagingVO<>());
+            }
+            StringBuilder sqlString = new StringBuilder();
+            String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
+            if ("part".equals(authType)){
+                sqlString.append(" AND string_to_array(").append("id").append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                dto.getParams().setPermissionSql(sqlString.toString());
+            }
+        }
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
     }

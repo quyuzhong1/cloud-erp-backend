@@ -261,6 +261,7 @@
         from
         logistics_bill lb
         inner join logistics_bill_detail lbd on lbd.main_id = lb.id and lbd.is_deleted = false
+        inner join wms_first_mile_delivery fmd on lb.outstock_id = fmd.id and fmd.is_deleted = false
         left join first_mile_estimated_bill fmb on fmb.logistics_bill_id = lb.id and fmb.is_deleted = false
         left join foreign_packing_task fpt on (fpt.source_id = lb.outstock_id or fpt.source_id = lb.source_id) and fpt.is_deleted = false
         where ${params.sqlMap.default}
@@ -310,6 +311,7 @@
                count(1)   as count
         FROM logistics_bill lb
                  inner join logistics_bill_detail lbd on lb.id = lbd.main_id
+        inner join wms_first_mile_delivery fmd on lb.outstock_id = fmd.id and fmd.is_deleted = false
         where lb.is_deleted = false and lbd.is_deleted = false
           and lb.order_type = #{orderType}
         <!--权限-->
