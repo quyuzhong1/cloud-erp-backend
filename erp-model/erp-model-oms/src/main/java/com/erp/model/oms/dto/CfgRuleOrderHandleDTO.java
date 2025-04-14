@@ -347,6 +347,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 城市替换为。。。
          */
         private String cityReplaceText;
+        /**
+         * 城市为空填充文本
+         */
+        private String cityFillText;
 
         /**
          * 收货地址1过滤开关
@@ -451,6 +455,20 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 邮编为空填充字符
          */
         private String zipCodeEmptyFillText;
+
+        /**
+         * 邮编替换开关
+         */
+        private boolean zipCodeReplaceSwitch;
+        /**
+         * 邮编待替换文本
+         */
+        private String zipCodeWaitReplaceText;
+
+        /**
+         * 邮编替换为。。。
+         */
+        private String zipCodeReplaceText;
     }
     /**
      * 收货人处理

@@ -381,6 +381,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                             receiverInfoVO.setCity(addressHandleContent.getCityReplaceText());
                         }
                         break;
+                    case CUSTOMIZE:
+                        receiverInfoVO.setCity(addressHandleContent.getCityFillText());
+                        break;
                     default:
                         break;
                 }
@@ -454,7 +457,10 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         if(zipCodeHandleContent.isZipCodeEmptyFillSwitch() && StringUtils.isBlank(receiverInfoVO.getZipCode())){
                 receiverInfoVO.setZipCode(zipCodeHandleContent.getZipCodeEmptyFillText());
             }
-
+        //邮编替换
+        if(zipCodeHandleContent.isZipCodeReplaceSwitch() && StringUtils.isNotBlank(receiverInfoVO.getZipCode()) && StringUtils.isNotBlank(zipCodeHandleContent.getZipCodeWaitReplaceText())&& StringUtils.isNotBlank(zipCodeHandleContent.getZipCodeReplaceText())){
+            receiverInfoVO.setZipCode(receiverInfoVO.getZipCode().replace(zipCodeHandleContent.getZipCodeWaitReplaceText(), zipCodeHandleContent.getZipCodeReplaceText()));
+        }
     }
     /**
      * 收货人处理
