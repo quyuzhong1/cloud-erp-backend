@@ -161,10 +161,15 @@
 
     <select id="tabList" resultType="com.erp.model.wms.dto.OverseasWarehouseInboundDTO$CountDTO">
         SELECT
-        instock_status AS tabFlag,
+        owi.instock_status AS tabFlag,
         COUNT(*) AS count
-        FROM overseas_warehouse_inbound
-        GROUP BY instock_status
+        FROM overseas_warehouse_inbound owi
+        where owi.is_deleted = FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY owi.instock_status
     </select>
     
     <select id="getDataCompareByCondition" resultType="java.util.Map">

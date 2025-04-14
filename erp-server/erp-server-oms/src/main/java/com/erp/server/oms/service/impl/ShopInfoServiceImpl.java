@@ -995,7 +995,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<String> platformList = list.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
         String permissionSql = null;
         if (Objects.nonNull(showByAuth) && showByAuth){
-            permissionSql = authDataFeign.getShopPermissionSql("");
+            permissionSql = authDataFeign.getShopPermissionSql("si.id");
         }
         List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList,permissionSql);
 

@@ -307,6 +307,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
             map.put("default",tabSql);
             pagingParamDTO.setSqlMap(map);
             pagingParamDTO.setPlatformType(dto.getPlatformType());
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             Integer count = this.baseMapper.tabList(pagingParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());

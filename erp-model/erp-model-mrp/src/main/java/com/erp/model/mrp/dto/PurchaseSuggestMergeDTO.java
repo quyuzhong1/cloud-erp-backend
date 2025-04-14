@@ -2,6 +2,7 @@ package com.erp.model.mrp.dto;
 
 import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -56,7 +57,7 @@ public class PurchaseSuggestMergeDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class TabListParamDTO {
+    public static class TabListParamDTO extends PermissionsDTO {
 
         /**
          * 是否是合并采购

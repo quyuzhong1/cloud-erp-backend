@@ -135,16 +135,14 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
         //店铺
         List<String> shopTableFieldList = Arrays.asList(shopTableField.split(","));
         int shopTableFieldSize = shopTableFieldList.size();
-        if (CollectionUtils.isNotEmpty(shopUserList)) {
-            if ("part".equals(authType)){
-                if (shopTableFieldSize == 1) {
-                    sqlString.append(" AND string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
-                } else {
-                    sqlString.append(" AND (string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
-                    sqlString.append(" OR ");
-                    for (int i = 1; i < shopTableFieldSize; i++) {
-                        sqlString.append("string_to_array(").append(shopTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
-                    }
+        if ("part".equals(authType)){
+            if (shopTableFieldSize == 1) {
+                sqlString.append(" AND string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+            } else {
+                sqlString.append(" AND (string_to_array(").append(shopTableFieldList.get(0)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                sqlString.append(" OR ");
+                for (int i = 1; i < shopTableFieldSize; i++) {
+                    sqlString.append("string_to_array(").append(shopTableFieldList.get(i)).append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',','))");
                 }
             }
         }

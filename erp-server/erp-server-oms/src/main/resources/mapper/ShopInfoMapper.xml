@@ -135,15 +135,15 @@
         </if>
     </select>
     <select id="listByParam" resultType="com.erp.model.oms.entity.ShopInfoEntity">
-        select *
-        from shop_info
+        select si.*
+        from shop_info si
         where si.is_deleted = false
         <!--权限-->
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
         <if test="platformList != null and platformList.size > 0">
-            AND  dict_platform IN
+            AND  si.dict_platform IN
             <foreach collection="platformList" separator="," open="(" close=")" item="platform">
                 #{platform}
             </foreach>

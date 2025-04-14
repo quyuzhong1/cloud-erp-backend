@@ -2,11 +2,13 @@ package com.erp.server.mrp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -51,6 +53,10 @@ public class PurchaseSuggestMergeController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "psm.shop_id",
+            menuCode = "oms:purchaseSuggestMerge:paging"
+    )
     @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult<PagingVO<PurchaseSuggestMergeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
         PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingVO = purchaseSuggestMergeService.paging(dto);
@@ -65,6 +71,10 @@ public class PurchaseSuggestMergeController extends BaseController {
      * @return ApiResult<List<TabListDTO>>
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "psm.shop_id",
+            menuCode = "oms:purchaseSuggestMerge:paging"
+    )
     public ApiResult<List<PurchaseSuggestMergeDTO.TabListDTO>> tabList(@RequestBody PurchaseSuggestMergeDTO.TabListParamDTO dto) {
         List<PurchaseSuggestMergeDTO.TabListDTO> tabList = purchaseSuggestMergeService.tabList(dto);
         return success(tabList);
@@ -241,7 +251,6 @@ public class PurchaseSuggestMergeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购建议（合并）")
     @PostMapping(value = "/export")
-    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = purchaseSuggestMergeService.export(pagingParamDTO);
         return flag == true ? success() : failure();

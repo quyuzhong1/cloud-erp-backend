@@ -552,6 +552,10 @@
                 #{shopId}
             </foreach>
         </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         <if test="params.orderCreateTimeList!=null and params.orderCreateTimeList.size>0">
             AND sb.platform_order_create_time >= #{params.orderCreateTimeList[0]}
             AND sb. platform_order_create_time &lt;= #{params.orderCreateTimeList[1]}
@@ -603,6 +607,10 @@
             <foreach collection="params.shopIdList" item="shopId" open="(" separator="," close=")">
                 #{shopId}
             </foreach>
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         <if test="params.orderCreateTimeList!=null and params.orderCreateTimeList.size>0">
             AND sb.platform_order_create_time >= #{params.orderCreateTimeList[0]}

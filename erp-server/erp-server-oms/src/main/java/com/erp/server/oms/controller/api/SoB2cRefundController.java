@@ -1,8 +1,10 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -38,6 +40,10 @@ public class SoB2cRefundController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "ro.shop_id",
+            menuCode = "oms:refundOrder:paging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<SoB2cRefundDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
         PagingVO<SoB2cRefundDTO.PagingViewDTO> pagingVO = soB2cRefundService.paging(dto);
