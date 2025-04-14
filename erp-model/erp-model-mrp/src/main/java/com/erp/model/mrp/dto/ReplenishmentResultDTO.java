@@ -51,7 +51,7 @@ public class ReplenishmentResultDTO {
     /**
      * FBA到货明细
      */
-    private List<EstimatedDeliveryDetailDTO> fbaDeliveryDetails;
+    private List<EstimatedDeliveryDetailDTO> Details;
     /**
      * 海外可用库存明细
      */

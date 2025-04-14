@@ -288,4 +288,32 @@ public class CfgSettingValueDTO implements Serializable {
          */
         private String transferWarehouseId;
     }
+
+    /**
+     * 东莞塘厦仓 东莞简拍
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DongGuanSettingDTO {
+
+        /**
+         *
+         */
+        private String warehouseId;
+        /**
+         *
+         */
+        private String warehouseName;
+        /**
+         *
+         */
+        private String companyId;
+        /**
+         *
+         */
+        private String companyName;
+
+
+    }
+
 }
