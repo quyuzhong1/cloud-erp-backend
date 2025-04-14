@@ -31,6 +31,7 @@
         <result column="start_code" property="startCode" />
         <result column="certificate_url" property="certificateUrl" />
         <result column="certificate_password" property="certificatePassword" />
+        <result column="token" property="token" />
     </resultMap>
     <select id="paging" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDTO$PagingViewDTO">
                 SELECT
