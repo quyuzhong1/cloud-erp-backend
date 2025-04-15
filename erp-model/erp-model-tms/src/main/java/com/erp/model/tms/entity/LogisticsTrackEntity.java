@@ -66,6 +66,11 @@ public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
      */
     @TableField("md5")
     private String md5;
+    /**
+     * 订单轨迹状态
+     */
+    @TableField(exist = false)
+    private String orderStatus;
 
     public static final String TRACK_NO = "track_no";
 
