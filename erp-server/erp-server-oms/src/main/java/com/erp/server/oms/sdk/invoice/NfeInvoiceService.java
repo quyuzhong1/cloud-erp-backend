@@ -9,8 +9,10 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
+import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.*;
@@ -21,6 +23,11 @@ import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.third.tf.TfFiscalService;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -100,21 +107,12 @@ public class NfeInvoiceService {
         if (InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode().equals(invoiceStatus)) {
             //上传xml、pdf
             uploadFile(obj);
-
             //美客多自动上传发票、速卖通无需上传
             if (CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode())) {
                 uploadStatus = SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode();
             }else {
                 try {
-                    //上传到平台
-                    MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
-                    mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
-                    String extendData = soB2cEntity.getExtendData();
-                    JSONObject entries = JSONUtil.parseObj(extendData);
-                    Object shipmentId = entries.get("shipmentId");
-                    mercadoInvoiceDTO.setShipmentId(ObjUtil.isEmpty(shipmentId) ? "" : shipmentId.toString());
-                    mercadoInvoiceDTO.setXmlContent("");
-                    mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
+                    uploadNfeInvoice(soB2cEntity);
                 } catch (Exception e) {
                     uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode();
                     remark = e.getMessage();
@@ -127,6 +125,39 @@ public class NfeInvoiceService {
         invoiceInfoEntity.setUploadStatus(uploadStatus);
         invoiceInfoEntity.setRemark(remark);
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+    }
+
+    /**
+     * 上传Nfe发票
+     * @author will
+     * @date 2025/4/15 16:32
+     * @param soB2cEntity
+     * @return void
+     */
+    public void uploadNfeInvoice (SoB2cEntity soB2cEntity) {
+        //上传到平台
+        MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
+        mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
+        String extendData = soB2cEntity.getExtendData();
+        JSONObject entries = JSONUtil.parseObj(extendData);
+        Object shipmentId = entries.get("shipmentId");
+        mercadoInvoiceDTO.setShipmentId(ObjUtil.isEmpty(shipmentId) ? "" : shipmentId.toString());
+
+        InvoiceInfoDTO.AttachDTO attachDTO = invoiceInfoService.getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
+        if (ObjUtil.isEmpty(attachDTO)) {
+            throw new ServiceException("NF-e发票未找到xml文件");
+        }
+        try (CloseableHttpClient client = HttpClients.createDefault()) {
+            HttpGet request = new HttpGet(FastDFSClientUtil.publicUrl + attachDTO.getAttachUrl());
+            try (CloseableHttpResponse response = client.execute(request)) {
+                String xmlContent = EntityUtils.toString(response.getEntity(), "UTF-8");
+                mercadoInvoiceDTO.setXmlContent(xmlContent);
+            }
+        } catch (Exception e) {
+            throw  new ServiceException("获取xml文件失败");
+        }
+        //NF-e发票
+        mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
     }
 
     /**
@@ -160,15 +191,7 @@ public class NfeInvoiceService {
                 uploadStatus = SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode();
             }else {
                 try {
-                    //上传到平台
-                    MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
-                    mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
-                    String extendData = soB2cEntity.getExtendData();
-                    JSONObject entries = JSONUtil.parseObj(extendData);
-                    Object shipmentId = entries.get("shipmentId");
-                    mercadoInvoiceDTO.setShipmentId(ObjUtil.isEmpty(shipmentId) ? "" : shipmentId.toString());
-                    mercadoInvoiceDTO.setXmlContent("");
-                    mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
+                    uploadNfeInvoice(soB2cEntity);
                 } catch (Exception e) {
                     uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode();
                     remark = e.getMessage();
@@ -326,6 +349,14 @@ public class NfeInvoiceService {
         uploadFile(obj);
     }
 
+    /**
+     * 更新Cce数据
+     * @author will
+     * @date 2025/4/15 11:53
+     * @param invoiceInfoEntity
+     * @param nfeCceDTO
+     * @return void
+     */
     public void updateCceInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeCceDTO nfeCceDTO) {
         Object obj;
         try {

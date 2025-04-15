@@ -121,7 +121,7 @@ public class CfgInvoiceInvalidDTO implements Serializable {
         * 作废原因
         */
         @NotBlank(message = "作废原因不能为空")
-        @Size(max = 50,message = "作废原因最大长度不能超过50位")
+        @Size(max = 255,message = "作废原因最大长度不能超过255位")
         private String reason;
 
 
