@@ -296,22 +296,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private LogisticsProductFeign logisticsProductFeign;
 
     @Resource
-    private AliExpressDliveryOrderService aliExpressDliveryOrderService;
-
-    @Resource
-    private WarehouseMappingFeign warehouseMappingFeign;
-
-    @Resource
-    private AliexpressDeliveryFeign aliexpressDeliveryFeign;
-
-    @Resource
     private SoOutstockFeign soOutstockFeign;
 
     @Resource
     private MQProducerService mqProducerService;
-
-    @Resource
-    private TikTokSdkClientService tikTokSdkClientService;
 
     @Resource
     private SoB2cLabelService soB2cLabelService;
@@ -322,9 +310,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private CustomerB2cService customerB2cService;
-
-    @Resource
-    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Resource
     private TransferLogisticsFeign transferLogisticsFeign;
@@ -352,15 +337,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    @Resource
-    private LogisticsMappingFeign logisticsMappingFeign;
     @Resource
     private AliExpressOrderService aliExpressOrderService;
-    @Resource
-    private WmsWarehouseFeign wmsWarehouseFeign;
-    @Resource
-    private TransferInfoFeign transferInfoFeign;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
@@ -369,8 +347,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private ExecutorService soB2cTabExecutorPool;
     @Resource
     private CustomerInfoService customerInfoService;
-    @Resource
-    private SyncSoB2cService syncSoB2cService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
