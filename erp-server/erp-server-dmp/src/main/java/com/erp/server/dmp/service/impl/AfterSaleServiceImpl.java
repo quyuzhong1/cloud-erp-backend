@@ -127,7 +127,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
 
         //第三方用户id为空的情况下，则新增用户
-        if(StringUtils.isNotBlank(addDTO.getThridUserId())){
+        if(StringUtils.isBlank(addDTO.getThridUserId())){
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
             thridUserInfoEntity.setUsername(addDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
