@@ -175,12 +175,13 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     @Override
     public List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName() {
         List<CfgInvoiceSettingEntity> invoiceSettingEntityList = this.list(new LambdaQueryWrapper<CfgInvoiceSettingEntity>()
-                .select(CfgInvoiceSettingEntity::getCompanyName, CfgInvoiceSettingEntity::getId));
+                .select(CfgInvoiceSettingEntity::getCompanyName, CfgInvoiceSettingEntity::getId, CfgInvoiceSettingEntity::getDisabled));
         List<CfgInvoiceInvalidDTO.DropDownDTO> dropDownList = invoiceSettingEntityList.stream()
                 .map(entity -> {
                     CfgInvoiceInvalidDTO.DropDownDTO dto = new CfgInvoiceInvalidDTO.DropDownDTO();
                     dto.setCode(entity.getCompanyName());
                     dto.setValue(entity.getId());
+                    dto.setDisabled(entity.getDisabled());
                     return dto;
                 })
                 .collect(Collectors.toList());
