@@ -226,4 +226,36 @@ public class NfeInvoiceDTO implements Serializable {
         @Alias("token_empresa")
         private String tokenEmpresa;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NfeCceDTO {
+        /**
+         * id
+         */
+        @Alias("id")
+        private String id;
+        /**
+         * 原因
+         */
+        @Alias("justificativa")
+        private String justificativa;
+        /**
+         * token
+         */
+        @Alias("token_empresa")
+        private String tokenEmpresa;
+        /**
+         * nameDev
+         */
+        @Alias("name_dev")
+        private String nameDev;
+        /**
+         * emailDev
+         */
+        @Alias("email_dev")
+        private String emailDev;
+    }
 }

@@ -630,7 +630,8 @@ public class MercadoLocalSdkClientService {
             result.setClientSecret(cfgAppClient.getClientSecret());
 
             Map<String, Object> extendData = shopInfoEntity.getExtendData();
-            result.setUserId(Long.valueOf(extendData.get("userId") + ""));
+            Object userId = extendData.get("userId");
+            result.setUserId(ObjectUtil.isEmpty(userId) ? null : Long.valueOf(userId.toString()));
             result.setSiteId(shopInfoEntity.getBusinessModel());
             if (Objects.nonNull(shopAuthEntity)) {
                 result.setAccessToken(shopAuthEntity.getAccessToken());

@@ -2,15 +2,12 @@ package com.sdk.third.tf;
 
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.entity.CfgSettingEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
-import com.sdk.third.tf.dto.CommonResp;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.CompanyDTO;
@@ -188,6 +185,26 @@ public class TfFiscalService {
         String accessToken = getAccessToken();
         nfeListParamDTO.setTokenEmpresa(accessToken);
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeListParamDTO), null, new HashMap<>(), RequestMethod.POST);
+        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        }
+        return apiResult.getData();
+    }
+
+    /**
+     * 更新cce信息
+     * @author will
+     * @date 2025/4/15 11:41
+     * @param nfeCceDTO
+     * @return Object
+     */
+    public Object updateCceInvoice(NfeInvoiceDTO.NfeCceDTO nfeCceDTO){
+        String path = "/corrigirCce_api";
+        String accessToken = getAccessToken();
+        nfeCceDTO.setTokenEmpresa(accessToken);
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCceDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());

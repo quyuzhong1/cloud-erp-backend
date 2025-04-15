@@ -71,7 +71,7 @@ public class CfgInvoiceInvalidController extends BaseController {
     @PostMapping("/export")
     public ApiResult<Object> exportCfgInvoiceInvalid(@RequestBody @Valid CustomerDTO.ExportDTO dto) {
         Boolean result = cfgInvoiceInvalidService.export(dto);
-        return Boolean.TRUE.equals(result) ? success() : failure();
+        return  success(true) ;
     }
 
     /**

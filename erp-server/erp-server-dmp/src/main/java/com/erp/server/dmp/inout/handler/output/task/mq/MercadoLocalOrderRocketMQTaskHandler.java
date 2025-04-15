@@ -278,6 +278,9 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 平台sku编号
         detailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSku());
 
+        //销售费用
+        detailDTO.setSaleFee(soDetailEntity.getSaleFee());
+
         //平台产品id
         detailDTO.setPlatformSpuNo(soDetailEntity.getPlatformSpuNo());
 
