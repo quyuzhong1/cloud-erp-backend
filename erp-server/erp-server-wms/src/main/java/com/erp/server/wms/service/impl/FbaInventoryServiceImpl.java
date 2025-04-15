@@ -304,7 +304,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
                 continue;
             }
             updateFnSkulist.stream()
-                    .filter(e -> e.getShopId().equalsIgnoreCase(channelId) && e.getPlatformSkuNo().equalsIgnoreCase(addDTO.getPlatformSku()))
+                    .filter(e -> e.getShopId().equalsIgnoreCase(channelId) && e.getPlatformSkuNo().equals(addDTO.getPlatformSku()))
                     .findFirst().ifPresent(mappingDTO -> addDTO.setPlatformFnSku(mappingDTO.getPlatformFnSku()));
 
         }
