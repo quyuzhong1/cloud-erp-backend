@@ -63,11 +63,6 @@ public class SysUserFeignController extends BaseController {
     private SysRoleMenuService sysRoleMenuService;
 
     @Resource
-    private AuthUserShopService authUserShopService;
-    @Resource
-    private AuthUserWarehouseService authUserWarehouseService;
-
-    @Resource
     private SysUserWechatService wechatService;
 
     @Resource
@@ -189,9 +184,8 @@ public class SysUserFeignController extends BaseController {
     public String getUserIdByThird(@RequestBody FindUserByThirdDTO thirdDTO) {
         SysUserInfoEntity userEntity = sysUserThirdService.getUserIdByThird(thirdDTO);
         if (!Objects.isNull(userEntity)) {
-            Integer deleteState = userEntity.getDeleteState();
             Integer userState = userEntity.getUserState();
-            if (SysConstant.YES_STATE.equals(deleteState) && SysConstant.YES_STATE.equals(userState)) {
+            if (SysConstant.YES_STATE.equals(userState)) {
                 return userEntity.getUid();
             }
         }

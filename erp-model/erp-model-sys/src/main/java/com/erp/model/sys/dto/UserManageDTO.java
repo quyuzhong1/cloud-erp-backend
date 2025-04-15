@@ -50,7 +50,7 @@ public class UserManageDTO implements Serializable {
      * 用户删除状态 1:正常 0：已删除
      */
 
-    private Integer deleteState;
+    private Boolean deleteState;
     /**
      * 最后登录的ip
      */
