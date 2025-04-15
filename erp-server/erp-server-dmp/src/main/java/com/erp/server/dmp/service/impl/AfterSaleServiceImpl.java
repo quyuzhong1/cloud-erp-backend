@@ -557,11 +557,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     public BatchResultDTO invalid(String id, String remark) {
         AfterSaleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到售后申请单数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())){
-            throw new ServiceException(ApiError.ERROR_98005);
-        }
-        if (!ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) {
-           throw new ServiceException(ApiError.ERROR_98005);
+        if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus()) || AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
+            throw new ServiceException("只有未完成未作废的数据支持作废");
         }
         log.info("作废 开始修改售后申请单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AfterSaleEntity::getId, id)
