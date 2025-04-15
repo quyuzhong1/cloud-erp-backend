@@ -2,6 +2,7 @@ package com.erp.server.tms.listener;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -28,6 +29,7 @@ import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -49,7 +51,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
     private final WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign = SpringUtil.getBean(WmsFirstMileDeliveryFeign.class);
     private final FirstMileEstimatedBillService firstMileEstimatedBillService = SpringUtil.getBean(FirstMileEstimatedBillService.class);
     private final TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService = SpringUtil.getBean(TmsFirstMileReconciliationDetailService.class);
-
+    private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     private final SupplierFeign supplierFeign = SpringUtil.getBean(SupplierFeign.class);
 
@@ -315,6 +317,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                         trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
                         trackEntity.setStatus(logisticTrackStatusEnum.getCode());
                         trackEntity.setContent(StringUtils.isBlank(excelDTO.getCurrencyTrack())?"已下单":excelDTO.getCurrencyTrack());
+                        trackEntity.setMd5(getDataMd5(trackEntity));
                         addTrackList.add(trackEntity);
                     }else{
                         if(StringUtils.isNotBlank(excelDTO.getCurrencyTrack())){
@@ -323,6 +326,7 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
                             trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
                             trackEntity.setStatus(logisticTrackStatusEnum.getCode());
                             trackEntity.setContent(excelDTO.getCurrencyTrack());
+                            trackEntity.setMd5(getDataMd5(trackEntity));
                             addTrackList.add(trackEntity);
                         }
                     }
@@ -339,5 +343,15 @@ public class FmLogisticsBillExcelListener extends AnalysisEventListener<FmLogist
             updateList.add(entity);
         }
         tmsFirstMileLogisticService.updateImport(updateList,updateDetailList,addTrackList, updateCostList);
+    }
+
+    /**
+     * 获取唯一值
+     * @param trackingDetail
+     * @return
+     */
+    private String getDataMd5(LogisticsTrackEntity trackingDetail) {
+        String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
+        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
     }
 }
