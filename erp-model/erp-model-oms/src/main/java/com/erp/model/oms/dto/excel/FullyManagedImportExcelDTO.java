@@ -71,6 +71,7 @@ public class FullyManagedImportExcelDTO {
     @ExcelProperty(value = "*订单金额", index = 4)
     @FieldValid(fieldName = "订单金额",isNotBlank = true,maxLength = 16,formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
     private String amountStr;
+    @ExcelIgnore
     private BigDecimal amount;
 
     /**
@@ -78,7 +79,7 @@ public class FullyManagedImportExcelDTO {
      */
     @ColumnWidth(20)
     @ExcelProperty(value = "*币别", index = 5)
-    @FieldValid(fieldName = "币别",isNotBlank = true,maxLength = 10,enumClass = CurrencyEnum.class)
+    @FieldValid(fieldName = "币别",isNotBlank = true,maxLength = 10)
     private String currencyCode;
     @ExcelIgnore
     private String currency;
@@ -162,6 +163,7 @@ public class FullyManagedImportExcelDTO {
     @ExcelProperty(value = "实际运费", index = 13)
     @FieldValid(fieldName = "实际运费",maxLength = 16,formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
     private String actualShippingCostStr;
+    @ExcelIgnore
     private BigDecimal actualShippingCost;
 
 
@@ -206,6 +208,7 @@ public class FullyManagedImportExcelDTO {
     @ExcelProperty(value = "*下单数量", index = 17)
     @FieldValid(fieldName = "下单数量",isNotBlank = true,maxLength = 10,formatPattern= FieldFormatPatternTypeEnum.INTEGER)
     private String qtyStr;
+    @ExcelIgnore
     private Integer qty;
 
 
@@ -227,6 +230,7 @@ public class FullyManagedImportExcelDTO {
     @ExcelProperty(value = "*真实售价", index = 19)
     @FieldValid(fieldName = "真实售价",isNotBlank = true,maxLength = 16,formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
     private String priceStr;
+    @ExcelIgnore
     private BigDecimal price;
 
 
@@ -237,6 +241,7 @@ public class FullyManagedImportExcelDTO {
     @ExcelProperty(value = "*税率", index = 20)
     @FieldValid(fieldName = "税率",isNotBlank = true,maxLength = 16,formatPattern=FieldFormatPatternTypeEnum.AMOUNT)
     private String taxRateStr;
+    @ExcelIgnore
     private BigDecimal taxRate;
 
     /**
