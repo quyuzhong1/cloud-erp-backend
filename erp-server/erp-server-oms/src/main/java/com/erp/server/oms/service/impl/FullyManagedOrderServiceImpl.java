@@ -320,13 +320,13 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
      */
     private SoB2cDTO.AddDTO buildAddDTO(String key, List<FullyManagedImportExcelDTO> value, List<FullyManagedImportExcelDTO> errorList) {
         //平台列表
-        List<SoB2cEntity> entityList = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).list();
-        if (CollUtil.isNotEmpty(entityList)) {
-            List<String> codeList = entityList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
-            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】销售订单已存在【{}】",e.getDictPlatformName(), e.getPlatformCode(), CharSequenceUtil.join(",",codeList))));
-            errorList.addAll(value);
-            return null;
-        }
+//        List<SoB2cEntity> entityList = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).list();
+//        if (CollUtil.isNotEmpty(entityList)) {
+//            List<String> codeList = entityList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
+//            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】销售订单已存在【{}】",e.getDictPlatformName(), e.getPlatformCode(), CharSequenceUtil.join(",",codeList))));
+//            errorList.addAll(value);
+//            return null;
+//        }
         if (value.size() > 1){
             //判断每个导入列中字段值是否一致
             boolean flag = value.stream()
