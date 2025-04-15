@@ -14,6 +14,7 @@
        <result column="version" property="version" />
        <result column="code" property="code" />
        <result column="approve_status" property="approveStatus" />
+       <result column="invalid_status" property="invalidStatus" />
        <result column="order_status" property="orderStatus" />
        <result column="remark" property="remark" />
        <result column="approve_user_id" property="approveUserId" />
@@ -31,7 +32,7 @@
         update_time,
         is_deleted,
         version,
-        code, approve_status, order_status, remark, approve_user_id, approve_time
+        code, approve_status, invalid_status,order_status, remark, approve_user_id, approve_time
     </sql>
 
     <select id="tabList" resultType="java.lang.Integer">
@@ -39,6 +40,9 @@
         from pilot_application pa
         <where>
             pa.is_deleted = false
+            <if test="invalidStatus != null">
+                and pa.invalid_status = #{invalidStatus}
+            </if>
             <if test="approveStatus != null and approveStatus != ''">
                 and pa.approve_status = #{approveStatus}
             </if>
@@ -108,6 +112,8 @@
                 pa.create_user_id createUserId,
                 pa.create_user_name createUserName,
                 pa.create_time createTime,
+                pa.invalid_status invalidStatus,
+                pa.invalid_remark invalidRemark,
                 pad.id detailId,
                 pad.type,
                 pad.sku_id skuId,

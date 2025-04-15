@@ -11,9 +11,12 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -278,4 +281,19 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * 添加物流单明细并补充物流费用
      */
     void addNoLogisticsBillDetailByBill();
+
+    /**
+     * 导入物流轨迹
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importTrack(MultipartFile excelFile, HttpServletResponse response) throws Exception;
+
+    /**
+     * 更新物流单信息
+     * @param updateDetailList
+     * @param addTrackList
+     */
+    void updateImport(List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList);
 }

@@ -245,4 +245,19 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * @param ids 参数
      */
     List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids);
+
+    /**
+     * 作废单据
+     * @param id
+     * @param remark
+     * @return
+     */
+    BatchResultDTO invalid(String id, String remark);
+
+    /**
+     * 取消作废
+     * @param id
+     * @return
+     */
+    BatchResultDTO unInvalid(String id);
 }
