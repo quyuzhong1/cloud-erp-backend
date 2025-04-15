@@ -93,6 +93,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         if (ObjectUtil.isEmpty(cfgInvoiceSettingEntity)){
             throw new ServiceException("发票设置不存在");
         }
+        //校验shopid是否唯一
+        if (super.count(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getShopId, dtoList.get(0).getShopId()))>0){
+            throw new ServiceException("店铺已存在!请不要重复添加");
+        }
         List<CfgInvoiceSettingDetailEntity> entityList = dtoList.stream()
                 .map(item -> {
                     CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(item, CfgInvoiceSettingDetailEntity.class);
@@ -135,5 +139,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             viewShopDTOS.add(viewShopDTO);
         });
         return viewShopDTOS;
+    }
+
+    @Override
+    public CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(String dictPlatform, String shopId) {
+        return baseMapper.getInvoiceSettingDetail(dictPlatform,shopId);
     }
 }

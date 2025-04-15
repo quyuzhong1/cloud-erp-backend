@@ -1,5 +1,7 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -18,10 +20,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.CalculateSizeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
@@ -113,6 +112,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private InvoiceInfoService invoiceInfoService;
+
+    @Resource
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -234,8 +237,33 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 }
             }
         }
+        //生成nf-e发票
+        generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
     }
 
+    /**
+     * 生成NF-e发票
+     * @author will
+     * @date 2025/4/14 15:52
+     * @param soB2cEntity
+     * @param type
+     * @return void
+     */
+    private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
+        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
+            return;
+        }
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
+            return;
+        }
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode())) {
+            return;
+        }
+        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
+            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId());
+        }
+    }
 
     /**
      * 检查亚马逊卖家自发货订单无地址
@@ -409,6 +437,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+        //生成Nf-e发票
+        generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;
     }
 

@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.common.business.service.SuperService;
@@ -28,4 +29,6 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
     CfgInvoiceSettingDTO.ViewDTO view(String id);
 
     Boolean updateStatus(CfgInvoiceSettingDTO.UpdateStatusDTO dto);
+
+    List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName();
 }

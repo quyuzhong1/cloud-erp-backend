@@ -113,7 +113,11 @@ public class CfgInvoiceSettingEntity extends BaseEntity<CfgInvoiceSettingEntity>
     */
     @TableField("certificate_password")
     private String certificatePassword;
-
+    /**
+     * 接口返回
+     */
+    @TableField("token")
+    private String token;
 
     public static final String TYPE = "type";
 

@@ -70,4 +70,15 @@
         </foreach>
     </select>
 
+    <!-- 查询启用数据 -->
+    <select id="getInvoiceSettingDetail" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
+        select
+            cis.token,
+        <include refid="Base_Column_List" />
+        from cfg_invoice_setting cis
+        inner join cfg_invoice_setting_detail cisd on cis.id = cisd.main_id and cisd.is_deleted = false
+        where cis.is_deleted = false and cis.disabled = false
+        and cisd.dict_platform  = #{dictPlatform} and cisd.shop_id = #{shopId}
+    </select>
+
 </mapper>

@@ -1474,6 +1474,11 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NOT_NEED(92181,"仅待开票和开票失败的订单允许无开票"),
     ERROR_INVOICE_NFE_OPTION(92182,"仅NF-E发票支持此操作"),
     ERROR_SKU_INVOICE_TAX_NOT_EXIST(92183,"平台SKU【{}】、店铺【{}】未找到税务信息"),
+    ERROR_INVOICE_NFE_CANCEL(92184,"取消发票失败，原因：{}"),
+    ERROR_INVOICE_NFE_UPLOAD_XML_NOT_EXIST(92185,"XML文件不存在"),
+    ERROR_INVOICE_COMPANY_TOKEN_NOT_EXIST(92186,"公司token不存在"),
+
+
 
 
     /**
