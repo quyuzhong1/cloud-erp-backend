@@ -126,12 +126,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
 
         //第三方用户id为空的情况下，则新增用户
-        ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
-        thridUserInfoEntity.setUsername(addDTO.getThridUserName());
-        thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
-        thridUserInfoEntity.setType("selfAdd");
-        thridUserInfoService.save(thridUserInfoEntity);
-        afterSaleEntity.setThridUserId(thridUserInfoEntity.getId());
+        if(StringUtils.isNotBlank(addDTO.getThridUserId())){
+            ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
+            thridUserInfoEntity.setUsername(addDTO.getThridUserName());
+            thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
+            thridUserInfoEntity.setType("selfAdd");
+            thridUserInfoService.save(thridUserInfoEntity);
+            afterSaleEntity.setThridUserId(thridUserInfoEntity.getId());
+        }else {
+            afterSaleEntity.setThridUserId(addDTO.getThridUserId());
+        }
 
         log.info("开始新增售后申请单");
         afterSaleEntity.setBillDate(LocalDate.now());
