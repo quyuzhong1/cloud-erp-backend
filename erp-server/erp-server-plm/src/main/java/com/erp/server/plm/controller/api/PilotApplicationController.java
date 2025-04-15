@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -13,6 +14,9 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.mrp.entity.DeliverySuggestEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
 import com.erp.model.plm.dto.ProductPackViewDTO;
@@ -480,5 +484,66 @@ public class PilotApplicationController extends BaseController {
     public ApiResult<List<ProductPackViewDTO>> listProductPackBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<ProductPackViewDTO> productPackViewDTOS = pilotApplicationService.listProductPackBySkuIds(dto.getIds());
         return success(productPackViewDTOS);
+    }
+
+    /**
+     * 作废
+     * @author zdy
+     * @date 2025/04/15 11:29
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/invalid")
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = pilotApplicationService.invalid(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("试产量产单作废失败",e);
+                PilotApplicationEntity entity = pilotApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "试产量产单不存在, 作废失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 取消作废
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025/04/15 11:29
+     */
+    @PostMapping("/unInvalid")
+    public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO unInvalidResult;
+            try {
+                unInvalidResult = pilotApplicationService.unInvalid(id);
+            } catch (Exception e) {
+                log.error("试产量产单取消作废失败", e);
+                PilotApplicationEntity entity = pilotApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    unInvalidResult = BatchResultDTO.fail(id, id, "试产量产单不存在, 取消作废失败");
+                    resultDTOS.add(unInvalidResult);
+                    continue;
+                }
+                unInvalidResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(unInvalidResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
