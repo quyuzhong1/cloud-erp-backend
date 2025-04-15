@@ -39,8 +39,8 @@ public class LogisticsTrackExcelDTO implements Serializable {
     /**
      * 状态时间
      */
-    @ExcelProperty(value = "*状态时间", converter= LocalDateStringConverter.class)
-    @FieldValid(fieldName = "状态时间", isNotBlank = true)
+    @ExcelProperty(value = "*状态时间")
+    @FieldValid(fieldName = "状态时间", isNotBlank = true,maxLength = 50)
     private String statusTimeStr;
     private LocalDateTime statusTime;
 
@@ -48,7 +48,7 @@ public class LogisticsTrackExcelDTO implements Serializable {
      * 轨迹描述
      */
     @ExcelProperty(value = "轨迹描述")
-    @FieldValid(fieldName = "轨迹描述", isNotBlank = true)
+    @FieldValid(fieldName = "轨迹描述", isNotBlank = true,maxLength = 200)
     private String trackDesc;
 
     /**
