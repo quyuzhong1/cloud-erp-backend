@@ -919,7 +919,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private void validateSubmit(PilotApplicationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         //校验包装信息是否完整
