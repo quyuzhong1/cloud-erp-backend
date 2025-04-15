@@ -63,6 +63,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -137,21 +138,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             afterSaleEntity.setThridUserId(addDTO.getThridUserId());
         }
 
-        log.info("开始新增售后申请单");
-        afterSaleEntity.setBillDate(LocalDate.now());
-        // 生成单号
-        // 生成单号
-        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHSQ);
-        afterSaleEntity.setCode(code);
-        boolean save = super.save(afterSaleEntity);
-        if(!save) {
-            throw new ServiceException("售后申请单保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "售后申请单" , afterSaleEntity.getCode());
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), "新增操作");
-        //新增明细
+        //总货值
+        BigDecimal totalAmount = BigDecimal.ZERO;
         List<AfterSaleDetailEntity> detailList = addDTO.getDetailList();
         if(CollUtil.isNotEmpty(detailList)){
             List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -159,7 +147,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
             List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
             Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-            detailList.forEach(detail -> {
+            for (AfterSaleDetailEntity detail : detailList) {
                 detail.setMainId(afterSaleEntity.getId());
                 ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                 detail.setSkuNo(productDetail.getSkuNo());
@@ -171,10 +159,29 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         throw new ServiceException("【"+detail.getSkuNo()+"】明细数量不能大于"+downDTO.getSkuQty());
                     }
                     detail.setSkuQty(downDTO.getSkuQty());
+                    //计算总货值
+                    totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
                 }
-            });
-            afterSaleDetailService.saveBatch(detailList);
+            }
         }
+        afterSaleEntity.setTotalPrice(totalAmount);
+
+        log.info("开始新增售后申请单");
+        afterSaleEntity.setBillDate(LocalDate.now());
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SHSQ);
+        afterSaleEntity.setCode(code);
+        boolean save = super.save(afterSaleEntity);
+        if(!save) {
+            throw new ServiceException("售后申请单保存失败");
+        }
+
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "售后申请单" , afterSaleEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), "新增操作");
+
+        //新增明细
+        afterSaleDetailService.saveBatch(detailList);
 
         //新增维修记录
         List<AfterSaleProgressEntity> progressList = new ArrayList<>();
@@ -266,6 +273,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
 
             //新增明细
+            BigDecimal totalAmount = BigDecimal.ZERO;
             List<AfterSaleDetailEntity> detailList = updateDTO.getDetailList();
             if(CollUtil.isNotEmpty(detailList)){
                 List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -273,22 +281,28 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
                 List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
                 Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-                detailList.forEach(detail -> {
+                for (AfterSaleDetailEntity detail : detailList) {
                     detail.setMainId(afterSaleEntity.getId());
                     ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                     detail.setSkuNo(productDetail.getSkuNo());
                     detail.setProductName(productDetail.getName());
                     if(downDTOMap.containsKey(detail.getSkuId())){
                         AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                        if(detail.getSkuQty().compareTo(downDTO.getSkuQty()) > 0){
+                            throw new ServiceException("【"+detail.getSkuNo()+"】明细数量不能大于"+downDTO.getSkuQty());
+                        }
                         detail.setPrice(downDTO.getPrice());
                         detail.setSkuQty(downDTO.getSkuQty());
+                        //计算总货值
+                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
                     }
-                });
+                }
                 // 删除明细数据
                 List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
                 afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
                 afterSaleDetailService.saveOrUpdateBatch(detailList);
             }
+            afterSaleEntity.setTotalPrice(totalAmount);
 
             // 删除明细数据
             attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
