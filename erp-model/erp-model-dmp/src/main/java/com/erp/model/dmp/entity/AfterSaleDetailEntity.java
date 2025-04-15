@@ -53,7 +53,7 @@ public class AfterSaleDetailEntity extends BaseEntity<AfterSaleDetailEntity> {
     /**
     * skuName
     */
-    @TableField("productName")
+    @TableField("product_name")
     private String productName;
     /**
     * 数量
