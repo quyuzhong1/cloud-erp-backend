@@ -574,9 +574,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     @Override
     public BatchResultDTO invalid(String id, String remark) {
         AfterSaleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到售后申请单数据"));
-        // 待提交或审核不通过并且未作废允许作废
-        if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus()) || AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
-            throw new ServiceException("只有未完成未作废的数据支持作废");
+        if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())
+                || AfterSaleStatusEnum.TERMINATED.getCode().equals(entity.getStatus())
+                || AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
+           return  BatchResultDTO.fail(entity.getId(), entity.getCode(),"只有未完成、未中止、未作废的数据支持作废");
         }
         log.info("作废 开始修改售后申请单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AfterSaleEntity::getId, id)
@@ -622,6 +623,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         AfterSaleEntity afterSaleEntity = lambdaQuery().eq(AfterSaleEntity::getCode, code).one();
         if (Objects.isNull(afterSaleEntity)) {
             throw new ServiceException("售后申请单不存在");
+        }
+
+        if(InvalidStatusEnum.VOIDED.getStatus().equals(afterSaleEntity.getInvalidStatus())
+                || AfterSaleStatusEnum.TERMINATED.getCode().equals(afterSaleEntity.getStatus())
+                || AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(afterSaleEntity.getStatus())){
+            return  BatchResultDTO.fail(afterSaleEntity.getId(), afterSaleEntity.getCode(),"只有未完成、未中止、未作废的数据支持作废");
         }
 
         afterSaleEntity.setInvalidStatus(InvalidStatusEnum.VOIDED.getStatus());
@@ -929,10 +936,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         for (AfterSaleEntity entity : entityList) {
             BatchResultDTO batchResultDTO;
-            if (!InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())){
-                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未作废的单据才能进行状态变更");
-            }else if(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus()) || AfterSaleStatusEnum.TERMINATED.getCode().equals(entity.getStatus())  ){
-                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "只有未完成的单据才能进行状态变更");
+            if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())
+                    || !ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus().getCode())
+                    || AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())
+                    || AfterSaleStatusEnum.TERMINATED.getCode().equals(entity.getStatus())) {
+                batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(),"只有审核已完成、未完成、未中止、未作废的数据支持作废");
             }else {
                 AfterSaleDTO.NodeDTO oldNodeDTO = nodeMap.get(entity.getStatus());
                 if(oldNodeDTO.getIndex() > newNodeDTO.getIndex()){
