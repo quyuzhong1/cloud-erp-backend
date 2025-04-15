@@ -12,7 +12,7 @@ import org.bson.Document;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class MongoDBAmazonTaxDmpExample {
+public class MongoDBAmazonTaxOmsExample {
 	public static void main(String[] args) {
         // MongoDB 连接字符串，包括用户名和密码
 //        String connectionString = "mongodb://root:mongoDBulanzi@172.16.100.12:27017";
@@ -115,11 +115,11 @@ public class MongoDBAmazonTaxDmpExample {
                     continue;
                 }
 
-                set.add("update dmp_so_info set update_time = now(), total_tax_fee = '" + total_tax_fee +  "' where third_code = '"+ amazonOrderId + "' and shop_id = '"+ shopId + "'  and source_system = 'Amazon' and source_platform = 'Amazon' and is_deleted = 'f';");
+                set.add("update so_b2c set update_time = now(), total_tax_fee = '" + total_tax_fee +  "' where platform_code = '"+ amazonOrderId + "' and shop_id = '"+ shopId + "'  and dict_platform = 'Amazon' and source_type = 'soB2c' and is_deleted = 'f';");
             }
 
 
-            String url = "C:\\Users\\Jim\\Desktop\\amazon_tax\\amazon_tax_"+ dbName +".sql";
+            String url = "C:\\Users\\Jim\\Desktop\\amazon_tax_oms\\amazon_tax_"+ dbName +".sql";
             FileUtil.writeUtf8Lines(set, url);
         } catch (Exception e) {
             e.printStackTrace();
