@@ -58,7 +58,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     public List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
         ArrayList<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
         //查询详情列表
-        List<CfgInvoiceSettingDetailEntity> entityList = baseMapper.selectList(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getMainId, dto.getId()).orderByDesc(CfgInvoiceSettingDetailEntity::getDictPlatform));
+        List<CfgInvoiceSettingDetailEntity> entityList = baseMapper.selectList(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getMainId, dto.getId())
+                .eq(CfgInvoiceSettingDetailEntity::getIsDeleted,false).orderByDesc(CfgInvoiceSettingDetailEntity::getDictPlatform));
         List<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(entityList, CfgInvoiceSettingDetailDTO.ViewDTO.class);
         //查询平台value对应
         List<DictBasicDTO.ViewDTO> keyList = dictBasicService.getByKey(dto.getKey());

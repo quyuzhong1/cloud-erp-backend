@@ -58,18 +58,22 @@
                 cis.certificate_url as certificateUrl,
                 cis.certificate_password as certificatePassword
                 FROM cfg_invoice_setting AS cis
-                LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id
+                <if test="params.sqlMap.default!=null and params.sqlMap.default!='' and params.sqlMap.default.contains('cisd')">
+                   LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id
+                </if>
                 WHERE ${params.sqlMap.default}
                 AND cis.is_deleted = FALSE
                 <!-- 权限 -->
                 <if test="params.permissionSql!=null and params.permissionSql!=''">
                     ${params.permissionSql}
                 </if>
-                GROUP BY cis.id, cis.type, cis.company_name, cis.lei_code, cis.disabled
-                       , cis.tax_type, cis.dict_company_type, cis.state_tax_no, cis.email
-                       , cis.post_code, cis.address, cis.doorplate_no, cis.district, cis.city
-                       , cis.state, cis.no, cis.start_code, cis.certificate_url, cis.certificate_password
-                       , cis.create_time, cis.update_time, cis.update_user_name
+                <if test="params.sqlMap.default!=null and params.sqlMap.default!='' and params.sqlMap.default.contains('cisd')">
+                    GROUP BY cis.id, cis.type, cis.company_name, cis.lei_code, cis.disabled
+                    , cis.tax_type, cis.dict_company_type, cis.state_tax_no, cis.email
+                    , cis.post_code, cis.address, cis.doorplate_no, cis.district, cis.city
+                    , cis.state, cis.no, cis.start_code, cis.certificate_url, cis.certificate_password
+                    , cis.create_time, cis.update_time, cis.update_user_name
+                </if>
                 ORDER BY
                 cis.create_time DESC
     </select>
