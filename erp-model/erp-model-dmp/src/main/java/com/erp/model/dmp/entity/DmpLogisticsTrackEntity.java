@@ -86,7 +86,12 @@ sign 成功签收 maybeException 可能异常transportLong  运输过久
     */
     @TableField("transport_type")
     private String transportType;
-
+    /**
+     * 状态 notFind  查询不到 waitCollect 等待揽收trackIng 运输途中 arriveWaitTake 到达待取deliveryIng 派送途中 deliveryFail 投递失败
+     sign 成功签收 maybeException 可能异常transportLong  运输过久
+     */
+    @TableField("order_status")
+    private String orderStatus;
 
     public static final String COURIER_CODE = "courier_code";
 
