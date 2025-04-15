@@ -160,7 +160,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                         acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
                         acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
                         acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
-                        acceptedToSaveDto.setTrackingStatus(convertTrackStatus(trackDetail.getTransitStatus()));
+                        String trackStatus = convertTrackStatus(trackDetail.getTransitStatus());
                         LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
                         if (CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())) {
                             List<PlatformTrackDetail> details = new ArrayList<>();
@@ -168,6 +168,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                                 PlatformTrackDetail detail = new PlatformTrackDetail();
                                 detail.setTrackNo(trackDetail.getTrackNo());
                                 detail.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
+                                detail.setOrderStatus(trackStatus);//转换类型
                                 LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                 detail.setTrackTime(eventTime);
                                 detail.setContent(trackingDetail.getEventDetail());
@@ -183,10 +184,10 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                 for (Rejected rejected : sourceDto.getRejected()) {
                     PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
                     acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
-                    acceptedToSaveDto.setTrackingStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
                     PlatformTrackDetail detail = new PlatformTrackDetail();
                     detail.setTrackNo(rejected.getTrackNo());
                     detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
+                    detail.setOrderStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
                     detail.setContent(rejected.getError().getCode() + ":" + rejected.getError().getMsg());
                     detail.setTrackTime(LocalDateTime.now());
                     acceptedToSaveDto.setDetails(Collections.singletonList(detail));

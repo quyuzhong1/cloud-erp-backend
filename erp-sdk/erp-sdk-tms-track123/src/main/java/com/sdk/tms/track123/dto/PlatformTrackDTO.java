@@ -27,10 +27,6 @@ public class PlatformTrackDTO extends UniqueDto {
      * 运单号
      */
     private String trackNo;
-    /**
-     * 轨迹状态
-     */
-    private String trackingStatus;
 
     private List<PlatformTrackDetail> details;
     @Override
