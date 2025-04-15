@@ -200,6 +200,12 @@ public class CfgInvoiceSettingDTO implements Serializable {
          * 创建时间
          */
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+        /**
+         * 操作时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime updateTime;
 
         /**

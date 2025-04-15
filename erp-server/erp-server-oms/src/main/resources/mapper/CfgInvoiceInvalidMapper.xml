@@ -41,9 +41,10 @@
         cii.no,
         cii.deactivate_invoice_no,
         cii.reason,
-        cii.update_time AS updateTime
+        cii.update_time AS updateTime,
+        cii.create_time AS createTime
         FROM cfg_invoice_invalid cii
-        inner join cfg_invoice_setting cis on cii.cfg_invoice_setting_id = cis.id and cis.is_deleted = false
+        LEFT join cfg_invoice_setting cis on cii.cfg_invoice_setting_id = cis.id and cis.is_deleted = false
         WHERE
         <!--高级查询-->
         ${params.sqlMap.default}

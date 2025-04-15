@@ -38,6 +38,7 @@
                 cis.id,
                 cis.type as type,
                 cis.company_name as companyName,
+                cis.create_time as createTime,
                 cis.update_time as updateTime,
                 cis.update_user_name as updateUserName,
                 cis.lei_code as leiCode,
