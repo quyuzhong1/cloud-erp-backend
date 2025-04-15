@@ -664,7 +664,7 @@ public class AfterSaleDTO implements Serializable {
         /**
          *
          */
-        private String prodcutName;
+        private String productName;
         /**
          *
          */

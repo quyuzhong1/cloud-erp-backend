@@ -152,6 +152,11 @@ public class DropDownListController extends BaseController {
         return success(result);
     }
 
+    @GetMapping("/dict/listInternalSalesPlatform")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listInternalSalesPlatform(@RequestParam("key") String key) {
+        return success(dictBasicService.listInternalSalesPlatform(key));
+    }
+
 
 
 }

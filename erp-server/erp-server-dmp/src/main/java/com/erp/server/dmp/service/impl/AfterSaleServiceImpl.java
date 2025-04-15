@@ -159,7 +159,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 detail.setMainId(afterSaleEntity.getId());
                 ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                 detail.setSkuNo(productDetail.getSkuNo());
-                detail.setProdcutName(productDetail.getName());
+                detail.setProductName(productDetail.getName());
                 if(downDTOMap.containsKey(detail.getSkuId())){
                     AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                     detail.setPrice(downDTO.getPrice());
@@ -273,7 +273,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     detail.setMainId(afterSaleEntity.getId());
                     ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                     detail.setSkuNo(productDetail.getSkuNo());
-                    detail.setProdcutName(productDetail.getName());
+                    detail.setProductName(productDetail.getName());
                     if(downDTOMap.containsKey(detail.getSkuId())){
                         AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                         detail.setPrice(downDTO.getPrice());
@@ -557,11 +557,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     public BatchResultDTO invalid(String id, String remark) {
         AfterSaleEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到售后申请单数据"));
         // 待提交或审核不通过并且未作废允许作废
-        if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())){
-            throw new ServiceException(ApiError.ERROR_98005);
-        }
-        if (!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) || ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus()))) {
-           throw new ServiceException(ApiError.ERROR_98005);
+        if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus()) || AfterSaleStatusEnum.TO_BE_SHIPPED.getCode().equals(entity.getStatus())){
+            throw new ServiceException("只有未完成未作废的数据支持作废");
         }
         log.info("作废 开始修改售后申请单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AfterSaleEntity::getId, id)
@@ -1113,7 +1110,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     if(Objects.nonNull(skuMappingDTO)){
                         drop.setSkuId(skuMappingDTO.getProductSkuId());
                         drop.setSkuNo(skuMappingDTO.getProductSkuNo());
-                        drop.setProdcutName(skuMappingDTO.getProductName());
+                        drop.setProductName(skuMappingDTO.getProductName());
                         resultList.add(drop);
                     }
                 }
