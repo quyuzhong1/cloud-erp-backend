@@ -360,7 +360,7 @@ public class SyncSdyJob {
                     selfAddSoB2cDelivery(soB2cEntity,
                             soB2cDeliveryEntityMap,
                             soB2cDeliveryDetailEntityList,
-                            soB2cDetailEntityList,
+                            detailEntityList,
                             skuVOList,
                             bomChildrenSkuDTOS,
                             parentSkuList,
