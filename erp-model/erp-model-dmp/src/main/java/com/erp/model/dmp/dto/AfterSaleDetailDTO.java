@@ -66,7 +66,7 @@ public class AfterSaleDetailDTO implements Serializable {
         /**
         * skuName
         */
-        private String prodcutName;
+        private String productName;
 
         /**
         * 数量
@@ -143,7 +143,7 @@ public class AfterSaleDetailDTO implements Serializable {
         */
         @NotBlank(message = "skuName不能为空")
         @Size(max = 64,message = "skuName最大长度不能超过64位")
-        private String prodcutName;
+        private String productName;
 
         /**
         * 数量

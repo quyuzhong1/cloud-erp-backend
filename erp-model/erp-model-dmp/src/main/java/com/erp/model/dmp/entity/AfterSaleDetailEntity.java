@@ -53,8 +53,8 @@ public class AfterSaleDetailEntity extends BaseEntity<AfterSaleDetailEntity> {
     /**
     * skuName
     */
-    @TableField("prodcut_name")
-    private String prodcutName;
+    @TableField("productName")
+    private String productName;
     /**
     * 数量
     */
@@ -77,7 +77,7 @@ public class AfterSaleDetailEntity extends BaseEntity<AfterSaleDetailEntity> {
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String PRODCUT_NAME = "prodcut_name";
+    public static final String PRODUCT_NAME = "product_name";
 
     public static final String SKU_QTY = "sku_qty";
 
