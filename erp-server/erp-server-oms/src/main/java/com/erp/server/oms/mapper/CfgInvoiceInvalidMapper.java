@@ -20,5 +20,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CfgInvoiceInvalidMapper extends BaseMapper<CfgInvoiceInvalidEntity> {
 
+    /**
+     * 分页查询作废发票号
+     * hcg
+     * @param query
+     * @param params
+     * @return
+     */
     IPage<CfgInvoiceInvalidDTO.PagingViewDTO> paging(Page<CfgInvoiceSettingDTO.PagingViewDTO> query, CfgInvoiceInvalidDTO.PagingParamDTO params);
 }

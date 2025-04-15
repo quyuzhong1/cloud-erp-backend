@@ -68,6 +68,11 @@ public class CfgInvoiceInvalidDTO implements Serializable {
          * 作废时间
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
