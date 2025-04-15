@@ -79,6 +79,7 @@
         inner join cfg_invoice_setting_detail cisd on cis.id = cisd.main_id and cisd.is_deleted = false
         where cis.is_deleted = false and cis.disabled = false
         and cisd.dict_platform  = #{dictPlatform} and cisd.shop_id = #{shopId}
+        limit 1
     </select>
 
 </mapper>

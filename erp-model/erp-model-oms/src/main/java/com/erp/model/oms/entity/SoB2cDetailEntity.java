@@ -227,6 +227,13 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("third_detail_id")
     private String thirdDetailId;
 
+    /**
+     * 销售费用
+     */
+    @TableField("sale_fee")
+    private BigDecimal saleFee;
+
+
     public static final String MAIN_ID = "main_id";
 
     public static final String IMAGE_URL = "image_url";

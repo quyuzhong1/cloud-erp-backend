@@ -5,6 +5,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -39,10 +41,14 @@ import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
+import com.google.common.io.Files;
+import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
+import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,7 +57,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -123,6 +131,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private NfeInvoiceService nfeInvoiceService;
+
+    @Resource
+    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+
 
     @Resource
     @Qualifier("soB2cTabExecutorPool")
@@ -478,40 +490,64 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
-    public List<BatchResultDTO> batchUploadInvoice(List<String> ids) {
-        List<BatchResultDTO> resultDTOList = new ArrayList<>();
-        List<InvoiceInfoEntity> entities = super.listByIds(ids);
-        List<String> soIds = entities.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
-        List<SoB2cEntity> updateSoB2cEntityList = new ArrayList<>();
-        for (InvoiceInfoEntity entity : entities) {
-            if(!entity.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"不是已开票状态的发票不能上传发票"));
-                continue;
-            }
-            if(entity.getUploadStatus().equals(InvoiceInfoUploadStatusEnum.UPLOADING.getCode())){
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),"上传中不能上传发票"));
-                continue;
-            }
-            SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(entity.getSoId()) && entity.getSoId().equals(e.getId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单"));
-            try {
-                String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
-                entity.setQueryId(feedId);
-                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
-                entity.setUploadTime(LocalDateTime.now());
-            }catch (Exception e){
-                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
-                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
-                log.error("亚马逊上传发票失败",e);
-                updateSoB2cEntityList.add(soB2cEntity);
-                resultDTOList.add(BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("亚马逊上传发票失败,{}",e.getMessage())));
-            }
+    public BatchResultDTO batchUploadInvoice(String id) {
+        InvoiceInfoEntity entity = super.getById(id);
+        SoB2cEntity soB2cEntity = soB2cService.getById(entity.getSoId());
+        if(!entity.getStatus().equals(InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"不是已开票状态的发票不能上传发票");
         }
-        service.updateBatchById(entities);
-        if (CollUtil.isNotEmpty(updateSoB2cEntityList)){
-            soB2cService.updateBatchById(updateSoB2cEntityList);
+        if(entity.getUploadStatus().equals(InvoiceInfoUploadStatusEnum.UPLOADING.getCode())){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"上传中不能上传发票");
         }
-        return resultDTOList;
+        try {
+            uploadInvoice(entity,soB2cEntity);
+            entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
+            entity.setUploadTime(LocalDateTime.now());
+        }catch (Exception e){
+            entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
+            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
+            log.error("上传发票失败",e);
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("上传发票失败,{}",e.getMessage()));
+        }
+        service.updateById(entity);
+        soB2cService.updateById(soB2cEntity);
+        return BatchResultDTO.fail(entity.getId(),entity.getCode(),"上传发票成功");
+    }
+
+    /**
+     * 上传发票
+     * @author will
+     *
+     * @date 2025/4/14 19:09
+     * @param entity
+     * @param soB2cEntity
+     * @return void
+     */
+    private void uploadInvoice (InvoiceInfoEntity entity,SoB2cEntity soB2cEntity) throws Exception{
+        //VAT发票
+        if (InvoiceInfoInvoiceTypeEnum.VAT.getCode().equals(entity.getInvoiceType())) {
+            String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
+            entity.setQueryId(feedId);
+            return;
+        }
+        //上传到平台
+        MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
+        mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
+        String extendData = soB2cEntity.getExtendData();
+        JSONObject entries = JSONUtil.parseObj(extendData);
+        Object shipmentId = entries.get("shipmentId");
+        mercadoInvoiceDTO.setShipmentId(ObjUtil.isEmpty(shipmentId) ? "" : shipmentId.toString());
+
+        InvoiceInfoDTO.AttachDTO attachDTO = getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
+        if (ObjUtil.isEmpty(attachDTO)) {
+            throw new ServiceException("NF-e发票未找到xml文件");
+        }
+        File xmlFile = new File(FastDFSClientUtil.publicUrl + attachDTO.getAttachUrl());
+        String xmlString = Files.asCharSource(xmlFile, StandardCharsets.UTF_8).read();
+        String escapedXml = StringEscapeUtils.escapeXml11(xmlString);
+        mercadoInvoiceDTO.setXmlContent(escapedXml);
+        //NF-e发票
+        mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
     }
 
     @Override
@@ -784,6 +820,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
     
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO updateCce(InvoiceInfoDTO.UpdateCceDTO dto) {
         InvoiceInfoEntity invoiceInfoEntity = this.getById(dto.getId());
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
@@ -807,7 +844,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceUpdateHisService.add(addDTO);
 
         //重新上传
-
+        NfeInvoiceDTO.NfeCceDTO nfeCceDTO = new NfeInvoiceDTO.NfeCceDTO();
+        nfeCceDTO.setId(invoiceInfoEntity.getQueryId());
+        nfeCceDTO.setJustificativa(dto.getContent());
+        nfeInvoiceService.updateCceInvoice(invoiceInfoEntity,nfeCceDTO);
         return BatchResultDTO.success(invoiceInfoEntity.getId(), invoiceInfoEntity.getCode(), "修改CC-e发票成功");
     }
 

@@ -64,7 +64,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
 
     void batchSave(List<InvoiceInfoEntity> addList, List<InvoiceDetailEntity> addDetailList);
 
-    List<BatchResultDTO> batchUploadInvoice(List<String> ids);
+    BatchResultDTO batchUploadInvoice(String id);
 
     Boolean export(InvoiceInfoDTO.PagingParamDTO dto);
 

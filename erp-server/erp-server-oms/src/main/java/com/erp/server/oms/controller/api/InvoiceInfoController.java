@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
@@ -14,6 +15,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
+import com.erp.model.oms.entity.InvoiceInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.server.oms.service.InvoiceInfoService;
 import com.erp.server.oms.service.SoB2cService;
@@ -156,7 +158,23 @@ public class InvoiceInfoController extends BaseController {
      */
     @PostMapping("/uploadInvoice")
     public ApiResult<List<BatchResultDTO>> uploadInvoice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<BatchResultDTO> resultDTOS = invoiceInfoService.batchUploadInvoice(dto.getIds());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = invoiceInfoService.batchUploadInvoice(id);
+            }catch (Exception e){
+                log.error("上传发票失败",e);
+                InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getById(id);
+                if (ObjectUtil.isEmpty(invoiceInfoEntity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "开票清单不存在, 上传发票失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(id, id, e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
