@@ -83,7 +83,12 @@
         afs.status AS status,
         afs.bill_date AS billDate,
         afs.approve_status AS approveStatus,
-        afs.approve_time AS approveTime,
+        CASE
+        WHEN afs.approve_status = 'approve' THEN
+        afs.approve_time
+        ELSE
+        null
+        END AS approveTime,
         afs.approve_user_id AS approveUserId,
         afs.approve_user_name AS approveUserName,
         afs.thrid_user_id AS thridUserId,
@@ -103,7 +108,6 @@
         afsd.id AS detailId,
         afsd.main_id AS mainId,
         afsd.price AS price,
-        afsd.repair_amount AS repairAmount,
         afsd.sku_id AS skuId,
         afsd.sku_no AS skuNo,
         afsd.product_name AS productName,
