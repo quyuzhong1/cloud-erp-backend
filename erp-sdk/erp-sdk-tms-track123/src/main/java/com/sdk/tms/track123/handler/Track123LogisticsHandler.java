@@ -160,6 +160,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                         acceptedToSaveDto.setTrackNo(trackDetail.getTrackNo());
                         acceptedToSaveDto.setUniqueId(sourceDto.getUniqueId());
                         acceptedToSaveDto.setPlatform(sourceDto.getPlatform());
+                        acceptedToSaveDto.setTrackingStatus(convertTrackStatus(trackDetail.getTransitStatus()));
                         LocalLogisticsInfo localLogisticsInfo = trackDetail.getLocalLogisticsInfo();
                         if (CollectionUtils.isNotEmpty(localLogisticsInfo.getTrackingDetails())) {
                             List<PlatformTrackDetail> details = new ArrayList<>();
@@ -175,18 +176,6 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                             acceptedToSaveDto.setDetails(details);
                             resultList.add(acceptedToSaveDto);
                         }
-//                        else if (StringUtils.isNotEmpty(trackDetail.getTransitStatus())) {
-//                            List<PlatformTrackDetail> details = new ArrayList<>();
-//                            PlatformTrackDetail detail = new PlatformTrackDetail();
-//                            detail.setTrackNo(trackDetail.getTrackNo());
-//                            detail.setStatus(convertTrackStatus(trackDetail.getTransitStatus()));//转换类型
-//                            LocalDateTime eventTime = LocalDateTime.parse(trackDetail.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-//                            detail.setTrackTime(eventTime);
-//                            detail.setContent("暂无信息");
-//                            details.add(detail);
-//                            acceptedToSaveDto.setDetails(details);
-//                            resultList.add(acceptedToSaveDto);
-//                        }
                     }
                 }
             }
@@ -194,6 +183,7 @@ public class Track123LogisticsHandler extends AbstractLogisticsTrackHandler<Plat
                 for (Rejected rejected : sourceDto.getRejected()) {
                     PlatformTrackDTO acceptedToSaveDto = new PlatformTrackDTO();
                     acceptedToSaveDto.setTrackNo(rejected.getTrackNo());
+                    acceptedToSaveDto.setTrackingStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());
                     PlatformTrackDetail detail = new PlatformTrackDetail();
                     detail.setTrackNo(rejected.getTrackNo());
                     detail.setStatus(LogisticTrackStatusEnum.NOT_FIND.getCode());

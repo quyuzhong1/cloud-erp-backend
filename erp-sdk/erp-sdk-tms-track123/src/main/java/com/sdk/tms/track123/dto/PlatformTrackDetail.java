@@ -32,6 +32,13 @@ public class PlatformTrackDetail implements Serializable {
      */
     private String status;
     /**
+     * 订单状态  订单状态 状态 notFind  查询不到 waitCollect 等待揽收
+     * trackIng 运输途中 arriveWaitTake 到达待取
+     * deliveryIng 派送途中 deliveryFail 投递失败
+     * sign 成功签收 maybeException 可能异常
+     */
+    private String orderStatus;
+    /**
      * 内容
      */
     private String content;
