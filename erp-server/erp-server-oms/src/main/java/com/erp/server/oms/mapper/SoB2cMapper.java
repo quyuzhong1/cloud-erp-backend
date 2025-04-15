@@ -11,7 +11,6 @@ import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -273,10 +272,19 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
 
     /**
      * 根据参数据查询需要发货的订单
+     *
      * @param billStatusList
      * @param platformStatusList
      * @param platformList
+     * @param codeList
      * @return
      */
-    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(@Param("billStatusList") List<String> billStatusList, @Param("platformStatusList") List<String> platformStatusList, @Param("platformList") List<String> platformList);
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(@Param("billStatusList") List<String> billStatusList, @Param("platformStatusList") List<String> platformStatusList, @Param("platformList") List<String> platformList, @Param("codeList")List<String> codeList);
+
+    /**
+     * 更新
+     * @param id
+     * @param extendData
+     */
+    void updateExtendData(@Param("id") String id, @Param("extendData") String extendData);
 }

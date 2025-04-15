@@ -431,7 +431,7 @@ public class SoPriceController extends BaseController {
             tableField = "pricing_user_id,create_user_id",
             menuCode = "oms:soPrice:paging",
             tableAlias = "sp,sp")
-    public ApiResult<List<SoPriceDTO.PriceDTO>> batchGetSoPrice(@RequestBody List<SoPriceDTO.PriceParamDTO> list) {
+    public ApiResult<List<SoPriceDTO.PriceDTO>> batchGetSoPrice(@RequestBody @Valid List<SoPriceDTO.PriceParamDTO> list) {
         return success(soPriceService.batchGetSoPrice(list));
     }
 

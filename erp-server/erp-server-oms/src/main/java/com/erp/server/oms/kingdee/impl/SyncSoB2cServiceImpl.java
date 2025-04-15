@@ -11,6 +11,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -462,7 +464,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
 
     @Override
     public void syncDataToSdy(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList, String operate) {
-        if (CollUtil.isNotEmpty(soB2cDetailEntityList)) {
+    	if (CollUtil.isNotEmpty(soB2cDetailEntityList)) {
             for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
                 if (StringUtils.isBlank(soB2cDetailEntity.getSkuId()) || StringUtils.isBlank(soB2cDetailEntity.getSkuNo())) {
                     continue;

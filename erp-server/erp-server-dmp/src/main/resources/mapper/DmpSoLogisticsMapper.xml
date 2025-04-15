@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpSoLogisticsMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpSoLogisticsEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="source_system" property="sourceSystem" />
+       <result column="third_logistics_id" property="thirdLogisticsId" />
+       <result column="third_logistics_code" property="thirdLogisticsCode" />
+       <result column="third_create_time" property="thirdCreateTime" />
+       <result column="third_update_time" property="thirdUpdateTime" />
+       <result column="delivery_time" property="deliveryTime" />
+       <result column="sign_time" property="signTime" />
+       <result column="outstock_code" property="outstockCode" />
+       <result column="logistic_company_code" property="logisticCompanyCode" />
+       <result column="logistic_company_name" property="logisticCompanyName" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        source_system, third_logistics_id, third_logistics_code, third_create_time, third_update_time, delivery_time, sign_time, outstock_code, logistic_company_code, logistic_company_name, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
+    </sql>
+
+
+</mapper>

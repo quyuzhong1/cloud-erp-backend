@@ -224,13 +224,14 @@
         spd.min_qty as minQty,
         spd.max_qty as maxQty,
         sp.so_org_id as soOrgId,
-        sp.so_org_name as soOrgName
+        sp.so_org_name as soOrgName,
+        spd.expire_date as expireDate,
+        spd.effective_date as effectiveDate
         from so_price sp
         inner join so_price_detail spd on sp.id = spd.main_id and spd.is_deleted = false
         inner join customer_info si on sp.customer_id = si.id and si.is_deleted = false
         <where>
-            sp.is_deleted = false and sp.approve_status = 'approve' and spd.disabled = false and to_char(now(), 'yyyy-mm-dd')::TIMESTAMP >=
-            spd.effective_date and spd.expire_date >= to_char(now(), 'yyyy-mm-dd')::TIMESTAMP
+            sp.is_deleted = false and sp.approve_status = 'approve' and spd.disabled = false
             <if test="params.skuIdList != null and params.skuIdList.size > 0">
                 and spd.sku_id in
                 <foreach collection="params.skuIdList" item="item" open="(" separator="," close=")">

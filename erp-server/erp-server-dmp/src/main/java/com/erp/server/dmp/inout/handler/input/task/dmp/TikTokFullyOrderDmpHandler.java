@@ -85,6 +85,9 @@ public class TikTokFullyOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                         dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     } else if ("INVAILD".equalsIgnoreCase(status)) {
+                        dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());
+                        dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
                     } else {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.APPROVE.getCode());

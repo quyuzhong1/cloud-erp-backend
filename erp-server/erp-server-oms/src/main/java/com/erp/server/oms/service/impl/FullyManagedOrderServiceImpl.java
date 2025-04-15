@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelAnalysisException;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -256,6 +257,9 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         } catch (ExcelCommonException e) {
             log.error("导入错误！>>>{}", e);
             throw new ServiceException(ApiError.ERROR_1016);
+        }catch (ExcelAnalysisException e){
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1033);
         }
         return Boolean.TRUE;
 
@@ -273,7 +277,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             return;
         }
         //根据平台单号进行分组
-        Map<String, List<FullyManagedImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(e ->e.getPlatformCode() + e.getDictPlatform()));
+        Map<String, List<FullyManagedImportExcelDTO>> collect = successList.stream().collect(Collectors.groupingBy(FullyManagedImportExcelDTO::getIndexStr));
         //遍历分组数据
         collect.forEach((key, value) -> {
             SoB2cDTO.AddDTO addDTO = buildAddDTO(key,value,errorList);
@@ -316,13 +320,13 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
      */
     private SoB2cDTO.AddDTO buildAddDTO(String key, List<FullyManagedImportExcelDTO> value, List<FullyManagedImportExcelDTO> errorList) {
         //平台列表
-        List<SoB2cEntity> entityList = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).list();
-        if (CollUtil.isNotEmpty(entityList)) {
-            List<String> codeList = entityList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
-            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】销售订单已存在【{}】",e.getDictPlatformName(), e.getPlatformCode(), CharSequenceUtil.join(",",codeList))));
-            errorList.addAll(value);
-            return null;
-        }
+//        List<SoB2cEntity> entityList = this.lambdaQuery().eq(SoB2cEntity::getPlatformCode, value.get(0).getPlatformCode()).eq(SoB2cEntity::getDictPlatform, value.get(0).getDictPlatform()).list();
+//        if (CollUtil.isNotEmpty(entityList)) {
+//            List<String> codeList = entityList.stream().map(SoB2cEntity::getCode).distinct().collect(Collectors.toList());
+//            value.forEach(e -> e.setErrorMsg(CharSequenceUtil.format("平台【{}】平台订单号【{}】销售订单已存在【{}】",e.getDictPlatformName(), e.getPlatformCode(), CharSequenceUtil.join(",",codeList))));
+//            errorList.addAll(value);
+//            return null;
+//        }
         if (value.size() > 1){
             //判断每个导入列中字段值是否一致
             boolean flag = value.stream()
@@ -429,8 +433,6 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         //仓位信息
         List<String> warehouseIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getWarehouseId).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationEntityList = FeignQuery.create(WarehouseLocationEntity.class).in(WarehouseLocationEntity::getWarehouseId, warehouseIdList).select(WarehouseLocationEntity::getWarehouseId, WarehouseLocationEntity::getCode, WarehouseLocationEntity::getName).list();
-        //物流渠道
-        List<String> channelIdList = records.stream().map(SoB2cDTO.ExcelExportDTO::getLogisticsChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         //库存信息
         List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList = new ArrayList<>();
         //无需计算库存sku
@@ -465,6 +467,12 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         paramDTO.setDictInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
         paramDTO.setSkuIdList(skuIdList);
         List<VirtualInventoryDTO.VirtualInventoryQtyDTO> virtualInventoryList = virtualInventoryFeign.listInventoryQty(paramDTO);
+        //实体仓库存
+        InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO1 = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
+        skuInventoryDTO1.setInventoryStatusList(Collections.singletonList(InventoryStatusEnum.USABLE.getCode()));
+        skuInventoryDTO1.setWarehouseIdList(warehouseIdList);
+        skuInventoryDTO1.setSkuIdList(skuIdList);
+        inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO1);
         //虚拟仓库信息
         List<VirtualWarehouseEntity> virtualWarehouseList = CollectionUtils.isEmpty(virtualWarehouseIdList) ? new ArrayList<>() : FeignQuery.getByIds(VirtualWarehouseEntity.class, virtualWarehouseIdList);
 
@@ -474,13 +482,6 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             List<SkuVO> ignoreInventorySkuList = plmTaskFeign.getNoInventorySku();
             ignoreInventorySkuIds = CollUtil.isNotEmpty(ignoreInventorySkuList) ?
                     ignoreInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : com.google.common.collect.Lists.newArrayList();
-
-            //获取第三方仓海外信息
-            InventoryQtyDTO.SkuInventoryStatusParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryStatusParamDTO();
-            skuInventoryDTO.setInventoryStatusList(Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode()));
-            skuInventoryDTO.setWarehouseIdList(warehouseIdList);
-            skuInventoryDTO.setSkuIdList(skuIdList);
-            inventoryList = inventoryFeign.listSkuInventoryStatusByParam(skuInventoryDTO);
         }
         //销售出库
         List<String> soIds = records.stream().map(SoB2cDTO.ExcelExportDTO::getId).distinct().collect(Collectors.toList());
@@ -514,7 +515,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             exportDTO.setApproveStatusName(ApproveStatusEnum.getName(exportDTO.getApproveStatus()));
             //订单状态
             exportDTO.setBillStatusName(SoB2cBillStatusEnum.getName(exportDTO.getBillStatus()));
-
+            //含税成本
             exportDTO.setTaxCost(MathUtil.multiply(exportDTO.getTaxCost(), exportDTO.getQty()));
             //产品名称
             ProductDetailEntity productDetailEntity = productDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), exportDTO.getSkuId()))
@@ -589,65 +590,20 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
             SoB2cDetailEntity soB2cDetail = soB2cDetailEntityList.stream().filter(e -> Objects.equals(exportDTO.getDetailId(), e.getId())).findFirst().orElse(null);
             SoB2cDetailDTO.ListDTO detailDTO = BeanUtil.copyProperties(soB2cDetail, SoB2cDetailDTO.ListDTO.class);
             exportDTO.setLabelDetailList(getLabelDetailList(exportDTO, skuVOMap, bomChildrenList, inventoryList, ignoreInventorySkuIds, detailDTO, virtualInventoryList, virtualWarehouseList));
-            //销售套装bom
-            if (CollectionUtils.isNotEmpty(childList)) {
-                List<Integer> qtyList = new ArrayList<>();
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : childList) {
-                    SoB2cDTO.ExcelExportDTO resultDTO = new SoB2cDTO.ExcelExportDTO();
-                    BeanMapperUtils.copy(exportDTO, resultDTO);
-                    //记录原始sku
-                    resultDTO.setParentSkuId(exportDTO.getSkuId());
-                    resultDTO.setParentSkuNo(exportDTO.getSkuNo());
-                    resultDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
-                    resultDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
-                    resultDTO.setQty(resultDTO.getQty());
-                    resultDTO.setSkuQty(resultDTO.getQty() * bomChildrenSkuDTO.getQuantity());
-                    //导出子级SKU信息
-                    ProductDetailEntity childEntity = productDetailEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), bomChildrenSkuDTO.getSkuId()))
-                            .findFirst().orElse(null);
-                    if (ObjectUtil.isNotEmpty(childEntity)) {
-                        resultDTO.setProductName(childEntity.getName());
-                        resultDTO.setVariantProperty(childEntity.getVariantProperty());
-                    }
-                    //虚拟仓可用库存
-                    if (CharSequenceUtil.isNotBlank(exportDTO.getVirtualWarehouseId())) {
-                        //虚拟仓是否缺货
-                        Integer childVirtualUsableQty = virtualInventoryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), bomChildrenSkuDTO.getSkuId())
-                                        && CharSequenceUtil.equals(obj.getVirtualWarehouseId(), exportDTO.getVirtualWarehouseId())
-                                        && CharSequenceUtil.equals(obj.getWarehouseId(), exportDTO.getWarehouseId()))
-                                .map(VirtualInventoryDTO.VirtualInventoryQtyDTO::getInventoryQty)
-                                .findFirst().orElse(MathUtil.ZERO);
-                        resultDTO.setVirtualUsableQty(childVirtualUsableQty);
-
-                        //针对父级可用数量
-                        double floor = Math.floor((double) childVirtualUsableQty / bomChildrenSkuDTO.getQuantity());
-                        Integer parentUsableQty = (int) floor;
-                        qtyList.add(parentUsableQty);
-                    }
-                    //如果按子级导出则添加
-                    if (SoB2cExportTypeEnum.CHILD_EXPORT.getCode().equals(exportType)) {
-                        //根据订单维度还是bom维度清除已存在的记录
-                        processRepeatData(resultDTO, codeList, codeAndParentSkuIdList);
-                        resultList.add(resultDTO);
-                    }
-                }
-                //父级可用取子级中最小可用数量
-                if (SoB2cExportTypeEnum.PARENT_EXPORT.getCode().equals(exportType)) {
-                    if (CollectionUtils.isNotEmpty(qtyList)) {
-                        Integer bomUsableQty = qtyList.stream().min(Comparator.comparing(obj -> obj)).get();
-                        exportDTO.setVirtualUsableQty(bomUsableQty);
-                    }
-                    exportDTO.setSkuQty(exportDTO.getQty());
-                    //根据订单维度还是bom维度清除已存在的记录
-                    processRepeatData(exportDTO, codeList, codeAndParentSkuIdList);
-                    resultList.add(exportDTO);
-                }
-            } else {
-                exportDTO.setSkuQty(exportDTO.getQty());
-                //根据订单维度还是bom维度清除已存在的记录
-                processRepeatData(exportDTO, codeList, codeAndParentSkuIdList);
-                resultList.add(exportDTO);
+            exportDTO.setSkuQty(exportDTO.getQty());
+            Integer useableQty = MathUtil.ZERO;
+            if (CollectionUtils.isNotEmpty(inventoryList)) {
+                //可用库存
+                useableQty = inventoryList.stream().filter(obj -> obj.getSkuId().equals(detailDTO.getSkuId())
+                                && obj.getWarehouseId().equals(detailDTO.getWarehouseId())
+                                && InventoryStatusEnum.USABLE.getCode().equals(obj.getInventoryStatus()))
+                        .mapToInt(obj -> obj.getInventoryTotal()).sum();
             }
+            exportDTO.setUseableQty(useableQty);
+            //根据订单维度还是bom维度清除已存在的记录
+            processRepeatData(exportDTO, codeList, codeAndParentSkuIdList);
+            resultList.add(exportDTO);
+
         }
         return resultList;
     }

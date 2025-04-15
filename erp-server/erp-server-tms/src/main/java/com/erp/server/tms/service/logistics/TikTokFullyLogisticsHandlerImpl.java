@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 
+import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.utils.PdfUtil;
@@ -10,6 +11,8 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.enums.BusinessTypeEnum;
+import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.ChanelQueryVO;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.vo.request.LogisticsGetLabelVO;
@@ -21,6 +24,7 @@ import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.oms.tiktok.dto.tiktok.channel.provider.ShippingProviderDTO;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryReq;
 import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyDeliveryResp;
@@ -53,6 +57,8 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private LogisticsOperateService logisticsOperateService;
 
     /**
      * 查询店铺
@@ -84,16 +90,28 @@ public class TikTokFullyLogisticsHandlerImpl extends AbstractLogisticsHandler {
         packagesDTO.setItems(itemsDTOS);
         packagesDTOS.add(packagesDTO);
         tikTokFullyDeliveryReq.setPackages(packagesDTOS);
-        TikTokFullyDeliveryResp tikTokFullyDeliveryResp = tikTokFullService.createDelivery(shopId,tikTokFullyDeliveryReq);
-        if(tikTokFullyDeliveryResp.getCode() != 0){
-            return failure(tikTokFullyDeliveryResp.getCode(),tikTokFullyDeliveryResp.getMessage(),null);
+        try {
+            TikTokFullyDeliveryResp tikTokFullyDeliveryResp = tikTokFullService.createDelivery(shopId,tikTokFullyDeliveryReq);
+            if(tikTokFullyDeliveryResp.getCode() != 0){
+                logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                        logisticsOrderVO.getPlatformCode(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK_FULLY.getCode(),
+                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tikTokFullyDeliveryResp), false);
+                return failure(tikTokFullyDeliveryResp.getCode(),tikTokFullyDeliveryResp.getMessage(),null);
+            }
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getPlatformCode(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK_FULLY.getCode(),
+                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(tikTokFullyDeliveryResp), false);
+            return success(LogisticsOrderResponseVO.builder()
+                    .transportNo(tikTokFullyDeliveryResp.getData().getDeliveryOrderCode())
+                    .deliveryNo(logisticsOrderVO.getDeliveryNo())
+                    .trackNo(tikTokFullyDeliveryResp.getData().getDeliveryOrderCode())
+                    .build());
+        }catch (Exception e){
+            logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
+                    logisticsOrderVO.getPlatformCode(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.TIK_TOK_FULLY.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(e.getMessage()), false);
+            return failure(-1,e.getMessage(),null);
         }
-        return success(LogisticsOrderResponseVO.builder()
-                .transportNo(tikTokFullyDeliveryResp.getData().getDeliveryOrderCode())
-                .deliveryNo(logisticsOrderVO.getDeliveryNo())
-                .trackNo(tikTokFullyDeliveryResp.getData().getDeliveryOrderCode())
-                .build());
-
     }
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
