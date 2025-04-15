@@ -65,8 +65,12 @@ public class CfgInvoiceInvalidController extends BaseController {
     }
 
     /**
-     * 导出作废发票号
-     */
+     * @description:导出发票号
+     * @author: hcg
+     * @date: 2025/4/15 17:25
+     * @param: CustomerDTO.ExportDTO
+     * @return: ApiResult<List<CfgInvoiceInvalidDTO.DropDownDTO>>
+     **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出作废发票号")
     @PostMapping("/export")
     public ApiResult<Object> exportCfgInvoiceInvalid(@RequestBody @Valid CustomerDTO.ExportDTO dto) {
@@ -74,10 +78,13 @@ public class CfgInvoiceInvalidController extends BaseController {
         return  success(true) ;
     }
 
-    /**
-     * 公司下拉
-     */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出作废发票号")
+  /**
+    * @description:下拉展示发票设置公司名
+    * @author: hcg
+    * @date: 2025/4/15 17:25
+    * @param: null
+    * @return: ApiResult<List<CfgInvoiceInvalidDTO.DropDownDTO>>
+    **/
     @GetMapping("/getCompanyName")
     public ApiResult<List<CfgInvoiceInvalidDTO.DropDownDTO>> getCompanyName() {
         return success(cfgInvoiceInvalidService.getCompanyName());

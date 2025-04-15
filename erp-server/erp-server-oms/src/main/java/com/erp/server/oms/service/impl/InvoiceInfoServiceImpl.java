@@ -5,8 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -41,14 +39,11 @@ import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
-import com.google.common.io.Files;
-import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,9 +53,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import javax.annotation.Resource;
-import java.io.File;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -531,24 +524,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             entity.setQueryId(feedId);
             return;
         }
-        //上传到平台
-        MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
-        mercadoInvoiceDTO.setShopId(soB2cEntity.getShopId());
-        String extendData = soB2cEntity.getExtendData();
-        JSONObject entries = JSONUtil.parseObj(extendData);
-        Object shipmentId = entries.get("shipmentId");
-        mercadoInvoiceDTO.setShipmentId(ObjUtil.isEmpty(shipmentId) ? "" : shipmentId.toString());
-
-        InvoiceInfoDTO.AttachDTO attachDTO = getNewInvoicedAttachBySoId(soB2cEntity.getId(), InvoiceInfoInvoiceTypeEnum.NFE.getCode(), AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
-        if (ObjUtil.isEmpty(attachDTO)) {
-            throw new ServiceException("NF-e发票未找到xml文件");
-        }
-        File xmlFile = new File(FastDFSClientUtil.publicUrl + attachDTO.getAttachUrl());
-        String xmlString = Files.asCharSource(xmlFile, StandardCharsets.UTF_8).read();
-        String escapedXml = StringEscapeUtils.escapeXml11(xmlString);
-        mercadoInvoiceDTO.setXmlContent(escapedXml);
-        //NF-e发票
-        mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
+        nfeInvoiceService.uploadNfeInvoice(soB2cEntity);
     }
 
     @Override
