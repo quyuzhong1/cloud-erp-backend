@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.alibaba.excel.write.metadata.WriteSheet;
 import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.fastjson.JSON;
@@ -29,10 +30,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
@@ -81,6 +84,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -1372,23 +1376,34 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     public Boolean importTrack(MultipartFile excelFile, HttpServletResponse response) throws Exception{
         //物流信息
         LogisticsTrackExcelListener billListener = new LogisticsTrackExcelListener();
-        EasyExcel.read(excelFile.getInputStream(), LogisticsTrackExcelDTO.class, billListener).sheet(0).doRead();
-        List<LogisticsTrackExcelDTO> errorBillList = billListener.getErrorList();
-        if(CollectionUtils.isNotEmpty(errorBillList)){
-            String fileName = new String("物流单导入失败.xlsx".getBytes(), "UTF-8");
-            response.addHeader("Content-Disposition", "filename=" + fileName);
-            response.setContentType("application/vnd.ms-excel");
-            ExcelWriter excelWriter = EasyExcel.write(response.getOutputStream()).build();
-            if(CollectionUtils.isNotEmpty(errorBillList)){
-                WriteSheet writeSheet1 = EasyExcel.writerSheet(0, "物流信息").build();
-                WriteTable writeTable = EasyExcel.writerTable(0).head(FmLogisticsBillExcelDTO.class).needHead(true).build();
-                excelWriter.write(errorBillList, writeSheet1,writeTable);
+        try {
+            EasyExcel.read(excelFile.getInputStream(), LogisticsTrackExcelDTO.class, billListener).sheet(0).doRead();
+            List<LogisticsTrackExcelDTO> errorList = billListener.getErrorList();
+            if (!errorList.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                String excelPath = "excel/tmsTrackLogisticsError.xlsx";
+                String name = "TMS物流单导入错误信息.xlsx";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
             }
-            excelWriter.finish();
-            response.flushBuffer();
-            return false;
+        }catch (SocketTimeoutException e) {
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
         }
-        return true;
+        return Boolean.TRUE;
     }
 
     @Override
