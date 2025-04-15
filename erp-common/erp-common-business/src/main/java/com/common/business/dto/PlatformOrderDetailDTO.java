@@ -127,4 +127,10 @@ public class PlatformOrderDetailDTO {
      * 第三方明细ID/编号
      */
     private String thirdDetailId = "";
+
+
+    /**
+     * 销售费用
+     */
+    private BigDecimal saleFee;
 }

@@ -88,15 +88,10 @@ public class NfeInvoiceService {
             createDTO.setCliente(nfeClienteDTO);
             //税务信息
             CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
-            List<NfeInvoiceDTO.NfeItensDTO> nfeItensList = getNfeItensDTO(soB2cEntity,invoiceSettingDetail);
-
-            BigDecimal valorTotal = nfeItensList.stream().map(NfeInvoiceDTO.NfeItensDTO::getUnitPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
-            createDTO.setValorTotal(valorTotal);
+            getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO);
 
             //查询运费
             getShipCost(soB2cEntity,invoiceSettingDetail);
-            createDTO.setFinalTotal(valorTotal);
-            createDTO.setItens(nfeItensList);
             obj = tfFiscalService.createInvoice(createDTO);
         }catch (Exception e){
             invoiceStatus = InvoiceInfoStatusEnum.INVOICE_FAILED.getCode();
@@ -223,7 +218,7 @@ public class NfeInvoiceService {
                 .eq(DmpSoBillDetailEntity::getSourcePlatform, soB2cEntity.getDictPlatform())
                 .list();
         if (CollUtil.isEmpty(allDmpSoBillDetailEntityList)) {
-            return null;
+           throw new ServiceException("开票地址信息不能为空");
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
@@ -237,7 +232,7 @@ public class NfeInvoiceService {
      * @param soB2cEntity
      * @return List<NfeItensDTO>
      */
-    private List<NfeInvoiceDTO.NfeItensDTO> getNfeItensDTO(SoB2cEntity soB2cEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail) {
+    private void getNfeItensDTO(SoB2cEntity soB2cEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail,NfeInvoiceDTO.NfeCreateDTO createDTO) {
         List<NfeInvoiceDTO.NfeItensDTO> itens = new ArrayList<>();
 
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
@@ -262,7 +257,7 @@ public class NfeInvoiceService {
         //查询发票税务信息
         List<InvoiceTaxEntity> invoiceTaxList = invoiceTaxService.listByListingIdList(listingIdList);
         Map<String, InvoiceTaxEntity> taxMap = invoiceTaxList.stream().collect(Collectors.toMap(InvoiceTaxEntity::getListingId, Function.identity()));
-
+        BigDecimal valorTotal = BigDecimal.ZERO;
         for (SoB2cDetailEntity detailEntity :detailList) {
             NfeInvoiceDTO.NfeItensDTO nfeItensDTO = new NfeInvoiceDTO.NfeItensDTO();
             //listing信息
@@ -281,8 +276,11 @@ public class NfeInvoiceService {
             //产品金额
             nfeItensDTO.setUnitPrice(getUnitPrice(detailEntity,invoiceSettingDetail));
             itens.add(nfeItensDTO);
+            valorTotal = MathUtil.add(valorTotal,MathUtil.multiply(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
         }
-        return itens;
+        createDTO.setItens(itens);
+        createDTO.setValorTotal(valorTotal);
+        createDTO.setFinalTotal(valorTotal);
     }
 
     /**
@@ -323,6 +321,17 @@ public class NfeInvoiceService {
              obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
         } catch (Exception e) {
              throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,e.getMessage());
+        }
+        //上传
+        uploadFile(obj);
+    }
+
+    public void updateCceInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeCceDTO nfeCceDTO) {
+        Object obj;
+        try {
+            obj = tfFiscalService.updateCceInvoice(nfeCceDTO);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,e.getMessage());
         }
         //上传
         uploadFile(obj);

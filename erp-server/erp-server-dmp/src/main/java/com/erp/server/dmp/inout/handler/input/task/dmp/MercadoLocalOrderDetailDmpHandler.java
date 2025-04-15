@@ -5,6 +5,7 @@ import com.erp.server.dmp.utils.MapCountUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +56,10 @@ public class MercadoLocalOrderDetailDmpHandler extends MercadoOrderGetDetailDmpH
 				Object titleObj = itemMap.get("title");
 				if (titleObj != null) {
 					dmpDataMap.put("skuName", titleObj);
+				}
+				Object saleFeeObj = itemMap.get("saleFee");
+				if(saleFeeObj != null) {
+					dmpDataMap.put("saleFee", new BigDecimal("saleFeeObj"));
 				}
 				dmpDataMap.put("currencyCode", dmpDataMap.get("currencyId"));
 

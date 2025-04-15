@@ -38,6 +38,7 @@
                 cis.id,
                 cis.type as type,
                 cis.company_name as companyName,
+                cis.create_time as createTime,
                 cis.update_time as updateTime,
                 cis.update_user_name as updateUserName,
                 cis.lei_code as leiCode,
@@ -57,7 +58,7 @@
                 cis.certificate_url as certificateUrl,
                 cis.certificate_password as certificatePassword
                 FROM cfg_invoice_setting AS cis
-                Inner JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id
+                LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id
                 WHERE ${params.sqlMap.default}
                 AND cis.is_deleted = FALSE
                 <!-- 权限 -->

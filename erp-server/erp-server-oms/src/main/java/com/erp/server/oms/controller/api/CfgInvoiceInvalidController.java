@@ -71,7 +71,7 @@ public class CfgInvoiceInvalidController extends BaseController {
     @PostMapping("/export")
     public ApiResult<Object> exportCfgInvoiceInvalid(@RequestBody @Valid CustomerDTO.ExportDTO dto) {
         Boolean result = cfgInvoiceInvalidService.export(dto);
-        return Boolean.TRUE.equals(result) ? success() : failure();
+        return  success(true) ;
     }
 
     /**
@@ -79,7 +79,7 @@ public class CfgInvoiceInvalidController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出作废发票号")
     @GetMapping("/getCompanyName")
-    public List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName() {
-        return cfgInvoiceInvalidService.getCompanyName();
+    public ApiResult<List<CfgInvoiceInvalidDTO.DropDownDTO>> getCompanyName() {
+        return success(cfgInvoiceInvalidService.getCompanyName());
     }
 }

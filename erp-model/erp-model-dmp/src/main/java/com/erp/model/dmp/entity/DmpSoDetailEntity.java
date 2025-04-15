@@ -258,6 +258,11 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     @TableField("shipping_discount_tax")
     private BigDecimal shippingDiscountTax;
 
+    /**
+     * 销售费用
+     */
+    @TableField("sale_fee")
+    private BigDecimal saleFee;
 
     public static final String MAIN_ID = "main_id";
 
