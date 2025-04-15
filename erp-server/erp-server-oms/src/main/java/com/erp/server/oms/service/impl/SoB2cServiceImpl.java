@@ -358,7 +358,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
     @Resource
     private AliExpressOrderService aliExpressOrderService;
     @Resource
