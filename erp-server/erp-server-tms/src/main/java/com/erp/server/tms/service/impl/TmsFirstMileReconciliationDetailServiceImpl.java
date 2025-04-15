@@ -1551,7 +1551,6 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
         reqDto.setDeliveryCodeList(sourceCodeList);
         List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
         List<TmsFirstMileLogisticDTO.DeliveryDTO> deliveryDTOList = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
-
         if(CollUtil.isNotEmpty(deliveryDTOList)){
             for (TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO : deliveryDTOList) {
                 if(CollUtil.isNotEmpty(deliveryDTO.getPackingDTOList())){
@@ -1561,21 +1560,23 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
                             v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
                         });
                     }
-                    BigDecimal weight = BigDecimal.ZERO;
+
+                    BigDecimal volumeWeight = BigDecimal.ZERO;
+                    BigDecimal packageWeight = BigDecimal.ZERO;
                     for (TmsFirstMileLogisticDTO.PackingDTO dto : deliveryDTO.getPackingDTOList()) {
-                        if(Objects.nonNull(dto.getVolumeWeight()) && StringUtils.isNotBlank(dto.getPackageWeight())){
-                            if(dto.getVolumeWeight().compareTo(new BigDecimal(dto.getPackageWeight())) > 0){
-                                weight = weight.add(dto.getVolumeWeight());
-                            }else {
-                                weight = weight.add(new BigDecimal(dto.getPackageWeight()));
-                            }
-                        }else if(Objects.isNull(dto.getVolumeWeight()) && StringUtils.isNotBlank(dto.getPackageWeight())){
-                            weight = weight.add(new BigDecimal(dto.getPackageWeight()));
-                        }else if(Objects.nonNull(dto.getVolumeWeight()) && StringUtils.isBlank(dto.getPackageWeight())){
-                            weight = weight.add((dto.getVolumeWeight()));
+                        if(Objects.nonNull(dto.getVolumeWeight())){
+                            volumeWeight = volumeWeight.add(dto.getVolumeWeight());
                         }
+                        if(StringUtils.isNotBlank(dto.getPackageWeight())){
+                            packageWeight = packageWeight.add(new BigDecimal(dto.getPackageWeight()));
+                        }
+
                     }
-                    weightMap.put(deliveryDTO.getOutstockCode(),weight);
+                    if(volumeWeight.compareTo(packageWeight) > 0){
+                        weightMap.put(deliveryDTO.getOutstockCode(), volumeWeight);
+                    }else {
+                        weightMap.put(deliveryDTO.getOutstockCode(), packageWeight);
+                    }
                 }
             }
         }
