@@ -2,7 +2,7 @@ spring:
   application:
     name: erp-wms
   profiles:
-    active: test
+    active: dev
 server:
   port: 7090
 
