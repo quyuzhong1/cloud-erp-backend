@@ -147,5 +147,10 @@ public class CfgInvoiceInvalidDTO implements Serializable {
          * 发票设置id
          */
         private String value;
+
+        /**
+         * disabled
+         */
+        private Boolean disabled;
     }
 }
