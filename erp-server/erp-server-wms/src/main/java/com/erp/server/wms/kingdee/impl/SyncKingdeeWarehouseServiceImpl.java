@@ -90,8 +90,12 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(WarehouseEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -250,7 +254,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
         wmsPushMsgEntity.setSyncOperate(operate);
-        if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
         	wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
         }else {
         	wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));

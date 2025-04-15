@@ -100,7 +100,7 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
-    	if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
     	    return saveTask(entity,operate,DmpOutputConstant.getQuerySyncMap());
     	}else {
     		return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
@@ -343,12 +343,15 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		plmPushMsgEntity.setSourceId(id);
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(operate);
-        ProductInfoEntity productInfo = null;
-        if (StringUtils.isNotBlank(entity.getProductId())){
-            productInfo = productInfoService.getById(entity.getProductId());
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	plmPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        }else {
+            ProductInfoEntity productInfo = null;
+            if (StringUtils.isNotBlank(entity.getProductId())){
+                productInfo = productInfoService.getById(entity.getProductId());
+            }
+            plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), productInfo, operate)));
         }
-        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), productInfo, operate)));
-        
         plmPushMsgService.save(plmPushMsgEntity);
 	}
 

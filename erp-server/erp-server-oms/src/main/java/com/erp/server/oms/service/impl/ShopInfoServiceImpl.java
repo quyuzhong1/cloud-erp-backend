@@ -588,6 +588,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setEnableTime(dto.getEnableTime());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
+
         shopInfo.setDictCountryCode(dto.getDictCountryCode());
         shopInfo.setBusinessModel(dto.getBusinessModel());
         String warehouseId = dto.getWarehouseId();

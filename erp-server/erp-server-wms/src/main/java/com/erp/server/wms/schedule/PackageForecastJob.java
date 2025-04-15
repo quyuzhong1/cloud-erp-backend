@@ -19,6 +19,7 @@ import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -62,7 +63,6 @@ public class PackageForecastJob {
         }
         handoverStatusList.add(CharSequenceUtil.EMPTY);
         List<PackageForecastEntity> orders = packageForecastService.lambdaQuery()
-                .ne(PackageForecastEntity::getHandoverNo, CharSequenceUtil.EMPTY)
                 .in(PackageForecastEntity::getHandoverStatus,handoverStatusList)
                 .gt(PackageForecastEntity::getBillDate, dateTime)
                 .list();
@@ -97,7 +97,8 @@ public class PackageForecastJob {
             if(Objects.isNull(packageForecast) || Objects.isNull(soB2cEntity)){
                 return;
             }
-            if(soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            if(soB2cEntity.getDictPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())
+             && StringUtils.isNotBlank(packageForecast.getHandoverNo())){
                 packageForecastService.queryAliExpressInfo(packageForecast);
                 XxlJobHelper.log("syncPackageForecastInfo update : {}", packageForecast.getHandoverNo());
             }
@@ -126,11 +127,10 @@ public class PackageForecastJob {
                     TikTokFullyLogisticResp tikTokFullyLogisticResp = tikTokFullService.queryLogistics(shopId,handoverNos);
                     List<TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO> logisticsOrders = tikTokFullyLogisticResp.getData().getLogisticsOrders();
                     for (TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO logisticsOrder : logisticsOrders) {
-                        PackageForecastEntity packageForecast = tiktokFullyList.stream()
+                        List<PackageForecastEntity> packageForecast = tiktokFullyList.stream()
                                 .filter(packageForecastEntity -> packageForecastEntity.getHandoverNo().equals(logisticsOrder.getCode()))
-                                .findFirst()
-                                .orElse(null);
-                        if(Objects.isNull(packageForecast)){
+                                .collect(Collectors.toList());
+                        if(CollectionUtils.isEmpty(packageForecast)){
                             continue;
                         }
                         //返回的运单号可能有多个，拼接起来
@@ -142,10 +142,12 @@ public class PackageForecastJob {
                                 .map(TikTokFullyLogisticResp.DataDTO.LogisticsOrdersDTO.LogisticsSubOrdersDTO::getCode)
                                 .collect(Collectors.toList());
                         String subLogisticCode = String.join(",", subLogisticCodeList);
-                        packageForecast.setPlatformPackageNo(subLogisticCode);
-                        packageForecast.setTransportNo(transportNo);
-                        packageForecast.setHandoverStatus(logisticsOrder.getStatus());
-                        updateList.add(packageForecast);
+                        for (PackageForecastEntity entity : packageForecast) {
+                            entity.setPlatformPackageNo(subLogisticCode);
+                            entity.setTransportNo(transportNo);
+                            entity.setHandoverStatus(logisticsOrder.getStatus());
+                        }
+                        updateList.addAll(packageForecast);
                     }
                 }catch (Exception e){
                     log.error("查询tiktok全托管异常 : ",e);

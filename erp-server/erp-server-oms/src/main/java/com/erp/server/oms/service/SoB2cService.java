@@ -1072,6 +1072,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
+    void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
+
     /**
      * 根据销售订单id和平台获取分区id
      * @param soId
@@ -1079,8 +1081,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     String getPartitionId(String soId, String platform);
-    void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
-
     /**
      * 根据条件查询销售订单
      * @param billStatusList
@@ -1088,5 +1088,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param platformList
      * @return
      */
-    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList);
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList);
+
+    /**
+     * 根据主表更新扩展字段
+     * @param id
+     * @param extendDataDTO
+     */
+    void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
 }

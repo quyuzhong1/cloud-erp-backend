@@ -1285,6 +1285,10 @@ public class SoB2cDTO implements Serializable {
          * 扩展字段
          */
         private String extendData;
+        /**
+         * 标签json
+         */
+        private String labelJson;
 
         /**
          * 物流信息
@@ -3761,5 +3765,10 @@ public class SoB2cDTO implements Serializable {
         private String platformOrderStatus;
         private String shopId;
         private String transportNo;
+        private String detailId;
+        private String extendData;
+        private String extendDetailData;
+        private String platformSkuNo;
+        private String platformSpuNo;
     }
 }

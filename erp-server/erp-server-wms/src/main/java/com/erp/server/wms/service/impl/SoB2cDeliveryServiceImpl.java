@@ -505,7 +505,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
 
     @Override
-    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids) {
+    public List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids, boolean isAddWave) {
         List<SoB2cDeliveryDetailEntity> deliveryDetailEntityList = soB2cDeliveryDetailService.listByMainIds(ids);
 
         //待处理、已发货和取消发货单 状态，不允许在打印拣货单
@@ -517,7 +517,9 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             throw new ServiceException(ApiError.STATUS_NOT_PRINT_PICKING, CharSequenceUtil.join(",", codeList));
         }
         List<String> platformList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+        boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        boolean allNotMatch = platformList.stream().noneMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        if (!allMatch && !allNotMatch) {
             throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT);
         }
         // 异常单生成波次异常状态，不允许在打印拣货单
@@ -562,9 +564,14 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (ObjectUtil.isEmpty(viewDTO.getWarehouseLocation())) {
                 viewDTO.setWarehouseLocation(skuVO.getWarehouseLocation());
             }
-            //波次信息
-            WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
-            viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
+            if (isAddWave){
+                //波次信息
+                WaveListDTO.WaveDeliveryDTO waveDeliveryDTO = waveDeliveryList.stream().filter(obj -> CharSequenceUtil.equals(obj.getDeliveryId(), entity.getId())).findFirst().orElse(new WaveListDTO.WaveDeliveryDTO());
+                viewDTO.setWaveCode(waveDeliveryDTO.getWaveCode());
+            }else {
+                viewDTO.setWaveCode("");
+            }
+
             printPickingViewList.add(viewDTO);
         }
         // 合并处理数量不相同的行
@@ -1311,9 +1318,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, SoB2cDetailEntity> soB2cDetailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity()));
         Map<String, SoB2cLogisticsEntity> logisticsMap = soB2cLogisticsEntities.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
         Map<String, LogisticsChannelDTO.BaseDTO> channelMap = channelInfoList.stream().collect(Collectors.toMap(LogisticsChannelDTO.BaseDTO::getId, Function.identity()));
-        for (SoB2cDeliveryDetailEntity detailEntity : soB2cDeliveryDetailEntityList) {
+        Map<String, List<SoB2cDeliveryDetailEntity>> deliveryMap = soB2cDeliveryDetailEntityList.stream().collect(Collectors.groupingBy(e -> e.getMainId() + e.getSourceDetailId()));
+        //循环遍历 deliveryMap
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : deliveryMap.entrySet()) {
+            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
             SoB2cDeliveryDTO.PrintSkuBarcodeDTO printSkuBarcodeDTO = new SoB2cDeliveryDTO.PrintSkuBarcodeDTO();
-            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(detailEntity.getMainId());
+
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(value.get(0).getMainId());
             if (Objects.isNull(soB2cDeliveryEntity)) {
                 continue;
             }
@@ -1321,21 +1332,21 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (Objects.isNull(soB2cEntity)) {
                 continue;
             }
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(detailEntity.getSourceDetailId());
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(value.get(0).getSourceDetailId());
             if (Objects.isNull(soB2cDetailEntity)) {
                 continue;
             }
-            printSkuBarcodeDTO.setId(detailEntity.getMainId());
+            printSkuBarcodeDTO.setId(soB2cDeliveryEntity.getId());
             printSkuBarcodeDTO.setCode(soB2cDeliveryEntity.getCode());
             printSkuBarcodeDTO.setSoId(soB2cEntity.getId());
             printSkuBarcodeDTO.setSoCode(soB2cEntity.getCode());
             printSkuBarcodeDTO.setPlatformCode(soB2cEntity.getPlatformCode());
             printSkuBarcodeDTO.setShopId(soB2cEntity.getShopId());
-            printSkuBarcodeDTO.setSkuId(detailEntity.getSkuId());
-            printSkuBarcodeDTO.setSkuNo(detailEntity.getSkuNo());
+            printSkuBarcodeDTO.setSkuId(soB2cDetailEntity.getSkuId());
+            printSkuBarcodeDTO.setSkuNo(soB2cDetailEntity.getSkuNo());
             printSkuBarcodeDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
             printSkuBarcodeDTO.setPlatformSpuNo(soB2cDetailEntity.getPlatformSpuNo());
-            printSkuBarcodeDTO.setQty(detailEntity.getDeliveryQty());
+            printSkuBarcodeDTO.setQty(soB2cDetailEntity.getQty());
             SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsMap.get(soB2cEntity.getId());
             if (Objects.nonNull(soB2cLogisticsEntity)) {
                 printSkuBarcodeDTO.setTransportNo(soB2cLogisticsEntity.getCode());
@@ -1434,11 +1445,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             return list;
         }
         List<String> platformList = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        if (!platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
-            return list;
-        }
-        if(platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+        boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        boolean allNotMatch = platformList.stream().noneMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        if (!allMatch && !allNotMatch) {
             throw new ServiceException(ApiError.ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT);
+        }
+        if (!allMatch){
+            return list;
         }
         List<String> soIds = deliveryEntityList.stream().map(SoB2cDeliveryEntity::getSourceId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
@@ -1446,9 +1459,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         Map<String, SoB2cDeliveryEntity> deliveryEntityMap = deliveryEntityList.stream().collect(Collectors.toMap(SoB2cDeliveryEntity::getId, Function.identity()));
         Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
         Map<String, SoB2cDetailEntity> soB2cDetailEntityMap = soB2cDetailEntityList.stream().collect(Collectors.toMap(SoB2cDetailEntity::getId, Function.identity()));
-        for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailEntityList) {
+        Map<String, List<SoB2cDeliveryDetailEntity>> deliveryMap = deliveryDetailEntityList.stream().collect(Collectors.groupingBy(e -> e.getMainId() + e.getSourceDetailId()));
+        //循环遍历 deliveryMap
+        for (Map.Entry<String, List<SoB2cDeliveryDetailEntity>> entry : deliveryMap.entrySet()) {
+            List<SoB2cDeliveryDetailEntity> value = entry.getValue();
             PickingListsDTO.CombinationPrintDetailView view = new PickingListsDTO.CombinationPrintDetailView();
-            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(detailEntity.getMainId());
+
+            SoB2cDeliveryEntity soB2cDeliveryEntity = deliveryEntityMap.get(value.get(0).getMainId());
             if (Objects.isNull(soB2cDeliveryEntity)) {
                 continue;
             }
@@ -1456,15 +1473,31 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             if (Objects.isNull(soB2cEntity)) {
                 continue;
             }
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(detailEntity.getSourceDetailId());
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailEntityMap.get(value.get(0).getSourceDetailId());
             if (Objects.isNull(soB2cDetailEntity)) {
                 continue;
             }
-            view.setThirdSku(soB2cDetailEntity.getPlatformSkuNo());
-            view.setParentSku(soB2cDetailEntity.getSkuNo());
-            view.setParentSkuQty(detailEntity.getDeliveryQty());
-            view.setCustomerPo("");
-            list.add(view);
+            if(value.size() == 1 && soB2cDetailEntity.getSkuNo().equals(value.get(0).getSkuNo())){
+                PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                combinationPrintDetailView.setThirdSku((soB2cDetailEntity.getPlatformSkuNo()));
+                combinationPrintDetailView.setIsCombination(Boolean.FALSE);
+                combinationPrintDetailView.setParentSku(soB2cDetailEntity.getSkuNo());
+                combinationPrintDetailView.setParentSkuQty(soB2cDetailEntity.getQty());
+                combinationPrintDetailView.setCustomerPo("");
+                list.add(combinationPrintDetailView);
+                continue;
+            }
+            for (SoB2cDeliveryDetailEntity deliveryDetailEntity : value){
+                PickingListsDTO.CombinationPrintDetailView combinationPrintDetailView = new PickingListsDTO.CombinationPrintDetailView();
+                combinationPrintDetailView.setThirdSku((soB2cDetailEntity.getPlatformSkuNo()));
+                combinationPrintDetailView.setIsCombination(Boolean.TRUE);
+                combinationPrintDetailView.setParentSku(soB2cDetailEntity.getSkuNo() + "【组】");
+                combinationPrintDetailView.setParentSkuQty(soB2cDetailEntity.getQty());
+                combinationPrintDetailView.setChildSku(deliveryDetailEntity.getSkuNo());
+                combinationPrintDetailView.setChildSkuQty(deliveryDetailEntity.getDeliveryQty());
+                combinationPrintDetailView.setCustomerPo("");
+                list.add(combinationPrintDetailView);
+            }
         }
         List<PickingListsDTO.CombinationPrintDetailView> combinationList = list.stream()
                 // 先按客户PO分组
@@ -1926,8 +1959,10 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     public List<BaseResultDTO.AddDTO> generationWaves(SoB2cDeliveryDTO.GenerationWavesDTO dto) {
         List<SoB2cDeliveryEntity> b2cDelivery = listByIds(dto.getIds());
         List<String> platformList = b2cDelivery.stream().map(SoB2cDeliveryEntity::getDictPlatform).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-        //校验平台列表中是否即包含托管订单有包含其他平台订单
-        if (platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) && !platformList.contains(PlatformDictEnum.TIK_TOK_FULLY.getCode()) ){
+        //校验平台列表中是否全部都是全托管订单或者非全托管订单
+        boolean allMatch = platformList.stream().allMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        boolean allNotMatch = platformList.stream().noneMatch(v -> PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(v));
+        if (!allMatch && !allNotMatch) {
             throw new ServiceException(ApiError.ERROR_EXIST_FULLY_AND_NOT_FULLY_ORDER);
         }
         boolean match = b2cDelivery.stream().allMatch(v -> SoB2cDeliveryStatusEnum.WAIT_HANDLE.getCode().equals(v.getStatus()));

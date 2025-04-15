@@ -3644,15 +3644,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
     }
 
-
-    @Override
-    public List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params) {
-        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate() || StringUtils.isBlank(params.getCurrency())){
-            return Collections.emptyList();
-        }
-        return this.baseMapper.listAmountBySkuIds(params);
-    }
-
     @Override
     public BatchResultDTO handleWdtData(String id) {
         SoOutstockEntity entity = this.soOutstockService.getById(id);
@@ -3751,5 +3742,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             return CharSequenceUtil.EMPTY;
         }
         return virtualWarehouseList.get(0).getVirtualWarehouseId();
+    }
+
+
+    @Override
+    public List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params) {
+        if(null == params || params.getSkuIds().isEmpty() || null == params.getReturnCreateDate() || StringUtils.isBlank(params.getCurrency())){
+            return Collections.emptyList();
+        }
+        return this.baseMapper.listAmountBySkuIds(params);
     }
 }

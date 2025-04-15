@@ -419,6 +419,9 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "组包预报单");
         }
         String successCode = PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode();
+        if(PackageUploadStatusEnum.CANCEL.getCode().equals(entity.getUploadStatus())){
+            return BatchResultDTO.success(entity.getId(), entity.getCode(), "已取消上传");
+        }
         if (!successCode.equals(entity.getUploadStatus())) {
             throw new ServiceException("仅上传成功可操作");
         }
@@ -440,21 +443,31 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             entity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
             entity.setHandoverStatus("");
             entity.setTransportNo("");
+            entity.setHandoverNo("");
+            entity.setRemark("");
+            entity.setPlatformPackageNo("");
             this.updateById(entity);
             return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消上传");
         } catch (Exception e) {
             entity.setRemark("取消失败原因:" + e.getMessage());
             this.updateById(entity);
             log.error("取消上传失败>>>>", e);
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传");
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), "取消上传失败:"+e.getMessage());
         }
 
     }
-    private void tikTokFullyCancel(PackageForecastEntity entity) {
+    @Transactional(rollbackFor = Exception.class)
+    public void tikTokFullyCancel(PackageForecastEntity entity) {
+        if(StringUtils.isBlank(entity.getHandoverNo())){
+            return;
+        }
         List<PackageForecastDetailEntity> detailEntityList = packageForecastDetailService.listDbByMainId(entity.getId());
         List<String> soIds = detailEntityList.stream().map(PackageForecastDetailEntity::getSoId).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cFeign.listByIds(soIds);
         List<String> shopIds = soB2cEntityList.stream().map(SoB2cEntity::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if(entity.getCollectMode().equals(PackageForecastCollectModeEnum.SELF_SEND.getCode())){
+            throw new ServiceException("商家自配方式不支持取消组包");
+        }
         if(CollectionUtils.isEmpty(shopIds)){
             throw new ServiceException("销售订单店铺未找到");
         }
@@ -462,6 +475,21 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
             throw new ServiceException("TikTok不支持多店铺取消组包");
         }
         tikTokFullService.cancelLogistics(shopIds.get(0), entity.getHandoverNo());
+        //将相同组包号的数据都取消
+        List<PackageForecastEntity> sameCodeList = lambdaQuery().eq(PackageForecastEntity::getHandoverNo, entity.getHandoverNo())
+                .ne(PackageForecastEntity::getId, entity.getId())
+                .list();
+        if(CollectionUtils.isNotEmpty(sameCodeList)){
+            for (PackageForecastEntity packageForecastEntity : sameCodeList) {
+                packageForecastEntity.setUploadStatus(PackageUploadStatusEnum.CANCEL.getCode());
+                packageForecastEntity.setHandoverStatus("");
+                packageForecastEntity.setTransportNo("");
+                packageForecastEntity.setHandoverNo("");
+                packageForecastEntity.setRemark("");
+                packageForecastEntity.setPlatformPackageNo("");
+            }
+            this.updateBatchById(sameCodeList);
+        }
     }
 
     private void tikTokCancel(PackageForecastEntity entity) {
@@ -1314,7 +1342,13 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
         if(allSoB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().count() > 1){
             throw new ServiceException("组包预报单明细数据平台不一致");
         }
-        return allSoB2cEntityList.get(0).getDictPlatform();
+        String platform = allSoB2cEntityList.get(0).getDictPlatform();
+        if(!platform.equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())
+                && !platform.equals(PlatformDictEnum.ALI_EXPRESS.getCode())
+                && !platform.equals(PlatformDictEnum.TIK_TOK.getCode())){
+            throw new ServiceException("非tiktok,tiktok全托管，速卖通平台无需上传");
+        }
+        return platform;
     }
 
     @Override
@@ -1391,8 +1425,10 @@ public class PackageForecastServiceImpl extends SuperServiceImpl<PackageForecast
                 v.setHandoverNo(tikTokFullyShippingResp.getData().getLogisticsOrder());
                 v.setUploadStatus(PackageUploadStatusEnum.UPLOAD_SUCCESS.getCode());
                 v.setCollectMode(dto.getCollectMode());
+
                 v.setCollectAddressId(dto.getCollectAddressId());
                 v.setCollectAddress(addressName);
+                v.setRemark("");
                 this.updateBatchById(packageForecastEntityList);
             });
         }catch (Exception e){

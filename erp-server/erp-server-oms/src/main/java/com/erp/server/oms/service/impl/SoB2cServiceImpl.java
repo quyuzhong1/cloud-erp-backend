@@ -114,6 +114,7 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
+import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
@@ -354,7 +355,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
     @Resource
     private AliExpressOrderService aliExpressOrderService;
     @Resource
@@ -367,6 +367,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private CustomerInfoService customerInfoService;
     @Resource
     private SoB2cExtendService soB2cExtendService;
+    @Resource
+    private SyncSoB2cService syncSoB2cService;
     @Resource
     private TikTokFullService tikTokFullService;
 
@@ -1311,8 +1313,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .update();
 
         //同步数帝云
-//        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
-//        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
+        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表", remark);
@@ -2090,7 +2092,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
-        if (isFullyManagedOrder(entity.getDictPlatform())){
+        //全托管并且是平台订单就进行校验状态
+        if (isFullyManagedOrder(entity.getDictPlatform()) && SourceTypeEnum.SO_B2C.getCode().equals(entity.getSourceType())){
             //检查平台状态
             List<FullyOrderDTO.DataDTO.StockupOrdersDTO> stockupOrdersDTOS = tikTokFullService.listOrderByParam(entity.getShopId(), Collections.singletonList(entity.getPlatformCode()));
             if (CollUtil.isNotEmpty(stockupOrdersDTOS)) {
@@ -2100,7 +2103,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (CharSequenceUtil.isNotBlank(status)){
                     String code = FullyManagedPlatformStatusEnum.getErpCodeByCode(PlatformDictEnum.TIK_TOK_FULLY.getCode(), status);
                     if (!code.equals(entity.getBillStatus())){
-                        this.updatePlatformStatus(entity, status);
+                        this.updatePlatformStatus(entity, code);
                     }
                     if (FullyManagedPlatformStatusEnum.TikTokStatusEnum.INVAILD.getCode().equals(status)){
                         throw new ServiceException(ApiError.ERROR_SO_B2C_PLATFORM_ORDER_STATUS_ERROR, entity.getCode());
@@ -2403,6 +2406,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     addDTO.setSkuId(deliverySku.getSkuId());
                     addDTO.setSkuNo(deliverySku.getSkuNo());
                     addDTO.setSourceDetailId(sourceDetailId);
+                    addDTO.setWarehouseId(deliverySku.getWarehouseId());
+                    addDTO.setWarehouseName(detailItem.getWarehouseName());
+                    addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+                    addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
                     addDTO.setDeliveryQty(qty * deliverySku.getQty());
                     deliveryDetailList.add(addDTO);
                 }
@@ -2410,6 +2417,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 SoB2cDeliveryDetailDTO.AddDTO addDTO = new SoB2cDeliveryDetailDTO.AddDTO();
                 addDTO.setSkuId(skuId);
                 addDTO.setSkuNo(detailItem.getSkuNo());
+                addDTO.setWarehouseId(detailItem.getWarehouseId());
+                addDTO.setWarehouseName(detailItem.getWarehouseName());
+                addDTO.setWarehouseLocation(detailItem.getWarehouseLocation());
+                addDTO.setVirtualWarehouseId(detailItem.getVirtualWarehouseId());
                 addDTO.setSourceDetailId(sourceDetailId);
                 addDTO.setDeliveryQty(qty);
                 deliveryDetailList.add(addDTO);
@@ -3944,7 +3955,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 data.setIsDeliver(labelJsonDTO.getIsDeliver());
             }
             if (isFullyManaged) {
-                data.setPlatformOrderStatusName(FullyManagedPlatformStatusEnum.getErpNameByCode(data.getDictPlatform(),data.getPlatformOrderStatus()));
+                data.setPlatformOrderStatusName(FullyManagedPlatformStatusEnum.getName(data.getPlatformOrderStatus()));
                 //扩展信息
                 String extendData = data.getExtendData();
                 if (StringUtils.isNotBlank(extendData)) {
@@ -4407,7 +4418,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         LocalDateTime createTime = soB2cEntity.getCreateTime();
         //全托管订单设置币种
         if (isFullyManagedOrder(soB2cEntity.getDictPlatform())){
-            soB2cEntity.setCurrency(shopInfoEntity.getTradeCurrency());
+            if(CharSequenceUtil.isBlank(soB2cEntity.getCurrency())){
+                soB2cEntity.setCurrency(shopInfoEntity.getTradeCurrency());
+            }
             createTime = soB2cEntity.getPayTime();
         }
         if (StringUtils.isNotBlank(soB2cEntity.getCurrency())) {
@@ -6137,6 +6150,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     dto.setBillStatus(oldEntity.getBillStatus());
                 }
             }
+            //全托管订单 存在历史订单信息，扩展字段数据不更新
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+                dto.setExtendData(oldEntity.getExtendData());
+            }
             // 全托管作废保留以前状态
             if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform()) && dto.getInvalidStatus()) {
                 oldEntity.setApproveStatus(oldApproveStatus);
@@ -6199,10 +6216,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 dto.setInvalidStatus(true);
                 dto.setInvalidRemark(oldEntity.getInvalidRemark());
                 dto.setInvalidType(oldEntity.getInvalidType());
-            }
-
-            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
-                dto.setPlatformOrderStatus(FullyManagedPlatformStatusEnum.getErpCodeByCode(dto.getDictPlatform(),dto.getPlatformOrderStatus()));
             }
             // 只替换更新信息
             SoB2cEntity entity = B2cOrderConsumerConverter.INSTANCE.convertUpdateMainOrder(oldEntity, dto);
@@ -9937,11 +9950,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList) {
+    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList) {
         if (CollUtil.isEmpty(platformList)){
             return Collections.emptyList();
         }
-        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList);
+        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList,codeList);
+    }
+
+    @Override
+    public void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO) {
+        baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
     }
 
 

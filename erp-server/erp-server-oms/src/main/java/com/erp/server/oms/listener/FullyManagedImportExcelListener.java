@@ -34,6 +34,7 @@ import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.ShopInfoService;
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
@@ -46,18 +47,10 @@ import java.util.stream.Collectors;
  * 全托管 销售订单导入
  */
 public class FullyManagedImportExcelListener extends AnalysisEventListener<FullyManagedImportExcelDTO> {
-
-
-    Map<String, SoB2cDTO.AddDTO> map = new HashMap<>();
-
-    /**
-     * 错误的map
-     */
-    Map<String, String> errorMap = new HashMap<>();
-
     /**
      * 错误信息
      */
+    @Getter
     private List<FullyManagedImportExcelDTO> errorList = new ArrayList<>();
 
     /**
@@ -68,6 +61,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
     /**
      * 数据校验成功的
      */
+    @Getter
     private List<FullyManagedImportExcelDTO> successList = new ArrayList<>();
 
     private final DictBasicService dictBasicService = SpringUtil.getBean(DictBasicService.class);
@@ -102,14 +96,66 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
+        try {
+            excelDTO.setIndex(Integer.valueOf(excelDTO.getIndexStr()));
+        }catch (Exception e){
+            errorMsgList.add("序号格式错误");
+        }
         if (CharSequenceUtil.isNotBlank(excelDTO.getPayTimeStr())) {
-            excelDTO.setPayTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getPayTimeStr()));
+            try {
+                excelDTO.setPayTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getPayTimeStr()));
+            }catch (Exception e){
+                errorMsgList.add("支付时间格式错误");
+            }
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getRequiredDeliveryTimeStr())) {
-            excelDTO.setRequiredDeliveryTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredDeliveryTimeStr()));
+            try {
+                excelDTO.setRequiredDeliveryTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredDeliveryTimeStr()));
+            }catch (Exception e){
+                errorMsgList.add("预计发货时间格式错误");
+            }
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getRequiredReceiveTimeStr())) {
-            excelDTO.setRequiredReceiveTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredReceiveTimeStr()));
+            try {
+                excelDTO.setRequiredReceiveTime(LocalDateUtil.stringToLocalDateTime(excelDTO.getRequiredReceiveTimeStr()));
+            }catch (Exception e){
+                errorMsgList.add("预计收货时间格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getAmountStr())) {
+            try {
+                excelDTO.setAmount(new BigDecimal(excelDTO.getAmountStr()));
+            }catch (Exception e){
+                errorMsgList.add("订单金额格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getPriceStr())) {
+            try {
+                excelDTO.setPrice(new BigDecimal(excelDTO.getPriceStr()));
+            }catch (Exception e){
+                errorMsgList.add("真实售价格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getTaxRateStr())) {
+            try {
+                excelDTO.setTaxRate(new BigDecimal(excelDTO.getTaxRateStr()));
+            }catch (Exception e){
+                errorMsgList.add("税率式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getActualShippingCostStr())) {
+            try {
+                excelDTO.setActualShippingCost(new BigDecimal(excelDTO.getActualShippingCostStr()));
+            }catch (Exception e){
+                errorMsgList.add("实际运费格式错误");
+            }
+        }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getQtyStr())) {
+            try {
+                excelDTO.setQty(new Integer(excelDTO.getQtyStr()));
+            }catch (Exception e){
+                errorMsgList.add("下单数量格式错误");
+            }
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getPackageSize())) {
             //根据*拆分，并转换成长宽高
@@ -130,14 +176,6 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         }
         //数据校验是成功的
         dataList.add(excelDTO);
-    }
-
-    public List<FullyManagedImportExcelDTO> getErrorList(){
-        return errorList;
-    }
-
-    public List<FullyManagedImportExcelDTO> getSuccessList(){
-        return successList;
     }
 
     public List<FullyManagedImportExcelDTO> getExcelDateList(){
@@ -178,6 +216,16 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
 
         for (FullyManagedImportExcelDTO excelDTO : dataList) {
             List<String> errorMsgList = new ArrayList<>();
+            //相同序号的平台订单号是否一致
+            List<FullyManagedImportExcelDTO> sameIndexList = dataList.stream().filter(v -> v.getIndex().equals(excelDTO.getIndex())).collect(Collectors.toList());
+            List<String> platformCount = sameIndexList.stream().map(FullyManagedImportExcelDTO::getPlatformCode).distinct().collect(Collectors.toList());
+            if(platformCount.size() > 1){
+                errorMsgList.add("序号【"+excelDTO.getIndex()+"】存在多个平台订单号");
+            }
+            List<String> dictPlatformCount = sameIndexList.stream().map(FullyManagedImportExcelDTO::getDictPlatformName).distinct().collect(Collectors.toList());
+            if(dictPlatformCount.size() > 1){
+                errorMsgList.add("序号【"+excelDTO.getIndex()+"】存在多个平台类型");
+            }
             //平台类型
             String platform = dictList.stream().filter(v -> v.getName().equals(excelDTO.getDictPlatformName())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse(null);
             if(Objects.isNull(platform)){
@@ -208,7 +256,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
             }
             //类目
             if (CharSequenceUtil.isNotBlank(excelDTO.getCategoryNameList())){
-                List<String> categoryIds = categoryList.stream().filter(v -> excelDTO.getCategoryNameList().contains(v.getName())).map(OrderCategoryDetailDTO.ListDTO::getId).collect(Collectors.toList());
+                List<String> categoryIds = categoryList.stream().filter(v -> excelDTO.getCategoryNameList().equals(v.getName())).map(OrderCategoryDetailDTO.ListDTO::getId).collect(Collectors.toList());
                 if(CollectionUtils.isEmpty(categoryIds)){
                     errorMsgList.add("类目不存在【"+excelDTO.getCategoryNameList()+"】");
                 }else {

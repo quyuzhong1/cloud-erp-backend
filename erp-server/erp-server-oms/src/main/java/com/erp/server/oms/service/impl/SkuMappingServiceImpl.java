@@ -54,9 +54,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
-import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
-import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.oms.listener.SkuMappingCustomerExcelListener;
 import com.erp.server.oms.listener.SkuMappingExcelListener;
@@ -1711,14 +1708,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
-        if(null ==  skuParamDTO || StringUtils.isBlank(skuParamDTO.getCutomerId())){
-            throw new ServiceException("客户id不能为空");
-        }
-        return this.baseMapper.listSkuBySkuNos(skuParamDTO);
-    }
-
-    @Override
     public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO) {
         if (Objects.isNull(queryDTO)){
             return Collections.emptyList();
@@ -1729,10 +1718,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return baseMapper.listSkuMappingByParams(queryDTO);
     }
 
-    @Override
-    public List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(ListingInfoDTO.QueryPlatformDTO params) {
-        return baseMapper.listByAccountAndDictPlatform(params);
-    }
 
     @Override
     public PagingVO<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
@@ -1925,6 +1910,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(ListingInfoDTO.QueryPlatformDTO params) {
+        return baseMapper.listByAccountAndDictPlatform(params);
+    }
+
+    @Override
+    public List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO) {
+        if(null ==  skuParamDTO || StringUtils.isBlank(skuParamDTO.getCutomerId())){
+            throw new ServiceException("客户id不能为空");
+        }
+        return this.baseMapper.listSkuBySkuNos(skuParamDTO);
+    }
 
     @Override
     public List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO) {
