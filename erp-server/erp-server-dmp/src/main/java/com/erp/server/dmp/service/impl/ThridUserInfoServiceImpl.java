@@ -47,6 +47,13 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThridUserInfoDTO.AddDTO addDTO) {
+        if(StringUtils.isNotBlank(addDTO.getOpenid())){
+            ThridUserInfoEntity oldThridUserInfoEntity = lambdaQuery().eq(ThridUserInfoEntity::getOpenid, addDTO.getOpenid()).one();
+            if(Objects.nonNull(oldThridUserInfoEntity)){
+                return new BaseResultDTO.AddDTO(oldThridUserInfoEntity.getId(), oldThridUserInfoEntity.getId());
+            }
+        }
+
         ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
         BeanMapper.copy(addDTO.getUserInfo(), thridUserInfoEntity);
         thridUserInfoEntity.setUnionid(addDTO.getUnionid());
