@@ -159,7 +159,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 detail.setMainId(afterSaleEntity.getId());
                 ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                 detail.setSkuNo(productDetail.getSkuNo());
-                detail.setProdcutName(productDetail.getName());
+                detail.setProductName(productDetail.getName());
                 if(downDTOMap.containsKey(detail.getSkuId())){
                     AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                     detail.setPrice(downDTO.getPrice());
@@ -273,7 +273,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     detail.setMainId(afterSaleEntity.getId());
                     ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                     detail.setSkuNo(productDetail.getSkuNo());
-                    detail.setProdcutName(productDetail.getName());
+                    detail.setProductName(productDetail.getName());
                     if(downDTOMap.containsKey(detail.getSkuId())){
                         AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                         detail.setPrice(downDTO.getPrice());
@@ -560,7 +560,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if(InvalidStatusEnum.VOIDED.getStatus().equals(entity.getInvalidStatus())){
             throw new ServiceException(ApiError.ERROR_98005);
         }
-        if (!(ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus().getStatus()) || ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus()))) {
+        if (!ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus().getStatus())) {
            throw new ServiceException(ApiError.ERROR_98005);
         }
         log.info("作废 开始修改售后申请单状态数据，id：【{}】", id);
@@ -1113,7 +1113,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     if(Objects.nonNull(skuMappingDTO)){
                         drop.setSkuId(skuMappingDTO.getProductSkuId());
                         drop.setSkuNo(skuMappingDTO.getProductSkuNo());
-                        drop.setProdcutName(skuMappingDTO.getProductName());
+                        drop.setProductName(skuMappingDTO.getProductName());
                         resultList.add(drop);
                     }
                 }

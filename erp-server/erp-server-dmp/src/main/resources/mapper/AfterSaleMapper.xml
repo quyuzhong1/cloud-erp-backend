@@ -106,7 +106,7 @@
         afsd.repair_amount AS repairAmount,
         afsd.sku_id AS skuId,
         afsd.sku_no AS skuNo,
-        afsd.prodcut_name AS prodcutName,
+        afsd.product_name AS productName,
         afsd.sku_qty AS skuQty,
         afsd.detail_desc AS detailDesc,
         tui.username AS thridUserName,

@@ -83,7 +83,7 @@ public class DmpAfterSaleExcekDTO implements Serializable {
          * 产品名称
          */
 //        @ExcelProperty(value = "产品名称", index = 10)
-        private String prodcutName;
+        private String productName;
 
         /**
          * 数量

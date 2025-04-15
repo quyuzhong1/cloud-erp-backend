@@ -17,7 +17,7 @@
        <result column="repair_amount" property="repairAmount" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="prodcut_name" property="prodcutName" />
+       <result column="product_name" property="productName" />
        <result column="sku_qty" property="skuQty" />
        <result column="detail_desc" property="detailDesc" />
     </resultMap>
@@ -38,7 +38,7 @@
 	afsd.repair_amount,
 	afsd.sku_id,
 	afsd.sku_no,
-	afsd.prodcut_name,
+	afsd.product_name,
 	afsd.sku_qty,
 	afsd.detail_desc
     </sql>
