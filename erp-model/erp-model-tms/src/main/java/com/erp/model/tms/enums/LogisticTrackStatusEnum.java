@@ -96,7 +96,17 @@ public enum LogisticTrackStatusEnum implements EnumMessage {
         }
         return "";
     }
-
+    public static String getCode(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (LogisticTrackStatusEnum item : LogisticTrackStatusEnum.values()) {
+            if (name.equals(item.getName())) {
+                return item.getCode();
+            }
+        }
+        return "";
+    }
     public static String getGroupName(String code) {
         if (StringUtils.isBlank(code)) {
             return "";
