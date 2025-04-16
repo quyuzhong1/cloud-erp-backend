@@ -548,4 +548,14 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
         return baseMapper.searchByKey(dto);
     }
+
+    @Override
+    public List<ListingInfoEntity> listByAuthIds(List<String> authIds) {
+        if (CollectionUtils.isNotEmpty(authIds)){
+            return lambdaQuery()
+                    .in(ListingInfoEntity::getAuthId, authIds)
+                    .list();
+        }
+        return Collections.emptyList();
+    }
 }
