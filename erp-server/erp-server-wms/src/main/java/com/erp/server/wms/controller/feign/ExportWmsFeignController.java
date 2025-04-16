@@ -224,6 +224,11 @@ public class ExportWmsFeignController {
 
 
     @PostMapping("/warehouseLocationSafetyInventory")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "warehouse_id",
+            menuCode = "wms:warehouseLocationSafetyInventory:paging"
+    )
+    @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto) {
         return warehouseLocationSafetyInventoryService.exportWarehouseLocationSafetyInventory(dto);
     }

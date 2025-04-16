@@ -64,6 +64,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
     private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> paging(PagingDTO<WarehouseLocationSafetyInventoryDTO.SearchParamDTO> paramDto) {
+        paramDto.getParams().setPermissionSql(paramDto.getPermissionSql());
         Page<Object> page = new Page<>(paramDto.getCurrPage(), paramDto.getPageSize());
         IPage<WarehouseLocationSafetyInventoryDTO.ViewDTO> result = this.baseMapper.paging(page, paramDto.getParams());
         fillViewList(result.getRecords());
@@ -194,6 +195,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
     @Override
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WarehouseLocationSafetyInventoryEntity> page = this.baseMapper.listByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         List<WarehouseLocationSafetyInventoryDTO.ViewDTO> viewList = BeanMapper.copyList(page.getRecords(), WarehouseLocationSafetyInventoryDTO.ViewDTO.class);
         fillViewList(viewList);

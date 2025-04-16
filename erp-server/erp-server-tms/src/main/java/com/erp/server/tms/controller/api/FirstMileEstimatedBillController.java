@@ -68,7 +68,7 @@ public class FirstMileEstimatedBillController extends BaseController {
             shopTableField = "lb.shop_id",
             menuCode = "tms:firstMileEstimatedBill:paging"
     )
-    public ApiResult<List<FirstMileEstimatedBillDTO.Tab>> tabList(@RequestBody FirstMileEstimatedBillDTO.PagingParam dto){
+    public ApiResult<List<FirstMileEstimatedBillDTO.Tab>> tabList(@RequestParam(required = false) FirstMileEstimatedBillDTO.PagingParam dto){
         List<FirstMileEstimatedBillDTO.Tab> list = firstMileEstimatedBillService.tabList(dto);
         return ApiResult.success(list);
     }

@@ -56,7 +56,7 @@ public class WaveListPdaController {
             warehouseTableField = "sbdd.warehouse_id",
             menuCode = "wms:waveList:paging"
     )
-    public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestBody(required = false) WaveListDTO.SearchParamDTO paramDTO) {
+    public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestParam(required = false) WaveListDTO.SearchParamDTO paramDTO) {
         List<WaveListDTO.TabDTO> list = waveListPdaService.tabList(paramDTO);
         return ApiResult.success(list);
     }

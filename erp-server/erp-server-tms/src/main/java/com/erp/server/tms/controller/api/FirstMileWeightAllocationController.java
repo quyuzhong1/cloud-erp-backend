@@ -82,7 +82,7 @@ public class FirstMileWeightAllocationController extends BaseController {
             menuCode = "tms:firstMileWeightAllocation:paging",
             tableAlias = "a"
     )
-    public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO){
+    public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(@RequestParam(required = false) FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO){
         List<FirstMileWeightAllocationDTO.TabDTO> list = firstMileWeightAllocationService.tabList(pagingParamDTO);
         return ApiResult.success(list);
     }
