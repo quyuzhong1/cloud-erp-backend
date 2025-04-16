@@ -462,6 +462,8 @@ public class AfterSaleDTO implements Serializable {
 
         @Size(max = 11,message = "手机号码最大长度不能超过11位")
         private String phoneNumber;
+        //用户类型 wx , selfAdd
+        private String type;
 
         /**
          * 第三方平台类型
