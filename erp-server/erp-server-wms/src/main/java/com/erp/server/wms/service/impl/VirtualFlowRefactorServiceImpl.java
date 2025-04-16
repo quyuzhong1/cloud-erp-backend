@@ -339,8 +339,12 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             }
             //销售出库单需出库
-            if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(sourceType)) {
+            if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(sourceType) && VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getType().equals(value.get(0).getBusinessType())) {
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
+            }
+            //旺店通销售出库单需出库
+            if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(sourceType) && VirtualInventoryBusinessTypeEnum.OUT_USABLE.getType().equals(value.get(0).getBusinessType())) {
+                dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
             }
             //更新库存
             getSelfBean().approve(dto);
