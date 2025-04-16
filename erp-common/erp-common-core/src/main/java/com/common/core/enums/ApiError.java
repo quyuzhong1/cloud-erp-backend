@@ -1479,6 +1479,7 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_UPLOAD_XML_NOT_EXIST(92185,"XML文件不存在"),
     ERROR_INVOICE_COMPANY_TOKEN_NOT_EXIST(92186,"公司token不存在"),
     ERROR_INVOICE_NFE_UPDATE_CCE(92187,"更新Cce发票失败，原因：{}"),
+    ERROR_INVOICE_NFE_CREATE_INVOICE(92188,"创建发票失败，原因：{}"),
 
 
 
