@@ -150,7 +150,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         //总货值
         BigDecimal totalAmount = BigDecimal.ZERO;
-        List<AfterSaleDetailEntity> detailList = addDTO.getDetailList();
+        List<AfterSaleDetailEntity> detailList = BeanMapper.copyList( addDTO.getDetailList(),AfterSaleDetailEntity.class);
         if(CollUtil.isNotEmpty(detailList)){
             List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
             List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
@@ -283,7 +283,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
             //新增明细
             BigDecimal totalAmount = BigDecimal.ZERO;
-            List<AfterSaleDetailEntity> detailList = updateDTO.getDetailList();
+            List<AfterSaleDetailEntity> detailList = BeanMapper.copyList( updateDTO.getDetailList(),AfterSaleDetailEntity.class);
             if(CollUtil.isNotEmpty(detailList)){
                 List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
                 List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
@@ -995,7 +995,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 if(StringUtils.isBlank(t.getRemark())){
                     t.setRemark(t.getTrackNo());
                 }else {
-                    t.setRemark(t.getTrackNo() + "\r\n" +t.getRemark());
+                    t.setRemark(t.getTrackNo() + "<br/>" +t.getRemark());
                 }
             }
         });
