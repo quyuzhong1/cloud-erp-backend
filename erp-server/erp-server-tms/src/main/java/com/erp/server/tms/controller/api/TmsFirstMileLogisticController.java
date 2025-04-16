@@ -80,7 +80,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             menuCode = "tms:tmsFirstMileLogistic:paging",
             tableAlias = "lb"
     )
-    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList(TmsFirstMileLogisticDTO.PagingParamDTO dto) {
+    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList(@RequestParam(required = false) TmsFirstMileLogisticDTO.PagingParamDTO dto) {
         return success(tmsFirstMileLogisticService.tabList(dto));
     }
 

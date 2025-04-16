@@ -66,7 +66,7 @@ public class DeliveryOrderController extends BaseController {
             warehouseTableField = "t.to_warehouse_id",
             menuCode = "wms:deliveryOrder:paging"
     )
-    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList(@RequestBody(required = false)DeliveryOrderDTO.ParamDTO paramDTO) {
+    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList(@RequestParam(required = false)DeliveryOrderDTO.ParamDTO paramDTO) {
         paramDTO.setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
         List<DeliveryOrderDTO.TabListDTO> tabList = deliveryOrderService.tabList(paramDTO);
         return success(tabList);

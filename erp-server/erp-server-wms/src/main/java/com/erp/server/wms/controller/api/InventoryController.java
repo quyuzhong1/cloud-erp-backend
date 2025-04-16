@@ -318,7 +318,7 @@ public class InventoryController extends BaseController {
             warehouseTableField = "it.warehouse_id",
             menuCode = "wms:inventory:paging"
     )
-    public ApiResult<List<InventoryDTO.TabDto>> tabList(@RequestBody(required = false) InventoryDTO.SearchParamDTO searchParamDTO){
+    public ApiResult<List<InventoryDTO.TabDto>> tabList(@RequestParam(required = false) InventoryDTO.SearchParamDTO searchParamDTO){
         List<InventoryDTO.TabDto> list = new ArrayList<>(3);
 
         long countWarehouse = inventoryService.countByWarehouse(searchParamDTO);
