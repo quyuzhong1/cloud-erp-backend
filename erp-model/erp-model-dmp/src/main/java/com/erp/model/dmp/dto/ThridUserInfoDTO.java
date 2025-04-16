@@ -325,6 +325,33 @@ public class ThridUserInfoDTO implements Serializable {
         private Integer errcode;
     }
 
+    /**
+     * 新增返回值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddResultDTO {
+        /**
+         * 表 id
+         */
+        private String id;
+
+        /**
+         * 编码
+         */
+        private String code;
+
+        /**
+         * 编码
+         */
+        private String thridUserId;
+
+        public AddResultDTO(String id, String code,String thridUserId) {
+            this.id = id;
+            this.code = code;
+            this.thridUserId = thridUserId;
+        }
+    }
 
 
 }

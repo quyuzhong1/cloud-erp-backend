@@ -31,7 +31,7 @@ public interface AfterSaleFeign {
      * @date: 2025-04-06
      */
     @PostMapping("/addThridUser")
-    ApiResult<BaseResultDTO.AddDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto);
+    ApiResult<ThridUserInfoDTO.AddResultDTO> addThridUser(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto);
 
 
     /**
