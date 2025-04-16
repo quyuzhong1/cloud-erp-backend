@@ -138,6 +138,7 @@ public enum ModuleTypeEnum {
     AFTER_SALE("120", "售后申请"),
     INVOICE_SETTING("121", "发票设置"),
     INVOICE_SETTING_DETAIL("122", "发票设置明细"),
+    INVOICE_INVALID("123", "发票设置明细"),
             ;
 
 

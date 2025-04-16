@@ -1,9 +1,13 @@
 package com.sdk.third.tf;
 
+import cn.hutool.http.HttpRequest;
+import cn.hutool.http.HttpResponse;
+import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.entity.CfgSettingEntity;
@@ -140,16 +144,21 @@ public class TfFiscalService {
         String path = "/emitir_transparente";
         String accessToken = getAccessToken();
         nfeCreateDTO.setTokenEmpresa(accessToken);
+
+        HttpRequest createPost = HttpUtil.createPost(URL+path);
+        String body = JSONUtil.toJsonStr(nfeCreateDTO);
+        createPost.body(body);
         // 创建明确包含 Content-Type 的请求头
         Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type", "application/json"); // 关键设置
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCreateDTO), null, headers, RequestMethod.POST);
-        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        headers.put("Content-Type","application/json");
+        headers.put("Content-Length", String.valueOf(body.length()));
+        headers.put("Host", "tffiscal.com.br");
+        createPost.addHeaders(headers);
+        HttpResponse response = createPost.execute();
+        if (200 != response.getStatus() ) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,response.body());
         }
-        return apiResult.getData();
+        return response.body();
     }
 
 

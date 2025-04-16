@@ -181,6 +181,26 @@ public class NfeInvoiceDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class NfePaymentDTO {
+        /**
+         * 金额
+         */
+        @Alias("amount")
+        private BigDecimal amount;
+        /**
+         * 付款方式
+         */
+        @Alias("method")
+        private String method;
+        /**
+         * 卡类型
+         */
+        @Alias("card_type")
+        private String cardType;
+    }
+
+    @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class NfeCancelDTO {
 
