@@ -3663,7 +3663,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //地址类型
             String addressTypeStr = mainInfo.getAddressType();
-            String addressType = AddressTypeEnum.getCodeByName(addressTypeStr);
+            String addressType = CustomerAddressTypeEnum.getCode(addressTypeStr);
             if (StringUtils.isBlank(addressType)) {
                 errorMsgList.add("地址类型不存在");
             }
