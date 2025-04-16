@@ -181,6 +181,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), "新增操作");
 
         //新增明细
+        detailList.stream().forEach(e -> e.setMainId(afterSaleEntity.getId()));
         afterSaleDetailService.saveBatch(detailList);
 
         //新增维修记录
