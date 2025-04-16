@@ -173,7 +173,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
             }
         }
-        afterSaleEntity.setTotalPrice(totalAmount);
+        if(Objects.isNull(afterSaleEntity.getTotalPrice())){
+            afterSaleEntity.setTotalPrice(totalAmount);
+        }
+
 
         log.info("开始新增售后申请单");
         afterSaleEntity.setBillDate(LocalDate.now());
@@ -310,7 +313,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
                 afterSaleDetailService.saveOrUpdateBatch(detailList);
             }
-            afterSaleEntity.setTotalPrice(totalAmount);
+
+            if(Objects.isNull(afterSaleEntity.getTotalPrice())){
+                afterSaleEntity.setTotalPrice(totalAmount);
+            }
 
             // 删除明细数据
             attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
@@ -825,6 +831,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         //单据状态
         data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
+
+        if(data.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())){
+            data.setApproveTime(null);
+        }
     }
 
     /**
