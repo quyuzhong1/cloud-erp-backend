@@ -13,6 +13,7 @@ import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.entity.CfgInvoiceInvalidEntity;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.oms.mapper.CfgInvoiceInvalidMapper;
 import com.erp.server.oms.service.CfgInvoiceInvalidService;
@@ -73,7 +74,7 @@ public class CfgInvoiceInvalidServiceImpl extends SuperServiceImpl<CfgInvoiceInv
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "作废发票号" , cfgInvoiceInvalidEntity.getId());
-        operateLogService.addModuleOperateLog(msg, null, cfgInvoiceInvalidEntity.getId(), "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.INVOICE_INVALID.getCode(), cfgInvoiceInvalidEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(cfgInvoiceInvalidEntity.getId(), cfgInvoiceInvalidEntity.getId());
     }

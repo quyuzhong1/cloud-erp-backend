@@ -132,6 +132,7 @@ public enum ModuleTypeEnum {
     INVOICE_INFO("117", "发票上传记录"),
     INVOICE_SETTING("121", "发票设置"),
     INVOICE_SETTING_DETAIL("122", "发票设置明细"),
+    INVOICE_INVALID("123", "发票设置明细"),
             ;
 
 
