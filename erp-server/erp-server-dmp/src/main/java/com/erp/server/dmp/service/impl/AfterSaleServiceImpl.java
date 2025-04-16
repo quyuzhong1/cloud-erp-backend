@@ -150,7 +150,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         //总货值
         BigDecimal totalAmount = BigDecimal.ZERO;
-        List<AfterSaleDetailEntity> detailList = addDTO.getDetailList();
+        List<AfterSaleDetailEntity> detailList = BeanMapper.copyList( addDTO.getDetailList(),AfterSaleDetailEntity.class);
         if(CollUtil.isNotEmpty(detailList)){
             List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
             List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
@@ -173,7 +173,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
             }
         }
-        afterSaleEntity.setTotalPrice(totalAmount);
+        if(Objects.isNull(afterSaleEntity.getTotalPrice())){
+            afterSaleEntity.setTotalPrice(totalAmount);
+        }
+
 
         log.info("开始新增售后申请单");
         afterSaleEntity.setBillDate(LocalDate.now());
@@ -283,7 +286,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
             //新增明细
             BigDecimal totalAmount = BigDecimal.ZERO;
-            List<AfterSaleDetailEntity> detailList = updateDTO.getDetailList();
+            List<AfterSaleDetailEntity> detailList = BeanMapper.copyList( updateDTO.getDetailList(),AfterSaleDetailEntity.class);
             if(CollUtil.isNotEmpty(detailList)){
                 List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
                 List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
@@ -310,7 +313,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
                 afterSaleDetailService.saveOrUpdateBatch(detailList);
             }
-            afterSaleEntity.setTotalPrice(totalAmount);
+
+            if(Objects.isNull(afterSaleEntity.getTotalPrice())){
+                afterSaleEntity.setTotalPrice(totalAmount);
+            }
 
             // 删除明细数据
             attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
@@ -498,6 +504,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
+        // 审核中的数据允许审核
+        if(Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
+            throw new ServiceException(ApiError.ERROR_98012);
+        }
+
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
@@ -820,6 +831,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         //单据状态
         data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
+
+        if(data.getStatus().equals(ApproveStatusEnum.APPROVE_ING.getCode())){
+            data.setApproveTime(null);
+        }
     }
 
     /**
@@ -951,9 +966,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     batchResultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), "当前节点不能小于等于原节点");
                 }else {
                     batchResultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+
+
                     //更新状态
                     entity.setStatus(dto.getNode());
-                    updateById(entity);
 
                     AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), dto.getNode());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
@@ -962,6 +978,18 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     }
                     afterSaleProgressEntity.setRemark(dto.getRemark());
                     afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+                    //erp状态变更客户寄件，输入快递单号后，需要流转至售后签收（待签收）
+                    if(StringUtils.isNotBlank(dto.getTrackNo()) && afterSaleStatus.getCode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())){
+                        AfterSaleProgressEntity byNode = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+                        byNode.setNodeTime(LocalDateTime.now());
+                        afterSaleProgressService.updateById(byNode);
+                        //更新状态
+                        entity.setStatus(AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
+                    }
+
+                    //更新
+                    updateById(entity);
 
                     //发送微信订阅消息
                     TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -995,7 +1023,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 if(StringUtils.isBlank(t.getRemark())){
                     t.setRemark(t.getTrackNo());
                 }else {
-                    t.setRemark(t.getTrackNo() + "\r\n" +t.getRemark());
+                    t.setRemark(t.getTrackNo() + "\n" +t.getRemark());
                 }
             }
         });
