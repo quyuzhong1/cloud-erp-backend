@@ -33,7 +33,6 @@ import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCalculateFeeResponse;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
-import com.erp.model.wms.entity.OverseasTransferWarehouseEntity;
 import com.erp.model.wms.enums.SptWarehouseStatusEnum;
 import com.erp.model.wms.enums.SptWarehouseTypeEnum;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
@@ -138,22 +137,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             warehouseList.forEach(v->{
                 v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.STANDARD.getName());
                 v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
-            });
-        }
-        List<OverseasTransferWarehouseEntity> overseasTransferWarehouseEntities = overseasTransferWarehouseService.lambdaQuery().eq(OverseasTransferWarehouseEntity::getDictPlatform, entity.getCode()).list();
-//        List<OverseasProviderWarehouseDTO.ViewDTO> transferViews = BeanMapper.copyList(overseasTransferWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
-        if(CollUtil.isNotEmpty(overseasTransferWarehouseEntities)){
-            overseasTransferWarehouseEntities.forEach(overseasTransferWarehouseEntitiy->{
-                OverseasProviderWarehouseDTO.ViewDTO v = new OverseasProviderWarehouseDTO.ViewDTO();
-                v.setId(overseasTransferWarehouseEntitiy.getId());
-                v.setMainId(id);
-                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.TRANSIT.getName());
-                v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
-                v.setPlatformWarehouseCode(overseasTransferWarehouseEntitiy.getPlatformToWarehouseCode());
-                v.setPlatformWarehouseName(overseasTransferWarehouseEntitiy.getPlatformToWarehouseName());
-                v.setCountry(overseasTransferWarehouseEntitiy.getCountry());
-                v.setCountryName(overseasTransferWarehouseEntitiy.getCountryName());
-                warehouseList.add(v);
             });
         }
         viewDTO.setDetailList(warehouseList);

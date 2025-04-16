@@ -21,7 +21,11 @@ import lombok.experimental.Accessors;
 @Accessors(chain = true)
 @TableName("overseas_transfer_warehouse")
 public class OverseasTransferWarehouseEntity extends BaseEntity<OverseasTransferWarehouseEntity> {
-
+    /**
+     * 第三方服务商表id
+     */
+    @TableField("overseas_provider_id")
+    private String overseasProviderId;
     /**
     * 平台类型
     */
