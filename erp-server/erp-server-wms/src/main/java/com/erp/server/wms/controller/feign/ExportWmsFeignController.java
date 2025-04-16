@@ -550,6 +550,7 @@ public class ExportWmsFeignController {
     @PostMapping("/qcBill")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
+            warehouseTableField = "qb.warehouse_id",
             menuCode = "wms:qcBill:exportQcBill",
             tableAlias = "qb")
     @WebAdvanceQuery(handler = QcInfoQueryHandler.class)

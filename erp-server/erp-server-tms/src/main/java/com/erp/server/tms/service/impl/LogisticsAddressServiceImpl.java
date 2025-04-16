@@ -243,6 +243,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
 
     @Override
     public PagingVO<LogisticsAddressDTO.PagingViewDTO> exportLogisticsAddress(PagingDTO<LogisticsAddressDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<LogisticsAddressDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             fillData(page.getRecords());

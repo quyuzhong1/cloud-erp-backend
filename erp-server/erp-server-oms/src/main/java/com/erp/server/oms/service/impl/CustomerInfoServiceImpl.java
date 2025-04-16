@@ -2077,6 +2077,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Override
     public List<cn.hutool.core.lang.Pair<Integer,List<?>>> exportCustomerPairList(PagingDTO<CustomerDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         List<cn.hutool.core.lang.Pair<Integer,List<?>>> pairList = new ArrayList<>();
         Page<CustomerDTO.PagingExportDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         List<CustomerDTO.PagingExportDTO> records = page.getRecords();
@@ -2190,6 +2191,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
 
     @Override
     public PagingVO<CustomerDTO.PagingExportDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<CustomerDTO.PagingExportDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         List<CustomerDTO.PagingExportDTO> records = page.getRecords();
         if(CollUtil.isEmpty(records)) {

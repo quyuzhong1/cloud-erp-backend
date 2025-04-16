@@ -77,6 +77,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -205,6 +206,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private SoB2cDeliveryService soB2cDeliveryService;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -271,7 +274,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<SoB2cDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
         SoB2cDeliveryDTO.PagingParamDTO searchParam = new SoB2cDeliveryDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
+        String permissionSql = param.getPermissionSql();
+        searchParam.setPermissionSql(permissionSql);
         List<SoB2cDeliveryDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = SoB2cDeliveryStatusEnum.getStatusList();
@@ -283,16 +287,27 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         });
         //拦截中 (处理中的拦截单)
+        param.setPermissionSql(getPermissionSql());
         List<SoB2cDeliveryInterceptDTO.TabListDTO> interceptTabList = soB2cDeliveryInterceptService.tabList(param);
         SoB2cDeliveryInterceptDTO.TabListDTO interceptDTO = interceptTabList.stream().filter(v->SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode().equals(v.getTabFlag())).findFirst().orElse(null);
         Integer interceptCount = interceptDTO == null?0:interceptDTO.getCount();
         list.add(new SoB2cDeliveryDTO.TabListDTO("intercepting", interceptCount));
         // 手动标发
+        param.setPermissionSql(permissionSql);
         int falseShipment = baseMapper.countShipmentMark(param);
         list.add(new SoB2cDeliveryDTO.TabListDTO("falseShipment", falseShipment));
         list.add(new SoB2cDeliveryDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDeliveryDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
+    }
+
+    private String getPermissionSql() {
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sbdid.warehouse_id");
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        if (CharSequenceUtil.isAllBlank(warehousePermissionSql, shopPermissionSql)) {
+            return null;
+        }
+        return CharSequenceUtil.format("{} {}", CharSequenceUtil.isNotBlank(warehousePermissionSql) ? warehousePermissionSql : " and 1=1 ", CharSequenceUtil.isNotBlank(shopPermissionSql) ? shopPermissionSql : " and 1=1 ");
     }
 
     @Override

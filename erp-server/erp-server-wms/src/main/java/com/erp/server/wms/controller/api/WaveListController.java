@@ -94,13 +94,13 @@ public class WaveListController extends BaseController {
     /**
      * tabList
      */
-    @GetMapping("/tabList")
+    @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "sbd.shop_id",
             warehouseTableField = "sbdd.warehouse_id",
             menuCode = "wms:waveList:paging"
     )
-    public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestParam(required = false) WaveListDTO.SearchParamDTO paramDTO) {
+    public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestBody WaveListDTO.SearchParamDTO paramDTO) {
         List<WaveListDTO.TabDTO> list = waveListService.tabList(paramDTO);
         return ApiResult.success(list);
     }

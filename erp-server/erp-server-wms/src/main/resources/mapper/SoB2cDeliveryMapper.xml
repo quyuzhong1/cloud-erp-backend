@@ -101,9 +101,12 @@
         <include refid="pageSql"/>
     </select>
     <select id="countShipmentMark" resultType="java.lang.Integer">
-        select count(*) from so_b2c_delivery sbd where
-        is_deleted=FALSE
-        and shipment_mark = 'manual'
+        select count(distinct sbd.id)
+        from so_b2c_delivery sbd
+        LEFT JOIN so_b2c_delivery_detail sbdd ON sbd.id = sbdd.main_id AND sbd.is_deleted = FALSE
+        where
+        sbd.is_deleted=FALSE
+        and sbd.shipment_mark = 'manual'
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
