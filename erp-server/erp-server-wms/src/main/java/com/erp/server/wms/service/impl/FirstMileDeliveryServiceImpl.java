@@ -2477,5 +2477,20 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         }
         return baseMapper.listDeliveryByReportMonth(approveStatus, sourceType, reportMonth,shipmentCode,asin,msku);
     }
+
+    @Override
+    public List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(List<String> deliveryCodes) {
+        if(CollUtil.isEmpty(deliveryCodes)){
+            return Collections.emptyList();
+        }
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> resultList = new ArrayList<>();
+        for (String deliveryCode : deliveryCodes) {
+            FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
+            reqDto.setDeliveryCodeList(Collections.singletonList(deliveryCode));
+            List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = getGenerateLogisticDTO(reqDto);
+            resultList.addAll(generateLogisticDTO);
+        }
+        return resultList;
+    }
 }
 

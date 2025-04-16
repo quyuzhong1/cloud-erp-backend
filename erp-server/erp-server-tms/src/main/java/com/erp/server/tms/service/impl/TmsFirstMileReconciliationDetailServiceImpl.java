@@ -1547,42 +1547,37 @@ public class TmsFirstMileReconciliationDetailServiceImpl extends SuperServiceImp
 
         //发货单维度下的物流单计费重之和
         Map<String, BigDecimal> weightMap = new HashMap<>();
-        for (String sourceCode : sourceCodeList) {
-            FirstMileDeliveryDTO.GenerateLogisticReqDTO reqDto = new FirstMileDeliveryDTO.GenerateLogisticReqDTO();
-            reqDto.setDeliveryCodeList(Collections.singletonList(sourceCode));
-            List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTO = wmsFirstMileDeliveryFeign.getGenerateLogisticDTO(reqDto);
-            List<TmsFirstMileLogisticDTO.DeliveryDTO> deliveryDTOList = BeanUtil.copyToList(generateLogisticDTO,TmsFirstMileLogisticDTO.DeliveryDTO.class);
-            if(CollUtil.isNotEmpty(deliveryDTOList)){
-                for (TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO : deliveryDTOList) {
-                    if(CollUtil.isNotEmpty(deliveryDTO.getPackingDTOList())){
-                        LogisticsChannelEntity channelEntity = logisticsChannelService.getById(firstMileLogisticMap.get(deliveryDTO.getOutstockCode()));
-                        if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting() != null && channelEntity.getVolumeSetting() > 0){
-                            deliveryDTO.getPackingDTOList().forEach(v -> {
-                                v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
-                            });
+        List<FirstMileDeliveryDTO.GenerateLogisticDTO> generateLogisticDTOS = wmsFirstMileDeliveryFeign.listGenerateLogisticDTO(sourceCodeList);
+        List<TmsFirstMileLogisticDTO.DeliveryDTO> deliveryDTOList = BeanUtil.copyToList(generateLogisticDTOS,TmsFirstMileLogisticDTO.DeliveryDTO.class);
+        if(CollUtil.isNotEmpty(deliveryDTOList)){
+            for (TmsFirstMileLogisticDTO.DeliveryDTO deliveryDTO : deliveryDTOList) {
+                if(CollUtil.isNotEmpty(deliveryDTO.getPackingDTOList())){
+                    LogisticsChannelEntity channelEntity = logisticsChannelService.getById(firstMileLogisticMap.get(deliveryDTO.getOutstockCode()));
+                    if(Objects.nonNull(channelEntity) && channelEntity.getVolumeSetting() != null && channelEntity.getVolumeSetting() > 0){
+                        deliveryDTO.getPackingDTOList().forEach(v -> {
+                            v.setVolumeWeight(v.getMultiplySize().divide(BigDecimal.valueOf(channelEntity.getVolumeSetting()), 4, RoundingMode.HALF_UP));
+                        });
+                    }
+
+                    BigDecimal volumeWeight = BigDecimal.ZERO;
+                    BigDecimal packageWeight = BigDecimal.ZERO;
+                    for (TmsFirstMileLogisticDTO.PackingDTO dto : deliveryDTO.getPackingDTOList()) {
+                        if(Objects.nonNull(dto.getVolumeWeight())){
+                            volumeWeight = volumeWeight.add(dto.getVolumeWeight());
+                        }
+                        if(StringUtils.isNotBlank(dto.getPackageWeight())){
+                            packageWeight = packageWeight.add(new BigDecimal(dto.getPackageWeight()));
                         }
 
-                        BigDecimal volumeWeight = BigDecimal.ZERO;
-                        BigDecimal packageWeight = BigDecimal.ZERO;
-                        for (TmsFirstMileLogisticDTO.PackingDTO dto : deliveryDTO.getPackingDTOList()) {
-                            if(Objects.nonNull(dto.getVolumeWeight())){
-                                volumeWeight = volumeWeight.add(dto.getVolumeWeight());
-                            }
-                            if(StringUtils.isNotBlank(dto.getPackageWeight())){
-                                packageWeight = packageWeight.add(new BigDecimal(dto.getPackageWeight()));
-                            }
-
-                        }
-                        if(volumeWeight.compareTo(packageWeight) > 0){
-                            weightMap.put(deliveryDTO.getOutstockCode(), volumeWeight);
-                        }else {
-                            weightMap.put(deliveryDTO.getOutstockCode(), packageWeight);
-                        }
+                    }
+                    if(volumeWeight.compareTo(packageWeight) > 0){
+                        weightMap.put(deliveryDTO.getOutstockCode(), volumeWeight);
+                    }else {
+                        weightMap.put(deliveryDTO.getOutstockCode(), packageWeight);
                     }
                 }
             }
         }
-
 
         //发货单明细
         List<FirstMileDeliveryDTO.ListFirstMileDTO> firstMileDetailList = wmsFirstMileDeliveryFeign.listDetailByCodes(sourceCodeList);
