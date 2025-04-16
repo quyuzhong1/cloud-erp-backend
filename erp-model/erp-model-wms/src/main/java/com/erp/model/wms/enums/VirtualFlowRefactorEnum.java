@@ -1,0 +1,59 @@
+package com.erp.model.wms.enums;
+
+import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
+import com.fasterxml.jackson.annotation.JsonValue;
+
+public enum VirtualFlowRefactorEnum implements EnumMessage {
+
+    B2B("b2b","B2B销售订单"),
+    B2C("b2c","B2C销售订单"),
+    FIRST_MILE("firstMile","头程订单"),
+    WAREHOUSE_ALLOCATION("warehouseAllocation","分货单")
+    ;
+
+    /**
+     * 类型
+     */
+    @EnumValue
+    @JsonValue
+    private String code;
+    /**
+     * 名称
+     */
+    private String name;
+
+
+    VirtualFlowRefactorEnum(String code, String name) {
+        this.code = code;
+        this.name = name;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public static String getName(String code) {
+        for (VirtualFlowRefactorEnum settingEnum : VirtualFlowRefactorEnum.values()) {
+            if (code.equals(settingEnum.getCode())) {
+                return settingEnum.getName();
+            }
+        }
+        return "";
+    }
+
+    public static VirtualFlowRefactorEnum getEnum(String code) {
+        for (VirtualFlowRefactorEnum settingEnum : VirtualFlowRefactorEnum.values()) {
+            if (code.equals(settingEnum.getCode())) {
+                return settingEnum;
+            }
+        }
+        return null;
+    }
+}

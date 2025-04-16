@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
 /**
  * <p>
  * 系统配置管理 服务实现类
@@ -265,5 +266,27 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private List<CfgSettingEntity> listCfgSetting () {
         List<CfgSettingEntity> list = baseMapper.listCfgSetting();
         return list;
+    }
+
+    /**
+     * @description: 查询未禁用配置
+     * @author jack
+     * @date: 2025-03-31
+     * @return List<CfgSettingEntity>
+     */
+    @Override
+    public List<CfgSettingEntity> listCfgSettingByKeys(List<String> keys) {
+        return lambdaQuery().in(CfgSettingEntity::getKey, keys).eq(CfgSettingEntity::getDisabled, Boolean.FALSE).eq(CfgSettingEntity::getIsDeleted, Boolean.FALSE).list();
+    }
+
+    /**
+     * @description: 查询费用分摊配置禁用配置
+     * @author jack
+     * @date: 2025-03-31
+     * @return CfgSettingValueDTO.AllocationSettingDTO
+     */
+    @Override
+    public CfgSettingValueDTO.AllocationSettingDTO getCfgSettingByAllocationSetting() {
+        return view().getAllocationSettingDTO();
     }
 }

@@ -126,8 +126,14 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }
 
-
-        shudiyunB2cOrderDTO.setRoot_node_no(rootNodeNoInitial);
+        // 父节点单号=平台退货订单号
+        shudiyunB2cOrderDTO.setParent_node_no(rootNodeNoInitial);
+        String targetRootNode = rootNodeNoInitial;
+        if (StringUtils.isNotBlank(entity.getPlatformOrderCode())){
+            targetRootNode = entity.getPlatformOrderCode();
+        }
+        shudiyunB2cOrderDTO.setRoot_node_no(targetRootNode);
+        shudiyunB2cOrderDTO.setRoot_node_no_initial(targetRootNode);
         shudiyunB2cOrderDTO.setGoods_no(detailEntity.getSkuNo());
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
         shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
@@ -139,11 +145,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
         }
 
-        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            shudiyunB2cOrderDTO.setIs_gift(1);
-        } else {
-            shudiyunB2cOrderDTO.setIs_gift(0);
-        }
+//        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
+//            shudiyunB2cOrderDTO.setIs_gift(1);
+//        } else {
+//            shudiyunB2cOrderDTO.setIs_gift(0);
+//        }
 
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
@@ -218,7 +224,6 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
 
         shudiyunB2cOrderDTO.setSource_system("SDC");
-        shudiyunB2cOrderDTO.setRoot_node_no_initial(rootNodeNoInitial);
 
         // 国家编码
         // 国家名称

@@ -13,6 +13,7 @@ import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
+import org.apache.commons.math3.util.Pair;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -90,7 +91,7 @@ public interface SyncSoB2cService {
                                                          List<ShopInfoEntity> shopInfoList,
                                                          List<CustomerInfoEntity> customerInfoList,
                                                          List<BaseIdDTO.CodeDTO> companyEntities,
-                                                         Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                         Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap,
                                                          SoB2cReceiverEntity receiverEntity,
                                                          List<DictBasicEntity> omsAllDictList,
                                                          List<DictPartitionEntity> partitionEntityList,
@@ -113,7 +114,7 @@ public interface SyncSoB2cService {
                                                             List<ShopInfoEntity> shopInfoList,
                                                             List<CustomerInfoEntity> customerInfoList,
                                                             List<BaseIdDTO.CodeDTO> companyEntities,
-                                                            Map<String, BigDecimal> deliveryDetailPriceMap,
+                                                            Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap,
                                                             SoB2cReceiverEntity receiverEntity,
                                                             List<DictBasicEntity> omsAllDictList,
                                                             List<DictPartitionEntity> partitionEntityList,
@@ -133,12 +134,12 @@ public interface SyncSoB2cService {
     void syncSdyCancelOrder(SoB2cEntity mainEntity, List<SoB2cDetailEntity> detailList, String code);
 
 
-    Map<String, BigDecimal> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
-                                                                    List<SoB2cDetailEntity> soB2cDetailEntityList,
-                                                                    List<SkuVO> skuVOList
+    Map<String, Pair<BigDecimal, BigDecimal>> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
+                                                                                      List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                                                                      List<SkuVO> skuVOList
     );
 
-    Map<String, BigDecimal> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
+    Map<String, Pair<BigDecimal, BigDecimal>> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
                                                           List<SoB2cDetailEntity> soB2cDetailEntityList,
                                                           List<SkuVO> skuVOList,
                                                           List<BomChildrenSkuDTO> bomChildrenSkuDTOS

@@ -54,6 +54,7 @@ import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -61,6 +62,7 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.tms.convert.FmLogisticsConverter;
@@ -201,6 +203,8 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
     private FirstMileCostAllocationService firstMileCostAllocationService;
     @Resource
     private TmsCostDetailService tmsCostDetailService;
+    @Resource
+    private PackingTaskFeign packingTaskFeign;
     private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -1997,6 +2001,17 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
         }
         if(!com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum.WAIT.equals(firstMileDeliveryEntity.getLogisticsStatus())){
             return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单只有未生成状态才能下推");
+        }
+
+        List<PackingTaskEntity> packingTaskList = packingTaskFeign.getPackingStatusByFirstMileDelivery(firstMileDeliveryEntity);
+        if(CollUtil.isEmpty(packingTaskList)){
+            return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单只有已装箱才能下推");
+        }else{
+            for (PackingTaskEntity entity : packingTaskList) {
+                if(!PackingTaskStatusEnum.PACKED.getCode().equals(entity.getPackingStatus())){
+                    return BatchResultDTO.fail(firstMileDeliveryEntity.getId(),firstMileDeliveryEntity.getCode(),"物流单只有已装箱才能下推");
+                }
+            }
         }
 
         TmsFirstMileLogisticDTO.AddDTO addDTO = new TmsFirstMileLogisticDTO.AddDTO();
