@@ -126,7 +126,7 @@ public class AfterSaleDetailDTO implements Serializable {
         /**
         * skuId
         */
-        @NotBlank(message = "skuId不能为空")
+        @NotBlank(message = "sku不能为空")
         @Size(max = 32,message = "skuId最大长度不能超过32位")
         private String skuId;
 

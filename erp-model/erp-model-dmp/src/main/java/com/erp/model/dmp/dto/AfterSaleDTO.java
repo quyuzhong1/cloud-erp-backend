@@ -8,7 +8,11 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.Valid;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -552,7 +556,7 @@ public class AfterSaleDTO implements Serializable {
          * 明细
          */
         @NotEmpty(message = "售后明细不能为空")
-        private List<AfterSaleDetailDTO.UpdateDTO> detailList;
+        private List<AfterSaleDetailDTO.@Valid UpdateDTO> detailList;
     }
 
     @Data
