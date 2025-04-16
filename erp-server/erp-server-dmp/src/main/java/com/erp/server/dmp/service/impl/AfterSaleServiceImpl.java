@@ -235,11 +235,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         //保存小程序附件
         if(CollUtil.isNotEmpty(addDTO.getAttachmentList())){
-            for (AfterSaleDTO.AttachmentDTO dto : addDTO.getAttachmentList()) {
+            for (String attachment : addDTO.getAttachmentList()) {
                 AttachmentEntity entity = new AttachmentEntity();
-                entity.setAttachName(dto.getUrl());
-                entity.setAttachUrl(dto.getUrl());
-                entity.setAttachSize(dto.getSize());
+                entity.setAttachName(attachment);
+                entity.setAttachUrl(attachment);
                 entity.setType("after_sale");
                 entity.setBusinessId(afterSaleEntity.getId());
                 attachmentService.save(entity);
@@ -330,11 +329,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
             //保存小程序附件
             if(CollUtil.isNotEmpty(updateDTO.getAttachmentList())){
-                for (AfterSaleDTO.AttachmentDTO dto : updateDTO.getAttachmentList()) {
+                for (String attachment : updateDTO.getAttachmentList()) {
                     AttachmentEntity entity = new AttachmentEntity();
-                    entity.setAttachName(dto.getUrl());
-                    entity.setAttachUrl(dto.getUrl());
-                    entity.setAttachSize(dto.getSize());
+                    entity.setAttachName(attachment);
+                    entity.setAttachUrl(attachment);
                     entity.setType("after_sale");
                     entity.setBusinessId(afterSaleEntity.getId());
                     attachmentService.save(entity);
@@ -995,9 +993,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
             if(StringUtils.isNotBlank(t.getTrackNo())){
                 if(StringUtils.isBlank(t.getRemark())){
-                    t.setRemark("快递单号："+t.getTrackNo());
+                    t.setRemark(t.getTrackNo());
                 }else {
-                    t.setRemark("快递单号："+t.getTrackNo() + "\n" +t.getRemark());
+                    t.setRemark(t.getTrackNo() + "\r\n" +t.getRemark());
                 }
             }
         });
@@ -1237,41 +1235,4 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 dmpPushMsgEntity, IdUtil.simpleUUID());
     }
 
-
-//    public static void main(String[] args) {
-//        String json ="{\"touser\": \"\",\n" +
-//                "  \"template_id\": \"11iXL0cf0mE57Rnxy6wMH_Gb4tSXed4NFXaAdQsIOr8\",\n" +
-//                "  \"page\": \"pages/repairProgress/index?code=\",\n" +
-//                "  \"miniprogram_state\":\"developer\",\n" +
-//                "  \"lang\":\"zh_CN\",\n" +
-//                "\t \"data\":{\n" +
-//                "        \"character_string1\": {\n" +
-//                "            \"value\": \"\"\n" +
-//                "        },\n" +
-//                "        \"thing2\": {\n" +
-//                "            \"value\": \"\"\n" +
-//                "        },\n" +
-//                "\t\t\t\t\"time6\": {\n" +
-//                "            \"value\": \"\"\n" +
-//                "        },\n" +
-//                "        \"thing7\": {\n" +
-//                "            \"value\": \"如有疑问，请联系客服\"\n" +
-//                "        }\n" +
-//                "    }\n" +
-//                "\t}";
-//        String openId ="openId";
-//        String code = "123456789";
-//        String repairInvoiceCode ="987654";
-//        String status = "approveIng";
-//        SubscribeMsgRequest request = JSONUtil.toBean(json, SubscribeMsgRequest.class);
-//        request.setTouser(openId);
-//        request.setPage(request.getPage()+code);
-//
-//        Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
-//        data.get("character_string1").setValue(repairInvoiceCode);
-//        data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
-//        data.get("time6").setValue(LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")));
-//
-//
-//    }
 }
