@@ -79,6 +79,7 @@ public class AfterSaleOpenApi {
      */
     @OpenApi("add")
     public ApiResult<BaseResultDTO.AddDTO> add( @Valid AfterSaleDTO.AddDTO dto){
+        dto.setType("wx");
         return afterSaleFeign.add(dto);
     }
 
