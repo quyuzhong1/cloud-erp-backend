@@ -59,7 +59,7 @@
                 cis.certificate_password as certificatePassword
                 FROM cfg_invoice_setting AS cis
                 <if test="params.sqlMap.default!=null and params.sqlMap.default!='' and params.sqlMap.default.contains('cisd')">
-                   LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id
+                   LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id and cisd.is_deleted = FALSE
                 </if>
                 WHERE ${params.sqlMap.default}
                 AND cis.is_deleted = FALSE

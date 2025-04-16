@@ -52,7 +52,7 @@
         FROM
             cfg_invoice_setting_detail cisd
                 LEFT JOIN
-            shop_info si ON cisd.shop_id = si.id
+            shop_info si ON cisd.shop_id = si.id and si.is_deleted = false
         WHERE
             cisd.is_deleted = FALSE;
     </select>
