@@ -530,7 +530,7 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 小程序端附件
          */
-        private List<AttachmentDTO> attachmentList;
+        private List<String> attachmentList;
         /**
          * web附件
          */
