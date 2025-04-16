@@ -306,7 +306,7 @@ public class KingdeeUserRefPostServiceImpl extends SuperServiceImpl<KingdeeUserR
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶员工任岗"));
         Boolean result = this.removeById(id);
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
-        if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
+        if (result) {
             //金蝶推送
             DmpPushTaskEntity pushTaskEntity = syncKingdeeUserPostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
             resultList.add(pushTaskEntity);

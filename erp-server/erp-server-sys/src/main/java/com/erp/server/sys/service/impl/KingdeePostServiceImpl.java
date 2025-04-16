@@ -247,7 +247,7 @@ public class KingdeePostServiceImpl extends SuperServiceImpl<KingdeePostMapper, 
         }
         Boolean result = this.removeById(id);
 
-        if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
+        if (result) {
             //金蝶推送
             DmpPushTaskEntity pushTaskEntity = syncKingdeePostService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
             //推送金蝶
