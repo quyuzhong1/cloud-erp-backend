@@ -46,7 +46,7 @@ public class AfterSaleOpenApi {
      * @since 2025-04-07
      */
     @OpenApi("addThridUser")
-    public ApiResult<BaseResultDTO.AddDTO> addThridUser(@Valid ThridUserInfoDTO.AddDTO dto){
+    public ApiResult<ThridUserInfoDTO.AddResultDTO> addThridUser(@Valid ThridUserInfoDTO.AddDTO dto){
         return afterSaleFeign.addThridUser(dto);
     }
 

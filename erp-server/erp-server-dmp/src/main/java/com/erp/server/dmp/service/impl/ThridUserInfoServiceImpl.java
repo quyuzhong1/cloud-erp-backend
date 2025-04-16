@@ -46,11 +46,11 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(ThridUserInfoDTO.AddDTO addDTO) {
+    public ThridUserInfoDTO.AddResultDTO add(ThridUserInfoDTO.AddDTO addDTO) {
         if(StringUtils.isNotBlank(addDTO.getOpenid())){
             ThridUserInfoEntity oldThridUserInfoEntity = lambdaQuery().eq(ThridUserInfoEntity::getOpenid, addDTO.getOpenid()).one();
             if(Objects.nonNull(oldThridUserInfoEntity)){
-                return new BaseResultDTO.AddDTO(oldThridUserInfoEntity.getId(), oldThridUserInfoEntity.getId());
+                return new ThridUserInfoDTO.AddResultDTO(oldThridUserInfoEntity.getId(), oldThridUserInfoEntity.getId(),oldThridUserInfoEntity.getId());
             }
         }
 
@@ -63,7 +63,7 @@ public class ThridUserInfoServiceImpl extends SuperServiceImpl<ThridUserInfoMapp
         if(!save) {
             throw new ServiceException("用户单保存失败");
         }
-        return new BaseResultDTO.AddDTO(thridUserInfoEntity.getId(), thridUserInfoEntity.getId());
+        return new ThridUserInfoDTO.AddResultDTO(thridUserInfoEntity.getId(), thridUserInfoEntity.getId(), thridUserInfoEntity.getId());
     }
 
 
