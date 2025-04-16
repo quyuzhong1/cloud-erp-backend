@@ -2094,7 +2094,6 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
             logisticsBillEntity.setTransportNo(dto.getTransportNo());
             updateList.add(logisticsBillEntity);
             logisticsBillCostEntity.setCurrency(supplierEntity.getPayCurrency());
-            updateCostList.add(logisticsBillCostEntity);
             //更新体积重
             FirstMileDeliveryDTO.GenerateLogisticDTO deliveryLogisticDto = generateLogisticDTOList.stream().filter(v->v.getOutstockId().equals(logisticsBillEntity.getOutstockId())).findFirst().orElse(null);
             if(Objects.nonNull(deliveryLogisticDto) && CollectionUtils.isNotEmpty(deliveryLogisticDto.getPackingDTOList())
@@ -2104,6 +2103,9 @@ public class TmsFirstMileLogisticServiceImpl extends SuperServiceImpl<LogisticsB
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
                 logisticsBillCostEntity.setVolumeWeight(totalSize.divide(BigDecimal.valueOf(logisticsChannelEntity.getVolumeSetting()),4, RoundingMode.HALF_UP));
             }
+            //更新计费重 取 体积重和实际重最大值
+            logisticsBillCostEntity.setBillingWeight(logisticsBillCostEntity.getVolumeWeight().max(logisticsBillCostEntity.getActualWeight()));
+            updateCostList.add(logisticsBillCostEntity);
             //设置消息发送
             if(Objects.nonNull(detailEntity) && detailEntity.getTrackStatus().equals(FmLogisticTrackStatusEnum.ORDERED.getCode()) && !oldChannelId.equals(dto.getLogisticsChannelId())){
                 TmsFirstMileLogisticDTO.MsgDTO msgDTO = new TmsFirstMileLogisticDTO.MsgDTO();
