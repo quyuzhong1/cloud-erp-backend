@@ -44,7 +44,7 @@ public class ThridUserInfoController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "用户表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto) {
+    public ApiResult<ThridUserInfoDTO.AddResultDTO> add(@RequestBody @Validated ThridUserInfoDTO.AddDTO dto) {
         return success(thridUserInfoService.add(dto));
     }
 

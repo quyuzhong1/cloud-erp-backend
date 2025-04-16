@@ -1,6 +1,5 @@
 package com.erp.server.dmp.service;
 
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.dmp.dto.ThridUserInfoDTO;
 import com.erp.model.dmp.entity.ThridUserInfoEntity;
@@ -22,7 +21,7 @@ public interface ThridUserInfoService extends SuperService<ThridUserInfoEntity> 
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(ThridUserInfoDTO.AddDTO dto);
+    ThridUserInfoDTO.AddResultDTO add(ThridUserInfoDTO.AddDTO dto);
 
     /**
     * 修改
