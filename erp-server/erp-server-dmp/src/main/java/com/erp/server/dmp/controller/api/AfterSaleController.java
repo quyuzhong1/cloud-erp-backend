@@ -55,6 +55,7 @@ public class AfterSaleController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "售后申请表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated AfterSaleDTO.AddDTO dto) {
+        dto.setType("selfAdd");
         return success(afterSaleService.addAndSubmit(dto));
     }
 

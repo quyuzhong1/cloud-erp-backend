@@ -127,11 +127,15 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
 
         //第三方用户id为空的情况下，则新增用户
-        if(StringUtils.isBlank(addDTO.getThridUserId())){
+        if(StringUtils.isBlank(addDTO.getType())
+                && addDTO.getType().equals("wx")
+                && StringUtils.isBlank(addDTO.getThridUserId())){
+            throw new ServiceException("第三方用户id不能为空");
+        }else if(StringUtils.isBlank(addDTO.getThridUserId())){
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
             thridUserInfoEntity.setUsername(addDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
-            thridUserInfoEntity.setType("selfAdd");
+            thridUserInfoEntity.setType(addDTO.getType());
             thridUserInfoService.save(thridUserInfoEntity);
             afterSaleEntity.setThridUserId(thridUserInfoEntity.getId());
         }else {
@@ -954,11 +958,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     if(StringUtils.isNotBlank(dto.getTrackNo())){
                         afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
                     }
-                    if(StringUtils.isNotBlank(afterSaleProgressEntity.getRemark())){
-                        afterSaleProgressEntity.setRemark(afterSaleProgressEntity.getRemark()+"<br>"+dto.getRemark());
-                    }else {
-                        afterSaleProgressEntity.setRemark(dto.getRemark());
-                    }
+                    afterSaleProgressEntity.setRemark(dto.getRemark());
                     afterSaleProgressService.updateById(afterSaleProgressEntity);
 
                     //发送微信订阅消息
@@ -993,7 +993,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 if(StringUtils.isBlank(t.getRemark())){
                     t.setRemark("快递单号："+t.getTrackNo());
                 }else {
-                    t.setRemark("快递单号："+t.getTrackNo() + "<br>" +t.getRemark());
+                    t.setRemark("快递单号："+t.getTrackNo() + "\n" +t.getRemark());
                 }
             }
         });
@@ -1183,14 +1183,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     public void sendSubscribeMsgRequest(AfterSaleEntity afterSaleEntity, String status){
         String code = afterSaleEntity.getCode();
-        String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
+//        String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
         String thridUserId = afterSaleEntity.getThridUserId();
         if(Objects.isNull(afterSaleEntity)){
             return ;
 
         }
         if(StringUtils.isBlank(code)
-                || StringUtils.isBlank(repairInvoiceCode)
                 || StringUtils.isBlank(status)
                 || StringUtils.isBlank(thridUserId)){
             return ;
@@ -1214,7 +1213,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         request.setTouser(openId);
         request.setPage(request.getPage()+code);
         Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
-        data.get("character_string1").setValue(repairInvoiceCode);
+        data.get("character_string1").setValue(code);
         data.get("thing2").setValue(AfterSaleStatusEnum.getNode(status));
         data.get("time6").setValue(LocalDateTimeUtil.format(LocalDateTime.now(), DateUtil.fmt));
 
