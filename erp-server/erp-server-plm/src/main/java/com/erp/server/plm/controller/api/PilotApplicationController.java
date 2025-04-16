@@ -13,25 +13,23 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.mrp.entity.DeliverySuggestEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
 import com.erp.model.plm.dto.ProductPackViewDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.entity.PilotApplicationDetailEntity;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.service.PilotApplicationDetailService;
 import com.erp.server.plm.service.PilotApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -48,6 +46,8 @@ public class PilotApplicationController extends BaseController {
 
     @Resource
     private PilotApplicationService pilotApplicationService;
+    @Resource
+    private PilotApplicationDetailService pilotApplicationDetailService;
 
     /**
     * 新增
@@ -543,6 +543,50 @@ public class PilotApplicationController extends BaseController {
                 unInvalidResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(unInvalidResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 更新备注
+     * @author Will
+     * @date: 2023/7/19 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新试产量产单:明细备注={remark}")
+    @PostMapping("/updateRemark")
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.listByIds(dto.getIds());
+        Map<String, PilotApplicationDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(PilotApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<PilotApplicationEntity> entityList = pilotApplicationService.listByIds(mainIds);
+        Map<String, PilotApplicationEntity> entityMap = entityList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        for (String id : dto.getIds()) {
+            PilotApplicationDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"试产量产单明细不存在"));
+                continue;
+            }
+            PilotApplicationEntity entity = entityMap.get(detailEntity.getMainId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"试产量产单不存在"));
+                continue;
+            }
+            try {
+                BaseIdsDTO.RemarkDTO remarkDTO = new BaseIdsDTO.RemarkDTO();
+                remarkDTO.setRemark(dto.getRemark());
+                remarkDTO.setIds(Collections.singletonList(id));
+                Boolean flag = pilotApplicationDetailService.updateRemark(remarkDTO);
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "修更新备注试产量产单成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "修更新备注试产量产单失败"));
+                }
+            }catch (Exception e){
+                log.error("试产量产单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
