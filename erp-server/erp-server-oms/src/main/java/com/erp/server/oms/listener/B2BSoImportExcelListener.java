@@ -18,14 +18,6 @@ import java.util.Map;
  */
 public class B2BSoImportExcelListener extends AnalysisEventListener<B2BSoImportExcelDTO> {
 
-
-    Map<String, SoInfoDTO.AddDTO> map = new HashMap<>();
-
-    /**
-     * 错误的map
-     */
-    Map<String, String> errorMap = new HashMap<>();
-
     /**
      * 错误信息
      */
