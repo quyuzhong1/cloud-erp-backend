@@ -650,6 +650,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
                         printSkuSingleView.getPrintView(picking, detail, skuName, customerPO);
+                        if (ObjectUtil.isEmpty(printSkuSingleView.getWarehouseLocation())) {
+                            printSkuSingleView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                        }
                         printSkuSingleView.setThirdSku("");
                         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                             printSkuSingleView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
@@ -665,6 +668,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
                         combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO);
+                        if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
+                            combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                        }
                         combinationPrintDetailView.setThirdSku("");
                         if (RequisitionApplicationTypeEnum.FBA.getCode().equals(application.getType())) {
                             combinationPrintDetailView.setThirdSku((requisitionApplicationDetail.getPlatformFnSku()));
@@ -713,6 +719,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
                         combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO);
+                        if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
+                            combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                        }
                         combinationPrintDetailView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
                         combinationPrintDetailView.setIsCombination(Boolean.FALSE);
                         printSkuSingleViewList.add(combinationPrintDetailView);
@@ -724,6 +733,9 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                         //sku产品名称
                         String skuName = skuVO.getSkuName();
                         combinationPrintDetailView.getPrintView(picking, detail, skuName, customerPO);
+                        if (ObjectUtil.isEmpty(combinationPrintDetailView.getWarehouseLocation())) {
+                            combinationPrintDetailView.setWarehouseLocation(skuVO.getWarehouseLocationLarge());
+                        }
                         combinationPrintDetailView.setThirdSku((soDeliveryNoticeDetailEntity.getPlatformSkuNo()));
                         combinationPrintDetailView.setIsCombination(Boolean.TRUE);
                         combinationPrintDetailView.setParentSkuNo(soDeliveryNoticeDetailEntity.getSkuNo());
