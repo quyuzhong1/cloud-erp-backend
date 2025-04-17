@@ -491,7 +491,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         receiverInfoVO.setContact(receiverInfoVO.getBuyerName());
                         break;
                     case CUSTOMIZE:
-                        receiverInfoVO.setContact(receiveHandleContent.getReceiveFillText());
+                        receiverInfoVO.setContact(CharSequenceUtil.isNotBlank(receiverInfoVO.getContact()) ? receiverInfoVO.getContact() : receiveHandleContent.getReceiveFillText());
                         break;
                     default:
                         break;
