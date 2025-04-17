@@ -3796,6 +3796,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //销售单价
                 String priceStr = item.getPrice();
                 BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
+                //含税单价
+                String taxPriceStr = item.getTaxPrice();
+                //含税单价和销售单价不能同时为空
+                if (CharSequenceUtil.isAllBlank(priceStr,taxPriceStr)) {
+                    errorMsgList.add("销售单价和含税单价不能同时为空");
+                }
+                if (CharSequenceUtil.isNotBlank(taxPriceStr) && CharSequenceUtil.isBlank(priceStr) && "是".equals(item.getIsTax())) {
+                    BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
+                    price = MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, MathUtil.divide(addDetail.getTaxRate(),MathUtil.BigDecimal_100)));
+                }
                 addDetail.setPrice(price);
 
                 //税率
