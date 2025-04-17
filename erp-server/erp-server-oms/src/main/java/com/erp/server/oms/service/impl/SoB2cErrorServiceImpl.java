@@ -203,7 +203,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
                 Map<String,RulePromptWordEntity> rulePromptWordEntityMap = this.getRulePromptWord(map);
                 if(Objects.nonNull(rulePromptWordEntityMap.get(entity.getId()))){
                     RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(entity.getId());
-                    viewDTO.setFailureReason(rulePromptWordEntity.getTips());
+                    viewDTO.setFailureReason(CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : entity.getMessage());
                     viewDTO.setSolution(rulePromptWordEntity.getSolution());
                 }
             }
@@ -483,7 +483,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
             v.setModules(SoB2cErrorTypeEnum.getName(v.getType()));
             if(Objects.nonNull(rulePromptWordEntityMap.get(v.getErrorIds()))){
                 RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(v.getErrorIds());
-                v.setTip(rulePromptWordEntity.getTips());
+                v.setTip(CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : v.getMessage());
                 v.setNeedPrompt("是");
             }else{
                 v.setNeedPrompt("否");

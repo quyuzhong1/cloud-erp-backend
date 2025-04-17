@@ -2078,7 +2078,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
             if(rulePromptWordEntityMap.containsKey(batchResultDTO.getId())){
                 RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(batchResultDTO.getId());
-                batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : batchResultDTO.getMsg(),rulePromptWordEntity.getSolution()));
             }
         }
         return batchResultDTO;
@@ -2217,7 +2217,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
                     if(rulePromptWordEntityMap.containsKey(soB2cErrorEntity.getId())){
                         RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(soB2cErrorEntity.getId());
-                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : soB2cErrorEntity.getMessage(),rulePromptWordEntity.getSolution()));
                     }
                 }
                 return batchResultDTO;
@@ -2653,7 +2653,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         createOutboundReq.setReceiverInfo(receiverInfo);
 
-        List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType);
+        List<SkuMappingDTO.ListSkuResultDTO> platformSkuList = skuMappingService.listBySkuList(listSkuParamList, dictPlatform, warehouseType, warehouseId);
         List<ThirdWarehouseCreateOutboundReq.Item> itemList = new ArrayList<>(detailList.size());
 
         List<SoB2cDeclareProductEntity> soB2cDeclareProductEntityList = soB2cDeclareProductService.listBySoId(entity.getId());
@@ -8165,7 +8165,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 if(rulePromptWordEntityMap.containsKey(v.getId())){
                     RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(v.getId());
-                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : v.getMessage(),rulePromptWordEntity.getSolution()));
                 }
             });
         }

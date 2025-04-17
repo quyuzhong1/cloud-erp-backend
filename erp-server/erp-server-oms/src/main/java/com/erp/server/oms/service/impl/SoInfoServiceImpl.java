@@ -3542,6 +3542,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             addSo.setSalesOrgId(salesOrgId);
             addSo.setSalesOrgName(salesOrgName);
+            //单据子类型
+            String transactionSubTypeName = mainInfo.getTransactionSubTypeName();
+            String transactionSubType = OrderSubTypeEnum.getCodeByName(transactionSubTypeName);
+            addSo.setTransactionSubType(transactionSubType);
+            if (StringUtils.isBlank(transactionSubType)) {
+                errorMsgList.add("单据子类型不存在");
+            }
             //销售部门
             String salesDeptName = mainInfo.getSalesDeptName();
             String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
@@ -3790,12 +3797,24 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //销售单价
                 String priceStr = item.getPrice();
                 BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
-                addDetail.setPrice(price);
-
+                //含税单价
+                String taxPriceStr = item.getTaxPrice();
+                //含税单价和销售单价不能同时为空
+                if (CharSequenceUtil.isAllBlank(priceStr,taxPriceStr)) {
+                    errorMsgList.add("销售单价和含税单价不能同时为空");
+                }
                 //税率
                 String taxRateStr = item.getTaxRate();
                 BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
                 addDetail.setTaxRate(taxRate);
+                if("是".equals(item.getIsTax()) && CharSequenceUtil.isBlank(taxRateStr)){
+                    errorMsgList.add("税率不能为空");
+                }
+                if (CharSequenceUtil.isNotBlank(taxPriceStr) && CharSequenceUtil.isBlank(priceStr) && "是".equals(item.getIsTax())) {
+                    BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
+                    price = MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, MathUtil.divide(taxRate,MathUtil.BigDecimal_100)));
+                }
+                addDetail.setPrice(price);
                 soDetailList.add(addDetail);
             }
 

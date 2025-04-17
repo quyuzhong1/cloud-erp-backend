@@ -142,22 +142,6 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
                 v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
             });
         }
-        List<OverseasTransferWarehouseEntity> overseasTransferWarehouseEntities = overseasTransferWarehouseService.lambdaQuery().eq(OverseasTransferWarehouseEntity::getDictPlatform, entity.getCode()).list();
-//        List<OverseasProviderWarehouseDTO.ViewDTO> transferViews = BeanMapper.copyList(overseasTransferWarehouseEntities, OverseasProviderWarehouseDTO.ViewDTO.class);
-        if(CollUtil.isNotEmpty(overseasTransferWarehouseEntities)){
-            overseasTransferWarehouseEntities.forEach(overseasTransferWarehouseEntitiy->{
-                OverseasProviderWarehouseDTO.ViewDTO v = new OverseasProviderWarehouseDTO.ViewDTO();
-                v.setId(overseasTransferWarehouseEntitiy.getId());
-                v.setMainId(id);
-                v.setPlatformWarehouseTypeName(SptWarehouseTypeEnum.TRANSIT.getName());
-                v.setPlatformWarehouseStatusName(SptWarehouseStatusEnum.getName(v.getPlatformWarehouseStatus()));
-                v.setPlatformWarehouseCode(overseasTransferWarehouseEntitiy.getPlatformToWarehouseCode());
-                v.setPlatformWarehouseName(overseasTransferWarehouseEntitiy.getPlatformToWarehouseName());
-                v.setCountry(overseasTransferWarehouseEntitiy.getCountry());
-                v.setCountryName(overseasTransferWarehouseEntitiy.getCountryName());
-                warehouseList.add(v);
-            });
-        }
         viewDTO.setDetailList(warehouseList);
         return viewDTO;
     }
