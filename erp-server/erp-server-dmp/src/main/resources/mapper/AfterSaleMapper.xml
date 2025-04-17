@@ -123,7 +123,7 @@
         left join after_sale AS afs on afs.id = afsd.main_id
         left join thrid_user_info as tui on afs.thrid_user_id = tui.id
         left join after_sale_progress as r on r.main_id = afs.id  and r.node = 'toBeReturned'
-        left join after_sale_progress as o on o.main_id = afs.id  and o.node = 'toBeShipped'
+        left join after_sale_progress as o on o.main_id = afs.id  and o.node IN( 'toBeShipped' ,'terminated')
         where
         ${params.sqlMap.default}
         AND afs.is_deleted = false
