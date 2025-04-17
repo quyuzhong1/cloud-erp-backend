@@ -76,7 +76,6 @@ public enum SettingEnum {
     AFTER_SALSE_NODE("afterSaleNode","after_sale","售后维修节点"),
     AFTER_SALSE_SUBSCRIBE_MSG("afterSaleSubscribeMsg","after_sale","售后微信消息订阅"),
     AFTER_SALSE_ORDER_CANCEL_MSG("afterSaleOrderCancelMsg","after_sale","订单取消通知"),
-    AFTER_SALSE_SEND_BACK_MSG("afterSaleSendBackMsg","after_sale","产品回寄通知"),
     AFTER_SALSE_ORDER_APPROVE_MSG("afterSaleOrderApproveMsg","after_sale","审核通过提醒"),
     ;
 
