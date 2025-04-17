@@ -308,22 +308,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private LogisticsProductFeign logisticsProductFeign;
 
     @Resource
-    private AliExpressDliveryOrderService aliExpressDliveryOrderService;
-
-    @Resource
-    private WarehouseMappingFeign warehouseMappingFeign;
-
-    @Resource
-    private AliexpressDeliveryFeign aliexpressDeliveryFeign;
-
-    @Resource
     private SoOutstockFeign soOutstockFeign;
 
     @Resource
     private MQProducerService mqProducerService;
-
-    @Resource
-    private TikTokSdkClientService tikTokSdkClientService;
 
     @Resource
     private SoB2cLabelService soB2cLabelService;
@@ -334,9 +322,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private CustomerB2cService customerB2cService;
-
-    @Resource
-    private WarehouseLocationFeign warehouseLocationFeign;
 
     @Resource
     private TransferLogisticsFeign transferLogisticsFeign;
@@ -364,15 +349,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
-    @Resource
-    private LogisticsMappingFeign logisticsMappingFeign;
     @Resource
     private AliExpressOrderService aliExpressOrderService;
-    @Resource
-    private WmsWarehouseFeign wmsWarehouseFeign;
-    @Resource
-    private TransferInfoFeign transferInfoFeign;
     @Resource
     private DmpInoutTaskFeign dmpInoutTaskFeign;
 
@@ -381,8 +359,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private ExecutorService soB2cTabExecutorPool;
     @Resource
     private CustomerInfoService customerInfoService;
-    @Resource
-    private SyncSoB2cService syncSoB2cService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -2006,7 +1982,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
             if(rulePromptWordEntityMap.containsKey(batchResultDTO.getId())){
                 RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(batchResultDTO.getId());
-                batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : batchResultDTO.getMsg(),rulePromptWordEntity.getSolution()));
             }
         }
         return batchResultDTO;
@@ -2123,7 +2099,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
                     if(rulePromptWordEntityMap.containsKey(soB2cErrorEntity.getId())){
                         RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(soB2cErrorEntity.getId());
-                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : soB2cErrorEntity.getMessage(),rulePromptWordEntity.getSolution()));
                     }
                 }
                 return batchResultDTO;
@@ -7946,7 +7922,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 if(rulePromptWordEntityMap.containsKey(v.getId())){
                     RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(v.getId());
-                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : v.getMessage(),rulePromptWordEntity.getSolution()));
                 }
             });
         }
@@ -8301,7 +8277,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             }
             if(Objects.nonNull(rulePromptWordEntityMap.get(listDTO.getErrorId()))){
                 RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(listDTO.getErrorId());
-                listDTO.setFailureReason(rulePromptWordEntity.getTips());
+                listDTO.setFailureReason(CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : listDTO.getMessage());
                 listDTO.setSolution(rulePromptWordEntity.getSolution());
             }
         }

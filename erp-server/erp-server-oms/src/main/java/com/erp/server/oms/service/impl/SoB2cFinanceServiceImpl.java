@@ -24,6 +24,7 @@ import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,8 +46,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper, SoB2cFinanceEntity> implements SoB2cFinanceService {
-    @Resource
-    private OperateLogService operateLogService;
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 

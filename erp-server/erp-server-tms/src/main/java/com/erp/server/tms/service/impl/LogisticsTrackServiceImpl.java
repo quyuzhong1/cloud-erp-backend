@@ -202,6 +202,8 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
             return;
         }
         String trackNo = dto.getData().getTrackNo();
+        String transitStatus = dto.getData().getTransitStatus();
+        String trackStatus = convertTrackStatus(transitStatus);
         //轨迹明细
         List<LogisticsTrackDTO.TrackingDetail> trackingDetails = dto.getData().getLocalLogisticsInfo().getTrackingDetails();
         //数据转换
@@ -213,7 +215,10 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
         //增量数据库记录
         this.saveIncrementTrackData(trackNo, newList);
         //根据跟踪号进行更新操作
-        logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(maxTrack);
+        if (Objects.nonNull(maxTrack)){
+            maxTrack.setOrderStatus(trackStatus);
+            logisticsBillDetailService.updateLogisticsBillDetailByTrackNo(maxTrack);
+        }
     }
 
     @Override
@@ -248,5 +253,30 @@ public class LogisticsTrackServiceImpl extends SuperServiceImpl<LogisticsTrackMa
      */
     private void handleData(LogisticsTrackEntity logisticsTrackEntity) {
         logisticsTrackEntity.setMd5(getDataMd5(logisticsTrackEntity));
+
+    }
+    private String convertTrackStatus(String transitSubStatus) {
+        if (StringUtils.isBlank(transitSubStatus)) {//待查询
+            return LogisticTrackStatusEnum.NOT_FIND.getCode();
+        } else if (transitSubStatus.contains("INIT")) {//待查询  单号正在查询中，请等待
+            return LogisticTrackStatusEnum.NOT_FIND.getCode();
+        } else if (transitSubStatus.contains("NO_RECORD")) {//暂无信息 包裹无法查询到物流轨迹信息
+            return LogisticTrackStatusEnum.NOT_FIND.getCode();
+        } else if (transitSubStatus.contains("INFO_RECEIVED")) {//已接收 物流公司已经收到寄运订单，正在准备揽收包裹
+            return LogisticTrackStatusEnum.WAIT_COLLECT.getCode();
+        } else if (transitSubStatus.contains("IN_TRANSIT")) {//运输中 包裹正在运输途中
+            return LogisticTrackStatusEnum.TRACK_ING.getCode();
+        } else if (transitSubStatus.contains("WAITING_DELIVERY")) {//派送中 包裹正在派送或已到达代收点等待收件人自提
+            return LogisticTrackStatusEnum.DELIVERY_ING.getCode();
+        } else if (transitSubStatus.contains("DELIVERY_FAILED")) {//投递失败 包裹尝试派送，但由于地址问题、收件人联系不上等原因导致派送失败
+            return LogisticTrackStatusEnum.DELIVERY_FAIL.getCode();
+        } else if (transitSubStatus.contains("ABNORMAL")) {//异常 包裹出现破损、退件、海关扣留等异常情况
+            return LogisticTrackStatusEnum.MAYBE_EXCEPTION.getCode();
+        } else if (transitSubStatus.contains("DELIVERED")) {//已成功 包裹投递成功
+            return LogisticTrackStatusEnum.SIGN.getCode();
+        } else if (transitSubStatus.contains("EXPIRED")) {//已过期 包裹在最近的30天没有任何物流更新
+            return LogisticTrackStatusEnum.TRANSPORT_LONG.getCode();
+        }
+        return LogisticTrackStatusEnum.NOT_FIND.getCode();
     }
 }
