@@ -176,6 +176,7 @@
             parameterType="com.erp.model.dmp.dto.AfterSaleDTO$ProgressDTO">
         select
             afs.id,
+            afs.status,
             afsp.id as detailId,
             afsp.node  ,
             afsp.node_time as nodeTimeLd ,
