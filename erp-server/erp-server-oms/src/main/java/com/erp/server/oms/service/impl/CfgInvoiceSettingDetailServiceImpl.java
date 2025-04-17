@@ -244,7 +244,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                         }))
                 .collect(Collectors.toList());
         log.info("开始新增发票设置明细");
-        if (!super.saveBatch(saveList)) {
+        if (ObjectUtil.isNotEmpty(saveList) &&!super.saveBatch(saveList)) {
             throw new ServiceException("新增发票设置明细失败");
         }
         return;
@@ -269,7 +269,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                         }))
                 .collect(Collectors.toList());
         log.info("开始更新发票设置明细");
-        if (!super.updateBatchById(saveList)) {
+        if (ObjectUtil.isNotEmpty(saveList) &&!super.updateBatchById(saveList)) {
             throw new ServiceException("更新发票设置明细失败");
         }
         return saveList;
