@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -944,6 +945,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             if (isGenerateInvoiceTax) {
                 continue;
             }
+            BeanUtil.copyProperties(invoiceTaxEntity,viewDTO);
             viewDTO.setIsGenerateInvoiceTax(isGenerateInvoiceTax);
             viewDTO.setPlatformSkuNo(soB2cDetailEntity.getPlatformSkuNo());
             viewDTO.setPlatformSkuName(CollUtil.isEmpty(listingInfoWithSkuMappingList) ? "" : listingInfoWithSkuMappingList.get(0).getPlatformSkuName());
