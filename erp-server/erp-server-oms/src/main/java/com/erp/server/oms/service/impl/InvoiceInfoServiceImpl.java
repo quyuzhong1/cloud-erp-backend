@@ -686,7 +686,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO notNeedInvoice(String soId, String remark) {
+    public BatchResultDTO notNeedInvoice(String soId, String remark,String invoiceType) {
         SoB2cEntity soB2cEntity = soB2cService.getById(soId);
         if (ObjUtil.isEmpty(soB2cEntity)) {
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "销售订单");
@@ -695,8 +695,13 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (!SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus()) && !SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
             throw new ServiceException(ApiError.ERROR_INVOICE_SUCCESS);
         }
-        soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode());
-        soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.NOT_NEED_INVOICE.getCode());
+        if (InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(invoiceType)) {
+            soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode());
+        } else if (InvoiceInfoInvoiceTypeEnum.VAT.getCode().equals(invoiceType)) {
+            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.NOT_NEED_INVOICE.getCode());
+        } else {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_OPTION);
+        }
         soB2cService.updateById(soB2cEntity);
 
         //删除开票失败的开票清单

@@ -294,12 +294,12 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/notNeedInvoice")
-    public ApiResult<List<BatchResultDTO>> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.SoRemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.NoNeedInvoiceDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getSoIdList().size());
         for (String id : dto.getSoIdList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = invoiceInfoService.notNeedInvoice(id,dto.getRemark());
+                resultDTO = invoiceInfoService.notNeedInvoice(id,dto.getRemark(),dto.getInvoiceType());
             }catch (Exception e){
                 log.error("无需开票失败",e);
                 SoB2cEntity soB2cEntity = soB2cService.getById(id);
