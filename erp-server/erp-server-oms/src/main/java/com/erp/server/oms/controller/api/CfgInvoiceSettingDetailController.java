@@ -44,7 +44,7 @@ public class CfgInvoiceSettingDetailController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "发票设置新增或修改")
-    public ApiResult<BaseResultDTO.AddDTO> addOrUpdate(@RequestBody @Validated List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList) {
+    public ApiResult<BaseResultDTO.AddDTO> addOrUpdate(@RequestBody @Validated List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> dtoList) {
         return success(cfgInvoiceSettingDetailService.addOrUpdate(dtoList));
     }
 
