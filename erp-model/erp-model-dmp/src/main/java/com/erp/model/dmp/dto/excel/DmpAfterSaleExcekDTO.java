@@ -95,7 +95,7 @@ public class DmpAfterSaleExcekDTO implements Serializable {
          * 货值
          */
 //        @ExcelProperty(value = "货值", index = 12)
-        private String totalPrice;
+        private String price;
 
         /**
          * 维修金额
