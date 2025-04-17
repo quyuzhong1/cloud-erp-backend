@@ -196,10 +196,10 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
                 newSaveBatch.add(newEntity);
             } else {
                 // 时间数据滞后忽略更新
-                if (null != newEntity.getDataEndTime() && newEntity.getDataEndTime().isBefore(oldEntity.getDataEndTime())){
-                    log.warn("【亚马逊FBA库存数据】 DataEndTime时间滞后忽略更新: entity={}", JSONUtil.toJsonStr(newEntity));
-                    continue;
-                }
+//                if (null != newEntity.getDataEndTime() && newEntity.getDataEndTime().isBefore(oldEntity.getDataEndTime())){
+//                    log.warn("【亚马逊FBA库存数据】 DataEndTime时间滞后忽略更新: entity={}", JSONUtil.toJsonStr(newEntity));
+//                    continue;
+//                }
                 FbaInventoryEntity updateEntity = WmsFbaInventoryConverter.INSTANCE.newCombineOld(oldEntity, newEntity);
                 newUpdateBatch.add(updateEntity);
             }
