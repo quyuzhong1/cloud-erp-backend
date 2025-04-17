@@ -111,25 +111,30 @@ public class DmpFbaMyiAllInventoryEntity extends BaseEntity<DmpFbaMyiAllInventor
     @TableField("fulfillable_qty")
     private Integer fulfillableQty;
     /**
-    * 预留
-    */
-    @TableField("reserved_qty")
-    private Integer reservedQty;
+     * FBM可售
+     */
+    @TableField("fbm_fulfillable_qty")
+    private Integer fbmFulfillableQty;
     /**
-    * 调查中数量
-    */
+     * 调查中数量
+     */
     @TableField("researching_qty")
     private Integer researchingQty;
     /**
-    * 不可售数量
-    */
+     * 不可售数量
+     */
     @TableField("unsellable_qty")
     private Integer unsellableQty;
     /**
-    * 库龄
-    */
-    @TableField("inventory_age")
-    private String inventoryAge;
+     * 是否是FBM
+     */
+    @TableField("mfn_listing_exists")
+    private String mfnListingExists;
+    /**
+     * 是否是FBA
+     */
+    @TableField("afn_listing_exists")
+    private String afnListingExists;
 
 
     public static final String ASIN = "asin";

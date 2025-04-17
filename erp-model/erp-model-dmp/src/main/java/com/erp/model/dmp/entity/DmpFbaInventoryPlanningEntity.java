@@ -26,6 +26,11 @@ import com.common.business.enums.ApproveStatusEnum;
 public class DmpFbaInventoryPlanningEntity extends BaseEntity<DmpFbaInventoryPlanningEntity> {
 
     /**
+     * 平台SPU
+     */
+    @TableField("asin")
+    private String asin;
+    /**
     * 卖家sku
     */
     @TableField("msku")

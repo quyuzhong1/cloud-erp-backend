@@ -107,7 +107,7 @@ public class DmpOutputFbaInventoryPlanningRocketMQTaskHandler extends DmpOutputR
                     shopMap.get(dmpEntity.getNextLevelId()),
                     listingInfoMap.getOrDefault(dmpEntity.getNextLevelId(), Collections.emptyMap()).get(dmpEntity.getMsku()));
             if (null != entity) {
-                map.put(entity.getId(), JSON.toJSONString(entity));
+                map.put(changId, JSON.toJSONString(entity));
             }
         }
         return map;
@@ -122,6 +122,10 @@ public class DmpOutputFbaInventoryPlanningRocketMQTaskHandler extends DmpOutputR
         }
         FbaInventoryEntity dtoEntity = new FbaInventoryEntity();
         dtoEntity.setSkuNo(null == listingInfoWithSkuMappingDTO ? "" : listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo());
+        dtoEntity.setMsku(dmpEntity.getMsku());
+        dtoEntity.setAsin(dmpEntity.getAsin());
+        dtoEntity.setFnSku(dmpEntity.getFnSku());
+        dtoEntity.setProductName(dmpEntity.getProductName());
         // 指定已有信息
         dtoEntity.setInventoryAge0To30Days(dmpEntity.getInventoryAge0To30Days());
         dtoEntity.setInventoryAge31To60Days(dmpEntity.getInventoryAge31To60Days());
@@ -141,6 +145,6 @@ public class DmpOutputFbaInventoryPlanningRocketMQTaskHandler extends DmpOutputR
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("msku", "marketplaceId", "platformShopCode");
+        return Arrays.asList("msku","fnSku", "platformShopCode");
     }
 }

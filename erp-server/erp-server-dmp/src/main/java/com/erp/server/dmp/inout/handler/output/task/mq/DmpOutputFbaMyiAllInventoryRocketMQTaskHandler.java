@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpFbaMyiAllInventoryEntity;
@@ -107,7 +108,7 @@ public class DmpOutputFbaMyiAllInventoryRocketMQTaskHandler extends DmpOutputRoc
                     shopMap.get(dmpEntity.getNextLevelId()),
                     listingInfoMap.getOrDefault(dmpEntity.getNextLevelId(), Collections.emptyMap()).get(dmpEntity.getMsku()));
             if (null != entity) {
-                map.put(entity.getId(), JSON.toJSONString(entity));
+                map.put(changId, JSON.toJSONString(entity));
             }
         }
         return map;
@@ -122,15 +123,19 @@ public class DmpOutputFbaMyiAllInventoryRocketMQTaskHandler extends DmpOutputRoc
         }
         FbaInventoryEntity dtoEntity = new FbaInventoryEntity();
         dtoEntity.setSkuNo(null == listingInfoWithSkuMappingDTO ? "" : listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo());
+        dtoEntity.setMsku(dmpEntity.getMsku());
+        dtoEntity.setAsin(dmpEntity.getAsin());
+        dtoEntity.setFnSku(dmpEntity.getFnSku());
+        dtoEntity.setProductName(dmpEntity.getProductName());
         // 指定已有信息
         dtoEntity.setInboundWorkingQty(dmpEntity.getInboundWorkingQty());
         dtoEntity.setInboundShippedQty(dmpEntity.getInboundShippedQty());
         dtoEntity.setInboundReceivingQty(dmpEntity.getInboundReceivingQty());
         dtoEntity.setFulfillableQty(dmpEntity.getFulfillableQty());
-        dtoEntity.setReservedQty(dmpEntity.getReservedQty());
+        dtoEntity.setFbmFulfillableQty(dmpEntity.getFbmFulfillableQty());
         dtoEntity.setResearchingQty(dmpEntity.getResearchingQty());
         dtoEntity.setUnsellableQty(dmpEntity.getUnsellableQty());
-
+        dtoEntity.setDeliveryChannels(switchDeliveryChannels(dmpEntity.getMfnListingExists(), dmpEntity.getAfnListingExists()));
 
         if (null != dmpEntity.getLastPlatformUpdateTime()){
             ZoneOffset zoneOffset = ZoneOffset.systemDefault().getRules().getOffset(Instant.now());
@@ -143,6 +148,19 @@ public class DmpOutputFbaMyiAllInventoryRocketMQTaskHandler extends DmpOutputRoc
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("msku", "marketplaceId", "platformShopCode");
+        return Arrays.asList("msku","fnSku", "platformShopCode");
+    }
+
+    /**
+     * 配送渠道：mfn-listing-exists=true为卖家自配送；afn-listing-exists=true为亚马逊配送
+     */
+    public String switchDeliveryChannels(String mfnListingExists, String afnListingExists){
+        if ("YES".equalsIgnoreCase(mfnListingExists)){
+            return "selfDelivery";
+        }
+        if ("YES".equalsIgnoreCase(afnListingExists)){
+            return "amazonDelivery";
+        }
+        return "";
     }
 }

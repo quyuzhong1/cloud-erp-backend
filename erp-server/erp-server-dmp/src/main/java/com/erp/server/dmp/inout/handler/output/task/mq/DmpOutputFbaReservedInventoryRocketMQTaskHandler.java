@@ -107,7 +107,7 @@ public class DmpOutputFbaReservedInventoryRocketMQTaskHandler extends DmpOutputR
                     shopMap.get(dmpEntity.getNextLevelId()),
                     listingInfoMap.getOrDefault(dmpEntity.getNextLevelId(), Collections.emptyMap()).get(dmpEntity.getMsku()));
             if (null != entity) {
-                map.put(entity.getId(), JSON.toJSONString(entity));
+                map.put(changId, JSON.toJSONString(entity));
             }
         }
         return map;
@@ -122,7 +122,12 @@ public class DmpOutputFbaReservedInventoryRocketMQTaskHandler extends DmpOutputR
         }
         FbaInventoryEntity dtoEntity = new FbaInventoryEntity();
         dtoEntity.setSkuNo(null == listingInfoWithSkuMappingDTO ? "" : listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo());
+        dtoEntity.setMsku(dmpEntity.getMsku());
+        dtoEntity.setAsin(dmpEntity.getAsin());
+        dtoEntity.setFnSku(dmpEntity.getFnSku());
+        dtoEntity.setProductName(dmpEntity.getProductName());
         // 指定已有信息
+        dtoEntity.setReservedQty(dmpEntity.getReservedQty());
         dtoEntity.setReservedTransfersQty(dmpEntity.getReservedTransfersQty());
         dtoEntity.setReservedProcessingQty(dmpEntity.getReservedProcessingQty());
         dtoEntity.setReservedOrderQty(dmpEntity.getReservedOrderQty());
@@ -138,6 +143,6 @@ public class DmpOutputFbaReservedInventoryRocketMQTaskHandler extends DmpOutputR
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("msku", "marketplaceId", "platformShopCode");
+        return Arrays.asList("msku","fnSku", "platformShopCode");
     }
 }

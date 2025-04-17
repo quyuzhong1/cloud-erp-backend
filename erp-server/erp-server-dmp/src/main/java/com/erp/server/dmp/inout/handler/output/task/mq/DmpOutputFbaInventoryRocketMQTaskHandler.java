@@ -111,7 +111,7 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
                     shopMap.get(dmpEntity.getNextLevelId()),
                     listingInfoMap.getOrDefault(dmpEntity.getNextLevelId(), Collections.emptyMap()).get(dmpEntity.getMsku()));
             if (null != entity) {
-                map.put(entity.getId(), JSON.toJSONString(entity));
+                map.put(changId, JSON.toJSONString(entity));
             }
         }
         return map;
@@ -139,6 +139,6 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("msku", "marketplaceId", "platformShopCode");
+        return Arrays.asList("msku","fnSku", "platformShopCode");
     }
 }

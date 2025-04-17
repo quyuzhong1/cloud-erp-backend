@@ -217,7 +217,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         if (!CollectionUtils.isEmpty(newUpdateBatch)){
             boolean result = this.updateBatchById(newUpdateBatch);
             if (!result) {
-                throw new ServiceException("【FbaInventoryEntity】批量更新失败");
+                log.warn("【FbaInventoryEntity】批量更新失败");
             }
         }
 
