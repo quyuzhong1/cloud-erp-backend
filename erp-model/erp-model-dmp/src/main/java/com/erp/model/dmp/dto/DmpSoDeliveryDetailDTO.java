@@ -45,6 +45,11 @@ public class DmpSoDeliveryDetailDTO implements Serializable {
         private String mainId;
 
         /**
+        * 第三方发货id
+        */
+        private String thirdDeliveryId;
+
+        /**
         * 第三方发货明细id
         */
         private String thirdDeliveryDetailId;
@@ -165,6 +170,46 @@ public class DmpSoDeliveryDetailDTO implements Serializable {
         private String settlementCurrencyCode;
 
         /**
+        * 国家编码
+        */
+        private String countryCode;
+
+        /**
+        * 国家名称
+        */
+        private String countryName;
+
+        /**
+        * 区域编码
+        */
+        private String regionCode;
+
+        /**
+        * 区域名称
+        */
+        private String regionName;
+
+        /**
+        * 军区编码
+        */
+        private String militaryRegionCode;
+
+        /**
+        * 军区名称
+        */
+        private String militaryRegionName;
+
+        /**
+        * 部门编码
+        */
+        private String departmentCode;
+
+        /**
+        * 部门名称
+        */
+        private String departmentName;
+
+        /**
         * 数据状态(已创建，已更新，已删除等)
         */
         private String dataStatus;
@@ -232,6 +277,13 @@ public class DmpSoDeliveryDetailDTO implements Serializable {
         @NotBlank(message = "主表id不能为空")
         @Size(max = 64,message = "主表id最大长度不能超过64位")
         private String mainId;
+
+        /**
+        * 第三方发货id
+        */
+        @NotBlank(message = "第三方发货id不能为空")
+        @Size(max = 64,message = "第三方发货id最大长度不能超过64位")
+        private String thirdDeliveryId;
 
         /**
         * 第三方发货明细id
@@ -384,6 +436,62 @@ public class DmpSoDeliveryDetailDTO implements Serializable {
         @NotBlank(message = "结算币别代码不能为空")
         @Size(max = 64,message = "结算币别代码最大长度不能超过64位")
         private String settlementCurrencyCode;
+
+        /**
+        * 国家编码
+        */
+        @NotBlank(message = "国家编码不能为空")
+        @Size(max = 64,message = "国家编码最大长度不能超过64位")
+        private String countryCode;
+
+        /**
+        * 国家名称
+        */
+        @NotBlank(message = "国家名称不能为空")
+        @Size(max = 255,message = "国家名称最大长度不能超过255位")
+        private String countryName;
+
+        /**
+        * 区域编码
+        */
+        @NotBlank(message = "区域编码不能为空")
+        @Size(max = 64,message = "区域编码最大长度不能超过64位")
+        private String regionCode;
+
+        /**
+        * 区域名称
+        */
+        @NotBlank(message = "区域名称不能为空")
+        @Size(max = 255,message = "区域名称最大长度不能超过255位")
+        private String regionName;
+
+        /**
+        * 军区编码
+        */
+        @NotBlank(message = "军区编码不能为空")
+        @Size(max = 64,message = "军区编码最大长度不能超过64位")
+        private String militaryRegionCode;
+
+        /**
+        * 军区名称
+        */
+        @NotBlank(message = "军区名称不能为空")
+        @Size(max = 255,message = "军区名称最大长度不能超过255位")
+        private String militaryRegionName;
+
+        /**
+        * 部门编码
+        */
+        @NotBlank(message = "部门编码不能为空")
+        @Size(max = 64,message = "部门编码最大长度不能超过64位")
+        private String departmentCode;
+
+        /**
+        * 部门名称
+        */
+        @NotBlank(message = "部门名称不能为空")
+        @Size(max = 255,message = "部门名称最大长度不能超过255位")
+        private String departmentName;
 
         /**
         * 数据状态(已创建，已更新，已删除等)

@@ -80,6 +80,11 @@ public class DmpSoDeliveryDTO implements Serializable {
         private String deliveryStatus;
 
         /**
+        * 交易类型
+        */
+        private String transactionType;
+
+        /**
         * 交易子类型
         */
         private String transactionSubType;
@@ -108,6 +113,11 @@ public class DmpSoDeliveryDTO implements Serializable {
         * 运费收入
         */
         private BigDecimal shippingAmount;
+
+        /**
+        * 税金
+        */
+        private BigDecimal totalTaxAmount;
 
         /**
         * 商品总数量 （合计）
@@ -173,46 +183,6 @@ public class DmpSoDeliveryDTO implements Serializable {
         * 平台销售订单号
         */
         private String platformCode;
-
-        /**
-        * 国家编码
-        */
-        private String countryCode;
-
-        /**
-        * 国家名称
-        */
-        private String countryName;
-
-        /**
-        * 区域编码
-        */
-        private String regionCode;
-
-        /**
-        * 区域名称
-        */
-        private String regionName;
-
-        /**
-        * 军区编码
-        */
-        private String militaryRegionCode;
-
-        /**
-        * 军区名称
-        */
-        private String militaryRegionName;
-
-        /**
-        * 部门编码
-        */
-        private String departmentCode;
-
-        /**
-        * 部门名称
-        */
-        private String departmentName;
 
         /**
         * 数据来源
@@ -332,6 +302,13 @@ public class DmpSoDeliveryDTO implements Serializable {
         private String deliveryStatus;
 
         /**
+        * 交易类型
+        */
+        @NotBlank(message = "交易类型不能为空")
+        @Size(max = 64,message = "交易类型最大长度不能超过64位")
+        private String transactionType;
+
+        /**
         * 交易子类型
         */
         @NotBlank(message = "交易子类型不能为空")
@@ -372,6 +349,13 @@ public class DmpSoDeliveryDTO implements Serializable {
         @NotNull(message = "运费收入不能为空")
         @Digits(integer = 12, fraction = 4, message = "运费收入整数位不能超过12位，小数位不能超过4位")
         private BigDecimal shippingAmount;
+
+        /**
+        * 税金
+        */
+        @NotNull(message = "税金不能为空")
+        @Digits(integer = 12, fraction = 4, message = "税金整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal totalTaxAmount;
 
         /**
         * 商品总数量 （合计）
@@ -460,62 +444,6 @@ public class DmpSoDeliveryDTO implements Serializable {
         @NotBlank(message = "平台销售订单号不能为空")
         @Size(max = 255,message = "平台销售订单号最大长度不能超过255位")
         private String platformCode;
-
-        /**
-        * 国家编码
-        */
-        @NotBlank(message = "国家编码不能为空")
-        @Size(max = 50,message = "国家编码最大长度不能超过50位")
-        private String countryCode;
-
-        /**
-        * 国家名称
-        */
-        @NotBlank(message = "国家名称不能为空")
-        @Size(max = 255,message = "国家名称最大长度不能超过255位")
-        private String countryName;
-
-        /**
-        * 区域编码
-        */
-        @NotBlank(message = "区域编码不能为空")
-        @Size(max = 50,message = "区域编码最大长度不能超过50位")
-        private String regionCode;
-
-        /**
-        * 区域名称
-        */
-        @NotBlank(message = "区域名称不能为空")
-        @Size(max = 255,message = "区域名称最大长度不能超过255位")
-        private String regionName;
-
-        /**
-        * 军区编码
-        */
-        @NotBlank(message = "军区编码不能为空")
-        @Size(max = 50,message = "军区编码最大长度不能超过50位")
-        private String militaryRegionCode;
-
-        /**
-        * 军区名称
-        */
-        @NotBlank(message = "军区名称不能为空")
-        @Size(max = 255,message = "军区名称最大长度不能超过255位")
-        private String militaryRegionName;
-
-        /**
-        * 部门编码
-        */
-        @NotBlank(message = "部门编码不能为空")
-        @Size(max = 50,message = "部门编码最大长度不能超过50位")
-        private String departmentCode;
-
-        /**
-        * 部门名称
-        */
-        @NotBlank(message = "部门名称不能为空")
-        @Size(max = 255,message = "部门名称最大长度不能超过255位")
-        private String departmentName;
 
         /**
         * 数据来源

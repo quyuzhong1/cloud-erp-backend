@@ -32,6 +32,11 @@ public class DmpSoDeliveryDetailEntity extends BaseEntity<DmpSoDeliveryDetailEnt
     @TableField("main_id")
     private String mainId;
     /**
+    * 第三方发货id
+    */
+    @TableField("third_delivery_id")
+    private String thirdDeliveryId;
+    /**
     * 第三方发货明细id
     */
     @TableField("third_delivery_detail_id")
@@ -152,6 +157,46 @@ public class DmpSoDeliveryDetailEntity extends BaseEntity<DmpSoDeliveryDetailEnt
     @TableField("settlement_currency_code")
     private String settlementCurrencyCode;
     /**
+    * 国家编码
+    */
+    @TableField("country_code")
+    private String countryCode;
+    /**
+    * 国家名称
+    */
+    @TableField("country_name")
+    private String countryName;
+    /**
+    * 区域编码
+    */
+    @TableField("region_code")
+    private String regionCode;
+    /**
+    * 区域名称
+    */
+    @TableField("region_name")
+    private String regionName;
+    /**
+    * 军区编码
+    */
+    @TableField("military_region_code")
+    private String militaryRegionCode;
+    /**
+    * 军区名称
+    */
+    @TableField("military_region_name")
+    private String militaryRegionName;
+    /**
+    * 部门编码
+    */
+    @TableField("department_code")
+    private String departmentCode;
+    /**
+    * 部门名称
+    */
+    @TableField("department_name")
+    private String departmentName;
+    /**
     * 数据状态(已创建，已更新，已删除等)
     */
     @TableField("data_status")
@@ -184,6 +229,8 @@ public class DmpSoDeliveryDetailEntity extends BaseEntity<DmpSoDeliveryDetailEnt
 
 
     public static final String MAIN_ID = "main_id";
+
+    public static final String THIRD_DELIVERY_ID = "third_delivery_id";
 
     public static final String THIRD_DELIVERY_DETAIL_ID = "third_delivery_detail_id";
 
@@ -232,6 +279,22 @@ public class DmpSoDeliveryDetailEntity extends BaseEntity<DmpSoDeliveryDetailEnt
     public static final String PLATFORM_SKU_NAME = "platform_sku_name";
 
     public static final String SETTLEMENT_CURRENCY_CODE = "settlement_currency_code";
+
+    public static final String COUNTRY_CODE = "country_code";
+
+    public static final String COUNTRY_NAME = "country_name";
+
+    public static final String REGION_CODE = "region_code";
+
+    public static final String REGION_NAME = "region_name";
+
+    public static final String MILITARY_REGION_CODE = "military_region_code";
+
+    public static final String MILITARY_REGION_NAME = "military_region_name";
+
+    public static final String DEPARTMENT_CODE = "department_code";
+
+    public static final String DEPARTMENT_NAME = "department_name";
 
     public static final String DATA_STATUS = "data_status";
 

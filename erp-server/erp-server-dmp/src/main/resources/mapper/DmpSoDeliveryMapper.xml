@@ -20,12 +20,14 @@
        <result column="third_update_time" property="thirdUpdateTime" />
        <result column="pay_time" property="payTime" />
        <result column="delivery_status" property="deliveryStatus" />
+       <result column="transaction_type" property="transactionType" />
        <result column="transaction_sub_type" property="transactionSubType" />
        <result column="all_amount" property="allAmount" />
        <result column="total_discount_amount" property="totalDiscountAmount" />
        <result column="total_cancel_amount" property="totalCancelAmount" />
        <result column="pay_amount" property="payAmount" />
        <result column="shipping_amount" property="shippingAmount" />
+       <result column="total_tax_amount" property="totalTaxAmount" />
        <result column="total_qty" property="totalQty" />
        <result column="cancel_qty" property="cancelQty" />
        <result column="shipping_qty" property="shippingQty" />
@@ -39,14 +41,6 @@
        <result column="shop_name" property="shopName" />
        <result column="shop_no" property="shopNo" />
        <result column="platform_code" property="platformCode" />
-       <result column="country_code" property="countryCode" />
-       <result column="country_name" property="countryName" />
-       <result column="region_code" property="regionCode" />
-       <result column="region_name" property="regionName" />
-       <result column="military_region_code" property="militaryRegionCode" />
-       <result column="military_region_name" property="militaryRegionName" />
-       <result column="department_code" property="departmentCode" />
-       <result column="department_name" property="departmentName" />
        <result column="data_source" property="dataSource" />
        <result column="remark" property="remark" />
        <result column="unique_encrypt" property="uniqueEncrypt" />
@@ -67,7 +61,7 @@
         update_user_id,
         version,
         is_deleted,
-        source_platform, source_system, third_delivery_id, third_delivery_code, third_create_time, third_update_time, pay_time, delivery_status, transaction_sub_type, all_amount, total_discount_amount, total_cancel_amount, pay_amount, shipping_amount, total_qty, cancel_qty, shipping_qty, sales_company_code, receiving_company_code, organization_name, organization_code, platform_name, subplatform_no, subplatform_name, shop_name, shop_no, platform_code, country_code, country_name, region_code, region_name, military_region_code, military_region_name, department_code, department_name, data_source, remark, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
+        source_platform, source_system, third_delivery_id, third_delivery_code, third_create_time, third_update_time, pay_time, delivery_status, transaction_type, transaction_sub_type, all_amount, total_discount_amount, total_cancel_amount, pay_amount, shipping_amount, total_tax_amount, total_qty, cancel_qty, shipping_qty, sales_company_code, receiving_company_code, organization_name, organization_code, platform_name, subplatform_no, subplatform_name, shop_name, shop_no, platform_code, data_source, remark, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
     </sql>
 
 

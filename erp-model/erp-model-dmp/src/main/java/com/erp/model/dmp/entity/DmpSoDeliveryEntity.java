@@ -67,6 +67,11 @@ public class DmpSoDeliveryEntity extends BaseEntity<DmpSoDeliveryEntity> {
     @TableField("delivery_status")
     private String deliveryStatus;
     /**
+    * 交易类型
+    */
+    @TableField("transaction_type")
+    private String transactionType;
+    /**
     * 交易子类型
     */
     @TableField("transaction_sub_type")
@@ -96,6 +101,11 @@ public class DmpSoDeliveryEntity extends BaseEntity<DmpSoDeliveryEntity> {
     */
     @TableField("shipping_amount")
     private BigDecimal shippingAmount;
+    /**
+    * 税金
+    */
+    @TableField("total_tax_amount")
+    private BigDecimal totalTaxAmount;
     /**
     * 商品总数量 （合计）
     */
@@ -162,46 +172,6 @@ public class DmpSoDeliveryEntity extends BaseEntity<DmpSoDeliveryEntity> {
     @TableField("platform_code")
     private String platformCode;
     /**
-    * 国家编码
-    */
-    @TableField("country_code")
-    private String countryCode;
-    /**
-    * 国家名称
-    */
-    @TableField("country_name")
-    private String countryName;
-    /**
-    * 区域编码
-    */
-    @TableField("region_code")
-    private String regionCode;
-    /**
-    * 区域名称
-    */
-    @TableField("region_name")
-    private String regionName;
-    /**
-    * 军区编码
-    */
-    @TableField("military_region_code")
-    private String militaryRegionCode;
-    /**
-    * 军区名称
-    */
-    @TableField("military_region_name")
-    private String militaryRegionName;
-    /**
-    * 部门编码
-    */
-    @TableField("department_code")
-    private String departmentCode;
-    /**
-    * 部门名称
-    */
-    @TableField("department_name")
-    private String departmentName;
-    /**
     * 数据来源
     */
     @TableField("data_source")
@@ -254,6 +224,8 @@ public class DmpSoDeliveryEntity extends BaseEntity<DmpSoDeliveryEntity> {
 
     public static final String DELIVERY_STATUS = "delivery_status";
 
+    public static final String TRANSACTION_TYPE = "transaction_type";
+
     public static final String TRANSACTION_SUB_TYPE = "transaction_sub_type";
 
     public static final String ALL_AMOUNT = "all_amount";
@@ -265,6 +237,8 @@ public class DmpSoDeliveryEntity extends BaseEntity<DmpSoDeliveryEntity> {
     public static final String PAY_AMOUNT = "pay_amount";
 
     public static final String SHIPPING_AMOUNT = "shipping_amount";
+
+    public static final String TOTAL_TAX_AMOUNT = "total_tax_amount";
 
     public static final String TOTAL_QTY = "total_qty";
 
@@ -291,22 +265,6 @@ public class DmpSoDeliveryEntity extends BaseEntity<DmpSoDeliveryEntity> {
     public static final String SHOP_NO = "shop_no";
 
     public static final String PLATFORM_CODE = "platform_code";
-
-    public static final String COUNTRY_CODE = "country_code";
-
-    public static final String COUNTRY_NAME = "country_name";
-
-    public static final String REGION_CODE = "region_code";
-
-    public static final String REGION_NAME = "region_name";
-
-    public static final String MILITARY_REGION_CODE = "military_region_code";
-
-    public static final String MILITARY_REGION_NAME = "military_region_name";
-
-    public static final String DEPARTMENT_CODE = "department_code";
-
-    public static final String DEPARTMENT_NAME = "department_name";
 
     public static final String DATA_SOURCE = "data_source";
 
