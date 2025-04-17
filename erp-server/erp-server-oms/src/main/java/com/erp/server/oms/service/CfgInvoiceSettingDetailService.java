@@ -43,4 +43,6 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
     CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(String dictPlatform, String shopId);
 
     List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> listDictSelect(CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto);
+
+    void delateByMainIds(List<String> ids, Boolean aTrue);
 }

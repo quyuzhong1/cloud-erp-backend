@@ -138,14 +138,14 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         Set<ShopInfoEntity> availableShopList = shoplist.stream()
                 .filter(shop -> !usedShopidList.contains(shop.getId()))
                 .collect(Collectors.toSet());
-        //转换元素
-        List<CfgInvoiceSettingDetailDTO.ViewShopDTO> viewShopDTOList = availableShopList.stream()
-                .map(item -> {
+        // 转换为 ViewShopDTO，并设置 disabled 字段
+        List<CfgInvoiceSettingDetailDTO.ViewShopDTO> viewShopDTOList = shoplist.stream()
+                .map(shop -> {
                     CfgInvoiceSettingDetailDTO.ViewShopDTO dto = new CfgInvoiceSettingDetailDTO.ViewShopDTO();
-                    dto.setId(item.getId());
-                    dto.setName(item.getDictPlatform());
-                    dto.setValue(item.getName());
-                    dto.setDisabled(item.getDisabled());
+                    dto.setId(shop.getId());
+                    dto.setName(shop.getDictPlatform());
+                    dto.setValue(shop.getName());
+                    dto.setDisabled(usedShopidList.contains(shop.getId())); // 设置是否禁用
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -165,6 +165,12 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 .collect(Collectors.toList());
         List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> viewDictPlatformDTOList = BeanUtil.copyToList(filtrationDictList, CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO.class);
         return viewDictPlatformDTOList;
+    }
+
+    @Override
+    public void delateByMainIds(List<String> ids, Boolean aTrue) {
+        boolean remove = this.lambdaUpdate().in(CfgInvoiceSettingDetailEntity::getMainId, ids).remove();
+        return;
     }
 
     /**
