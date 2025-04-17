@@ -984,6 +984,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     if(StringUtils.isNotBlank(dto.getTrackNo()) && afterSaleStatus.getCode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())){
                         AfterSaleProgressEntity byNode = afterSaleProgressService.getByNode(entity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
                         byNode.setNodeTime(LocalDateTime.now());
+                        byNode.setRemark("待签收");
                         afterSaleProgressService.updateById(byNode);
                         //更新状态
                         entity.setStatus(AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode());
@@ -1039,13 +1040,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }
             }
         });
-
-        // 过滤 nodeTime 不为空的记录找出 index 最大的记录
-        AfterSaleProgressDTO.RepairRecordListDTO repairRecordListDTO = repairProgress.stream()
-                .filter(record -> record.getNodeTimeLd() != null)
-                .max(Comparator.comparingInt(AfterSaleProgressDTO.RepairRecordListDTO::getIndex)).get();
-
-        repairRecordDTO.setActive(repairRecordListDTO.getIndex() - 1);
+        List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
+        AfterSaleDTO.NodeDTO nodeDTO = nodeList.stream().filter(e -> e.getNode().equals(repairProgress.get(0).getStatus())).findFirst().orElse(null);
+        repairRecordDTO.setActive(nodeDTO.getIndex() - 1);
         repairRecordDTO.setRecordList(repairProgress);
         return repairRecordDTO;
     }
