@@ -290,6 +290,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         invoiceInfoEntity.setTemplateType(InvoiceInfoTemplateTypeEnum.OFFICIAL.getCode());
         //发票状态
         invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICING.getCode());
+        if (CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode())) {
+            invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode());
+        }
         return invoiceInfoEntity;
     }
 
