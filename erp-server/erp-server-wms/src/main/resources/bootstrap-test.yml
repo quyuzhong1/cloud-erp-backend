@@ -2,17 +2,17 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.12
+        server-addr: 172.16.100.60:32570
         namespace: test
       config:
-        server-addr: 172.16.100.12
+        server-addr: 172.16.100.60:32570
         namespace: test
         shared-configs: common.yml,db-wms.yml,druid-common.yml,erp-third-party.yml
 
 sfs:
   nacos:
     application: seata-server
-    server-addr: 172.16.100.12
+    server-addr: 172.16.100.60:32570
     namespace: seata-server
     group: SEATA_GROUP
 
