@@ -97,7 +97,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param remark 
      * @return BatchResultDTO
      */
-    BatchResultDTO notNeedInvoice( String soId, String remark);
+    BatchResultDTO notNeedInvoice( String soId, String remark,String invoiceType);
     /**
      * 开局Cce
      * @author will

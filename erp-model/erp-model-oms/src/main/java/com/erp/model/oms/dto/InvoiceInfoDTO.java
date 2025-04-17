@@ -95,6 +95,32 @@ public class InvoiceInfoDTO implements Serializable {
         private String remark;
     }
 
+
+    /**
+     * 销售订单无需开票DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class NoNeedInvoiceDTO {
+        /**
+         * so主键id
+         */
+        @NotEmpty(message = "soId不能为空")
+        private List<String> soIdList;
+
+        /**
+         * 备注
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+
+        /**
+         * 发票类型不能为空
+         */
+        @NotBlank(message = "发票类型不能为空")
+        private String invoiceType;
+    }
+
     /**
      * 开具Cce保存
      */
