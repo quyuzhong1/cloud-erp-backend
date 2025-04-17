@@ -3541,6 +3541,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             addSo.setSalesOrgId(salesOrgId);
             addSo.setSalesOrgName(salesOrgName);
+            //单据子类型
+            String transactionSubTypeName = mainInfo.getTransactionSubTypeName();
+            String transactionSubType = OrderSubTypeEnum.getCodeByName(transactionSubTypeName);
+            addSo.setTransactionSubType(transactionSubType);
+            if (StringUtils.isBlank(transactionSubType)) {
+                errorMsgList.add("单据子类型不存在");
+            }
             //销售部门
             String salesDeptName = mainInfo.getSalesDeptName();
             String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
