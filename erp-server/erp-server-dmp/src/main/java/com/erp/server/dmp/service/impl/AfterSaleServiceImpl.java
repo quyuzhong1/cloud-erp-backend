@@ -349,8 +349,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
             for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
                 if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode()) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
-                    afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
-
                     afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
 
@@ -364,8 +362,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 //                    });
                 }
                 if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode()) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
-                    afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
-
                     afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
 
