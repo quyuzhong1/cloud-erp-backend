@@ -163,7 +163,10 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         }
         boolean remove = this.lambdaUpdate().in(CfgInvoiceSettingEntity::getId, ids).remove();
         if (remove) {
+            //删除附件
             omsAttachmentService.deleteByBusinessIds(ids);
+            //删除明细
+            cfgInvoiceSettingDetailService.delateByMainIds(ids, Boolean.TRUE);
         }
         return remove;
     }

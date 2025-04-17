@@ -167,6 +167,12 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         return viewDictPlatformDTOList;
     }
 
+    @Override
+    public void delateByMainIds(List<String> ids, Boolean aTrue) {
+        boolean remove = this.lambdaUpdate().in(CfgInvoiceSettingDetailEntity::getMainId, ids).remove();
+        return;
+    }
+
     /**
      * @description: 校验发票设置是否存在
      * @author: hcg
