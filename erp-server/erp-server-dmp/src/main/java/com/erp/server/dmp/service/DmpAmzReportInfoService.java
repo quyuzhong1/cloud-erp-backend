@@ -29,5 +29,5 @@ public interface DmpAmzReportInfoService extends SuperService<DmpAmzReportInfoEn
      * @author Jim
      * @date: 2024-01-19
      */
-    DmpAmzReportInfoEntity getOneByNewEndDate(String reportType);
+    DmpAmzReportInfoEntity getOneByNewEndDate(String reportType, String platformShopCode, String join);
 }
