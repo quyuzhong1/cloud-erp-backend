@@ -257,7 +257,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (ObjUtil.isEmpty(invoiceSettingDetail)) {
             return;
         }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode())) {
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
             return;
         }
         if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
