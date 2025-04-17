@@ -6,15 +6,15 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 输入输出db信息 db类型 枚举
+ * 输出数据获取配置 获取数据类型 枚举
  * </p>
  *
  * @author shukai
- * @since 2024-06-11 09:37:12
+ * @since 2025-02-10 18:16:25
  */
-public enum DmpCfgDbDbTypeEnum implements EnumMessage {
-	POSTGRESQL("postgresql", "postgresql"),
-	MYSQL("mysql", "mysql"),
+public enum DmpCfgOutputDataTypeEnum implements EnumMessage {
+	DB("db", "数据库"),
+	API("api", "接口"),
     ;
     /**
      * 类型
@@ -27,7 +27,7 @@ public enum DmpCfgDbDbTypeEnum implements EnumMessage {
      */
     private String name;
 
-    DmpCfgDbDbTypeEnum(String code, String name) {
+    DmpCfgOutputDataTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -46,7 +46,7 @@ public enum DmpCfgDbDbTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpCfgDbDbTypeEnum statusEnum : DmpCfgDbDbTypeEnum.values()) {
+        for (DmpCfgOutputDataTypeEnum statusEnum : DmpCfgOutputDataTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }
