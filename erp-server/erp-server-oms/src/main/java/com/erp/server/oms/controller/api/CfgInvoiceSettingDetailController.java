@@ -72,4 +72,16 @@ public class CfgInvoiceSettingDetailController extends BaseController {
         return success(cfgInvoiceSettingDetailService.listShopSelect(dictplatform));
     }
 
+    /**
+     * 平台下拉
+     * @description:
+     * @author: hcg
+     * @date: 2025/4/10 15:01
+     * @param:
+     * @return:
+     **/
+    @GetMapping("/listDictSelect")
+    public ApiResult<List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO>> listDictSelect(@RequestBody @Validated CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto){
+        return success(cfgInvoiceSettingDetailService.listDictSelect(dto));
+    }
 }

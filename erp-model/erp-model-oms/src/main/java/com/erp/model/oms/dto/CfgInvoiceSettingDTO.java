@@ -2,6 +2,8 @@ package com.erp.model.oms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,7 +50,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
          * 法人国家经济号（必填）
          */
         @NotBlank(message = "法人国家经济号不能为空")
-        @Size(max = 100, message = "法人国家经济号最大长度不能超过100位")
+        @Size(max = 50, message = "法人国家经济号最大长度不能超过50位")
         private String leiCode;
 
         /**
@@ -89,7 +91,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
          * 邮编（必填）
          */
         @NotBlank(message = "邮编不能为空")
-        @Size(max = 50, message = "邮编最大长度不能超过50位")
+        @Size(max = 20, message = "邮编最大长度不能超过20位")
         private String postCode;
 
         /**
@@ -151,6 +153,21 @@ public class CfgInvoiceSettingDTO implements Serializable {
         @NotBlank(message = "证书密码不能为空")
         @Size(max = 100, message = "证书密码最大长度不能超过100位")
         private String certificatePassword;
+
+        /**
+         * 附件地址
+         */
+//        @NotBlank(message = "证书地址不能为空")
+        @Size(max = 100, message = "证书地址最大长度不能超过100位")
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+//        @NotBlank(message = "证书名不能为空")
+        @Size(max = 100, message = "证书名最大长度不能超过100位")
+        private List<String> attachmentNameList;
+
     }
 
     /**

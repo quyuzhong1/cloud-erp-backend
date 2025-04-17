@@ -242,4 +242,37 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
          */
         private Boolean disabled;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewDictPlatformDTO {
+        /**
+         * dictId
+         */
+        private String id;
+        /**
+         * dict.name
+         */
+        private String name;
+
+        /**
+         *  dict.value
+         */
+        private String value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ParamsDictPlatformDTO {
+        /**
+         * key = salesPlatform
+         */
+        @NotBlank(message = "key不能为空")
+        private String key;
+
+        /**
+         * 目前限制为速卖通和美克多本土店 names = ["AliExpress","mercadolibre"]，对应为dict中的value
+         */
+        private List<String> names;
+    }
 }

@@ -68,13 +68,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         }
         // 列表为空，第一次点击，返回平台情况即可
         if (ObjectUtil.isEmpty(viewDTOList)) {
-            keyList.forEach(item -> {
-                CfgInvoiceSettingDetailDTO.ViewDTO viewDTO = new CfgInvoiceSettingDetailDTO.ViewDTO();
-                viewDTO.setMainId(dto.getId());
-                viewDTO.setPlatformName(item.getName());
-                viewDTO.setPlatformValue(item.getValue());
-                viewDTOS.add(viewDTO);
-            });
             return viewDTOS;
         }
         // 平台value对应名称
@@ -150,6 +143,16 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         return baseMapper.getInvoiceSettingDetail(dictPlatform, shopId);
     }
 
+    @Override
+    public List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> listDictSelect(CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto) {
+        List<DictBasicDTO.ViewDTO> platformList = dictBasicService.getByKey(dto.getKey());
+        List<DictBasicDTO.ViewDTO> filtrationDictList = platformList.stream()
+                .filter(p -> dto.getNames().contains(p.getValue()))
+                .collect(Collectors.toList());
+        List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> viewDictPlatformDTOList = BeanUtil.copyToList(filtrationDictList, CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO.class);
+        return viewDictPlatformDTOList;
+    }
+
     /**
       * @description: 校验发票设置是否存在
       * @author: hcg
@@ -174,6 +177,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
       **/
     private void handleDeletedDetails(List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList) {
         String mainId = dtoList.get(0).getMainId();
+        //查询已存在的发票设置明细
         Set<String> existingIds = this.list(
                         new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>()
                                 .eq(CfgInvoiceSettingDetailEntity::getMainId, mainId)
@@ -213,7 +217,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             long count = super.count(
                     new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>()
                             .in(CfgInvoiceSettingDetailEntity::getShopId, incomingShopIds)
-                            .eq(CfgInvoiceSettingDetailEntity::getMainId, mainId)
             );
             if (count > 0) {
                 throw new ServiceException("店铺已存在!请不要重复添加");

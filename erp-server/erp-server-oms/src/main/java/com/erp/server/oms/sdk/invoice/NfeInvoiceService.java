@@ -97,8 +97,6 @@ public class NfeInvoiceService {
             CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
             getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO);
 
-            //查询运费
-            getShipCost(soB2cEntity,invoiceSettingDetail);
             obj = tfFiscalService.createInvoice(createDTO);
         }catch (Exception e){
             invoiceStatus = InvoiceInfoStatusEnum.INVOICE_FAILED.getCode();
@@ -258,6 +256,12 @@ public class NfeInvoiceService {
     private void getNfeItensDTO(SoB2cEntity soB2cEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail,NfeInvoiceDTO.NfeCreateDTO createDTO) {
         List<NfeInvoiceDTO.NfeItensDTO> itens = new ArrayList<>();
 
+        //财务信息
+        SoB2cFinanceEntity financeEntity = soB2cFinanceService.getByMainId(soB2cEntity.getId());
+        if (ObjUtil.isEmpty(financeEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
+        }
+
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
@@ -303,7 +307,10 @@ public class NfeInvoiceService {
         }
         createDTO.setItens(itens);
         createDTO.setValorTotal(valorTotal);
-        createDTO.setFinalTotal(valorTotal);
+
+        //查询运费
+        BigDecimal shipCost = getShipCost(soB2cEntity, invoiceSettingDetail);
+        createDTO.setFinalTotal(MathUtil.subtract(valorTotal,shipCost));
     }
 
     /**
@@ -325,7 +332,7 @@ public class NfeInvoiceService {
             return MathUtil.multiply(detailEntity.getPrice(),invoiceSettingDetail.getRatio()) ;
         }
         if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.DEDUCT.getCode())) {
-            return MathUtil.subtract(detailEntity.getPrice(),detailEntity.getProductCost()) ;
+            return MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;
         }
         return detailEntity.getPrice();
     }
