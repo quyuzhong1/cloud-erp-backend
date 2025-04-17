@@ -766,7 +766,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
             //- 组排序时，每个组按照第一个子件的仓位作为组的仓位，相同的组的子件SKU合并在一起
             List<PickingListsDTO.PrintSkuView> combinationList = printSkuCombinationViewList.stream()
                     // 先按 CustomerPo 分组
-                    .collect(Collectors.groupingBy(e-> e.getCustomerPO() + ":" + e.getThirdSku() + ":" + e.getParentSkuNo()))
+                    .collect(Collectors.groupingBy(PickingListsDTO.PrintSkuView::getCustomerPO))
                     .values().stream()
                     // 平铺所有 CustomerPo 分组后的数据
                     .flatMap(customerPoViews -> customerPoViews.stream()
@@ -782,7 +782,10 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                             ))
                             .values().stream().sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getWarehouseLocation))
                     )
-                    .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getWarehouseLocation))
+                    .sorted(Comparator.comparing(PickingListsDTO.PrintSkuView::getCustomerPO)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getParentSkuNo)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getThirdSku)
+                            .thenComparing(PickingListsDTO.PrintSkuView::getWarehouseLocation))
                     .collect(Collectors.toList());
             printView.setPrintSkuCombinationViewList(combinationList);
             printViews.add(printView);
