@@ -209,19 +209,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
       * @return: null
       **/
     private void handleCreateDetails(List<CfgInvoiceSettingDetailDTO.AddDTO> createList, String mainId) {
-        List<String> incomingShopIds = createList.stream()
-                .map(CfgInvoiceSettingDetailDTO.AddDTO::getShopId)
-                .filter(ObjectUtil::isNotEmpty)
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(incomingShopIds)) {
-            long count = super.count(
-                    new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>()
-                            .in(CfgInvoiceSettingDetailEntity::getShopId, incomingShopIds)
-            );
-            if (count > 0) {
-                throw new ServiceException("店铺已存在!请不要重复添加");
-            }
-        }
+        checkShopIdExist(createList);
+        //处理数据
         List<CfgInvoiceSettingDetailEntity> entityCreateList = createList.stream()
                 .map(item -> {
                     CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(item, CfgInvoiceSettingDetailEntity.class);
@@ -243,6 +232,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
       * @return: null
       **/
     private void handleUpdateDetails(List<CfgInvoiceSettingDetailDTO.AddDTO> updateList) {
+        checkShopIdExist(updateList);
+        //处理数据
         List<CfgInvoiceSettingDetailEntity> entityUpdateList = updateList.stream()
                 .map(item -> {
                     CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(item, CfgInvoiceSettingDetailEntity.class);
@@ -254,5 +245,25 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         if (!super.updateBatchById(entityUpdateList)) {
             throw new ServiceException("更新发票设置明细失败");
         }
+    }
+
+    /**
+     * 校验绑定的shopid是否已存在
+     */
+    public void checkShopIdExist(List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList) {
+        List<String> incomingShopIds = dtoList.stream()
+                .map(CfgInvoiceSettingDetailDTO.AddDTO::getShopId)
+                .filter(ObjectUtil::isNotEmpty)
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(incomingShopIds)) {
+            long count = super.count(
+                    new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>()
+                            .in(CfgInvoiceSettingDetailEntity::getShopId, incomingShopIds)
+            );
+            if (count > 0) {
+                throw new ServiceException("店铺已存在!请不要重复添加");
+            }
+        }
+        return ;
     }
 }
