@@ -309,8 +309,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     }
                 }
                 // 删除明细数据
-                List<String> ids = detailList.stream().map(item -> item.getId()).distinct().collect(Collectors.toList());
-                afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
+                List<String> ids = detailList.stream().map(item -> item.getId()).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+
+                if(CollUtil.isNotEmpty(ids)){
+                    afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
+                }else {
+                    afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).remove();
+                }
                 afterSaleDetailService.saveOrUpdateBatch(detailList);
             }
 
@@ -349,8 +354,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
             for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
                 if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode()) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
-                    afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_RETURNED.getCode());
-
                     afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
 
@@ -364,8 +367,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 //                    });
                 }
                 if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode()) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
-                    afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
-
                     afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
 
@@ -599,7 +600,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         log.info("作废 开始修改售后申请单状态数据，id：【{}】", id);
         lambdaUpdate().eq(AfterSaleEntity::getId, id)
             .set(AfterSaleEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
-             .set(AfterSaleEntity::getInvalidTime, LocalDateTime.now())
+            .set(AfterSaleEntity::getInvalidTime, LocalDateTime.now())
             .set(AfterSaleEntity::getStatus, AfterSaleStatusEnum.TERMINATED.getCode())
             .set(AfterSaleEntity::getInvalidRemark, remark)
             .update();
@@ -1243,13 +1244,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             return ;
         }
 
-        String value = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_SUBSCRIBE_MSG);
-        if (StringUtils.isBlank(value)) {
+        String msg = cfgSettingService.getValue(SettingEnum.AFTER_SALSE_SUBSCRIBE_MSG);
+        if (StringUtils.isBlank(msg)) {
             throw new ServiceException("售后微信消息订阅配置不存在");
         }
-
         //推送mq 让消费者去执行消息推送
-        SubscribeMsgRequest request = JSONUtil.toBean(value, SubscribeMsgRequest.class);
+        SubscribeMsgRequest request = JSONUtil.toBean(msg, SubscribeMsgRequest.class);
         request.setTouser("openId");
         request.setPage(request.getPage()+code);
         Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
@@ -1260,8 +1260,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         DmpPushMsgEntity dmpPushMsgEntity = new DmpPushMsgEntity();
         // 将请求对象转换为 JSON 字符串
         String jsonStr = JSONUtil.toJsonStr(request);
-
-
 
         dmpPushMsgEntity.setTargetPlatform("wx");
         dmpPushMsgEntity.setSourcePlatform(ServiceCodeNameEnum.DMP.getCode());
