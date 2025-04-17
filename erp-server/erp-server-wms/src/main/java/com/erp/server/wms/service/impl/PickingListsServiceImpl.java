@@ -632,7 +632,6 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                 List<String> requisitionDetailIds = details.stream().map(PickingDetailEntity::getSourceDetailId).collect(Collectors.toList());
                 List<RequisitionApplicationDetailEntity> requisitionApplicationDetailEntityList = applicationDetails.stream().filter(v->requisitionDetailIds.contains(v.getId())).collect(Collectors.toList());
                 for (PickingDetailEntity detail : details){
-//                for (RequisitionApplicationDetailEntity requisitionApplicationDetail : requisitionApplicationDetailEntityList) {
                     RequisitionApplicationDetailEntity requisitionApplicationDetail = requisitionApplicationDetailEntityList.stream().filter(e -> e.getId().equals(detail.getSourceDetailId())).findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION_DETAIL));
                     RequisitionApplicationEntity application = applicationEntities.stream().filter(v -> v.getId().equals(requisitionApplicationDetail.getMainId()))
                             .findFirst().orElseThrow(() -> new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION));
@@ -776,6 +775,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
                                     Collectors.collectingAndThen(Collectors.toList(), list -> {
                                                 PickingListsDTO.PrintSkuView view = list.get(0);
                                                 view.setParentSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getParentSkuQty).sum());
+                                                view.setChildSkuQty(list.stream().mapToInt(PickingListsDTO.PrintSkuView::getChildSkuQty).sum());
                                                 return view;
                                             }
                                     )
