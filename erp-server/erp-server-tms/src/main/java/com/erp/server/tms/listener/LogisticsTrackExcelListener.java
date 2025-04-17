@@ -165,15 +165,13 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
                         trackEntity.setMd5(getDataMd5(trackEntity));
                         addTrackList.add(trackEntity);
                     }else{
-                        if(StringUtils.isNotBlank(excelDTO.getTrackDesc())){
-                            LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
-                            trackEntity.setTrackNo(entity.getTransportNo());
-                            trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
-                            trackEntity.setStatus(trackStatus);
-                            trackEntity.setContent(excelDTO.getTrackDesc());
-                            trackEntity.setMd5(getDataMd5(trackEntity));
-                            addTrackList.add(trackEntity);
-                        }
+                        LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
+                        trackEntity.setTrackNo(entity.getTransportNo());
+                        trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
+                        trackEntity.setStatus(trackStatus);
+                        trackEntity.setContent(excelDTO.getTrackDesc());
+                        trackEntity.setMd5(getDataMd5(trackEntity));
+                        addTrackList.add(trackEntity);
                     }
                     if (LogisticTrackStatusEnum.SIGN.getCode().equals(trackStatus)){
                         detailEntity.setSignTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
