@@ -723,8 +723,9 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if(Objects.isNull(warehouseInfo) || CharSequenceUtil.isEmpty(warehouseInfo.getId())) {
             throw new ServiceException(ApiError.ERROR_99002);
         }
+        VirtualInventoryEntity found = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(), inventoryStatusEnum.getCode());
         // 登记交易流水
-        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, null, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
+        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, found, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
         transactionFlowDTO.setVirtualTransRuleId(transRuleId);
         virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.IN_STOCK);
@@ -748,7 +749,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
         VirtualInventoryEntity found = virtualInventoryService.findVirtualInventoryStock(param.getVirtualWarehouseId(),param.getWarehouseId(),param.getSkuId(), inventoryStatusEnum.getCode());
         // 登记交易流水（有可能一个操作产生多条，从多个库存明细中扣除）
-        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, null, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
+        VirtualTransFlowDTO.AddDTO transactionFlowDTO = wrapTransactionFlow(param, found, businessType, inventoryStatusEnum, param.getQty(), warehouseInfo.getOrgId());
         transactionFlowDTO.setTransactionNo(transactionNo);
         virtualTransFlowService.add(transactionFlowDTO, transRuleId, InventoryModeEnum.OUT_STOCK);
         log.warn("出库成功，交易业务：【{}】，来源单据：{}，单据id：【{}】，SKU编号：【{}】，库存状态：【{}】，入库数量：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getSkuNo(), inventoryStatusEnum.getName(), param.getQty());
@@ -799,7 +800,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         virtualTransFlowDTO.setSourceId(param.getSourceId());
         virtualTransFlowDTO.setSourceCode(param.getSourceCode());
         virtualTransFlowDTO.setSourceDetailId(param.getSourceDetailId());
-        virtualTransFlowDTO.setVirtualInventoryId("");
+        virtualTransFlowDTO.setVirtualInventoryId(ObjectUtil.isEmpty(virtualInventoryEntity) ? "" : virtualInventoryEntity.getId());
         virtualTransFlowDTO.setDictInventoryStatus(inventoryStatusEnum.getCode());
         virtualTransFlowDTO.setDictBizType(businessType.getCode());
         virtualTransFlowDTO.setBillDate(param.getBillDate());
