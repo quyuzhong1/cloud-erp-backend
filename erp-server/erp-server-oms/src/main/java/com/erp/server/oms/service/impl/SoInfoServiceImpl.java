@@ -3802,16 +3802,18 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 if (CharSequenceUtil.isAllBlank(priceStr,taxPriceStr)) {
                     errorMsgList.add("销售单价和含税单价不能同时为空");
                 }
-                if (CharSequenceUtil.isNotBlank(taxPriceStr) && CharSequenceUtil.isBlank(priceStr) && "是".equals(item.getIsTax())) {
-                    BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
-                    price = MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, MathUtil.divide(addDetail.getTaxRate(),MathUtil.BigDecimal_100)));
-                }
-                addDetail.setPrice(price);
-
                 //税率
                 String taxRateStr = item.getTaxRate();
                 BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
                 addDetail.setTaxRate(taxRate);
+                if("是".equals(item.getIsTax()) && CharSequenceUtil.isBlank(taxRateStr)){
+                    errorMsgList.add("税率不能为空");
+                }
+                if (CharSequenceUtil.isNotBlank(taxPriceStr) && CharSequenceUtil.isBlank(priceStr) && "是".equals(item.getIsTax())) {
+                    BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
+                    price = MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, MathUtil.divide(taxRate,MathUtil.BigDecimal_100)));
+                }
+                addDetail.setPrice(price);
                 soDetailList.add(addDetail);
             }
 
