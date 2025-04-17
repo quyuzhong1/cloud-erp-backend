@@ -1019,11 +1019,22 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             if (Objects.nonNull(t.getNodeTimeLd())) {
                 t.setNodeTime(LocalDateTimeUtil.format(t.getNodeTimeLd(), DateUtil.fmt));
             }
-            if(StringUtils.isNotBlank(t.getTrackNo())){
-                if(StringUtils.isBlank(t.getRemark())){
-                    t.setRemark(t.getTrackNo());
-                }else {
-                    t.setRemark(t.getTrackNo() + "\n" +t.getRemark());
+            if(t.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())){
+                if(StringUtils.isNotBlank(t.getTrackNo())){
+                    if(StringUtils.isBlank(t.getRemark())){
+                        t.setRemark("寄回快递单号："+t.getTrackNo());
+                    }else {
+                        t.setRemark("寄回快递单号："+t.getTrackNo() + "\n" +t.getRemark());
+                    }
+                }
+            }
+            if(t.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())){
+                if(StringUtils.isNotBlank(t.getTrackNo())){
+                    if(StringUtils.isBlank(t.getRemark())){
+                        t.setRemark("寄出快递单号："+t.getTrackNo());
+                    }else {
+                        t.setRemark("寄出快递单号："+t.getTrackNo() + "\n" +t.getRemark());
+                    }
                 }
             }
         });
@@ -1189,12 +1200,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //更新运单号
         boolean update = afterSaleProgressService.lambdaUpdate().eq(AfterSaleProgressEntity::getMainId, afterSaleEntity.getId())
                 .eq(AfterSaleProgressEntity::getNode, AfterSaleStatusEnum.TO_BE_RETURNED.getCode())
-                .set(AfterSaleProgressEntity::getTrackNo, trackNo)
+                .set(AfterSaleProgressEntity::getTrackNo, trackNo).set(AfterSaleProgressEntity::getNodeTime, LocalDateTime.now())
                 .update();
 
         //更新节点时间
         //更新通过，则进入下一个节点：售后签收
-        updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),trackNo,"待签收");
+        updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),"","待签收");
 
         //发送微信订阅消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -1212,7 +1223,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
     public void sendSubscribeMsgRequest(AfterSaleEntity afterSaleEntity, String status){
         String code = afterSaleEntity.getCode();
-//        String repairInvoiceCode = afterSaleEntity.getRepairInvoiceCode();
         String thridUserId = afterSaleEntity.getThridUserId();
         if(Objects.isNull(afterSaleEntity)){
             return ;
@@ -1229,6 +1239,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         if(Objects.nonNull(thridUserInfoEntity) && StringUtils.isNotBlank(thridUserInfoEntity.getOpenid())){
             openId = thridUserInfoEntity.getOpenid();
         }else {
+            log.error("微信用户信息openid不存在");
             return ;
         }
 
@@ -1239,7 +1250,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
         //推送mq 让消费者去执行消息推送
         SubscribeMsgRequest request = JSONUtil.toBean(value, SubscribeMsgRequest.class);
-        request.setTouser(openId);
+        request.setTouser("openId");
         request.setPage(request.getPage()+code);
         Map<String, SubscribeMsgRequest.DataItem> data = request.getData();
         data.get("character_string1").setValue(code);
@@ -1249,6 +1260,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         DmpPushMsgEntity dmpPushMsgEntity = new DmpPushMsgEntity();
         // 将请求对象转换为 JSON 字符串
         String jsonStr = JSONUtil.toJsonStr(request);
+
+
 
         dmpPushMsgEntity.setTargetPlatform("wx");
         dmpPushMsgEntity.setSourcePlatform(ServiceCodeNameEnum.DMP.getCode());
