@@ -206,6 +206,8 @@ public class AfterSaleProgressDTO implements Serializable {
          */
         private String id;
 
+        private String status;
+
         private String detailId;
         /**
          * 进度节点
