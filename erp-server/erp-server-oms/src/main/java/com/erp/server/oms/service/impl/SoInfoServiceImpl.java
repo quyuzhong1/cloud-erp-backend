@@ -3784,12 +3784,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }
-                if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
-                    isAdd = Boolean.FALSE;
-                    List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
-                    item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
-                    errorList.add(item);
-                }
                 //币种
                 addDetail.setCurrency(currency);
                 //数量
@@ -3803,17 +3797,17 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 String taxPriceStr = item.getTaxPrice();
                 //含税单价和销售单价不能同时为空
                 if (CharSequenceUtil.isAllBlank(priceStr,taxPriceStr)) {
-                    errorMsgList.add("销售单价和含税单价不能同时为空");
+                    msgList.add("销售单价和含税单价不能同时为空");
                 }
                 //税率
                 String taxRateStr = item.getTaxRate();
                 BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
                 addDetail.setTaxRate(taxRate);
                 if("是".equals(item.getIsTax()) && CharSequenceUtil.isBlank(taxRateStr)){
-                    errorMsgList.add("税率不能为空");
+                    msgList.add("税率不能为空");
                 }
                 if("否".equals(item.getIsTax()) && BigDecimal.ZERO.compareTo(taxRate) != 0){
-                    errorMsgList.add("不含税时税率必须为0");
+                    msgList.add("不含税时税率必须为0");
                 }
                 if (CharSequenceUtil.isNotBlank(taxPriceStr) && CharSequenceUtil.isBlank(priceStr) && "是".equals(item.getIsTax())) {
                     BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
@@ -3821,6 +3815,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 }
                 addDetail.setPrice(price);
                 soDetailList.add(addDetail);
+                if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
+                    isAdd = Boolean.FALSE;
+                    List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
+                    item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
+                    errorList.add(item);
+                }
             }
 
             try {

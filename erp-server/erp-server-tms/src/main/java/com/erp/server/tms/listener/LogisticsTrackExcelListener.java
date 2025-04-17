@@ -169,7 +169,7 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
                         trackEntity.setTrackNo(entity.getTransportNo());
                         trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
                         trackEntity.setStatus(trackStatus);
-                        trackEntity.setContent(excelDTO.getTrackDesc());
+                        trackEntity.setContent(CharSequenceUtil.isNotBlank(excelDTO.getTrackDesc()) ? excelDTO.getTrackDesc() : "");
                         trackEntity.setMd5(getDataMd5(trackEntity));
                         addTrackList.add(trackEntity);
                     }
