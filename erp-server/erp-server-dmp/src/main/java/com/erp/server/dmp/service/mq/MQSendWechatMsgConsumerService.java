@@ -30,47 +30,10 @@ public class MQSendWechatMsgConsumerService implements RocketMQListener<DmpPushM
 
     @Override
     public void onMessage(DmpPushMsgEntity dmpPushMsgEntity) {
-
-        dmpPushMsgService.save(dmpPushMsgEntity);
-
         // 发送微信订阅消息
-        wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
+        String result = wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
+        log.info("【{}】发送微信订阅消息结果：{}",dmpPushMsgEntity.getSourceCode(),result);
+        dmpPushMsgEntity.setRemark(result);
+        dmpPushMsgService.save(dmpPushMsgEntity);
     }
-
-
-//    @Resource
-//    private ShopInfoMappingService shopInfoMappingService;
-//    @Resource
-//    private WmsShipmentFeign wmsShipmentFeign;
-//    @Resource
-//    private MongoService mongoService;
-//
-//    /**
-//     * rocketmq 监听发货订单相关数据
-//     */
-//    @Service
-//    @RocketMQMessageListener(topic = RocketMqTopic.DMP_ERP_ORDER_TOPIC,
-//            selectorExpression = "lx_fba_shipment_receive_tag",
-//            consumerGroup = "${spring.cloud.nacos.discovery.namespace}-lx_fba_receive_consumer")
-//    public class ConsumerErpFbaReceive implements RocketMQListener {
-//        @Override
-//        public void onMessage(Object extObj) {
-//            log.info("监听领星Fba签收明细消息：entity={}", JSONUtil.toJsonStr(extObj));
-//            try {
-//                FbaReceiveGroupEntity ext = JSONUtil.toBean(extObj.toString(), FbaReceiveGroupEntity.class);
-//                // 检查店铺ID
-//                if (null == ext.getShopId()){
-//                    throw new ServiceException(StrUtil.format("来源数据异常, 店铺ID为空, dto={}", extObj.toString()));
-//                }
-//                // 保存和检查调拨
-//                wmsShipmentFeign.saveAndCheckTransfer(ext);
-//                MapUtil mapUtil = getMapParam();
-//                UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
-//                finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
-//            } catch (Throwable e) {
-//                log.error("监听领星Fba签收明细消费失败：error={}", ExceptionUtil.stacktraceToString(e));
-//            }
-//        }
-//    }
-
 }
