@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
 import com.erp.server.oms.mapper.OmsAttachmentMapper;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -91,4 +93,18 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
         }
         this.remove(queryWrapper);
     }
+
+    @Override
+    public void deleteByBusinessIds(List<String> businessIdList) {
+        if (CollectionUtils.isNotEmpty(businessIdList)) {
+            LambdaQueryWrapper<OmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(OmsAttachmentEntity::getBusinessId, businessIdList);
+            List<OmsAttachmentEntity> list = this.list(queryWrapper);
+            List<String> urlList = list.stream().map(OmsAttachmentEntity::getAttachUrl).collect(Collectors.toList());
+            //批量删除fastdfs 数据
+            FastDFSClientUtil.deleteBatchFile(urlList);
+            this.removeByIds(list.stream().map(OmsAttachmentEntity::getId).collect(Collectors.toList()));
+        }
+    }
+
 }

@@ -50,6 +50,12 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      */
     void removeAttachment(OmsAttachmentDTO.DeleteDTO dto);
 
-    
-
+    /**
+     * 根据业务表id 集合删除
+     * @author yl
+     * @date 2023-03-20 11:52
+     * @param businessIdList
+     * @return void
+     */
+    void deleteByBusinessIds(List<String> businessIdList);
 }
