@@ -145,7 +145,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                     dto.setId(shop.getId());
                     dto.setName(shop.getDictPlatform());
                     dto.setValue(shop.getName());
-                    dto.setDisabled(usedShopidList.contains(shop.getId())); // 设置是否禁用
+                    //场景
+                    dto.setDisabled(Boolean.TRUE.equals(shop.getDisabled()) || usedShopidList.contains(shop.getId()));
                     return dto;
                 })
                 .collect(Collectors.toList());
