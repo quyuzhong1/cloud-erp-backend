@@ -1069,7 +1069,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                                     zipOut.closeEntry();
                                 }
                             } catch (Exception e) {
-                                throw new RuntimeException("文件处理失败: " + attachDTO.getAttachName(), e);
+                                throw new ServiceException("文件处理失败: " + attachDTO.getAttachName(), e);
                             } finally {
                                 semaphore.release();
                             }

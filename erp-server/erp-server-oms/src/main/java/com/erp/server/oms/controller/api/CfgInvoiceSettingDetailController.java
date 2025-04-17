@@ -44,7 +44,7 @@ public class CfgInvoiceSettingDetailController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "发票设置新增或修改")
-    public ApiResult<BaseResultDTO.AddDTO> addOrUpdate(@RequestBody @Validated List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList) {
+    public ApiResult<BaseResultDTO.AddDTO> addOrUpdate(@RequestBody @Validated List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> dtoList) {
         return success(cfgInvoiceSettingDetailService.addOrUpdate(dtoList));
     }
 
@@ -72,4 +72,16 @@ public class CfgInvoiceSettingDetailController extends BaseController {
         return success(cfgInvoiceSettingDetailService.listShopSelect(dictplatform));
     }
 
+    /**
+     * 平台下拉
+     * @description:
+     * @author: hcg
+     * @date: 2025/4/10 15:01
+     * @param:
+     * @return:
+     **/
+    @PostMapping("/listDictSelect")
+    public ApiResult<List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO>> listDictSelect(@RequestBody @Validated CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto){
+        return success(cfgInvoiceSettingDetailService.listDictSelect(dto));
+    }
 }
