@@ -10082,6 +10082,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (!errorNoList.contains(no)) {
 
                     soB2cService.save(soB2cEntity);
+                    // 操作日志
+                    String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
 
                     List<SoB2cDetailDTO.AddDTO> addDTOS = BeanMapper.copyList(detailList, SoB2cDetailDTO.AddDTO.class);
                     //计算物流尺寸
@@ -10159,9 +10162,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         //自动计算预估运费到订单的预估运费字段
                         soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(soB2cEntity.getId()));
                     }
-                    // 操作日志
-                    String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
                 } else {
                     continue;
                 }
