@@ -48,7 +48,7 @@ public class LogisticsTrackExcelDTO implements Serializable {
      * 轨迹描述
      */
     @ExcelProperty(value = "轨迹描述")
-    @FieldValid(fieldName = "轨迹描述", isNotBlank = true,maxLength = 200)
+    @FieldValid(fieldName = "轨迹描述",maxLength = 200)
     private String trackDesc;
 
     /**
