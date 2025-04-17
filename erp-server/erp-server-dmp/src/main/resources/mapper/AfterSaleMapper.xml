@@ -112,6 +112,7 @@
         afsd.sku_no AS skuNo,
         afsd.product_name AS productName,
         afsd.sku_qty AS skuQty,
+        afsd.price AS price,
         afsd.detail_desc AS detailDesc,
         tui.username AS thridUserName,
         tui.nick_name AS nickName,
