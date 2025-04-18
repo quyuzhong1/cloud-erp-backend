@@ -1095,4 +1095,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param extendDataDTO
      */
     void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
+
+    void updatePlatformStatus(SoB2cEntity entity, String code);
 }
