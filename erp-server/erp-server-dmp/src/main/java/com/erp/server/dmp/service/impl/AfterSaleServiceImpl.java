@@ -1292,14 +1292,14 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
 
         DmpPushMsgEntity dmpPushMsgEntity = buildDmpPushMsgEntity(afterSaleEntity, request);
-        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
-                dmpPushMsgEntity, IdUtil.simpleUUID());
+//        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
+//                dmpPushMsgEntity, IdUtil.simpleUUID());
 
-//        // 发送微信订阅消息
-//        String result = wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
-//        log.info("【{}】发送微信订阅消息结果：{}",dmpPushMsgEntity.getSourceCode(),result);
-//        dmpPushMsgEntity.setRemark(result);
-//        dmpPushMsgService.save(dmpPushMsgEntity);
+        // 发送微信订阅消息
+        String result = wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
+        log.info("【{}】发送微信订阅消息结果：{}",dmpPushMsgEntity.getSourceCode(),result);
+        dmpPushMsgEntity.setRemark(result);
+        dmpPushMsgService.save(dmpPushMsgEntity);
     }
 
     // 参数校验
