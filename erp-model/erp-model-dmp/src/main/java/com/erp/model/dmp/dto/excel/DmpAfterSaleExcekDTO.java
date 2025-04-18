@@ -103,11 +103,6 @@ public class DmpAfterSaleExcekDTO implements Serializable {
 //        @ExcelProperty(value = "维修金额", index = 13)
         private String totalRepairAmount;
 
-        /**
-         * 申请日期
-         */
-//        @ExcelProperty(value = "申请日期", converter = LocalDateStringConverter.class, index = 14)
-        private LocalDate billDate;
 
         /**
          * 寄回快递单号
@@ -132,6 +127,12 @@ public class DmpAfterSaleExcekDTO implements Serializable {
          */
 //        @ExcelProperty(value = "备注", index = 18)
         private String remark;
+
+        /**
+         * 申请日期
+         */
+//        @ExcelProperty(value = "申请日期", converter = LocalDateStringConverter.class, index = 14)
+        private LocalDate billDate;
 
         /**
          * 审核人
