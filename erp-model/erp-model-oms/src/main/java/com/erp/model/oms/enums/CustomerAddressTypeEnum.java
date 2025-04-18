@@ -1,5 +1,6 @@
 package com.erp.model.oms.enums;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -45,6 +46,17 @@ public enum CustomerAddressTypeEnum  implements EnumMessage {
         for (CustomerAddressTypeEnum addressTypeEnum : CustomerAddressTypeEnum.values()) {
             if (code.equals(addressTypeEnum.getCode())) {
                 return addressTypeEnum.getName();
+            }
+        }
+        return "";
+    }
+    public static String getCode(String name) {
+        if(CharSequenceUtil.isBlank(name)){
+            return "";
+        }
+        for (CustomerAddressTypeEnum addressTypeEnum : CustomerAddressTypeEnum.values()) {
+            if (name.equals(addressTypeEnum.getName())) {
+                return addressTypeEnum.getCode();
             }
         }
         return "";

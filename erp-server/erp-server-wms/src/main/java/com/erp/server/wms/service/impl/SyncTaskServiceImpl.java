@@ -755,7 +755,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeOtherOutstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+            Map<String, Object> newSyncDataToKingdee = syncKingdeeOtherOutstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            if(newSyncDataToKingdee == null) {
+            	continue;
+            }
+			resultList.put(syncParamDetailDTO.getDataId(), newSyncDataToKingdee);
         }
         return resultList;
     }
@@ -780,7 +784,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeOtherInstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+            Map<String, Object> newSyncDataToKingdee = syncKingdeeOtherInstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            if(newSyncDataToKingdee == null) {
+            	continue;
+            }
+			resultList.put(syncParamDetailDTO.getDataId(), newSyncDataToKingdee);
         }
         return resultList;
     }

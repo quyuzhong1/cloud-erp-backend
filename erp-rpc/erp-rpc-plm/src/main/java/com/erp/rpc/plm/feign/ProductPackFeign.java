@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 产品包装
@@ -19,4 +21,7 @@ public interface ProductPackFeign {
 
     @PostMapping("/listBySkuIds")
     List<ProductPackEntity> listBySkuIds(@RequestBody List<String> skuIds);
+
+    @PostMapping("/listSingleBySkuIds")
+    Map<String, BigDecimal> listSingleBySkuIds(@RequestBody List<String> skuIds);
 }

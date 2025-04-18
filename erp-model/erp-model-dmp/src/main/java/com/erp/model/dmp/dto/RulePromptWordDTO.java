@@ -235,7 +235,6 @@ public class RulePromptWordDTO implements Serializable {
         /**
         * 提示
         */
-        @NotBlank(message = "提示不能为空")
         @Size(max = 255,message = "提示最大长度不能超过255位")
         private String tips;
 

@@ -986,4 +986,5 @@ public class CustomerB2CDTO implements Serializable {
          */
         private String searchKeyword;
     }
+
 }

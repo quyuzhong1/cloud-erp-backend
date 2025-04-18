@@ -63,5 +63,5 @@ public interface InventorySkuCostMapper extends BaseMapper<InventorySkuCostEntit
      * @param salesOrgIds
      * @return
      */
-    List<InventorySkuCostDTO.SkuCostDTO> listSkuCost(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("salesOrgIds") List<String> salesOrgIds);
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCost(@Param("skuIds") List<String> skuIds, @Param("warehouseIds") List<String> warehouseIds, @Param("salesOrgIds") List<String> salesOrgIds,@Param("month")String month);
 }

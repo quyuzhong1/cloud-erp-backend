@@ -480,6 +480,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<SalesDemandEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(SalesDemandEntity::getSourceId, sourceIds)
+                .eq(SalesDemandEntity::getInvalidStatus,Boolean.FALSE)
+                .eq(SalesDemandEntity::getIsDeleted,Boolean.FALSE)
+                .list();
+    }
 
     /**
      * 处理数据id

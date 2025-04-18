@@ -307,7 +307,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             sdyDTO.setUnit("PCS");
             sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));
-            sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformCode());
+            if (StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformOrderCode())){
+                sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformOrderCode());
+            } else {
+                sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformCode());
+            }
 
             if (dmpSoReturnEntity.getReturnTime() != null) {
                 sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
@@ -323,7 +327,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             }
             sdyDTO.setReason(dmpSoReturnDetailEntity.getReason());
             sdyDTO.setSource_system("SDC");
-            sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getPlatformCode());
+            if (StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformOrderCode())){
+                sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getPlatformOrderCode());
+            } else {
+                sdyDTO.setRoot_node_no_initial(dmpSoReturnEntity.getPlatformCode());
+            }
             result.put(dmpSoReturnDetailEntity.getId(), sdyDTO);
         }
 

@@ -302,7 +302,7 @@
             md.qty as qty
         from machine_info mi
         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'
-        inner join so_delivery_notice_detail sdnd on sdnd.source_detail_id = md.id and sdnd.is_deleted = false
+        inner join so_delivery_notice_detail sdnd on sdnd.id = md.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != ''
         where mi.is_deleted = false  and mi.source_type in ('soInfo','soDeliveryNotice')
         --直接调拨单出库
@@ -343,6 +343,6 @@
         inner join so_delivery_notice_detail sdnd on sdnd.id = sod.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sod.warehouse_id = sdn.warehouse_id
         where so.is_deleted = false and so.approve_status = 'approve'
-       ) b2b order by b2b.bill_date asc
+       ) b2b where b2b.qty > 0 order by b2b.bill_date asc
     </select>
 </mapper>

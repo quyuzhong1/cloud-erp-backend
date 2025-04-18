@@ -1,6 +1,8 @@
 package com.erp.server.plm.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -66,5 +68,13 @@ public class PilotApplicationDetailServiceImpl extends SuperServiceImpl<PilotApp
 
         // 记录主单操作日志
         return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean updateRemark(BaseIdsDTO.RemarkDTO remarkDTO) {
+        if (CollUtil.isEmpty(remarkDTO.getIds())) {
+            return Boolean.FALSE;
+        }
+        return this.lambdaUpdate().in(PilotApplicationDetailEntity::getId, remarkDTO.getIds()).set(PilotApplicationDetailEntity::getRemark, remarkDTO.getRemark()).update();
     }
 }

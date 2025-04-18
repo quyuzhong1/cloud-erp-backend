@@ -275,6 +275,7 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
                 .eq(VirtualTransFlowEntity::getSkuId, entity.getSkuId())
                 .eq(VirtualTransFlowEntity::getOperationMode, InventoryOperationModeEnum.APPROVE.getCode())
                 .le(VirtualTransFlowEntity::getTradeTime, entity.getTradeTime())
+                .orderByDesc(VirtualTransFlowEntity::getTradeTime)
                 .last("limit 1")
                 .one();
     }

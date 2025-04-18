@@ -41,6 +41,7 @@ import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.bcel.generic.I2F;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -356,6 +357,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                             receiverInfoVO.setProvince(addressHandleContent.getProvinceReplaceText());
                         }
                         break;
+                    case CUSTOMIZE:
+                        receiverInfoVO.setProvince(CharSequenceUtil.isNotBlank(receiverInfoVO.getProvince()) ? receiverInfoVO.getProvince() : addressHandleContent.getProvinceFillText());
+                        break;
                     default:
                         break;
                 }
@@ -377,6 +381,9 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         if (StringUtils.isNotBlank(receiverInfoVO.getCity()) && StringUtils.isNotBlank(addressHandleContent.getCityWaitReplaceText()) && receiverInfoVO.getCity().equals(addressHandleContent.getCityWaitReplaceText())) {
                             receiverInfoVO.setCity(addressHandleContent.getCityReplaceText());
                         }
+                        break;
+                    case CUSTOMIZE:
+                        receiverInfoVO.setCity(CharSequenceUtil.isNotBlank(receiverInfoVO.getCity()) ? receiverInfoVO.getCity() : addressHandleContent.getCityFillText());
                         break;
                     default:
                         break;
@@ -451,7 +458,19 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         if(zipCodeHandleContent.isZipCodeEmptyFillSwitch() && StringUtils.isBlank(receiverInfoVO.getZipCode())){
                 receiverInfoVO.setZipCode(zipCodeHandleContent.getZipCodeEmptyFillText());
             }
-
+        //邮编处理
+        if(zipCodeHandleContent.isZipCodeSwitch()){
+            RuleOrderHandleEnum.ZipCodeContentEnum cityRuleContentEnum = EnumMessage.getByCode(RuleOrderHandleEnum.ZipCodeContentEnum.class,zipCodeHandleContent.getHandleZipCodeRule());
+            if(Objects.nonNull(cityRuleContentEnum)){
+                switch (cityRuleContentEnum) {
+                    case REPLACE_BLANK:
+                        receiverInfoVO.setZipCode(null);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
     }
     /**
      * 收货人处理
@@ -472,7 +491,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         receiverInfoVO.setContact(receiverInfoVO.getBuyerName());
                         break;
                     case CUSTOMIZE:
-                        receiverInfoVO.setContact(receiveHandleContent.getReceiveFillText());
+                        receiverInfoVO.setContact(CharSequenceUtil.isNotBlank(receiverInfoVO.getContact()) ? receiverInfoVO.getContact() : receiveHandleContent.getReceiveFillText());
                         break;
                     default:
                         break;

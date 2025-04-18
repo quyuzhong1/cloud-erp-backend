@@ -40,7 +40,6 @@ public class SysEventTrackingServiceImpl extends SuperServiceImpl<SysEventTracki
     @Resource
     private SysDepartmentUserService sysDepartmentUserService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SysEventTrackingDTO.AddDTO addDTO) {
