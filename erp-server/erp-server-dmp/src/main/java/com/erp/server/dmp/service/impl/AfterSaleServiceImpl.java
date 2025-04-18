@@ -114,6 +114,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private DmpSoOutstockService dmpSoOutstockService;
     @Resource
     private MQProducerService mQProducerService;
+    @Resource
+    private DmpPushMsgService dmpPushMsgService;
 
 
 
@@ -127,11 +129,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
 
         //第三方用户id为空的情况下，则新增用户
-        if(StringUtils.isBlank(addDTO.getType())
-                && addDTO.getType().equals("wx")
+        if(addDTO.getType().equals("wx")
                 && StringUtils.isBlank(addDTO.getThridUserId())){
             throw new ServiceException("第三方用户id不能为空");
-        }else if(StringUtils.isBlank(addDTO.getThridUserId())){
+        }else if(addDTO.getType().equals("selfAdd")
+                &&StringUtils.isBlank(addDTO.getThridUserId())){
             ThridUserInfoEntity thridUserInfoEntity = new ThridUserInfoEntity();
             thridUserInfoEntity.setUsername(addDTO.getThridUserName());
             thridUserInfoEntity.setPhoneNumber(addDTO.getPhoneNumber());
@@ -1290,8 +1292,14 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
 
         DmpPushMsgEntity dmpPushMsgEntity = buildDmpPushMsgEntity(afterSaleEntity, request);
-        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
-                dmpPushMsgEntity, IdUtil.simpleUUID());
+//        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
+//                dmpPushMsgEntity, IdUtil.simpleUUID());
+
+        // 发送微信订阅消息
+        String result = wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
+        log.info("【{}】发送微信订阅消息结果：{}",dmpPushMsgEntity.getSourceCode(),result);
+        dmpPushMsgEntity.setRemark(result);
+        dmpPushMsgService.save(dmpPushMsgEntity);
     }
 
     // 参数校验
