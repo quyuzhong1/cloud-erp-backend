@@ -113,15 +113,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
-        // 跳过未作废的自发货无地址的订单
-        if ( notPlatformOrderNotExistAddress(dto)
-                && null != dto.getInvalidStatus()
-                && !dto.getInvalidStatus()
-        ) {
-            log.warn("卖家自发货订单无地址暂不新增：单号={}", dto.getPlatformCode());
-            return;
-        }
-
         SoB2cDTO.PullOrderResultDTO resultDTO = platformOrderConsumerHandleService.checkAndSaveAll(dto);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
         //平台仓订单
@@ -404,7 +395,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 //        }
         // 已支付订单在出库时推送
         // 已取消订单推送?
-        if (mainEntity.getIsCancel()) {
+        if (mainEntity.getIsCancel() && ApproveStatusEnum.APPROVE.equals(mainEntity.getApproveStatus())) {
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }

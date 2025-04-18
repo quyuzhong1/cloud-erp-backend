@@ -770,4 +770,14 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     public List<DmpOutputTaskRecordEntity> queryBySourceCodeAndCfgOutputId(String sourceCode, String cfgOutputId) {
         return this.baseMapper.queryBySourceCodeAndCfgOutputId(sourceCode, cfgOutputId);
     }
+
+    @Override
+    public DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass) {
+        return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
+    }
+
+	@Override
+	public List<String> outputErrorCountMsg() {
+		return baseMapper.outputErrorCountMsg();
+	}
 }

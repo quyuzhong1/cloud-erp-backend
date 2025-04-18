@@ -2,7 +2,9 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.erp.sdk.oms.amz.spapi.model.orders.Money;
+import com.google.gson.annotations.SerializedName;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -54,10 +56,54 @@ public class DmpInputAmzOrderDetailDmpHandler extends DmpInputAmzOrderDoChildDmp
             if (promotionDiscountObj != null) {
                 Map<String, Object> promotionDiscountMap = (Map<String, Object>) promotionDiscountObj;
                 dmpInputMongoChild.put("discount", promotionDiscountMap.get("amount"));
-
             }
+
+            // 产品销售税
+            Object itemTaxObj = dmpInputMongoChild.get("itemTax");
+            if (null != itemTaxObj){
+                Money itemTax = JSON.parseObject(JSON.toJSONString(itemTaxObj), Money.class);
+                dmpInputMongoChild.put("itemTax", itemTax.getAmount());
+            }
+
+            // 运费税
+            Object shippingTaxObj = dmpInputMongoChild.get("shippingTax");
+            if (null != shippingTaxObj){
+                Money shippingTax = JSON.parseObject(JSON.toJSONString(shippingTaxObj), Money.class);
+                dmpInputMongoChild.put("shippingTax", shippingTax.getAmount());
+            }
+
+            Object buyerInfoObj = dmpInputMongoChild.get("buyerInfo");
+            if (null != buyerInfoObj){
+                JSONObject buyerInfoJson = (JSONObject) JSON.toJSON(buyerInfoObj);
+                Object giftWrapPriceObj = buyerInfoJson.get("giftWrapPrice");
+                Object giftWrapTaxObj = buyerInfoJson.get("giftWrapTax");
+                if (null != giftWrapPriceObj){
+                    // 礼品包装费(备用)
+                    Money giftWrapPrice= JSON.parseObject(JSON.toJSONString(giftWrapPriceObj), Money.class);
+                    dmpInputMongoChild.put("giftWrapPrice", giftWrapPrice.getAmount());
+                }
+                if (null != giftWrapTaxObj){
+                    // 礼品包装税
+                    Money giftWrapTax = JSON.parseObject(JSON.toJSONString(giftWrapTaxObj), Money.class);
+                    dmpInputMongoChild.put("giftWrapTax", giftWrapTax.getAmount());
+                }
+            }
+
+            // 促销折扣税
+            Object promotionDiscountTaxObj = dmpInputMongoChild.get("promotionDiscountTax");
+            if (null != promotionDiscountTaxObj){
+                Money promotionDiscountTax = JSON.parseObject(JSON.toJSONString(promotionDiscountTaxObj), Money.class);
+                dmpInputMongoChild.put("promotionDiscountTax", promotionDiscountTax.getAmount());
+            }
+
+            // 运费折扣税
+            Object shippingDiscountTaxObj = dmpInputMongoChild.get("shippingDiscountTax");
+            if (null != shippingDiscountTaxObj){
+                Money shippingDiscountTax = JSON.parseObject(JSON.toJSONString(shippingDiscountTaxObj), Money.class);
+                dmpInputMongoChild.put("shippingDiscountTax", shippingDiscountTax.getAmount());
+            }
+
         }
         return dmpInputMongoChildList;
-
     }
 }

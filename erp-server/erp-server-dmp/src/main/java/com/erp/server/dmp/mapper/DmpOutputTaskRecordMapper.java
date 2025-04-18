@@ -89,4 +89,8 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     void dmpInputMoveToHistoryTable(@Param("conditionSql") String conditionSql);
 
     List<DmpOutputTaskRecordEntity> queryBySourceCodeAndCfgOutputId(@Param("sourceCode") String sourceCode, @Param("cfgOutputId") String cfgOutputId);
+
+    DmpOutputTaskRecordEntity getOutputTaskRecord(@Param("sourceCode") String sourceCode, @Param("outputClass") String outputClass);
+    
+    List<String> outputErrorCountMsg();
 }

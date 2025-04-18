@@ -207,6 +207,11 @@ public class DmpOutputAmzOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         // 1=详情数据已更新(发送MQ)
         orderDTO.setDownloadStatus(1);
 
+        // 税后支付金额
+        orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+        // 税后支付金额
+        orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
+
 
         // 记录详情
         if (!CollectionUtils.isEmpty(dmpSoDetailEntityList)) {

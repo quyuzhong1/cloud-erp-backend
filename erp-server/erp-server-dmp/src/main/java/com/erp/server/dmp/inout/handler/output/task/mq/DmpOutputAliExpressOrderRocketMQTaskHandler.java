@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -251,17 +252,24 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setSourceId(thirdCode);
         // 来源编码
         orderDTO.setSourceCode(thirdCode);
+
+		// 税后支付金额
+		orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+		// 税后支付金额
+		orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
+		// 折扣金额
+		orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
         
         // 标签json
         orderDTO.setLabelJson(dmpSoInfoEntity.getExtendData());
 
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(dmpSoInfoEntity.getOrderStatus());
+        orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
 
         // 审核状态状态
         // （ApproveStatus字典类型）
-        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getApproveStatus());
+        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
@@ -271,6 +279,10 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setAbnormalType("");
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
+        
+        orderDTO.setTotalCancelGoodsAmount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
+        orderDTO.setCancelGoodsCurrency(dmpSoInfoEntity.getCancelGoodsCurrency());
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
         
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
         if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
@@ -320,14 +332,16 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 // 数量
                 Integer qty = dmpSoDetailEntity.getQty();
 				detailDTO.setQty(qty);
-                
-                BigDecimal sellPriceOrigin = dmpSoDetailEntity.getSellPriceOrigin();
-                if(sellPriceOrigin != null && qty != null && qty.compareTo(0) != 0) {
-                	// 单价
-                	detailDTO.setPrice(sellPriceOrigin.divide(new BigDecimal(qty) , 2, RoundingMode.HALF_UP));
+
+				// 单价
+                BigDecimal sellPriceOrigin = null == dmpSoDetailEntity.getSellPriceOrigin() ? BigDecimal.ZERO : dmpSoDetailEntity.getSellPriceOrigin();
+				// 明细总价
+				BigDecimal amount = BigDecimal.ZERO;
+				if(qty != null && qty.compareTo(0) != 0) {
+                	amount = sellPriceOrigin.multiply(BigDecimal.valueOf(qty));
                 }
-                
-				detailDTO.setAmount(sellPriceOrigin);
+				detailDTO.setPrice(sellPriceOrigin);
+				detailDTO.setAmount(amount);
                 detailDTO.setCurrency(dmpSoDetailEntity.getCurrencyCode());
                 
                 // 汇率
