@@ -386,13 +386,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private InvoiceInfoService invoiceInfoService;
 
-    @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
-
-    @Lazy
-    @Resource
-    private InvoiceInfoService invoiceInfoService;
-
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
