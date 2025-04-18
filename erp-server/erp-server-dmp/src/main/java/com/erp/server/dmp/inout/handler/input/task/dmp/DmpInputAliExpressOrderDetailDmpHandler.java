@@ -6,11 +6,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.alibaba.fastjson.TypeReference;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
+import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.python.icu.math.BigDecimal;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -74,6 +77,22 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 				        lableMap.put("logisticsWarehouseType", c.get("logistics_warehouse_type"));
 				        lableMap.put("tagList", c.get("tags"));
 						c.put("extendData", JSON.toJSONString(lableMap));
+
+						//属性
+						String productAttributes = c.get("product_attributes") == null ? "" : c.get("product_attributes").toString();
+						if(StringUtils.isNotBlank(productAttributes)) {
+							OrderItemDetail.ChildAttributes childSkus = JSON.parseObject(productAttributes,new TypeReference<OrderItemDetail.ChildAttributes>() {}.getType());
+							if(childSkus != null) {
+								List<OrderItemDetail.ChildSku> skuList = childSkus.getChildSkus();
+								if (CollUtil.isNotEmpty(skuList)) {
+									for (OrderItemDetail.ChildSku sku : skuList) {
+										if ("Ships From".equals(sku.getPName())) {
+											c.put("variantProperty",sku.getPValue());
+										}
+									}
+								}
+							}
+						}
 						
 						c.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
 						c.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));

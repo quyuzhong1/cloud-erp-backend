@@ -1474,6 +1474,7 @@ public enum ApiError implements Serializable {
 
 
     ERROR_92175(92175,"存在下游单据不允许作废"),
+
     ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
     ERROR_SO_PRICE_CHANGE_DATE(92177,"销售调价表SKU【{}】失效时间不可小于生效时间"),
