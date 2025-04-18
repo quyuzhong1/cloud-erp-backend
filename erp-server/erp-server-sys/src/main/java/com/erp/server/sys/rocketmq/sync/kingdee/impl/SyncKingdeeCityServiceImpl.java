@@ -14,6 +14,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -60,48 +61,12 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
 
     @Override
     public DmpPushTaskEntity syncDataToKingdee(DictCityEntity entity, String operate) {
-        Map<String, Object> resultMap = new HashMap<>();
-        Boolean isExistParent = true;
-        resultMap.put("isExistParent", isExistParent);
-        //业务id
-        resultMap.put("id",entity.getId());
-        //编码
-        resultMap.put("code",entity.getKingdeeCode());
-        //名称
-        resultMap.put("name",entity.getName());
-        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
-        String syncKingdeeId="";
-        if (Objects.nonNull(thirdpartyRef)) {
-            syncKingdeeId = thirdpartyRef.getThirdpartyId();
-        }
-        //金蝶id
-        resultMap.put("syncKingdeeId",syncKingdeeId);
-        resultMap.put("operate", operate);
-        //模块类型
-        Integer moduleType = ApiModuleTypeEnum.PROVINCE_CITY.getCode();
-        //辅助资料类型编码
-        String fNumber = AssistantDataEnum.CITY.getCode();
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
-        }
-        if(isExistParent){
-            DictCityEntity cityEntity = dictCityService.getById(entity.getParentId());
-            if (Objects.isNull(cityEntity) || StringUtils.isBlank(cityEntity.getKingdeeCode())) {
-                throw new ServiceException(new ApiResult(1, "未找到上级省或者省未同步到金蝶"));
-            }
-            //上级编码
-            resultMap.put("parentCode",cityEntity.getKingdeeCode());
-
-            //上级
-            ThirdpartyRefBusinessEntity parentThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(cityEntity.getId());
-            if (Objects.nonNull(parentThirdpartyRef)) {
-                resultMap.put("pid",parentThirdpartyRef.getThirdpartyId());
-            }
-        }
-        resultMap.put("moduleType",moduleType);
-        resultMap.put("fNumber", fNumber);
-        return saveTask(entity,operate,resultMap);
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     private DmpPushTaskEntity saveTask(DictCityEntity entity, String operate, Map<String, Object> resultMap) {
@@ -138,5 +103,51 @@ public class SyncKingdeeCityServiceImpl implements SyncKingdeeCityService {
         
         return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(DictCityEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+        Boolean isExistParent = true;
+        resultMap.put("isExistParent", isExistParent);
+        //业务id
+        resultMap.put("id",entity.getId());
+        //编码
+        resultMap.put("code",entity.getKingdeeCode());
+        //名称
+        resultMap.put("name",entity.getName());
+        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
+        String syncKingdeeId="";
+        if (Objects.nonNull(thirdpartyRef)) {
+            syncKingdeeId = thirdpartyRef.getThirdpartyId();
+        }
+        //金蝶id
+        resultMap.put("syncKingdeeId",syncKingdeeId);
+        resultMap.put("operate", operate);
+        //模块类型
+        Integer moduleType = ApiModuleTypeEnum.PROVINCE_CITY.getCode();
+        //辅助资料类型编码
+        String fNumber = AssistantDataEnum.CITY.getCode();
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            return resultMap;
+        }
+        if(isExistParent){
+            DictCityEntity cityEntity = dictCityService.getById(entity.getParentId());
+            if (Objects.isNull(cityEntity) || StringUtils.isBlank(cityEntity.getKingdeeCode())) {
+                throw new ServiceException(new ApiResult(1, "未找到上级省或者省未同步到金蝶"));
+            }
+            //上级编码
+            resultMap.put("parentCode",cityEntity.getKingdeeCode());
+
+            //上级
+            ThirdpartyRefBusinessEntity parentThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(cityEntity.getId());
+            if (Objects.nonNull(parentThirdpartyRef)) {
+                resultMap.put("pid",parentThirdpartyRef.getThirdpartyId());
+            }
+        }
+        resultMap.put("moduleType",moduleType);
+        resultMap.put("fNumber", fNumber);
+        return resultMap;
+	}
 
 }

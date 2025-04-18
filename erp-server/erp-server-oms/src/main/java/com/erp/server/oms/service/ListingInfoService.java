@@ -98,4 +98,6 @@ public interface ListingInfoService extends SuperService<ListingInfoEntity> {
     List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(ListingInfoParamDTO dto);
 
     List<ListingInfoDTO.SearchResultDTO> searchByKey(ListingInfoDTO.SearchParamDTO dto);
+
+    List<ListingInfoEntity> listByAuthIds(List<String> authIds);
 }

@@ -2,29 +2,44 @@ package com.erp.server.dmp.inout.utils;
 
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import cn.hutool.core.collection.CollectionUtil;
-import com.common.core.exception.ServiceException;
-import com.erp.model.dmp.entity.DmpCfgOutputConvertMappingEntity;
+import javax.sql.DataSource;
+
 import org.apache.commons.lang.StringUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.Sequence;
+import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpBasicSystemEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.entity.DmpCfgOutputConvertMappingEntity;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.http.HttpUtil;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class DmpHandlerUtils {
 	
 	private static String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
@@ -278,4 +293,189 @@ public class DmpHandlerUtils {
 
 		return fieldMap;
 	}
+	
+	public static void main(String[] args) {
+		Map<String, Object> map = new HashMap<>();
+		map.put("a", "1");
+		map.put("c@j", "2");
+		map.put("c@arr_k", "k1");
+		map.put("c@arr_l@z", "z1");
+		map.put("c@arr_l@y", "y2");
+		map.put("c@e@h", "1");
+		map.put("b", "1");
+		map.put("c@e@g", "1");
+		
+		List<Map<String, Object>> list = new ArrayList<>();
+		list.add(map);
+		map = new HashMap<>();
+		map.put("a", "1");
+		map.put("c@j", "2");
+		map.put("c@arr_k", "k2");
+		map.put("c@arr_l@z", "z2");
+		map.put("c@arr_l@y", "y1");
+		map.put("c@e@h", "1");
+		map.put("b", "1");
+		map.put("c@e@g", "1");
+		list.add(map);
+		
+		System.out.println(JSON.toJSONString(parseDbColumnName(list)));
+	}
+	
+	public static Map<String , Object> parseDbColumnName(List<Map<String, Object>> list){
+		List<Map<String , Object>> resultList = new ArrayList<>();
+		Set<String> arrStr = new HashSet<>();
+		for(Map<String, Object> l : list) {
+			int max = 0;
+			Map<String[], Object> newMaps = new HashMap<>();
+			for(Map.Entry<String, Object> m : l.entrySet()) {
+				String key = m.getKey();
+				String[] split = key.split("@");
+				if(max < split.length) {
+					max = split.length;
+				}
+				newMaps.put(split, m.getValue());
+				if(key.contains("arr_")) {
+					StringBuilder arrs = new StringBuilder();
+					for(String s : split) {
+						arrs.append(s);
+						if(s.contains("arr_")) {
+							arrStr.add(arrs.toString());
+							break;
+						}
+						arrs.append("@");
+					}
+				}
+			}
+			
+			Map<String , Object> result  = new HashMap<>();
+			while(max > 0) {
+				result = parseDbColumnNameIndex(newMaps, max , result);
+				max = max - 1;
+			}
+			resultList.add(result);
+		}
+		
+		for(String arr : arrStr) {
+			List<Object> listElement = new ArrayList<>();
+			String[] split = arr.split("@");
+			Map<String, Object> element = null;
+			
+			String key = "";
+			for(Map<String , Object> result : resultList) {
+				for(int i = 0; i < split.length; i++) {
+					if(split[i].startsWith("arr_")) {
+						key = split[i].replace("arr_" , "");
+						listElement.add(element.get(key));
+						break;
+					}
+					element = (Map<String, Object>)result.get(split[i]);
+				}
+			}
+			element.put(key, listElement);
+		}
+		return resultList.get(resultList.size() - 1);
+	}
+    
+    private static Map<String , Object> parseDbColumnNameIndex(Map<String[], Object> newMaps , int i , Map<String , Object> result){
+    	Map<String , Object> output = new HashMap<>();
+    	for(Map.Entry<String[], Object> newMap : newMaps.entrySet()) {
+    		String[] key = newMap.getKey();
+    		int length = key.length;
+    		if(length >= i) {
+    			String c = key[i - 1];
+    			c = c.replace("arr_", "");
+    			if(length == i) {
+    				if(length > 1) {
+    					String p = key[i - 2];
+    					p = p.replace("arr_", "");
+    					Object object = output.get(p);
+    					Map<String, Object> map = null;
+    					if(object == null) {
+            				map = new HashMap<>();
+            			}else {
+            				map = (Map<String, Object>) object;
+            			}
+    					map.put(c, newMap.getValue());
+    					output.put(p, map);
+    				}else {
+    					output.put(c, newMap.getValue());
+    				}
+    			}else {
+    				Object object = result.get(c);
+    				if(i > 1) {
+    					String p = key[i - 2];
+    					p = p.replace("arr_", "");
+        				Map<String, Object> map = new HashMap<>();
+    					if(object == null) {
+            				map.put(c, newMap.getValue());
+            			}else {
+            				map.put(c, object);
+            			}
+    					Object object2 = output.get(p);
+    					if(object2 != null) {
+    						map.putAll((Map<String, Object>)object2);
+    					}
+    					output.put(p, map);
+    				}else {
+    					output.put(c, object);
+    				}
+    			}
+    		}
+    	}
+    	return output;
+    }
+    
+    public static Map<String, List<Map<String, Object>>> queryDatabase(DataSource dataSource, String sqlQuery) throws SQLException {
+    	Map<String, List<Map<String, Object>>> result = new HashMap<>();
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(sqlQuery);
+
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            while (resultSet.next()) {
+            	Map<String, Object> resultMap = new HashMap<>();
+            	String dataIdValue = "";
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnName(i);
+                    Object columnValue = resultSet.getObject(i);
+                    if(columnName.equals("querySourceId")) {
+                    	dataIdValue = columnValue.toString();
+                    }
+                    resultMap.put(columnName, columnValue);
+                }
+                List<Map<String, Object>> list = result.get(dataIdValue);
+				if(CollUtil.isEmpty(list)) {
+					list = new ArrayList<>();
+                }
+				list.add(resultMap);
+                result.put(dataIdValue , list);
+            }
+
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                log.error("关闭dmpCfgDbEntity查询的连接异常" , e);
+            }
+        }
+
+        return result;
+    }
 }

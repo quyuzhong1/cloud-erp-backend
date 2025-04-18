@@ -32,7 +32,7 @@ public class PilotApplicationQueryHandler extends AbstractQueryHandler {
                 return "";
             }
             if(value.equals("waitSubmit")){
-                return "(pa.approve_status = 'waitSubmit')";
+                return "(pa.approve_status = 'waitSubmit' and pa.invalid_status = false)";
             }
             if(value.equals("waitMeApprove")){
                 //待我审批流程信息
@@ -59,7 +59,7 @@ public class PilotApplicationQueryHandler extends AbstractQueryHandler {
                 }
             }
             if(value.equals("reject")){
-                return "(pa.approve_status = 'reject')";
+                return "(pa.approve_status = 'reject' and pa.invalid_status = false)";
             }
             if(value.equals("notOrder")){
                 return "(pa.approve_status = 'approve' and pad.order_status = 'notOrder')";

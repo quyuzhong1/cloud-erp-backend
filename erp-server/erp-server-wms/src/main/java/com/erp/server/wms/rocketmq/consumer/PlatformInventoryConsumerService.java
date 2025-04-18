@@ -176,8 +176,8 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                 List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
                 if(CollectionUtils.isNotEmpty(listingedInfoWithSkuMappingList)){
                     ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.stream()
-                            .filter(e-> (e.getHasMappingAll() && e.getPlatformSkuNo().equalsIgnoreCase(dto.getProductSku()))
-                                    || (e.getWarehouseId().equalsIgnoreCase(dto.getWarehouseId()) && e.getPlatformSkuNo().equalsIgnoreCase(dto.getProductSku()))
+                            .filter(e-> (e.getHasMappingAll() && e.getPlatformSkuNo().equals(dto.getProductSku()))
+                                    || (e.getWarehouseId().equalsIgnoreCase(dto.getWarehouseId()) && e.getPlatformSkuNo().equals(dto.getProductSku()))
                             ).findFirst().orElse(null);
                     if (null != listingInfoWithSkuMappingDTO){
                         entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName().trim());

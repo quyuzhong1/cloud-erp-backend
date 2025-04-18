@@ -21,6 +21,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -113,7 +114,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(PoReturnEntity entity, String operate) {
         //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**

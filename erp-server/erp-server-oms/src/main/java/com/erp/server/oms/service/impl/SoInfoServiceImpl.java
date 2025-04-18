@@ -43,9 +43,9 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.B2BSoImportExcelDTO;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
@@ -70,6 +70,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.scm.feign.SaleDemandFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
@@ -243,6 +244,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Resource
     private CfgSettingFeign fgSettingFeign;
+    @Resource
+    private SaleDemandFeign saleDemandFeign;
 
     /**
      * 添加销售订单
@@ -336,7 +339,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         this.buildPartition(addEntity);
         //获取虚拟仓库
         handleVirtualWarehouse(addEntity);
-
+        //获取客户收货国家
+        CustomerDTO.BaseDTO base = customerInfoService.getBase(customerId);
+        if(Objects.nonNull(base)){
+            addEntity.setCountryId(base.getCountryId());
+            addEntity.setCountryName(base.getCountryName());
+        }
         //保存成功
         Boolean addResult = this.saveOrUpdate(addEntity);
         if (addResult) {
@@ -1319,7 +1327,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         this.buildPartition(soInfo);
         //获取虚拟仓库
         handleVirtualWarehouse(soInfo);
-
+        //获取客户收货国家
+        CustomerDTO.BaseDTO base = customerInfoService.getBase(customerId);
+        if(Objects.nonNull(base)){
+            soInfo.setCountryId(base.getCountryId());
+            soInfo.setCountryName(base.getCountryName());
+        }
         Boolean updateResult = this.updateById(soInfo);
         if (updateResult) {
 
@@ -1742,6 +1755,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (count > 0) {
             throw new ServiceException(ApiError.ERROR_92019);
         }
+        //校验是否有下游单据
+        isExistDowmstream(ids);
 
         //作废释放冻结库存
         ids.stream().forEach(obj -> unLockVirtualInventory(obj));
@@ -1755,6 +1770,50 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //发送金蝶
         sendPushTask(list,SyncOperateEnum.OPERATE_INVALID.getCode());
         return Boolean.TRUE;
+    }
+
+    private void isExistDowmstream(List<String> ids) {
+        //校验是否有下游单据
+        //订单变更
+//        Integer soChangeCount = soChangeService.lambdaQuery()
+//                .in(SoChangeEntity::getSoId, ids)
+//                .eq(SoChangeEntity::getInvalidStatus,Boolean.FALSE)
+//                .eq(SoChangeEntity::getIsDeleted,Boolean.FALSE)
+//                .count();
+//        if(soChangeCount > 0){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
+//        //销售退货订单
+//        Integer soReturnCount = soReturnService.lambdaQuery().in(SoReturnEntity::getSourceId, ids)
+//                .eq(SoReturnEntity::getInvalidStatus,Boolean.FALSE)
+//                .eq(SoReturnEntity::getIsDeleted,Boolean.FALSE)
+//                .count();
+//        if(soReturnCount > 0){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
+        //发货通知单
+        List<SoDeliveryNoticeEntity> soDeliveryNoticeList = FeignQuery.create(SoDeliveryNoticeEntity.class)
+                .in(SoDeliveryNoticeEntity::getSourceId,ids)
+                .eq(SoDeliveryNoticeEntity::getInvalidStatus,Boolean.FALSE)
+                .eq(SoDeliveryNoticeEntity::getIsDeleted,Boolean.FALSE)
+                .list();
+        if(!soDeliveryNoticeList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_92175);
+        }
+//        //销售出库单
+//        List<SoOutstockEntity> soOutstockList = FeignQuery.create(SoOutstockEntity.class)
+//                .in(SoOutstockEntity::getSoId,ids)
+//                .eq(SoOutstockEntity::getInvalidStatus,Boolean.FALSE)
+//                .eq(SoOutstockEntity::getIsDeleted,Boolean.FALSE)
+//                .list();
+//        if(!soOutstockList.isEmpty()){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
+//        //备货申请单
+//        List<SalesDemandEntity> salesDemandList = saleDemandFeign.listBySourceIds(ids);
+//        if(!salesDemandList.isEmpty()){
+//            throw new ServiceException(ApiError.ERROR_92175);
+//        }
     }
 
 
@@ -3483,6 +3542,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             addSo.setSalesOrgId(salesOrgId);
             addSo.setSalesOrgName(salesOrgName);
+            //单据子类型
+            String transactionSubTypeName = mainInfo.getTransactionSubTypeName();
+            String transactionSubType = OrderSubTypeEnum.getCodeByName(transactionSubTypeName);
+            addSo.setTransactionSubType(transactionSubType);
+            if (StringUtils.isBlank(transactionSubType)) {
+                errorMsgList.add("单据子类型不存在");
+            }
             //销售部门
             String salesDeptName = mainInfo.getSalesDeptName();
             String salesDeptId = deptList.stream().filter(d -> d.getName().equals(salesDeptName)).findFirst().
@@ -3604,7 +3670,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
             //地址类型
             String addressTypeStr = mainInfo.getAddressType();
-            String addressType = AddressTypeEnum.getCodeByName(addressTypeStr);
+            String addressType = CustomerAddressTypeEnum.getCode(addressTypeStr);
             if (StringUtils.isBlank(addressType)) {
                 errorMsgList.add("地址类型不存在");
             }
@@ -3679,6 +3745,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //是否关闭
                 String isCloseStr = item.getIsClose();
                 addDetail.setIsClose("是".equals(isCloseStr));
+                //客户PO号
+                addDetail.setCustomerPO(item.getCustomerPO());
                 addDetail.setRemark(item.getDetailRemark());
                 //sku no
                 String skuNo = item.getSkuNo();
@@ -3714,12 +3782,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                         addDetail.setPlatformSkuNo(skuMappingViewDTO.getPlatformSkuNo());
                     }
                 }
-                if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
-                    isAdd = Boolean.FALSE;
-                    List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
-                    item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
-                    errorList.add(item);
-                }
                 //币种
                 addDetail.setCurrency(currency);
                 //数量
@@ -3729,13 +3791,34 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 //销售单价
                 String priceStr = item.getPrice();
                 BigDecimal price = MathUtil.getBigDecimalByStr(priceStr);
-                addDetail.setPrice(price);
-
+                //含税单价
+                String taxPriceStr = item.getTaxPrice();
+                //含税单价和销售单价不能同时为空
+                if (CharSequenceUtil.isAllBlank(priceStr,taxPriceStr)) {
+                    msgList.add("销售单价和含税单价不能同时为空");
+                }
                 //税率
                 String taxRateStr = item.getTaxRate();
                 BigDecimal taxRate = MathUtil.getBigDecimalByStr(taxRateStr);
                 addDetail.setTaxRate(taxRate);
+                if("是".equals(item.getIsTax()) && CharSequenceUtil.isBlank(taxRateStr)){
+                    msgList.add("税率不能为空");
+                }
+                if("否".equals(item.getIsTax()) && BigDecimal.ZERO.compareTo(taxRate) != 0){
+                    msgList.add("不含税时税率必须为0");
+                }
+                if (CharSequenceUtil.isNotBlank(taxPriceStr) && CharSequenceUtil.isBlank(priceStr) && "是".equals(item.getIsTax())) {
+                    BigDecimal taxPrice = MathUtil.getBigDecimalByStr(taxPriceStr);
+                    price = MathUtil.divide(taxPrice, MathUtil.add(MathUtil.BigDecimal_1, MathUtil.divide(taxRate,MathUtil.BigDecimal_100)));
+                }
+                addDetail.setPrice(price);
                 soDetailList.add(addDetail);
+                if (CollectionUtils.isNotEmpty(msgList) || CollectionUtils.isNotEmpty(errorMsgList)) {
+                    isAdd = Boolean.FALSE;
+                    List<String> itemErrorList = Stream.concat(errorMsgList.stream(),msgList.stream()).distinct().collect(Collectors.toList());
+                    item.setErrorMsg(FieldValidUtil.getMsgSort(itemErrorList));
+                    errorList.add(item);
+                }
             }
 
             try {

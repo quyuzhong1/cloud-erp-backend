@@ -226,7 +226,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             }
             shudiyunB2cOrderDTO.setTotal_freight(dmpSoInfoEntity.getShippingAmount());
             if (PlatformDictEnum.WDT.getCode().equals(dmpSoInfoEntity.getSourceSystem())) {
-
+            	shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getSkuNo());
                 Map<String, Object> thirdShopEntityListMap = cacheMap.get("thirdShopEntityList");
                 if(thirdShopEntityListMap == null) {
                 	thirdShopEntityListMap = new HashMap<>();
@@ -470,6 +470,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
 
             } else {
+            	shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getPlatformSku());
                 String shopId = "";
                 if (CharSequenceUtil.isNotBlank(dmpSoInfoEntity.getShopId())) {
                     shopId = dmpSoInfoEntity.getShopId();
@@ -643,7 +644,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(dmpSoInfoEntity.getPlatformCreateTime()));
             }
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
-            shudiyunB2cOrderDTO.setGoods_no(dmpSoDetailEntity.getPlatformSku());
             shudiyunB2cOrderDTO.setGoods_name(dmpSoDetailEntity.getSkuName());
 
             BigDecimal sellPriceOrigin = dmpSoDetailEntity.getSellPriceOrigin();

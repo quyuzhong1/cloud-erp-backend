@@ -5,13 +5,17 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
+import com.common.business.wrapper.QueryParam;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -90,11 +94,17 @@ public class SyncSdyJob {
         LocalDateTime createEndTime = null;
         Integer pageSize = 1000;// 每页记录数
         List<String> platformList = new LinkedList<>();
+        String queryParamsStr = "";
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             createStartTime = jsonParam.getLocalDateTime("createStartTime", LocalDateTime.now().minusMonths(1));
             createEndTime = jsonParam.getLocalDateTime("createEndTime", LocalDateTime.now());
+            String platformListStr = jsonParam.getStr("platformList");
+            if (StringUtils.isNotBlank(platformListStr)){
+                platformList = Arrays.stream(platformListStr.split(",")).collect(Collectors.toList());
+            }
             jsonParam.getInt("pageSize", 1000);
+            queryParamsStr = jsonParam.getStr("queryParams");
         }
 
         //总条数
@@ -104,7 +114,16 @@ public class SyncSdyJob {
         while (true) {
             XxlJobHelper.log("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
             int offset = currentPage * pageSize;
-            list = soB2cService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset, platformList);
+
+            if (StringUtils.isNotBlank(queryParamsStr)){
+                List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
+                QueryWrapper<SoB2cEntity> queryWrapper = (QueryWrapper<SoB2cEntity>) QueryParam.getQueryWrapper(queryParams);
+                Page<SoB2cEntity> page = soB2cService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                list = page.getRecords();
+            } else {
+                list = soB2cService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset, platformList);
+            }
+
             if (CollUtil.isEmpty(list)) {
                 return;
             }
@@ -168,7 +187,7 @@ public class SyncSdyJob {
                         .list();
                 aliexpressDeliveryMap  = aliexpressDeliveryList.stream().collect(Collectors.groupingBy(AliexpressDeliveryEntity::getSoId));
                 if (!CollectionUtils.isEmpty(aliexpressDeliveryList)) {
-                    List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                    List<String> mainIds = aliexpressDeliveryList.stream().map(BaseEntity::getId).collect(Collectors.toList());
                     detailAliexpressDeliveryList = FeignQuery.create(AliexpressDeliveryDetailEntity.class)
                             .in(AliexpressDeliveryDetailEntity::getMainId, mainIds)
                             .list();
@@ -187,10 +206,11 @@ public class SyncSdyJob {
                 // 最新已发货单
                 List<SoB2cDeliveryEntity> soB2cDeliveryEntityList = soB2cDeliveryFeign.listBySourceId(selfAddSoIds)
                         .stream()
-                        .filter(e -> Objects.equals(e.getStatus(), SoB2cDeliveryStatusEnum.SHIPPED.getCode())).collect(Collectors.toList());
+                        .filter(e -> e.getStatus().equalsIgnoreCase(SoB2cDeliveryStatusEnum.SHIPPED.getCode()))
+                        .collect(Collectors.toList());
                 soB2cDeliveryEntityMap = soB2cDeliveryEntityList.stream().collect(Collectors.groupingBy(SoB2cDeliveryEntity::getSourceId));
                 if (!CollectionUtils.isEmpty(soB2cDeliveryEntityList)) {
-                    List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+                    List<String> mainIds = soB2cDeliveryEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
                     soB2cDeliveryDetailEntityList = FeignQuery.create(SoB2cDeliveryDetailEntity.class)
                             .in(SoB2cDeliveryDetailEntity::getMainId, mainIds)
                             .list();
@@ -260,7 +280,7 @@ public class SyncSdyJob {
                             syncAliExpressDelivery(soB2cEntity,
                                     aliexpressDeliveryMap,
                                     detailAliexpressDeliveryList,
-                                    soB2cDetailEntityList,
+                                    detailEntityList,
                                     skuVOList,
                                     bomChildrenSkuDTOS,
                                     parentSkuList,
@@ -340,7 +360,7 @@ public class SyncSdyJob {
                     selfAddSoB2cDelivery(soB2cEntity,
                             soB2cDeliveryEntityMap,
                             soB2cDeliveryDetailEntityList,
-                            soB2cDetailEntityList,
+                            detailEntityList,
                             skuVOList,
                             bomChildrenSkuDTOS,
                             parentSkuList,
@@ -476,11 +496,13 @@ public class SyncSdyJob {
         LocalDateTime createStartTime = null;
         LocalDateTime createEndTime = null;
         Integer pageSize = 1000;// 每页记录数
+        String queryParamsStr = "";
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             createStartTime = jsonParam.getLocalDateTime("createStartTime", LocalDateTime.now().minusMonths(1));
             createEndTime = jsonParam.getLocalDateTime("createEndTime", LocalDateTime.now());
             jsonParam.getInt("pageSize", 1000);
+            queryParamsStr = jsonParam.getStr("queryParams");
         }
 
         //总条数
@@ -489,7 +511,14 @@ public class SyncSdyJob {
         while (true) {
             XxlJobHelper.log("===========当前页数：" + currentPage + "开始时间：" + LocalDateTime.now());
             int offset = currentPage * pageSize;
-            list = soInfoService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
+            if (StringUtils.isNotBlank(queryParamsStr)) {
+                List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
+                QueryWrapper<SoInfoEntity> queryWrapper = (QueryWrapper<SoInfoEntity>) QueryParam.getQueryWrapper(queryParams);
+                Page<SoInfoEntity> page = soInfoService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                list = page.getRecords();
+            } else {
+                list = soInfoService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
+            }
             if (CollUtil.isEmpty(list)) {
                 return;
             }

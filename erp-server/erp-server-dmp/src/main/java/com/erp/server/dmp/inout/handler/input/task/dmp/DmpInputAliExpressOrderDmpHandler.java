@@ -152,7 +152,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						Map<String, Object> promotionFeeMap = (Map) newSellerOrderAmountObj;
 						Object newSellerOrderAmount = promotionFeeMap.get("amount");
 						if (newSellerOrderAmount != null) {
-							dmpDataMap.put("afterTaxPayAmount", newSellerOrderAmount);
+							dmpDataMap.put("afterTaxAmount", newSellerOrderAmount);
 						}
 					}
 

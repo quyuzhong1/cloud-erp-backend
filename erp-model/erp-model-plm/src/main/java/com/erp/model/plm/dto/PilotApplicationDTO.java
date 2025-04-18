@@ -113,6 +113,18 @@ public class PilotApplicationDTO implements Serializable {
          * 订单状态名称
          */
         private String orderStatusName;
+        /**
+         * 是否作废 【可排序】
+         */
+        private Boolean invalidStatus;
+        /**
+         * 是否作废 true 已作废 false 未作废
+         */
+        private String invalidStatusName;
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
 
         private String skuId;
 

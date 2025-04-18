@@ -1280,7 +1280,8 @@ public class SoB2cDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class
+    CommonDTO {
 
         /**
          * 平台订单号

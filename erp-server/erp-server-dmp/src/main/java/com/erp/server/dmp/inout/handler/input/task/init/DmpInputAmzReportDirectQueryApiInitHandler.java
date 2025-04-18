@@ -222,7 +222,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
      */
     private List<DmpInputTaskInitDTO> checkAndConvert(String reportType, AmazonShopInfoDTO shopInfoDTO, Boolean checkNewDateEndTime, Report report) {
         if (checkNewDateEndTime) {
-            DmpAmzReportInfoEntity newReport = dmpAmzReportInfoService.getOneByNewEndDate(reportType);
+            DmpAmzReportInfoEntity newReport = dmpAmzReportInfoService.getOneByNewEndDate(reportType, shopInfoDTO.getPlatformShopCode(), String.join(",", report.getMarketplaceIds()));
             if (null != newReport) {
                 // 当前数据最新时间
                 OffsetDateTime offsetDateEndDateTime = DateUtil.parseOffsetDateTime(newReport.getDataEndTime());

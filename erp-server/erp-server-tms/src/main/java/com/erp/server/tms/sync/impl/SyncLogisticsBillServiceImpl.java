@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -139,7 +140,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             tmsPushMsgEntity.setSourceCode(sourceCode);
             tmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
-            map.put("isQuerySync", Boolean.TRUE);
+            map.put(DmpOutputConstant.IS_QUERY_SYNC, Boolean.TRUE);
             map.put("detailId", billDetailEntity.getId());
             map.put("operate", operate);
             tmsPushMsgEntity.setPushData(JSON.toJSONString(map));

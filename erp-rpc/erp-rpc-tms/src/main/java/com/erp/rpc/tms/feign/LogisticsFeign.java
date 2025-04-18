@@ -1,8 +1,8 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
@@ -143,4 +143,10 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/listSkuCostByDetailList")
     List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(@RequestBody List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList);
+    /**
+     * 所有的物流渠道
+     * @return
+     */
+    @GetMapping("/feign/logistics/listAll")
+    List<BaseDropDownDTO.DisabledDTO> listAll();
 }

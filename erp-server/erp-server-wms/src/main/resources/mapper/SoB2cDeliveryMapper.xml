@@ -108,4 +108,107 @@
             ${params.permissionSql}
         </if>
     </select>
+
+    <!--根据订单号查询-->
+    <select id="rebuildB2cVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
+        select b2c.* from (
+          -- b2c发货单冻结
+          select
+              sbdd.sku_id,
+              sbdd.sku_no,
+              sbdd.virtual_warehouse_id,
+              sbdd.warehouse_id,
+              'soB2cDelivery' as source_type,
+              sbd.id as source_id,
+              sbd.code as source_code,
+              sbdd.id as source_detail_id,
+              sbd.create_time as bill_date,
+              sbd.create_time as trade_time,
+              sbdd.delivery_qty as qty,
+              'so_b2c_delivery' as businessType
+          from so_b2c_delivery sbd
+                   inner join  so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false
+              and sbdd.virtual_warehouse_id != '' and sbd.status in ('shipped','cancelDelivery')
+          where sbd.is_deleted = false
+          union all
+          --b2c发货单取消冻结
+          select
+              sbdd.sku_id,
+              sbdd.sku_no,
+              sbdd.virtual_warehouse_id,
+              sbdd.warehouse_id,
+              'soB2cDelivery' as source_type,
+              sbd.id as source_id,
+              sbd.code as source_code,
+              sbdd.id as source_detail_id,
+              sbd.update_time as bill_date,
+              sbd.update_time as trade_time,
+              sbdd.delivery_qty as qty,
+              'so_b2c_delivery_cancel' as businessType
+          from so_b2c_delivery sbd
+              inner join  so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false
+              and sbdd.virtual_warehouse_id != '' and sbd.status = 'cancelDelivery'
+          where sbd.is_deleted = false
+          union all
+          --直接调拨单出库
+          select
+              tid.sku_id,
+              tid.sku_no,
+              sbdd.virtual_warehouse_id,
+              sbdd.warehouse_id,
+              'transferInfo' as source_type,
+              ti.id as source_id,
+              ti.code as source_code,
+              tid.id as source_detail_id,
+              ti.approve_time as bill_date,
+              ti.approve_time as trade_time,
+              tid.qty as qty,
+              '' as businessType
+          from transfer_info ti
+              inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false and ti.approve_status = 'approve'
+              inner join picking_detail pd on tid.source_detail_id = pd.id and pd.is_deleted = false
+              inner join so_b2c_delivery_detail sbdd on sbdd.id = pd.source_detail_id and sbdd.is_deleted = false and sbdd.virtual_warehouse_id != '' and sbdd.warehouse_id = tid.out_warehouse_id
+          where ti.is_deleted = false
+          union all
+          --销售出库单出库(非旺店通)
+          select
+              sod.sku_id,
+              sod.sku_no,
+              sbdd.virtual_warehouse_id,
+              sbdd.warehouse_id,
+              'soOutstock' as source_type,
+              so.id as source_id,
+              so.code as source_code,
+              sod.id as source_detail_id,
+              so.approve_time as bill_date,
+              so.approve_time as trade_time,
+              sod.actual_qty as qty,
+              'so_out_stock' as businessType
+          from so_outstock so
+              inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+              and so.approve_status = 'approve' and so.source_type = 'soB2cDelivery' and so.order_type ='B2C' and sod.virtual_warehouse_id != ''
+              inner join so_b2c_delivery_detail sbdd on sbdd.id = sod.source_detail_id and sbdd.is_deleted = false and sbdd.virtual_warehouse_id != '' and sbdd.warehouse_id = sod.warehouse_id
+          where so.is_deleted = false
+          union all
+          --旺店通来源销售出库单出库
+          select
+              sod.sku_id,
+              sod.sku_no,
+              sod.virtual_warehouse_id,
+              sod.warehouse_id,
+              'soOutstock' as source_type,
+              so.id as source_id,
+              so.code as source_code,
+              sod.id as source_detail_id,
+              so.approve_time as bill_date,
+              so.approve_time as trade_time,
+              sod.actual_qty as qty,
+              'out_usable' as businessType
+          from so_outstock so
+              inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+              and so.approve_status = 'approve' and so.source_type != 'soB2cDelivery' and so.order_type ='B2C' and sod.virtual_warehouse_id != ''
+          where so.is_deleted = false
+      ) b2c where b2c.qty > 0 order by b2c.bill_date asc
+    </select>
+
 </mapper>

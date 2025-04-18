@@ -228,7 +228,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         String warehouseId = warehouseDTO.getWarehouseId();
 
         return mappingDTO.getDictPlatform().equalsIgnoreCase(data.getDictPlatform())
-                && mappingDTO.getPlatformSkuNo().equalsIgnoreCase(data.getPlatformSku())
+                && mappingDTO.getPlatformSkuNo().equals(data.getPlatformSku())
                 && mappingDTO.getWarehouseId().equalsIgnoreCase(warehouseId);
     }
 
@@ -304,7 +304,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
                             listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.stream()
                                     .filter(e-> e.getWarehouseId().equalsIgnoreCase(warehouseDTO.getWarehouseId()) &&
                                             e.getDictPlatform().equalsIgnoreCase(entity.getDictPlatform()) &&
-                                            e.getPlatformSkuNo().equalsIgnoreCase(entity.getPlatformSku()))
+                                            e.getPlatformSkuNo().equals(entity.getPlatformSku()))
                                     .findFirst()
                                     .orElse(null);
                         }
