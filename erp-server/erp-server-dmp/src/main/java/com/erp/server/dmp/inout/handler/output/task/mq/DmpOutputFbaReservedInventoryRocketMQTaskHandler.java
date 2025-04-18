@@ -2,11 +2,9 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpFbaInventoryEntity;
-import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.entity.DmpFbaReservedInventoryEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -16,15 +14,12 @@ import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.mapstruct.Mapping;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.Instant;
-import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.*;
 import java.util.function.Function;
@@ -32,7 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
-public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
+public class DmpOutputFbaReservedInventoryRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler {
 
     @Resource
     private ShopInfoFeign shopInfoFeign;
@@ -42,7 +37,7 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
-        Map<String, DmpFbaInventoryEntity> dmpFbaInventoryEntityMap = new HashMap<>();
+        Map<String, DmpFbaReservedInventoryEntity> dmpFbaInventoryEntityMap = new HashMap<>();
 
         // 店铺信息
         Set<String> shopIds = new HashSet<>();
@@ -57,9 +52,9 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
                 continue;
             }
             String storageName = convertInputDmpBaseEntityListMap.getKey().getStorageName();
-            if ("dmp_fba_inventory".equals(storageName)) {
+            if ("dmp_fba_reserved_inventory".equals(storageName)) {
                 for (BaseEntity v : value) {
-                    DmpFbaInventoryEntity dmpEntity = (DmpFbaInventoryEntity) v;
+                    DmpFbaReservedInventoryEntity dmpEntity = (DmpFbaReservedInventoryEntity) v;
                     dmpFbaInventoryEntityMap.put(dmpEntity.getId(), dmpEntity);
                     shopIds.add(dmpEntity.getNextLevelId());
                     sellerSkuList.add(dmpEntity.getMsku());
@@ -97,7 +92,7 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
                 continue;
             }
             String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
-            if ("dmp_fba_inventory".equals(storageName)) {
+            if ("dmp_fba_reserved_inventory".equals(storageName)) {
                 for (BaseEntity v : value) {
                     changeIds.add(v.getId());
                 }
@@ -106,7 +101,7 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-            DmpFbaInventoryEntity dmpEntity = dmpFbaInventoryEntityMap.get(changId);
+            DmpFbaReservedInventoryEntity dmpEntity = dmpFbaInventoryEntityMap.get(changId);
             FbaInventoryEntity entity = this.convert(dmpEntity,
                     cfgOutputId,
                     shopMap.get(dmpEntity.getNextLevelId()),
@@ -121,7 +116,7 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
     /**
      * DMP数据转换推送DTO
      **/
-    public FbaInventoryEntity convert(DmpFbaInventoryEntity dmpEntity, String cfgOutputId, ShopInfoEntity shopInfoEntity, ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO) {
+    public FbaInventoryEntity convert(DmpFbaReservedInventoryEntity dmpEntity, String cfgOutputId, ShopInfoEntity shopInfoEntity, ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO) {
         if (this.validateDataBlack(dmpEntity, cfgOutputId)) {
             return null;
         }
@@ -131,16 +126,11 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
         dtoEntity.setAsin(dmpEntity.getAsin());
         dtoEntity.setFnSku(dmpEntity.getFnSku());
         dtoEntity.setProductName(dmpEntity.getProductName());
-
         // 指定已有信息
-        dtoEntity.setInboundWorkingQty(dmpEntity.getInboundWorkingQty());
-        dtoEntity.setInboundShippedQty(dmpEntity.getInboundShippedQty());
-        dtoEntity.setInboundReceivingQty(dmpEntity.getInboundReceivingQty());
-        dtoEntity.setFulfillableQty(dmpEntity.getFulfillableQty());
-        dtoEntity.setResearchingQty(dmpEntity.getResearchingQty());
-        dtoEntity.setUnsellableQty(dmpEntity.getUnsellableQty());
         dtoEntity.setReservedQty(dmpEntity.getReservedQty());
-        dtoEntity.setResearchingQty(dmpEntity.getResearchingQty());
+        dtoEntity.setReservedTransfersQty(dmpEntity.getReservedTransfersQty());
+        dtoEntity.setReservedProcessingQty(dmpEntity.getReservedProcessingQty());
+        dtoEntity.setReservedOrderQty(dmpEntity.getReservedOrderQty());
 
         if (null != dmpEntity.getLastPlatformUpdateTime()){
             ZoneOffset zoneOffset = ZoneOffset.systemDefault().getRules().getOffset(Instant.now());

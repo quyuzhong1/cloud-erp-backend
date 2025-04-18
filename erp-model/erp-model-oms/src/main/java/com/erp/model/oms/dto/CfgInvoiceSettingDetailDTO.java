@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.util.List;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -70,6 +71,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         /**
          * 平对对应的明细
          */
+        @Valid
         List<CommonDTO> detailDTOList;
     }
 

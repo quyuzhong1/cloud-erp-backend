@@ -44,5 +44,13 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
 
     List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> listDictSelect(CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto);
 
+      /**
+        * @description: 级联删除绑定店铺明细
+        * @author: hcg
+        * @date: 2025/4/18 9:41
+        * @param ids
+        * @param aTrue
+        * @return: void
+        **/
     void delateByMainIds(List<String> ids, Boolean aTrue);
 }

@@ -122,6 +122,7 @@ import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
@@ -146,6 +147,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.net.SocketTimeoutException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -2273,16 +2277,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
-
-    private void updatePlatformStatus(SoB2cEntity entity, String status) {
-        if (Objects.isNull(entity) ||  CharSequenceUtil.isBlank(status)){
-            return;
-        }
-        this.lambdaUpdate().eq(SoB2cEntity::getId,entity.getId()).set(SoB2cEntity::getPlatformOrderStatus,status).update();
-        String msg = "销售订单【{}】平台订单状态由【{}】变更为【{}】";
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode(), entity.getPlatformOrderStatus(), status), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
-
-    }
 
     private void checkLogisticsParam(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         String labelJson = entity.getLabelJson();
@@ -9935,7 +9929,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus) {
-
+        lambdaUpdate().eq(SoB2cEntity::getId,soId).set(SoB2cEntity::getNfeInvoiceStatus,nfeInvoiceStatus).update();
     }
 
     @Override
@@ -10331,6 +10325,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (!errorNoList.contains(no)) {
 
                     soB2cService.save(soB2cEntity);
+                    // 操作日志
+                    String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
 
                     List<SoB2cDetailDTO.AddDTO> addDTOS = BeanMapper.copyList(detailList, SoB2cDetailDTO.AddDTO.class);
                     //计算物流尺寸
@@ -10408,9 +10405,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         //自动计算预估运费到订单的预估运费字段
                         soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(soB2cEntity.getId()));
                     }
-                    // 操作日志
-                    String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
                 } else {
                     continue;
                 }
