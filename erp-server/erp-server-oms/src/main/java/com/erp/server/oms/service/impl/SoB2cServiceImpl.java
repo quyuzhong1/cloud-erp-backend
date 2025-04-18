@@ -9959,6 +9959,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
     }
 
+    @Override
+    public void updatePlatformStatus(SoB2cEntity entity, String code) {
+
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
