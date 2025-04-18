@@ -10,6 +10,8 @@ import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
+import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -70,6 +72,19 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 Map<String, Object> extendDataMap = new HashMap<>();
                 extendDataMap.put("isPlatformWarehouseOrder", isPlatformWarehouseOrder);
                 dmpDataMap.put("extendData", JSON.toJSONString(extendDataMap));
+
+                // 物流类型
+                String logisticType = "";
+                if (null !=isPlatformWarehouseOrder) {
+                    if (isPlatformWarehouseOrder) {
+                        //平台仓
+                        logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
+                    } else {
+                        //自发货
+                        logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+                    }
+                }
+                dmpDataMap.put("logisticType", logisticType);
 
                 // 订单状态
                 String sourceOrderStatus = dmpDataMap.getOrDefault("status", "").toString();
