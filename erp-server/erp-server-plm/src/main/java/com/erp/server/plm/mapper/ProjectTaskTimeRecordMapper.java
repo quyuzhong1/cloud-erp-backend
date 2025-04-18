@@ -20,7 +20,8 @@ import java.util.List;
  * @since 2023-02-23
  */
 @Mapper
-public interface ProjectTaskTimeRecordMapper extends BaseMapper<ProjectTaskTimeRecordEntity> {
+public interface
+ProjectTaskTimeRecordMapper extends BaseMapper<ProjectTaskTimeRecordEntity> {
 
     /**
      * 分页查询任务列表

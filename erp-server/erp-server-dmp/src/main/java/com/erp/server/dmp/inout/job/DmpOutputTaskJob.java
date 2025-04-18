@@ -26,6 +26,7 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputFinishRequest;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputTaskFactory;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.inout.utils.DmpOutputUtils;
 import com.erp.server.dmp.service.DmpCfgOutputService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordMergeService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
@@ -61,6 +62,9 @@ public class DmpOutputTaskJob {
     
     @Autowired
     private DmpHandlerCache dmpHandlerCache;
+    
+    @Autowired
+    private DmpOutputUtils dmpOutputUtils;
 	
 	@XxlJob("doOutputErrorTask")
     public ReturnT doOutputErrorTask(){
@@ -226,6 +230,12 @@ public class DmpOutputTaskJob {
 			log.error(size + "组合数据推送数帝云失败：" , e);
 			DmpHandlerUtils.sendFeiShuMsg(size + "组合数据推送数帝云失败：" + "【" + e.getMessage() + "】");
 		}
+		return ReturnT.SUCCESS;
+	}
+	
+	@XxlJob("outputErrorCountMsg")
+	public ReturnT outputErrorCountMsg(){
+		dmpOutputUtils.outputErrorCountMsg();
 		return ReturnT.SUCCESS;
 	}
 }

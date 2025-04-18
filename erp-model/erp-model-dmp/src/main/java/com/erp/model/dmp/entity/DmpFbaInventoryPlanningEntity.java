@@ -1,0 +1,166 @@
+package com.erp.model.dmp.entity;
+
+import com.baomidou.mybatisplus.annotation.TableName;
+import com.common.core.entity.BaseEntity;
+import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.TableField;
+import java.io.Serializable;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+import com.common.business.enums.ApproveStatusEnum;
+
+
+/**
+ * <p>
+ * 中台FBA库存库龄信息
+ * </p>
+ *
+ * @author Jim
+ * @since 2025-04-11
+*/
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Accessors(chain = true)
+@TableName("dmp_fba_inventory_planning")
+public class DmpFbaInventoryPlanningEntity extends BaseEntity<DmpFbaInventoryPlanningEntity> {
+
+    /**
+     * 平台SPU
+     */
+    @TableField("asin")
+    private String asin;
+    /**
+    * 卖家sku
+    */
+    @TableField("msku")
+    private String msku;
+    /**
+    * FNSKU
+    */
+    @TableField("fn_sku")
+    private String fnSku;
+    /**
+    * 产品名称
+    */
+    @TableField("product_name")
+    private String productName;
+    /**
+    * 平台最后更新时间
+    */
+    @TableField("last_platform_update_time")
+    private LocalDateTime lastPlatformUpdateTime;
+    /**
+    * 亚马逊站点代号
+    */
+    @TableField("marketplace_id")
+    private String marketplaceId;
+    /**
+    * 输入任务ID
+    */
+    @TableField("input_task_id")
+    private String inputTaskId;
+    /**
+    * 亚马逊账号代号
+    */
+    @TableField("platform_shop_code")
+    private String platformShopCode;
+    /**
+    * 任务转换ID
+    */
+    @TableField("convert_id")
+    private String convertId;
+    /**
+    * 店铺ID
+    */
+    @TableField("next_level_id")
+    private String nextLevelId;
+    /**
+    * 任务来源唯一加密代号
+    */
+    @TableField("unique_encrypt")
+    private String uniqueEncrypt;
+    /**
+    * 任务数据加密代号
+    */
+    @TableField("data_encrypt")
+    private String dataEncrypt;
+    /**
+    * 库龄 0-30 天的可售商品数量
+    */
+    @TableField("inventory_age_0_to_30_days")
+    private Integer inventoryAge0To30Days;
+    /**
+    * 库龄 31-60 天的可售商品数量
+    */
+    @TableField("inventory_age_31_to_60_days")
+    private Integer inventoryAge31To60Days;
+    /**
+    * 库龄 61-90 天的可售商品数量
+    */
+    @TableField("inventory_age_61_to_90_days")
+    private Integer inventoryAge61To90Days;
+    /**
+    * 库龄 91-180 天的可售商品数量
+    */
+    @TableField("inventory_age_91_to_180_days")
+    private Integer inventoryAge91To180Days;
+    /**
+    * 库龄 181-270 天的可售商品数量
+    */
+    @TableField("inventory_age_181_to_270_days")
+    private Integer inventoryAge181To270Days;
+    /**
+    * 库龄 271-365 天的可售商品数量
+    */
+    @TableField("inventory_age_271_to_365_days")
+    private Integer inventoryAge271To365Days;
+    /**
+    * 库龄 365 天以上的可售商品数量
+    */
+    @TableField("inventory_age_365_plus_days")
+    private Integer inventoryAge365PlusDays;
+
+
+    public static final String MSKU = "msku";
+
+    public static final String FN_SKU = "fn_sku";
+
+    public static final String PRODUCT_NAME = "product_name";
+
+    public static final String LAST_PLATFORM_UPDATE_TIME = "last_platform_update_time";
+
+    public static final String MARKETPLACE_ID = "marketplace_id";
+
+    public static final String INPUT_TASK_ID = "input_task_id";
+
+    public static final String PLATFORM_SHOP_CODE = "platform_shop_code";
+
+    public static final String CONVERT_ID = "convert_id";
+
+    public static final String NEXT_LEVEL_ID = "next_level_id";
+
+    public static final String UNIQUE_ENCRYPT = "unique_encrypt";
+
+    public static final String DATA_ENCRYPT = "data_encrypt";
+
+    public static final String INVENTORY_AGE_0_TO_30_DAYS = "inventory_age_0_to_30_days";
+
+    public static final String INVENTORY_AGE_31_TO_60_DAYS = "inventory_age_31_to_60_days";
+
+    public static final String INVENTORY_AGE_61_TO_90_DAYS = "inventory_age_61_to_90_days";
+
+    public static final String INVENTORY_AGE_91_TO_180_DAYS = "inventory_age_91_to_180_days";
+
+    public static final String INVENTORY_AGE_181_TO_270_DAYS = "inventory_age_181_to_270_days";
+
+    public static final String INVENTORY_AGE_271_TO_365_DAYS = "inventory_age_271_to_365_days";
+
+    public static final String INVENTORY_AGE_365_PLUS_DAYS = "inventory_age_365_plus_days";
+
+    @Override
+    public Serializable pkVal() {
+        return null;
+    }
+
+}

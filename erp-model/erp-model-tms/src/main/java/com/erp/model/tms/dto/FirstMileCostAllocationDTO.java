@@ -845,13 +845,15 @@ public class FirstMileCostAllocationDTO implements Serializable {
         private boolean currencyMonthReconciliation = false;
         //上月开始有账单
         private boolean lastMonthReconciliation = false;
+        //上月有实际账单
+        private boolean lastReconciliation = false;
         //本月有实际账单
         private boolean currencyReconciliation = false;
         //同一个核算期间内是否有其他对账月份的对账单
         private boolean hasOtherReconciliation = false;
         //发货单费用分摊数据是否有期初对账单费用分摊数据
         private boolean hasInitCostReconciliation = false;
-        //有其他对账月份对账单，并且对账单未期初实际对账单，且对账单已分摊完成（最后分摊月份中 实际账单/期末在途为0）
+        //有其他对账月份对账单，并且对账单为期初实际对账单，且对账单已分摊完成（最后分摊月份中 实际账单/期末在途为0）
         private boolean isHasInitCostReconciliationAndEnd = false;
     }
 

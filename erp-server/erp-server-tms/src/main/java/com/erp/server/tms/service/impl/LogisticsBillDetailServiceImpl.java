@@ -3,14 +3,10 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -31,8 +27,6 @@ import org.apache.commons.math3.util.Pair;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -282,18 +276,19 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
 
     @Override
     public void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity logisticsTrackEntity) {
-        if (Objects.isNull(logisticsTrackEntity) || CharSequenceUtil.isBlank(logisticsTrackEntity.getTrackNo()) || CharSequenceUtil.isBlank(logisticsTrackEntity.getStatus())){
+        if (Objects.isNull(logisticsTrackEntity) || CharSequenceUtil.isBlank(logisticsTrackEntity.getTrackNo()) || CharSequenceUtil.isBlank(logisticsTrackEntity.getOrderStatus())){
             return;
         }
         LocalDateTime signTime = null;
-        if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(logisticsTrackEntity.getStatus())) {
+        String trackStatus = logisticsTrackEntity.getOrderStatus();
+        if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(trackStatus)) {
             signTime = logisticsTrackEntity.getTrackTime();
         }
-        LocalDateTime trackTime = logisticsTrackEntity.getTrackTime();
+        LocalDateTime trackTime = Objects.nonNull(logisticsTrackEntity.getTrackTime()) ? logisticsTrackEntity.getTrackTime() : LocalDateTime.now();
         //根据跟踪号查询更新
         this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo())
                 .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
-                .set(LogisticsBillDetailEntity::getTrackStatus, logisticsTrackEntity.getStatus())
+                .set(LogisticsBillDetailEntity::getTrackStatus, trackStatus)
                 .set(LogisticsBillDetailEntity::getTrackTime, trackTime)
                 .set(LogisticsBillDetailEntity::getTrackContent,logisticsTrackEntity.getContent())
                 .set(LogisticsBillDetailEntity::getSignTime, signTime)
@@ -301,7 +296,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
                 .update();
         //根据运单号查询更新
         if (CharSequenceUtil.isNotBlank(logisticsTrackEntity.getTrackNo())){
-            baseMapper.updateTransportNo(Collections.singletonList(logisticsTrackEntity.getTrackNo()),Boolean.TRUE,logisticsTrackEntity.getStatus(),signTime, trackTime,logisticsTrackEntity.getContent());
+            baseMapper.updateTransportNo(Collections.singletonList(logisticsTrackEntity.getTrackNo()),Boolean.TRUE,trackStatus,signTime, trackTime,logisticsTrackEntity.getContent());
         }
 
         LogisticsBillDetailEntity detailEntity = lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo()).last(SqlConstants.LIMIT_1).one();
@@ -309,7 +304,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
             if (detailEntity.getSignTime() != null) {
                 //同步速递云运单
-                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(logisticsTrackEntity.getStatus()));
+                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
             }
         }
     }

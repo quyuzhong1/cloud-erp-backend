@@ -285,4 +285,5 @@ public interface CustomerB2cService extends SuperService<CustomerB2cEntity> {
      */
     PagingVO<CustomerB2CDTO.InfoDTO> pagingSelect(PagingDTO<CustomerB2CDTO.SelectDTO> searchDTO);
 
+    List<CustomerB2CDTO.DropListDTO> customerListByName(List<String> customerNameList);
 }

@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -38,5 +40,10 @@ public class ProductPackFeignController {
     @PostMapping("/listBySkuIds")
     List<ProductPackEntity> listBySkuIds(@RequestBody List<String> skuIds){
         return productPackService.listBySkuIdList(skuIds);
+    }
+
+    @PostMapping("/listSingleBySkuIds")
+    Map<String, BigDecimal> listSingleBySkuIds(@RequestBody List<String> skuIds){
+        return productPackService.listSingleBySkuIds(skuIds);
     }
 }

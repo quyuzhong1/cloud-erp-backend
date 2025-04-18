@@ -1,9 +1,11 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.LengthConverterUtil;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.ProductPackDTO;
 import com.erp.model.plm.dto.ProductPackShowDTO;
 import com.erp.model.plm.entity.BasicDictEntity;
@@ -11,13 +13,11 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.SysLogEntity;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.ProductPackMapper;
-import com.erp.server.plm.service.BasicDictService;
-import com.erp.server.plm.service.ProductDetailService;
-import com.erp.server.plm.service.ProductPackService;
-import com.erp.server.plm.service.SysLogService;
+import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @Description 产品包装信息服务类
@@ -46,6 +47,9 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
 
     @Resource
     private SysLogService sysLogService;
+
+    @Resource
+    private BomSkuService bomSkuService;
     /**
      * @param productId:产品信息表id
      * @return java.util.List<com.erp.model.plm.dto.ProductDetailShowDTO>
@@ -281,6 +285,47 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(String.valueOf(ProductDetailEntity.class))
                 .setBusinessId(productPackDTO.getSkuId()).setOperation("QC质检").setContent(logContent));
     }
+
+
+    @Override
+    public Map<String, BigDecimal> listSingleBySkuIds(List<String> skuIds) {
+        Map<String, BigDecimal> skuIdToGrossWeightMap = new HashMap<>();
+        if(CollUtil.isEmpty(skuIds)){
+            return skuIdToGrossWeightMap;
+        }
+
+        //根据sku进行获取子件 然后根据bom进行累加组合品
+        List<BomChildrenSkuDTO> bomChildrenList = bomSkuService.listBomChildBySkuIds(skuIds);
+
+        List<ProductPackEntity> list = lambdaQuery().in(ProductPackEntity::getSkuId, skuIds).list();
+
+        //根据sku重新组合
+        String combination = BomTypeEnum.COMBINATION.getType();
+        for (String skuId : skuIds) {
+            List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenList.stream().filter(e -> combination.equals(e.getType()) && e.getParentSkuId().equals(skuId)).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(childrenSkuDTOS)){
+                //只需要处理组合品
+                //判断childrenSkuDTOS里grossWeight是有小于等于0 或为空的
+                if (childrenSkuDTOS.stream().anyMatch(e -> e.getGrossWeight() == null || e.getGrossWeight().compareTo(BigDecimal.ZERO) <= 0)){
+                    continue;
+                }
+                // 计算 grossWeight 的和
+                BigDecimal totalGrossWeight = BigDecimal.ZERO;
+                for (BomChildrenSkuDTO childrenSkuDTO : childrenSkuDTOS) {
+                    totalGrossWeight = totalGrossWeight.add(childrenSkuDTO.getGrossWeight().multiply(new BigDecimal(childrenSkuDTO.getQuantity())));
+                }
+                skuIdToGrossWeightMap.put(skuId, totalGrossWeight);
+            }else{
+                //单品
+                ProductPackEntity productPackEntity = list.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
+                if (productPackEntity != null&&productPackEntity.getGrossWeight() != null && productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) > 0) {
+                    skuIdToGrossWeightMap.put(skuId, productPackEntity.getGrossWeight());
+                }
+            }
+        }
+        return skuIdToGrossWeightMap;
+    }
+
 }
 
 
