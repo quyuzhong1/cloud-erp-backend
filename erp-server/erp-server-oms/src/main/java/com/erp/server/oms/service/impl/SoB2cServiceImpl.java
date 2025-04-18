@@ -374,15 +374,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         //是否虚拟仓缺货
         Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
-        if(Objects.nonNull(isOutStock) || Objects.nonNull(isVirtualOutStock)){
-            return this.filterIsOutStockList(pagingParamDTO, shopAuthResultDTO, isOutStock,isVirtualOutStock);
-        }
-//        else if (Objects.nonNull(isOutStock)) {
-//            return this.filterIsOutStockList(pagingParamDTO, shopAuthResultDTO, isOutStock);
-//        } else if (Objects.nonNull(isVirtualOutStock)) {
-//            return this.filterIsVirtualOutStockList(pagingParamDTO, shopAuthResultDTO, isVirtualOutStock);
-//        }
-        else {
+        if (Objects.nonNull(isOutStock)) {
+            return this.filterIsOutStockList(pagingParamDTO, shopAuthResultDTO, isOutStock);
+        } else if (Objects.nonNull(isVirtualOutStock)) {
+            return this.filterIsVirtualOutStockList(pagingParamDTO, shopAuthResultDTO, isVirtualOutStock);
+        } else {
             Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
             IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), shopAuthResultDTO, null);
             if (CollUtil.isEmpty(pageData.getRecords())) {
@@ -431,12 +427,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return new PagingVO(result);
     }
 
-    private PagingVO filterIsOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, Boolean isOutStock,Boolean isVirtualOutStock) {
+    private PagingVO filterIsOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, Boolean isOutStock) {
         List<AdvanceQueryDTO> advanceQueryDTOList = pagingParamDTO.getParams().getAdvanceQueryDTOList();
         //必须选仓库而且只能选一个
         List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
         if (warehouseIdList.size() != 1) {
-            throw new ServiceException("选择缺货条件或者X缺条件必须选择仓库且只能选择一个仓库");
+            throw new ServiceException("选择缺货条件必须选择仓库且只能选择一个仓库");
         }
         //查询全部数据，过滤出有缺货
         Page query = new Page(1, Integer.MAX_VALUE, false);
@@ -447,31 +443,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cDTO.ListDTO> list = pageData.getRecords();
         // 数据处理
         fillList(list);
-        if (isOutStock && isVirtualOutStock) {
+        if (isOutStock) {
             for (SoB2cDTO.ListDTO listDTO : list) {
-                List<SoB2cDetailDTO.ListDTO> collect = listDTO.getDetailList().stream()
-                        .filter(v -> v.getDetailLabelDTO().getIsOutStock() != null && v.getDetailLabelDTO().getIsOutStock() && v.getDetailLabelDTO().getIsVirtualOutStock() != null && v.getDetailLabelDTO().getIsVirtualOutStock())
-                        .collect(Collectors.toList());
-                listDTO.setDetailList(collect);
+                listDTO.setDetailList(listDTO.getDetailList().stream().filter(v -> v.getDetailLabelDTO().getIsOutStock() != null && v.getDetailLabelDTO().getIsOutStock()).collect(Collectors.toList()));
             }
             list = list.stream().filter(v -> CollectionUtils.isNotEmpty(v.getDetailList())).collect(Collectors.toList());
-        } else if(isOutStock){
-            for (SoB2cDTO.ListDTO listDTO : list) {
-                List<SoB2cDetailDTO.ListDTO> collect = listDTO.getDetailList().stream()
-                        .filter(v -> v.getDetailLabelDTO().getIsOutStock() != null && v.getDetailLabelDTO().getIsOutStock())
-                        .collect(Collectors.toList());
-                listDTO.setDetailList(collect);
-            }
-            list = list.stream().filter(v -> CollectionUtils.isNotEmpty(v.getDetailList())).collect(Collectors.toList());
-        } else if(isVirtualOutStock){
-            for (SoB2cDTO.ListDTO listDTO : list) {
-                List<SoB2cDetailDTO.ListDTO> collect = listDTO.getDetailList().stream()
-                        .filter(v -> v.getDetailLabelDTO().getIsVirtualOutStock() != null && v.getDetailLabelDTO().getIsVirtualOutStock())
-                        .collect(Collectors.toList());
-                listDTO.setDetailList(collect);
-            }
-            list = list.stream().filter(v -> CollectionUtils.isNotEmpty(v.getDetailList())).collect(Collectors.toList());
-        }else {
+        } else {
             for (SoB2cDTO.ListDTO listDTO : list) {
                 listDTO.setDetailList(listDTO.getDetailList().stream().filter(v -> v.getDetailLabelDTO().getIsOutStock() == null || !v.getDetailLabelDTO().getIsOutStock()).collect(Collectors.toList()));
             }
