@@ -1064,8 +1064,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
         });
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
-        AfterSaleDTO.NodeDTO nodeDTO = nodeList.stream().filter(e -> e.getNode().equals(repairProgress.get(0).getStatus())).findFirst().orElse(null);
-        repairRecordDTO.setActive(nodeDTO.getIndex() - 1);
+        if(AfterSaleStatusEnum.TERMINATED.getCode().equals(repairProgress.get(0).getStatus())){
+            repairRecordDTO.setActive(nodeList.size() - 1);
+        }else {
+            AfterSaleDTO.NodeDTO nodeDTO = nodeList.stream().filter(e -> e.getNode().equals(repairProgress.get(0).getStatus())).findFirst().orElse(null);
+            repairRecordDTO.setActive(nodeDTO.getIndex() - 1);
+        }
         repairRecordDTO.setRecordList(repairProgress);
         return repairRecordDTO;
     }
@@ -1292,14 +1296,14 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
 
         DmpPushMsgEntity dmpPushMsgEntity = buildDmpPushMsgEntity(afterSaleEntity, request);
-//        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
-//                dmpPushMsgEntity, IdUtil.simpleUUID());
+        SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
+                dmpPushMsgEntity, IdUtil.simpleUUID());
 
-        // 发送微信订阅消息
-        String result = wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
-        log.info("【{}】发送微信订阅消息结果：{}",dmpPushMsgEntity.getSourceCode(),result);
-        dmpPushMsgEntity.setRemark(result);
-        dmpPushMsgService.save(dmpPushMsgEntity);
+//        //发送微信订阅消息
+//        String result = wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
+//        log.info("【{}】发送微信订阅消息结果：{}",dmpPushMsgEntity.getSourceCode(),result);
+//        dmpPushMsgEntity.setRemark(result);
+//        dmpPushMsgService.save(dmpPushMsgEntity);
     }
 
     // 参数校验
