@@ -233,6 +233,11 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
     @TableField("sale_fee")
     private BigDecimal saleFee;
 
+    /**
+     * 变体属性
+     */
+    @TableField("variant_property")
+    private String variantProperty;
 
     public static final String MAIN_ID = "main_id";
 

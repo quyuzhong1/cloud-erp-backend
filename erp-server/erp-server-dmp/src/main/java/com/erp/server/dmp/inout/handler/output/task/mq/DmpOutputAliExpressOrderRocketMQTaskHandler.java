@@ -312,6 +312,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         if(CollUtil.isNotEmpty(dmpSoDetailEntityList)) {
         	for(DmpSoDetailEntity dmpSoDetailEntity : dmpSoDetailEntityList) {
         		PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
+				detailDTO.setVariantProperty(dmpSoDetailEntity.getVariantProperty());
                 // 图片URL
                 detailDTO.setImageUrl(dmpSoDetailEntity.getSkuUrl());
                 // skuId
