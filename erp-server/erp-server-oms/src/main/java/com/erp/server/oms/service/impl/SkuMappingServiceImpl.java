@@ -665,12 +665,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         ListingInfoEntity listingInfo = listingInfoService.getById(skuMapping.getListingId());
         String listingId = "";
+        String authId = "";
         if (Objects.nonNull(listingInfo)) {
             listingId = listingInfo.getId();
             // listing 更新匹配关系
             listingInfo.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             listingInfo.setRemark("");
             listingInfo.setThirdBarcode(thirdBarcode);
+            authId = listingInfo.getAuthId();
             if (!listingInfoService.updateById(listingInfo)) {
                 throw new ServiceException("[listing] 更新失败");
             }
@@ -699,6 +701,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             throw new ServiceException("[SkuMapping] 原数据删除失败");
         }
 //        checkWarehouseSkuExist(id, listingId, warehouseId, productSkuId);
+        //校验数据是否存在相同服务商不同listing 有关联多个sku
+        checkSameWarehouseSkuExist(listingId, authId, productSkuId);
 
         SkuMappingEntity addSkuMapping = new SkuMappingEntity();
         addSkuMapping.setWarehouseId(StringUtils.isBlank(warehouseId) ? "" : warehouseId);
@@ -722,6 +726,16 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMapping.getListingId(), "编辑sku映射表");
         return addSkuMapping.getId();
 
+    }
+
+    private void checkSameWarehouseSkuExist(String listingId, String authId, String productSkuId) {
+        if(StringUtils.isBlank(authId) || StringUtils.isBlank(productSkuId) || StringUtils.isBlank(listingId)){
+            return;
+        }
+        boolean existFlag = this.baseMapper.existOtherListing(listingId,authId,productSkuId);
+        if(existFlag){
+            throw new ServiceException("该服务商下已存在该映射关系");
+        }
     }
 
     private SkuMappingEntity getWarehouseMapping(String listingId,String warehouseId ,String skuId,RuleTypeEnum ruleTypeEnum,LocalDateTime effectiveTime){

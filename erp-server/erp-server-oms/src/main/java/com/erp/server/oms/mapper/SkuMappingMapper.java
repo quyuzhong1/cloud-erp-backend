@@ -125,4 +125,6 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(@Param("params") ListingInfoDTO.QueryPlatformDTO params);
 
     List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@Param("params")SkuMappingDTO.SkuParamDTO params);
+
+    boolean existOtherListing(String listingId, String authId, String productSkuId);
 }
