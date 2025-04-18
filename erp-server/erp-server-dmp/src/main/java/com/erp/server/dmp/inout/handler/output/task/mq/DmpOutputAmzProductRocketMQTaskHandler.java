@@ -174,7 +174,7 @@ public class DmpOutputAmzProductRocketMQTaskHandler extends DmpOutputRocketMQTas
         // fnsku
         DmpFbaInventoryEntity dmpFbaInventoryEntity = dmpFbaInventoryEntityList
                 .stream()
-                .filter(e -> e.getMsku().equalsIgnoreCase(dmpSkuInfoEntity.getSkuNo()))
+                .filter(e -> e.getMsku().equals(dmpSkuInfoEntity.getSkuNo()))
                 .findFirst()
                 .orElse(null);
         if (null != dmpFbaInventoryEntity){
