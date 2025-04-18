@@ -243,6 +243,10 @@ public class NfeInvoiceService {
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
+
+        //州（省份）二字码缩写
+
+
         return nfeClienteDTO;
     }
 

@@ -122,6 +122,7 @@ import com.erp.server.oms.service.*;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
+import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
@@ -146,6 +147,9 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.net.SocketTimeoutException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -4039,7 +4043,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Boolean isCombination = Boolean.FALSE;
             for (SoB2cDetailDTO.ListDTO detailDTO : soB2cDetailList) {
                 SkuVO skuVO = skuVOMap.get(detailDTO.getSkuId());
-                detailDTO.setVariantProperty(null == skuVO ? "" : skuVO.getVariantProperty());
 
                 detailDTO.setProductName(null == skuVO ? "" : skuVO.getSkuName());
                 SkuVO.PropertyDTO skuPropertyDTO = null == skuVO ? new SkuVO.PropertyDTO() : null == skuVO.getPropertyDTO() ? new SkuVO.PropertyDTO() : skuVO.getPropertyDTO();
@@ -4056,9 +4059,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 //库存SKU
                 SkuMappingDTO.ListSkuDTO warehouseListSkuDTO = skuMappingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getProductSkuId(), detailDTO.getSkuId()) && CharSequenceUtil.equals(obj.getWarehouseId(), detailDTO.getWarehouseId())).findFirst().orElse(null);
+                String variantProperty = detailDTO.getVariantProperty();
                 if (ObjectUtils.isNotEmpty(warehouseListSkuDTO)) {
-                    detailDTO.setVariantProperty(warehouseListSkuDTO.getVariantProperty());
+                    detailDTO.setVariantProperty( warehouseListSkuDTO.getVariantProperty());
+                }else{
+                    detailDTO.setVariantProperty(null == skuVO ? "" : skuVO.getVariantProperty());
                 }
+                detailDTO.setVariantProperty(detailDTO.getVariantProperty()+variantProperty);
                 ListingInfoEntity listingInfoEntity = listingInfoEntityList.stream().filter(v -> {
                     return detailDTO.getSourcePlatform().equals(SoB2cSourcePlatformEnum.ENUM_THIRD_PLATFORM.getCode())
                             && v.getPlatformSkuNo().equals(detailDTO.getPlatformSkuNo()) && v.getPlatform().equals(data.getDictPlatform())
@@ -9982,7 +9989,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Override
     public void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus) {
-
+        lambdaUpdate().eq(SoB2cEntity::getId,soId).set(SoB2cEntity::getNfeInvoiceStatus,nfeInvoiceStatus).update();
     }
 
 

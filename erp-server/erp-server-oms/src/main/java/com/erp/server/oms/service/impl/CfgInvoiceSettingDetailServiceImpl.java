@@ -129,15 +129,12 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
 
     @Override
     public List<CfgInvoiceSettingDetailDTO.ViewShopDTO> listShopSelect(String dictplatform) {
-        List<ShopInfoEntity> shoplist = shopInfoService.list(new LambdaQueryWrapper<ShopInfoEntity>().eq(ShopInfoEntity::getDictPlatform, dictplatform));
+        List<ShopInfoEntity> shoplist = shopInfoService.list(new LambdaQueryWrapper<ShopInfoEntity>().eq(ShopInfoEntity::getDictPlatform, dictplatform)
+                .eq(ShopInfoEntity::getIsDeleted, false).select(ShopInfoEntity::getId, ShopInfoEntity::getName,ShopInfoEntity::getDictPlatform, ShopInfoEntity::getDisabled));
         //记录已绑定的店铺id
         Set<String> usedShopidList = this.list(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getDictPlatform, dictplatform)
                         .eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false).select(CfgInvoiceSettingDetailEntity::getShopId)).stream()
                 .map(CfgInvoiceSettingDetailEntity::getShopId).collect(Collectors.toSet());
-        //过滤
-        Set<ShopInfoEntity> availableShopList = shoplist.stream()
-                .filter(shop -> !usedShopidList.contains(shop.getId()))
-                .collect(Collectors.toSet());
         // 转换为 ViewShopDTO，并设置 disabled 字段
         List<CfgInvoiceSettingDetailDTO.ViewShopDTO> viewShopDTOList = shoplist.stream()
                 .map(shop -> {

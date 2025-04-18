@@ -137,6 +137,12 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("ie_rg")
         private String ieRg;
+
+        /**
+         * 州（省份）二字码缩写
+         */
+        @Alias("uf")
+        private String uf;
     }
 
     @Data

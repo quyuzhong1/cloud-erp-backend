@@ -55,6 +55,21 @@ public class CompanyDTO {
     @Alias("rua")
     private String rua;
 
+    @Alias("natureza_id")
+    private String naturezaId;
+
+    @Alias("surname")
+    private String surname;
+
+    @Alias("last_name")
+    private String lastName;
+
+    @Alias("landmark")
+    private String landmark;
+
+    @Alias("ambiente")
+    private String ambiente;
+
     private String city;
 
 }

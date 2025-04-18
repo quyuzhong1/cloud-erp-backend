@@ -196,6 +196,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             afterSaleEntity.setTotalPrice(totalAmount);
         }
 
+        if(Objects.isNull(afterSaleEntity.getTotalRepairAmount())){
+            afterSaleEntity.setTotalRepairAmount(BigDecimal.ZERO);
+        }
 
         log.info("开始新增售后申请单");
         afterSaleEntity.setBillDate(LocalDate.now());
@@ -359,6 +362,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 afterSaleEntity.setTotalPrice(totalAmount);
             }
 
+            if(Objects.isNull(afterSaleEntity.getTotalRepairAmount())){
+                afterSaleEntity.setTotalRepairAmount(BigDecimal.ZERO);
+            }
+
             // 删除明细数据
             attachmentService.lambdaUpdate().eq(AttachmentEntity::getType, "after_sale").eq(AttachmentEntity::getBusinessId, updateDTO.getId()).remove();
             //保存web附件
@@ -389,11 +396,11 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             //更新运单号
             List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
             for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
-                if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode()) && StringUtils.isNotBlank(updateDTO.getReturnTrackNo())){//客户寄件
+                if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())){//客户寄件
                     afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
                 }
-                if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode()) && StringUtils.isNotBlank(updateDTO.getOutboundTrackNo())){//售后发货
+                if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())){//售后发货
                     afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
                 }
@@ -525,7 +532,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         // 审核中的数据允许审核
         if(Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException("已作废数据不支持审核");
         }
 
         // 调用流程审核
@@ -1064,8 +1071,12 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
         });
         List<AfterSaleDTO.NodeDTO> nodeList = getNodeList();
-        AfterSaleDTO.NodeDTO nodeDTO = nodeList.stream().filter(e -> e.getNode().equals(repairProgress.get(0).getStatus())).findFirst().orElse(null);
-        repairRecordDTO.setActive(nodeDTO.getIndex() - 1);
+        if(AfterSaleStatusEnum.TERMINATED.getCode().equals(repairProgress.get(0).getStatus())){
+            repairRecordDTO.setActive(nodeList.size() - 1);
+        }else {
+            AfterSaleDTO.NodeDTO nodeDTO = nodeList.stream().filter(e -> e.getNode().equals(repairProgress.get(0).getStatus())).findFirst().orElse(null);
+            repairRecordDTO.setActive(nodeDTO.getIndex() - 1);
+        }
         repairRecordDTO.setRecordList(repairProgress);
         return repairRecordDTO;
     }
@@ -1112,6 +1123,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         //更新通过，则进入下一个节点：已完成
                         String logisticsCode = map.get(repairInvoiceCode).getLogisticsCode();
                         updateProgressByMainId( afterSaleEntity.getId(), AfterSaleStatusEnum.TO_BE_SHIPPED.getCode(),logisticsCode,"");
+
+                        afterSaleEntity.setStatus(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
+                        updateById(afterSaleEntity);
 
                         //发送微信订阅消息
                         sendSubscribeMsgRequest(afterSaleEntity,AfterSaleStatusEnum.TO_BE_SHIPPED.getCode());
@@ -1295,7 +1309,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.DMP_WECHAT_SUBSCRIBE_MSG_TOPIC, RocketMqTagEnum.DMP_WECHAT_SUBSCRIBE_MSG_TAG.getName(),
                 dmpPushMsgEntity, IdUtil.simpleUUID());
 
-//        // 发送微信订阅消息
+//        //发送微信订阅消息
 //        String result = wxMiniAppService.sendSubscribeMsg(dmpPushMsgEntity.getPushData());
 //        log.info("【{}】发送微信订阅消息结果：{}",dmpPushMsgEntity.getSourceCode(),result);
 //        dmpPushMsgEntity.setRemark(result);
