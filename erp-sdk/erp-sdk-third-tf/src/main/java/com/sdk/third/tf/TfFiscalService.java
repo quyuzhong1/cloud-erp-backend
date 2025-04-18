@@ -37,14 +37,37 @@ public class TfFiscalService {
     public final static String URL = "https://tffiscal.com.br/api";
 
     public static void main(String[] args) {
-        String path = "/alterar_empresa";
-        UpdateCompanyDTO updateCompanyDTO = new UpdateCompanyDTO();
+        String path = "/cadastrar_empresa";
+        CompanyDTO updateCompanyDTO = new CompanyDTO();
         updateCompanyDTO.setTokenPlataforma("19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b");
-        updateCompanyDTO.setCnpj("96623144148088");
+        updateCompanyDTO.setCnpj("96611441148088");
         updateCompanyDTO.setIe("000000000");
         updateCompanyDTO.setRazaoSocial("WJKJ");
-        updateCompanyDTO.setUsername("WJKJ2");
-        updateCompanyDTO.setApiCompleta(null);
+        updateCompanyDTO.setUltimoNumeroNfe("test");
+        updateCompanyDTO.setTelefone("12345678");
+        updateCompanyDTO.setIsActive(1);
+        updateCompanyDTO.setNumero("test");
+        updateCompanyDTO.setCity("São Paulo");
+        updateCompanyDTO.setBairro("test");
+        updateCompanyDTO.setCertificadoViaLink(true);
+        updateCompanyDTO.setSenhaCertificado("1241231");
+        updateCompanyDTO.setZipCode("03936-020");
+        updateCompanyDTO.setCertificado("https://erptest.ulanzi.cn:9002/group1/M00/AE/F3/rBBkDGf_i-qAZzqVAAAPxveKY34854.pfx");
+        updateCompanyDTO.setCep("test");
+        updateCompanyDTO.setPassword("WJKJ");
+        updateCompanyDTO.setName("WJKJ");
+        updateCompanyDTO.setRazaoSocial("test12345");
+        updateCompanyDTO.setState("São Paulo");
+        updateCompanyDTO.setApiCompleta(true);
+        updateCompanyDTO.setFirstName("WJKJTEST22131");
+        updateCompanyDTO.setEmail("ulanzichat@ulanzi.cn");
+        updateCompanyDTO.setUsername("WJKJTEST22131");
+        updateCompanyDTO.setRua("test");
+        updateCompanyDTO.setNaturezaId("10");
+//        updateCompanyDTO.setSurname("1412321");
+//        updateCompanyDTO.setLastName("1231");
+//        updateCompanyDTO.setLandmark("1231");
+//        updateCompanyDTO.setAmbiente("1231");
         Map<String, String> headerMap = new HashMap<>();
 
         //拉取数据
@@ -75,6 +98,7 @@ public class TfFiscalService {
         String path = "/cadastrar_empresa";
         String accessToken = getAccessToken();
         addCompanyDTO.setTokenPlataforma(accessToken);
+        buildDefaultCompany(addCompanyDTO);
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(addCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
@@ -241,6 +265,7 @@ public class TfFiscalService {
         JSONObject jsonObject = JSONUtil.parseObj(jsonStr);
         companyDTO.setCity(jsonObject.getStr("city"));
         companyDTO.setCertificadoViaLink(jsonObject.get("certificado_via_link",Boolean.class));
+        companyDTO.setCertificado(jsonObject.getStr("certificado"));
         companyDTO.setZipCode(jsonObject.getStr("zip_code"));
         companyDTO.setPassword(jsonObject.getStr("password"));
         companyDTO.setName(jsonObject.getStr("name"));
@@ -248,5 +273,6 @@ public class TfFiscalService {
         companyDTO.setApiCompleta(jsonObject.get("api_completa",Boolean.class));
         companyDTO.setFirstName(jsonObject.getStr("first_name"));
         companyDTO.setEmail(jsonObject.getStr("email"));
+        companyDTO.setNaturezaId(jsonObject.getStr("natureza_id"));
     }
 }

@@ -264,6 +264,12 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     @TableField("sale_fee")
     private BigDecimal saleFee;
 
+    /**
+     * 变体属性
+     */
+    @TableField("variant_property")
+    private String variantProperty;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String THIRD_DETAIL_ID = "third_detail_id";
