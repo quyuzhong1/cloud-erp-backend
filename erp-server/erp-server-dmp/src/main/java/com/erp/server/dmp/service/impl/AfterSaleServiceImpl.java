@@ -525,7 +525,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         }
         // 审核中的数据允许审核
         if(Objects.equals(entity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
-            throw new ServiceException(ApiError.ERROR_98012);
+            throw new ServiceException("已作废数据不支持审核");
         }
 
         // 调用流程审核
