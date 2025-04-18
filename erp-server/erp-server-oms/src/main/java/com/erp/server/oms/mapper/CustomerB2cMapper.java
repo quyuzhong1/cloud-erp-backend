@@ -61,4 +61,11 @@ public interface CustomerB2cMapper extends BaseMapper<CustomerB2cEntity> {
      */
     IPage<CustomerB2CDTO.InfoDTO> pagingSelect(Page query, @Param("params") CustomerB2CDTO.SelectDTO params);
 
+    /**
+     * 根据名称获取
+     * @return
+     */
+    List<CustomerB2CDTO.DropListDTO> customerListByName(@Param("customerNameList")List<String> customerNameList);
+
+
 }

@@ -289,6 +289,12 @@
                 #{id}
             </foreach>
         </if>
+        <if test="params.deliveryCodeList != null and params.deliveryCodeList.size > 0">
+            AND fmd.code IN
+            <foreach collection="params.deliveryCodeList" item="code" open="(" close=")" separator=",">
+                #{code}
+            </foreach>
+        </if>
         <if test="params.searchKey != null and params.searchKey != ''">
             AND fmd.code ILIKE concat('%', #{params.searchKey}::text ,'%')
         </if>

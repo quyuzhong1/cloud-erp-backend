@@ -20,6 +20,7 @@ import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.BiOrderInfoEntity;
 import com.erp.model.dmp.entity.BiOrderItemSplitEntity;
 import com.erp.model.dmp.entity.CfgSettingEntity;
@@ -142,8 +143,11 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
     @GlobalTransactional
     @Transactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoInfoEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -617,7 +621,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
         //默认线下订单
         shudiyunB2cOrderDTO.setTransaction_type("配货单");
         if (CharSequenceUtil.isBlank(soInfoEntity.getTransactionSubType())) {
-            shudiyunB2cOrderDTO.setTransaction_sub_type("配货单");
+            shudiyunB2cOrderDTO.setTransaction_sub_type("线下订单");
         } else {
             shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.getName(soInfoEntity.getTransactionSubType()));
         }
@@ -867,7 +871,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             omsPushMsgEntity.setSourceCode(view.getCode() + "_" + soDetailEntity.getSkuNo());
             omsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
-            map.put("isQuerySync", Boolean.TRUE);
+            map.put(DmpOutputConstant.IS_QUERY_SYNC, Boolean.TRUE);
             map.put("detailId", soDetailEntity.getId());
             map.put("operate", operate);
             omsPushMsgEntity.setPushData(JSON.toJSONString(map));

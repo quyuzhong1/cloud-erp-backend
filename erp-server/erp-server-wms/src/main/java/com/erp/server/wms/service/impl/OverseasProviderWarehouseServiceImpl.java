@@ -24,11 +24,9 @@ import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.ListingMatchResultEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
@@ -244,8 +242,8 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
                 //已绑定第三方供应商仓，一个仓库只能绑定一个第三方仓
                 String sameWarehouse = list.stream()
                         .filter(req -> !req.getDisabled()
-                                && req.getWarehouseId().equals(detailEntity.getWarehouseId())
-                                && !req.getPlatformWarehouseCode().equals(detailEntity.getPlatformWarehouseCode()))
+                                && CharSequenceUtil.equals(req.getWarehouseId(),detailEntity.getWarehouseId())
+                                && !CharSequenceUtil.equals(req.getPlatformWarehouseCode(),detailEntity.getPlatformWarehouseCode()))
                         .map(OverseasProviderWarehouseEntity::getPlatformWarehouseName).findFirst().orElse(null);
                 if (StringUtils.isNotBlank(sameWarehouse)) {
                     throw new ServiceException("系统仓库【{}】已映射【{}】-【{}】",detailEntity.getWarehouseName(),dto.getName(),sameWarehouse);

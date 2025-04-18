@@ -107,7 +107,18 @@ public class PickingListsController extends BaseController {
     }
 
     /**
-     * 批量打印
+     * 批量打印（组合/单品）
+     *
+     * @param idsDTO idsDTO
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印头程/B2B拣货单")
+    @PostMapping("/printCombination")
+    public ApiResult<List<PickingListsDTO.PrintCombinationView>> printCombination(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<PickingListsDTO.PrintCombinationView> views = pickingListsService.printCombination(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
+        return success(views);
+    }
+    /**
+     * 批量打印拣货单（头程 拣货清单/发货清单）
      *
      * @param idsDTO idsDTO
      **/
@@ -118,7 +129,7 @@ public class PickingListsController extends BaseController {
         return success(views);
     }
     /**
-     * 批量打印
+     * 批量打印（b2b 拣货清单/发货清单）
      *
      * @param idsDTO idsDTO
      **/

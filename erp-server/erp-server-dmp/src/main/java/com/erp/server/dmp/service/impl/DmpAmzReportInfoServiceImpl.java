@@ -33,9 +33,11 @@ public class DmpAmzReportInfoServiceImpl extends SuperServiceImpl<DmpAmzReportIn
 
 
     @Override
-    public DmpAmzReportInfoEntity getOneByNewEndDate(String reportType) {
+    public DmpAmzReportInfoEntity getOneByNewEndDate(String reportType, String platformShopCode, String marketplaceIdsList) {
         return lambdaQuery()
                 .eq(DmpAmzReportInfoEntity::getReportType, reportType)
+                .eq(DmpAmzReportInfoEntity::getPlatformShopCode, platformShopCode)
+                .eq(DmpAmzReportInfoEntity::getNextLevelId, marketplaceIdsList)
                 .eq(DmpAmzReportInfoEntity::getProcessingStatus, Report.ProcessingStatusEnum.DONE.getValue())
                 .orderByDesc(DmpAmzReportInfoEntity::getDataEndTime)
                 .last("limit 1")

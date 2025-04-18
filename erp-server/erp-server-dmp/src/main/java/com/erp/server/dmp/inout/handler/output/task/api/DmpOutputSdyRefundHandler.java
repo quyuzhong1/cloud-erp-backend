@@ -349,7 +349,6 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setUnit("PCS");
             sdyDTO.setPlatform_id(dmpSoRefundEntity.getSourceSystem());
             sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoRefundEntity.getSourceSystem()));
-            sdyDTO.setRoot_node_no(dmpSoRefundEntity.getThirdCode());
             sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoRefundEntity.getPlatformUpdateTime()));
             sdyDTO.setGoods_status("已退货");
@@ -361,7 +360,13 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             }
             sdyDTO.setReason(dmpSoRefundEntity.getReason());
             sdyDTO.setSource_system("SDC");
-            sdyDTO.setRoot_node_no_initial(dmpSoRefundEntity.getPlatformCode());
+            // 目标
+            String targetPlatformCode = dmpSoRefundEntity.getThirdCode();
+            if (StringUtils.isNotBlank(dmpSoRefundEntity.getPlatformOrderCode())){
+                targetPlatformCode = dmpSoRefundEntity.getPlatformOrderCode();
+            }
+            sdyDTO.setRoot_node_no(targetPlatformCode);
+            sdyDTO.setRoot_node_no_initial(targetPlatformCode);
             result.put(dmpSoRefundDetailEntity.getId(), sdyDTO);
         }
 

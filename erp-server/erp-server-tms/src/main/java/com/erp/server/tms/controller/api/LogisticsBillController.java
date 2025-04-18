@@ -11,9 +11,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -25,10 +29,19 @@ import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -199,5 +212,39 @@ public class LogisticsBillController extends BaseController {
         logisticsBillService.addNoLogisticsBillDetailByBill();
         return success();
     }
+    /**
+     * 下载物流轨迹模板
+     */
+    @GetMapping("/exportTrackTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载小包物流单模板")
+    public ApiResult<Object> exportTrackTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "excel/tmsTrackLogistics.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
 
+    /**
+     * 小包物流单导入
+     */
+    @PostMapping("/importTrack")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "小包物流单导入")
+    public ApiResult<Boolean> importTrack(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) throws Exception {
+        return success(logisticsBillService.importTrack(excelFile,response));
+    }
 }

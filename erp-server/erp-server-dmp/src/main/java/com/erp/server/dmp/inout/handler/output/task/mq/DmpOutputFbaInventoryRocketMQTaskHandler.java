@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpFbaInventoryEntity;
@@ -111,7 +112,7 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
                     shopMap.get(dmpEntity.getNextLevelId()),
                     listingInfoMap.getOrDefault(dmpEntity.getNextLevelId(), Collections.emptyMap()).get(dmpEntity.getMsku()));
             if (null != entity) {
-                map.put(entity.getId(), JSON.toJSONString(entity));
+                map.put(changId, JSON.toJSONString(entity));
             }
         }
         return map;
@@ -125,8 +126,21 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
             return null;
         }
         FbaInventoryEntity dtoEntity = new FbaInventoryEntity();
-        BeanUtils.copyProperties(dmpEntity, dtoEntity);
         dtoEntity.setSkuNo(null == listingInfoWithSkuMappingDTO ? "" : listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo());
+        dtoEntity.setMsku(dmpEntity.getMsku());
+        dtoEntity.setAsin(dmpEntity.getAsin());
+        dtoEntity.setFnSku(dmpEntity.getFnSku());
+        dtoEntity.setProductName(dmpEntity.getProductName());
+
+        // 指定已有信息
+        dtoEntity.setInboundWorkingQty(dmpEntity.getInboundWorkingQty());
+        dtoEntity.setInboundShippedQty(dmpEntity.getInboundShippedQty());
+        dtoEntity.setInboundReceivingQty(dmpEntity.getInboundReceivingQty());
+        dtoEntity.setFulfillableQty(dmpEntity.getFulfillableQty());
+        dtoEntity.setResearchingQty(dmpEntity.getResearchingQty());
+        dtoEntity.setUnsellableQty(dmpEntity.getUnsellableQty());
+        dtoEntity.setReservedQty(dmpEntity.getReservedQty());
+        dtoEntity.setResearchingQty(dmpEntity.getResearchingQty());
 
         if (null != dmpEntity.getLastPlatformUpdateTime()){
             ZoneOffset zoneOffset = ZoneOffset.systemDefault().getRules().getOffset(Instant.now());
@@ -139,6 +153,6 @@ public class DmpOutputFbaInventoryRocketMQTaskHandler extends DmpOutputRocketMQT
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("msku", "marketplaceId", "platformShopCode");
+        return Arrays.asList("msku","fnSku", "platformShopCode");
     }
 }

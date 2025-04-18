@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2024-06-11 09:37:12
  */
 public enum DmpCfgDbDbTypeEnum implements EnumMessage {
-	PG("pg", "pg"),
+	POSTGRESQL("postgresql", "postgresql"),
 	MYSQL("mysql", "mysql"),
     ;
     /**
