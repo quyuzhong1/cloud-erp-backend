@@ -1088,4 +1088,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param extendDataDTO
      */
     void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
+
+    /**
+     * 根据物流id标识是否匹配渠道规则
+     * @param dto
+     */
+    void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto);
 }

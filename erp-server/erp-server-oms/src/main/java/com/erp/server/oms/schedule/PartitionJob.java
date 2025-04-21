@@ -103,7 +103,7 @@ public class PartitionJob {
                 String finalCountry = country;
                 CfgCountryPartitionEntity cfgCountryPartitionEntity = cfgCountryPartitionEntityList.stream().filter(cfg -> cfg.getCountry().equals(finalCountry)).findFirst().orElse(null);
                 if(Objects.nonNull(cfgCountryPartitionEntity)){
-                    soB2cExtendEntity.setPartitionId(cfgCountryPartitionEntity.getPartitionId());
+                    soB2cExtendEntity.setPartitionId(Objects.nonNull(cfgCountryPartitionEntity.getPartitionId()) ? cfgCountryPartitionEntity.getPartitionId() : "");
                     updateList.add(soB2cExtendEntity);
                 }
             }

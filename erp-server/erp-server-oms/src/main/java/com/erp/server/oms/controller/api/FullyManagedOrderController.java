@@ -162,6 +162,7 @@ public class FullyManagedOrderController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
+        soB2cService.uploadLogisticsStatus(dto);
         //检查是否备案并修改状态
 //        soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");
         //自动计算预估运费到订单的预估运费字段
