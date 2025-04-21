@@ -201,6 +201,10 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         // 补充关联数据并保存
         fillData(saveList, detailEntityList, fbaShipmentEntity);
+
+        // 检查sku映射关系
+        checkSkuMapping(saveList);
+
         // 查询历史签收记录
         if (CollectionUtils.isEmpty(oldEntityList)){
             // 保存
@@ -279,6 +283,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         fbaShipmentService.handlerWarehouse(fbaShipmentEntity, handleEntityList, billDate, closedDateMap);
         return true;
     }
+
 
     /**
      * 补充明细ID和sku信息
@@ -463,5 +468,24 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
             return Collections.emptyList();
         }
         return baseMapper.countReceiveQtyByParams(dto);
+    }
+
+    /**
+     * 检查sku映射关系
+     * @param saveList 当前签收记录
+     */
+    private void checkSkuMapping(List<FbaShipmentReceiveEntity> saveList) {
+        List<String> skuMsgList = new LinkedList<>();
+        saveList.stream()
+                .filter(e-> StringUtils.isBlank(e.getSkuId()))
+                .forEach(e-> {
+                    String msg = CharSequenceUtil.format("FBA签收记录数据异常:未找到平台sku映射数据, msku={}, fnSku={}", e.getMsku(), e.getFnSku());
+                    skuMsgList.add(msg);
+                });
+        if (!skuMsgList.isEmpty()) {
+            String msg = String.join(",", skuMsgList);
+            log.warn(msg);
+            throw new ServiceException(msg);
+        }
     }
 }
