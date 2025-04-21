@@ -1,5 +1,7 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -48,6 +50,15 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
             this.saveBatch(addList);
         }
 
+    }
+
+    @Override
+    public void batchAddOrUpdate(List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList) {
+        if (CollUtil.isEmpty(addOrUpdateList)) {
+            return;
+        }
+        List<OmsAttachmentEntity> omsAttachmentList = BeanUtil.copyToList(addOrUpdateList, OmsAttachmentEntity.class);
+        this.saveOrUpdateBatch(omsAttachmentList);
     }
 
     /**

@@ -133,7 +133,7 @@ public class InvoiceInfoController extends BaseController {
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(id, id, e.getMessage());
+                resultDTO = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
