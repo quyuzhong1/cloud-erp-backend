@@ -177,7 +177,7 @@ public class TfFiscalService {
         headers.put("Host", "tffiscal.com.br");
         createPost.addHeaders(headers);
         HttpResponse response = createPost.execute();
-        log.warn("请求参数-body:{},响应结果-response:{}", body, response.body());
+        log.error("请求参数-body:{},响应结果-response:{}", body, response.body());
         if (200 != response.getStatus() ) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,response.body());
         }
@@ -205,7 +205,7 @@ public class TfFiscalService {
         headers.put("Host", "tffiscal.com.br");
         createPost.addHeaders(headers);
         HttpResponse response = createPost.execute();
-        log.warn("请求参数-body:{},响应结果-response:{}", body, response.body());
+        log.error("请求参数-body:{},响应结果-response:{}", body, response.body());
         if (200 != response.getStatus() ) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,response.body());
         }
@@ -232,7 +232,7 @@ public class TfFiscalService {
         headers.put("Host", "tffiscal.com.br");
         createPost.addHeaders(headers);
         HttpResponse response = createPost.execute();
-        log.warn("请求参数-body:{},响应结果-response:{}", body, response.body());
+        log.error("请求参数-body:{},响应结果-response:{}", body, response.body());
         if (200 != response.getStatus() ) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,response.body());
         }
