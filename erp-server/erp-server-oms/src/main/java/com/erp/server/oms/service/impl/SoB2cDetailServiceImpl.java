@@ -1002,6 +1002,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if(StringUtils.isBlank(detailEntity.getSplitDetailId())){
                 //建议售价
                 detailEntity.setAdvicePrice(skuVO.getRetailPrice());
+            }
+            if(Objects.isNull(detailEntity.getAmount())){
                 detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
             }
             //虚拟仓信息
