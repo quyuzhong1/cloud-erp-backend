@@ -90,8 +90,6 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(OtherInstockEntity entity, String operate) {
     	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
-    	}else {
     		List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
     		//服务sku
             List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
@@ -100,6 +98,8 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
             if(detailList.stream().allMatch(d -> ignoreInventorySkuNos.contains(d.getSkuNo()))) {
             	return null;
             }
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
     		return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
     	}
     }
