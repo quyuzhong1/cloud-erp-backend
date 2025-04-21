@@ -167,4 +167,9 @@ public class WmsFirstMileDeliveryController {
     List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(@RequestBody List<String> businessCodes){
         return firstMileDeliveryService.getDeliveryCodeByBusinessCodes(businessCodes);
     }
+
+    @PostMapping("/listGenerateLogisticDTO")
+    public List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(@RequestBody List<String> deliveryCodes) {
+        return firstMileDeliveryService.listGenerateLogisticDTO(deliveryCodes);
+    }
 }

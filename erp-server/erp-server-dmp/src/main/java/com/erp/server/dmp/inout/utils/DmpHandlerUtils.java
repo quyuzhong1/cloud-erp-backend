@@ -439,7 +439,7 @@ public class DmpHandlerUtils {
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
 
-            if (resultSet.next()) {
+            while (resultSet.next()) {
             	Map<String, Object> resultMap = new HashMap<>();
             	String dataIdValue = "";
                 for (int i = 1; i <= columnCount; i++) {

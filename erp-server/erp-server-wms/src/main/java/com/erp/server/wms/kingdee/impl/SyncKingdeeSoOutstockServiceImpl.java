@@ -458,7 +458,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 if (ObjectUtil.isNotEmpty(soB2cDetailEntity)) {
                     dmpOrderItemEntity.setCostPrice(soB2cDetailEntity.getAmount());
                     dmpOrderItemEntity.setSellPrice(soB2cDetailEntity.getPrice());
-                    dmpOrderItemEntity.setIsGift(soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0 ? 1 : 2);
+//                    dmpOrderItemEntity.setIsGift(soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0 ? 1 : 2);
                     dmpOrderItemEntity.setAmount(soB2cDetailEntity.getAmount());
                 }
 
@@ -467,7 +467,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 if (ObjectUtil.isNotEmpty(soDetailEntity)) {
                     dmpOrderItemEntity.setCostPrice(soDetailEntity.getSaleCost());
                     dmpOrderItemEntity.setSellPrice(soDetailEntity.getPrice());
-                    dmpOrderItemEntity.setIsGift(soDetailEntity.getIsGift() ? 1 : 2);
+//                    dmpOrderItemEntity.setIsGift(soDetailEntity.getIsGift() ? 1 : 2);
                     dmpOrderItemEntity.setAmount(soDetailEntity.getAmount());
                 }
             }

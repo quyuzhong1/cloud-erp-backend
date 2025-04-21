@@ -2,10 +2,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.12
+        server-addr: 172.16.100.60:32570
         namespace: ${NACOS_NAMESPACE:dev}
       config:
-        server-addr: 172.16.100.12
+        server-addr: 172.16.100.60:32570
         namespace: dev
         file-extension: yml
         shared-configs: common.yml,db-dmp.yml,druid-common.yml
@@ -18,12 +18,12 @@ fdfs:
   connect-timeout: 600
   so-timeout: 1500
   tracker-list:
-    - 172.16.100.12:22122
+    - 172.16.100.60:32520
 
 sfs:
   nacos:
     application: seata-server
-    server-addr: 172.16.100.12:8848
+    server-addr: 172.16.100.60:32570
     namespace: seata-server
     group: SEATA_GROUP
 

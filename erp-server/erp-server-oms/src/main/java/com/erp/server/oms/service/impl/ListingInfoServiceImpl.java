@@ -520,7 +520,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 continue;
             }
             FbaInventoryEntity fbaInventoryEntity = fbaInventoryEntityList.stream()
-                    .filter(e -> e.getWarehouseId().equalsIgnoreCase(warehouseId) && e.getMsku().equalsIgnoreCase(mappingDTO.getPlatformSkuNo()))
+                    .filter(e -> e.getWarehouseId().equalsIgnoreCase(warehouseId) && e.getMsku().equals(mappingDTO.getPlatformSkuNo()))
                     .findFirst()
                     .orElse(null);
             if (null == fbaInventoryEntity){
@@ -547,5 +547,15 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             throw new ServiceException("客户（仓库）不能为空");
         }
         return baseMapper.searchByKey(dto);
+    }
+
+    @Override
+    public List<ListingInfoEntity> listByAuthIds(List<String> authIds) {
+        if (CollectionUtils.isNotEmpty(authIds)){
+            return lambdaQuery()
+                    .in(ListingInfoEntity::getAuthId, authIds)
+                    .list();
+        }
+        return Collections.emptyList();
     }
 }

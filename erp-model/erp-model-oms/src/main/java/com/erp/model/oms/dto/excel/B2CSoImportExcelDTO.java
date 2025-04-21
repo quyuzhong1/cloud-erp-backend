@@ -77,7 +77,7 @@ public class B2CSoImportExcelDTO {
     
     @ColumnWidth(30)
     @ExcelProperty(value = "*付款时间")
-    @FieldValid(fieldName = "付款时间",isNotBlank = true,formatPattern= FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "付款时间",isNotBlank = true)
     private String payTime;
 
     /**

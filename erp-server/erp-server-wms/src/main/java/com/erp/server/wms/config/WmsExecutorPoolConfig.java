@@ -37,9 +37,9 @@ public class WmsExecutorPoolConfig {
      */
     @Bean(name = "virtualFlowRefactorPool")
     public ExecutorService virtualFlowRefactorPool() {
-        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 30,
+        ThreadPoolExecutor service = new ThreadPoolExecutor(10, 50,
                 5L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(100));
+                new LinkedBlockingQueue<>(1000));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);

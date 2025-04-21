@@ -148,8 +148,12 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
         CustomerAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> req.getPerson().equals(entity.getPerson())).findFirst().orElse(new CustomerAddressDTO.ViewDTO());
         resultMap.put("addressCode", viewDTO.getCode());
         resultMap.put("address", viewDTO.getAddress());
+        String customerCode = "";
+        if(customerInfoEntity != null) {
+        	customerCode = customerInfoEntity.getCode();
+        }
         //客户编号
-        resultMap.put("customerCode", customerInfoEntity.getCode());
+        resultMap.put("customerCode", customerCode);
         return resultMap;
 	}
 }

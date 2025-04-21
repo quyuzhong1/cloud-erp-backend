@@ -187,7 +187,7 @@ public class DmpInputAmzOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 dmpDataMap.put("payTime", "payment".equalsIgnoreCase(sourceOrder.convertPayStatus()) ? null : purchaseLocalDateTime);
 
                 // 总税
-                BigDecimal totalTaxFee = totalItemTax.add(totalShippingTax).add(totalGiftWrapTax).add(totalPromotionDiscountTax);
+                BigDecimal totalTaxFee = totalItemTax.add(totalShippingTax).add(totalGiftWrapTax).subtract(totalPromotionDiscountTax);
                 dmpDataMap.put("totalTaxFee", totalTaxFee);
 
             }

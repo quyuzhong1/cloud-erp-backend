@@ -39,34 +39,34 @@ public class DmpInputAmzFbaInventoryDmpHandler extends DmpInputDbConvertDmpHandl
             InventoryDetails inventoryDetails = JSON.parseObject(detailsJsonObj.toJSONString(), InventoryDetails.class);
             for (TreeMap<String, Object> dmpDataMap : dmpDataMaps) {
                 Integer fulFillableQuantity = inventoryDetails.getFulfillableQuantity();
-                dmpDataMap.put("fulfillable_qty", fulFillableQuantity);
+                dmpDataMap.put("fulfillableQty", fulFillableQuantity);
 
 
                 Integer inboundWorkingQuantity = inventoryDetails.getInboundWorkingQuantity();
-                dmpDataMap.put("inbound_working_qty", inboundWorkingQuantity);
+                dmpDataMap.put("inboundWorkingQty", inboundWorkingQuantity);
 
                 Integer inboundShippedQuantity = inventoryDetails.getInboundShippedQuantity();
-                dmpDataMap.put("inbound_shipped_qty", inboundShippedQuantity);
+                dmpDataMap.put("inboundShippedQty", inboundShippedQuantity);
 
                 Integer inboundReceivingQuantity = inventoryDetails.getInboundReceivingQuantity();
-                dmpDataMap.put("inbound_receiving_qty", inboundReceivingQuantity);
+                dmpDataMap.put("inboundReceivingQty", inboundReceivingQuantity);
 
                 ReservedQuantity reservedQuantity = inventoryDetails.getReservedQuantity();
                 if (null != reservedQuantity) {
                     Integer totalReservedQuantity = reservedQuantity.getTotalReservedQuantity();
-                    dmpDataMap.put("reserved_qty", totalReservedQuantity);
+                    dmpDataMap.put("reservedQty", totalReservedQuantity);
                 }
 
                 ResearchingQuantity researchingQuantity = inventoryDetails.getResearchingQuantity();
                 if (null != researchingQuantity) {
                     Integer totalResearchingQuantity = researchingQuantity.getTotalResearchingQuantity();
-                    dmpDataMap.put("researching_qty", totalResearchingQuantity);
+                    dmpDataMap.put("researchingQty", totalResearchingQuantity);
                 }
 
                 UnfulfillableQuantity unfulfillableQuantity = inventoryDetails.getUnfulfillableQuantity();
                 if (null != unfulfillableQuantity) {
                     Integer totalUnfulfillableQuantity = unfulfillableQuantity.getTotalUnfulfillableQuantity();
-                    dmpDataMap.put("unsellable_qty", totalUnfulfillableQuantity);
+                    dmpDataMap.put("unsellableQty", totalUnfulfillableQuantity);
                 }
             }
         }

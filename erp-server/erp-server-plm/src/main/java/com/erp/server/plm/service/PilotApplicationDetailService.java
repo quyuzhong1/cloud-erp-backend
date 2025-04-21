@@ -32,5 +32,10 @@ public interface PilotApplicationDetailService extends SuperService<PilotApplica
     */
     Boolean update(PilotApplicationDetailDTO.UpdateDTO dto);
 
-
+    /**
+     * 更新明细备注
+     * @param remarkDTO
+     * @return
+     */
+    Boolean updateRemark(BaseIdsDTO.RemarkDTO remarkDTO);
 }

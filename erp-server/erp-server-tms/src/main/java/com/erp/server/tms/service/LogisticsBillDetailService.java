@@ -2,7 +2,6 @@ package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
@@ -102,6 +101,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
 
     /**
      * 根据跟踪号进行更新操作
+     *
      * @param max
      */
     void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity max);

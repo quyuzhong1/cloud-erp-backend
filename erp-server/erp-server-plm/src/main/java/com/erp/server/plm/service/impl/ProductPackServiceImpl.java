@@ -310,9 +310,10 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
                     continue;
                 }
                 // 计算 grossWeight 的和
-                BigDecimal totalGrossWeight = childrenSkuDTOS.stream()
-                        .map(BomChildrenSkuDTO::getGrossWeight)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+                BigDecimal totalGrossWeight = BigDecimal.ZERO;
+                for (BomChildrenSkuDTO childrenSkuDTO : childrenSkuDTOS) {
+                    totalGrossWeight = totalGrossWeight.add(childrenSkuDTO.getGrossWeight().multiply(new BigDecimal(childrenSkuDTO.getQuantity())));
+                }
                 skuIdToGrossWeightMap.put(skuId, totalGrossWeight);
             }else{
                 //单品

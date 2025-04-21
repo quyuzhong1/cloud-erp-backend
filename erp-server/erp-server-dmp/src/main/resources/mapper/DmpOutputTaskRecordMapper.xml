@@ -344,7 +344,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     </select>
     
     <select id="outputErrorCountMsg" resultType="java.lang.String">
-        SELECT concat('【' , k.name , '】推送【' , i.name , '】失败总计' , count(*))
+        SELECT concat('【' , k.name , '】推送【' , i.name , '】失败：' , count(*))
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
@@ -359,6 +359,6 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
         AND t.is_deleted = false
 				and t.create_time <![CDATA[ < ]]> current_date
 				and l.id is not null and i.id is not null and k.id is not null
-				group by l."name",i.name,k.name order by count(*) desc
+				group by l."name",i.name,k.name order by k.name,i.name,count(*) desc
     </select>
 </mapper>

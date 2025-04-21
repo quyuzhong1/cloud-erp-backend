@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -138,7 +139,7 @@ public class AsyncServiceImpl implements AsyncService {
 
 
     @Override
-    @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
+    @DistributeLocker(keyName = "submitPlatformUniqueKey")
     public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey,boolean hasNotOutstock) {
         log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
         // 查询本单明细有已发货标记跳过触发

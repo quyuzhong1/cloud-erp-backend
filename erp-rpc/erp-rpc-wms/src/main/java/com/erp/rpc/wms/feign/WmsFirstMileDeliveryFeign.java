@@ -105,4 +105,7 @@ public interface WmsFirstMileDeliveryFeign {
      */
     @PostMapping("/feign/firstMileDelivery/getDeliveryCodeByBusinessCodes")
     List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(List<String> businessCodes);
+
+    @PostMapping("/feign/firstMileDelivery/listGenerateLogisticDTO")
+    List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(@RequestBody List<String> deliveryCodes);
 }
