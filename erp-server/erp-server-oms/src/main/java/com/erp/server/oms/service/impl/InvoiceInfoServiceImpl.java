@@ -740,13 +740,13 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if(invoiceType.equals(InvoiceInfoInvoiceTypeEnum.NFE.getCode())) {
             //无需开票
             if (!SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus()) && !SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
-                throw new ServiceException(ApiError.ERROR_INVOICE_SUCCESS);
+                throw new ServiceException(ApiError.ERROR_INVOICE_NOT_NEED);
             }
         }
         if(invoiceType.equals(InvoiceInfoInvoiceTypeEnum.VAT.getCode())) {
             //无需开票
             if (!SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getVatInvoiceStatus()) && !SoB2cNfeStatusEnum.INVOICE_FAILURE.getCode().equals(soB2cEntity.getVatInvoiceStatus())) {
-                throw new ServiceException(ApiError.ERROR_INVOICE_SUCCESS);
+                throw new ServiceException(ApiError.ERROR_INVOICE_NOT_NEED);
             }
         }
         if (InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(invoiceType)) {
