@@ -11,10 +11,9 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDetailDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.QcNoticeDetailEntity;
-import com.erp.model.wms.entity.QcNoticeEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PutawayStatusEnum;
+import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.model.wms.enums.QcNoticeStatusEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
@@ -84,6 +83,21 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     private WmsAttachmentService attachmentService;
     @Resource
     private InventoryService inventoryService;
+    @Resource
+    private QcInfoService qcInfoService;
+
+    @Resource
+    private QcProductService qcProductService;
+
+    @Resource
+    private QcResultService qcResultService;
+
+    @Resource
+    private QcReportDetailService qcReportDetailService;
+
+    @Resource
+    private QcRemarkService qcRemarkService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -337,14 +351,37 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单单数据"));
         // 反审核条件判断
         validateDisApprove(entity);
-        // TODO 检查是否有下推单据（如果支持下推的话）明细数据
+        //反审核质检通知单时，需要校验所有的质检单明细的质检状态为待质检，否则提示：【SKU】已质检完成，不允许操作反审核
+        List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByMainIds(Collections.singletonList(id));
+        Map<String, String> map = qcNoticeDetailEntities.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, QcNoticeDetailEntity::getSkuNo));
 
-        // 更新审核信息
+        //质检单
+        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIdsAndType(Collections.singletonList(entity.getId()),SourceTypeEnum.QC_NOTICE.getCode());
+        List<QcInfoEntity> qcInfoList = qcInfoEntities.stream().filter(e ->
+                e.equals(QcBillStatusEnum.EXEMPTION.getCode())
+                        || e.equals(QcBillStatusEnum.FINISH_QC.getCode())
+                        || e.equals(QcBillStatusEnum.WAIT_RE_QC.getCode())
+        ).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(qcInfoList)){
+            StringBuffer sb = new StringBuffer();
+            for (QcInfoEntity qcInfo : qcInfoList) {
+                sb.append(map.get(qcInfo.getSourceDetailId()));
+                sb.append(";");
+            }
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format(ApiError.ERROR_92269.msg,sb.toString()));
+        }
+        //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        List<String> qcInfoIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
+
+        qcInfoService.lambdaUpdate().in(QcInfoEntity::getId, qcInfoIdList).remove();
+        qcProductService.lambdaUpdate().in(QcProductEntity::getMainId, qcInfoIdList).remove();
+        qcResultService.lambdaUpdate().in(QcResultEntity::getMainId, qcInfoIdList).remove();
+        qcReportDetailService.lambdaUpdate().in(QcReportDetailEntity::getMainId, qcInfoIdList).remove();
+        qcRemarkService.lambdaUpdate().in(QcRemarkEntity::getMainId, qcInfoIdList).remove();
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
     }
@@ -354,7 +391,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98014);
         }
-        // TODO 下游盘点计划单反审核
         return true;
     }
 
