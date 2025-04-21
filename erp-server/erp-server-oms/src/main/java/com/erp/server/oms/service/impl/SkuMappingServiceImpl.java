@@ -123,6 +123,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
     @Resource
+    private OverseasProviderFeign overseasProviderFeign;
+
+    @Resource
     private SkuMappingExtendService skuMappingExtendService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
@@ -1261,10 +1264,20 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList, String dictPlatform, String type) {
+    public List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList, String dictPlatform, String type, String warehouseId) {
+        //查询仓库对应的海外仓授权
+        OverseasProviderEntity overseasProviderEntity = overseasProviderFeign.getByWarehouseId(warehouseId);
+        if(Objects.isNull(overseasProviderEntity)){
+            throw new ServiceException("海外仓库授权不存在");
+        }
+        List<ListingInfoEntity> listingInfoEntityList = listingInfoService.listByAuthIds(Collections.singletonList(overseasProviderEntity.getId()));
+        if(CollectionUtils.isEmpty(listingInfoEntityList)){
+            throw new ServiceException("海外仓库授权下没有对应的listing");
+        }
         List<String> skuIdList = listSkuParamList.stream().map(SkuMappingDTO.ListingSkuParamDTO::getSkuId).distinct().collect(Collectors.toList());
         List<String> warehouseIdList = listSkuParamList.stream().map(SkuMappingDTO.ListingSkuParamDTO::getWarehouseId).distinct().collect(Collectors.toList());
-        List<SkuMappingEntity> skuMappingList = this.listByInfo(skuIdList, dictPlatform, type);
+        List<String> listingIds = listingInfoEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<SkuMappingEntity> skuMappingList = this.listByInfo(skuIdList, dictPlatform, type,listingIds);
         List<SkuMappingEntity> wantSkuMappingList = new ArrayList<>(skuMappingList.size());
         for (SkuMappingEntity skuMappingEntity : skuMappingList) {
             Boolean hasMappingAll = skuMappingEntity.getHasMappingAll();
@@ -1278,24 +1291,22 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         List<SkuMappingDTO.ListSkuResultDTO> resultList = new ArrayList<>(wantSkuMappingList.size());
-        List<String> listingIdList = wantSkuMappingList.stream().map(SkuMappingEntity::getListingId).collect(Collectors.toList());
-        List<ListingInfoEntity> listingInfoList = CollectionUtils.isNotEmpty(listingIdList) ? listingInfoService.listByIds(listingIdList) : Collections.emptyList();
         for (SkuMappingEntity item : wantSkuMappingList) {
             SkuMappingDTO.ListSkuResultDTO resultDTO = new SkuMappingDTO.ListSkuResultDTO();
             String listingId = item.getListingId();
             resultDTO.setSkuId(item.getProductSkuId());
             resultDTO.setSkuNo(item.getProductSkuNo());
             resultDTO.setListingId(listingId);
-            ListingInfoEntity listingEntity = listingInfoList.stream().filter(l -> l.getId().equals(listingId)).findFirst().orElse(null);
+            ListingInfoEntity listingEntity = listingInfoEntityList.stream().filter(l -> l.getId().equals(listingId)).findFirst().orElse(null);
             if (Objects.nonNull(listingEntity)) {
                 resultDTO.setType(listingEntity.getType());
                 resultDTO.setPlatformSkuNo(listingEntity.getPlatformSkuNo());
                 resultDTO.setPlatformSkuName(listingEntity.getPlatformSkuName());
                 resultDTO.setPlatformSpuNo(listingEntity.getPlatformSpuNo());
                 resultDTO.setPlatformSpuName(listingEntity.getPlatformSpuName());
+                resultDTO.setDictPlatform(dictPlatform);
+                resultList.add(resultDTO);
             }
-            resultDTO.setDictPlatform(dictPlatform);
-            resultList.add(resultDTO);
         }
 
         return resultList;
@@ -1366,12 +1377,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         return baseMapper.advanceQuerySku(advanceQueryContainer);
     }
 
-    private List<SkuMappingEntity> listByInfo(List<String> skuIdList, String dictPlatform, String type) {
+    private List<SkuMappingEntity> listByInfo(List<String> skuIdList, String dictPlatform, String type,List<String> listingIds) {
         LocalDateTime now = LocalDateTime.now();
         return this.lambdaQuery().
                 ge(SkuMappingEntity::getExpireTime, now).
                 le(SkuMappingEntity::getEffectiveTime, now).
                 in(CollectionUtils.isNotEmpty(skuIdList), SkuMappingEntity::getProductSkuId, skuIdList).
+                in(CollectionUtils.isNotEmpty(listingIds), SkuMappingEntity::getListingId, listingIds).
                 eq(SkuMappingEntity::getDictPlatform, dictPlatform).
                 eq(SkuMappingEntity::getType, type).
                 list();
@@ -1407,7 +1419,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         // 美客多同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         if (StringUtils.isBlank(platformSpuNo) && (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
-                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform))){
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
+        )){
             throw new ServiceException("来源平台SPU为空");
         }
         // 查询相同SPU记录
@@ -1490,6 +1504,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
                 && PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                && PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
                 && PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
                 && PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
         ){
@@ -1506,6 +1521,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         // 速卖通同店铺存在相同SkuNo需要配合平台产ID/SPU查询
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
         ){

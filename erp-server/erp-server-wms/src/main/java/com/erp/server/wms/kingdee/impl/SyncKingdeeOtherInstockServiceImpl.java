@@ -18,12 +18,14 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeePostDTO;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
@@ -33,6 +35,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeOtherInstockService;
@@ -47,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @description: 同步其他入库单
@@ -76,14 +80,28 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+    
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(OtherInstockEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+    		//服务sku
+            List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+            List<String> ignoreInventorySkuNos = CollUtil.isNotEmpty(noInventorySku) ?
+                    noInventorySku.stream().map(SkuVO::getSkuNo).distinct().collect(Collectors.toList()) : Collections.emptyList();
+            if(detailList.stream().allMatch(d -> ignoreInventorySkuNos.contains(d.getSkuNo()))) {
+            	return null;
+            }
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -95,6 +113,9 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
      * @param resultMap
      */
     private DmpPushTaskEntity saveTask (OtherInstockEntity entity, String operate, Map<String, Object> resultMap) {
+    	if(resultMap == null) {
+    		return null;
+    	}
     	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
         		.eq(CfgSettingEntity::getKey, SourceTypeEnum.OTHER_INSTOCK.getCode())
@@ -208,11 +229,19 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
         //是否支持下推仓位
         List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
 
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuNos = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuNo).distinct().collect(Collectors.toList()) : Collections.emptyList();
         List<JSONObject> list = new ArrayList<>();
         for (OtherInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
             //SKU
-            jsonObject.set("skuNo", detail.getSkuNo());
+            String skuNo = detail.getSkuNo();
+            if(ignoreInventorySkuNos.contains(skuNo)) {
+            	continue;
+            }
+			jsonObject.set("skuNo", skuNo);
             //实发数量
             jsonObject.set("actualQty", detail.getActualQty());
             //单位
@@ -243,6 +272,9 @@ public class SyncKingdeeOtherInstockServiceImpl implements SyncKingdeeOtherInsto
             jsonObject.set("remark", detail.getRemark());
 
             list.add(jsonObject);
+        }
+        if(CollUtil.isEmpty(list)) {
+        	return null;
         }
         resultMap.put("list", list);
         return resultMap;

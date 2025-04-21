@@ -7,7 +7,7 @@ import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -29,6 +29,8 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.mrp.entity.DeliverySuggestEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -39,6 +41,8 @@ import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import com.erp.model.scm.enums.InvalidStatusEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -109,15 +113,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Resource
     private ProductDetailMapper productDetailMapper;
     @Autowired
-    private ScmTaskFeign scmTaskFeign;
-    @Resource
-    private ProjectInfoService projectInfoService;
-    @Resource
-    private ProductChangeService productChangeService;
-    @Autowired
     private BomSkuService bomSkuService;
-    @Resource
-    private ProductRefLabelService productRefLabelService;
     @Resource
     private ProductCostService productCostService;
     @Resource
@@ -136,6 +132,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ProductPurchaseService productPurchaseService;
     @Resource
     private ProductPackService productPackService;
+    private static final String SKUCLASSPATH = String.valueOf(PilotApplicationEntity.class);
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -295,13 +292,9 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     @Override
     public List<PilotApplicationDTO.TabListDTO> tabList(PermissionsDTO param) {
         LoginUser user = UserContext.getNonLoginUser();
-        PilotApplicationDTO.PagingParamDTO searchParam = new PilotApplicationDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
         List<PilotApplicationDTO.TabListDTO> list = new ArrayList<>();
         //待提交
-        QueryWrapper<PilotApplicationEntity> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("approve_status", ApproveStatusEnum.WAIT_SUBMIT.getCode());
-        int waitSubmitCount = this.baseMapper.selectCount(queryWrapper);
+        int waitSubmitCount = this.baseMapper.tabList(ApproveStatusEnum.WAIT_SUBMIT.getCode(), null, null,param.getPermissionSql(), null, false);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_SUBMIT.getCode(), PilotApplicationTabEnum.WAIT_SUBMIT.getName(), waitSubmitCount));
         //待我审核
         //根据单据id查询审核流程
@@ -313,21 +306,17 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         List<ProcessTaskManagementEntity> processTaskManagementList = workflowFeign.listProcessByBusinessKey(dto);
         if (CollectionUtils.isNotEmpty(processTaskManagementList)) {
             List<String> ids = processTaskManagementList.stream().map(ProcessTaskManagementEntity::getBusinessId).collect(Collectors.toList());
-            queryWrapper.clear();
-            queryWrapper.in("id", ids);
-            waitMeApproveCount = this.baseMapper.selectCount(queryWrapper);
+            waitMeApproveCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE_ING.getCode(), null, null,param.getPermissionSql(), ids,null);
         }
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.WAIT_ME_APPROVE.getCode(), PilotApplicationTabEnum.WAIT_ME_APPROVE.getName(), waitMeApproveCount));
         //不通过
-        queryWrapper.clear();
-        queryWrapper.eq("approve_status", ApproveStatusEnum.REJECT.getCode());
-        int rejectCount = this.baseMapper.selectCount(queryWrapper);
+        int rejectCount = this.baseMapper.tabList(ApproveStatusEnum.REJECT.getCode(), null, null,param.getPermissionSql(), null,false);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.REJECT.getCode(), PilotApplicationTabEnum.REJECT.getName(), rejectCount));
         //未下单
-        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null);
+        int notOrderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.NOT_ORDER.getCode(), null,param.getPermissionSql(), null,null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.NOT_ORDER.getCode(), PilotApplicationTabEnum.NOT_ORDER.getName(), notOrderCount));
         //已下单
-        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null);
+        int orderCount = this.baseMapper.tabList(ApproveStatusEnum.APPROVE.getCode(), PilotApplicationTabEnum.ORDER.getCode(), null,param.getPermissionSql(), null,null);
         list.add(new PilotApplicationDTO.TabListDTO(PilotApplicationTabEnum.ORDER.getCode(), PilotApplicationTabEnum.ORDER.getName(), orderCount));
         return list;
     }
@@ -868,6 +857,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         }
         purchaseList = purchaseApplicationFeign.listStockInQty(purchaseList);
         for (PilotApplicationDTO.ListDTO item : list) {
+            item.setInvalidStatusName(Objects.nonNull(item.getInvalidStatus()) && item.getInvalidStatus() ? "已作废" : "未作废");
             item.setApproveStatusName(ApproveStatusEnum.getName(item.getApproveStatus()));
             item.setOrderStatusName(PilotPushPurchaseStatusEnum.getName(item.getOrderStatus()));
             item.setProductName(productDetailMap.get(item.getSkuId()));
@@ -929,7 +919,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private void validateSubmit(PilotApplicationEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus()) || entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         //校验包装信息是否完整
@@ -1391,6 +1381,58 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     public List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids) {
         List<ProductPackViewDTO> dtos = productDetailService.listProductPackBySkuIds(ids);
         return dtos.stream().filter(this::verifyComplete).collect(Collectors.toList());
+    }
+
+    @Override
+    public BatchResultDTO invalid(String id, String remark) {
+        PilotApplicationEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "试产量产单"));
+        if (old.getInvalidStatus()) {
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98012.msg);
+        }
+        //仅支持待提交/审核不通过可作废
+        if (!old.getApproveStatus().equals(ApproveStatusEnum.WAIT_SUBMIT) && !old.getApproveStatus().equals(ApproveStatusEnum.REJECT)) {
+            return BatchResultDTO.fail(old.getId(),old.getCode(),ApiError.ERROR_98005.msg);
+        }
+        //创建人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        //更新成作废状态
+        old.setInvalidStatus(Boolean.TRUE);
+        old.setInvalidRemark(remark);
+        old.setInvalidTime(LocalDateTime.now());
+        old.setInvalidUserId(userInfo.getUid());
+        old.setInvalidUserName(userInfo.getUserName());
+        this.updateById(old);
+
+        // 操作日志
+        String msg = StrUtil.format("用户{}，作废了{}，作废原因{}",userInfo.getUserName(), old.getCode(), old.getInvalidRemark());
+        //新增操作日志
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
+                .setBusinessId(id).setOperation("作废").setContent(msg));
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.INVALID);
+    }
+
+    @Override
+    public BatchResultDTO unInvalid(String id) {
+        PilotApplicationEntity old = Optional.ofNullable(super.getById(id)).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "试产量产单"));
+        if (!old.getInvalidStatus()) {
+            return BatchResultDTO.fail(old.getId(),old.getCode(),"未作废单据不支持取消作废");
+        }
+
+        log.info("反作废 开始修改试产量产单状态数据，id：【{}】", id);
+        lambdaUpdate().eq(PilotApplicationEntity::getId, id)
+                .set(PilotApplicationEntity::getInvalidStatus, InvalidStatusEnum.NOT_VOIDED.getStatus())
+                .set(PilotApplicationEntity::getInvalidTime, null)
+                .set(PilotApplicationEntity::getInvalidRemark, CharSequenceUtil.EMPTY)
+                .set(PilotApplicationEntity::getInvalidUserId, CharSequenceUtil.EMPTY)
+                .set(PilotApplicationEntity::getInvalidUserName, CharSequenceUtil.EMPTY)
+                .update();
+        log.info("反作废 开始记录操作日志，id：【{}】", id);
+        // 操作日志
+        String msg = StrUtil.format("用户{}，取消作废了{}",UserContext.getDefaultLoginUser().getUserName(), old.getCode());
+        //新增操作日志
+        sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
+                .setBusinessId(id).setOperation("取消作废").setContent(msg));
+        return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UN_INVALID);
     }
 
     /**

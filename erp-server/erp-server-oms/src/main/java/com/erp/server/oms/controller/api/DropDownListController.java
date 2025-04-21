@@ -6,6 +6,7 @@ import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -118,8 +119,21 @@ public class DropDownListController extends BaseController {
     }
 
 
-
-
+    /**
+     * 字典信息带禁用
+     */
+    @GetMapping("/dict/listWithDisabled")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listWithDisabled(@RequestParam("key") String key) {
+        List<DictBasicEntity> list = dictBasicService.lambdaQuery()
+                .eq(DictBasicEntity::getType, key)
+                .list();
+        //list 根据sort排序
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicEntity::getSort)).collect(Collectors.toList());
+        List<BaseDropDownDTO.DisabledDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getValue(), x.getName(), !x.getStatus()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
 
 
 

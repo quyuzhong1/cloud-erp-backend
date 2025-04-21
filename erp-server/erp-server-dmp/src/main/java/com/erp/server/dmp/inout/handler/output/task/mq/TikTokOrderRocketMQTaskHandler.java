@@ -228,6 +228,12 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         //运费
         orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
 
+        // 税金
+        orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+
+        // 税后支付金额
+        orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
+
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
         orderDTO.setDetails(details);

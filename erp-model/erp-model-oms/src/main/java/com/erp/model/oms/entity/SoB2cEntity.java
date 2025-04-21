@@ -378,6 +378,18 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("vat_invoice_status")
     private String vatInvoiceStatus;
 
+    /**
+     * 总税费
+     */
+    @TableField("total_tax_fee")
+    private BigDecimal totalTaxFee;
+
+    /**
+     * 总税后支付金额(速卖通)
+     */
+    @TableField("after_tax_amount")
+    private BigDecimal afterTaxAmount;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -450,6 +462,9 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", dictPayMethod='" + dictPayMethod + '\'' +
                 ", buyerRemark='" + buyerRemark + '\'' +
                 ", isCancel=" + isCancel +
+                ", totalTaxFee=" + totalTaxFee +
+                ", afterTaxAmount=" + afterTaxAmount +
+                ", totalDiscount=" + totalDiscount +
                 '}';
     }
 
@@ -484,8 +499,16 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 return "WFSFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType()) || "3PLFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType());
             }
         }
-        //美客多
+        //美客多-全球
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(this.dictPlatform)) {
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                //平台仓发货
+                return "fulfillment".equalsIgnoreCase(labelJsonDTO.getLogisticType());
+            }
+        }
+        //美客多-本土
+        if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 //平台仓发货

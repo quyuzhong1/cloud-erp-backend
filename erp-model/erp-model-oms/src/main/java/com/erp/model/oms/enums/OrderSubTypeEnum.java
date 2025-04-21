@@ -67,6 +67,16 @@ public enum OrderSubTypeEnum implements EnumMessage {
         }
         return "";
     }
-
+    public static String getCodeByName(String name) {
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (OrderSubTypeEnum statusEnum : OrderSubTypeEnum.values()) {
+            if (name.equals(statusEnum.getName())) {
+                return statusEnum.getCode();
+            }
+        }
+        return "";
+    }
 
 }

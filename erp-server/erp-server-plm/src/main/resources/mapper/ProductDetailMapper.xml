@@ -1687,10 +1687,7 @@
         SELECT
         pd.ID AS skuId,
         pi.ID AS productId,
-<!--        pi.spu_no,-->
-<!--        pi.NAME AS spuName,-->
         pd.sku_no,
-<!--        pd.NAME AS skuName,-->
         CASE WHEN pbi."type" IS NULL OR pbi."type" = 'single' THEN false ELSE true END AS is_combination
         FROM
         product_detail pd
@@ -1709,13 +1706,11 @@
             OR
             pd.name ILIKE concat('%',#{searchKeyword}::text,'%')
             )
-            ORDER BY CASE
-            WHEN pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
-            WHEN pd.name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 1
-            ELSE 2
-            END,
-            LENGTH(pd.sku_no), LENGTH(pd.name),
-            pd.sku_no, pd.name;
+            ORDER BY
+            case when pd.sku_no ILIKE concat(#{searchKeyword}::text,'%') THEN 1
+            when pd.sku_no ILIKE concat('%',#{searchKeyword}::text) THEN 2
+            when pd.sku_no ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+            end , pd.sku_no
         </if>
     </select>
     <select id="getSkuInfoAdvanceQuery" resultType="com.erp.model.plm.vo.SkuVO">

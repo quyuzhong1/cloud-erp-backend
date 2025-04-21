@@ -30,29 +30,6 @@ public interface TrackDataConverter {
 
     List<LogisticsTrackEntity> platformToTrack(List<PlatformTrackDetail> details);
 
-
-    @Mapping(target = "version", ignore = true)
-    @Mapping(target = "updateUserName", ignore = true)
-    @Mapping(target = "updateUserId", ignore = true)
-    @Mapping(target = "updateTime", ignore = true)
-    @Mapping(target = "transportType", ignore = true)
-    @Mapping(target = "trackTime", source = "trackingDetail.eventTime")
-    @Mapping(target = "trackNo", ignore = true)
-    @Mapping(target = "status", source = "trackingDetail.transitSubStatus", qualifiedByName = "convertTrackStatus")
-    @Mapping(target = "isDeleted", ignore = true)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createUserName", ignore = true)
-    @Mapping(target = "createUserId", ignore = true)
-    @Mapping(target = "createTime", ignore = true)
-    @Mapping(target = "content", source = "trackingDetail.eventDetail")
-    LogisticsTrackEntity responseToTrack(TrackingDetail trackingDetail);
-    /**
-     * 物流原始数据同步
-     * @param trackingDetails
-     * @return
-     */
-    List<LogisticsTrackEntity> responseToTrack(List<TrackingDetail> trackingDetails);
-
     /**
      * INIT	待查询	单号正在查询中，请等待
      * NO_RECORD	暂无信息	包裹无法查询到物流轨迹信息

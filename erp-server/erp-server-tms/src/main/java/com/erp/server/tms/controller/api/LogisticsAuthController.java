@@ -68,6 +68,7 @@ public class LogisticsAuthController extends BaseController {
         String logisticsPlatform = dto.getLogisticsPlatform();
         if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
                 ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
             authMap = logisticsAuthService.addShopeeShopAuth(authMap, logisticsPlatform);
         }

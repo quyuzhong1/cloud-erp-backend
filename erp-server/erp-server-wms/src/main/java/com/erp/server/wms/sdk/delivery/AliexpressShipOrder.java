@@ -16,6 +16,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.SoB2cRefDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
@@ -76,7 +77,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         if (null == tmsSignShipDTO) {
             throw new ServiceException("找不到渠道信息");
         }
-
+        SoB2cRefDTO.SplitCombinationDTO splitCombinationDTO = soB2cFeign.getSplitCombination(dto.getSoB2cId());
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
             //检查销售订单详情是否存在
@@ -89,8 +90,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             currentDetailEntityList = currentDetailEntityList.stream()
                     .filter(e -> CharSequenceUtil.isNotBlank(e.getSourceDetailId()))
                     .collect(Collectors.toList());
-            List<SoB2cDetailEntity> detailEntityList = super.handleSplit(currentDetailEntityList, dto.isFalseDeliveryFlag());
-            if (CollectionUtils.isEmpty(detailEntityList)) {
+            if (CollectionUtils.isEmpty(currentDetailEntityList)) {
                 log.warn("【速卖通标记发货】订单【{}】所有明细来源ID为空,不请求速卖通接口", mainEntity.getCode());
                 continue;
             }
@@ -114,7 +114,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 throw new ServiceException("订单明细列表为空");
             }
             // 得到当前标记的子订单下标
-            List<String> sourceDetailIds = detailEntityList.stream().map(SoB2cDetailEntity::getSourceDetailId).collect(Collectors.toList());
+            List<String> sourceDetailIds = currentDetailEntityList.stream().map(SoB2cDetailEntity::getSourceDetailId).collect(Collectors.toList());
             List<String> subOrderIndexList = childOrderList.stream()
                     .filter(e -> sourceDetailIds.contains(e.getChildOrderId()))
                     .map(OrderItemDetail::getOrderSortId)
@@ -128,8 +128,8 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 );
                 throw new ServiceException("【速卖通标记发货】订单【{}】数据异常未匹配到有效子订单下标");
             }
-            // 都是全部发货
-            String sendType = "all";
+            String sendType = getSendType(mainEntity, splitCombinationDTO);
+
 
             DeclareDeliverRequest request = DeclareDeliverRequest.builder()
                     .outRef(mainEntity.getPlatformCode())
@@ -148,21 +148,21 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 List<DictBasicDTO.ListDTO> warehouseTypes = dictBasicService.getByKey("aliexpressAllowShipOrderId");
                 if (CollectionUtils.isEmpty(warehouseTypes)) {
                     log.warn("【速卖通标记发货】【{}】不存在指定的订单ID配置,不请求速卖通接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(request));
-                    signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                    signShippedDetailList.addAll(currentDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
                     continue;
                 }
                 // 允许通过的ID
                 DictBasicDTO.ListDTO configAllowPlatformOrderDTO = warehouseTypes.stream().filter(e -> mainEntity.getPlatformCode().equalsIgnoreCase(e.getValue())).findFirst().orElse(null);
                 if (null == configAllowPlatformOrderDTO) {
                     log.warn("【速卖通标记发货】【{}】不属于配置指定的订单ID,不请求速卖通接口:请求参数={}", mainEntity.getPlatformCode(), JSONUtil.toJsonStr(request));
-                    signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                    signShippedDetailList.addAll(currentDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
                     continue;
                 }
             }
 
             try {
                 aliExpressOrderService.subDeclareDeliver(request);
-                signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+                signShippedDetailList.addAll(currentDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ServiceException e){
                 if (-353 == e.getCode()) {
                     log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
@@ -170,7 +170,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 }
                 if (-999 == e.getCode() && e.getMessage().contains("系统已经重新路由")){
                     //更新跟踪号，重新申明下单
-                    return reShipOrder(e, detailEntityList, request, signShippedDetailList, mainEntity);
+                    return reShipOrder(e, currentDetailEntityList, request, signShippedDetailList, mainEntity);
                 }
                 log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 throw new ServiceException(ALI_API_FAIL + e.getMessage());
@@ -180,6 +180,32 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             }
         }
         return signShippedDetailList;
+    }
+
+    private String getSendType(SoB2cEntity mainEntity, SoB2cRefDTO.SplitCombinationDTO splitCombinationDTO) {
+        // 判断是否拆单--》是，判断拆单其他订单是否已经全部发货，--》否，发货类型为部分发货
+        //其他情况为全部发货
+        List<SoB2cEntity> allSplitSoB2c = splitCombinationDTO.getSoB2cEntity();
+        List<SoB2cDetailEntity> allSplitSoB2cDetail = splitCombinationDTO.getSoB2cDetailEntityList();
+        String sendType = "all";
+        if(CollectionUtils.isEmpty(allSplitSoB2cDetail) || CollectionUtils.isEmpty(allSplitSoB2c)){
+            return sendType;
+        }
+        SoB2cEntity currentEntity = allSplitSoB2c.stream().filter(e -> e.getId().equals(mainEntity.getId())).findFirst().orElse(null);
+        if(Objects.isNull(currentEntity)){
+            return sendType;
+        }else{
+            List<SoB2cEntity> otherSplitSoB2c = allSplitSoB2c.stream().filter(e -> !e.getId().equals(mainEntity.getId())).collect(Collectors.toList());
+            if(CollectionUtils.isEmpty(otherSplitSoB2c)) {
+                return sendType;
+            }
+            List<String> otherMainIds = otherSplitSoB2c.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            List<SoB2cDetailEntity> otherSplitSoB2cDetail = allSplitSoB2cDetail.stream().filter(e -> otherMainIds.contains(e.getMainId())).collect(Collectors.toList());
+            if(otherSplitSoB2cDetail.stream().anyMatch(v->!v.getIsSignShipped())){
+                sendType = "part";
+            }
+        }
+        return sendType;
     }
 
     /**

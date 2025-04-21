@@ -89,12 +89,14 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 List<TrackDetail> accepted = track.getData().getAccepted().getContent();
                 if (CollectionUtils.isNotEmpty(accepted)) {
                     accepted.forEach(trackDetail -> {
+                        String trackingStatus = trackDetail.getTrackingStatus();
                         List<TrackingDetail> trackingDetails = trackDetail.getLocalLogisticsInfo().getTrackingDetails();
                         if(CollectionUtils.isNotEmpty(trackingDetails)){
                             //本地物流
                             trackingDetails.forEach(trackingDetail -> {
                                 LogisticsTrackEntity logisticsTrackEntity = new LogisticsTrackEntity();
                                 logisticsTrackEntity.setTrackNo(trackDetail.getTrackNo());
+                                logisticsTrackEntity.setOrderStatus(convertTrackStatus(trackingStatus));//转换类型
                                 logisticsTrackEntity.setStatus(convertTrackStatus(trackingDetail.getTransitSubStatus()));//转换类型
                                 LocalDateTime eventTime = LocalDateTime.parse(trackingDetail.getEventTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
                                 logisticsTrackEntity.setTrackTime(eventTime);

@@ -21,6 +21,7 @@ import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.common.message.enums.AssistantDataEnum;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -66,51 +67,12 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(DictCountryEntity entity, String operate) {
-
-        Map<String, Object> resultMap = new HashMap<>();
-        Boolean isExistParent = true;
-        resultMap.put("isExistParent", isExistParent);
-        //业务id
-        resultMap.put("id",entity.getId());
-        //编码
-        resultMap.put("code",entity.getKingdeeCode());
-        //名称
-        resultMap.put("name",entity.getNameCn());
-        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
-        String syncKingdeeId="";
-        if (Objects.nonNull(thirdpartyRef)) {
-            syncKingdeeId = thirdpartyRef.getThirdpartyId();
-        }
-        //金蝶id
-        resultMap.put("syncKingdeeId",syncKingdeeId);
-        resultMap.put("operate", operate);
-
-        //模块类型
-        Integer moduleType = ApiModuleTypeEnum.COUNTRY.getCode();
-        //辅助资料类型编码
-        String fNumber = AssistantDataEnum.COUNTRY.getCode();
-        //删除操作
-        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            return saveTask(entity,operate,resultMap);
-        }
-        if(isExistParent){
-            DictGlobalAreaEntity areaEntity = dictGlobalAreaService.getById(entity.getRegionCode());
-            if(Objects.isNull(areaEntity)){
-                throw new ServiceException(new ApiResult(1,"未找到上级区域"));
-            }
-            //上级编码
-            resultMap.put("parentCode",areaEntity.getKingdeeCode());
-            //上级
-            ThirdpartyRefBusinessEntity pidThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getRegionCode());
-            if (Objects.nonNull(pidThirdpartyRef)) {
-                resultMap.put("pid",pidThirdpartyRef.getThirdpartyId());
-            }
-
-
-        }
-        resultMap.put("moduleType",moduleType);
-        resultMap.put("fNumber", fNumber);
-        return saveTask(entity,operate,resultMap);
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     private DmpPushTaskEntity saveTask(DictCountryEntity entity, String operate, Map<String, Object> resultMap) {
@@ -147,4 +109,52 @@ public class SyncKingdeeCountryServiceImpl implements SyncKingdeeCountryService 
         
         return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(DictCountryEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+        Boolean isExistParent = true;
+        resultMap.put("isExistParent", isExistParent);
+        //业务id
+        resultMap.put("id",entity.getId());
+        //编码
+        resultMap.put("code",entity.getKingdeeCode());
+        //名称
+        resultMap.put("name",entity.getNameCn());
+        ThirdpartyRefBusinessEntity thirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getId());
+        String syncKingdeeId="";
+        if (Objects.nonNull(thirdpartyRef)) {
+            syncKingdeeId = thirdpartyRef.getThirdpartyId();
+        }
+        //金蝶id
+        resultMap.put("syncKingdeeId",syncKingdeeId);
+        resultMap.put("operate", operate);
+
+        //模块类型
+        Integer moduleType = ApiModuleTypeEnum.COUNTRY.getCode();
+        //辅助资料类型编码
+        String fNumber = AssistantDataEnum.COUNTRY.getCode();
+        //删除操作
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	return resultMap;
+        }
+        if(isExistParent){
+            DictGlobalAreaEntity areaEntity = dictGlobalAreaService.getById(entity.getRegionCode());
+            if(Objects.isNull(areaEntity)){
+                throw new ServiceException(new ApiResult(1,"未找到上级区域"));
+            }
+            //上级编码
+            resultMap.put("parentCode",areaEntity.getKingdeeCode());
+            //上级
+            ThirdpartyRefBusinessEntity pidThirdpartyRef=  thirdpartyRefBusinessService.getByBusinessId(entity.getRegionCode());
+            if (Objects.nonNull(pidThirdpartyRef)) {
+                resultMap.put("pid",pidThirdpartyRef.getThirdpartyId());
+            }
+
+
+        }
+        resultMap.put("moduleType",moduleType);
+        resultMap.put("fNumber", fNumber);
+        return resultMap;
+	}
 }

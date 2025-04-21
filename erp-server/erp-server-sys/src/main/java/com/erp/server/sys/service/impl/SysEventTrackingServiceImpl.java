@@ -40,7 +40,6 @@ public class SysEventTrackingServiceImpl extends SuperServiceImpl<SysEventTracki
     @Resource
     private SysDepartmentUserService sysDepartmentUserService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SysEventTrackingDTO.AddDTO addDTO) {
@@ -50,7 +49,7 @@ public class SysEventTrackingServiceImpl extends SuperServiceImpl<SysEventTracki
         // 数据处理
         handleData(sysEventTrackingEntity, addDTO);
 
-        log.info("开始新增前端埋点事件记录");
+//        log.info("开始新增前端埋点事件记录");
         boolean save = super.save(sysEventTrackingEntity);
         if(!save) {
             throw new ServiceException("前端埋点事件记录保存失败");

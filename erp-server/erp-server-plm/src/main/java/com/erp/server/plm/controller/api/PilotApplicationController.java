@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -12,22 +13,23 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
 import com.erp.model.plm.dto.ProductPackViewDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.entity.PilotApplicationDetailEntity;
 import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.service.PilotApplicationDetailService;
 import com.erp.server.plm.service.PilotApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -44,6 +46,8 @@ public class PilotApplicationController extends BaseController {
 
     @Resource
     private PilotApplicationService pilotApplicationService;
+    @Resource
+    private PilotApplicationDetailService pilotApplicationDetailService;
 
     /**
     * 新增
@@ -85,7 +89,7 @@ public class PilotApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:pilotApplication:paging",
-            tableAlias = ""
+            tableAlias = "pa"
     )
     public ApiResult<List<PilotApplicationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(pilotApplicationService.tabList(dto));
@@ -102,7 +106,7 @@ public class PilotApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:pilotApplication:paging",
-            tableAlias = ""
+            tableAlias = "pa"
     )
     @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
     public ApiResult<PagingVO<PilotApplicationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PilotApplicationDTO.PagingParamDTO> dto) {
@@ -480,5 +484,110 @@ public class PilotApplicationController extends BaseController {
     public ApiResult<List<ProductPackViewDTO>> listProductPackBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<ProductPackViewDTO> productPackViewDTOS = pilotApplicationService.listProductPackBySkuIds(dto.getIds());
         return success(productPackViewDTOS);
+    }
+
+    /**
+     * 作废
+     * @author zdy
+     * @date 2025/04/15 11:29
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/invalid")
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = pilotApplicationService.invalid(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("试产量产单作废失败",e);
+                PilotApplicationEntity entity = pilotApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "试产量产单不存在, 作废失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 取消作废
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025/04/15 11:29
+     */
+    @PostMapping("/unInvalid")
+    public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO unInvalidResult;
+            try {
+                unInvalidResult = pilotApplicationService.unInvalid(id);
+            } catch (Exception e) {
+                log.error("试产量产单取消作废失败", e);
+                PilotApplicationEntity entity = pilotApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    unInvalidResult = BatchResultDTO.fail(id, id, "试产量产单不存在, 取消作废失败");
+                    resultDTOS.add(unInvalidResult);
+                    continue;
+                }
+                unInvalidResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(unInvalidResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 更新备注
+     * @author Will
+     * @date: 2023/7/19 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新试产量产单:明细备注={remark}")
+    @PostMapping("/updateRemark")
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.listByIds(dto.getIds());
+        Map<String, PilotApplicationDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(PilotApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<PilotApplicationEntity> entityList = pilotApplicationService.listByIds(mainIds);
+        Map<String, PilotApplicationEntity> entityMap = entityList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        for (String id : dto.getIds()) {
+            PilotApplicationDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"试产量产单明细不存在"));
+                continue;
+            }
+            PilotApplicationEntity entity = entityMap.get(detailEntity.getMainId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"试产量产单不存在"));
+                continue;
+            }
+            try {
+                BaseIdsDTO.RemarkDTO remarkDTO = new BaseIdsDTO.RemarkDTO();
+                remarkDTO.setRemark(dto.getRemark());
+                remarkDTO.setIds(Collections.singletonList(id));
+                Boolean flag = pilotApplicationDetailService.updateRemark(remarkDTO);
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "修更新备注试产量产单成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "修更新备注试产量产单失败"));
+                }
+            }catch (Exception e){
+                log.error("试产量产单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

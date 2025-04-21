@@ -16,6 +16,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -23,6 +24,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.enums.SaleMethodEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -41,6 +43,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -99,8 +102,11 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
-        //生成任务
-       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    	    return saveTask(entity,operate,DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
 
@@ -339,14 +345,22 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		plmPushMsgEntity.setSourceId(id);
         plmPushMsgEntity.setSourceCode(entity.getSkuNo());
         plmPushMsgEntity.setSyncOperate(operate);
-        plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), operate)));
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	plmPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        }else {
+        	ProductInfoEntity productInfo = null;
+            if (StringUtils.isNotBlank(entity.getProductId())){
+                productInfo = productInfoService.getById(entity.getProductId());
+            }
+            plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), productInfo, operate)));
+        }
         
         plmPushMsgService.save(plmPushMsgEntity);
 	}
 
 
 	@Override
-	public Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, String operate) {
+	public Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, ProductInfoEntity productInfoEntity, String operate) {
 		ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
@@ -379,6 +393,36 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
 		}else {
 			resultMap.put("status", ProductDetailStatusEnum.getName(entity.getStatus()));
 		}
+        // 是否虚拟品/is_virtual
+        // 商品属性=费用/服务
+        if (null != productInfoEntity){
+            if ("费用".equalsIgnoreCase(productInfoEntity.getProperty()) || "服务".equalsIgnoreCase(productInfoEntity.getProperty())
+            ){
+                resultMap.put("is_virtual", 1);
+            } else{
+                resultMap.put("is_virtual", 0);
+            }
+            // 是否服务类商品/is_service
+            // 商品属性=服务
+            if ("服务".equalsIgnoreCase(productInfoEntity.getProperty())
+            ){
+                resultMap.put("is_service", 1);
+            } else{
+                resultMap.put("is_service", 0);
+            }
+            // 销售方式
+            if (StringUtils.isNotBlank(productInfoEntity.getSaleMethod())) {
+                String[] sales = productInfoEntity.getSaleMethod().split(",");
+                List<SaleMethodEnum> saleMethods = Stream.of(sales).map(SaleMethodEnum::getEnumByName).collect(Collectors.toList());
+                if (1 == saleMethods.size() && saleMethods.contains(SaleMethodEnum.GIFT)){
+                    // 只包含赠品视为赠品
+                    resultMap.put("is_gift", 1);
+                } else {
+                    resultMap.put("is_gift", 0);
+                }
+            }
+        }
+
 		return resultMap;
 	}
 }

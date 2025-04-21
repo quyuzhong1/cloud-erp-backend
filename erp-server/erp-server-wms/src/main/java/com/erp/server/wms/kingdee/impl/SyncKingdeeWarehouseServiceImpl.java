@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -18,6 +19,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -88,8 +90,12 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(WarehouseEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -188,9 +194,11 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             resultMap.put("type",type.getValue());
         }
         //仓库负责人
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            resultMap.put("chargeCode",findUserDTO.getCode());
+        if (CharSequenceUtil.isNotBlank(entity.getChargeId())){
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                resultMap.put("chargeCode",findUserDTO.getCode());
+            }
         }
         //查询仓位
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Collections.singletonList(entity.getId()));
@@ -246,7 +254,11 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
         wmsPushMsgEntity.setSyncOperate(operate);
-        wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        }else {
+        	wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        }
         
         wmsPushMsgService.save(wmsPushMsgEntity);
 	}

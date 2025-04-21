@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -234,7 +235,20 @@ public class DmpInputShopeeOrderDmpHandler extends DmpInputChildDataToParentDmpH
 						}
 					}
 				}
-				
+				dmpDataMap.put("nextLevelId", nextLevelId);
+				Object item_list_obj = dmpDataMap.get("item_list");
+				if(item_list_obj != null) {
+					BigDecimal allAmount = BigDecimal.ZERO;
+					List<Map<String, Object>> item_list = (List<Map<String, Object>>)item_list_obj;
+					for(Map<String, Object> item : item_list) {
+						Object model_original_price_obj = item.get("model_original_price");
+						Object model_quantity_purchased_obj = item.get("model_quantity_purchased");
+						if(model_original_price_obj != null && model_quantity_purchased_obj != null) {
+							allAmount = allAmount.add(new BigDecimal(model_original_price_obj.toString()).multiply(new BigDecimal(model_quantity_purchased_obj.toString())));
+						}
+					}
+					dmpDataMap.put("allAmount", allAmount);
+				}
 			}
 		}
 	}

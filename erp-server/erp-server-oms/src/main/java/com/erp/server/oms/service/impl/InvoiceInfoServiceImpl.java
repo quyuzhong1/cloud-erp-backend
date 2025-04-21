@@ -41,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +51,7 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INFO;
@@ -81,7 +83,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Resource
     private ShopInfoService shopInfoService;
-
+    @Lazy
     @Resource
     private CfgVatInvoiceService cfgVatInvoiceService;
 
@@ -452,12 +454,15 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
      * 查询上传中的发票最新状态
      */
     @Override
-    public void queryUploadingInvoice() {
+    public void queryUploadingInvoice() throws Exception {
         List<InvoiceInfoEntity> invoiceInfoEntityList = lambdaQuery().eq(InvoiceInfoEntity::getUploadStatus, InvoiceInfoUploadStatusEnum.UPLOADING.getCode()).list();
         invoiceInfoEntityList = invoiceInfoEntityList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getQueryId()) && CharSequenceUtil.isNotBlank(e.getShopId())).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(invoiceInfoEntityList)){
             return;
         }
+        invoiceInfoEntityList = invoiceInfoEntityList.stream()
+                .limit(30)
+                .collect(Collectors.toList());
         List<String> soIds = invoiceInfoEntityList.stream().map(InvoiceInfoEntity::getSoId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIds);
         List<SoB2cEntity> updateSoB2cList = new ArrayList<>();
@@ -489,13 +494,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                     }
                 }
             }catch (Exception e){
+                //应该是亚马逊异常
                 log.error("{}亚马逊查询发票异常",soB2cEntity.getCode(),e);
-                invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
-                invoiceInfoEntity.setQueryResult("系统异常"+e.getMessage());
-                invoiceInfoEntity.setRemark("系统异常"+e.getMessage());
-                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
-                updateSoB2cList.add(soB2cEntity);
+                invoiceInfoEntity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
+                invoiceInfoEntity.setQueryResult("亚马逊查询发票结果异常"+e.getMessage());
+                invoiceInfoEntity.setRemark("亚马逊查询发票结果异常"+e.getMessage());
                 updateList.add(invoiceInfoEntity);
+            }finally {
+                TimeUnit.SECONDS.sleep(90);
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)){

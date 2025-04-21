@@ -7,6 +7,11 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.ExcelWriter;
+import com.alibaba.excel.exception.ExcelCommonException;
+import com.alibaba.excel.write.metadata.WriteSheet;
+import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -25,10 +30,12 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
@@ -41,6 +48,9 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
+import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
+import com.erp.model.tms.dto.excel.LogisticsTrackExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.tms.vo.request.*;
@@ -58,24 +68,26 @@ import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.constant.TmsConstant;
 import com.erp.server.tms.convert.LogisticsBillConverter;
 import com.erp.server.tms.handler.LogisticsRegistry;
+import com.erp.server.tms.listener.LogisticsTrackExcelListener;
 import com.erp.server.tms.mapper.LogisticsBillMapper;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
-import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -137,9 +149,6 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     private LogisticsBillService logisticsBillService;
 
     @Resource
-    private MercadoSdkClientService mercadoSdkClientService;
-
-    @Resource
     private CfgRuleFeign cfgRuleFeign;
     @Resource
     private SysDictFeign sysDictFeign;
@@ -148,13 +157,9 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
     @Resource
     private WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign;
     @Resource
-    private LogisticsSupplierService logisticsSupplierService;
-
-    @Resource
-    private TmsPushMsgService tmsPushMsgService;
-
-    @Resource
     private SyncLogisticsBillService syncLogisticsBillService;
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -495,7 +500,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
         parceInfo.setTotalPrice(totalPrice);
         //根据销售平台和渠道code 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(logisticsPlatform, logisticsChannel.getCode());
-        if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)) {
+        if (Objects.isNull(saleChannel) && !LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) && !LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)) {
             throw new ServiceException(ApiError.ERROR_SALES_CHANNEL_NOT_EXIST, logisticsChannel.getName());
         }
         //根据订单处理规则，判断是否需要清空国家、省市数据
@@ -1030,7 +1035,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                     if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                         getLabelVO.setDeliveryNo(soB2cEntity.getShippingOrderNo());
                     }
-                }else if (logisticsPlatform.equals(LogisticsPlatformEnum.MERCADOLIBRE.getCode())){
+                }else if (logisticsPlatform.equals(LogisticsPlatformEnum.MERCADOLIBRE.getCode()) || logisticsPlatform.equals(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode())){
                     if (ObjectUtil.isNotEmpty(soB2cEntity)) {
                         JSONObject jsonObject = JSON.parseObject(soB2cEntity.getLabelJson());
                         String shipmentId = String.valueOf(jsonObject.getLong("shipmentId"));
@@ -1075,6 +1080,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 try {
                     labelList = service.getLabelList(labelVOArrayList);
                 } catch (IOException e) {
+                    log.error("获取物流面单异常", e);
                     throw new ServiceException("获取物流面单异常"+e.getMessage());
                 }
                 //校验是否请求成功
@@ -1364,5 +1370,63 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 }
             });
         });
+    }
+
+    @Override
+    public Boolean importTrack(MultipartFile excelFile, HttpServletResponse response) throws Exception{
+        //物流信息
+        LogisticsTrackExcelListener billListener = new LogisticsTrackExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), LogisticsTrackExcelDTO.class, billListener).sheet(0).doRead();
+            List<LogisticsTrackExcelDTO> errorList = billListener.getErrorList();
+            if (!errorList.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
+                String excelPath = "excel/tmsTrackLogisticsError.xlsx";
+                String name = "TMS物流单导入错误信息.xlsx";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
+            }
+        }catch (SocketTimeoutException e) {
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public void updateImport(List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList) {
+        if(CollectionUtils.isNotEmpty(updateDetailList)){
+            List<LogisticsBillDetailEntity> updateDataList = new ArrayList<>();
+            //分组
+            Map<String, List<LogisticsBillDetailEntity>> detailMap = updateDetailList.stream().collect(Collectors.groupingBy(LogisticsBillDetailEntity::getId));
+            //循环遍历
+            for (Map.Entry<String, List<LogisticsBillDetailEntity>> entry : detailMap.entrySet()) {
+                List<LogisticsBillDetailEntity> value = entry.getValue();
+                //获取trackTime最新的一条数据
+                LogisticsBillDetailEntity max = value.stream().max(Comparator.comparing(LogisticsBillDetailEntity::getTrackTime)).orElse(null);
+                if (Objects.nonNull(max)){
+                    updateDataList.add(max);
+                }
+            }
+            if (CollUtil.isNotEmpty(updateDataList)){
+                logisticsBillDetailService.updateBatchById(updateDataList);
+            }
+        }
+        if(CollectionUtils.isNotEmpty(addTrackList)){
+            logisticsTrackService.saveBatch(addTrackList);
+        }
     }
 }

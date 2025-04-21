@@ -983,7 +983,10 @@ public enum ApiError implements Serializable {
     NOT_APPROVE_NOT_UPDATE_LOGISTICS(99114,"只有待审核和审核通过的发货单可以更新物流信息"),
     DELIVERY_QTY_EXCEED_DECLAREQTY(99115,"sku【{}】发货数量超过申报数量不允许下推"),
     ERROR_NOT_REQUISITION_APPLICATION(99116,"未找到要货申请单"),
+    ERROR_NOT_REQUISITION_APPLICATION_DETAIL(99116,"未找到要货申请单明细"),
     ERROR_NOT_DELIVERY_NOTICE(99116,"未找到发货通知单"),
+    ERROR_NOT_DELIVERY_NOTICE_DETAIL(99116,"未找到发货通知单明细"),
+    ERROR_NOT_PICKING_DETAIL(99116,"未找到拣货明细"),
     ERROR_NOT_WAREHOUSE(99117,"请匹配系统仓库后启用"),
     ERROR_ONWAY_WAREHOUSE_NOT_EXIST(99118,"在途归属仓库不存在"),
     IS_SUBMIT_IN_SUBMIT(99119,"只有待提交的状态可以提交"),
@@ -1195,6 +1198,7 @@ public enum ApiError implements Serializable {
     ERROR_92246(92246,"存在有效下推单据【采购退货单{}】,不支持反审"),
     ERROR_92247(92247,"存在有效下推单据【委外退料单{}】【采购退货单{}】,不支持反审"),
     ERROR_SO_DELIVERY_NOTICE_DETAIL_NOT_EXIST(92248,"销售通知单明细未找到"),
+    ERROR_SO_DETAIL_NOT_EXIST(92248,"销售订单明细未找到"),
 
     ERROR_92248(92248,"中转规则自动产生的直接调拨单,不支持修改"),
     ERROR_92249(92249,"打印FNSKU标签失败"),
@@ -1443,6 +1447,7 @@ public enum ApiError implements Serializable {
     ERROR_92172(92172,"退货通知单明细不能为空"),
     ERROR_92173(92173,"退货签收单明细不能为空"),
     ERROR_92174(92174,"退货入库单明细不能为空"),
+    ERROR_92175(92175,"存在下游单据不允许作废"),
 
 
     /**
