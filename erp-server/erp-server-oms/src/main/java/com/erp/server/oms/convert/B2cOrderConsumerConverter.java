@@ -134,6 +134,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "advicePrice", source = "detailDTO.advicePrice"),
             @Mapping(target = "sourcePlatform", source = "detailDTO.sourcePlatform"),
             @Mapping(target = "labelJson", source = "detailDTO.labelJson"),
+            @Mapping(target = "platformSkuId", source = "detailDTO.platformSkuId"),
             // 历史实体
             @Mapping(target = "mainId", source = "oldEntity.mainId"),
             @Mapping(target = "warehouseId", source = "oldEntity.warehouseId"),

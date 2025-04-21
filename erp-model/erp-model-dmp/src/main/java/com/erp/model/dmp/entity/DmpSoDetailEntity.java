@@ -258,6 +258,12 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     @TableField("shipping_discount_tax")
     private BigDecimal shippingDiscountTax;
 
+    /**
+     * 平台SKU ID
+     */
+    @TableField("platform_sku_id")
+    private String platformSkuId;
+
 
     public static final String MAIN_ID = "main_id";
 

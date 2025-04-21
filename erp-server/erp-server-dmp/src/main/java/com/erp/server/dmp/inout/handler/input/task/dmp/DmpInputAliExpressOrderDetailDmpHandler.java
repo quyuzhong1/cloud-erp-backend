@@ -46,9 +46,27 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 			for(Map<String, Object> dmpInputMongoChild : dmpInputMongoChildList) {
 				AliExpressOrder sourceOrder = JSON.parseObject(JSON.toJSONString(dmpInputMongoChild), AliExpressOrder.class);
 				Object child_order_list = dmpInputMongoChild.get("child_order_list");
+				// 明细扩展信息
+				Object child_order_ext_info_list = dmpInputMongoChild.get("child_order_ext_info_list");
 				if(child_order_list != null) {
 					List<Map<String, Object>> child_order_map_list = (List<Map<String, Object>>) child_order_list;
-					child_order_map_list.forEach(c -> {
+
+					// 扩展信息
+					List<Map<String, Object>> child_order_ext_info_map_list = new ArrayList<>();
+					if(child_order_ext_info_list != null) {
+						child_order_ext_info_map_list = (List<Map<String, Object>>) child_order_ext_info_list;
+					}
+
+					for (int i = 0; i < child_order_map_list.size(); i++) {
+						Map<String, Object> c = child_order_map_list.get(i);
+						if (CollectionUtils.isNotEmpty(child_order_ext_info_map_list) && child_order_ext_info_map_list.size() >= i) {
+							Map<String, Object> child_order_ext_info_map = child_order_ext_info_map_list.get(i);
+							if (child_order_ext_info_map != null) {
+								// 补充平台skuId
+								c.put("platformSkuId", child_order_ext_info_map.getOrDefault("sku_id",""));
+							}
+						}
+
 						Object order_id = dmpInputMongoChild.get("order_id");
 						c.put("order_id", order_id);
 						Map<String, Object> soOutstockMap = soOutstockMaps.get(order_id);
@@ -68,16 +86,15 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 								c.put("currencyCode", currency_code_obj);
 							}
 						}
-
 						Map<String, Object> lableMap = new HashMap<>();
 						lableMap.put("alreadyTaxed", c.get("already_taxed"));
-				        lableMap.put("logisticsWarehouseType", c.get("logistics_warehouse_type"));
-				        lableMap.put("tagList", c.get("tags"));
+						lableMap.put("logisticsWarehouseType", c.get("logistics_warehouse_type"));
+						lableMap.put("tagList", c.get("tags"));
 						c.put("extendData", JSON.toJSONString(lableMap));
-						
 						c.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
 						c.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
-					});
+					}
+
 					dmpInputMongoChildEntityList.addAll(child_order_map_list);
 				}
 			}
