@@ -69,6 +69,7 @@ public class CfgAuthDTO implements Serializable {
             this.region = regionEntity.getRegion();
             this.name = regionEntity.getName();
             this.dictPlatform = regionEntity.getDictPlatform();
+            this.index = regionEntity.getIndex();
             this.countryList = Collections.emptyList();
             if (CollectionUtils.isNotEmpty(countryEntityList)) {
                 this.countryList = countryEntityList.stream()
@@ -136,6 +137,7 @@ public class CfgAuthDTO implements Serializable {
             this.sellerCentralUrl = entity.getSellerCentralUrl();
             this.remark = entity.getRemark();
             this.mainId = entity.getMainId();
+            this.index = entity.getIndex();
         }
     }
 

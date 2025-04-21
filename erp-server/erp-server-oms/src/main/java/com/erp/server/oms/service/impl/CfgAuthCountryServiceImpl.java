@@ -47,14 +47,14 @@ public class CfgAuthCountryServiceImpl extends SuperServiceImpl<CfgAuthCountryMa
     @Override
     public List<CfgAuthDTO.ViewDTO> listByDictPlatform(String dictPlatform) {
         List<CfgAuthRegionEntity> list = cfgAuthRegionService.lambdaQuery()
-                .eq(CfgAuthRegionEntity::getRegion, dictPlatform)
+                .eq(CfgAuthRegionEntity::getDictPlatform, dictPlatform)
                 .list();
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
         List<String> mainIds = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
         Map<String, List<CfgAuthCountryEntity>> countryMap = lambdaQuery()
-                .eq(CfgAuthCountryEntity::getMainId, mainIds)
+                .in(CfgAuthCountryEntity::getMainId, mainIds)
                 .list()
                 .stream()
                 .collect(Collectors.groupingBy(CfgAuthCountryEntity::getMainId));
