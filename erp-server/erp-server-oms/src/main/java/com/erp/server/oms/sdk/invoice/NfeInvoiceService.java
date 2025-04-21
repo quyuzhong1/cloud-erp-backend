@@ -99,8 +99,8 @@ public class NfeInvoiceService {
         String remark = "";
         Object obj = null;
         String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
+        NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
         try {
-            NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity);
@@ -115,7 +115,8 @@ public class NfeInvoiceService {
              obj = tfFiscalService.createInvoice(createDTO);
         }catch (Exception e){
             log.error("创建发票失败,返回信息:{}", e.getMessage());
-           throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,e.getMessage());
+            log.error("请求参数-body:{}", JSONUtil.toJsonStr(createDTO));
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,e.getMessage());
         }
         NfeInvoiceDTO.NfeSuccessResultDTO resultDTO = null;
         try {
