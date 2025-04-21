@@ -292,7 +292,7 @@ public class DeliverySuggestController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货建议")
     @PostMapping(value = "/export")
-    @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
+
     public ApiResult<String> export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = deliverySuggestService.export(pagingParamDTO);
         return Boolean.TRUE.equals(flag) ? success() : failure();

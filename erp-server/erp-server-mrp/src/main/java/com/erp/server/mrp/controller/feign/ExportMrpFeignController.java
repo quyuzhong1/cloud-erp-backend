@@ -210,6 +210,10 @@ public class ExportMrpFeignController {
      * @param dto 参数
      */
     @PostMapping("/exportMrpSalesCalcList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "csic.shop_id",
+            menuCode = "oms:calcSalesInfoDim:pagingDetail"
+    )
     @WebAdvanceQuery
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
         return calcSalesInfoDimService.exportMrpSalesCalcList(dto);

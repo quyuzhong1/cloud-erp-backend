@@ -72,7 +72,7 @@ public class TmsFirstMileLogisticController extends BaseController {
      * @date:  2024-03-19
      * @return ApiResult<String>
      */
-    @GetMapping("/tabList")
+    @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             shopTableField = "lb.shop_id",
@@ -80,7 +80,7 @@ public class TmsFirstMileLogisticController extends BaseController {
             menuCode = "tms:tmsFirstMileLogistic:paging",
             tableAlias = "lb"
     )
-    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList(@RequestParam(required = false) TmsFirstMileLogisticDTO.PagingParamDTO dto) {
+    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO dto) {
         return success(tmsFirstMileLogisticService.tabList(dto));
     }
 
