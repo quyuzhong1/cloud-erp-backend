@@ -249,6 +249,7 @@ public class OverseasInventoryServiceImpl extends SuperServiceImpl<OverseasInven
         LambdaQueryWrapper<OverseasInventoryEntity> queryWrapper = new LambdaQueryWrapper<OverseasInventoryEntity>()
                 .eq(OverseasInventoryEntity::getDictPlatform, entity.getDictPlatform())
                 .eq(OverseasInventoryEntity::getWarehouseCode, entity.getWarehouseCode())
+                .eq(OverseasInventoryEntity::getMainId, entity.getMainId())
                 .eq(OverseasInventoryEntity::getPlatformSku, entity.getPlatformSku());
         OverseasInventoryEntity existingEntity = this.getOne(queryWrapper);
         if (existingEntity == null || entity.getDownloadTime().isAfter(existingEntity.getDownloadTime())) {
