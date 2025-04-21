@@ -110,7 +110,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     public List<StocktakingTaskDTO.TabDTO> tabList(PermissionsDTO dto) {
         List<StocktakingTaskDTO.TabDTO> tabList = new ArrayList<>(4);
-        List<StocktakingTaskDTO.TabDTO> dbList = baseMapper.tabList(dto.getPermissionSql());
+        List<StocktakingTaskDTO.TabDTO> dbList = baseMapper.tabList(getPermissionSql(dto.getPermissionSql()));
         StocktakingTaskDTO.TabDTO all = new StocktakingTaskDTO.TabDTO();
         int allCount = dbList.stream().mapToInt(StocktakingTaskDTO.TabDTO::getCount).sum();
         all.setTabFlag(WmsConstant.ALL);
@@ -139,7 +139,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
     @Override
     public PagingVO<StocktakingTaskDTO.PagingViewDTO> paging(PagingDTO<StocktakingTaskDTO.PagingParamDTO> dto) {
         StocktakingTaskDTO.PagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
+        params.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         Page query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<StocktakingTaskDTO.PagingViewDTO> list = pageData.getRecords();
@@ -149,6 +149,13 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
         //填充数据
         fillDb(list);
         return new PagingVO<>(pageData);
+    }
+
+    private String getPermissionSql(String permissionSql) {
+        if (StringUtils.isBlank(permissionSql)) {
+            return null;
+        }
+        return " and exists (select 1 from stocktaking_task_detail std where st.id=std.main_id and std.is_deleted=FALSE " + permissionSql + ")";
     }
 
 
@@ -705,6 +712,7 @@ public class StocktakingTaskServiceImpl extends SuperServiceImpl<StocktakingTask
 
     @Override
     public Boolean exportExcel(StocktakingTaskDTO.ExportDTO params, HttpServletResponse response) {
+        params.setPermissionSql(getPermissionSql(params.getPermissionSql()));
         //获取导出数据
         List<StocktakingTaskDTO.PagingViewDTO> list = baseMapper.listExport(params);
         if (CollectionUtils.isEmpty(list)) {

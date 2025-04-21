@@ -22,14 +22,14 @@
 
      <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingTaskDTO$TabDTO">
        SELECT
-         approve_status AS tabFlag,
-         count(id)  AS count
-       FROM  stocktaking_task
-       WHERE is_deleted=FALSE
+         st.approve_status AS tabFlag,
+         count(distinct st.id)  AS count
+       FROM  stocktaking_task st
+       WHERE st.is_deleted=FALSE
        <if test="permissionSql!=null and permissionSql!=''">
            ${permissionSql}
        </if>
-       GROUP BY approve_status
+       GROUP BY st.approve_status
      </select>
 
     <select id="paging" resultType="com.erp.model.wms.dto.StocktakingTaskDTO$PagingViewDTO">

@@ -343,6 +343,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public List<SkuMappingDTO.TabListDTO> tabList(SkuMappingDTO.FindTabDTO dto) {
         List<SkuMappingDTO.TabListDTO> resultList = new ArrayList<>(3);
+        if("warehouse".equals(dto.getType())){
+            //重置权限
+            dto.setPermissionSql(getWarehousePermissionSql());
+        }else if ("customer".equals(dto.getType())){
+            //重置权限
+            dto.setPermissionSql("");
+        }
         List<SkuMappingDTO.MatchCountDTO> matchCountList = baseMapper.listMatchCount(dto);
         //所有
         SkuMappingDTO.TabListDTO all = new SkuMappingDTO.TabListDTO();

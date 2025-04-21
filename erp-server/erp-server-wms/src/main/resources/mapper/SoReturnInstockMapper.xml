@@ -74,6 +74,7 @@
         count(distinct sri.id)
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
+        left join so_b2c sb on sb.id = sri.so_id and sb.is_deleted=FALSE
         WHERE srid.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and sri.approve_status in
@@ -134,6 +135,7 @@
         srid.tax_return_amount_local_currency
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
+        left join so_b2c sb on sb.id = sri.so_id and sb.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
          and  srid.is_deleted = FALSE

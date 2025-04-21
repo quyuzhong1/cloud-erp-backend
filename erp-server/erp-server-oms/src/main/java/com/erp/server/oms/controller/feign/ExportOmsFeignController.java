@@ -200,7 +200,11 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/exportSoB2cReturn")
-    @WebAdvanceQuery
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sbr.shop_id",
+            menuCode = "oms:soB2cReturn:paging"
+    )
+    @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
     public PagingVO<SoB2cReturnDTO.PagingViewDTO> exportSoB2cReturn(@RequestBody PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
         return soB2cReturnService.paging(dto);
     }
