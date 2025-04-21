@@ -106,6 +106,8 @@ public enum BusinessNoTypeEnum {
     CODE_N(81, "N","库龄批次号",BusinessNoConstant.N),
     CODE_INV(82, "INV","发票号",BusinessNoConstant.INV),
 
+    CODE_ZJTZ(86, "ZJTZ","质检通知",BusinessNoConstant.ZJTZ),
+
     ;
 
 

@@ -219,7 +219,7 @@ public class QcNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        @NotEmpty
         private List<QcNoticeDetailDTO.@Valid AddDTO> detailList;
     }
 
@@ -236,6 +236,7 @@ public class QcNoticeDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        @NotEmpty
         private List< QcNoticeDetailDTO.@Valid UpdateDTO> detailList;
 
     }

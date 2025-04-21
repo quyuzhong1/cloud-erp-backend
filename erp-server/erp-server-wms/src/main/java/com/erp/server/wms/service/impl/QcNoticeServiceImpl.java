@@ -1,11 +1,14 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.wms.dto.QcNoticeDetailDTO;
+import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.model.wms.entity.QcNoticeEntity;
 import com.erp.server.wms.mapper.QcNoticeMapper;
 import com.erp.server.wms.service.QcNoticeService;
@@ -73,13 +76,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity qcNoticeEntity = new QcNoticeEntity();
         BeanMapperUtils.copy(addDTO, qcNoticeEntity);
 
+        List<QcNoticeDetailEntity> qcNoticeDetailList = BeanMapperUtils.copyList(QcNoticeDetailEntity.class, addDTO.getDetailList());
+
+
         // 数据处理
         handleData(qcNoticeEntity);
 
         log.info("开始新增质检通知单");
         // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJTZ);
         qcNoticeEntity.setCode(code);
         boolean save = super.save(qcNoticeEntity);
         if(!save) {
@@ -475,6 +480,5 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     * 新增修改处理数据
     */
     private void handleData(QcNoticeEntity qcNoticeEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }
