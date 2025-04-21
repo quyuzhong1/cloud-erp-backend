@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -150,7 +151,7 @@ public class QcNoticeDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "主键id不能为空")
+        @NotBlank(message = "明细id不能为空")
         private String id;
 
     }
@@ -162,8 +163,6 @@ public class QcNoticeDetailDTO implements Serializable {
         /**
         * main_id
         */
-        @NotBlank(message = "main_id不能为空")
-        @Size(max = 19,message = "main_id最大长度不能超过19位")
         private String mainId;
 
         /**
@@ -176,79 +175,80 @@ public class QcNoticeDetailDTO implements Serializable {
         /**
         * sku_name
         */
-        @NotBlank(message = "sku_name不能为空")
-        @Size(max = 500,message = "sku_name最大长度不能超过500位")
+        private String skuNo;
+        /**
+        * sku_name
+        */
         private String skuName;
 
         /**
         * 质检通知数量
         */
         @NotNull(message = "质检通知数量不能为空")
+        @Min(value = 0,message = "质检通知数量不能小于0")
         private Integer qcNoticeQty;
 
         /**
         * 质检数量
         */
-        @NotNull(message = "质检数量不能为空")
+//        @NotNull(message = "质检数量不能为空")
         private Integer qcQty;
 
         /**
         * 送检差异数量
         */
-        @NotNull(message = "送检差异数量不能为空")
+//        @NotNull(message = "送检差异数量不能为空")
         private Integer qcDiffQty;
 
         /**
         * 良品数量
         */
-        @NotNull(message = "良品数量不能为空")
+//        @NotNull(message = "良品数量不能为空")
         private Integer qcGoodQty;
 
         /**
         * 不良品数量
         */
-        @NotNull(message = "不良品数量不能为空")
+//        @NotNull(message = "不良品数量不能为空")
         private Integer qcBadQty;
 
         /**
         * 上架数量
         */
-        @NotNull(message = "上架数量不能为空")
+//        @NotNull(message = "上架数量不能为空")
         private Integer putawayQty;
 
         /**
         * 不良备注
         */
-        @NotBlank(message = "不良备注不能为空")
+//        @NotBlank(message = "不良备注不能为空")
         @Size(max = 500,message = "不良备注最大长度不能超过500位")
         private String badDesc;
 
         /**
         * 质检员id
         */
-        @NotBlank(message = "质检员id不能为空")
-        @Size(max = 19,message = "质检员id最大长度不能超过19位")
+//        @NotBlank(message = "质检员id不能为空")
+//        @Size(max = 19,message = "质检员id最大长度不能超过19位")
         private String qcUserId;
 
         /**
         * 质检员
         */
-        @NotBlank(message = "质检员不能为空")
-        @Size(max = 64,message = "质检员最大长度不能超过64位")
         private String qcUserName;
 
         /**
         * 问题属性 type=qcProblemType
         */
-        @NotBlank(message = "问题属性 type=qcProblemType不能为空")
-        @Size(max = 64,message = "问题属性 type=qcProblemType最大长度不能超过64位")
+//        @NotBlank(message = "问题属性 type=qcProblemType不能为空")
+//        @Size(max = 64,message = "问题属性 type=qcProblemType最大长度不能超过64位")
         private String qcProblemDict;
 
         /**
         * 质检状态 QcBillStatusEnum
         */
-        @NotBlank(message = "质检状态 QcBillStatusEnum不能为空")
-        @Size(max = 64,message = "质检状态 QcBillStatusEnum最大长度不能超过64位")
+//        @NotBlank(message = "质检状态 QcBillStatusEnum不能为空")
+//        @Size(max = 64,message = "质检状态 QcBillStatusEnum最大长度不能超过64位")
         private String qcStatus;
 
         /**
@@ -259,8 +259,8 @@ public class QcNoticeDetailDTO implements Serializable {
         /**
         * 上架状态 待上架:wait  部分上架：part  已上架：finish
         */
-        @NotBlank(message = "上架状态 待上架:wait  部分上架：part  已上架：finish不能为空")
-        @Size(max = 64,message = "上架状态 待上架:wait  部分上架：part  已上架：finish最大长度不能超过64位")
+//        @NotBlank(message = "上架状态 待上架:wait  部分上架：part  已上架：finish不能为空")
+//        @Size(max = 64,message = "上架状态 待上架:wait  部分上架：part  已上架：finish最大长度不能超过64位")
         private String putawayStatus;
 
         /**

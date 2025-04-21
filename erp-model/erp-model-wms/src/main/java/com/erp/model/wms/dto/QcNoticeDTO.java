@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -219,6 +220,7 @@ public class QcNoticeDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
 
+        private List<QcNoticeDetailDTO.@Valid AddDTO> detailList;
     }
 
     /**
@@ -233,6 +235,8 @@ public class QcNoticeDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        private List< QcNoticeDetailDTO.@Valid UpdateDTO> detailList;
 
     }
 
@@ -257,17 +261,15 @@ public class QcNoticeDTO implements Serializable {
         /**
         * 质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  
         */
-        @NotBlank(message = "质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  不能为空")
-        @Size(max = 32,message = "质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  最大长度不能超过32位")
+        @NotBlank(message = "质检类型不能为空")
+        @Size(max = 32,message = "质检类型最大长度不能超过32位")
         private String qcType;
 
         /**
         * 备注
         */
+        @Size(max = 500,message = "质检类型最大长度不能超过255位")
         private String remark;
 
-
     }
-
-
 }
