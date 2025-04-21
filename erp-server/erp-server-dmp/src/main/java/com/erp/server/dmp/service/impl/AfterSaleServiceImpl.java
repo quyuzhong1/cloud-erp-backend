@@ -160,36 +160,19 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
             Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
 
-            Map<String, Integer> plactformSummary = detailByPlatformCode.stream()
-                    .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
-                    .collect(Collectors.groupingBy(
-                            AfterSaleDTO.DropDownDTO::getSkuId, // 按照 skuId 分组
-                            Collectors.summingInt(AfterSaleDTO.DropDownDTO::getSkuQty) // 统计 skuQty 的总和
-                    ));
-
-            Map<String, Integer> skuQtySummary = detailList.stream()
-                    .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
-                    .collect(Collectors.groupingBy(
-                            AfterSaleDetailEntity::getSkuId, // 按照 skuId 分组
-                            Collectors.summingInt(AfterSaleDetailEntity::getSkuQty) // 统计 skuQty 的总和
-                    ));
-
-            for (Map.Entry<String, Integer> entry : skuQtySummary.entrySet()) {
-                if(plactformSummary.containsKey(entry.getKey())){
-                    if(entry.getValue().compareTo(plactformSummary.get(entry.getKey())) > 0){
-                        throw new ServiceException("【"+downDTOMap.get(entry.getKey()).getSkuNo()+"】明细数量不能大于"+plactformSummary.get(entry.getKey()));
-                    }
-                }
-            }
+            checkDetailQty(detailByPlatformCode, detailList, downDTOMap);
 
             for (AfterSaleDetailEntity detail : detailList) {
                 detail.setMainId(afterSaleEntity.getId());
                 ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                 detail.setSkuNo(productDetail.getSkuNo());
                 detail.setProductName(productDetail.getName());
-                if(downDTOMap.containsKey(detail.getSkuId())){
+                if(Objects.isNull(detail.getPrice())){
                     AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                     detail.setPrice(downDTO.getPrice());
+                    //计算总货值
+                    totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                }else{
                     //计算总货值
                     totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
                 }
@@ -275,6 +258,64 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         return new BaseResultDTO.AddDTO(afterSaleEntity.getId(), code);
     }
 
+    private static Map<String, Integer> checkDetailQty(List<AfterSaleDTO.DropDownDTO> detailByPlatformCode, List<AfterSaleDetailEntity> detailList, Map<String, AfterSaleDTO.DropDownDTO> downDTOMap) {
+        Map<String, Integer> platformSummary = detailByPlatformCode.stream()
+                .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
+                .collect(Collectors.groupingBy(
+                        detail -> detail.getSkuId(), // 按照 skuId
+                        Collectors.summingInt(AfterSaleDTO.DropDownDTO::getSkuQty) // 统计 skuQty 的总和
+                ));
+
+        Map<String, Integer> skuQtySummary = detailList.stream()
+                .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
+                .collect(Collectors.groupingBy(
+                        detail -> detail.getSkuId(), // 按照 skuId
+                        Collectors.summingInt(AfterSaleDetailEntity::getSkuQty) // 统计 skuQty 的总和
+                ));
+        for (Map.Entry<String, Integer> entry : skuQtySummary.entrySet()) {
+            // 按照 skuId 和 price 组合成新的 key
+            String key = entry.getKey();
+            Integer detailQty = entry.getValue();
+            if(platformSummary.containsKey(key)){
+                Integer qty = platformSummary.get(key);
+                if(detailQty.compareTo(qty) > 0){
+                    throw new ServiceException("【"+ downDTOMap.get(entry.getKey()).getSkuNo()+"】明细数量不能大于"+qty);
+                }
+            }
+        }
+
+        platformSummary.clear();
+
+        skuQtySummary.clear();
+
+        platformSummary = detailByPlatformCode.stream()
+                .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
+                .collect(Collectors.groupingBy(
+                        detail -> detail.getSkuId() + ":" + detail.getPrice().setScale(4), // 按照 skuId 和 price 组合成新的 key
+                        Collectors.summingInt(AfterSaleDTO.DropDownDTO::getSkuQty) // 统计 skuQty 的总和
+                ));
+
+        skuQtySummary = detailList.stream()
+                .filter(detail -> StringUtil.isNotBlank(detail.getSkuId()) && Objects.nonNull(detail.getPrice())) // 过滤掉 skuId 为空的数据
+                .collect(Collectors.groupingBy(
+                        detail -> detail.getSkuId() + ":" + detail.getPrice().setScale(4), // 按照 skuId 和 price 组合成新的 key
+                        Collectors.summingInt(AfterSaleDetailEntity::getSkuQty) // 统计 skuQty 的总和
+                ));
+
+        for (Map.Entry<String, Integer> entry : skuQtySummary.entrySet()) {
+            // 按照 skuId 和 price 组合成新的 key
+            String key = entry.getKey();
+            Integer detailQty = entry.getValue();
+            if(platformSummary.containsKey(key)){
+                Integer qty = platformSummary.get(key);
+                if(detailQty.compareTo(qty) > 0){
+                    throw new ServiceException("【"+ downDTOMap.get(entry.getKey().split(":")[0]).getSkuNo()+"】明细数量不能大于"+qty);
+                }
+            }
+        }
+        return platformSummary;
+    }
+
     /**
     * 修改
     */
@@ -319,36 +360,19 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
                 Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
 
-                Map<String, Integer> plactformSummary = detailByPlatformCode.stream()
-                        .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
-                        .collect(Collectors.groupingBy(
-                                AfterSaleDTO.DropDownDTO::getSkuId, // 按照 skuId 分组
-                                Collectors.summingInt(AfterSaleDTO.DropDownDTO::getSkuQty) // 统计 skuQty 的总和
-                        ));
-
-                Map<String, Integer> skuQtySummary = detailList.stream()
-                        .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
-                        .collect(Collectors.groupingBy(
-                                AfterSaleDetailEntity::getSkuId, // 按照 skuId 分组
-                                Collectors.summingInt(AfterSaleDetailEntity::getSkuQty) // 统计 skuQty 的总和
-                        ));
-
-                for (Map.Entry<String, Integer> entry : skuQtySummary.entrySet()) {
-                    if(plactformSummary.containsKey(entry.getKey())){
-                        if(entry.getValue().compareTo(plactformSummary.get(entry.getKey())) > 0){
-                            throw new ServiceException("【"+downDTOMap.get(entry.getKey()).getSkuNo()+"】明细数量不能大于"+plactformSummary.get(entry.getKey()));
-                        }
-                    }
-                }
+                checkDetailQty(detailByPlatformCode, detailList, downDTOMap);
 
                 for (AfterSaleDetailEntity detail : detailList) {
                     detail.setMainId(afterSaleEntity.getId());
                     ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                     detail.setSkuNo(productDetail.getSkuNo());
                     detail.setProductName(productDetail.getName());
-                    if(downDTOMap.containsKey(detail.getSkuId())){
+                    if(Objects.isNull(detail.getPrice())){
                         AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                         detail.setPrice(downDTO.getPrice());
+                        //计算总货值
+                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                    }else{
                         //计算总货值
                         totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
                     }
