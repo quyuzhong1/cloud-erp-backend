@@ -50,7 +50,6 @@ public interface SoReturnInstockMapper extends BaseMapper<SoReturnInstockEntity>
      * @param dto dto
      * @return java.util.List<com.erp.model.wms.dto.SoReturnInstockDTO.PagingView>
      **/
-    List<SoReturnInstockDTO.PagingView> soReturnInstockExportExcel(@Param("params") SoReturnInstockDTO.PagingParam dto);
     Page<SoReturnInstockDTO.PagingView> soReturnInstockExportExcel(@Param("page") Page<SoReturnInstockDTO.PagingView> page, @Param("params") SoReturnInstockDTO.PagingParam dto);
 
     /**

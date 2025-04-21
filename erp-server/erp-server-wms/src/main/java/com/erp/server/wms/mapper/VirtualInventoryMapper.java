@@ -86,7 +86,6 @@ public interface VirtualInventoryMapper extends BaseMapper<VirtualInventoryEntit
      * @param params
      * @return List<ListDiffExportDataDTO>
      */
-    List<VirtualInventoryDiffDTO.ListDiffExportDataDTO> listDiffExportData(@Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
     Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> listDiffExportData(@Param("page") Page<VirtualInventoryDiffDTO.ListDiffExportDataDTO> page, @Param("params") VirtualInventoryDiffDTO.SearchParamDTO params);
 
     /**

@@ -47,7 +47,6 @@ public interface SoReturnReceiveMapper extends BaseMapper<SoReturnReceiveEntity>
      * @param dto dto
      * @return java.util.List<com.erp.model.wms.dto.SoReturnReceiveDTO.PagingView>
      **/
-    List<SoReturnReceiveDTO.PagingView> soReturnReceiveExportExcel(@Param("params") SoReturnReceiveDTO.PagingParam dto);
     Page<SoReturnReceiveDTO.PagingView> soReturnReceiveExportExcel(@Param("page") Page<SoReturnReceiveDTO.PagingView> page, @Param("params") SoReturnReceiveDTO.PagingParam dto);
 
     /**

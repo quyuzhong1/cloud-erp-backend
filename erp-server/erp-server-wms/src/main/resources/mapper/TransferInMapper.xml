@@ -5,14 +5,15 @@
 
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.TransferInDTO$ApproveCountDTO">
           SELECT
-            approve_status,
-	        count(*)
-	     FROM   transfer_in
-	     WHERE is_deleted=FALSE
+        ti.approve_status,
+	        count(distinct ti.id)
+	     FROM   transfer_in ti
+        INNER JOIN transfer_in_detail tid ON ti.id=tid.main_id AND tid.is_deleted=FALSE
+	     WHERE ti.is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-         GROUP BY approve_status
+         GROUP BY ti.approve_status
     </select>
 
     <select id="paging" resultType="com.erp.model.wms.dto.TransferInDTO$PagingViewDTO">

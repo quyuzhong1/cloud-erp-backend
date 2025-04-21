@@ -83,6 +83,10 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
 
@@ -146,7 +150,7 @@
             AND sm.type=#{params.type}
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY match_result
     </select>

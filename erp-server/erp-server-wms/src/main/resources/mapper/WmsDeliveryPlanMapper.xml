@@ -149,11 +149,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.WmsDeliveryPlanDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  wms_delivery_plan
-        WHERE is_deleted=FALSE
-        GROUP BY approve_status
+        odp.approve_status AS tabFlag,
+        count(odp.id)  AS count
+        FROM  wms_delivery_plan odp
+        WHERE odp.is_deleted=FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY odp.approve_status
     </select>
 
     <!--下推要货申请列表查询-->

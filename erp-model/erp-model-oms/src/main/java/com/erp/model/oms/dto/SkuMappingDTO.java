@@ -7,10 +7,7 @@ import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -85,6 +82,7 @@ public class SkuMappingDTO implements Serializable {
     /**
      * tab
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class FindTabDTO extends PermissionsDTO {
