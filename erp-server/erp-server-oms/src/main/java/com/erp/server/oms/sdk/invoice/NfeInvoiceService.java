@@ -245,11 +245,14 @@ public class NfeInvoiceService {
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
                 .eq(DictCityEntity::getCountryCode, "BR")
                 .eq(DictCityEntity::getType,"province")
-                .eq(DictCityEntity::getCodePt,nfeClienteDTO.getState()).list();
+                .eq(DictCityEntity::getCodePt,nfeClienteDTO.getState())
+                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
+                .list();
         if (CollUtil.isEmpty(dictCityList)) {
             throw new ServiceException("开票省份/州二字码未找到");
         }
         nfeClienteDTO.setUf(dictCityList.get(0).getCode());
+        nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
         return nfeClienteDTO;
     }
 
