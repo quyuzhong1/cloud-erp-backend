@@ -1001,7 +1001,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         List<String> platformList = list.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
         String permissionSql = null;
         if (Objects.nonNull(showByAuth) && showByAuth){
-            permissionSql = authDataFeign.getShopPermissionSql("");
+            permissionSql = authDataFeign.getShopPermissionSql("si.id");
         }
         List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList,permissionSql);
 
@@ -1610,6 +1610,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<ShopDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollectionUtils.isNotEmpty(page.getRecords())) {
             //填充数据

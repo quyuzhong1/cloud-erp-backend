@@ -45,7 +45,7 @@ public class VirtualInventoryDiffController extends BaseController {
     */
     @PostMapping("/diffPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "i.warehouse_id",
+            warehouseTableField = "diff.warehouseId",
             menuCode = "wms:diffPaging:paging"
     )
     @WebAdvanceQuery(handler = VirtualInventoryDiffQueryHandler.class)

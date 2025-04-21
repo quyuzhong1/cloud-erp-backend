@@ -1,9 +1,11 @@
 package com.erp.server.mrp.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -51,6 +53,10 @@ public class PurchaseSuggestIndependentController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "psm.shop_id",
+            menuCode = "oms:purchaseSuggestIndependent:paging"
+    )
     @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult<PagingVO<PurchaseSuggestIndependentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {
         PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingVO = purchaseSuggestIndependentService.paging(dto);

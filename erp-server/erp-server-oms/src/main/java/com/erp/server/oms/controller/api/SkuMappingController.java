@@ -75,6 +75,10 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sm.shop_id",
+            menuCode = "oms:skuMaping:platformPaging"
+    )
     public ApiResult<List<SkuMappingDTO.TabListDTO>> tabList(@Validated @RequestBody SkuMappingDTO.FindTabDTO dto) {
         List<SkuMappingDTO.TabListDTO> list = skuMappingService.tabList(dto);
         return success(list);
@@ -103,6 +107,10 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/platformPaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sm.shop_id",
+            menuCode = "oms:skuMaping:platformPaging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<SkuMappingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
         PagingVO<SkuMappingDTO.PagingViewDTO> pagingVO = skuMappingService.paging(dto);

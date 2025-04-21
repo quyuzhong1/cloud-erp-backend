@@ -57,6 +57,7 @@ public class PdaSoOutstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "so.warehouse_id",
             menuCode = "wms:pdaSoOutstock:paging",
             tableAlias = "so"
     )
@@ -75,6 +76,7 @@ public class PdaSoOutstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "so.warehouse_id",
             menuCode = "wms:pdaSoOutstock:paging",
             tableAlias = "so"
     )

@@ -3,20 +3,23 @@
 <mapper namespace="com.erp.server.wms.mapper.WaveListPdaMapper">
 
     <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
-        select id,
-                create_time,
-                code,
-                name,
-                type,
-                status,
-                picking_cart_type,
-                picking_cart_code,
-                picking_type
-        from wave_list
-        where is_deleted = false
+        select distinct wl.id,
+        wl.create_time,
+        wl.code,
+        wl.name,
+        wl.type,
+        wl.status,
+        wl.picking_cart_type,
+        wl.picking_cart_code,
+        wl.picking_type
+        from wave_list wl
+        left join wave_list_detail wld on wl.id = wld.main_id and wld.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.id = wld.delivery_id and sbd.is_deleted = false
+        left join so_b2c_delivery_detail sbdd on sbdd.main_id = sbd.id and sbdd.is_deleted = false
+        where wl.is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
-        order by create_time desc
+        order by wl.create_time desc
     </select>
 </mapper>

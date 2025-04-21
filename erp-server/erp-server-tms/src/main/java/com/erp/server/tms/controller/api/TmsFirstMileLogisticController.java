@@ -75,10 +75,12 @@ public class TmsFirstMileLogisticController extends BaseController {
     @GetMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
             menuCode = "tms:tmsFirstMileLogistic:paging",
             tableAlias = "lb"
     )
-    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList(TmsFirstMileLogisticDTO.PagingParamDTO dto) {
+    public ApiResult<List<TmsFirstMileLogisticDTO.TabListDTO>> tabList(@RequestParam(required = false) TmsFirstMileLogisticDTO.PagingParamDTO dto) {
         return success(tmsFirstMileLogisticService.tabList(dto));
     }
 
@@ -93,6 +95,8 @@ public class TmsFirstMileLogisticController extends BaseController {
     @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
             menuCode = "tms:tmsFirstMileLogistic:paging",
             tableAlias = "lb"
     )
@@ -346,6 +350,13 @@ public class TmsFirstMileLogisticController extends BaseController {
      * 导出
      */
     @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
+            menuCode = "tms:tmsFirstMileLogistic:paging",
+            tableAlias = "lb"
+    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程物流单")
     @WebAdvanceQuery(handler = TmsFirstMileLogisticQueryHandler.class)
     public ApiResult<Object>export(@RequestBody @Valid TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) {

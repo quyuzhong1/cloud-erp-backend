@@ -33,7 +33,6 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -343,7 +342,7 @@
             wh.is_deleted = false
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
-                #{params.permissionSql}
+                ${params.permissionSql}
             </if>
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))

@@ -99,6 +99,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "k.shop_id",
             menuCode = "tms:smallBagCostAllocation:paging",
             tableAlias = "t"
     )
@@ -116,6 +117,7 @@ public class SmallBagCostAllocationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "k.shop_id",
             menuCode = "tms:smallBagCostAllocation:paging",
             tableAlias = "t"
     )

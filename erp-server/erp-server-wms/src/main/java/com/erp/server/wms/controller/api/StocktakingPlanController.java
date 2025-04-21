@@ -55,7 +55,7 @@ public class StocktakingPlanController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "sp.warehouse_id",
+            warehouseTableField = "spd.warehouse_id",
             menuCode = "wms:stocktakingPlan:paging",
             tableAlias = "sp"
     )
@@ -73,7 +73,7 @@ public class StocktakingPlanController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "sp.warehouse_id",
+            warehouseTableField = "spd.warehouse_id",
             menuCode = "wms:stocktakingPlan:paging",
             tableAlias = "sp"
     )

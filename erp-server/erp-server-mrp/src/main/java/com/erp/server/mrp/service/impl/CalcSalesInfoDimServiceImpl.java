@@ -370,6 +370,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> pagingDetail(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<CalcSalesInfoDimDTO.DetailViewDTO> page = baseMapper.pagingDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
         if (!CollectionUtils.isEmpty(page.getRecords())) {

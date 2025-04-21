@@ -203,6 +203,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         LoginUser user = UserContext.getDefaultLoginUser();
+        params.getParams().setPermissionSql(params.getPermissionSql());
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
         if (!CollectionUtils.isEmpty(pagingVO.getRecords())) {
             processData(pagingVO.getRecords());

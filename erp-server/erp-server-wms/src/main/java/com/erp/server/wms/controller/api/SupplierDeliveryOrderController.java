@@ -45,12 +45,12 @@ public class SupplierDeliveryOrderController extends BaseController {
      * 获取 tab列表
      * @return
      */
-    @GetMapping("/tabList")
+    @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "t.to_warehouse_id",
             menuCode = "wms:supplierDeliveryOrder:paging"
     )
-    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList(@RequestBody(required = false) DeliveryOrderDTO.ParamDTO paramDTO) {
+    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList(@RequestBody DeliveryOrderDTO.ParamDTO paramDTO) {
         List<DeliveryOrderDTO.TabListDTO> tabList = srmDeliveryFeign.tabList(paramDTO);
         return success(tabList);
     }

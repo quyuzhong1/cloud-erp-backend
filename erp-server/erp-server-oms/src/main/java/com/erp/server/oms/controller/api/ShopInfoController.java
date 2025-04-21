@@ -18,13 +18,16 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.ShopDTO.ShopBatchUpdateDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -59,6 +63,8 @@ public class ShopInfoController extends BaseController {
 
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
     /**
      * 店铺 分页
      *
@@ -67,6 +73,7 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "si.id",
             menuCode = "oms:shop:paging",
             tableAlias = "si"
     )
@@ -84,6 +91,19 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/pagingCustom")
     @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())){
+            List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(dto.getParams().getUserId());
+            //如果用户没有店铺权限，就返回空
+            if (CollectionUtils.isEmpty(shopUserList)){
+                return success(new PagingVO<>());
+            }
+            StringBuilder sqlString = new StringBuilder();
+            String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
+            if ("part".equals(authType)){
+                sqlString.append(" AND string_to_array(").append("si.id").append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                dto.getParams().setPermissionSql(sqlString.toString());
+            }
+        }
         PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
         return success(pagingVO);
     }
