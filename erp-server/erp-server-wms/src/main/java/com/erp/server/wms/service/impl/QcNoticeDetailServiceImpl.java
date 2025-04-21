@@ -90,6 +90,14 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
         return lambdaQuery().in(QcNoticeDetailEntity::getMainId,mainIds).list();
     }
 
+    @Override
+    public void deleteByMainId(String id) {
+        if(StringUtils.isBlank(id)){
+            return ;
+        }
+        lambdaUpdate().eq(QcNoticeDetailEntity::getMainId,id).remove();
+    }
+
     private List<String> getDeleteIds(List<QcNoticeDetailEntity> newList, List<QcNoticeDetailEntity> oldList) {
         List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).map(QcNoticeDetailEntity::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(QcNoticeDetailEntity::getId).collect(Collectors.toList());

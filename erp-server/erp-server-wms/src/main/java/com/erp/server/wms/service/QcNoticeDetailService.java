@@ -37,4 +37,6 @@ public interface QcNoticeDetailService extends SuperService<QcNoticeDetailEntity
 
 
     List<QcNoticeDetailEntity> listByMainIds(List<String> mainIds);
+
+    void deleteByMainId(String id);
 }

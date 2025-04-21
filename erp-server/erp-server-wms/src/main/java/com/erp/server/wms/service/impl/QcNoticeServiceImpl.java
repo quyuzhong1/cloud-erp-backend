@@ -402,11 +402,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
-        // TODO 删除明细数据（如果有明细数据的话）
-
         // 删除主单数据
         log.info("删除 开始删除质检通知单主单数据，id：【{}】", id);
         super.removeById(id);
+        //删除明细
+        qcNoticeDetailService.deleteByMainId(id);
         // 删除日志数据
         log.info("删除 开始删除质检通知单日志数据，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单");
