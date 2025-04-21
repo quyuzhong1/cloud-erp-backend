@@ -20,6 +20,10 @@
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         order by wl.create_time desc
     </select>
 </mapper>
