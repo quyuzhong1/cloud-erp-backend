@@ -1097,4 +1097,10 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return void
      */
     void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
+
+    /**
+     * 根据物流id标识是否匹配渠道规则
+     * @param dto
+     */
+    void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto);
 }

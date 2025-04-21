@@ -139,7 +139,8 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
         if (CharSequenceUtil.isNotBlank(shopId)){
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getDictCountryCode())){
-                soB2cExtendEntity.setPartitionId(sysPartitionFeign.getPartitionByCountry(shopInfo.getDictCountryCode()));
+                String partitionByCountry = sysPartitionFeign.getPartitionByCountry(shopInfo.getDictCountryCode());
+                soB2cExtendEntity.setPartitionId(Objects.nonNull(partitionByCountry) ? partitionByCountry : "");
             }
         }
     }
