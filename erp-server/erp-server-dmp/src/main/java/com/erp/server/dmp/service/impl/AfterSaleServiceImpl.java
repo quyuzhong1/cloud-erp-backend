@@ -160,6 +160,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
             Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
 
+            Map<String, Integer> plactformSummary = detailByPlatformCode.stream()
+                    .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
+                    .collect(Collectors.groupingBy(
+                            AfterSaleDTO.DropDownDTO::getSkuId, // 按照 skuId 分组
+                            Collectors.summingInt(AfterSaleDTO.DropDownDTO::getSkuQty) // 统计 skuQty 的总和
+                    ));
+
             Map<String, Integer> skuQtySummary = detailList.stream()
                     .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
                     .collect(Collectors.groupingBy(
@@ -168,10 +175,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     ));
 
             for (Map.Entry<String, Integer> entry : skuQtySummary.entrySet()) {
-                if(downDTOMap.containsKey(entry.getKey())){
-                    AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(entry.getKey());
-                    if(entry.getValue().compareTo(downDTOMap.get(entry.getKey()).getSkuQty()) > 0){
-                        throw new ServiceException("【"+downDTO.getSkuNo()+"】明细数量不能大于"+downDTO.getSkuQty());
+                if(plactformSummary.containsKey(entry.getKey())){
+                    if(entry.getValue().compareTo(plactformSummary.get(entry.getKey())) > 0){
+                        throw new ServiceException("【"+downDTOMap.get(entry.getKey()).getSkuNo()+"】明细数量不能大于"+plactformSummary.get(entry.getKey()));
                     }
                 }
             }
@@ -184,9 +190,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 if(downDTOMap.containsKey(detail.getSkuId())){
                     AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                     detail.setPrice(downDTO.getPrice());
-                    if(detail.getSkuQty().compareTo(downDTO.getSkuQty()) > 0){
-                        throw new ServiceException("【"+detail.getSkuNo()+"】明细数量不能大于"+downDTO.getSkuQty());
-                    }
                     //计算总货值
                     totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
                 }
@@ -316,6 +319,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
                 Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
 
+                Map<String, Integer> plactformSummary = detailByPlatformCode.stream()
+                        .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
+                        .collect(Collectors.groupingBy(
+                                AfterSaleDTO.DropDownDTO::getSkuId, // 按照 skuId 分组
+                                Collectors.summingInt(AfterSaleDTO.DropDownDTO::getSkuQty) // 统计 skuQty 的总和
+                        ));
+
                 Map<String, Integer> skuQtySummary = detailList.stream()
                         .filter(detail -> StringUtil.isNotBlank(detail.getSkuId())) // 过滤掉 skuId 为空的数据
                         .collect(Collectors.groupingBy(
@@ -324,10 +334,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         ));
 
                 for (Map.Entry<String, Integer> entry : skuQtySummary.entrySet()) {
-                    if(downDTOMap.containsKey(entry.getKey())){
-                        AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(entry.getKey());
-                        if(entry.getValue().compareTo(downDTOMap.get(entry.getKey()).getSkuQty()) > 0){
-                            throw new ServiceException("【"+downDTO.getSkuNo()+"】明细数量不能大于"+downDTO.getSkuQty());
+                    if(plactformSummary.containsKey(entry.getKey())){
+                        if(entry.getValue().compareTo(plactformSummary.get(entry.getKey())) > 0){
+                            throw new ServiceException("【"+downDTOMap.get(entry.getKey()).getSkuNo()+"】明细数量不能大于"+plactformSummary.get(entry.getKey()));
                         }
                     }
                 }
@@ -339,9 +348,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     detail.setProductName(productDetail.getName());
                     if(downDTOMap.containsKey(detail.getSkuId())){
                         AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                        if(detail.getSkuQty().compareTo(downDTO.getSkuQty()) > 0){
-                            throw new ServiceException("【"+detail.getSkuNo()+"】明细数量不能大于"+downDTO.getSkuQty());
-                        }
                         detail.setPrice(downDTO.getPrice());
                         //计算总货值
                         totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
