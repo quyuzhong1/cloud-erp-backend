@@ -39,7 +39,7 @@ public class TfFiscalService {
     public static void main(String[] args) {
         String path = "/cadastrar_empresa";
         CompanyDTO updateCompanyDTO = new CompanyDTO();
-        updateCompanyDTO.setTokenPlataforma("19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b");
+        updateCompanyDTO.setTokenPlataforma("16-04-2025_09-19-No28tBi0Yw28FixdY1sIjkmt4-dksxdY1sIjkB12n413207N4-sb7XiNa");
         updateCompanyDTO.setCnpj("96611441148088");
         updateCompanyDTO.setIe("000000000");
         updateCompanyDTO.setRazaoSocial("WJKJ");
@@ -64,10 +64,10 @@ public class TfFiscalService {
         updateCompanyDTO.setUsername("WJKJTEST22131");
         updateCompanyDTO.setRua("test");
         updateCompanyDTO.setNaturezaId("10");
-//        updateCompanyDTO.setSurname("1412321");
-//        updateCompanyDTO.setLastName("1231");
-//        updateCompanyDTO.setLandmark("1231");
-//        updateCompanyDTO.setAmbiente("1231");
+        updateCompanyDTO.setSurname("1412321");
+        updateCompanyDTO.setLastName("1231");
+        updateCompanyDTO.setLandmark("1231");
+        updateCompanyDTO.setAmbiente("1231");
         Map<String, String> headerMap = new HashMap<>();
 
         //拉取数据
@@ -274,5 +274,9 @@ public class TfFiscalService {
         companyDTO.setFirstName(jsonObject.getStr("first_name"));
         companyDTO.setEmail(jsonObject.getStr("email"));
         companyDTO.setNaturezaId(jsonObject.getStr("natureza_id"));
+        companyDTO.setSurname(companyDTO.getName());
+        companyDTO.setLastName(companyDTO.getName());
+        companyDTO.setLandmark(jsonObject.getStr("landmark"));
+        companyDTO.setAmbiente(jsonObject.getStr("ambiente"));
     }
 }
