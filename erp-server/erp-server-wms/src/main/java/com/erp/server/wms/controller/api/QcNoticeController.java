@@ -82,7 +82,7 @@ public class QcNoticeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:paging",
-            tableAlias = ""
+            tableAlias = "qn"
     )
     public ApiResult<List<QcNoticeDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(qcNoticeService.tabList(dto));
@@ -99,7 +99,7 @@ public class QcNoticeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:paging",
-            tableAlias = ""
+            tableAlias = "qn"
     )
     public ApiResult<PagingVO<QcNoticeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<QcNoticeDTO.PagingParamDTO> dto) {
         return success(qcNoticeService.paging(dto));

@@ -32,41 +32,5 @@ import com.erp.model.wms.dto.QcNoticeDetailDTO;
 @RequestMapping("/qcNoticeDetail")
 public class QcNoticeDetailController extends BaseController {
 
-    @Resource
-    private QcNoticeDetailService qcNoticeDetailService;
-
-    /**
-    * 新增
-    * @author jack
-    * @date:  2025-04-21
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "质检通知单明细新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated QcNoticeDetailDTO.AddDTO dto) {
-        return success(qcNoticeDetailService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2025-04-21
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "质检通知单明细修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "wms:qcNoticeDetail:update",
-        serviceClass = QcNoticeDetailService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated QcNoticeDetailDTO.UpdateDTO dto) {
-        qcNoticeDetailService.update(dto);
-        return success();
-    }
-
-
 
 }

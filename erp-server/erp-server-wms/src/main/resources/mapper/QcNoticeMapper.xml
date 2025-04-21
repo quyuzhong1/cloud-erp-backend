@@ -25,20 +25,82 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        approve_status, approve_time, approve_user_id, approve_user_name, code, qc_warehouse_id, putaway_warehouse_id, qc_type, remark
+        qn.ID,
+	qn.create_user_id,
+	qn.create_user_name,
+	qn.create_time,
+	qn.update_user_id,
+	qn.update_user_name,
+	qn.update_time,
+	qn.VERSION,
+	qn.is_deleted,
+	qn.approve_status,
+	qn.approve_time,
+	qn.approve_user_id,
+	qn.approve_user_name,
+	qn.code,
+	qn.qc_warehouse_id,
+	qn.putaway_warehouse_id,
+	qn.qc_type,
+	qn.qc_status,
+	qn.remark
     </sql>
 
     <select id="paging" resultType="com.erp.model.wms.dto.QcNoticeDTO$ListDTO">
-
+        SELECT
+            qn.ID AS id,
+            qn.create_user_id AS createUserId,
+            qn.create_user_name AS createUserName,
+            qn.create_time AS createTime,
+            qn.is_deleted AS isDeleted,
+            qn.approve_status AS approveStatus,
+            qn.approve_time AS approveTime,
+            qn.approve_user_id AS approveUserId,
+            qn.approve_user_name AS approveUserName,
+            qn.code AS code,
+            qn.qc_warehouse_id AS qcWarehouseId,
+            qn.putaway_warehouse_id AS putawayWarehouseId,
+            qn.qc_type AS qcType,
+            qn.qc_status AS qcStatus,
+            qn.qc_timeliness AS qcTimeliness,
+            qn.remark AS remark,
+            qnd.id AS detailId,
+            qnd.sku_id AS skuId,
+            qnd.sku_no AS skuNo,
+            qnd.sku_name AS skuName,
+            qnd.qc_notice_qty AS qcNoticeQty,
+            qnd.qc_qty AS qcQty,
+            qnd.qc_diff_qty AS qcDiffQty,
+            qnd.qc_good_qty AS qcGoodQty,
+            qnd.qc_bad_qty AS qcBadQty,
+            qnd.putaway_qty AS putawayQty,
+            qnd.bad_desc AS badDesc,
+            qnd.qc_user_id AS qcUserId,
+            qnd.qc_user_name AS qcUserName,
+            qnd.qc_problem_dict AS qcProblemDict,
+            qnd.qc_status AS qcDetailStatus,
+            qnd.qc_date AS qcDate,
+            qnd.putaway_status AS putawayStatus,
+            qnd.putaway_date AS putawayDate,
+            qi.code  AS qcInfoCode
+        FROM
+            qc_notice AS qn
+                LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+                LEFT JOIN qc_info as qn.id = qi.source_id and qi.source_type = 'qcNotice'
+        WHERE
+            ${params.sqlMap.default}
+          AND  qc.is_deleted = FALSE
+          AND qcd.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qn.create_time desc
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -50,14 +112,27 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.QcNoticeDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
+        qn.approve_status AS tabFlag,
         count(*)  AS count
-        FROM  qc_notice
-        WHERE is_deleted=FALSE
+        FROM  qc_notice as qn
+        WHERE qn.is_deleted=FALSE
+            and qn.approve_status in ('waitSubmit','approveIng')
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY qn.approve_status
+    </select>
+
+    <select id="tabQcStatusList" resultType="com.erp.model.wms.dto.QcNoticeDTO$TabListDTO">
+        SELECT
+        qn.qc_status AS tabFlag,
+        count(*)  AS count
+        FROM  qc_notice as qn
+        WHERE qn.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY qn.qc_status
     </select>
 
 </mapper>

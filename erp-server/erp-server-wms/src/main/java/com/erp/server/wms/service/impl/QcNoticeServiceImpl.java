@@ -7,19 +7,26 @@ import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDetailDTO;
+import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.erp.model.wms.entity.QcNoticeEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.model.wms.enums.PutawayStatusEnum;
+import com.erp.model.wms.enums.QcNoticeStatusEnum;
+import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.QcNoticeMapper;
-import com.erp.server.wms.service.QcNoticeService;
+import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,8 +56,10 @@ import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * 质检通知单 服务实现类
@@ -62,12 +71,18 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoticeEntity> implements QcNoticeService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
+    @Resource
+    private WarehouseService warehouseService;
+    @Resource
+    private WmsAttachmentService attachmentService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -75,70 +90,58 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     public BaseResultDTO.AddDTO add(QcNoticeDTO.AddDTO addDTO) {
         QcNoticeEntity qcNoticeEntity = new QcNoticeEntity();
         BeanMapperUtils.copy(addDTO, qcNoticeEntity);
-
-        List<QcNoticeDetailEntity> qcNoticeDetailList = BeanMapperUtils.copyList(QcNoticeDetailEntity.class, addDTO.getDetailList());
-
-
-        // 数据处理
-        handleData(qcNoticeEntity);
-
         log.info("开始新增质检通知单");
         // 生成单号
         String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_ZJTZ);
         qcNoticeEntity.setCode(code);
         boolean save = super.save(qcNoticeEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("质检通知单保存失败");
         }
-
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "质检通知单" , qcNoticeEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, qcNoticeEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "质检通知单", qcNoticeEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeEntity.getId(), "新增操作");
 
+        qcNoticeDetailService.add(addDTO, qcNoticeEntity.getId());
         return new BaseResultDTO.AddDTO(qcNoticeEntity.getId(), code);
     }
 
     /**
-    * 修改
-    */
+     * 修改
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(QcNoticeDTO.UpdateDTO addOrUpdateDTO) {
-        QcNoticeEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "质检通知单"));
+    public Boolean update(QcNoticeDTO.UpdateDTO updateDTO) {
+        QcNoticeEntity old = super.getById(updateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "质检通知单"));
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
-        QcNoticeEntity qcNoticeEntity =  BeanMapperUtils.map(QcNoticeEntity.class, addOrUpdateDTO);
+        QcNoticeEntity qcNoticeEntity = BeanMapperUtils.map(QcNoticeEntity.class, updateDTO);
 
-        // 数据处理
-        handleData(qcNoticeEntity);
         log.info("编辑 开始修改质检通知单数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(qcNoticeEntity);
-        if(!save) {
+        if (!save) {
             throw new ServiceException("质检通知单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
-            log.info("编辑 开始记录质检通知单日志数据，单号：【{}】", qcNoticeEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), qcNoticeEntity.getCode(), "质检通知单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, qcNoticeEntity, null, qcNoticeEntity.getId(), msg);
+        log.info("编辑 开始记录质检通知单日志数据，单号：【{}】", qcNoticeEntity.getCode());
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), qcNoticeEntity.getCode(), "质检通知单");
+        operateLogService.addModuleOperateLogByObj(old, qcNoticeEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeEntity.getId(), msg);
+
+        qcNoticeDetailService.update(updateDTO, qcNoticeEntity.getId());
+
         return Boolean.TRUE;
     }
-
 
     @Override
     public PagingVO<QcNoticeDTO.ListDTO> paging(PagingDTO<QcNoticeDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<QcNoticeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
-           return new PagingVO(pageData);
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
@@ -149,17 +152,38 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     public List<QcNoticeDTO.TabListDTO> tabList(PermissionsDTO param) {
         QcNoticeDTO.PagingParamDTO searchParam = new QcNoticeDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
-        List<QcNoticeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = ApproveStatusEnum.getStatusList();
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(QcNoticeDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.parallelStream().forEach(status -> {
-            if(!existStatusList.contains(status)) {
-            list.add(new QcNoticeDTO.TabListDTO(status, 0));
+        List<QcNoticeDTO.TabListDTO> list = new ArrayList<>();
+        List<QcNoticeDTO.TabListDTO> tabList = baseMapper.tabList(searchParam);
+        Map<String, QcNoticeDTO.TabListDTO> tabMap = tabList.stream().collect(Collectors.toMap(QcNoticeDTO.TabListDTO::getTabFlag, t ->t));
+        if(tabMap.containsKey(ApproveStatusEnum.WAIT_SUBMIT.getCode())){
+            QcNoticeDTO.TabListDTO tabListDTO = tabMap.get(ApproveStatusEnum.WAIT_SUBMIT.getCode());
+            tabListDTO.setTabFlagName(ApproveStatusEnum.WAIT_SUBMIT.getName());
+            list.add(tabListDTO);
+        }else{
+            list.add(new QcNoticeDTO.TabListDTO(ApproveStatusEnum.WAIT_SUBMIT.getCode(),ApproveStatusEnum.WAIT_SUBMIT.getName(), 0));
         }
-        });
-        list.add(new QcNoticeDTO.TabListDTO("all", list.stream().mapToInt(QcNoticeDTO.TabListDTO::getCount).sum()));
+
+        if(tabMap.containsKey(ApproveStatusEnum.APPROVE_ING.getCode())){
+            QcNoticeDTO.TabListDTO tabListDTO = tabMap.get(ApproveStatusEnum.APPROVE_ING.getCode());
+            tabListDTO.setTabFlagName(ApproveStatusEnum.APPROVE_ING.getName());
+            list.add(tabListDTO);
+        }else{
+            list.add(new QcNoticeDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(),ApproveStatusEnum.APPROVE_ING.getName(), 0));
+        }
+
+        List<QcNoticeDTO.TabListDTO> tabQcStatusList = baseMapper.tabQcStatusList(searchParam);
+        Map<String, QcNoticeDTO.TabListDTO> tabQcStatusMap = tabQcStatusList.stream().collect(Collectors.toMap(QcNoticeDTO.TabListDTO::getTabFlag, t -> t));
+        List<String> codeList = QcNoticeStatusEnum.getCodeList();
+        for (String code : codeList) {
+            if(tabQcStatusMap.containsKey(code)){
+                QcNoticeDTO.TabListDTO tabListDTO = tabQcStatusMap.get(code);
+                tabListDTO.setTabFlagName(QcNoticeStatusEnum.getByCode(code).getName());
+                list.add(tabListDTO);
+            }else {
+                list.add(new QcNoticeDTO.TabListDTO(code,QcNoticeStatusEnum.getByCode(code).getName(), 0));
+            }
+        }
+        list.add(new QcNoticeDTO.TabListDTO("all","全部", list.stream().mapToInt(QcNoticeDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
     }
@@ -167,8 +191,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @Override
     public void exportList(QcNoticeDTO.ExportDTO param, HttpServletResponse response) {
         List<QcNoticeDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
+        if (CollUtil.isEmpty(list)) {
+            return;
         }
         // 数据处理
         fillList(list);
@@ -235,12 +259,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     @Override
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
+        if (Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException(ApiError.REJECT_COMMENT_NOT_EMPTY);
         }
         QcNoticeEntity entity = getById(dto.getId());
         // 审核中的数据允许审核
-        if(!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
+        if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
         // 调用流程审核
@@ -254,10 +278,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     }
 
     /**
-    * 审核流程处理
-    * @param entity
-    * @param dto
-    */
+     * 审核流程处理
+     *
+     * @param entity
+     * @param dto
+     */
     private void approveProcess(QcNoticeEntity entity, ApproveOneDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
@@ -329,8 +354,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     }
 
     /**
-    * 撤销
-    */
+     * 撤销
+     */
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -341,7 +366,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             throw new ServiceException(ApiError.ERROR_98007);
         }
         // TODO 撤销流程
-        log.info("撤销 开始撤销流程，id：【{}】",id);
+        log.info("撤销 开始撤销流程，id：【{}】", id);
 
         log.info("撤销 开始修改质检通知单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -375,20 +400,23 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Override
     public QcNoticeDTO.ViewDTO view(String id) {
-        QcNoticeEntity qcNoticeEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到质检通知单数据"));
+        QcNoticeEntity qcNoticeEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         QcNoticeDTO.ViewDTO data = BeanMapperUtils.map(QcNoticeDTO.ViewDTO.class, qcNoticeEntity);
+
+        List<QcNoticeDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(QcNoticeDetailDTO.ViewDTO.class, qcNoticeDetailService.listByMainIds(Arrays.asList(id)));
+        data.setDetailList(detailList);
         // 数据填充处理
         fillOne(data);
-        // TODO 查询明细数据（如果有的话）
         return data;
     }
+
     /**
-    * 启动流程
-    *
-    * @param entity
-    * @return void
-    * @Date 2023/7/4 10:07
-    **/
+     * 启动流程
+     *
+     * @param entity
+     * @return void
+     * @Date 2023/7/4 10:07
+     **/
 
     public void startProcess(QcNoticeEntity entity) {
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
@@ -404,81 +432,144 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             throw new ServiceException(result.getMsg());
         }
     }
+
     private void fillOne(QcNoticeDTO.ViewDTO data) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
+        List<String> warehouseIdList = new ArrayList<>();
+        warehouseIdList.add(data.getQcWarehouseId());
+        warehouseIdList.add(data.getPutawayWarehouseId());
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
+        Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
+        //质检仓库
+        data.setQcWarehouseName(warehouseMap.get(data.getQcWarehouseId()));
+
+        //上架仓库
+        data.setPutawayWarehouseName(warehouseMap.get(data.getPutawayWarehouseId()));
+
+        //质检类型
+        data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
+
+        //单据状态
+        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+
+        if(CollUtil.isNotEmpty(data.getDetailList())){
+            List<QcNoticeDetailDTO.ViewDTO> detailList = data.getDetailList();
+            List<String> ids = detailList.stream().map(QcNoticeDetailDTO.ViewDTO::getId).collect(Collectors.toList());
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = attachmentService.getByBusinessIds(ids);
+            Map<String, List<WmsAttachmentDTO.UpdateDTO>> listMap = attachmentList.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
+
+            for (QcNoticeDetailDTO.ViewDTO dto : detailList) {
+                List<WmsAttachmentDTO.UpdateDTO> updateDTOS = listMap.get(dto.getId());
+                List<String> imageUrls = updateDTOS.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                List<String> imageNames = updateDTOS.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+                dto.setAttachNameList(imageNames);
+                dto.setAttachUrlList(imageUrls);
+            }
+        }
     }
 
     /**
-    * 审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
+     * 审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
     public void updateForApprove(String id, String approveStatus) {
         //当前登录人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         this.lambdaUpdate().eq(QcNoticeEntity::getId, id)
-            .set(QcNoticeEntity::getApproveUserId, userInfo.getUid())
-            .set(QcNoticeEntity::getApproveUserName, userInfo.getUserName())
-            .set(QcNoticeEntity::getApproveStatus, approveStatus)
-            .set(QcNoticeEntity::getApproveTime, LocalDateTime.now())
-            .update(new QcNoticeEntity());
-     }
+                .set(QcNoticeEntity::getApproveUserId, userInfo.getUid())
+                .set(QcNoticeEntity::getApproveUserName, userInfo.getUserName())
+                .set(QcNoticeEntity::getApproveStatus, approveStatus)
+                .set(QcNoticeEntity::getApproveTime, LocalDateTime.now())
+                .update(new QcNoticeEntity());
+    }
 
     /**
-    * 反审核更新审核信息
-    * @param id
-    * @param approveStatus
-    */
+     * 反审核更新审核信息
+     *
+     * @param id
+     * @param approveStatus
+     */
     @Transactional(rollbackFor = Exception.class)
     public void updateForDisApprove(String id, String approveStatus) {
         this.lambdaUpdate().eq(QcNoticeEntity::getId, id)
-            .set(QcNoticeEntity::getApproveUserId, "")
-            .set(QcNoticeEntity::getApproveUserName, "")
-            .set(QcNoticeEntity::getApproveStatus, approveStatus)
-            .set(QcNoticeEntity::getApproveTime, null)
-            .update(new QcNoticeEntity());
-        }
+                .set(QcNoticeEntity::getApproveUserId, "")
+                .set(QcNoticeEntity::getApproveUserName, "")
+                .set(QcNoticeEntity::getApproveStatus, approveStatus)
+                .set(QcNoticeEntity::getApproveTime, null)
+                .update(new QcNoticeEntity());
+    }
 
     /**
-    * 更新审核状态
-    */
+     * 更新审核状态
+     */
     @Transactional(rollbackFor = Exception.class)
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(QcNoticeEntity::getId, id)
-        .set(QcNoticeEntity::getApproveStatus, approveStatus)
-        .update(new QcNoticeEntity());
+                .set(QcNoticeEntity::getApproveStatus, approveStatus)
+                .update(new QcNoticeEntity());
     }
 
     /**
-    * 分页查询、导出 数据处理
-    */
+     * 分页查询、导出 数据处理
+     */
     private void fillList(List<QcNoticeDTO.ListDTO> list) {
-        if(CollUtil.isEmpty(list)) {
-           return;
+        if (CollUtil.isEmpty(list)) {
+            return;
         }
+
+        List<String> qcWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getQcWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> putawayWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getPutawayWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        qcWarehouseId.addAll(putawayWarehouseId);
+
+        List<String> warehouseIdList = qcWarehouseId.stream().distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
+        Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
 
         // 属性赋值
-        for(QcNoticeDTO.ListDTO data : list) {
+        for (QcNoticeDTO.ListDTO data : list) {
+            //质检仓库
+            data.setQcWarehouseName(warehouseMap.get(data.getQcWarehouseId()));
+
+            //上架仓库
+            data.setPutawayWarehouseName(warehouseMap.get(data.getPutawayWarehouseId()));
+
+            //质检类型
+            data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
+
+            //单据质检状态
+            data.setQcStatusName(QcNoticeStatusEnum.getByCode(data.getQcStatus()).getName());
+
+            //单据状态
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+
+            //sku 质检状态
+            data.setQcDetailStatusName(QcNoticeStatusEnum.getByCode(data.getQcDetailStatus()).getName());
+
+            //上架状态 待上架:wait  部分上架：part  已上架：finish
+            data.setPutawayStatusName(PutawayStatusEnum.getByCode(data.getPutawayStatus()).getName());
+
         }
     }
+
     /**
-    * 分页查询、导出 数据处理
-    */
+     * 分页查询、导出 数据处理
+     */
     private void validateSubmit(QcNoticeEntity entity) {
         // 待提交或审核不通过并且未作废允许提交
-        if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
+        if (!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
         return;
     }
 
     /**
-    * 新增修改处理数据
-    */
+     * 新增修改处理数据
+     */
     private void handleData(QcNoticeEntity qcNoticeEntity) {
     }
 }

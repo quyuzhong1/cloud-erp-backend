@@ -66,6 +66,11 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     @TableField("qc_type")
     private String qcType;
     /**
+     * 质检状态 QcBillStatusEnum
+     */
+    @TableField("qc_status")
+    private String qcStatus;
+    /**
     * 备注
     */
     @TableField("remark")
@@ -87,6 +92,8 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     public static final String PUTAWAY_WAREHOUSE_ID = "putaway_warehouse_id";
 
     public static final String QC_TYPE = "qc_type";
+
+    public static final String QC_STATUS = "qc_status";
 
     public static final String REMARK = "remark";
 

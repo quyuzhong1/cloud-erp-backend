@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -128,7 +129,8 @@ public class QcNoticeDetailDTO implements Serializable {
         */
         private LocalDateTime putawayDate;
 
-
+        private List<String> attachNameList;
+        private List<String> attachUrlList;
     }
 
     /**

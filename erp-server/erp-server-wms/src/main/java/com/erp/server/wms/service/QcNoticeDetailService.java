@@ -1,8 +1,11 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.QcNoticeDetailDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -21,7 +24,7 @@ public interface QcNoticeDetailService extends SuperService<QcNoticeDetailEntity
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(QcNoticeDetailDTO.AddDTO dto);
+    void add(QcNoticeDTO.AddDTO dto,String mainId);
 
     /**
     * 修改
@@ -30,7 +33,8 @@ public interface QcNoticeDetailService extends SuperService<QcNoticeDetailEntity
     * @param dto
     * @return
     */
-    Boolean update(QcNoticeDetailDTO.UpdateDTO dto);
+    void update(QcNoticeDTO.UpdateDTO dto,String mainId);
 
 
+    List<QcNoticeDetailEntity> listByMainIds(List<String> mainIds);
 }

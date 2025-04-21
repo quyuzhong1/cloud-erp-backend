@@ -3,6 +3,8 @@ package com.erp.model.wms.dto;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -41,6 +43,10 @@ public class QcNoticeDTO implements Serializable {
          * 类型
          */
          private String tabFlag;
+         /**
+         * 类型
+         */
+         private String tabFlagName;
 
          /**
          * 数量
@@ -103,26 +109,45 @@ public class QcNoticeDTO implements Serializable {
         */
         private String code;
 
+
+        /**
+         * 质检单号
+         */
+        private String qcInfoCode;
+
         /**
         * 质检仓库
         */
         private String qcWarehouseId;
+        private String qcWarehouseName;
 
         /**
         * 上架仓库
         */
         private String putawayWarehouseId;
+        private String putawayWarehouseName;
 
         /**
         * 质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  
         */
         private String qcType;
+        private String qcTypeName;
+
+        /**
+         * 质检状态 QcBillStatusEnum
+         */
+        private String qcStatus;
+        private String qcStatusName;
+
+        /**
+         * 质检时效
+         */
+        private Integer qcTimeliness;
 
         /**
         * 备注
         */
         private String remark;
-
 
         /**
         * 审核状态名称
@@ -138,6 +163,97 @@ public class QcNoticeDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+
+        /**
+         * sku_id
+         */
+        private String skuId;
+
+        /**
+         * sku_no
+         */
+        private String skuNo;
+
+        /**
+         * sku_name
+         */
+        private String skuName;
+
+        /**
+         * 质检通知数量
+         */
+        private Integer qcNoticeQty;
+
+        /**
+         * 质检数量
+         */
+        private Integer qcQty;
+
+        /**
+         * 送检差异数量
+         */
+        private Integer qcDiffQty;
+
+        /**
+         * 良品数量
+         */
+        private Integer qcGoodQty;
+
+        /**
+         * 不良品数量
+         */
+        private Integer qcBadQty;
+
+        /**
+         * 上架数量
+         */
+        private Integer putawayQty;
+
+        /**
+         * 不良备注
+         */
+        private String badDesc;
+
+        /**
+         * 质检员id
+         */
+        private String qcUserId;
+
+        /**
+         * 质检员
+         */
+        private String qcUserName;
+
+        /**
+         * 问题属性 type=qcProblemType
+         */
+        private String qcProblemDict;
+
+        /**
+         * 质检状态 QcBillStatusEnum
+         */
+        private String qcDetailStatus;
+        private String qcDetailStatusName;
+
+        /**
+         * 质检时间
+         */
+        private LocalDateTime qcDate;
+
+        /**
+         * 上架状态 待上架:wait  部分上架：part  已上架：finish
+         */
+        private String putawayStatus;
+        private String putawayStatusName;
+
+        /**
+         * 上架时间
+         */
+        private LocalDateTime putawayDate;
+
+
+
     }
 
     /**
@@ -169,20 +285,7 @@ public class QcNoticeDTO implements Serializable {
         */
         private String approveStatus;
 
-        /**
-        * 审核时间
-        */
-        private LocalDateTime approveTime;
-
-        /**
-        * 最新审核人ID
-        */
-        private String approveUserId;
-
-        /**
-        * 最新审核人
-        */
-        private String approveUserName;
+        private String approveStatusName;
 
         /**
         * 质检通知单号
@@ -193,21 +296,26 @@ public class QcNoticeDTO implements Serializable {
         * 质检仓库
         */
         private String qcWarehouseId;
+        private String qcWarehouseName;
 
         /**
         * 上架仓库
         */
         private String putawayWarehouseId;
+        private String putawayWarehouseName;
 
         /**
         * 质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  
         */
         private String qcType;
+        private String qcTypeName;
 
         /**
         * 备注
         */
         private String remark;
+
+        private List<QcNoticeDetailDTO.ViewDTO> detailList;
 
 
     }
@@ -249,21 +357,18 @@ public class QcNoticeDTO implements Serializable {
         * 质检仓库
         */
         @NotBlank(message = "质检仓库不能为空")
-        @Size(max = 255,message = "质检仓库最大长度不能超过255位")
         private String qcWarehouseId;
 
         /**
         * 上架仓库
         */
         @NotBlank(message = "上架仓库不能为空")
-        @Size(max = 255,message = "上架仓库最大长度不能超过255位")
         private String putawayWarehouseId;
 
         /**
         * 质检类型 stockIn 入库质检   outsideQc 外检质检  insideQc  在库质检   newProductStockIn 新品入库质检  b2bOutsideQc  B2B外检  
         */
         @NotBlank(message = "质检类型不能为空")
-        @Size(max = 32,message = "质检类型最大长度不能超过32位")
         private String qcType;
 
         /**

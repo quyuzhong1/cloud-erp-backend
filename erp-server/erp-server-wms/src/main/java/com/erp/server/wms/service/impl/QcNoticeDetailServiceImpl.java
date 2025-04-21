@@ -1,25 +1,35 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.wms.entity.QcNoticeDetailEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.QcNoticeDetailMapper;
 import com.erp.server.wms.service.QcNoticeDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.QcNoticeDetailDTO;
+
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 质检通知单明细 服务实现类
@@ -31,32 +41,21 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMapper, QcNoticeDetailEntity> implements QcNoticeDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(QcNoticeDetailDTO.AddDTO addDTO) {
-        QcNoticeDetailEntity qcNoticeDetailEntity = new QcNoticeDetailEntity();
-        BeanMapperUtils.copy(addDTO, qcNoticeDetailEntity);
+    public void add(QcNoticeDTO.AddDTO addDTO,String mainId) {
+        //新增明细
+        List<QcNoticeDetailEntity> qcNoticeDetailList = BeanMapperUtils.copyList(QcNoticeDetailEntity.class, addDTO.getDetailList());
 
-        // 数据处理
-        handleData(qcNoticeDetailEntity);
+        handleData(qcNoticeDetailList, mainId);
 
-        log.info("开始新增质检通知单明细");
-        boolean save = super.save(qcNoticeDetailEntity);
-        if(!save) {
-            throw new ServiceException("质检通知单明细保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "质检通知单明细" , qcNoticeDetailEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, qcNoticeDetailEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(qcNoticeDetailEntity.getId(), qcNoticeDetailEntity.getId());
+        saveBatch(qcNoticeDetailList);
     }
 
     /**
@@ -64,33 +63,75 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(QcNoticeDetailDTO.UpdateDTO addOrUpdateDTO) {
-        QcNoticeDetailEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "质检通知单明细"));
-        QcNoticeDetailEntity qcNoticeDetailEntity =  BeanMapperUtils.map(QcNoticeDetailEntity.class, addOrUpdateDTO);
+    public void update(QcNoticeDTO.UpdateDTO addOrUpdateDTO,String mainId) {
+        //原明细数据
+        List<QcNoticeDetailEntity>  oldList = listByMainIds(Collections.singletonList(mainId));
 
-        // 数据处理
-        handleData(qcNoticeDetailEntity);
-        log.info("编辑 开始修改质检通知单明细数据，id：【{}】", old.getId());
-        boolean save = super.updateById(qcNoticeDetailEntity);
-        if(!save) {
-            throw new ServiceException("质检通知单明细保存失败");
+        List<QcNoticeDetailEntity> qcNoticeDetailList = BeanMapperUtils.copyList(QcNoticeDetailEntity.class, addOrUpdateDTO.getDetailList());
+        List<String> deleteIds = getDeleteIds(qcNoticeDetailList, oldList);
+        if (CollectionUtils.isNotEmpty(deleteIds)) {
+            List<QcNoticeDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
+            //操作日志
+            List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.QC_NOTICE.getCode(),pairList,"编辑操作");
+            this.removeByIds(deleteIds);
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
 
-        // 记录主单操作日志
-            log.info("编辑 开始记录质检通知单明细日志数据，id：【{}】", qcNoticeDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), qcNoticeDetailEntity.getId(), "质检通知单明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, qcNoticeDetailEntity, null, qcNoticeDetailEntity.getId(), msg);
-        return Boolean.TRUE;
+        handleData(qcNoticeDetailList, mainId);
+        //新增或更新明细
+        saveOrUpdateBatch(qcNoticeDetailList);
+    }
+
+    @Override
+    public List<QcNoticeDetailEntity> listByMainIds(List<String> mainIds) {
+        if(CollUtil.isEmpty(mainIds)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(QcNoticeDetailEntity::getMainId,mainIds).list();
+    }
+
+    private List<String> getDeleteIds(List<QcNoticeDetailEntity> newList, List<QcNoticeDetailEntity> oldList) {
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).map(QcNoticeDetailEntity::getId).collect(Collectors.toList());
+        List<String> oldIds = oldList.stream().map(QcNoticeDetailEntity::getId).collect(Collectors.toList());
+        return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
     }
 
 
     /**
     * 新增修改处理数据
     */
-    private void handleData(QcNoticeDetailEntity qcNoticeDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+    private void handleData(List<QcNoticeDetailEntity> qcNoticeDetailList,String mainId) {
+        //原明细数据
+        List<QcNoticeDetailEntity>  oldList = listByMainIds(Collections.singletonList(mainId));
+
+        List<String> skuIds = qcNoticeDetailList.stream().map(QcNoticeDetailEntity::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
+        Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t, (o1, o2) -> o1));
+
+        qcNoticeDetailList.stream().forEach(e -> {
+            e.setMainId(mainId);
+
+            ProductDetailEntity productDetailEntity = skuMap.get(e.getSkuId());
+            if (Objects.nonNull(productDetailEntity)) {
+                e.setSkuNo(productDetailEntity.getSkuNo());
+                e.setSkuName(productDetailEntity.getName());
+            }
+
+            //校验是否是修改，如果是就新增修改日志
+            if (CharSequenceUtil.isNotBlank(e.getId())) {
+                QcNoticeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(e.getId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(old)) {
+                    throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
+                }
+                operateLogService.addModuleOperateLogByObj(old, e, ModuleTypeEnum.QC_NOTICE.getCode(), mainId,"", String.format("【%s】", old.getSkuNo()));
+            }
+        });
+
+        //需要新增的数据
+        List<QcNoticeDetailEntity> addList = qcNoticeDetailList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(addList)) {
+            List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+            operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.QC_NOTICE.getCode(), addPairList, "编辑操作");
+        }
     }
 }
