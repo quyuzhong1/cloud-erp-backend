@@ -4436,7 +4436,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cEntity.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             }
         }
-
     }
 
     /**
@@ -9963,6 +9962,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public void updatePlatformStatus(SoB2cEntity entity, String code) {
 
+    }
+
+    @Override
+    public void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        SoB2cEntity entity = this.getById(id);
+        if (Objects.isNull(entity)){
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(dto.getLogisticsDTO().getLogisticsChannelId()) && !entity.getIsMatchLogisticsRule()){
+            this.lambdaUpdate().set(SoB2cEntity::getIsMatchLogisticsRule,Boolean.TRUE).eq(SoB2cEntity::getId,id).update();
+        }
     }
 
 
