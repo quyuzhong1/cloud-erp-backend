@@ -39,7 +39,7 @@ public class TfFiscalService {
     public static void main(String[] args) {
         String path = "/cadastrar_empresa";
         CompanyDTO updateCompanyDTO = new CompanyDTO();
-        updateCompanyDTO.setTokenPlataforma("19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b");
+        updateCompanyDTO.setTokenPlataforma("16-04-2025_09-19-No28tBi0Yw28FixdY1sIjkmt4-dksxdY1sIjkB12n413207N4-sb7XiNa");
         updateCompanyDTO.setCnpj("96611441148088");
         updateCompanyDTO.setIe("000000000");
         updateCompanyDTO.setRazaoSocial("WJKJ");
@@ -64,10 +64,10 @@ public class TfFiscalService {
         updateCompanyDTO.setUsername("WJKJTEST22131");
         updateCompanyDTO.setRua("test");
         updateCompanyDTO.setNaturezaId("10");
-//        updateCompanyDTO.setSurname("1412321");
-//        updateCompanyDTO.setLastName("1231");
-//        updateCompanyDTO.setLandmark("1231");
-//        updateCompanyDTO.setAmbiente("1231");
+        updateCompanyDTO.setSurname("1412321");
+        updateCompanyDTO.setLastName("1231");
+        updateCompanyDTO.setLandmark("1231");
+        updateCompanyDTO.setAmbiente("1231");
         Map<String, String> headerMap = new HashMap<>();
 
         //拉取数据
@@ -166,8 +166,6 @@ public class TfFiscalService {
      */
     public Object createInvoice(NfeInvoiceDTO.NfeCreateDTO nfeCreateDTO){
         String path = "/emitir_transparente";
-        String accessToken = getAccessToken();
-        nfeCreateDTO.setTokenEmpresa(accessToken);
 
         HttpRequest createPost = HttpUtil.createPost(URL+path);
         String body = JSONUtil.toJsonStr(nfeCreateDTO);
@@ -196,36 +194,24 @@ public class TfFiscalService {
      */
     public Object cancelInvoice(NfeInvoiceDTO.NfeCancelDTO nfeCreateDTO){
         String path = "/cancelar_nota";
-        String accessToken = getAccessToken();
-        nfeCreateDTO.setTokenEmpresa(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCreateDTO), null, new HashMap<>(), RequestMethod.POST);
-        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+
+        HttpRequest createPost = HttpUtil.createPost(URL+path);
+        String body = JSONUtil.toJsonStr(nfeCreateDTO);
+        createPost.body(body);
+        // 创建明确包含 Content-Type 的请求头
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type","application/json");
+        headers.put("Content-Length", String.valueOf(body.length()));
+        headers.put("Host", "tffiscal.com.br");
+        createPost.addHeaders(headers);
+        HttpResponse response = createPost.execute();
+        log.warn("请求参数-body:{},响应结果-response:{}", body, response.body());
+        if (200 != response.getStatus() ) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,response.body());
         }
-        return apiResult.getData();
+        return response.body();
     }
 
-    /**
-     * 查询发票
-     * @author will
-     * @date 2025/4/14 16:15
-     * @param nfeListParamDTO
-     * @return Object
-     */
-    public Object getNfeInvoiceResult(NfeInvoiceDTO.NfeListParamDTO nfeListParamDTO){
-        String path = "/consultar_nota";
-        String accessToken = getAccessToken();
-        nfeListParamDTO.setTokenEmpresa(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeListParamDTO), null, new HashMap<>(), RequestMethod.POST);
-        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
-        }
-        return apiResult.getData();
-    }
 
     /**
      * 更新cce信息
@@ -236,15 +222,21 @@ public class TfFiscalService {
      */
     public Object updateCceInvoice(NfeInvoiceDTO.NfeCceDTO nfeCceDTO){
         String path = "/corrigirCce_api";
-        String accessToken = getAccessToken();
-        nfeCceDTO.setTokenEmpresa(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCceDTO), null, new HashMap<>(), RequestMethod.POST);
-        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        HttpRequest createPost = HttpUtil.createPost(URL+path);
+        String body = JSONUtil.toJsonStr(nfeCceDTO);
+        createPost.body(body);
+        // 创建明确包含 Content-Type 的请求头
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type","application/json");
+        headers.put("Content-Length", String.valueOf(body.length()));
+        headers.put("Host", "tffiscal.com.br");
+        createPost.addHeaders(headers);
+        HttpResponse response = createPost.execute();
+        log.warn("请求参数-body:{},响应结果-response:{}", body, response.body());
+        if (200 != response.getStatus() ) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,response.body());
         }
-        return apiResult.getData();
+        return response.body();
     }
 
     private String getAccessToken() {
@@ -274,5 +266,9 @@ public class TfFiscalService {
         companyDTO.setFirstName(jsonObject.getStr("first_name"));
         companyDTO.setEmail(jsonObject.getStr("email"));
         companyDTO.setNaturezaId(jsonObject.getStr("natureza_id"));
+        companyDTO.setSurname(companyDTO.getName());
+        companyDTO.setLastName(companyDTO.getName());
+        companyDTO.setLandmark(jsonObject.getStr("landmark"));
+        companyDTO.setAmbiente(jsonObject.getStr("ambiente"));
     }
 }
