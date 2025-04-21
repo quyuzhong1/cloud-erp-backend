@@ -20,9 +20,13 @@ import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.server.oms.convert.InvoiceSettingConverter;
 import com.erp.server.oms.mapper.CfgInvoiceSettingMapper;
 import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.sdk.third.tf.TfFiscalService;
+import com.sdk.third.tf.entity.AddCompanyDTO;
+import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,6 +59,12 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
 
     @Resource
     private OmsAttachmentService omsAttachmentService;
+
+    @Resource
+    private TfFiscalService tfFiscalService;
+
+    @Resource
+    InvoiceSettingConverter invoiceSettingConverter;
 
     @Override
     public PagingVO<CfgInvoiceSettingDTO.PagingViewDTO> paging(PagingDTO<CfgInvoiceSettingDTO.PagingParamDTO> dto) {
@@ -113,6 +123,11 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
         omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
+        //CfgInvoiceSettingEntity -> AddCompanyDTO
+        AddCompanyDTO addCompanyDTO = invoiceSettingConverter.invoiceSettinToAddCompanyDTOTo(entity);
+        //调用TF
+        String token = tfFiscalService.createCompany(addCompanyDTO);
+        this.save(entity.setToken(token));
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置", entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), entity.getId(), "新增操作");
@@ -136,7 +151,11 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         checkCode(dto.getLeiCode(), dto.getPostCode());
         //转换格式
         CfgInvoiceSettingEntity cfgVatInvoiceEntity = BeanMapperUtils.map(CfgInvoiceSettingEntity.class, dto);
+        //禁止更新以下字段
         cfgVatInvoiceEntity.setStartCode(old.getStartCode());
+        cfgVatInvoiceEntity.setLeiCode(old.getLeiCode());
+        cfgVatInvoiceEntity.setStateTaxNo(old.getStateTaxNo());
+        cfgVatInvoiceEntity.setNo(old.getNo());
         log.info("编辑 开始修改发票设置数据，id：【{}】", old.getId());
         //修改
         boolean update = super.updateById(cfgVatInvoiceEntity);
@@ -148,6 +167,9 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
         String type = tableName.value();
         omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgVatInvoiceEntity.getId());
+        //调用TF
+        UpdateCompanyDTO updateCompanyDTO = invoiceSettingConverter.invoiceSettinToUpdateCompanyDTOTo(cfgVatInvoiceEntity);
+        tfFiscalService.updateCompany(updateCompanyDTO);
         //保存日志
         log.info("编辑 开始记录发票设置日志数据，id：【{}】", cfgVatInvoiceEntity.getId());
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgVatInvoiceEntity.getId(), "发票设置");
@@ -161,12 +183,15 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         if (CollUtil.isEmpty(ids)) {
             return Boolean.TRUE;
         }
+        List<CfgInvoiceSettingEntity> entities = this.list(new LambdaQueryWrapper<CfgInvoiceSettingEntity>().eq(CfgInvoiceSettingEntity::getId, ids.get(0)));
         boolean remove = this.lambdaUpdate().in(CfgInvoiceSettingEntity::getId, ids).remove();
         if (remove) {
             //删除附件
             omsAttachmentService.deleteByBusinessIds(ids);
             //删除明细
             cfgInvoiceSettingDetailService.delateByMainIds(ids, Boolean.TRUE);
+            //调用TF
+            tfFiscalService.deleteCompany(entities.get(0).getLeiCode());
         }
         return remove;
     }
