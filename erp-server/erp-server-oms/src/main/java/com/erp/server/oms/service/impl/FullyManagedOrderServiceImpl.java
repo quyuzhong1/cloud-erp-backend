@@ -54,6 +54,7 @@ import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
@@ -134,16 +135,19 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
     @Resource
     private SoB2cRefCategoryService soB2cRefCategoryService;
-    
+    @Resource
+    private AuthDataFeign authDataFeign;
+
     @Override
     public List<SoB2cDTO.TabListDTO> fullyManagedTabList(PermissionsDTO param) {
         FullyManagedTabEnum[] values = FullyManagedTabEnum.values();
         List<Future<SoB2cDTO.TabListDTO>> futureList = new ArrayList<>();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql();
         for (FullyManagedTabEnum item : values) {
             Future<SoB2cDTO.TabListDTO> submit = soB2cTabExecutorPool.submit(() -> {
                 SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
-                searchParamDTO.setPermissionSql(param.getPermissionSql());
+                searchParamDTO.setPermissionSql(permissionSql);
                 SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
                 String tabSql = fullyManagedQueryHandler.getTabSql(item.getCode());
                 HashMap<String,String> map = new HashMap<>();
@@ -194,7 +198,13 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
         //更新全托管订单的预警时间
         this.baseMapper.updateTimeOutConfig(platformList,timeOutSettingDTO.getWarningTime().multiply(new BigDecimal(60)).intValue());
     }
-
+    private String getPermissionSql() {
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb2c.shop_id");
+        shopPermissionSql = CharSequenceUtil.isNotBlank(shopPermissionSql) ? shopPermissionSql : " and 1=1 ";
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sb2cd.warehouse_id");
+        warehousePermissionSql = CharSequenceUtil.isNotBlank(warehousePermissionSql) ? " and exists (select 1 from so_b2c_detail sb2cd where sb2c.id = sb2cd.main_id and sb2cd.is_deleted=FALSE " + warehousePermissionSql + ")" : " and 1=1 ";
+        return CharSequenceUtil.format(" {}  {}", shopPermissionSql, warehousePermissionSql);
+    }
     @Override
     public void downloadTemplate(HttpServletResponse response) {
         String path = "classpath:excel/fullyManagedOrderTemplate.xlsx";
@@ -347,6 +357,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
     public PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
         Page<SoB2cDTO.ExcelExportDTO> page;
         List<SoB2cDTO.ExcelExportDTO> records;
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         List<AdvanceQueryDTO> advanceQueryDTOList = dto.getParams().getAdvanceQueryDTOList();
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         //是否缺货 过滤

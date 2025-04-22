@@ -123,7 +123,7 @@ public class ExportOmsFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "sb2cd.warehouse_id",
             shopTableField = "sb2c.shop_id",
-            menuCode = "oms:soB2c:paging"
+            menuCode = "oms:fully:paging"
     )
     @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
     public PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {

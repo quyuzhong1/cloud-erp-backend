@@ -78,9 +78,6 @@ public class FullyManagedOrderController extends BaseController {
     private SoB2cLogisticsService soB2cLogisticsService;
 
     @Resource
-    private SoB2cStatusService soB2cStatusService;
-
-    @Resource
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
