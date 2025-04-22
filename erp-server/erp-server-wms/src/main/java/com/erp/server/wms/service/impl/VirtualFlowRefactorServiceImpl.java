@@ -180,13 +180,18 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
     private void handleAllocation (VirtualWarehouseAllocationEntity allocationEntity,List<String> ignoreSkuIds) {
         //查找所有明细
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.listByMainIdList(Collections.singletonList(allocationEntity.getId()));
+
+        //查询历史bom信息
+        List<String> bomSkuIdList = detailList.stream().map(VirtualWarehouseAllocationDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(bomSkuIdList);
+
         if (CollectionUtils.isNotEmpty(detailList)) {
             String type = allocationEntity.getType();
             switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
                 case ALLOCATION:
                     VirtualInventoryStockDTO.StockParamDTO allocationDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.IN_USABLE, detailList, allocationEntity);
                     allocationDto.setIsSplitBom(Boolean.FALSE);
-                    getSelfBean().approve(allocationDto,ignoreSkuIds);
+                    getSelfBean().approve(allocationDto,ignoreSkuIds,bomChildrenSkuList);
                     break;
                 case TRANSFER:
                     VirtualInventoryStockDTO.TransferParamDTO dto = getTransferDTO(allocationEntity, detailList);
@@ -195,7 +200,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 case CANCEL:
                     VirtualInventoryStockDTO.StockParamDTO cancelDto = getCancelDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
                     cancelDto.setIsSplitBom(Boolean.FALSE);
-                    getSelfBean().approve(cancelDto,ignoreSkuIds);
+                    getSelfBean().approve(cancelDto,ignoreSkuIds,bomChildrenSkuList);
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);
@@ -323,6 +328,10 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             return Boolean.TRUE;
         }).collect(Collectors.toList());
 
+        //查询历史bom信息
+        List<String> bomSkuIdList = singleList.stream().map(VirtualFlowRefactorDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(bomSkuIdList);
+
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
         List<CompletableFuture<Void>> futures = map.values().stream().map(value -> CompletableFuture.runAsync(() -> {
@@ -351,7 +360,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
             }
             //更新库存
-            getSelfBean().approve(dto,ignoreSkuIds);
+            getSelfBean().approve(dto,ignoreSkuIds,bomChildrenSkuList);
         }, b2bVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -368,6 +377,10 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if (CollUtil.isEmpty(list)) {
             return;
         }
+        //查询历史bom信息
+        List<String> bomSkuIdList = list.stream().map(VirtualFlowRefactorDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(bomSkuIdList);
+
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId()).concat(obj.getBusinessType())));
         List<CompletableFuture<Void>> futures = map.values().stream().map(value -> CompletableFuture.runAsync(() -> {
             String sourceType = value.get(0).getSourceType().getCode();
@@ -395,7 +408,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
             }
             //更新库存
-            getSelfBean().approve(dto,ignoreSkuIds);
+            getSelfBean().approve(dto,ignoreSkuIds,bomChildrenSkuList);
         }, b2cVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -426,6 +439,10 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }).collect(Collectors.toList());
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
+        //查询历史bom信息
+        List<String> bomSkuIdList = singleList.stream().map(VirtualFlowRefactorDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(bomSkuIdList);
+
         List<CompletableFuture<Void>> futures = map.values().stream().map(value -> CompletableFuture.runAsync(() -> {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
@@ -444,7 +461,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             }
             //更新库存
-            getSelfBean().approve(dto,ignoreSkuIds);
+            getSelfBean().approve(dto,ignoreSkuIds,bomChildrenSkuList);
         }, firstMileVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -597,10 +614,10 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approve(VirtualInventoryStockDTO.StockParamDTO dto,List<String> ignoreSkuIds) {
+    public void approve(VirtualInventoryStockDTO.StockParamDTO dto,List<String> ignoreSkuIds,List<BomChildrenSkuDTO> bomChildrenSkuList) {
         ValidatorUtil.validateEntity(dto);
         //BOM拆分
-        List<VirtualInventoryStockDTO.OutInStockDTO> outInStockList = splitBom(dto.getParamList(), dto.getIsSplitBom());
+        List<VirtualInventoryStockDTO.OutInStockDTO> outInStockList = splitBom(dto.getParamList(), dto.getIsSplitBom(),bomChildrenSkuList);
         if (CollUtil.isEmpty(outInStockList)) {
             outInStockList = dto.getParamList();
         }
@@ -614,7 +631,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @param paramList
      * @return List<OutInStockDTO>
      */
-    private List<VirtualInventoryStockDTO.OutInStockDTO> splitBom (List<VirtualInventoryStockDTO.OutInStockDTO> paramList,Boolean isSplitBom) {
+    private List<VirtualInventoryStockDTO.OutInStockDTO> splitBom (List<VirtualInventoryStockDTO.OutInStockDTO> paramList,Boolean isSplitBom,List<BomChildrenSkuDTO> bomChildrenSkuList) {
         List<VirtualInventoryStockDTO.OutInStockDTO> resultList = new ArrayList<>();
         if (ObjectUtil.isNotEmpty(isSplitBom) && !isSplitBom) {
             return resultList;
@@ -624,9 +641,6 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if (CollUtil.isEmpty(list) || !Boolean.valueOf(list.get(0).getValue())) {
             return resultList;
         }
-
-        List<String> skuIdList = paramList.stream().map(VirtualInventoryStockDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
         if (CollUtil.isEmpty(bomChildrenSkuList)) {
             return resultList;
         }
