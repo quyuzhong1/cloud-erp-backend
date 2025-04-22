@@ -58,6 +58,8 @@ import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import static cn.hutool.json.XMLTokener.entity;
+
 /**
  * <p>
  * 质检通知单 服务实现类
@@ -106,6 +108,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Resource
     private TransferOutService transferOutService;
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -382,12 +386,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         List<String> qcInfoIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
-
-        qcInfoService.lambdaUpdate().in(QcInfoEntity::getId, qcInfoIdList).remove();
-        qcProductService.lambdaUpdate().in(QcProductEntity::getMainId, qcInfoIdList).remove();
-        qcResultService.lambdaUpdate().in(QcResultEntity::getMainId, qcInfoIdList).remove();
-        qcReportDetailService.lambdaUpdate().in(QcReportDetailEntity::getMainId, qcInfoIdList).remove();
-        qcRemarkService.lambdaUpdate().in(QcRemarkEntity::getMainId, qcInfoIdList).remove();
+        //删除质检单以及其明细
+        deleteQcInfo(qcInfoIdList);
 
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单");
@@ -630,6 +630,70 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     }
 
     @Override
+    public void cancelQcInfoFinish(List<String> detailIdList) {
+        //先判断明细id下生成的分布式调出单的情况
+        List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByIds(detailIdList);
+        List<String> mainIdList = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getMainId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+
+        Map<String, QcNoticeEntity> noticeMap = listByIds(mainIdList).stream().collect(Collectors.toMap(QcNoticeEntity::getId, t -> t));
+
+        List<TransferOutEntity> transferOutList = transferOutService.listBySourceIds(mainIdList);
+
+        Map<String, List<TransferOutEntity>> transferOutMap = transferOutList.stream().collect(Collectors.groupingBy(TransferOutEntity::getSourceId));
+
+        String errorMessage = "【{}】质检单没有下推的分布式调出单";
+        String errorMessage2 = "【{}】质检单已生成分步式调出单审核，不允许撤销质检";
+
+        List<BatchResultDTO> results = new ArrayList<>();
+
+        for (String qcNoticeId : mainIdList) {
+            if(!transferOutMap.containsKey(qcNoticeId)){
+                QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
+                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), String.format(errorMessage, qcNoticeEntity.getCode()));
+                results.add(fail);
+            }else {
+                for (TransferOutEntity transferOutEntity : transferOutMap.get(qcNoticeId)) {
+                    if(transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())
+                        || transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())){
+                        QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
+                        BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), String.format(errorMessage2, qcNoticeEntity.getCode()));
+                        results.add(fail);
+                    }else {
+                        List<TransferOutDetailEntity> transferOutDetailEntities = transferOutDetailService.listByMainId(transferOutEntity.getId());
+
+                        //判断transferOutDetailEntities中的sourceDetailId是否在detailIdList
+                        boolean allMatch = transferOutDetailEntities.stream().allMatch(t -> detailIdList.contains(t.getSourceDetailId()));
+                        boolean noneMatch = transferOutDetailEntities.stream().noneMatch(t -> detailIdList.contains(t.getSourceDetailId()));
+                        if(Boolean.TRUE.equals(noneMatch)){
+                            //不执行
+                        } else {
+                            //执行 删除分布式调出单
+                            transferOutDetailService.removeByMainIds(Collections.singletonList(transferOutEntity.getId()));
+                            transferOutDetailService.removeById(transferOutEntity.getId());
+                            //执行 删除关联的明细的质检单
+                            List<String> qcNoticeDetailIdList = transferOutDetailEntities.stream().map(TransferOutDetailEntity::getSourceDetailId).collect(Collectors.toList());
+                            List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceDetailIds(qcNoticeDetailIdList);
+                            List<String> qcInfoIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
+                            //删除质检单以及其明细
+                            deleteQcInfo(qcInfoIdList);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    //删除质检单以及其明细
+    private void deleteQcInfo(List<String> qcInfoIdList) {
+        qcInfoService.lambdaUpdate().in(QcInfoEntity::getId, qcInfoIdList).remove();
+        qcProductService.lambdaUpdate().in(QcProductEntity::getMainId, qcInfoIdList).remove();
+        qcResultService.lambdaUpdate().in(QcResultEntity::getMainId, qcInfoIdList).remove();
+        qcReportDetailService.lambdaUpdate().in(QcReportDetailEntity::getMainId, qcInfoIdList).remove();
+        qcRemarkService.lambdaUpdate().in(QcRemarkEntity::getMainId, qcInfoIdList).remove();
+    }
+
+    @Override
     public QcNoticeDTO.ViewDTO view(String id) {
         QcNoticeEntity qcNoticeEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         QcNoticeDTO.ViewDTO data = BeanMapperUtils.map(QcNoticeDTO.ViewDTO.class, qcNoticeEntity);
@@ -653,7 +717,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
         startDTO.setBusinessId(entity.getId());
         startDTO.setBusinessCode(entity.getCode());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
         startDTO.setBusinessKey(SourceTypeEnum.QC_NOTICE.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());

@@ -374,14 +374,33 @@ public class QcNoticeController extends BaseController {
      * @param dto
      * @return ApiResult<QcNoticeDTO.ViewDTO>>
      */
-    @GetMapping("/generateQcInfo")
+    @GetMapping("/generateQcInfoFinish")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:generateQcInfo",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<Object> generateQcInfo(@RequestBody @Validated List<QcNoticeDTO.QcInfoView> dto) {
+    public ApiResult<List<BatchResultDTO>> generateQcInfo(@RequestBody @Validated List<QcNoticeDTO.QcInfoView> dto) {
         qcNoticeService.generateQcInfo(dto);
+        return success();
+    }
+
+
+    /**
+     * 撤销质检
+     * @author jack
+     * @date:  2025-04-21
+     * @param dto
+     * @return ApiResult<QcNoticeDTO.ViewDTO>>
+     */
+    @GetMapping("/cancelQcInfoFinish")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:cancelQcInfoFinish",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<Object> cancelQcInfoFinish(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        qcNoticeService.cancelQcInfoFinish(dto.getDetailIdList());
         return success();
     }
 

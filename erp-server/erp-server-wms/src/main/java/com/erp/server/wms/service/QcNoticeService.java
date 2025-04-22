@@ -5,6 +5,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.QcNoticeDTO;
 import com.common.business.vo.PagingVO;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
 /**
@@ -146,4 +147,6 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     List<QcNoticeDTO.QcInfoView> generateQcInfoView(List<String> ids);
 
     void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto);
+
+    void cancelQcInfoFinish(List<String> detailIdList);
 }
