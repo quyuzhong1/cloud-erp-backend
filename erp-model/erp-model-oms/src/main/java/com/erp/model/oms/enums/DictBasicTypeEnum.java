@@ -33,9 +33,6 @@ public enum DictBasicTypeEnum {
     CFG_SETTING("cfgSetting", "系统配置"),
     ORDER_SOURCE_TYPE("orderSourceType", "订单来源类型"),
 
-    CFG_SETTING("cfgSetting", "系统配置"),
-    ORDER_SOURCE_TYPE("orderSourceType", "订单来源类型"),
-
     // 数帝云
     SDY_SUB_PLATFORM("sdySubPlatform" , "数帝子平台映射"),
     SDY_PARTITION_LEVEL1_DEPT("sdyPartitionLevel1Dept" , "数帝云军区一级部门映射"),
