@@ -12,10 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -154,14 +151,16 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * 附件地址
          */
-        @NotBlank(message = "证书地址不能为空")
+        @NotEmpty(message = "证书地址列表不能为空")
+        @Size(max = 1, message = "最多只能上传1个附件地址")
         @Valid
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
-        @NotBlank(message = "证书名不能为空")
+        @NotEmpty(message = "证书名列表不能为空")
+        @Size(max = 1, message = "最多只能上传1个附件名")
         @Valid
         private List<String> attachmentNameList;
 
