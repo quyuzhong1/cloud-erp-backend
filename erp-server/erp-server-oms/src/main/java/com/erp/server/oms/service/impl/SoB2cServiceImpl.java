@@ -116,7 +116,6 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
-import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
@@ -125,7 +124,6 @@ import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -149,9 +147,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.net.SocketTimeoutException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -2201,8 +2196,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(entity.getThirdSystem().equals(PlatformDictEnum.LING_XING.getCode())){
             updateLingXingOrder(entity, list);
         }
-        //是否推送发票
-        autoPushInvoice(entity,overseasWarehouseList.get(0),logisticsChannelId);
+
+        if (CollUtil.isNotEmpty(overseasWarehouseList)) {
+            //是否推送发票
+            autoPushInvoice(entity,overseasWarehouseList.get(0),logisticsChannelId);
+        }
+
 
         /**
          * 如果是API 对接的仓库
