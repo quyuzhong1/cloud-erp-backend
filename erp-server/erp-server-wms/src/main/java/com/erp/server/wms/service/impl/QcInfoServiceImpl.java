@@ -244,9 +244,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
         if(SourceTypeEnum.QC_NOTICE.getCode().equals(dto.getSourceType())){
 
-
-
-
         }else {
             //采购订单明细
             String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
@@ -1148,8 +1145,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99020);
         }
         List<String> ids = Collections.singletonList(entity.getId());
-        //批量检查
-        batchCheckQcQty(qcList, true);
+
+        //质检通知单不检查数量
+        if(!entity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+            //批量检查
+            batchCheckQcQty(qcList, true);
+        }
+
         LocalDateTime now = LocalDateTime.now();
         //质检状态
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());

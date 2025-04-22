@@ -506,6 +506,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //质检通知单审核通过自动生成质检单
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
+            //回写质检通知单
+            QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
+            qcNoticeDetailEntity.setQcQty(qcInfoView.getQcQty());
+            qcNoticeDetailEntity.setQcGoodQty(qcInfoView.getQcGoodQty());
+            qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
+            qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
+            qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
+            qcNoticeDetailService.updateById(qcNoticeDetailEntity);
+
             QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
             //来源
             addDto.setSourceCode(qcInfoView.getCode());
@@ -540,16 +549,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcInfo.setBadImageUrlList(qcInfoView.getAttachUrlList());
             addDto.setQcInfo(qcInfo);
             //新增质检单
-            qcInfoService.add(addDto);
-
-            //回写质检通知单
-            QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
-            qcNoticeDetailEntity.setQcQty(qcInfoView.getQcQty());
-            qcNoticeDetailEntity.setQcGoodQty(qcInfoView.getQcGoodQty());
-            qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
-            qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
-            qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
-            qcNoticeDetailService.updateById(qcNoticeDetailEntity);
+            QcInfoEntity qcInfoEntity = qcInfoService.add(addDto);
+            //完成质检
+            BatchResultDTO finish = qcInfoService.finish(qcInfoEntity);
         }
     }
 
