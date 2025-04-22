@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -117,6 +118,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		BigDecimal totalTaxAmount = dmpSoDeliveryEntity.getTotalTaxAmount();
     		Integer totalQty = dmpSoDeliveryEntity.getTotalQty();
     		Integer cancelQty = dmpSoDeliveryEntity.getCancelQty();
+    		Integer shippingQty = dmpSoDeliveryEntity.getShippingQty();
     		String salesCompanyCode = dmpSoDeliveryEntity.getSalesCompanyCode();
     		String receivingCompanyCode = dmpSoDeliveryEntity.getReceivingCompanyCode();
     		String organizationCode = dmpSoDeliveryEntity.getOrganizationCode();
@@ -129,10 +131,23 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		String shopName = dmpSoDeliveryEntity.getShopName();
     		String platformCode = dmpSoDeliveryEntity.getPlatformCode();
     		
+    		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
     		String payTimeFormat = null;
     		if(payTime != null) {
     			payTimeFormat = localDateTime.format(payTime);
     		}
+    		LocalDateTime thirdCreateTime = dmpSoDeliveryEntity.getThirdCreateTime();
+    		String thirdCreateTimeFormat = null;
+    		if(thirdCreateTime != null) {
+    			thirdCreateTimeFormat = localDateTime.format(thirdCreateTime);
+    		}
+    		
+    		LocalDateTime thirdUpdateTime = dmpSoDeliveryEntity.getThirdUpdateTime();
+    		String thirdUpdateTimeFormat = null;
+    		if(thirdUpdateTime != null) {
+    			thirdUpdateTimeFormat = localDateTime.format(thirdUpdateTime);
+    		}
+    		
     		for(DmpSoDeliveryDetailEntity dmpSoDeliveryDetailEntity : dmpSoDeliveryDetailEntityList) {
     			if(validateDataBlack(dmpSoDeliveryDetailEntity, cfgOutputId)) {
     				continue;
@@ -164,7 +179,6 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	            shudiyunB2cOrderDTO.setDiscount_deduction_amount(totalDiscountAmount);
 	            shudiyunB2cOrderDTO.setTotal_canceled_goods_amount(totalCancelAmount);
 	            shudiyunB2cOrderDTO.setBuyer_actual_payment(payAmount);
-	            shudiyunB2cOrderDTO.setTaxation(totalTaxAmount);
 	            shudiyunB2cOrderDTO.setTotal_freight(shippingAmount);
 	            shudiyunB2cOrderDTO.setPost_amount(shippingAmount);
 	            shudiyunB2cOrderDTO.setTotal_goods_quantity(totalQty);
@@ -201,13 +215,21 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setTransaction_currency(dmpSoDeliveryDetailEntity.getCurrencyName());
 	            shudiyunB2cOrderDTO.setTransaction_currency_code(dmpSoDeliveryDetailEntity.getCurrencyCode());
 
-    	        shudiyunB2cOrderDTO.setMsku_code(dmpSoDeliveryDetailEntity.getPlatformSkuNo());
-    	        shudiyunB2cOrderDTO.setMsku_name(dmpSoDeliveryDetailEntity.getPlatformSkuName());
+	            if(!isB2B) {
+	            	shudiyunB2cOrderDTO.setMsku_code(dmpSoDeliveryDetailEntity.getPlatformSkuNo());
+	            	shudiyunB2cOrderDTO.setMsku_name(dmpSoDeliveryDetailEntity.getPlatformSkuName());
+	            	shudiyunB2cOrderDTO.setTaxation(totalTaxAmount);
+	            }else {
+	            	shudiyunB2cOrderDTO.setRoot_node_create_time(thirdCreateTimeFormat);
+	    	        shudiyunB2cOrderDTO.setRoot_node_modify_time(thirdUpdateTimeFormat);
+	            }
+	            
+	            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(shippingQty);
+    	        
     	        shudiyunB2cOrderDTO.setSku_code(skuNo);
     	        shudiyunB2cOrderDTO.setSku_name(skuName);
 
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
-
     	        
     	        // 国家编码
     	        shudiyunB2cOrderDTO.setCountry_code(dmpSoDeliveryDetailEntity.getCountryCode());
@@ -232,4 +254,8 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	return result;
     }
 
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("biz_no" , "goods_no");
+    }
 }
