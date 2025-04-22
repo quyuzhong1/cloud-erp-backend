@@ -252,7 +252,6 @@
     <!-- 查询b2b订单流水 -->
     <select id="rebuildB2bVirtualFlow"
             resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
-        select b2b.* from (
         -- b2b销售订单冻结
         select
             sd.sku_id,
@@ -267,8 +266,8 @@
             COALESCE(sd.frozen_time,sd.create_time) as trade_time,
             sd.frozen_qty as qty
         from so_info si
-        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
-        where si.is_deleted = false and si.virtual_warehouse_id != '' and sd.frozen_qty != 0
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false and sd.frozen_qty > 0
+        where si.is_deleted = false and si.virtual_warehouse_id != ''
         union all
         -- 发货通知单冻结
         select
@@ -284,9 +283,9 @@
             sdn.create_time as trade_time,
             sdnd.delivery_qty as qty
         from so_delivery_notice sdn
-        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false
-        where sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false
-        -- 加工单出库
+        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false and sdnd.delivery_qty > 0
+        where sdn.is_deleted = false
+        -- 加工单出库(发货通知单下推)
         union all
         select
             md.sku_id,
@@ -301,10 +300,30 @@
             mi.approve_time as trade_time,
             md.qty as qty
         from machine_info mi
-        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'
+        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve' and mi.source_type = 'soDeliveryNotice' and md.qty > 0
         inner join so_delivery_notice_detail sdnd on sdnd.id = md.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != ''
-        where mi.is_deleted = false  and mi.source_type in ('soInfo','soDeliveryNotice')
+        where mi.is_deleted = false
+        -- 加工单出库(销售订单下推)
+        union all
+        select
+            md.sku_id,
+            md.sku_no,
+            si.virtual_warehouse_id,
+            si.warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            mi.approve_time as bill_date,
+            mi.approve_time as trade_time,
+            md.qty as qty
+        from machine_info mi
+         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'  and mi.source_type = 'soInfo' and md.qty > 0
+         inner join machine_ref_so mrs on md.id = mrs.machine_detail_id and mi.id = mrs.machine_id and mrs.is_deleted = false
+         inner join so_detail sd on sd.id = mrs.so_detail_id and sd.is_deleted = false
+         inner join  so_info si on si.id = sd.main_id and si.is_deleted = false and si.virtual_warehouse_id != ''
+        where mi.is_deleted = false
         --直接调拨单出库
         union all
         select
@@ -320,10 +339,10 @@
             ti.approve_time as trade_time,
             tid.qty as qty
         from transfer_info ti
-        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false and ti.approve_status = 'approve' and tid.qty > 0
         inner join so_delivery_notice_detail sdnd on sdnd.id = tid.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and tid.out_warehouse_id = sdn.warehouse_id
-        where ti.is_deleted = false and ti.approve_status = 'approve'
+        where ti.is_deleted = false
         union all
         -- 销售出库单出库
         select
@@ -339,10 +358,9 @@
             so.approve_time as trade_time,
             sod.actual_qty as qty
         from so_outstock so
-        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false
+        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false and so.approve_status = 'approve' and sod.actual_qty > 0
         inner join so_delivery_notice_detail sdnd on sdnd.id = sod.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sod.warehouse_id = sdn.warehouse_id
-        where so.is_deleted = false and so.approve_status = 'approve'
-       ) b2b where b2b.qty > 0 order by b2b.bill_date asc
+        where so.is_deleted = false
     </select>
 </mapper>
