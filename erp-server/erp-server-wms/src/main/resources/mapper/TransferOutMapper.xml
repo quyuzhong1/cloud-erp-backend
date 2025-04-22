@@ -119,5 +119,31 @@
             </foreach>
         </where>
     </select>
+    <select id="listPutawayDetail" resultType="com.erp.model.wms.dto.TransferOutDTO$PutawayDetailDTO">
+        select
+            t.code as outCode,
+            t.approve_time as outApproveTime,
+            tod.qty as outQty,
+            t.out_warehouse_id as outWarehouseId,
+            t.out_warehouse_name as outWarehouseName,
+            ti.id as outId,
+            ti.code as inCode,
+            tid.qty as inQty,
+            ti.out_warehouse_id as inWarehouseId,
+            ti.out_warehouse_name as inWarehouseName
+        from
+            transfer_out t
+                left join (select main_id, count(1) as qty from transfer_out_detail where is_deleted = false GROUP BY main_id ) as tod on t.id = tod.main_id
+                left join transfer_in as ti on t.id = ti.source_id
+                left join (select main_id, count(1) as qty from transfer_in_detail where is_deleted = false GROUP BY main_id )  as tid on ti.id = tid.main_id
+        where t.is_deleted = FALSE
+          and t.approve_status = 'approve'
+          and t.invalid_status = false
+          and ti.is_deleted = FALSE
+          and ti.approve_status = 'approve'
+          and ti.invalid_status = false
+          and t.source_id =#{id}
+
+    </select>
 
 </mapper>

@@ -537,6 +537,31 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String id) {
+        List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(id);
+        if(CollUtil.isNotEmpty(putawayDetailDTOS)){
+            List<String> outIds = putawayDetailDTOS.stream().map(TransferOutDTO.PutawayDetailDTO::getOutId).collect(Collectors.toList());
+
+            List<OperateLogEntity> operateLogEntityList  = operateLogService.lambdaQuery()
+                    .eq(OperateLogEntity::getModuleType, ModuleTypeEnum.TRANSFER_IN.getCode())
+                    .in(OperateLogEntity::getBusinessId, outIds)
+                    .like(OperateLogEntity::getContent, ApproveStatusEnum.APPROVE.getName())
+                    .list();
+
+            Map<String, List<OperateLogEntity>> map = operateLogEntityList.stream().collect(Collectors.groupingBy(OperateLogEntity::getBusinessId));
+
+            for (TransferOutDTO.PutawayDetailDTO detailDTO : putawayDetailDTOS) {
+                if(map.containsKey(detailDTO.getOutId())){
+                    List<OperateLogEntity> list = map.get(detailDTO.getOutId());
+                    list.sort(Comparator.comparing(OperateLogEntity::getCreateTime).reversed());
+                    detailDTO.setInApproveTime(list.get(0).getCreateTime());
+                }
+            }
+        }
+        return putawayDetailDTOS;
+    }
+
     /**
      * 更新审核状态
      */
