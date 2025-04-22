@@ -110,6 +110,8 @@ public enum BusinessNoTypeEnum {
 
     CODE_XSJM(83, "xsjm","销售价目编号", BusinessNoConstant.XSJM),
     CODE_XSTJ(84, "xstj","销售价目调价编号", BusinessNoConstant.XSTJ),
+    CODE_ZJTZ(86, "ZJTZ","质检通知",BusinessNoConstant.ZJTZ),
+
     ;
 
 

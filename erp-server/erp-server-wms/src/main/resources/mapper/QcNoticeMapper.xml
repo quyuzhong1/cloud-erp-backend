@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.QcNoticeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.QcNoticeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="code" property="code" />
+       <result column="qc_warehouse_id" property="qcWarehouseId" />
+       <result column="putaway_warehouse_id" property="putawayWarehouseId" />
+       <result column="qc_type" property="qcType" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        qn.ID,
+	qn.create_user_id,
+	qn.create_user_name,
+	qn.create_time,
+	qn.update_user_id,
+	qn.update_user_name,
+	qn.update_time,
+	qn.VERSION,
+	qn.is_deleted,
+	qn.approve_status,
+	qn.approve_time,
+	qn.approve_user_id,
+	qn.approve_user_name,
+	qn.code,
+	qn.qc_warehouse_id,
+	qn.putaway_warehouse_id,
+	qn.qc_type,
+	qn.qc_status,
+	qn.remark
+    </sql>
+
+    <sql id="paging_sql">
+        SELECT
+        qn.ID AS id,
+        qn.create_user_id AS createUserId,
+        qn.create_user_name AS createUserName,
+        qn.create_time AS createTime,
+        qn.is_deleted AS isDeleted,
+        qn.approve_status AS approveStatus,
+        qn.approve_time AS approveTime,
+        qn.approve_user_id AS approveUserId,
+        qn.approve_user_name AS approveUserName,
+        qn.code AS code,
+        qn.qc_warehouse_id AS qcWarehouseId,
+        qn.putaway_warehouse_id AS putawayWarehouseId,
+        qn.qc_type AS qcType,
+        qn.qc_status AS qcStatus,
+        qn.qc_timeliness AS qcTimeliness,
+        qn.remark AS remark,
+        qnd.id AS detailId,
+        qnd.sku_id AS skuId,
+        qnd.sku_no AS skuNo,
+        qnd.product_name AS productName,
+        qnd.qc_notice_qty AS qcNoticeQty,
+        qnd.qc_qty AS qcQty,
+        qnd.qc_diff_qty AS qcDiffQty,
+        qnd.qc_good_qty AS qcGoodQty,
+        qnd.qc_bad_qty AS qcBadQty,
+        qnd.putaway_qty AS putawayQty,
+        qnd.bad_desc AS badDesc,
+        qnd.qc_user_id AS qcUserId,
+        qnd.qc_user_name AS qcUserName,
+        qnd.qc_problem_dict AS qcProblemDict,
+        qnd.qc_status AS qcDetailStatus,
+        qnd.qc_date AS qcDate,
+        qnd.putaway_status AS putawayStatus,
+        qnd.putaway_date AS putawayDate,
+        qi.code  AS qcInfoCode
+        FROM
+        qc_notice AS qn
+        LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+        LEFT JOIN qc_info as qn.id = qi.source_id and qi.source_type = 'qcNotice'
+        WHERE
+        ${params.sqlMap.default}
+        AND  qc.is_deleted = FALSE
+        AND qcd.is_deleted = FALSE
+        AND qi.is_deleted = FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        qn.create_time desc
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.QcNoticeDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from qc_notice where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.wms.dto.QcNoticeDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+    <select id="tabList" resultType="com.erp.model.wms.dto.QcNoticeDTO$TabListDTO">
+        SELECT
+        qn.approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  qc_notice as qn
+        WHERE qn.is_deleted=FALSE
+            and qn.approve_status in ('waitSubmit','approveIng')
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY qn.approve_status
+    </select>
+
+    <select id="tabQcStatusList" resultType="com.erp.model.wms.dto.QcNoticeDTO$TabListDTO">
+        SELECT
+        qn.qc_status AS tabFlag,
+        count(*)  AS count
+        FROM  qc_notice as qn
+        WHERE qn.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY qn.qc_status
+    </select>
+
+    <select id="listQcInfoView" resultType="com.erp.model.wms.dto.QcNoticeDTO$QcInfoView">
+        SELECT
+        qn.ID AS id,
+        qn.code AS code,
+        qn.qc_type AS qcType,
+        qn.qc_status AS qcStatus,
+        qn.qc_warehouse_id AS qcWarehouseId,
+        qnd.id AS detailId,
+        qnd.sku_id AS skuId,
+        qnd.sku_no AS skuNo,
+        qnd.product_name AS productName,
+        qnd.qc_notice_qty AS qcNoticeQty,
+        qnd.qc_qty AS qcQty,
+        qnd.qc_diff_qty AS qcDiffQty,
+        qnd.qc_good_qty AS qcGoodQty,
+        qnd.qc_bad_qty AS qcBadQty,
+        qnd.putaway_qty AS putawayQty,
+        qnd.bad_desc AS badDesc,
+        qnd.qc_problem_dict AS qcProblemDict,
+        qnd.qc_date AS qcDate
+        FROM
+        qc_notice AS qn
+        LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+        WHERE
+              qc.is_deleted = FALSE
+            AND qc.appprove_status = 'approve'
+            AND qcd.is_deleted = FALSE
+            and qnd.qc_status = 'wait'
+            AND qn.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        ORDER BY
+        qn.code
+    </select>
+</mapper>
