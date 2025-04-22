@@ -139,13 +139,6 @@ public class CfgInvoiceSettingDTO implements Serializable {
         private String startCode;
 
         /**
-         * A1证书链接（必填）
-         */
-        @NotBlank(message = "A1证书链接不能为空")
-        @Size(max = 255, message = "证书链接最大长度不能超过255位")
-        private String certificateUrl;
-
-        /**
          * A1证书密码（必填，敏感字段建议加密传输）
          */
         @NotBlank(message = "证书密码不能为空")
